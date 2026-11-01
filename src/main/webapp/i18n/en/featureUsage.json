@@ -669,6 +669,10 @@
                         "name": "Personal data export",
                         "description": "Exporting one's own data."
                     },
+                    "AGENT_ACCESS": {
+                        "name": "Agent access tokens",
+                        "description": "Creating and revoking personal access tokens that let coding agents act on one's behalf."
+                    },
                     "LTI": {
                         "name": "LTI",
                         "description": "Opening Artemis content from a learning management system."

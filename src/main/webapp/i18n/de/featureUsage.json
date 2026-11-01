@@ -669,6 +669,10 @@
                         "name": "Export persönlicher Daten",
                         "description": "Export der eigenen Daten."
                     },
+                    "AGENT_ACCESS": {
+                        "name": "Zugriffstoken für Agenten",
+                        "description": "Persönliche Zugriffstoken erstellen und widerrufen, mit denen Coding-Agenten im eigenen Namen handeln."
+                    },
                     "LTI": {
                         "name": "LTI",
                         "description": "Artemis-Inhalte aus einem Lernmanagementsystem öffnen."

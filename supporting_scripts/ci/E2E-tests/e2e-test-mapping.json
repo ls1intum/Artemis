@@ -125,6 +125,7 @@
         "src/main/webapp/app/hyperion/"
     ],
     "consumerAuditNotes": [
+        "TutorialGroupImportExport creates/deletes a course, configures groups, looks up a tutor and exercises registration import and CSV/JSON export. Include account/core, automatic group communication and the lecture service used by tutorial management; retain conservative exam coverage for the shared course lifecycle. ExerciseSplitPanelResize also creates and participates in a modeling exercise for the narrow flush-panel contract.",
         "Exam workflows use ExamExerciseGroupCreationPage.addGroupWithExercise (dynamic ExerciseType dispatch) and ExamParticipationPage. Conservatively cover all exercise types and assessment for the entire exam group, including nested test-exam specs.",
         "Exercise creation/management/participation uses shared exercise services, result/assessment handling and automatic communication channels. Communication includes all such workflows plus lecture/exam and course messaging workflows.",
         "Lecture consumers include atlas competency progress/lecture links, course tabs/management/rich message editor, Iris chat/context/activity feeds, and account deletion cleanup.",
@@ -136,7 +137,8 @@
         "Routed client dependencies matter even without direct test API calls: tutorialgroup detail/overview inject LectureService; atlas details/edit/create and course-competency service consume LectureUnitService/LectureService; communication message-editor resources/suggestions load lectures. Their owner workflows are lecture consumers.",
         "IrisSettingsService/IrisChatService are injected by lecture views, programming participation/editor, atlas learning-path views and communication tutor-suggestion/redirect components. Conservatively select these owner workflows for Iris changes, even when the current CI profile hides chat UI.",
         "CourseOverviewComponent (course/overview/course-overview/course-overview.component.ts) unconditionally subscribes to ExamParticipationService.examIsStarted$; its template uses the emitted state for sidebar visibility and layout. courses.route.ts mounts this parent for all student /courses/:courseId children. Specs visiting those routes directly or through audited course/programming/competency pageobjects are exam consumers; management-only routes do not inherit this parent.",
-        "The opt-in exam-management-client exact-file mapping replaces only the broad exam mapping for its three audited files. Its consumers include the entire quiz UI group because quiz-question-list-edit-existing.component.ts actively loads accessible exams when shown. Passive service injection in course-only assessment/grading/user-import/archive branches does not subscribe to exam state or execute exam HTTP calls; their exam-context paths are covered by the exam group. Mixed scoped and broader exam inputs union both scopes. This is a maintained runtime contract, not a general guarantee for exam/manage/."
+        "The opt-in exam-management-client exact-file mapping replaces only the broad exam mapping for its three audited files. Its consumers include the entire quiz UI group because quiz-question-list-edit-existing.component.ts actively loads accessible exams when shown. Passive service injection in course-only assessment/grading/user-import/archive branches does not subscribe to exam state or execute exam HTTP calls; their exam-context paths are covered by the exam group. Mixed scoped and broader exam inputs union both scopes. This is a maintained runtime contract, not a general guarantee for exam/manage/.",
+        "CourseManagementTumUi creates and deletes users, manages course membership, configures grading and team forms, and creates/submits/assesses a real modeling exercise. Conservatively retain course-management server/module consumers plus core account lifecycle and modeling/assessment. It does not consume the exact exam-management client override. Shared UI/package inputs keep the existing full-suite fallback."
     ],
     "specModules": {
         "e2e/Login.spec.ts": ["core"],
@@ -1098,8 +1100,25 @@
             "quiz",
             "text"
         ],
+        "e2e/exercise/CourseManagementTumUi.spec.ts": [
+            "assessment",
+            "atlas",
+            "communication",
+            "core",
+            "course",
+            "exam",
+            "exercise",
+            "fileupload",
+            "iris",
+            "lecture",
+            "modeling",
+            "programming",
+            "quiz",
+            "text",
+            "tutorialgroup"
+        ],
         "e2e/exercise/ExerciseImport.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "fileupload", "modeling", "programming", "quiz", "text"],
-        "e2e/exercise/ExerciseSplitPanelResize.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "text"],
+        "e2e/exercise/ExerciseSplitPanelResize.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "modeling", "text"],
         "e2e/exercise/ExerciseVariantGeneration.spec.ts": ["assessment", "communication", "course", "exercise", "hyperion", "quiz"],
         "e2e/exercise/file-upload/FileUploadExerciseAssessment.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "fileupload"],
         "e2e/exercise/file-upload/FileUploadExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "course", "exercise", "fileupload"],
@@ -1179,7 +1198,9 @@
         "e2e/shared/DateTimePicker.spec.ts": ["atlas", "course", "shared"],
         "e2e/shared/LayoutHelpers.spec.ts": ["shared"],
         "e2e/tutorialgroup/TutorialGroupDetailLayout.spec.ts": ["communication", "course", "exam", "lecture", "tutorialgroup"],
-        "e2e/tutorialgroup/TutorialGroupEditing.spec.ts": ["communication", "course", "lecture", "tutorialgroup"]
+        "e2e/tutorialgroup/TutorialGroupEditing.spec.ts": ["communication", "course", "lecture", "tutorialgroup"],
+        "e2e/tutorialgroup/TutorialGroupSidebarAttendance.spec.ts": ["communication", "course", "exam", "lecture", "tutorialgroup"],
+        "e2e/tutorialgroup/TutorialGroupImportExport.spec.ts": ["account", "communication", "core", "course", "exam", "lecture", "tutorialgroup"]
     },
     "ignoredPaths": ["documentation/", "src/test/javascript/", "README.md", "CLAUDE.md", "AGENTS.md", "CONTRIBUTING.md", ".github/PULL_REQUEST_TEMPLATE.md", ".agents/", "skills/"],
     "catalogModules": [

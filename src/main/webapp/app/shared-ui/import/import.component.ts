@@ -2,7 +2,7 @@ import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } 
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { PaginatorState } from 'primeng/paginator';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -29,9 +29,10 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected router = inject(Router);
     private sortService = inject(SortService);
     private readonly destroyRef = inject(DestroyRef);
-    // Optional injections for PrimeNG dialog support - components may be opened via DialogService or embedded in other components
-    protected dialogRef = inject(DynamicDialogRef, { optional: true });
-    protected dialogConfig = inject(DynamicDialogConfig, { optional: true });
+    // Exercise imports use TUM UI. Keep the legacy injection path for unrelated lecture/exam imports
+    // that still share this data-loading base; the rendered exercise dialog never uses that path.
+    protected dialogRef = inject(TumAetUiDialogRef, { optional: true }) ?? inject(DynamicDialogRef, { optional: true });
+    protected dialogConfig = inject(TumAetUiDialogConfig, { optional: true }) ?? inject(DynamicDialogConfig, { optional: true });
 
     /** Emits the item the user selected for the import, for hosts that embed the component without a PrimeNG dialog reference. */
     readonly selected = output<T>();
@@ -185,7 +186,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
      * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the 1-indexed page
      * used throughout this component before delegating to {@link onPageChange}.
      */
-    onPaginatorPageChange(event: PaginatorState): void {
+    onPaginatorPageChange(event: { page?: number }): void {
         this.onPageChange((event.page ?? 0) + 1);
     }
 

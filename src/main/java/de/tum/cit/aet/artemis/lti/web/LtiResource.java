@@ -24,8 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nimbusds.jwt.SignedJWT;
 
-import tools.jackson.databind.node.ObjectNode;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -187,9 +185,16 @@ public class LtiResource {
             case COMPETENCY, LEARNING_PATH, IRIS -> ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, resourceType);
         };
 
-        ObjectNode json = JsonObjectMapper.get().createObjectNode();
-        json.put("targetLinkUri", targetLink);
-        return ResponseEntity.ok(json.toString());
+        return ResponseEntity.ok(JsonObjectMapper.get().writeValueAsString(new DeepLinkingTargetDTO(targetLink)));
+    }
+
+    /**
+     * The JSON object that the deep linking endpoint returns.
+     * It is deliberately not annotated with {@code @JsonInclude}: the property is always written, as it always was.
+     *
+     * @param targetLinkUri the deep linking response target link
+     */
+    private record DeepLinkingTargetDTO(String targetLinkUri) {
     }
 
     /**

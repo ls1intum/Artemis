@@ -389,7 +389,8 @@ export class GradingService {
                 isPassingGrade: step.isPassingGrade,
             })),
             courseMaxPoints: gradingScale.course?.maxPoints,
-            coursePresentationScore: gradingScale.course?.presentationScore,
+            // The server treats omission as unchanged; explicitly disable Basic when switching to None or Graded.
+            coursePresentationScore: gradingScale.course ? (gradingScale.course.presentationScore ?? 0) : undefined,
             examMaxPoints: gradingScale.exam?.examMaxPoints,
         };
     }

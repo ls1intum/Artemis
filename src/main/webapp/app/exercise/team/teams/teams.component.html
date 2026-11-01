@@ -1,9 +1,9 @@
 <div>
-    <div class="mb-3 d-flex align-items-center justify-content-between">
+    <div class="mb-4! flex items-center justify-between">
         <h2 class="mb-0">
             <span>{{ exercise()?.title }} - </span>{{ filteredTeamsSize() ?? teams().length }} <span jhiTranslate="artemisApp.team.home.title"></span>
         </h2>
-        <div class="d-flex align-items-center gap-2">
+        <div class="flex items-center gap-2">
             @if (exercise()?.isAtLeastEditor && teams().length > 0) {
                 <jhi-teams-export-button [teams]="teams()" />
             }
@@ -26,15 +26,16 @@
 
     <!-- Filter in the table caption bar (rendered next to the search box) -->
     <ng-template #tableActionsRef>
-        <p-select-button
+        <tumaet-ui-select-button
             size="small"
             [options]="filterOptions"
             [ngModel]="teamCriteria.filterProp"
-            (onChange)="$event.value !== null && updateTeamFilter($event.value)"
+            (ngModelChange)="updateTeamFilter($event)"
+            [allowEmpty]="false"
+            [itemTemplate]="filterItem"
             optionValue="value"
-        >
-            <ng-template #item let-item>{{ item.labelKey | artemisTranslate }}</ng-template>
-        </p-select-button>
+        />
+        <ng-template #filterItem let-item>{{ item.labelKey | artemisTranslate }}</ng-template>
     </ng-template>
 
     <!-- Cell templates -->
@@ -56,7 +57,7 @@
         } @else if (cell.data.owner) {
             <a [href]="'mailto:' + cell.data.owner?.email">{{ cell.data.owner?.name }}</a>
         } @else {
-            <span class="fw-bold" jhiTranslate="artemisApp.team.detail.noOwner"></span>
+            <span class="font-bold" jhiTranslate="artemisApp.team.detail.noOwner"></span>
         }
     </ng-template>
 

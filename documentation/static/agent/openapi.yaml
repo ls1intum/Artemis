@@ -1,0 +1,2680 @@
+openapi: 3.1.0
+info: {title: Artemis API for coding agents, description: 'The part of the Artemis
+    REST API that a personal access token can call. Create a token in User Settings
+    under Agent Access and send it as `Authorization: Bearer art_pat_...`. A token
+    acts as its owner, with at most the owner''s role in each course, and only on
+    operations whose scopes it holds. Exercises and lecture units created through
+    this API get a release date in the future, which publishes them on its own, so
+    a person must review them before it. Announcements, lectures and competencies
+    are visible to students at once.', version: '1'}
+servers:
+- {url: 'https://artemis.example.org', description: Replace with the address of your
+    Artemis instance.}
+security:
+- personalAccessToken: []
+paths:
+  /api/text/text-exercises:
+    put:
+      tags: [text-exercise-creation-update-resource]
+      summary: Update a text exercise
+      description: Replaces the editable fields of an existing text exercise, so send
+        the whole exercise. A request with a personal access token can change only
+        an exercise that students cannot see yet (its releaseDate is in the future),
+        and the change must keep releaseDate in the future. Published exercises can
+        be changed only in the Artemis web interface.
+      operationId: updateTextExercise
+      parameters:
+      - name: notificationText
+        in: query
+        required: false
+        schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateTextExerciseDTO'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TextExerciseResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+    post:
+      tags: [text-exercise-creation-update-resource]
+      summary: Create a text exercise
+      description: Creates a text exercise in a course (set courseId; exercise groups
+        of exams are not available to tokens). A request with a personal access token
+        must set releaseDate to a time in the future. The exercise becomes visible
+        automatically at releaseDate, so the instructor must review it before that
+        date and can move the date in the Artemis web interface. title, maxPoints,
+        includedInOverallScore and courseId are required.
+      operationId: createTextExercise
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateTextExerciseDTO'}
+        required: true
+      responses:
+        '201':
+          description: The exercise was created as a draft.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TextExerciseResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/programming/programming-exercises:
+    put:
+      tags: [programming-exercise-update-resource]
+      summary: Update a programming exercise
+      description: 'Replaces the editable settings of an existing programming exercise,
+        so send the whole exercise: omitted flags reset to false. shortName, staticCodeAnalysisEnabled,
+        the checkout paths and the course cannot be changed. A request with a personal
+        access token can change only an exercise that students cannot see yet (its
+        releaseDate is in the future) and that has no student participations, and
+        the change must keep releaseDate in the future. Anything else can be changed
+        only in the Artemis web interface.'
+      operationId: updateProgrammingExercise
+      parameters:
+      - name: notificationText
+        in: query
+        required: false
+        schema: {type: string}
+      - name: hyperionCompetencyId
+        in: query
+        required: false
+        schema:
+          type: array
+          items: {type: integer, format: int64}
+          uniqueItems: true
+          maxItems: 10000
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateProgrammingExerciseDTO'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProgrammingExerciseResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/programming/programming-exercises/timeline:
+    put:
+      tags: [programming-exercise-partial-update-resource]
+      summary: Change the dates of a programming exercise
+      description: 'Replaces the timeline of a programming exercise: releaseDate,
+        startDate, dueDate, assessmentType, assessmentDueDate, exampleSolutionPublicationDate
+        and buildAndTestStudentSubmissionsAfterDueDate. A field that is missing from
+        the request is cleared, so read the exercise first and send the current value
+        of every field that must stay. A request with a personal access token can
+        change only an exercise that students cannot see yet and that has no student
+        participations, and releaseDate must stay in the future. The exercise becomes
+        visible automatically at releaseDate, so the instructor must review it before
+        that date and can move the date in the Artemis web interface.'
+      operationId: updateProgrammingExerciseTimeline
+      parameters:
+      - name: notificationText
+        in: query
+        required: false
+        schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProgrammingExerciseTimelineUpdateDTO'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProgrammingExerciseResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/modeling/modeling-exercises:
+    put:
+      tags: [modeling-exercise-resource]
+      summary: Update a modeling exercise
+      description: Replaces the editable fields of an existing modeling exercise,
+        so send the whole exercise. A request with a personal access token can change
+        only an exercise that students cannot see yet (its releaseDate is in the future),
+        and the change must keep releaseDate in the future. Published exercises can
+        be changed only in the Artemis web interface.
+      operationId: updateModelingExercise
+      parameters:
+      - name: notificationText
+        in: query
+        required: false
+        schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateModelingExerciseDTO'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ModelingExerciseResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+    post:
+      tags: [modeling-exercise-resource]
+      summary: Create a modeling exercise
+      description: Creates a modeling exercise in a course (set courseId; exercise
+        groups of exams are not available to tokens). A request with a personal access
+        token must set releaseDate to a time in the future. The exercise becomes visible
+        automatically at releaseDate, so the instructor must review it before that
+        date and can move the date in the Artemis web interface. title, diagramType,
+        maxPoints, includedInOverallScore and courseId are required, and the diagram
+        type cannot be changed later.
+      operationId: createModelingExercise
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateModelingExerciseDTO'}
+        required: true
+      responses:
+        '201':
+          description: The exercise was created as a draft.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ModelingExerciseResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/atlas/courses/{courseId}/competencies:
+    get:
+      tags: [competency-resource]
+      summary: List the competencies of a course
+      description: Returns the competencies of the course. Each one carries the caller's
+        own learning progress. Links to exercises and lecture units are not included;
+        get a single competency for those.
+      operationId: getCompetenciesWithProgress
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseCompetencyResponseDTO'}
+                maxItems: 10000
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+    put:
+      tags: [competency-resource]
+      summary: Update a competency
+      description: Replaces the editable fields of an existing competency. The id
+        in the body identifies it, so send the full competency, not only the changed
+        fields. Nothing is deleted.
+      operationId: updateCompetency
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CourseCompetencyRequestDTO'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+    post:
+      tags: [competency-resource]
+      summary: Create a competency
+      description: Creates a competency in the course. The title (at most 255 characters)
+        and the mastery threshold are required. To link the competency to lecture
+        units or exercises, set competencyLinks on those objects; this endpoint does
+        not link anything.
+      operationId: createCompetency
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CourseCompetencyRequestDTO'}
+        required: true
+      responses:
+        '201':
+          description: The competency was created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/programming/programming-exercises/setup:
+    post:
+      tags: [programming-exercise-creation-resource]
+      summary: Create a programming exercise
+      description: 'Creates a programming exercise with its template, solution and
+        test repositories and its build plan. This takes a while. A request with a
+        personal access token must set releaseDate to a time in the future. The exercise
+        becomes visible automatically at releaseDate, so the instructor must review
+        it before that date and can move the date in the Artemis web interface. Required:
+        title, shortName (unique in the course), course (with its id), programmingLanguage,
+        buildConfig, staticCodeAnalysisEnabled, maxPoints and at least one of allowOnlineEditor,
+        allowOfflineIde and allowOnlineIde. A language with project types also needs
+        projectType, and Java and Kotlin need packageName. To edit the code, clone
+        the repositories with git, using your VCS access token from the user settings.'
+      operationId: createProgrammingExercise
+      parameters:
+      - name: emptyRepositories
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      - name: hyperionCompetencyId
+        in: query
+        required: false
+        schema:
+          type: array
+          items: {type: integer, format: int64}
+          uniqueItems: true
+          maxItems: 10000
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateProgrammingExerciseDTO'}
+        required: true
+      responses:
+        '201':
+          description: The exercise and its repositories were created as a draft.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProgrammingExerciseResponseDTO'}
+        '500':
+          description: The repositories or the build plan could not be set up. The
+            exercise may be partly created, so check the course before retrying.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProgrammingExerciseResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/lecture/lectures:
+    post:
+      tags: [lecture-resource]
+      summary: Create a lecture
+      description: 'Creates an empty lecture in a course (set course with its id).
+        title is required; startDate, if set, must not be after endDate. A lecture
+        has no release date of its own: students see it with its title and description
+        at once, and only its units can stay hidden with a releaseDate in the future.
+        channelName names the lecture''s communication channel and is derived from
+        the title if omitted.'
+      operationId: createLecture
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SimpleLectureDTO'}
+        required: true
+      responses:
+        '201':
+          description: The lecture was created.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SimpleLectureDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/lecture/lectures/{lectureId}/attachment-video-units:
+    post:
+      tags: [attachment-video-unit-resource]
+      summary: Add a unit with slides or a video to a lecture
+      description: 'Adds an attachment video unit to a lecture. Send multipart/form-data
+        with the part attachmentVideoUnit (JSON: name, releaseDate, description, videoSource),
+        and for slides the part attachment (JSON: name, attachmentType FILE, releaseDate)
+        together with the part file (the PDF). A request with a personal access token
+        must set releaseDate to a time in the future, on the unit and on the attachment.
+        The material becomes visible automatically when its release dates have passed,
+        so the instructor must review it before those dates and can move them in the
+        Artemis web interface. The unit is returned at once; splitting the PDF into
+        slides and indexing it for Iris continue in the background, and their progress
+        is reported by the lecture unit status endpoint.'
+      operationId: createAttachmentVideoUnit
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: keepFilename
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                attachmentVideoUnit: {$ref: '#/components/schemas/AttachmentVideoUnitDTO'}
+                attachment: {$ref: '#/components/schemas/AttachmentDTO'}
+                file: {type: string, format: binary}
+              required: [attachmentVideoUnit]
+      responses:
+        '201':
+          description: The unit was created as a draft.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AttachmentVideoUnitDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/communication/courses/{courseId}/announcements:
+    post:
+      tags: [conversation-message-resource]
+      summary: Post an announcement to a course
+      description: Posts a message to the course's announcement channel (the default
+        one unless channelId is given). Students are notified immediately and the
+        post is visible at once, so confirm the text with the instructor before calling
+        this. Requires at least the instructor role in the course.
+      operationId: createAnnouncement
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateAnnouncementDTO'}
+        required: true
+      responses:
+        '201':
+          description: The announcement was posted.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PostResponseDTO'}
+        '400':
+          description: The channel is not an announcement channel of the course, or
+            the course has no default announcement channel.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PostResponseDTO'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/atlas/courses/{courseId}/course-competencies/relations:
+    get:
+      tags: [course-competency-resource]
+      summary: List the relations between competencies
+      description: 'Returns the edges of the competency graph of the course: tail,
+        head and relation type, by competency id.'
+      operationId: getCompetencyRelations
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CompetencyRelationDTO'}
+                uniqueItems: true
+                maxItems: 10000
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+    post:
+      tags: [course-competency-resource]
+      summary: Create a relation between two competencies
+      description: Adds an edge to the competency graph. Tail and head must be competencies
+        of this course. The request is rejected with 400 if the relation type is missing
+        or the relation would create a circular dependency.
+      operationId: createCompetencyRelation
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CompetencyRelationDTO'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CompetencyRelationDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/atlas/courses/{courseId}/competencies/import-standardized:
+    post:
+      tags: [competency-resource]
+      summary: Import standardized competencies
+      description: Adds competencies from the catalogue of standardized competencies
+        to the course. The body is a list of catalogue ids.
+      operationId: importStandardizedCompetencies
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: integer, format: int64}
+              maxItems: 10000
+        required: true
+      responses:
+        '201':
+          description: The competencies were imported.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CompetencyImportResponseDTO'}
+                maxItems: 10000
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/atlas/courses/{courseId}/competencies/bulk:
+    post:
+      tags: [competency-resource]
+      summary: Create several competencies
+      description: Creates all given competencies in one request. The request is rejected
+        as a whole if one of them is invalid.
+      operationId: createCompetencies
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/CourseCompetencyRequestDTO'}
+              maxItems: 10000
+        required: true
+      responses:
+        '201':
+          description: The competencies were created.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseCompetencyResponseDTO'}
+                maxItems: 10000
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/programming/programming-exercises/{exerciseId}/update-test-cases:
+    patch:
+      tags: [programming-exercise-test-case-resource]
+      summary: Set the weights and visibility of test cases
+      description: Changes weight, bonusMultiplier, bonusPoints and visibility of
+        existing test cases, identified by id. Test cases themselves come from the
+        tests in the test repository when the build runs; they cannot be created here.
+        A request with a personal access token can change only an exercise that students
+        cannot see yet and that has no student participations.
+      operationId: updateTestCases
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/ProgrammingExerciseTestCaseDTO'}
+              uniqueItems: true
+              maxItems: 10000
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ProgrammingExerciseTestCaseResponseDTO'}
+                uniqueItems: true
+                maxItems: 10000
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/programming/programming-exercises/{exerciseId}/problem-statement:
+    patch:
+      tags: [programming-exercise-partial-update-resource]
+      summary: Replace the problem statement of a programming exercise
+      description: The request body is the new problem statement as plain Markdown
+        text, not JSON. Test cases are referenced in tasks as [task][Task name](testName1,testName2).
+        A request with a personal access token can change only an exercise that students
+        cannot see yet and that has no student participations.
+      operationId: updateProblemStatement
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: notificationText
+        in: query
+        required: false
+        schema: {type: string}
+      requestBody:
+        content:
+          text/plain:
+            schema: {type: string}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProgrammingExerciseResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/atlas/courses/{courseId}/course-competencies/relations/{relationId}:
+    patch:
+      tags: [course-competency-resource]
+      summary: Change the type of a relation
+      description: Changes the relation type of an existing relation. To change tail
+        or head, create a new relation.
+      operationId: updateCompetencyRelation
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: relationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateCourseCompetencyRelationDTO'}
+        required: true
+      responses:
+        '204': {description: The relation was updated.}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/text/text-exercises/{exerciseId}:
+    get:
+      tags: [text-exercise-resource]
+      summary: Get a text exercise
+      description: Returns all fields of a text exercise. Exercises of exams cannot
+        be read with a personal access token.
+      operationId: getTextExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: withPlagiarismDetectionConfig
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TextExerciseResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/text/courses/{courseId}/text-exercises:
+    get:
+      tags: [text-exercise-resource]
+      summary: List the text exercises of a course
+      description: Returns a summary of every text exercise of the course, with its
+        id, title, dates and points. Get one exercise for all its fields.
+      operationId: getTextExercisesForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TextExerciseListItemDTO'}
+                maxItems: 10000
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/programming/programming-exercises/{exerciseId}:
+    get:
+      tags: [programming-exercise-retrieval-resource]
+      summary: Get a programming exercise
+      description: Returns all fields of a programming exercise, including its build
+        configuration and the repository addresses of its template, solution and test
+        repositories. Exercises of exams cannot be read with a personal access token.
+      operationId: getProgrammingExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: withPlagiarismDetectionConfig
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProgrammingExerciseResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/programming/programming-exercises/{exerciseId}/test-cases:
+    get:
+      tags: [programming-exercise-test-case-resource]
+      summary: List the test cases of a programming exercise
+      description: Returns the test cases of a programming exercise with their ids,
+        weights, bonus settings and visibility. Use the ids to change weights and
+        visibility. Test cases exist once the build has run against the test repository.
+        Exercises of exams cannot be read with a personal access token.
+      operationId: getTestCases
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ProgrammingExerciseTestCaseResponseDTO'}
+                uniqueItems: true
+                maxItems: 10000
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/programming/courses/{courseId}/programming-exercises:
+    get:
+      tags: [programming-exercise-retrieval-resource]
+      summary: List the programming exercises of a course
+      description: Returns a summary of every programming exercise of the course.
+        Get one exercise for all its fields.
+      operationId: getProgrammingExercisesForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ProgrammingExerciseListItemDTO'}
+                maxItems: 10000
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/modeling/modeling-exercises/{exerciseId}:
+    get:
+      tags: [modeling-exercise-resource]
+      summary: Get a modeling exercise
+      description: Returns all fields of a modeling exercise. Exercises of exams cannot
+        be read with a personal access token.
+      operationId: getModelingExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ModelingExerciseResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/modeling/courses/{courseId}/modeling-exercises:
+    get:
+      tags: [modeling-exercise-resource]
+      summary: List the modeling exercises of a course
+      description: Returns a summary of every modeling exercise of the course, with
+        its id, title, dates and points. Get one exercise for all its fields.
+      operationId: getModelingExercisesForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ModelingExerciseListItemDTO'}
+                maxItems: 10000
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/lecture/lectures/{lectureId}/lecture-units/statuses:
+    get:
+      tags: [lecture-unit-resource]
+      summary: Get the processing status of the units of a lecture
+      description: 'Reports, for each attachment video unit of the lecture, how far
+        the background processing of its slides and video has come: processingPhase
+        is IDLE, TRANSCRIBING, INGESTING, DONE, FAILED or SKIPPED. Poll this after
+        uploading slides; DONE or SKIPPED means nothing more is pending. The list
+        is empty when processing is not enabled on this instance.'
+      operationId: getUnitStatuses
+      parameters:
+      - name: lectureId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/LectureUnitCombinedStatusDTO'}
+                maxItems: 10000
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/course/courses/for-dropdown:
+    get:
+      tags: [course-overview-resource]
+      summary: List your courses
+      description: Returns the id, title and icon of every active course the caller
+        belongs to. Use the ids in the paths of the other operations.
+      operationId: getCoursesForDropdown
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseDropdownDTO'}
+                uniqueItems: true
+                maxItems: 10000
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/atlas/courses/{courseId}/course-competencies:
+    get:
+      tags: [course-competency-resource]
+      summary: List all competencies and prerequisites of a course
+      description: Returns every competency and prerequisite of the course. Each one
+        carries the caller's own learning progress. Set filter=true to leave out those
+        not linked to any exercise or lecture unit.
+      operationId: getCourseCompetenciesWithProgress
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: filter
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/CourseCompetencyResponseDTO'}
+                maxItems: 10000
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/atlas/courses/{courseId}/course-competencies/{competencyId}:
+    get:
+      tags: [course-competency-resource]
+      summary: Get one course competency
+      description: Returns a competency or prerequisite of the course with its linked
+        exercises and lecture units, as far as the caller may see them.
+      operationId: getCourseCompetency
+      parameters:
+      - name: competencyId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+  /api/atlas/courses/{courseId}/competencies/{competencyId}:
+    get:
+      tags: [competency-resource]
+      summary: Get one competency
+      description: Returns a competency with the exercises and lecture units linked
+        to it, as far as the caller may see them.
+      operationId: getCompetency
+      parameters:
+      - name: competencyId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseCompetencyResponseDTO'}
+        '400': {description: 'The request is invalid. The body is an RFC 7807 problem
+            document with a message and, for validation errors, a list of fieldErrors.'}
+        '401': {description: 'The token is missing, unknown, expired or revoked, or
+            its owner is an administrator.'}
+        '403': {description: 'The token lacks a scope this operation needs, or its
+            owner lacks the required role in the course.'}
+        '404': {description: 'The course or object does not exist, or is not visible
+            to the token''s owner.'}
+components:
+  schemas:
+    CompetencyDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+    CompetencyLinkDTO:
+      type: object
+      properties:
+        competency: {$ref: '#/components/schemas/CompetencyDTO'}
+        weight: {type: number, format: double}
+        generatedByAi: {type: boolean, readOnly: true}
+    GradingCriterionDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        structuredGradingInstructions:
+          type: array
+          items: {$ref: '#/components/schemas/GradingInstructionDTO'}
+          maxItems: 10000
+    GradingInstructionDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        credits: {type: number, format: double}
+        gradingScale: {type: string}
+        instructionDescription: {type: string}
+        feedback: {type: string}
+        usageCount: {type: integer, format: int32}
+    PlagiarismDetectionConfigDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        continuousPlagiarismControlEnabled: {type: boolean}
+        continuousPlagiarismControlPostDueDateChecksEnabled: {type: boolean}
+        continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: {type: integer,
+          format: int32}
+        similarityThreshold: {type: integer, format: int32}
+        minimumScore: {type: integer, format: int32}
+        minimumSize: {type: integer, format: int32}
+    TeamAssignmentConfigDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        minTeamSize: {type: integer, format: int32}
+        maxTeamSize: {type: integer, format: int32}
+    UpdateTextExerciseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        channelName: {type: string}
+        shortName: {type: string}
+        problemStatement: {type: string}
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+          maxItems: 10000
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        presentationScoreEnabled: {type: boolean}
+        secondCorrectionEnabled: {type: boolean}
+        gradingInstructions: {type: string}
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        exampleSolution: {type: string}
+        courseId: {type: integer, format: int64}
+        exerciseGroupId: {type: integer, format: int64}
+        mode:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+        teamAssignmentConfig: {$ref: '#/components/schemas/TeamAssignmentConfigDTO'}
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
+          uniqueItems: true
+          maxItems: 10000
+        plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
+    AssessmentNoteDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        note: {type: string}
+    CourseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        accuracyOfScores: {type: integer, format: int32}
+    CourseForQuizExerciseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        shortName: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        enrollmentStartDate: {type: string, format: date-time}
+        enrollmentEndDate: {type: string, format: date-time}
+        unenrollmentEndDate: {type: string, format: date-time}
+        semester: {type: string}
+        testCourse: {type: boolean}
+        language:
+          type: string
+          enum: [ENGLISH, GERMAN]
+        defaultProgrammingLanguage:
+          type: string
+          enum: [EMPTY, JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT,
+            OCAML, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO,
+            MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP]
+        onlineCourse: {type: boolean}
+        courseInformationSharingConfiguration:
+          type: string
+          enum: [DISABLED, COMMUNICATION_AND_MESSAGING, COMMUNICATION_ONLY]
+        maxComplaints: {type: integer, format: int32}
+        maxTeamComplaints: {type: integer, format: int32}
+        maxComplaintTimeDays: {type: integer, format: int32}
+        maxRequestMoreFeedbackTimeDays: {type: integer, format: int32}
+        maxComplaintTextLimit: {type: integer, format: int32}
+        maxComplaintResponseTextLimit: {type: integer, format: int32}
+        complaintsEnabled: {type: boolean}
+        requestMoreFeedbackEnabled: {type: boolean}
+        accuracyOfScores: {type: integer, format: int32}
+        athenaGradingFeedbackEnabled: {type: boolean}
+        athenaFormativeFeedbackEnabled: {type: boolean}
+    ExamReferenceDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        testExam: {type: boolean}
+        publishResultsDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        numberOfCorrectionRoundsInExam: {type: integer, format: int32}
+        course: {$ref: '#/components/schemas/CourseForQuizExerciseDTO'}
+    ExampleSubmissionDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        usedForTutorial: {type: boolean}
+        submission: {$ref: '#/components/schemas/TextSubmissionResponseDTO'}
+    ExerciseVariantGroupReferenceDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        maxPoints: {type: number, format: double}
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+    FeedbackDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        text: {type: string}
+        detailText: {type: string}
+        hasLongFeedbackText: {type: boolean}
+        reference: {type: string}
+        credits: {type: number, format: double}
+        positive: {type: boolean}
+        type:
+          type: string
+          enum: [MANUAL, MANUAL_UNREFERENCED, AUTOMATIC_ADAPTED, AUTOMATIC]
+        visibility:
+          type: string
+          enum: [ALWAYS, AFTER_DUE_DATE, NEVER]
+        gradingInstruction: {$ref: '#/components/schemas/GradingInstructionDTO'}
+        testCase: {$ref: '#/components/schemas/TestCaseDTO'}
+    ParticipationDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        testRun: {type: boolean}
+        type: {type: string}
+        initializationState:
+          type: string
+          enum: [UNINITIALIZED, REPO_COPIED, REPO_CONFIGURED, INACTIVE, BUILD_PLAN_COPIED,
+            BUILD_PLAN_CONFIGURED, INITIALIZED, FINISHED]
+        submissionCount: {type: integer, format: int32}
+        exercise: {$ref: '#/components/schemas/ParticipationExerciseDTO'}
+    ParticipationExerciseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exerciseType:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        type: {type: string}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        maxPoints: {type: number, format: double}
+        course: {$ref: '#/components/schemas/CourseDTO'}
+    ParticipationSubmissionDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submitted: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        submissionExerciseType: {type: string}
+        commitHash: {type: string}
+        text: {type: string}
+        language:
+          type: string
+          enum: [ENGLISH, GERMAN]
+        model: {type: string}
+        explanationText: {type: string}
+        filePath: {type: string}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/ParticipationSubmissionResultDTO'}
+          maxItems: 10000
+    ParticipationSubmissionResultDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        completionDate: {type: string, format: date-time}
+        successful: {type: boolean}
+        score: {type: number, format: double}
+        rated: {type: boolean}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        testCaseCount: {type: integer, format: int32}
+        passedTestCaseCount: {type: integer, format: int32}
+        codeIssueCount: {type: integer, format: int32}
+    ResultDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        completionDate: {type: string, format: date-time}
+        successful: {type: boolean}
+        score: {type: number, format: double}
+        rated: {type: boolean}
+        submission: {$ref: '#/components/schemas/SubmissionDTO'}
+        participation: {$ref: '#/components/schemas/ParticipationDTO'}
+        feedbacks:
+          type: array
+          items: {$ref: '#/components/schemas/FeedbackDTO'}
+          maxItems: 10000
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        correctionRound: {type: integer, format: int32}
+        hasComplaint: {type: boolean}
+        exampleResult: {type: boolean}
+        assessor: {$ref: '#/components/schemas/UserNameDTO'}
+        assessmentNote: {$ref: '#/components/schemas/AssessmentNoteDTO'}
+        exerciseId: {type: integer, format: int64}
+    StudentParticipationDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        initializationState:
+          type: string
+          enum: [UNINITIALIZED, REPO_COPIED, REPO_CONFIGURED, INACTIVE, BUILD_PLAN_COPIED,
+            BUILD_PLAN_CONFIGURED, INITIALIZED, FINISHED]
+        initializationDate: {type: string, format: date-time}
+        individualDueDate: {type: string, format: date-time}
+        presentationScore: {type: number, format: double}
+        testRun: {type: boolean}
+        type: {type: string}
+        submissionCount: {type: integer, format: int32}
+        participantName: {type: string}
+        participantIdentifier: {type: string}
+        student: {$ref: '#/components/schemas/UserPublicInfoDTO'}
+        team: {$ref: '#/components/schemas/TeamDTO'}
+        exercise: {$ref: '#/components/schemas/ParticipationExerciseDTO'}
+        submissions:
+          type: array
+          items: {$ref: '#/components/schemas/ParticipationSubmissionDTO'}
+          maxItems: 10000
+        repositoryUri: {type: string}
+        buildPlanId: {type: string}
+        branch: {type: string}
+    SubmissionDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submitted: {type: boolean}
+        type:
+          type: string
+          enum: [MANUAL, TIMEOUT, TEST, OTHER, INSTRUCTOR, EXTERNAL]
+        exampleSubmission: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        commitHash: {type: string}
+        buildFailed: {type: boolean}
+        participation: {$ref: '#/components/schemas/ParticipationDTO'}
+        submissionExerciseType: {type: string}
+        isProcessing: {type: boolean}
+        buildStartDate: {type: string, format: date-time}
+        estimatedCompletionDate: {type: string, format: date-time}
+    TeamDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        shortName: {type: string}
+        students:
+          type: array
+          items: {$ref: '#/components/schemas/UserNameDTO'}
+          maxItems: 10000
+    TestCaseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        testName: {type: string}
+        weight: {type: number, format: double}
+        active: {type: boolean}
+        visibility:
+          type: string
+          enum: [ALWAYS, AFTER_DUE_DATE, NEVER]
+        bonusMultiplier: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        type:
+          type: string
+          enum: [STRUCTURAL, BEHAVIORAL, DEFAULT]
+    TextBlockDTO:
+      type: object
+      properties:
+        id: {type: string}
+        text: {type: string}
+        startIndex: {type: integer, format: int32}
+        endIndex: {type: integer, format: int32}
+        type:
+          type: string
+          enum: [AUTOMATIC, MANUAL]
+    TextExerciseExamGroupDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exam: {$ref: '#/components/schemas/ExamReferenceDTO'}
+    TextExerciseResponseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        type: {type: string}
+        exerciseType:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        mode:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        secondCorrectionEnabled: {type: boolean}
+        presentationScoreEnabled: {type: boolean}
+        problemStatement: {type: string}
+        exampleSolution: {type: string}
+        gradingInstructions: {type: string}
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+          maxItems: 10000
+        channelName: {type: string}
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        allowFeedbackRequests: {type: boolean}
+        courseId: {type: integer, format: int64}
+        courseAccuracyOfScores: {type: number, format: double}
+        course: {$ref: '#/components/schemas/CourseForQuizExerciseDTO'}
+        exerciseGroupId: {type: integer, format: int64}
+        examId: {type: integer, format: int64}
+        examPublishResultsDate: {type: string, format: date-time}
+        teamAssignmentConfig: {$ref: '#/components/schemas/TeamAssignmentConfigDTO'}
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
+          uniqueItems: true
+          maxItems: 10000
+        plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
+        gradingInstructionFeedbackUsed: {type: boolean}
+        exampleSubmissions:
+          type: array
+          items: {$ref: '#/components/schemas/ExampleSubmissionDTO'}
+          uniqueItems: true
+          maxItems: 10000
+        teamMode: {type: boolean}
+        exerciseGroup: {$ref: '#/components/schemas/TextExerciseExamGroupDTO'}
+        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReferenceDTO'}
+    TextSubmissionResponseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submissionExerciseType: {type: string}
+        text: {type: string}
+        language:
+          type: string
+          enum: [ENGLISH, GERMAN]
+        submitted: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        type:
+          type: string
+          enum: [MANUAL, TIMEOUT, TEST, OTHER, INSTRUCTOR, EXTERNAL]
+        exampleSubmission: {type: boolean}
+        participation: {$ref: '#/components/schemas/StudentParticipationDTO'}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/ResultDTO'}
+          maxItems: 10000
+        blocks:
+          type: array
+          items: {$ref: '#/components/schemas/TextBlockDTO'}
+          maxItems: 10000
+    UserNameDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+    UserPublicInfoDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        firstName: {type: string}
+        lastName: {type: string}
+        imageUrl: {type: string}
+        isInstructor: {type: boolean}
+        isEditor: {type: boolean}
+        isTeachingAssistant: {type: boolean}
+        isStudent: {type: boolean}
+    AuxiliaryRepositoryDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        repositoryUri: {type: string}
+        checkoutDirectory: {type: string}
+        description: {type: string}
+    SubmissionPolicyDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {type: string}
+        submissionLimit: {type: integer, format: int32}
+        exceedingPenalty: {type: number, format: double}
+        active: {type: boolean}
+    UpdateProgrammingExerciseBuildConfigDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        sequentialTestRuns: {type: boolean}
+        branch: {type: string}
+        buildPlanConfiguration: {type: string}
+        buildScript: {type: string}
+        checkoutSolutionRepository: {type: boolean}
+        testCheckoutPath: {type: string}
+        assignmentCheckoutPath: {type: string}
+        solutionCheckoutPath: {type: string}
+        timeoutSeconds: {type: integer, format: int32}
+        dockerFlags: {type: string}
+        theiaImage: {type: string}
+        onlineIdeExperienceLevel:
+          type: string
+          enum: [BEGINNER, ADVANCED, EXPERT]
+        allowBranching: {type: boolean}
+        branchRegex: {type: string}
+    UpdateProgrammingExerciseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        channelName: {type: string}
+        shortName: {type: string}
+        problemStatement: {type: string}
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+          maxItems: 10000
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        presentationScoreEnabled: {type: boolean}
+        secondCorrectionEnabled: {type: boolean}
+        gradingInstructions: {type: string}
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        courseId: {type: integer, format: int64}
+        exerciseGroupId: {type: integer, format: int64}
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
+          uniqueItems: true
+          maxItems: 10000
+        testRepositoryUri: {type: string}
+        solutionRepositoryUri: {type: string}
+        auxiliaryRepositories:
+          type: array
+          items: {$ref: '#/components/schemas/AuxiliaryRepositoryDTO'}
+          maxItems: 10000
+        allowOnlineEditor: {type: boolean}
+        allowOfflineIde: {type: boolean}
+        allowOnlineIde: {type: boolean}
+        staticCodeAnalysisEnabled: {type: boolean}
+        maxStaticCodeAnalysisPenalty: {type: integer, format: int32}
+        programmingLanguage:
+          type: string
+          enum: [EMPTY, JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT,
+            OCAML, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO,
+            MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP]
+        packageName: {type: string}
+        showTestNamesToStudents: {type: boolean}
+        buildAndTestStudentSubmissionsAfterDueDate: {type: string, format: date-time}
+        testCasesChanged: {type: boolean}
+        projectKey: {type: string}
+        submissionPolicy: {$ref: '#/components/schemas/SubmissionPolicyDTO'}
+        projectType:
+          type: string
+          enum: [MAVEN_MAVEN, PLAIN_MAVEN, PLAIN, XCODE, FACT, GCC, PLAIN_GRADLE,
+            GRADLE_GRADLE, MAVEN_BLACKBOX]
+        releaseTestsWithExampleSolution: {type: boolean}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        buildConfig: {$ref: '#/components/schemas/UpdateProgrammingExerciseBuildConfigDTO'}
+        plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
+    ProgrammingExerciseCourseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        shortName: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        enrollmentStartDate: {type: string, format: date-time}
+        enrollmentEndDate: {type: string, format: date-time}
+        unenrollmentEndDate: {type: string, format: date-time}
+        semester: {type: string}
+        testCourse: {type: boolean}
+        language:
+          type: string
+          enum: [ENGLISH, GERMAN]
+        defaultProgrammingLanguage:
+          type: string
+          enum: [EMPTY, JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT,
+            OCAML, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO,
+            MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP]
+        onlineCourse: {type: boolean}
+        courseInformationSharingConfiguration:
+          type: string
+          enum: [DISABLED, COMMUNICATION_AND_MESSAGING, COMMUNICATION_ONLY]
+        maxComplaints: {type: integer, format: int32}
+        maxTeamComplaints: {type: integer, format: int32}
+        maxComplaintTimeDays: {type: integer, format: int32}
+        maxRequestMoreFeedbackTimeDays: {type: integer, format: int32}
+        maxComplaintTextLimit: {type: integer, format: int32}
+        maxComplaintResponseTextLimit: {type: integer, format: int32}
+        complaintsEnabled: {type: boolean}
+        requestMoreFeedbackEnabled: {type: boolean}
+        accuracyOfScores: {type: integer, format: int32}
+        presentationScore: {type: integer, format: int32}
+        enrollmentEnabled: {type: boolean}
+        unenrollmentEnabled: {type: boolean}
+        onboardingDone: {type: boolean}
+        athenaGradingFeedbackEnabled: {type: boolean}
+        athenaFormativeFeedbackEnabled: {type: boolean}
+        learningPathsEnabled: {type: boolean}
+        gradeRelevant: {type: boolean}
+        dataRetentionHold: {type: boolean}
+        trainingEnabled: {type: boolean}
+        color: {type: string}
+        courseIcon: {type: string}
+        enrollmentConfirmationMessage: {type: string}
+        courseArchivePath: {type: string}
+        maxPoints: {type: integer, format: int32}
+        timeZone: {type: string}
+        courseInformationSharingMessagingCodeOfConduct: {type: string}
+    ProgrammingExerciseExamDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        testExam: {type: boolean}
+        examWithAttendanceCheck: {type: boolean}
+        visibleDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        publishResultsDate: {type: string, format: date-time}
+        examStudentReviewStart: {type: string, format: date-time}
+        examStudentReviewEnd: {type: string, format: date-time}
+        examSummaryPublicationDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        gracePeriod: {type: integer, format: int32}
+        workingTime: {type: integer, format: int32}
+        startText: {type: string}
+        endText: {type: string}
+        confirmationStartText: {type: string}
+        confirmationEndText: {type: string}
+        examMaxPoints: {type: integer, format: int32}
+        numberOfExercisesInExam: {type: integer, format: int32}
+        numberOfCorrectionRoundsInExam: {type: integer, format: int32}
+        randomizeExerciseOrder: {type: boolean}
+        examiner: {type: string}
+        moduleNumber: {type: string}
+        courseName: {type: string}
+        examArchivePath: {type: string}
+        course: {$ref: '#/components/schemas/ProgrammingExerciseCourseDTO'}
+    ProgrammingExerciseExamGroupDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        isMandatory: {type: boolean}
+        exam: {$ref: '#/components/schemas/ProgrammingExerciseExamDTO'}
+    ProgrammingExerciseResponseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {type: string}
+        title: {type: string}
+        shortName: {type: string}
+        channelName: {type: string}
+        problemStatement: {type: string}
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+          maxItems: 10000
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        mode:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+        teamMode: {type: boolean}
+        teamAssignmentConfig: {$ref: '#/components/schemas/TeamAssignmentConfigDTO'}
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        buildAndTestStudentSubmissionsAfterDueDate: {type: string, format: date-time}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        presentationScoreEnabled: {type: boolean}
+        secondCorrectionEnabled: {type: boolean}
+        gradingInstructions: {type: string}
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
+          uniqueItems: true
+          maxItems: 10000
+        plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
+        programmingLanguage:
+          type: string
+          enum: [EMPTY, JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT,
+            OCAML, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO,
+            MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP]
+        packageName: {type: string}
+        projectType:
+          type: string
+          enum: [MAVEN_MAVEN, PLAIN_MAVEN, PLAIN, XCODE, FACT, GCC, PLAIN_GRADLE,
+            GRADLE_GRADLE, MAVEN_BLACKBOX]
+        projectKey: {type: string}
+        testRepositoryUri: {type: string}
+        staticCodeAnalysisEnabled: {type: boolean}
+        maxStaticCodeAnalysisPenalty: {type: integer, format: int32}
+        showTestNamesToStudents: {type: boolean}
+        releaseTestsWithExampleSolution: {type: boolean}
+        testCasesChanged: {type: boolean}
+        allowOnlineEditor: {type: boolean}
+        allowOfflineIde: {type: boolean}
+        allowOnlineIde: {type: boolean}
+        gradingInstructionFeedbackUsed: {type: boolean}
+        buildConfig: {$ref: '#/components/schemas/UpdateProgrammingExerciseBuildConfigDTO'}
+        submissionPolicy: {$ref: '#/components/schemas/SubmissionPolicyDTO'}
+        course: {$ref: '#/components/schemas/ProgrammingExerciseCourseDTO'}
+        exerciseGroup: {$ref: '#/components/schemas/ProgrammingExerciseExamGroupDTO'}
+        templateParticipation: {$ref: '#/components/schemas/TemplateSolutionParticipationDTO'}
+        solutionParticipation: {$ref: '#/components/schemas/TemplateSolutionParticipationDTO'}
+        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReferenceDTO'}
+        studentParticipations:
+          type: array
+          items: {$ref: '#/components/schemas/ProgrammingExerciseStudentParticipationDTO'}
+          maxItems: 10000
+        auxiliaryRepositories:
+          type: array
+          items: {$ref: '#/components/schemas/AuxiliaryRepositoryDTO'}
+          maxItems: 10000
+        exerciseType:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        visibleToStudents: {type: boolean}
+        studentAssignedTeamIdComputed: {type: boolean}
+        defaultTestCaseVisibility:
+          type: string
+          enum: [ALWAYS, AFTER_DUE_DATE, NEVER]
+    ProgrammingExerciseStudentParticipationDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {type: string}
+        initializationState:
+          type: string
+          enum: [UNINITIALIZED, REPO_COPIED, REPO_CONFIGURED, INACTIVE, BUILD_PLAN_COPIED,
+            BUILD_PLAN_CONFIGURED, INITIALIZED, FINISHED]
+        initializationDate: {type: string, format: date-time}
+        individualDueDate: {type: string, format: date-time}
+        testRun: {type: boolean}
+        repositoryUri: {type: string}
+        branch: {type: string}
+        buildPlanId: {type: string}
+        participantName: {type: string}
+        participantIdentifier: {type: string}
+        student: {$ref: '#/components/schemas/UserNameDTO'}
+        team: {$ref: '#/components/schemas/TeamDTO'}
+        submissionCount: {type: integer, format: int32}
+        exercise: {$ref: '#/components/schemas/ProgrammingExerciseResponseDTO'}
+        submissions:
+          type: array
+          items: {$ref: '#/components/schemas/ProgrammingSubmissionWithResultsDTO'}
+          maxItems: 10000
+    ProgrammingSubmissionWithResultsDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submissionExerciseType: {type: string}
+        type:
+          type: string
+          enum: [MANUAL, TIMEOUT, TEST, OTHER, INSTRUCTOR, EXTERNAL]
+        submitted: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        commitHash: {type: string}
+        buildFailed: {type: boolean}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/ResultDTO'}
+          maxItems: 10000
+    TemplateSolutionParticipationDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {type: string}
+        repositoryUri: {type: string}
+        buildPlanId: {type: string}
+        initializationState:
+          type: string
+          enum: [UNINITIALIZED, REPO_COPIED, REPO_CONFIGURED, INACTIVE, BUILD_PLAN_COPIED,
+            BUILD_PLAN_CONFIGURED, INITIALIZED, FINISHED]
+        submissions:
+          type: array
+          items: {$ref: '#/components/schemas/ProgrammingSubmissionWithResultsDTO'}
+          maxItems: 10000
+    ProgrammingExerciseTimelineUpdateDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        buildAndTestStudentSubmissionsAfterDueDate: {type: string, format: date-time}
+      required: [id]
+    UpdateModelingExerciseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        channelName: {type: string}
+        shortName: {type: string}
+        problemStatement: {type: string}
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+          maxItems: 10000
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        presentationScoreEnabled: {type: boolean}
+        secondCorrectionEnabled: {type: boolean}
+        gradingInstructions: {type: string}
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        diagramType:
+          type: string
+          enum: [ClassDiagram, ObjectDiagram, ActivityDiagram, UseCaseDiagram, CommunicationDiagram,
+            ComponentDiagram, DeploymentDiagram, PetriNet, SyntaxTree, Flowchart,
+            BPMN, Sfc]
+        exampleSolutionModel: {type: string}
+        exampleSolutionExplanation: {type: string}
+        courseId: {type: integer, format: int64}
+        exerciseGroupId: {type: integer, format: int64}
+        mode:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+        teamAssignmentConfig: {$ref: '#/components/schemas/TeamAssignmentConfigDTO'}
+        plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
+          uniqueItems: true
+          maxItems: 10000
+    ExampleModelingSubmissionDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        model: {type: string}
+        explanationText: {type: string}
+        submitted: {type: boolean}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/ResultDTO'}
+          maxItems: 10000
+        submissionExerciseType: {type: string}
+    ModelingExampleSubmissionDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        usedForTutorial: {type: boolean}
+        submission: {$ref: '#/components/schemas/ExampleModelingSubmissionDTO'}
+    ModelingExerciseExamGroupDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        isMandatory: {type: boolean}
+        exam: {$ref: '#/components/schemas/ExamReferenceDTO'}
+    ModelingExerciseResponseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        type: {type: string}
+        exerciseType:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        mode:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        secondCorrectionEnabled: {type: boolean}
+        presentationScoreEnabled: {type: boolean}
+        problemStatement: {type: string}
+        diagramType:
+          type: string
+          enum: [ClassDiagram, ObjectDiagram, ActivityDiagram, UseCaseDiagram, CommunicationDiagram,
+            ComponentDiagram, DeploymentDiagram, PetriNet, SyntaxTree, Flowchart,
+            BPMN, Sfc]
+        exampleSolutionModel: {type: string}
+        exampleSolutionExplanation: {type: string}
+        gradingInstructions: {type: string}
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+          maxItems: 10000
+        channelName: {type: string}
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        courseId: {type: integer, format: int64}
+        courseAccuracyOfScores: {type: number, format: double}
+        course: {$ref: '#/components/schemas/CourseForQuizExerciseDTO'}
+        exerciseGroupId: {type: integer, format: int64}
+        examId: {type: integer, format: int64}
+        examPublishResultsDate: {type: string, format: date-time}
+        teamAssignmentConfig: {$ref: '#/components/schemas/TeamAssignmentConfigDTO'}
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
+          uniqueItems: true
+          maxItems: 10000
+        plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
+        gradingInstructionFeedbackUsed: {type: boolean}
+        exampleSubmissions:
+          type: array
+          items: {$ref: '#/components/schemas/ModelingExampleSubmissionDTO'}
+          uniqueItems: true
+          maxItems: 10000
+        teamMode: {type: boolean}
+        exerciseGroup: {$ref: '#/components/schemas/ModelingExerciseExamGroupDTO'}
+        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReferenceDTO'}
+    CourseCompetencyRequestDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64, description: 'The id of the competency.
+            Required to update one, omitted to create one.'}
+        title: {type: string, description: 'The title of the competency, at most 255
+            characters.', maxLength: 255, minLength: 0}
+        description: {type: string, description: 'A description of what the student
+            should be able to do, at most 10000 characters.', maxLength: 10000, minLength: 0}
+        softDueDate: {type: string, format: date-time, description: A soft due date
+            for reaching the competency. Optional.}
+        masteryThreshold: {type: integer, format: int32, description: 'The progress,
+            from 1 to 100 percent, at which the competency counts as mastered.', maximum: 100,
+          minimum: 1}
+        taxonomy:
+          type: string
+          description: The taxonomy level of the competency. Optional.
+          enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
+        optional: {type: boolean, description: Whether the competency is optional.
+            Defaults to false.}
+      required: [masteryThreshold, title]
+    AttachmentForCompetencyDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        link: {type: string}
+        releaseDate: {type: string, format: date-time}
+        uploadDate: {type: string, format: date-time}
+        version: {type: integer, format: int32}
+        attachmentType:
+          type: string
+          enum: [FILE, URL]
+        studentVersion: {type: string}
+    CompetencyExerciseLinkResponseDTO:
+      type: object
+      properties:
+        weight: {type: number, format: double}
+        generatedByAi: {type: boolean}
+        exercise: {$ref: '#/components/schemas/ExerciseForCompetencyDTO'}
+    CompetencyLectureUnitLinkResponseDTO:
+      type: object
+      properties:
+        weight: {type: number, format: double}
+        generatedByAi: {type: boolean}
+        lectureUnit: {$ref: '#/components/schemas/LectureUnitForCompetencyDTO'}
+    CompetencyProgressDTO:
+      type: object
+      properties:
+        progress: {type: number, format: double}
+        confidence: {type: number, format: double}
+        confidenceReason:
+          type: string
+          enum: [NO_REASON, RECENT_SCORES_LOWER, RECENT_SCORES_HIGHER, MORE_EASY_POINTS,
+            MORE_HARD_POINTS, QUICKLY_SOLVED_EXERCISES, MORE_LOW_WEIGHTED_EXERCISES,
+            MORE_HIGH_WEIGHTED_EXERCISES]
+    CourseCompetencyResponseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        taxonomy:
+          type: string
+          enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
+        softDueDate: {type: string, format: date-time}
+        masteryThreshold: {type: integer, format: int32}
+        optional: {type: boolean}
+        generatedByAi: {type: boolean}
+        type: {type: string}
+        linkedCourseCompetency: {$ref: '#/components/schemas/LinkedCourseCompetencyDTO'}
+        linkedStandardizedCompetencyId: {type: integer, format: int64}
+        userProgress:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyProgressDTO'}
+          maxItems: 10000
+        course: {$ref: '#/components/schemas/CourseInfoDTO'}
+        exerciseLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyExerciseLinkResponseDTO'}
+          maxItems: 10000
+        lectureUnitLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLectureUnitLinkResponseDTO'}
+          maxItems: 10000
+    CourseInfoDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        semester: {type: string}
+    ExerciseForCompetencyDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        type:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        mode:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+          maxItems: 10000
+        teamMode: {type: boolean}
+        studentAssignedTeamId: {type: integer, format: int64}
+        studentAssignedTeamIdComputed: {type: boolean}
+        allowOnlineEditor: {type: boolean}
+        allowOfflineIde: {type: boolean}
+        quizStarted: {type: boolean}
+        quizEnded: {type: boolean}
+    LectureReferenceDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+    LectureUnitForCompetencyDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        lecture: {$ref: '#/components/schemas/LectureReferenceDTO'}
+        name: {type: string}
+        releaseDate: {type: string, format: date-time}
+        completed: {type: boolean}
+        visibleToStudents: {type: boolean}
+        type: {type: string}
+        description: {type: string}
+        source: {type: string}
+        content: {type: string}
+        attachment: {$ref: '#/components/schemas/AttachmentForCompetencyDTO'}
+        videoSource: {type: string}
+    LinkedCourseCompetencyDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        courseTitle: {type: string}
+        semester: {type: string}
+    CourseRefDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        color: {type: string}
+    CreateProgrammingExerciseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        channelName: {type: string}
+        packageName: {type: string}
+        problemStatement: {type: string}
+        gradingInstructions: {type: string}
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+          maxItems: 10000
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        mode:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+        teamAssignmentConfig: {$ref: '#/components/schemas/TeamAssignmentConfigDTO'}
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        buildAndTestStudentSubmissionsAfterDueDate: {type: string, format: date-time}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        presentationScoreEnabled: {type: boolean}
+        secondCorrectionEnabled: {type: boolean}
+        allowOnlineEditor: {type: boolean}
+        allowOfflineIde: {type: boolean}
+        allowOnlineIde: {type: boolean}
+        staticCodeAnalysisEnabled: {type: boolean}
+        maxStaticCodeAnalysisPenalty: {type: integer, format: int32}
+        showTestNamesToStudents: {type: boolean}
+        releaseTestsWithExampleSolution: {type: boolean}
+        programmingLanguage:
+          type: string
+          enum: [EMPTY, JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT,
+            OCAML, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO,
+            MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP]
+        projectType:
+          type: string
+          enum: [MAVEN_MAVEN, PLAIN_MAVEN, PLAIN, XCODE, FACT, GCC, PLAIN_GRADLE,
+            GRADLE_GRADLE, MAVEN_BLACKBOX]
+        buildConfig: {$ref: '#/components/schemas/UpdateProgrammingExerciseBuildConfigDTO'}
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
+          uniqueItems: true
+          maxItems: 10000
+        auxiliaryRepositories:
+          type: array
+          items: {$ref: '#/components/schemas/AuxiliaryRepositoryDTO'}
+          maxItems: 10000
+        submissionPolicy: {$ref: '#/components/schemas/SubmissionPolicyDTO'}
+        plagiarismDetectionConfig: {$ref: '#/components/schemas/PlagiarismDetectionConfigDTO'}
+        course: {$ref: '#/components/schemas/CourseRefDTO'}
+        exerciseGroup: {$ref: '#/components/schemas/ExerciseGroupIdDTO'}
+        securityFramework: {$ref: '#/components/schemas/SecurityFrameworkChoiceDTO'}
+    ExerciseGroupIdDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+    SecurityFrameworkChoiceDTO:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [ACTIVATE, DEACTIVATE]
+        frameworkVersion: {type: string}
+    SimpleLectureDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        isTutorialLecture: {type: boolean}
+        channelName: {type: string}
+        course: {$ref: '#/components/schemas/CourseDTO'}
+    AttachmentDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        link: {type: string}
+        version: {type: integer, format: int32}
+        uploadDate: {type: string, format: date-time}
+        releaseDate: {type: string, format: date-time}
+        attachmentType:
+          type: string
+          enum: [FILE, URL]
+        studentVersion: {type: string}
+    AttachmentVideoUnitDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        releaseDate: {type: string, format: date-time}
+        description: {type: string, maxLength: 1000, minLength: 0}
+        videoSource: {type: string}
+        competencyLinks:
+          type: array
+          items: {$ref: '#/components/schemas/CompetencyLinkDTO'}
+          uniqueItems: true
+          maxItems: 10000
+        attachment: {$ref: '#/components/schemas/AttachmentDTO'}
+        slides:
+          type: array
+          items: {$ref: '#/components/schemas/SlideDTO'}
+          maxItems: 10000
+        completed: {type: boolean}
+        visibleToStudents: {type: boolean}
+        lecture: {$ref: '#/components/schemas/LectureReferenceDTO'}
+        attachmentUpdateIntent:
+          type: string
+          enum: [NO_FILE_CHANGE, FILE_UPLOAD, EDITOR_PDF_CONTENT_CHANGED]
+        type: {type: string}
+    SlideDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        slideNumber: {type: integer, format: int32}
+        hidden: {type: string, format: date-time}
+        attachmentVideoUnitId: {type: integer, format: int64}
+        exercise: {$ref: '#/components/schemas/SlideExerciseDTO'}
+    SlideExerciseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+    CreateAnnouncementDTO:
+      type: object
+      properties:
+        content: {type: string, description: 'The text of the announcement, in Markdown.',
+          minLength: 1}
+        title: {type: string, description: An optional headline., maxLength: 200,
+          minLength: 0}
+        channelId: {type: integer, format: int64, description: The announcement channel
+            to post to. The course's default announcement channel if omitted.}
+      required: [content]
+    AnswerParentPostRefDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        conversation: {$ref: '#/components/schemas/ConversationRefDTO'}
+    AnswerPostResponseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        author: {$ref: '#/components/schemas/UserSummaryDTO'}
+        authorRole:
+          type: string
+          enum: [INSTRUCTOR, TUTOR, USER]
+        creationDate: {type: string, format: date-time}
+        updatedDate: {type: string, format: date-time}
+        content: {type: string}
+        resolvesPost: {type: boolean}
+        isSaved: {type: boolean}
+        hasForwardedMessages: {type: boolean}
+        post: {$ref: '#/components/schemas/AnswerParentPostRefDTO'}
+        reactions:
+          type: array
+          items: {$ref: '#/components/schemas/ReactionResponseDTO'}
+          uniqueItems: true
+          maxItems: 10000
+        verified: {type: boolean}
+    ConversationRefDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {type: string}
+        name: {type: string}
+        isPublic: {type: boolean}
+        isAnnouncementChannel: {type: boolean}
+        isArchived: {type: boolean}
+        isCourseWide: {type: boolean}
+        lastMessageDate: {type: string, format: date-time}
+    PlagiarismCaseRefDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+    PostResponseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        author: {$ref: '#/components/schemas/UserSummaryDTO'}
+        authorRole:
+          type: string
+          enum: [INSTRUCTOR, TUTOR, USER]
+        creationDate: {type: string, format: date-time}
+        updatedDate: {type: string, format: date-time}
+        content: {type: string}
+        title: {type: string}
+        visibleForStudents: {type: boolean}
+        displayPriority:
+          type: string
+          enum: [PINNED, ARCHIVED, NONE]
+        conversation: {$ref: '#/components/schemas/ConversationRefDTO'}
+        plagiarismCase: {$ref: '#/components/schemas/PlagiarismCaseRefDTO'}
+        resolved: {type: boolean}
+        isSaved: {type: boolean}
+        hasForwardedMessages: {type: boolean}
+        reactions:
+          type: array
+          items: {$ref: '#/components/schemas/ReactionResponseDTO'}
+          uniqueItems: true
+          maxItems: 10000
+        answers:
+          type: array
+          items: {$ref: '#/components/schemas/AnswerPostResponseDTO'}
+          maxItems: 10000
+    ReactionResponseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        user: {$ref: '#/components/schemas/UserNameRefDTO'}
+        emojiId: {type: string}
+        creationDate: {type: string, format: date-time}
+    UserNameRefDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+    UserSummaryDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string}
+        imageUrl: {type: string}
+        bot: {type: boolean}
+    CompetencyRelationDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64, description: The id of the relation. Omit
+            it when creating a relation.}
+        tailCompetencyId: {type: integer, format: int64, description: 'The id of the
+            tail competency, the one that ASSUMES, EXTENDS or MATCHES the head. Required.'}
+        headCompetencyId: {type: integer, format: int64, description: The id of the
+            head competency. Required. Both competencies must belong to the same course.}
+        relationType:
+          type: string
+          description: 'ASSUMES: the tail assumes the student already achieved the
+            head. EXTENDS: the tail covers the head''s topic in more detail. MATCHES:
+            the tail matches the head, for example a duplicate.'
+          enum: [ASSUMES, EXTENDS, MATCHES]
+      required: [headCompetencyId, relationType, tailCompetencyId]
+    CompetencyImportResponseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        taxonomy:
+          type: string
+          enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
+        softDueDate: {type: string, format: date-time}
+        masteryThreshold: {type: integer, format: int32}
+        optional: {type: boolean}
+        generatedByAi: {type: boolean}
+        courseId: {type: integer, format: int64}
+        linkedStandardizedCompetencyId: {type: integer, format: int64}
+    ProgrammingExerciseTestCaseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        weight: {type: number, format: double}
+        bonusMultiplier: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        visibility:
+          type: string
+          enum: [ALWAYS, AFTER_DUE_DATE, NEVER]
+    ProgrammingExerciseTestCaseResponseDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        testName: {type: string}
+        weight: {type: number, format: double}
+        bonusMultiplier: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        active: {type: boolean}
+        visibility:
+          type: string
+          enum: [ALWAYS, AFTER_DUE_DATE, NEVER]
+        type:
+          type: string
+          enum: [STRUCTURAL, BEHAVIORAL, DEFAULT]
+    UpdateCourseCompetencyRelationDTO:
+      type: object
+      properties:
+        newRelationType:
+          type: string
+          enum: [ASSUMES, EXTENDS, MATCHES]
+    TextExerciseListItemDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        type: {type: string}
+        exerciseType:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        releaseDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        presentationScoreEnabled: {type: boolean}
+        teamMode: {type: boolean}
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+          maxItems: 10000
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
+        courseId: {type: integer, format: int64}
+        course: {$ref: '#/components/schemas/CourseRefDTO'}
+        examId: {type: integer, format: int64}
+        examTitle: {type: string}
+        exerciseGroup: {$ref: '#/components/schemas/TextExerciseExamGroupDTO'}
+    ProgrammingExerciseListItemDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {type: string}
+        title: {type: string}
+        shortName: {type: string}
+        programmingLanguage:
+          type: string
+          enum: [EMPTY, JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT,
+            OCAML, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO,
+            MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP]
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+          maxItems: 10000
+        releaseDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        buildAndTestStudentSubmissionsAfterDueDate: {type: string, format: date-time}
+        assessmentType:
+          type: string
+          enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        presentationScoreEnabled: {type: boolean}
+        mode:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+        teamMode: {type: boolean}
+        testCasesChanged: {type: boolean}
+        allowOfflineIde: {type: boolean}
+        allowOnlineEditor: {type: boolean}
+        allowOnlineIde: {type: boolean}
+        projectKey: {type: string}
+        course: {$ref: '#/components/schemas/ProgrammingExerciseCourseDTO'}
+        exerciseGroup: {$ref: '#/components/schemas/ProgrammingExerciseExamGroupDTO'}
+        templateParticipation: {$ref: '#/components/schemas/TemplateSolutionParticipationDTO'}
+        solutionParticipation: {$ref: '#/components/schemas/TemplateSolutionParticipationDTO'}
+        exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReferenceDTO'}
+    ModelingExerciseListItemDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        type: {type: string}
+        exerciseType:
+          type: string
+          enum: [text, programming, modeling, file-upload, quiz]
+        diagramType:
+          type: string
+          enum: [ClassDiagram, ObjectDiagram, ActivityDiagram, UseCaseDiagram, CommunicationDiagram,
+            ComponentDiagram, DeploymentDiagram, PetriNet, SyntaxTree, Flowchart,
+            BPMN, Sfc]
+        releaseDate: {type: string, format: date-time}
+        dueDate: {type: string, format: date-time}
+        assessmentDueDate: {type: string, format: date-time}
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore:
+          type: string
+          enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+        presentationScoreEnabled: {type: boolean}
+        teamMode: {type: boolean}
+        categories:
+          type: array
+          items: {type: string}
+          uniqueItems: true
+          maxItems: 10000
+        gradingCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/GradingCriterionDTO'}
+          maxItems: 10000
+        courseId: {type: integer, format: int64}
+        course: {$ref: '#/components/schemas/CourseRefDTO'}
+        examId: {type: integer, format: int64}
+        examTitle: {type: string}
+        exerciseGroup: {$ref: '#/components/schemas/ModelingExerciseExamGroupDTO'}
+    LectureUnitCombinedStatusDTO:
+      type: object
+      properties:
+        lectureUnitId: {type: integer, format: int64}
+        processingPhase:
+          type: string
+          enum: [IDLE, TRANSCRIBING, INGESTING, DONE, FAILED, SKIPPED]
+        retryCount: {type: integer, format: int32}
+        startedAt: {type: string, format: date-time}
+        processingErrorKey: {type: string}
+        transcriptionStatus:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED]
+        stageName: {type: string}
+        stageProgress: {type: integer, format: int32}
+        stageTotal: {type: integer, format: int32}
+        lastHeartbeatAt: {type: string, format: date-time}
+    CourseDropdownDTO:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        courseIcon: {type: string}
+  securitySchemes:
+    personalAccessToken: {type: http, description: 'A personal access token, which
+        starts with art_pat_.', scheme: bearer}

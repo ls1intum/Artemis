@@ -126,6 +126,18 @@ describe('LectureUnitComponent', () => {
         expect(onCompletionEmitSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('should keep the completion slot of an unreleased unit, hidden, so its buttons line up with the other rows', () => {
+        const completionButton = () => fixture.debugElement.query(By.css('[data-testid="lecture-unit-completion-icon"]')).nativeElement.closest('button') as HTMLElement;
+
+        fixture.detectChanges();
+        expect(completionButton().classList).not.toContain('invisible');
+
+        fixture.componentRef.setInput('lectureUnit', { ...lectureUnit, visibleToStudents: false });
+        fixture.detectChanges();
+
+        expect(completionButton().classList).toContain('invisible');
+    });
+
     it('should toggle collapse', async () => {
         const toggleCollapseSpy = vi.spyOn(component, 'toggleCollapse');
         const onCollapseEmitSpy = vi.spyOn(component.onCollapse, 'emit');

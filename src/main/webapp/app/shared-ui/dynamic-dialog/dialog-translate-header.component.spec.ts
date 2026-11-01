@@ -1,15 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { DynamicDialogConfig } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig } from '@tumaet/ui-angular';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 
+interface DialogHeaderData {
+    headerKey?: string;
+    headerParams?: Record<string, unknown>;
+}
+
 describe('DialogTranslateHeaderComponent', () => {
-    const createComponent = async (data: DynamicDialogConfig['data']): Promise<ComponentFixture<DialogTranslateHeaderComponent>> => {
+    const createComponent = async (data: DialogHeaderData | undefined): Promise<ComponentFixture<DialogTranslateHeaderComponent>> => {
         await TestBed.configureTestingModule({
             imports: [DialogTranslateHeaderComponent],
             providers: [
-                { provide: DynamicDialogConfig, useValue: { data } },
+                { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig<DialogHeaderData>({ data }) },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();

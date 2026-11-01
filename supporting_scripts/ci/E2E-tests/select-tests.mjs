@@ -149,7 +149,7 @@ export function selectTests(root, changedFiles, mapping) {
     };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (import.meta.main) {
     const root = join(scriptDirectory, '../../..');
     let result;
     try {

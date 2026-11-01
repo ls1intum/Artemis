@@ -1,6 +1,6 @@
 import { Component, inject, input, output } from '@angular/core';
 import { faCopy } from '@fortawesome/free-solid-svg-icons';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -20,7 +20,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     imports: [FaIconComponent, TranslateDirective],
 })
 export class ProgrammingExerciseGradingTableActionsComponent {
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private translateService = inject(TranslateService);
 
     readonly faCopy = faCopy;
@@ -38,14 +38,12 @@ export class ProgrammingExerciseGradingTableActionsComponent {
             exerciseType: ExerciseType.PROGRAMMING,
             programmingLanguage: this.exercise().programmingLanguage,
         };
-        const dialogRef = this.dialogService.open(ExerciseImportComponent, {
+        const dialogRef = this.dialogService.open<ExerciseImportComponent, ProgrammingExercise, ExerciseImportDialogData>(ExerciseImportComponent, {
             header: this.translateService.instant('artemisApp.programmingExercise.configureGrading.categories.importLabel'),
-            width: '50rem',
-            modal: true,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
             data: dialogData,
         });
 

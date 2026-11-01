@@ -305,7 +305,7 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
         });
         await requestOk(page, 'post', `api/communication/saved-posts/${bystanderThread.id}?type=post`);
         await requestOk(page, 'patch', `api/communication/courses/${course.id}/code-of-conduct/agreement`);
-        await requestOk(page, 'post', `api/communication/courses/${course.id}/one-to-one-chats`, { data: [bystanderLogin] });
+        await requestOk(page, 'post', `api/communication/courses/${course.id}/one-to-one-chats`, { data: { login: bystanderLogin } });
         await startParticipationAndSubmit(page, textExercise.id!, 'The answer of the account under review');
         await requestOk(page, 'post', `api/lecture/lectures/${lecture.id}/lecture-units/${lectureUnit.id}/completion?completed=true`);
         await requestOk(page, 'put', 'api/notification/global-notification-settings/NEW_LOGIN', { data: { enabled: false } });

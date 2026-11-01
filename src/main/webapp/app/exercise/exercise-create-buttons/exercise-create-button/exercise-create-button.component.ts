@@ -4,18 +4,18 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseManageButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-manage-button/exercise-manage-button.component';
 import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
-import { ButtonModule } from 'primeng/button';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exercise-create-button',
-    imports: [TranslateDirective, FaIconComponent, FeatureToggleLinkDirective, ButtonModule],
+    imports: [TranslateDirective, FaIconComponent, FeatureToggleLinkDirective, TumAetUiButtonComponent],
     templateUrl: './exercise-create-button.component.html',
 })
 export class ExerciseCreateButtonComponent extends ExerciseManageButtonComponent {
     protected readonly faPlus = faPlus;
     linkToExerciseCreation() {
         this.beforeNavigate.emit();
-        this.modalService.dismissAll();
+        this.dialogService.closeAll();
         void this.router.navigate(['/course-management', this.course()?.id, this.exerciseType() + '-exercises', 'new']);
     }
 }
