@@ -25,6 +25,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
@@ -157,6 +159,31 @@ class Lti13TokenRetrieverTest {
         verify(restTemplate).exchange(any(), eq(String.class));
 
         assertThat(token).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "{}", "{\"access_token\": null}", "{\"access_token\": \"\"}", "{\"access_token\": \"  \"}", "{\"access_token\": {\"nested\": 1}}", "[]",
+            "\"access_token\"", "null", "", "not json" })
+    void getTokenWithoutUsableAccessToken(String body) throws NoSuchAlgorithmException {
+        JWK jwk = generateKey();
+        when(oAuth2JWKSService.getJWK(any())).thenReturn(jwk);
+        when(restTemplate.exchange(any(), eq(String.class))).thenReturn(ResponseEntity.of(Optional.of(body)));
+
+        String token = lti13TokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);
+
+        assertThat(token).isNull();
+    }
+
+    @Test
+    void getTokenIgnoresTheOtherFieldsOfTheTokenResponse() throws NoSuchAlgorithmException {
+        JWK jwk = generateKey();
+        when(oAuth2JWKSService.getJWK(any())).thenReturn(jwk);
+        String body = "{\"token_type\": \"bearer\", \"expires_in\": 3600, \"scope\": \"a b\", \"access_token\": \"result\"}";
+        when(restTemplate.exchange(any(), eq(String.class))).thenReturn(ResponseEntity.of(Optional.of(body)));
+
+        String token = lti13TokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);
+
+        assertThat(token).isEqualTo("result");
     }
 
     @Test

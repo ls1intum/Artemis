@@ -465,7 +465,7 @@ function getSidebarCardElementForTutorialGroup(tutorialGroup: TutorialGroup): Si
         subtitleLeft: 'No upcoming session',
         subtitleRight: undefined,
         attendanceText: '1 / 10',
-        attendanceChipColor: 'var(--green)',
+        attendanceChipColor: 'var(--tumaet-ui-state-success)',
     };
 }
 

@@ -110,7 +110,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let router: Router;
 
     let updateAfterComplaintStub: ReturnType<typeof vi.spyOn>;
-    let findBySubmissionIdStub: ReturnType<typeof vi.spyOn>;
+    let findBySubmissionIdForAssessmentStub: ReturnType<typeof vi.spyOn>;
     let getIdentityStub: ReturnType<typeof vi.spyOn>;
     let getProgrammingSubmissionForExerciseWithoutAssessmentStub: ReturnType<typeof vi.spyOn>;
     let lockAndGetProgrammingSubmissionParticipationStub: ReturnType<typeof vi.spyOn>;
@@ -243,7 +243,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         lockAndGetProgrammingSubmissionParticipationStub = vi
             .spyOn(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation')
             .mockReturnValue(scheduled([submission], asapScheduler));
-        findBySubmissionIdStub = vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
+        findBySubmissionIdForAssessmentStub = vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
         getIdentityStub = vi.spyOn(accountService, 'identity').mockReturnValue(new Promise((promise) => promise(user)));
         getProgrammingSubmissionForExerciseWithoutAssessmentStub = vi
             .spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment')
@@ -502,7 +502,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         expect(getIdentityStub).toHaveBeenCalledOnce();
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledOnce();
-        expect(findBySubmissionIdStub).toHaveBeenCalledOnce();
+        expect(findBySubmissionIdForAssessmentStub).toHaveBeenCalledOnce();
         expect(comp.isAssessor()).toBe(true);
         expect(comp.complaint()).not.toBeNull();
         fixture.changeDetectorRef.detectChanges();
@@ -562,13 +562,13 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should not show complaint when participation contains no complaint', async () => {
-        findBySubmissionIdStub.mockReturnValue(of({ body: undefined }));
+        findBySubmissionIdForAssessmentStub.mockReturnValue(of({ body: undefined }));
         comp.ngOnInit();
         await flushMicrotasks();
 
         expect(getIdentityStub).toHaveBeenCalledOnce();
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledOnce();
-        expect(findBySubmissionIdStub).toHaveBeenCalledOnce();
+        expect(findBySubmissionIdForAssessmentStub).toHaveBeenCalledOnce();
         expect(comp.complaint()).toBeUndefined();
         fixture.changeDetectorRef.detectChanges();
 
@@ -1346,5 +1346,29 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             expect(debugElement.query(By.css('[jhiTranslate="artemisApp.programmingAssessment.notFound"]'))).toBeNull();
             expect(findExerciseSpy).not.toHaveBeenCalled();
         });
+    });
+    it.each([true, false])('shows the failed participation state with lock limit=%s', (locked) => {
+        const alert = vi.spyOn(TestBed.inject(AlertService), 'error');
+        lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(
+            throwError(() => new HttpErrorResponse({ status: 403, error: locked ? { errorKey: 'lockedSubmissionsLimitReached' } : { detail: 'Participation unavailable' } })),
+        );
+        fixture.detectChanges();
+        expect(comp.loadingInitialSubmission()).toBe(false);
+        expect(comp.participationCouldNotBeFetched()).toBe(true);
+        expect(comp.lockLimitReached()).toBe(locked);
+        if (locked) expect(alert).not.toHaveBeenCalled();
+        else expect(alert).toHaveBeenCalledWith('Participation unavailable');
+    });
+
+    it('prompts before unloading a submission with unsaved feedback', () => {
+        comp.submission.set(submission);
+        comp.hasPendingChanges = true;
+        const event = new Event('beforeunload', { cancelable: true });
+        comp.handleBeforeUnload(event as BeforeUnloadEvent);
+        expect(event.defaultPrevented).toBe(true);
+        comp.hasPendingChanges = false;
+        const clean = new Event('beforeunload', { cancelable: true });
+        comp.handleBeforeUnload(clean as BeforeUnloadEvent);
+        expect(clean.defaultPrevented).toBe(false);
     });
 });

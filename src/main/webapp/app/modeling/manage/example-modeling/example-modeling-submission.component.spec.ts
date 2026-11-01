@@ -22,12 +22,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { FormsModule } from '@angular/forms';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
@@ -180,6 +181,28 @@ describe('Example Modeling Submission Component', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it.each([
+        [false, false, false, 'for-staff'],
+        [true, false, false, 'for-exam-management'],
+        [true, true, false, 'for-exam-assessment'],
+        [true, false, true, 'for-exam-assessment'],
+    ] as const)('should select known source kind before loading an example (exam=%s, readOnly=%s, complete=%s)', (exam, readOnly, complete, suffix) => {
+        route.snapshot = new MockActivatedRoute({
+            courseId: 7,
+            exerciseId: 22,
+            exampleSubmissionId: 35,
+            ...(exam ? { examId: 9, exerciseGroupId: 8 } : {}),
+            ...(readOnly ? { readOnly: true } : {}),
+            ...(complete ? { toComplete: true } : {}),
+        }).snapshot;
+        vi.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: { id: 35, usedForTutorial: true, submission: { id: 20, model: undefined } } })));
+        vi.spyOn(TestBed.inject(ModelingAssessmentService), 'getExampleAssessment').mockReturnValue(of(new Result()));
+        comp.ngOnInit();
+        const request = TestBed.inject(HttpTestingController).expectOne((r) => r.url.startsWith('api/exercise/exercises/'));
+        request.flush({ id: 22, type: 'modeling', course: { id: 7 } });
+        expect(request.request.url).toBe(`api/exercise/exercises/22/${suffix}`);
     });
 
     describe('ordered saves', () => {

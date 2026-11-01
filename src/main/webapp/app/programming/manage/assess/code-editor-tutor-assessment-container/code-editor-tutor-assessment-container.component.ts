@@ -297,7 +297,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         this.handleErrorResponse(error);
                         // Stop the chain: without a participation the steps below cannot run anyway, and letting the
                         // error reach the subscriber would additionally report it as an uncaught exception — the very
-                        // Sentry noise the explicit handling avoids.
+                        // error report the explicit handling avoids.
                         return EMPTY;
                     }),
                     // The following is needed for highlighting changed code lines
@@ -826,7 +826,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         if (!submission) {
             return;
         }
-        this.complaintService.findBySubmissionId(submission.id!).subscribe({
+        this.complaintService.findBySubmissionIdForAssessment(submission.id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;

@@ -1,62 +1,75 @@
-import { Component, TemplateRef, inject, input, output, viewChild } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { DialogService } from 'primeng/dynamicdialog';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
-import {
-    ConfirmAutofocusModalData,
-    ConfirmAutofocusModalResult,
-    openConfirmAutofocusDialog,
-} from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-confirm-button',
     templateUrl: './confirm-autofocus-button.component.html',
-    imports: [ButtonComponent],
+    imports: [TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ConfirmAutofocusButtonComponent {
-    private dialogService = inject(DialogService);
+    readonly icon = input<IconProp>();
+    readonly title = input('');
+    readonly tooltip = input('');
+    readonly disabled = input(false);
+    readonly isLoading = input(false);
+    readonly btnType = input(ButtonType.PRIMARY);
+    readonly confirmationTitle = input('');
+    readonly confirmationTitleTranslationParams = input<Record<string, string>>();
+    readonly confirmationText = input('');
+    readonly translateText = input(false);
+    readonly textIsMarkdown = input(false);
+    readonly onConfirm = output<void>();
+    readonly onCancel = output<void>();
 
-    icon = input<IconProp | undefined>(undefined);
-    title = input<string>('');
-    tooltip = input<string>('');
-    disabled = input(false);
-    isLoading = input(false);
-    btnType = input(ButtonType.PRIMARY);
+    protected readonly visible = signal(false);
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly markdown = computed(() => htmlForMarkdown(this.confirmationText()));
+    protected readonly severity = computed<TumAetUiButtonSeverity>(() => {
+        switch (this.btnType()) {
+            case ButtonType.ERROR:
+            case ButtonType.ERROR_OUTLINE:
+                return 'danger';
+            case ButtonType.SECONDARY:
+            case ButtonType.DEFAULT:
+                return 'secondary';
+            case ButtonType.SUCCESS:
+            case ButtonType.SUCCESS_OUTLINE:
+                return 'success';
+            case ButtonType.WARNING:
+                return 'warn';
+            case ButtonType.INFO:
+                return 'info';
+            default:
+                return 'primary';
+        }
+    });
+    protected readonly variant = computed(() => (this.btnType().includes('outline') ? 'outlined' : 'solid'));
+    private confirmed = false;
 
-    confirmationTitle = input<string>('');
-    confirmationTitleTranslationParams = input<Record<string, string>>();
-    confirmationText = input<string>('');
-    translateText = input<boolean>(false);
-    textIsMarkdown = input<boolean>(false);
-    onConfirm = output<void>();
-    onCancel = output<void>();
+    onOpenConfirmationModal(): void {
+        if (this.disabled() || this.isLoading()) {
+            return;
+        }
+        this.confirmed = false;
+        this.visible.set(true);
+    }
 
-    content = viewChild<TemplateRef<unknown>>('content');
+    protected confirm(): void {
+        this.confirmed = true;
+        this.visible.set(false);
+        this.onConfirm.emit();
+    }
 
-    /**
-     * open confirmation modal with text and title
-     */
-    onOpenConfirmationModal() {
-        const isMarkdown = this.textIsMarkdown();
-        const data: ConfirmAutofocusModalData = {
-            text: isMarkdown ? htmlForMarkdown(this.confirmationText()) : this.confirmationText(),
-            textIsMarkdown: isMarkdown,
-            title: this.confirmationTitle(),
-            titleTranslationParams: this.confirmationTitleTranslationParams(),
-            translateText: this.translateText(),
-            contentRef: this.content(),
-            confirmDisabled: false,
-        };
-
-        const dialogRef = openConfirmAutofocusDialog(this.dialogService, data);
-
-        dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
-            if (result?.confirmed) {
-                this.onConfirm.emit();
-            } else {
-                this.onCancel.emit();
-            }
-        });
+    protected onHidden(): void {
+        if (!this.confirmed) {
+            this.onCancel.emit();
+        }
     }
 }

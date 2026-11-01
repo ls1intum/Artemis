@@ -1,12 +1,4 @@
-<div
-    class="frame"
-    [ngClass]="{
-        'status-regular': variant() === 'REGULAR',
-        'status-cancelled': variant() === 'CANCELLED',
-        'status-rescheduled': variant() === 'RESCHEDULED',
-        'status-relocated': variant() === 'RELOCATED',
-    }"
->
+<tumaet-ui-tag size="sm" [rounded]="true" [severity]="variant() === 'REGULAR' ? 'success' : variant() === 'CANCELLED' ? 'danger' : 'warn'">
     @switch (variant()) {
         @case ('REGULAR') {
             <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.statusChipLabel.regular"></span>
@@ -22,4 +14,4 @@
         }
         @default {}
     }
-</div>
+</tumaet-ui-tag>

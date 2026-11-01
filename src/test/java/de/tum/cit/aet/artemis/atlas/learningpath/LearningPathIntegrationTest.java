@@ -180,19 +180,19 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TUTOR_OF_COURSE, roles = "TA")
+    @WithMockUser(username = TUTOR_OF_COURSE, roles = "USER")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = EDITOR_OF_COURSE, roles = "EDITOR")
+    @WithMockUser(username = EDITOR_OF_COURSE, roles = "USER")
     void testAll_asEditor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testEnableLearningPaths() throws Exception {
         enableLearningPathsRESTCall(course);
         final var updatedCourse = courseRepository.findWithEagerLearningPathsByIdElseThrow(course.getId());
@@ -202,7 +202,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testEnableLearningPathsWithNoCompetencies() throws Exception {
         var courseWithoutCompetencies = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, false, 0).getFirst();
         enableLearningPathsRESTCall(courseWithoutCompetencies);
@@ -214,7 +214,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testEnableLearningPathsAlreadyEnabled() throws Exception {
         course.setLearningPathsEnabled(true);
         courseRepository.save(course);
@@ -222,7 +222,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testGenerateMissingLearningPathsForCourse() throws Exception {
         course.setLearningPathsEnabled(true);
         courseRepository.save(course);
@@ -237,7 +237,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testGenerateMissingLearningPathsForCourseNotEnabled() throws Exception {
         request.put("/api/atlas/courses/" + course.getId() + "/learning-paths/generate-missing", null, HttpStatus.BAD_REQUEST);
     }
@@ -260,7 +260,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testGetLearningPathsOnPageForCourseLearningPathsDisabled() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/atlas/courses/" + course.getId() + "/learning-paths", HttpStatus.BAD_REQUEST, LearningPathInformationDTO.class,
@@ -268,7 +268,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testGetLearningPathsOnPageForCourseEmpty() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var search = pageableSearchUtilService.configureSearch(STUDENT1_OF_COURSE + "SuffixThatAllowsTheResultToBeEmpty");
@@ -278,7 +278,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testGetLearningPathsOnPageForCourseExactlyStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var search = pageableSearchUtilService.configureSearch(STUDENT1_OF_COURSE);
@@ -308,7 +308,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     @MethodSource("addCompetencyToLearningPathsOnCreateAndImportCompetencyTestProvider")
     void addCompetencyToLearningPaths(Function<LearningPathIntegrationTest, Competency> restCall) {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
@@ -325,7 +325,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testUpdateLearningPathProgress() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
@@ -338,7 +338,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testGetAverageProgressForCourse_successfulCalculation() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
@@ -356,7 +356,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testGetAverageProgressForCourse_emptyCalculation() throws Exception {
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         assertAverageProgress(course.getId(), HttpStatus.OK, 0.0);
@@ -370,7 +370,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      * @see LearningPathServiceTest
      */
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testGetHealthStatusForCourse() throws Exception {
         request.get("/api/atlas/courses/" + course.getId() + "/learning-path-health", HttpStatus.OK, LearningPathHealthDTO.class);
     }
@@ -534,7 +534,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "USER")
     void testGetCompetencyProgressForLearningPathByInstructor() throws Exception {
         testGetCompetencyProgressForLearningPath();
     }

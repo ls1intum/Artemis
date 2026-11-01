@@ -1,9 +1,9 @@
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 import { Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-second-correction-enable-button',

@@ -1,3 +1,6 @@
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
+import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
 import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
@@ -11,12 +14,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
-import { IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, map, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
@@ -26,7 +29,6 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
@@ -56,13 +58,14 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
-import { Signal, signal } from '@angular/core';
+import { Signal, computed, signal } from '@angular/core';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -110,11 +113,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FaIconComponent],
+            imports: [FaIconComponent, CategorySelectorComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ProgrammingExerciseInstructionAnalysisService, useClass: ProgrammingExerciseInstructionAnalysisService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
@@ -245,6 +247,59 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             exercise.problemStatement = statement;
             return new HttpResponse({ body: exercise });
         }
+
+        it('publishes synchronized metadata through the settings signal', () => {
+            const initialize = vi.spyOn(TestBed.inject(ExerciseMetadataSyncService), 'initialize');
+            protectedSettings();
+            const syncContext = initialize.mock.calls[0][0];
+            const visibleTitle = computed(() => comp.programmingExercise.title);
+            expect(visibleTitle()).toBe('Saved exercise');
+            const categories = [new ExerciseCategory('Shared category', '#ffffff')];
+            const gradingCriteria = [{ id: 1, title: 'Shared criterion', structuredGradingInstructions: [] }];
+            comp.programmingExercise.categories = categories;
+            comp.programmingExercise.gradingCriteria = gradingCriteria;
+            const incoming = { ...comp.programmingExercise, title: 'Incoming exercise' };
+
+            syncContext.setCurrentExercise!(incoming);
+
+            expect(comp.programmingExercise).not.toBe(incoming);
+            expect(comp.programmingExercise).toEqual(incoming);
+            expect(comp.programmingExercise).toBeInstanceOf(ProgrammingExercise);
+            expect(comp.programmingExercise.categories).not.toBe(categories);
+            expect(comp.programmingExercise.categories).toEqual(categories);
+            expect(comp.programmingExercise.categories?.[0]).toBe(categories[0]);
+            expect(comp.getProgrammingExerciseCreationConfig().exerciseCategories).toBe(comp.programmingExercise.categories);
+            expect(comp.programmingExercise.gradingCriteria).toBe(gradingCriteria);
+            expect(syncContext.getCurrentExercise()).toBe(comp.programmingExercise);
+            expect(visibleTitle()).toBe('Incoming exercise');
+        });
+
+        it('refreshes synchronized category chips through the separate settings binding', async () => {
+            const initialize = vi.spyOn(TestBed.inject(ExerciseMetadataSyncService), 'initialize');
+            protectedSettings();
+            const localCategories = [new ExerciseCategory('Local category', '#ffffff')];
+            comp.updateCategories(localCategories);
+            const categoryFixture = TestBed.createComponent(CategorySelectorComponent);
+            categoryFixture.componentRef.setInput('categories', comp.getProgrammingExerciseCreationConfig().exerciseCategories);
+            categoryFixture.detectChanges();
+            await categoryFixture.whenStable();
+            expect(categoryFixture.nativeElement.querySelector('button.category-name').textContent).toBe('Local category');
+
+            // Align the owner after async fixture initialization, then simulate the metadata handler's in-place update.
+            comp.updateCategories(localCategories);
+            localCategories.splice(0, 1, new ExerciseCategory('Incoming category', '#691b0b'));
+            expect(comp.programmingExercise.categories).toBe(localCategories);
+            initialize.mock.calls[0][0].setCurrentExercise!(comp.programmingExercise);
+            categoryFixture.componentRef.setInput('categories', comp.getProgrammingExerciseCreationConfig().exerciseCategories);
+            categoryFixture.detectChanges();
+            await categoryFixture.whenStable();
+
+            expect(comp.programmingExercise.categories?.map((category) => category.category)).toEqual(['Incoming category']);
+            expect(comp.getProgrammingExerciseCreationConfig().exerciseCategories?.map((category) => category.category)).toEqual(['Incoming category']);
+            expect(categoryFixture.componentInstance.selectedCategoryItems().map((category) => category.category)).toEqual(['Incoming category']);
+            expect(categoryFixture.nativeElement.querySelector('button.category-name').textContent).toBe('Incoming category');
+            expect(categoryFixture.nativeElement.textContent).not.toContain('Local category');
+        });
 
         it('revalidates before a category save even when the generation event was missed', () => {
             protectedSettings();
@@ -403,9 +458,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.exerciseProblemComponent = (() => ({ editableInstructions: () => ({ savingInstructions }) })) as unknown as typeof comp.exerciseProblemComponent;
             const confirmed = new Subject<void>();
             const reEvaluated = new Subject<void>();
-            vi.spyOn(comp['modalService'], 'hasOpenModals').mockReturnValue(true);
+            vi.spyOn(comp['modalService'], 'hasOpenDialogs').mockReturnValue(true);
             vi.spyOn(comp['popupService'], 'checkExerciseBeforeUpdate').mockResolvedValue({
-                componentInstance: { confirmed, reEvaluated, deleteFeedback: false },
+                componentInstance: { confirmed, reEvaluated, deleteFeedback: signal(false) },
             } as Awaited<ReturnType<(typeof comp)['popupService']['checkExerciseBeforeUpdate']>>);
             const find = vi.spyOn(programmingExerciseService, 'find');
             const update = vi.spyOn(programmingExerciseService, 'update');
@@ -524,6 +579,52 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         expect(comp.isSimpleMode()).toBeFalsy();
         expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(false);
+    });
+
+    describe('TUM update warning decisions', () => {
+        let warning: ExerciseUpdateWarningComponent;
+
+        beforeEach(() => {
+            comp.programmingExercise = new ProgrammingExercise(course, undefined);
+            comp.backupExercise = new ProgrammingExercise(course, undefined);
+            comp.isSaving.set(false);
+            warning = TestBed.createComponent(ExerciseUpdateWarningComponent).componentInstance;
+            const ref = new TumAetUiDialogRef<void, ExerciseUpdateWarningComponent>(vi.fn(), vi.fn());
+            ref.componentInstance = warning;
+            vi.spyOn(TestBed.inject(ExerciseUpdateWarningService), 'checkExerciseBeforeUpdate').mockResolvedValue(ref);
+            vi.spyOn(TestBed.inject(TumAetUiDialogService), 'hasOpenDialogs').mockReturnValue(true);
+        });
+
+        it('waits for the warning confirmation before saving', async () => {
+            const saveSpy = vi.spyOn(comp, 'saveExercise').mockImplementation(() => {});
+            comp.save();
+            await Promise.resolve();
+            expect(saveSpy).not.toHaveBeenCalled();
+            warning.confirmed.next();
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it.each([false, true])('passes the delete-feedback boolean %s when reevaluating', async (deleteFeedback) => {
+            warning.deleteFeedback.set(deleteFeedback);
+            const saveSpy = vi.spyOn(comp, 'saveExercise').mockImplementation(() => {});
+            const updateSpy = vi.spyOn(programmingExerciseService, 'reevaluateAndUpdate').mockReturnValue(new Subject<HttpResponse<ProgrammingExercise>>());
+            comp.save();
+            await Promise.resolve();
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(updateSpy).not.toHaveBeenCalled();
+            warning.reEvaluated.next();
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(comp.programmingExercise, { deleteFeedback });
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('keeps the generation save guard when a warning is reevaluated', async () => {
+            const updateSpy = vi.spyOn(programmingExerciseService, 'reevaluateAndUpdate');
+            comp.save();
+            await Promise.resolve();
+            comp.generationRefreshPending.set(true);
+            warning.reEvaluated.next();
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
     });
 
     describe('save', () => {
@@ -760,14 +861,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should not be in exam mode after onInit', () => {
             // GIVEN
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             // WHEN
             comp.ngOnInit();
 
             // THEN
-            expect(courseService.find).toHaveBeenCalledWith(courseId);
+            expect(courseService.findForManagement).toHaveBeenCalledWith(courseId);
             expect(comp.isSaving()).toBe(false);
             expect(comp.programmingExercise).toStrictEqual(expectedProgrammingExercise);
             expect(comp.isExamMode()).toBe(false);
@@ -792,7 +893,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 route.params = of({ courseId });
                 route.data = of({ programmingExercise: new ProgrammingExercise(course, undefined) });
             }
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             // GIVEN
             const testProgrammingLanguage = ProgrammingLanguage.SWIFT;
             expect(new ProgrammingExercise(undefined, undefined).programmingLanguage).not.toBe(testProgrammingLanguage);
@@ -813,7 +914,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             route.params = of({ courseId });
             route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
 
             const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
@@ -847,7 +948,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.onProgrammingLanguageChange(ProgrammingLanguage.SWIFT);
 
             // THEN
-            expect(courseService.find).toHaveBeenCalledWith(courseId);
+            expect(courseService.findForManagement).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.SWIFT);
             expect(comp.staticCodeAnalysisAllowed).toBe(true);
             expect(comp.packageNamePattern).toBe(APP_NAME_PATTERN_FOR_SWIFT);
@@ -860,7 +961,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.onProjectTypeChange(ProjectType.GCC);
 
             // THEN
-            expect(courseService.find).toHaveBeenCalledWith(courseId);
+            expect(courseService.findForManagement).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
             expect(comp.selectedProjectType).toBe(ProjectType.GCC);
             expect(comp.staticCodeAnalysisAllowed).toBe(true);
@@ -912,7 +1013,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             route.url = of([{ path: 'new' } as UrlSegment]);
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
             // the shared course keeps the default language that an earlier test chose, the package name pattern below belongs to Java
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.JAVA } as Course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(
+                of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.JAVA } as Course })),
+            );
             vi.spyOn(programmingExerciseFeatureService, 'supportsProgrammingLanguage').mockReturnValue(true);
             comp.ngOnInit();
             fixture.detectChanges();
@@ -962,15 +1065,18 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             route.data = of({ programmingExercise: saved });
             route.url = of([{ path: 'edit' } as UrlSegment]);
             route.params = of({ courseId, exerciseId: saved.id });
-            vi.spyOn(courseService, 'find').mockReturnValue(
-                of(new HttpResponse({ body: Object.assign(new Course(), { id: courseId, title: 'Hydrated course', description: 'Loaded separately' }) })),
-            );
+            const hydratedCourse = Object.assign(new Course(), { id: courseId, title: 'Hydrated course', description: 'Loaded separately' });
+            const loadCourse = vi
+                .spyOn(courseService, 'findForManagement')
+                .mockReturnValue(of(new HttpResponse({ body: hydratedCourse })))
+                .mockClear();
             fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
             comp = fixture.componentInstance;
             fixture.detectChanges();
             await fixture.whenStable();
             fixture.detectChanges();
             const action = fixture.debugElement.query(By.directive(CreateVariantWithAiButtonComponent)).componentInstance;
+            expect(loadCourse).toHaveBeenCalledExactlyOnceWith(courseId);
             expect(comp.programmingExercise.course?.title).toBe('Hydrated course');
             expect(comp.backupExercise.course?.title).toBeUndefined();
             expect(comp.programmingExercise.categories).toEqual([]);
@@ -1076,12 +1182,30 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         let route: ActivatedRoute;
 
         beforeEach(() => {
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
             route.url = of([{ path: 'import' } as UrlSegment]);
+        });
+
+        it('checks short names in the target course when importing from another course', () => {
+            const sourceCourse = new Course();
+            sourceCourse.id = courseId + 1;
+            const programmingExercise = getProgrammingExerciseForImport();
+            programmingExercise.course = sourceCourse;
+            route.data = of({ programmingExercise });
+            const existingDetailsSpy = vi
+                .spyOn(TestBed.inject(ExerciseService), 'getExistingExerciseDetailsInCourse')
+                .mockReturnValue(of({ exerciseTitles: new Set<string>(), shortNames: new Set<string>() }));
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            expect(comp.courseId()).toBe(courseId);
+            expect(existingDetailsSpy).toHaveBeenCalledWith(courseId, ExerciseType.PROGRAMMING);
+            expect(existingDetailsSpy).not.toHaveBeenCalledWith(sourceCourse.id, ExerciseType.PROGRAMMING);
         });
 
         it('should correctly import into an exam exercise', () => {
@@ -1101,6 +1225,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.course).toBeUndefined();
             expect(comp.isImportFromExistingExercise).toBe(true);
             expect(comp.isExamMode()).toBe(true);
+            expect(comp.courseId()).toBe(courseId);
             expect(comp.importOptions.setTestCaseVisibilityToAfterDueDate).toBe(true);
         });
 
@@ -1140,7 +1265,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);
                 expect(comp.programmingExercise).toBe(programmingExercise);
-                expect(courseService.find).toHaveBeenCalledWith(courseId);
+                expect(courseService.findForManagement).toHaveBeenCalledWith(courseId);
 
                 comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                 comp.onStaticCodeAnalysisChanged();
@@ -1182,7 +1307,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             (programmingExercise as any).categories = categories;
             route.data = of({ programmingExercise });
 
-            const findSpy = vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            const findSpy = vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             // WHEN
@@ -1355,7 +1480,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 getProgrammingLanguageFeature(language),
             );
             vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.PYTHON } as Course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(
+                of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.PYTHON } as Course })),
+            );
             comp.ngOnInit();
 
             expect(comp.isImportFromSharing).toBe(true);
@@ -1421,7 +1548,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     }),
                 ),
             );
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(of(new HttpResponse({ body: entity })));
 
             comp.isImportFromSharing = true;
@@ -1442,7 +1569,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
 
-            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'save failed', status: 503 })));
 
             comp.isImportFromSharing = true;
@@ -2287,7 +2414,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         route.url = of([{ path: 'edit' } as UrlSegment]);
         route.data = of({ programmingExercise });
 
-        vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
         vi.spyOn(Utils, 'loadCourseExerciseCategories').mockReturnValue(of([]));
         vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 

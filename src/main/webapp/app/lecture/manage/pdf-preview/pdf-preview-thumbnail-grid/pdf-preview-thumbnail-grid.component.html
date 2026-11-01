@@ -17,6 +17,10 @@
                 [cdkDragData]="page"
             >
                 <button
+                    tumAetUiButton
+                    severity="secondary"
+                    variant="text"
+                    size="small"
                     type="button"
                     [id]="'pdf-page-' + page.slideId"
                     class="relative block w-full border-0 bg-transparent p-0 text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
@@ -30,25 +34,43 @@
                     <ng-container [ngTemplateOutlet]="pageOverlay" [ngTemplateOutletContext]="{ $implicit: page }" />
                 </button>
                 @if (loadedPages().has(page.order)) {
-                    <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
+                    <tumaet-ui-checkbox
+                        class="pdf-page-selection"
+                        [inputId]="'checkbox-' + page.slideId"
+                        [ariaLabel]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: page.order }"
+                        [checked]="isPageSelected(page.slideId)"
+                        (changed)="togglePageSelection(page.slideId, $event.originalEvent)"
+                    />
                 }
                 <button
                     type="button"
                     [id]="'hide-show-button-' + page.slideId"
                     [style.opacity]="activeButtonPage() && activeButtonPage()?.slideId === page.slideId ? '1' : '0'"
-                    [class]="'hide-show-btn btn ' + (hiddenPages()[page.slideId] ? 'btn-success' : 'btn-secondary')"
-                    (click)="toggleVisibility(page.slideId, $event)"
-                    [ngbPopover]="hiddenPages()[page.slideId] ? showPageBox : hidePageBox"
-                    #popover="ngbPopover"
-                    [autoClose]="'outside'"
-                    placement="right auto"
-                    container="body"
-                    (shown)="isPopoverOpen.set(true)"
-                    (hidden)="activeButtonPage.set(undefined); isPopoverOpen.set(false)"
+                    tumAetUiButton
+                    size="small"
+                    class="hide-show-btn"
+                    [severity]="hiddenPages()[page.slideId] ? 'success' : 'secondary'"
+                    (click)="togglePagePopover(page.slideId, $event, popover)"
+                    aria-haspopup="dialog"
+                    [attr.aria-label]="
+                        (hiddenPages()[page.slideId] ? 'artemisApp.attachment.pdfPreview.thumbnailGrid.showPage' : 'artemisApp.attachment.pdfPreview.dateBox.hidePage')
+                            | artemisTranslate: { param: getPageOrder(page.slideId) }
+                    "
+                    [attr.aria-expanded]="popover.isOpen()"
                 >
                     <fa-icon [icon]="hiddenPages()[page.slideId] ? faEye : faEyeSlash" />
                 </button>
 
+                <tumaet-ui-popover
+                    #popover
+                    placement="right"
+                    [ariaLabel]="'artemisApp.attachment.pdfPreview.hidePageButton' | artemisTranslate"
+                    (openChange)="isPopoverOpen.set($event); !$event && activeButtonPage.set(undefined)"
+                >
+                    @if (popover.isOpen()) {
+                        <ng-container [ngTemplateOutlet]="hiddenPages()[page.slideId] ? showPageBox : hidePageBox" />
+                    }
+                </tumaet-ui-popover>
                 <ng-template #hidePageBox>
                     <jhi-pdf-preview-date-box-component
                         [courseId]="courseId()"
@@ -59,7 +81,7 @@
                 </ng-template>
                 <ng-template #showPageBox>
                     <div class="confirmation-box">
-                        <div class="popover-title mb-2">
+                        <div class="preview-heading mb-2">
                             <h5>
                                 <span
                                     jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPage"
@@ -69,7 +91,7 @@
                             <p>
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
                                 @if (hiddenPages()[activeButtonPage()?.slideId!]?.date!.isSame(FOREVER, 'day')) {
-                                    <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
+                                    <span class="text-muted-color" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
                                 } @else {
                                     <span>
                                         {{ hiddenPages()[activeButtonPage()?.slideId!]?.date!.format('MMM D, YYYY - HH:mm') }}
@@ -85,11 +107,18 @@
                                 <br />
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPageConfirmation"></span>
                             </p>
-                            <div class="submit-container mt-3 d-flex justify-content-between">
-                                <button type="button" class="btn btn-secondary" (click)="activeButtonPage.set(undefined); popover.close()">
+                            <div class="submit-container mt-4! flex justify-between">
+                                <button tumAetUiButton severity="secondary" variant="solid" size="default" type="button" (click)="activeButtonPage.set(undefined); popover.close()">
                                     <span jhiTranslate="entity.action.cancel"></span>
                                 </button>
-                                <button type="button" class="btn btn-primary" (click)="showPage(activeButtonPage()?.slideId!); popover.close()">
+                                <button
+                                    tumAetUiButton
+                                    severity="primary"
+                                    variant="solid"
+                                    size="default"
+                                    type="button"
+                                    (click)="showPage(activeButtonPage()?.slideId!); popover.close()"
+                                >
                                     <span jhiTranslate="entity.action.show"></span>
                                 </button>
                             </div>
@@ -103,6 +132,10 @@
         @for (page of orderedPages(); track page.slideId) {
             <div class="pdf-canvas-container">
                 <button
+                    tumAetUiButton
+                    severity="secondary"
+                    variant="text"
+                    size="small"
                     type="button"
                     [id]="'pdf-page-' + page.slideId"
                     class="relative block w-full border-0 bg-transparent p-0 text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
@@ -112,7 +145,13 @@
                     <ng-container [ngTemplateOutlet]="pageOverlay" [ngTemplateOutletContext]="{ $implicit: page }" />
                 </button>
                 @if (loadedPages().has(page.order)) {
-                    <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
+                    <tumaet-ui-checkbox
+                        class="pdf-page-selection"
+                        [inputId]="'checkbox-' + page.slideId"
+                        [ariaLabel]="'artemisApp.attachment.pdfPreview.thumbnailGrid.previewPage' | artemisTranslate: { param: page.order }"
+                        [checked]="isPageSelected(page.slideId)"
+                        (changed)="togglePageSelection(page.slideId, $event.originalEvent)"
+                    />
                 }
             </div>
         }

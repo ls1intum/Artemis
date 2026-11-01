@@ -44,8 +44,8 @@ export class ExerciseTeamsPage {
                 }
             }
         }
-        await this.page.locator('[data-testid="owner-search-input"]').waitFor({ state: 'visible', timeout: 30_000 });
-        await this.page.locator('[data-testid="student-search-input"]').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.getByTestId('owner-search-input').getByRole('combobox').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.getByTestId('student-search-input').getByRole('combobox').waitFor({ state: 'visible', timeout: 30_000 });
     }
 
     /**
@@ -300,7 +300,7 @@ export class ExerciseTeamsPage {
      * @param username - the tutor username.
      */
     async setTeamTutor(username: string) {
-        await this.searchTutor(this.page.locator('[data-testid="owner-search-input"]'), username);
+        await this.searchTutor(this.page.getByTestId('owner-search-input').getByRole('combobox'), username);
     }
 
     /**
@@ -308,7 +308,7 @@ export class ExerciseTeamsPage {
      * @param username - the student username.
      */
     async addStudentToTeam(username: string) {
-        await this.searchStudent(this.page.locator('[data-testid="student-search-input"]'), username);
+        await this.searchStudent(this.page.getByTestId('student-search-input').getByRole('combobox'), username);
     }
 
     /**

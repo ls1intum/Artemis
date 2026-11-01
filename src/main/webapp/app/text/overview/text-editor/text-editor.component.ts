@@ -15,7 +15,7 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
-import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
+import { EditorViewingPurpose, ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -83,6 +83,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     protected readonly isAthenaAIResult = isAthenaAIResult;
     protected readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
+    viewingPurpose = input<EditorViewingPurpose>('owner');
     participationId = input<number>();
     expandProblemStatement = input<boolean>(true);
     inputExercise = input<TextExercise>();
@@ -147,7 +148,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             // When participationId is provided as input (e.g. in exam summary), route params won't contain it,
             // so we fetch directly instead of relying on the route.params subscription to trigger the fetch.
             if (this.participationId() !== undefined) {
-                this.textService.get(participationId!, this.resultId).subscribe({
+                this.textService.get(participationId!, this.resultId, this.viewingPurpose()).subscribe({
                     next: (data: StudentParticipation) => {
                         this.updateParticipation(data, this.submissionId, this.resultId);
                         this.participationWebsocketService.addParticipation(this.participation(), this.textExercise());
@@ -170,7 +171,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                         if (participationIdToFetch === undefined) {
                             return;
                         }
-                        this.textService.get(participationIdToFetch, this.resultId).subscribe({
+                        this.textService.get(participationIdToFetch, this.resultId, this.viewingPurpose()).subscribe({
                             next: (data: StudentParticipation) => {
                                 this.updateParticipation(data, this.submissionId, this.resultId);
                             },
@@ -210,7 +211,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise()?.title ?? '' });
                         this.hasAthenaResultForLatestSubmission = true;
                         if (this.isExamSummary() && this.participation()?.id !== undefined) {
-                            this.textService.get(this.participation().id!, athenaResult.id).subscribe({
+                            this.textService.get(this.participation().id!, athenaResult.id, this.viewingPurpose()).subscribe({
                                 next: (data) => this.updateParticipation(data, this.submissionId, athenaResult.id),
                                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
                             });
