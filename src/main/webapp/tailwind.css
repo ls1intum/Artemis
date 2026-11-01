@@ -92,6 +92,7 @@
 @source './app/shared-ui/delete-dialog';
 @source './app/core/alert';
 @source './app/core/about-us';
+@source './app/core/usage-statistics';
 
 /* Lecture and tutorial-group modules, including their reading views and shared UI compositions. */
 @source './app/lecture';

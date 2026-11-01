@@ -1,0 +1,90 @@
+<div class="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8" data-testid="usage-dashboard">
+    <header class="flex flex-col gap-2">
+        <h1 class="m-0 text-3xl font-bold">{{ 'artemisApp.usageDashboard.title' | artemisTranslate }}</h1>
+        <p class="m-0 text-text-secondary" jhiTranslate="artemisApp.usageDashboard.subtitle"></p>
+    </header>
+
+    @if (failed()) {
+        <p class="text-state-danger" role="alert" data-testid="usage-error" jhiTranslate="artemisApp.usageDashboard.error"></p>
+    } @else if (selected(); as semester) {
+        <nav class="flex flex-wrap gap-2" [attr.aria-label]="'artemisApp.usageDashboard.semesterSelection' | artemisTranslate" data-testid="usage-semesters">
+            @for (option of semesters(); track option.label) {
+                <button
+                    type="button"
+                    class="usage__pill"
+                    [attr.aria-pressed]="option.label === semester.label"
+                    [attr.data-testid]="'usage-semester-' + option.label"
+                    (click)="select(option.label)"
+                >
+                    {{ option.label }}
+                </button>
+            }
+        </nav>
+
+        <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="usage-cards">
+            <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-courses">
+                <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.courses"></span>
+                <span class="text-3xl font-bold">{{ semester.courses | number }}</span>
+            </div>
+            <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-students">
+                <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.students"></span>
+                <span class="text-3xl font-bold">{{ semester.students | number }}</span>
+            </div>
+            <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-active-students">
+                <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.activeStudents"></span>
+                <span class="text-3xl font-bold">{{ semester.activeStudents | number }}</span>
+            </div>
+            <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-submissions">
+                <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.submissions"></span>
+                <span class="text-3xl font-bold">{{ semester.submissions | number }}</span>
+            </div>
+            <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-exercises">
+                <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.exercises"></span>
+                <span class="text-3xl font-bold">{{ totalExercises() | number }}</span>
+            </div>
+            <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-lectures">
+                <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.lectures"></span>
+                <span class="text-3xl font-bold">{{ semester.lectures | number }}</span>
+            </div>
+        </section>
+
+        <section class="flex flex-col gap-3" data-testid="usage-exercise-types">
+            <h2 class="m-0 text-xl font-semibold">{{ 'artemisApp.usageDashboard.exercisesByType' | artemisTranslate }}</h2>
+            <ul class="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-5">
+                @for (type of exerciseTypes; track type) {
+                    <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" [attr.data-testid]="'usage-type-' + type">
+                        <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.exerciseTypes.' + type | artemisTranslate }}</span>
+                        <span class="text-xl font-bold">{{ semester.exercisesByType[type] ?? 0 | number }}</span>
+                    </li>
+                }
+            </ul>
+        </section>
+
+        <section class="flex flex-col gap-3" data-testid="usage-trend">
+            <h2 class="m-0 text-xl font-semibold">{{ 'artemisApp.usageDashboard.activeStudentsTrend' | artemisTranslate }}</h2>
+            <ul class="m-0 flex list-none flex-col gap-2 p-0">
+                @for (option of semesters(); track option.label) {
+                    <li class="flex items-center gap-3">
+                        <span class="w-28 shrink-0 text-sm">{{ option.label }}</span>
+                        <div class="h-4 grow rounded bg-surface-sunken">
+                            <div class="h-4 rounded bg-primary" [style.width.%]="barWidth(option)"></div>
+                        </div>
+                        <span class="w-16 shrink-0 text-end text-sm">{{ option.activeStudents | number }}</span>
+                    </li>
+                }
+            </ul>
+        </section>
+
+        <section class="flex flex-col gap-2 text-sm text-text-secondary" data-testid="usage-definitions">
+            <h2 class="m-0 text-base font-semibold">{{ 'artemisApp.usageDashboard.definitions.title' | artemisTranslate }}</h2>
+            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.course"></p>
+            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.students"></p>
+            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.activeStudents"></p>
+            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.privacy"></p>
+        </section>
+    } @else if (statistics()) {
+        <output class="block text-text-secondary" data-testid="usage-empty">{{ 'artemisApp.usageDashboard.empty' | artemisTranslate }}</output>
+    } @else {
+        <output class="block text-text-secondary" data-testid="usage-loading">{{ 'artemisApp.usageDashboard.loading' | artemisTranslate }}</output>
+    }
+</div>
