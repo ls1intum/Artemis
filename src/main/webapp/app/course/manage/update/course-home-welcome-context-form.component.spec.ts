@@ -25,4 +25,30 @@ describe('Course welcome context form', () => {
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('artemisApp.course.studentWelcomeContext.tooLong');
     });
+
+    it('associates each instance with its own label, hint and validation error', () => {
+        const controls = [new FormControl('', { nonNullable: true }), new FormControl('', { nonNullable: true, validators: [Validators.maxLength(2000)] })];
+        const ids: string[] = [];
+        for (const control of controls) {
+            const fixture = TestBed.createComponent(CourseHomeWelcomeContextFormComponent);
+            fixture.componentRef.setInput('control', control);
+            fixture.detectChanges();
+            const textarea: HTMLTextAreaElement = fixture.nativeElement.querySelector('textarea');
+            const label: HTMLLabelElement = fixture.nativeElement.querySelector('label');
+            const hint: HTMLElement = fixture.nativeElement.querySelector('.tumaet-ui-form-field-hint');
+            expect(textarea.id).toBeTruthy();
+            expect(label.htmlFor).toBe(textarea.id);
+            expect(textarea.getAttribute('aria-describedby')).toBe(hint.id);
+            ids.push(textarea.id);
+            control.setValue('x'.repeat(2001));
+            control.markAsTouched();
+            fixture.detectChanges();
+            if (control.invalid) {
+                const error: HTMLElement = fixture.nativeElement.querySelector('[role="alert"]');
+                expect(textarea.getAttribute('aria-describedby')).toBe(error.id);
+                expect(textarea.getAttribute('aria-invalid')).toBe('true');
+            }
+        }
+        expect(new Set(ids).size).toBe(controls.length);
+    });
 });

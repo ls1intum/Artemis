@@ -150,9 +150,31 @@ class CourseHomeWelcomeServiceTest {
         assertFallback(generate().join());
     }
 
+    @Test
+    void aNullProviderCompletionStillReturnsTheUsableFallback() {
+        when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(null));
+        assertFallback(generate().join());
+    }
+
+    @Test
+    void plainEncouragementAtTheLengthLimitIsAccepted() {
+        String output = "a".repeat(500);
+        when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(Optional.of(output)));
+        assertThat(generate().join().message()).isEqualTo(output);
+    }
+
+    @Test
+    void aDomainWithTheMostLabelsThatFitTheLengthLimitIsRejected() {
+        String output = "a.".repeat(249) + "aa";
+        assertThat(output).hasSize(500);
+        when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(Optional.of(output)));
+        assertFallback(generate().join());
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { " ", "<b>Keep learning</b>", "[Read this](https://example.org)", "Visit example.org for advice.", "Tomorrow is your next deadline.",
-            "Heute musst du die Aufgabe abgeben.", "You have 42 exercises to finish.", "{\"message\":\"Keep learning\"}", "```Keep learning```" })
+            "Heute musst du die Aufgabe abgeben.", "You have 42 exercises to finish.", "{\"message\":\"Keep learning\"}", "```Keep learning```", "Reflect at institut.example.",
+            "Try x.---.example for help." })
     void malformedLinksAndNewTimeOrCountClaimsAreRejected(String output) {
         when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(Optional.of(output)));
         assertFallback(generate().join());
