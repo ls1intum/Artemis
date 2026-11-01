@@ -25,10 +25,10 @@ import org.springframework.context.annotation.Profile;
 public class RateLimitingProperties {
 
     /**
-     * Whether rate limiting is enabled globally.
-     * Default: false (disabled)
+     * Whether rate limiting is enabled globally. The limit for client error reports is not affected: it cannot be disabled.
+     * Default: true (enabled)
      */
-    private boolean enabled = false;
+    private boolean enabled = true;
 
     /**
      * Addresses exempt from every rate limit, as literal IPv4 or IPv6 addresses or CIDR blocks.

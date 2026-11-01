@@ -42,9 +42,9 @@ artemis:
     client-error-report-requests-per-minute: 60
 ```
 
-<Callout variant={CalloutVariant.warning}>
+<Callout variant={CalloutVariant.info}>
 
-  Rate limiting is switched off by default. Until you set `artemis.rate-limiting.enabled` to `true`, anybody who can reach the server can fill its log through this endpoint. Enable it on every installation that is reachable from the internet. See [Security](/admin/production-setup/security#rate-limiting) for the other limits and for the addresses that can be exempt.
+  This limit cannot be switched off. Unlike the other rate limits, it also applies when `artemis.rate-limiting.enabled` is `false` or the rate limit feature is toggled off, because anybody who can reach the server could otherwise fill its log through this endpoint. Only an address in `artemis.rate-limiting.exempt-addresses` is not limited, see [Security](/admin/production-setup/security#rate-limiting).
 
 </Callout>
 

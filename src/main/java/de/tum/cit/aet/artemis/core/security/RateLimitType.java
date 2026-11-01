@@ -126,15 +126,36 @@ public enum RateLimitType {
      * shared address, not for one user: a lecture hall can sit behind one NAT, and the client already drops duplicate
      * reports and caps the reports of a page.
      * <p>
+     * Unlike every other type, this limit cannot be switched off: it applies even if {@code artemis.rate-limiting.enabled} is
+     * {@code false} or the rate limit feature is toggled off, because the endpoint is open to everybody and an installation
+     * that disables rate limiting for its logins must not leave its log open to flooding. Only an address in
+     * {@code artemis.rate-limiting.exempt-addresses} is not limited.
+     * <p>
      * Default: 60 requests per minute per client, overridable with
      * {@code artemis.rate-limiting.client-error-report-requests-per-minute}.
      */
-    CLIENT_ERROR_REPORT(60);
+    CLIENT_ERROR_REPORT(60, true);
 
     private final int defaultRpm;
 
+    private final boolean alwaysEnforced;
+
     RateLimitType(int defaultRpm) {
+        this(defaultRpm, false);
+    }
+
+    RateLimitType(int defaultRpm, boolean alwaysEnforced) {
         this.defaultRpm = defaultRpm;
+        this.alwaysEnforced = alwaysEnforced;
+    }
+
+    /**
+     * Whether the limit is enforced even if rate limiting is switched off globally or toggled off as a feature.
+     *
+     * @return {@code true} if this limit cannot be disabled
+     */
+    public boolean isAlwaysEnforced() {
+        return alwaysEnforced;
     }
 
     /**

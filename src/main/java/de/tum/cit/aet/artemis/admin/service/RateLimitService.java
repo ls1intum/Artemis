@@ -59,8 +59,8 @@ public class RateLimitService {
      * @throws RateLimitExceededException if the rate limit is exceeded
      */
     public void enforcePerMinute(IPAddress clientId, RateLimitType rpmType) {
-        // Skip rate limiting if disabled globally or disabled via feature toggle
-        if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit)) {
+        // Skip rate limiting if disabled globally or disabled via feature toggle, except for a limit that cannot be disabled
+        if (isSwitchedOff(rpmType)) {
             log.debug("Rate limiting is disabled globally, skipping enforcement for client {} at {}", clientId, rpmType.name());
             return;
         }
@@ -99,7 +99,7 @@ public class RateLimitService {
      * @return whether the client may still be served, {@code true} when rate limiting is off or the client is exempt
      */
     public boolean hasRemainingBudget(IPAddress clientId, RateLimitType rpmType) {
-        if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit) || configurationService.isExempt(clientId)) {
+        if (isSwitchedOff(rpmType) || configurationService.isExempt(clientId)) {
             return true;
         }
         return getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).getAvailableTokens() > 0;
@@ -115,10 +115,17 @@ public class RateLimitService {
      * @param rpmType  the rate limit type to determine the RPM configuration
      */
     public void consumePerMinute(IPAddress clientId, RateLimitType rpmType) {
-        if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit) || configurationService.isExempt(clientId)) {
+        if (isSwitchedOff(rpmType) || configurationService.isExempt(clientId)) {
             return;
         }
         getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).tryConsume(1);
+    }
+
+    /**
+     * Whether the limit of a type is not enforced because rate limiting is disabled. A type that is always enforced is never switched off.
+     */
+    private boolean isSwitchedOff(RateLimitType rpmType) {
+        return !rpmType.isAlwaysEnforced() && (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit));
     }
 
     private Bucket getOrCreatePerMinuteBucket(IPAddress clientId, RateLimitType rpmType, int rpm) {

@@ -74,6 +74,54 @@ class RateLimitServiceTest {
     }
 
     @Test
+    void testEnforcePerMinute_ClientErrorReport_IsEnforcedWhenRateLimitingIsDisabled() throws AddressStringException {
+        // neither the global switch nor the feature toggle is consulted for a limit that cannot be disabled, so they are not stubbed
+        when(configurationService.getEffectiveRpm(RateLimitType.CLIENT_ERROR_REPORT)).thenReturn(60);
+        when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
+        when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
+        when(consumptionProbe.isConsumed()).thenReturn(false);
+        when(consumptionProbe.getNanosToWaitForRefill()).thenReturn(30_000_000_000L);
+        IPAddress clientId = new IPAddressString("192.168.1.1").toAddress();
+
+        assertThatThrownBy(() -> rateLimitService.enforcePerMinute(clientId, RateLimitType.CLIENT_ERROR_REPORT)).isInstanceOf(RateLimitExceededException.class);
+
+        verify(configurationService, never()).isRateLimitingEnabled();
+    }
+
+    @Test
+    void testEnforcePerMinute_ClientErrorReport_IsEnforcedWhenTheFeatureIsToggledOff() throws AddressStringException {
+        when(configurationService.getEffectiveRpm(RateLimitType.CLIENT_ERROR_REPORT)).thenReturn(60);
+        when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
+        when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
+        when(consumptionProbe.isConsumed()).thenReturn(true);
+
+        rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.CLIENT_ERROR_REPORT);
+
+        verify(bucketProxy).tryConsumeAndReturnRemaining(1);
+        verify(featureToggleService, never()).isFeatureEnabled(any());
+    }
+
+    @Test
+    void testEnforcePerMinute_ClientErrorReport_DoesNotLimitAnExemptAddress() throws AddressStringException {
+        IPAddress clientId = new IPAddressString("192.168.1.1").toAddress();
+        when(configurationService.isExempt(clientId)).thenReturn(true);
+
+        rateLimitService.enforcePerMinute(clientId, RateLimitType.CLIENT_ERROR_REPORT);
+
+        verify(proxyManager, never()).getProxy(anyString(), any());
+    }
+
+    @Test
+    void testEnforcePerMinute_OtherTypes_AreNotEnforcedWhenTheFeatureIsToggledOff() throws AddressStringException {
+        when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(false);
+
+        rateLimitService.enforcePerMinute(new IPAddressString("192.168.1.1").toAddress(), RateLimitType.AUTHENTICATION);
+
+        verify(proxyManager, never()).getProxy(anyString(), any());
+    }
+
+    @Test
     void testEnforcePerMinute_WhenWithinLimit_ShouldSucceed() throws AddressStringException {
         when(configurationService.isRateLimitingEnabled()).thenReturn(true);
         when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
