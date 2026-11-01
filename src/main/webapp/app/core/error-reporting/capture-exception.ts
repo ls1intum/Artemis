@@ -128,7 +128,26 @@ function describe(exception: unknown): string {
     if (typeof exception === 'string') {
         return exception;
     }
+    // An HttpErrorResponse is no Error. Converted to json it would put its whole url, with the query, and the body of the response into the
+    // message, and neither belongs into a report: the status and the path tell what failed. The name is checked instead of the type, because
+    // errors that reach the error handler can be reconstructed.
+    const response = exception as { name?: unknown; status?: unknown; statusText?: unknown; url?: unknown } | null | undefined;
+    if (response?.name === 'HttpErrorResponse') {
+        return `Http failure response for ${pathOf(response.url)}: ${String(response.status)} ${typeof response.statusText === 'string' ? response.statusText : ''}`.trim();
+    }
     return stringify(exception);
+}
+
+/** The path of a url without its query and its fragment, which can carry tokens and identifiers. */
+function pathOf(url: unknown): string {
+    if (typeof url !== 'string' || !url) {
+        return '(unknown url)';
+    }
+    try {
+        return new URL(url, window.location.origin).pathname;
+    } catch {
+        return url.split(/[?#]/)[0];
+    }
 }
 
 /** The stack of an error followed by the stacks of its causes, as far as they fit. */

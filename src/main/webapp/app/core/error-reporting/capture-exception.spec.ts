@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpErrorResponse } from '@angular/common/http';
 import { VERSION } from 'app/app.constants';
 import { ClientErrorReport, ClientErrorReporter, captureException } from 'app/core/error-reporting/capture-exception';
 
@@ -8,8 +9,13 @@ describe('ClientErrorReporter', () => {
     let reporter: ClientErrorReporter;
 
     const reportOf = (index: number): ClientErrorReport => send.mock.calls[index][0];
-    // the same line, so that two errors have the same stack, as one error that is thrown twice from the same place
-    const boom = () => new Error('boom');
+    // An error has the stack of the place that created it, which differs from line to line. The reporter tells duplicates by that stack, so the
+    // errors that must be duplicates get the same one, as an error that is thrown twice from the same place has.
+    const boom = (): Error => {
+        const error = new Error('boom');
+        error.stack = 'Error: boom\n    at thrownFromTheSamePlace (component.ts:1:1)';
+        return error;
+    };
 
     beforeEach(() => {
         send = vi.fn();
@@ -55,6 +61,28 @@ describe('ClientErrorReporter', () => {
             reporter.report({ status: 500, detail: 'broken' });
 
             expect(reportOf(0).message).toBe('{"status":500,"detail":"broken"}');
+        });
+
+        it('should report a failed request by its status and its path and neither by its query nor by the body of its response', () => {
+            const response = new HttpErrorResponse({
+                status: 500,
+                statusText: 'Internal Server Error',
+                url: 'http://localhost:9000/api/core/posts/17?token=secret&login=ge12abc#section',
+                error: { stack: 'private details of the server', message: 'body of the response' },
+            });
+
+            reporter.report(response);
+
+            expect(reportOf(0).message).toBe('Http failure response for /api/core/posts/17: 500 Internal Server Error');
+            expect(JSON.stringify(reportOf(0))).not.toMatch(/secret|ge12abc|private details|body of the response|section/);
+        });
+
+        it('should report a reconstructed failed request the same way and survive one without a url', () => {
+            reporter.report({ name: 'HttpErrorResponse', status: 0, statusText: 'Unknown Error', url: '/api/core/x?y=z' });
+            reporter.report({ name: 'HttpErrorResponse', status: 502 });
+
+            expect(reportOf(0).message).toBe('Http failure response for /api/core/x: 0 Unknown Error');
+            expect(reportOf(1).message).toBe('Http failure response for (unknown url): 502');
         });
 
         it('should describe a value that cannot be converted to json', () => {

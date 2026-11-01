@@ -32,7 +32,11 @@ export class ClientErrorHandler extends ErrorHandler {
         if (error instanceof Error) {
             return error;
         }
-        const wrapper = error as { error?: unknown; originalError?: unknown; message?: unknown } | null | undefined;
+        const wrapper = error as { name?: unknown; error?: unknown; originalError?: unknown; message?: unknown } | null | undefined;
+        if (wrapper?.name === 'HttpErrorResponse') {
+            // describes itself without the query of its url and without the body of the response, which its message and its error contain
+            return error;
+        }
         return (wrapper?.error instanceof Error ? wrapper.error : undefined) ?? wrapper?.originalError ?? wrapper?.message ?? error;
     }
 
@@ -41,10 +45,19 @@ export class ClientErrorHandler extends ErrorHandler {
      * The message is only reported once per day per browser of a user.
      */
     reportIfPasskeyIsNotSupported(): void {
-        if (window.PublicKeyCredential || this.hasBeenReportedToday()) {
+        if (window.PublicKeyCredential) {
             return;
         }
-        this.localStorageService.store<Date>('webauthnNotSupportedTimestamp', new Date());
+        try {
+            if (this.hasBeenReportedToday()) {
+                return;
+            }
+            this.localStorageService.store<Date>('webauthnNotSupportedTimestamp', new Date());
+        } catch {
+            // The browser blocks its storage or it is full. This runs when the application starts, so it must not stop it, and without the
+            // marker the report would be sent again on every start, so it is not sent at all.
+            return;
+        }
         captureException(new Error('Browser does not support WebAuthn - no Passkey authentication possible'), { severity: 'INFO', tags: { feature: 'Passkey Authentication' } });
     }
 
