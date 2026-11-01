@@ -40,6 +40,7 @@ A single class while iterating:
 | Anything that serializes JSON          | Jackson version                                     |
 | A websocket topic or message handler   | Websocket topics                                    |
 | An endpoint a coding agent should call | Endpoints opted in to access tokens                 |
+| A quiz endpoint or a DTO it uses       | Quiz OpenAPI specification                          |
 
 The detail for each, with the reason and the failing rule name, is in `reference/gates.md`. Read
 it rather than guessing; several of these rules forbid something that looks completely reasonable.
@@ -139,6 +140,13 @@ No architecture test checks the draft guard, so add an endpoint test that a toke
 The other rules are enforced by `AllowedScopesArchitectureTest` in
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/`. See
 [agent access](../../documentation/docs/developer/agent-access.mdx).
+
+**Quiz OpenAPI specification.** The generated Angular client is built from the committed `config/openapi/openapi.yaml`, so a
+quiz endpoint or DTO change must regenerate it (`./gradlew generateOpenApiDocs pruneOpenApiSpec -x webapp`, then
+`./gradlew openApiGenerate -x webapp`) and commit the specification with `src/main/webapp/app/openapi`. Enforced by
+`QuizOpenApiSpecificationArchitectureTest` in `src/test/java/de/tum/cit/aet/artemis/quiz/architecture/`, which compares the
+operations under `/api/quiz/`, their parameters and every DTO schema they use with the committed file. See
+[OpenAPI](../../documentation/docs/developer/openapi.mdx).
 
 ## Before adding a cache
 
