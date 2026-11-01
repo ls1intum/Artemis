@@ -382,7 +382,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
             @Test
             void shouldThrowNullPointerExceptionWhenFreePeriodEntityIsNull() {
-                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO.of(null)).isInstanceOf(NullPointerException.class);
+                assertThatThrownBy(() -> TutorialGroupConfigurationDTO.TutorialGroupConfigurationFreePeriodDTO.of(null)).isInstanceOf(NullPointerException.class);
             }
         }
     }
@@ -401,7 +401,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
                 { "2022-08-15T10:00:00Z", "2022-08-14T10:00:00Z", "tutorialFreePeriodInvalidOrder" },
                 { "2022-07-01T10:00:00Z", "2022-07-02T10:00:00Z", "tutorialFreePeriodOutOfBounds" } };
         for (String[] values : cases) {
-            var period = new TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO(null, values[0], values[1], "Invalid interval");
+            var period = new TutorialGroupConfigurationDTO.TutorialGroupConfigurationFreePeriodDTO(null, values[0], values[1], "Invalid interval");
             var dto = new TutorialGroupConfigurationDTO(original.id(), original.tutorialPeriodStartInclusive(), original.tutorialPeriodEndInclusive(),
                     original.useTutorialGroupChannels(), original.usePublicTutorialGroupChannels(), java.util.Set.of(period));
             request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put(getTutorialGroupsConfigurationPath(courseId, configuration.getId()))
