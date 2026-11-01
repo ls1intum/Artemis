@@ -20,6 +20,8 @@ Declare required DTO properties explicitly with `@Schema(requiredMode = Schema.R
 
 The Angular generator uses Observable HttpClient services (`useHttpResource=false`, `separateResources=false`) and enables `observeResponseHeaders`. An Observable operation with declared success response headers returns `HttpResponse<T>`, retaining pagination, Location and alert headers for its callers. Declare the headers actually produced by the endpoint. System notification alert header names follow `jhipster.clientApp.name` during export. The pruning step preserves literal null values in nullable enums.
 
+System notification administration reads and writes belong to `AdminSystemNotificationApi` under `/api/notification/admin/system-notifications` and require administrator access. The list declares `Link` and `X-Total-Count` response headers and Spring paging parameters. The detail read declares its 404 response. `PublicSystemNotificationApi` serves active and future notifications under `/api/notification/public/system-notifications/active`, including before authentication.
+
 Course notification preference schemas distinguish complete effective channel flags in responses from partial, nullable channel overrides in requests. The settings adapter normalizes an omitted empty response map for its UI subjects; channel flags remain the generated booleans without new defaults.
 
 Course feed schemas use the outer `notificationType` to discriminate 28 flat envelope variants. The ordered shared pipeline registers sealed payload records with their explicit required annotations, composes complete envelope branches, then filters and strips DTO suffixes. This changes only OpenAPI metadata; Jackson, legacy read-only `parameters` and flat push JSON retain their existing shape. Optional payload references remain optional, while primitive payload flags and counts remain required.
@@ -41,6 +43,8 @@ To generate the OpenAPI spec, run the following command in the root directory:
 ```bash
 ./gradlew generateOpenApiDocs pruneOpenApiSpec -x webapp
 ```
+
+The application scan includes the notification controllers alongside the other DTO-based modules. The agent group scans all Artemis packages and selects operations by their agent-access annotations. Both specifications use the same pruning task, which preserves literal null values.
 
 This starts a throwaway server, reads its specification and writes an `openapi.yaml` file to the `config/openapi` directory. The server
 uses port 8080 and its SSH server port 7921. If a development server already uses them, add `-PopenApiServerPort=<port>` and

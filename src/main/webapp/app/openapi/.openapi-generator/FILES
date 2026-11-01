@@ -31,7 +31,6 @@ api/quiz-participation-api.ts
 api/quiz-statistics-api.ts
 api/quiz-submission-api.ts
 api/quiz-training-api.ts
-api/system-notification-api.ts
 api/tutorial-group-api.ts
 api/tutorial-group-free-period-api.ts
 api/tutorial-group-session-api.ts
@@ -86,6 +85,7 @@ model/course-notification-setting-info.ts
 model/course-notification-setting-specification-request-notification-type-channels-value.ts
 model/course-notification-setting-specification-request.ts
 model/course-notification.ts
+model/course-with-id.ts
 model/create-exercise-variant-group.ts
 model/create-or-update-tutorial-group-request.ts
 model/create-or-update-tutorial-group-session-request.ts
@@ -121,6 +121,7 @@ model/duplicate-test-case-course-notification.ts
 model/duplicate-test-case-payload.ts
 model/entity-id-ref.ts
 model/exam-seat.ts
+model/exam-with-id-and-course.ts
 model/exercise-assessed-course-notification.ts
 model/exercise-assessed-payload.ts
 model/exercise-generation-activity.ts
@@ -143,6 +144,7 @@ model/exercise-generation-status.ts
 model/exercise-generation-usage.ts
 model/exercise-generation-verdict.ts
 model/exercise-generation-wedged-slot.ts
+model/exercise-group-with-id-and-exam.ts
 model/exercise-open-for-practice-course-notification.ts
 model/exercise-open-for-practice-payload.ts
 model/exercise-updated-course-notification.ts
