@@ -16,8 +16,6 @@
                 <tumaet-ui-toggle-switch
                     class="shrink-0"
                     [inputId]="feature.testId + '-toggle'"
-                    [ngModel]="feature.enabled()"
-                    [ngModelOptions]="{ standalone: true }"
                     [disabled]="!loaded()"
                     (changed)="setEnabled(feature.key, $event)"
                     [ariaLabel]="featureKey + '.label' | artemisTranslate"

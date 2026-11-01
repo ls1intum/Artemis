@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, viewChildren } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { map } from 'rxjs/operators';
 import { AthenaFeature, createAthenaCourseConfigState } from 'app/course/manage/services/athena-course-config.state';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
@@ -21,15 +20,7 @@ import { TumAetUiMessageComponent, TumAetUiToggleSwitchComponent } from '@tumaet
     selector: 'jhi-athena-settings-update',
     templateUrl: './athena-settings-update.component.html',
     host: { class: 'block' },
-    imports: [
-        CourseTitleBarTitleComponent,
-        CourseTitleBarTitleDirective,
-        FormsModule,
-        TranslateDirective,
-        ArtemisTranslatePipe,
-        TumAetUiMessageComponent,
-        TumAetUiToggleSwitchComponent,
-    ],
+    imports: [CourseTitleBarTitleComponent, CourseTitleBarTitleDirective, TranslateDirective, ArtemisTranslatePipe, TumAetUiMessageComponent, TumAetUiToggleSwitchComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AthenaSettingsUpdateComponent {
@@ -57,6 +48,18 @@ export class AthenaSettingsUpdateComponent {
         { key: 'formativeFeedbackEnabled' as const, testId: 'athena-settings-formative-feedback', enabled: this.formativeEnabled },
         { key: 'gradingFeedbackEnabled' as const, testId: 'athena-settings-grading-feedback', enabled: this.gradingEnabled },
     ];
+
+    private readonly toggles = viewChildren(TumAetUiToggleSwitchComponent);
+
+    constructor() {
+        // A click shows the new state on the switch at once. A save failing before the next render rolls the state back to the value a binding
+        // would still hold, so it would never write it again. Every switch or rollback replaces the configuration, so each one is written here.
+        effect(() => {
+            this.state()?.config();
+            const toggles = this.toggles();
+            this.features.forEach((feature, index) => toggles[index]?.writeValue(feature.enabled()));
+        });
+    }
 
     /**
      * Switch one of the two Athena features and save it right away.

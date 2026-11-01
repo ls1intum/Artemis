@@ -53,6 +53,24 @@ describe('AthenaSettingsUpdateComponent', () => {
         expect(comp.formativeEnabled()).toBe(false);
     });
 
+    it('should show the stored state on the switch when a save fails before the next render', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        createComponent();
+        fixture.detectChanges();
+        const input = (testId: string): HTMLInputElement => fixture.nativeElement.querySelector(`[data-testid="${testId}"] input`);
+
+        // the request fails synchronously, before Angular renders the switched state
+        input('athena-settings-grading-feedback').click();
+        input('athena-settings-formative-feedback').click();
+        fixture.detectChanges();
+
+        expect(comp.gradingEnabled()).toBe(true);
+        expect(comp.formativeEnabled()).toBe(false);
+        expect(input('athena-settings-grading-feedback').checked).toBe(true);
+        expect(input('athena-settings-formative-feedback').checked).toBe(false);
+    });
+
     it('should render one toggle per feature', () => {
         vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of(bothDisabled));
         createComponent();
