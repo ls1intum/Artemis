@@ -697,6 +697,42 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResultForStudentParticipation_showsAthenaBeforeAssessmentDueDate() throws Exception {
+        // The sibling endpoint must also keep Athena automatic feedback visible before the assessment due date, consistent with latest-result-with-feedbacks.
+        programmingExercise.setStartDate(ZonedDateTime.now().minusDays(3));
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(4));
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        var athenaResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC_ATHENA, ZonedDateTime.now().minusHours(1));
+        StudentParticipation participation = (StudentParticipation) athenaResult.getSubmission().getParticipation();
+
+        var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
+                ProgrammingExerciseStudentParticipation.class);
+
+        Set<Result> results = participationUtilService.getResultsForParticipation(requestedParticipation);
+        assertThat(results).extracting(Result::getId).contains(athenaResult.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithAllResults_showsAthenaBeforeAssessmentDueDate() throws Exception {
+        // The all-results endpoint must also keep Athena automatic feedback visible before the assessment due date.
+        programmingExercise.setStartDate(ZonedDateTime.now().minusDays(3));
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(4));
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        var athenaResult = addStudentParticipationWithResult(AssessmentType.AUTOMATIC_ATHENA, ZonedDateTime.now().minusHours(1));
+        StudentParticipation participation = (StudentParticipation) athenaResult.getSubmission().getParticipation();
+
+        var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
+                ProgrammingExerciseStudentParticipation.class);
+
+        Set<Result> results = participationUtilService.getResultsForParticipation(requestedParticipation);
+        assertThat(results).extracting(Result::getId).contains(athenaResult.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksForTemplateParticipationAsTutorShouldReturnForbidden() throws Exception {
         TemplateProgrammingExerciseParticipation participation = addTemplateParticipationWithResult();
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);

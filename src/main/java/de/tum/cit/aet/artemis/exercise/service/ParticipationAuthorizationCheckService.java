@@ -2,7 +2,12 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -13,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -125,6 +132,45 @@ public class ParticipationAuthorizationCheckService {
         // anyway.
         return studentExamApiValue.findByExerciseIdAndUserId(exercise.getId(), student.getId())
                 .map(studentExam -> !studentExamApiValue.shouldStudentSeeResult(studentExam, participation)).orElse(true);
+    }
+
+    /**
+     * Determines the ids of the results the owning student may already see for the given participation. For an exam exercise no result is shown until the student may see it. For a
+     * course exercise a manual assessment only becomes visible once it is completed and the assessment due date has passed, while automatic results are always visible. This
+     * mirrors
+     * the gate the dedicated retrieval queries apply and is owner-based, like them. The participation is only read here, never mutated, because its submissions' result collection
+     * uses orphan removal.
+     *
+     * @param participation the participation whose results are inspected
+     * @return the ids of the results that may be returned to the student
+     */
+    public Set<Long> visibleResultIds(StudentParticipation participation) {
+        if (participation.getSubmissions() == null || shouldHideExamExerciseResults(participation)) {
+            return Set.of();
+        }
+        Exercise exercise = participation.getExercise();
+        boolean manualResultsReleased = exercise.getAssessmentDueDate() == null || exercise.getAssessmentDueDate().isBefore(ZonedDateTime.now());
+        return participation.getSubmissions().stream().filter(Objects::nonNull)
+                .flatMap(submission -> submission.getResults() == null ? Stream.empty() : submission.getResults().stream())
+                .filter(result -> isResultVisibleToStudent(result, manualResultsReleased)).map(Result::getId).collect(Collectors.toSet());
+    }
+
+    /**
+     * A result is visible to the owning student when it is automatic (including Athena automatic feedback, which text and modeling exercises show before the assessment due date),
+     * or
+     * when it is a completed manual assessment whose exercise has released its manual results (no assessment due date, or one that has already passed).
+     *
+     * @param result                the result to check, may be null
+     * @param manualResultsReleased whether the exercise's manual results are already released
+     * @return true if the student may see the result
+     */
+    private static boolean isResultVisibleToStudent(Result result, boolean manualResultsReleased) {
+        if (result == null || result.getId() == null) {
+            return false;
+        }
+        AssessmentType assessmentType = result.getAssessmentType();
+        boolean automatic = assessmentType == AssessmentType.AUTOMATIC || assessmentType == AssessmentType.AUTOMATIC_ATHENA;
+        return automatic || (result.getCompletionDate() != null && manualResultsReleased);
     }
 
     /**
