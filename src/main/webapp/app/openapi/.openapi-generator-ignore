@@ -67,5 +67,4 @@ api/hyperion-quiz-question-pool-resources.ts
 api/quiz-exercise-resources.ts
 api/hyperion-faq-resources.ts
 api/calendar-resources.ts
-api/system-notification-resources.ts
 api/quiz-exercise-creation-update-resources.ts
