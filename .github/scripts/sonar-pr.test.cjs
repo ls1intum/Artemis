@@ -473,6 +473,14 @@ for (const artifactName of ['Server JaCoCo XML', 'Vitest Coverage Report']) {
             })),
         ];
         f.state.artifacts[0].name = artifactName;
+        // These alternatives represent server-only and client-only runs. A run that actually
+        // executed server shards must also provide their coverage, even when client coverage exists.
+        if (artifactName === 'Vitest Coverage Report') {
+            f.state.jobs = [
+                { name: 'Test / Client Tests', conclusion: 'success' },
+                { name: 'Test / Server Tests Report', conclusion: 'skipped' },
+            ];
+        }
         assert.equal(await f.find(), '52');
     });
 }
