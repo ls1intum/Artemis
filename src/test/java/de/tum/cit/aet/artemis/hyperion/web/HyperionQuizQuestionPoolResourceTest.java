@@ -347,7 +347,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForbiddenForStudentOnProgress() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "student1");
 
@@ -401,7 +401,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectACorrectOptionRangeThatIsOutOfOrder() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
@@ -410,7 +410,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldCancelARunningBuildAndDropThePendingItems() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         generationDelayMillis.set(1500);
@@ -427,7 +427,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldReturnForbiddenForTutorOnCancel() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
@@ -435,7 +435,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldRejectADifficultyMixThatDoesNotAddUpToOneHundredPercent() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
@@ -452,7 +452,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldRecordReviewDecisionsForEditor() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         QuizQuestionPoolItem item = saveJudgedItem(courseId);
@@ -469,7 +469,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldNotReviewAQuestionOfAnotherCourse() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         QuizQuestionPoolItem item = saveJudgedItem(courseId);
@@ -484,7 +484,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldRejectAReviewOfAQuestionThatIsNotJudgedYet() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         QuizQuestionPoolItem item = savePendingItem(courseId);
@@ -495,7 +495,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldDeleteASingleQuestionForInstructor() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         QuizQuestionPoolItem item = saveJudgedItem(courseId);
@@ -506,7 +506,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldNotDeleteAQuestionOfAnotherCourse() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         QuizQuestionPoolItem item = saveJudgedItem(courseId);
@@ -521,7 +521,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldDeleteTheQuestionsOfOneCompetencyAndThenTheWholePool() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         saveJudgedItem(courseId);
@@ -542,7 +542,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void shouldReturnForbiddenForEditorOnDelete() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         QuizQuestionPoolItem item = saveJudgedItem(courseId);
@@ -553,7 +553,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldReturnForbiddenForTutorOnReview() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
         QuizQuestionPoolItem item = saveJudgedItem(courseId);
