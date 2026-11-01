@@ -77,7 +77,7 @@
                 "empty": "Derzeit gibt es keine Abgaben zur Bewertung in dieser Aufgabe.",
                 "participant": "Team"
             },
-            "queueUnavailable": "Auf dieser Seite sind keine neuen Bewertungen verfügbar. Die Verfügbarkeit hängt vom Abgabestatus, den Fristen und gesperrten Bewertungen ab. Zweitkorrekturen erfordern eine abgeschlossene Erstkorrektur durch eine andere Person.",
+            "queueUnavailable": "Auf dieser Seite sind keine neuen Bewertungen verfügbar. Die Verfügbarkeit hängt vom Abgabestatus, den Fristen und gesperrten Bewertungen ab.",
             "lockedByAnotherTutor": "Diese Bewertung ist durch eine andere betreuende Person gesperrt.",
             "correctionRound": "Korrekturrunde",
             "myTeams": {

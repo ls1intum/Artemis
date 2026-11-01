@@ -77,7 +77,7 @@
                 "empty": "There are currently no submissions available for assessment in this exercise.",
                 "participant": "Team"
             },
-            "queueUnavailable": "No new assessments are available on this page. Availability depends on submitted work, deadline rules and assessment locks. Second corrections require a completed first correction by another tutor.",
+            "queueUnavailable": "No new assessments are available on this page. Availability depends on submitted work, deadline rules and assessment locks.",
             "lockedByAnotherTutor": "This assessment is locked by another tutor.",
             "correctionRound": "Correction round",
             "myTeams": {
