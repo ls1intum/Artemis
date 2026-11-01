@@ -97,6 +97,12 @@ public class RateLimitingProperties {
      */
     private Integer onlineResourceFetchRequestsPerMinute;
 
+    /**
+     * Requests per minute for client error reports of unauthenticated clients.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#CLIENT_ERROR_REPORT}.
+     */
+    private Integer clientErrorReportRequestsPerMinute;
+
     public List<String> getExemptAddresses() {
         return exemptAddresses;
     }
@@ -183,5 +189,13 @@ public class RateLimitingProperties {
 
     public void setOnlineResourceFetchRequestsPerMinute(Integer onlineResourceFetchRequestsPerMinute) {
         this.onlineResourceFetchRequestsPerMinute = onlineResourceFetchRequestsPerMinute;
+    }
+
+    public Integer getClientErrorReportRequestsPerMinute() {
+        return clientErrorReportRequestsPerMinute;
+    }
+
+    public void setClientErrorReportRequestsPerMinute(Integer clientErrorReportRequestsPerMinute) {
+        this.clientErrorReportRequestsPerMinute = clientErrorReportRequestsPerMinute;
     }
 }

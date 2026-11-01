@@ -116,7 +116,20 @@ public enum RateLimitType {
      * Default: 30 requests per minute per client, overridable with
      * {@code artemis.rate-limiting.online-resource-fetch-requests-per-minute}.
      */
-    ONLINE_RESOURCE_FETCH(30);
+    ONLINE_RESOURCE_FETCH(30),
+
+    /**
+     * Rate limit for client error reports sent by clients that are not authenticated, such as an error on the login page
+     * or an error that prevents the application from starting. Reports of authenticated users are not limited by this.
+     * <p>
+     * Every report writes a log entry, so the limit bounds how fast one address can fill the log. It is sized for a
+     * shared address, not for one user: a lecture hall can sit behind one NAT, and the client already drops duplicate
+     * reports and caps the reports of a page.
+     * <p>
+     * Default: 60 requests per minute per client, overridable with
+     * {@code artemis.rate-limiting.client-error-report-requests-per-minute}.
+     */
+    CLIENT_ERROR_REPORT(60);
 
     private final int defaultRpm;
 

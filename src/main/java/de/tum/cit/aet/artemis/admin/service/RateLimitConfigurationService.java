@@ -126,6 +126,7 @@ public class RateLimitConfigurationService {
                 properties.getBuildAgentCloneTokenRequestsPerMinute() != null ? properties.getBuildAgentCloneTokenRequestsPerMinute() : type.getDefaultRpm();
             case ONLINE_RESOURCE_FETCH ->
                 properties.getOnlineResourceFetchRequestsPerMinute() != null ? properties.getOnlineResourceFetchRequestsPerMinute() : type.getDefaultRpm();
+            case CLIENT_ERROR_REPORT -> properties.getClientErrorReportRequestsPerMinute() != null ? properties.getClientErrorReportRequestsPerMinute() : type.getDefaultRpm();
         };
     }
 }

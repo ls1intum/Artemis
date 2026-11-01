@@ -1,0 +1,55 @@
+---
+id: client-error-reports
+title: Client Error Reports
+sidebar_label: Client Error Reports
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+Artemis does not send errors to an external error tracking service. When the client hits an unexpected error, it reports it to the Artemis server it was loaded from, and the server writes it to its log. There is no database table for it and nothing else to operate: the log is the only place the reports end up, and the log rotation you already run decides how long they are kept.
+
+## What is reported
+
+The client reports an error that nothing else handled, for example an exception in a component, and the errors that the code of Artemis reports deliberately when a state should never happen, such as an unknown question type. A failed request with a status from 400 to 499 is not reported, because it is expected and the user is told where it happens. A failed request with a status of 500 or higher is reported.
+
+A report contains the message and the stack of the error, the path of the page without its query and fragment, the client version, the browser as sent in the `User-Agent` header, whether the sender was signed in, and a few short labels and values that describe the situation. It never contains the login of the sender. The client sends the same error at most once per minute and at most ten reports per minute from one page, so a defective component cannot flood the server.
+
+## Where to find the reports
+
+The server logs every report with the logger of `ClientErrorReportService` and a message that starts with `Client error report`. The log level follows the severity of the report: `ERROR` for an error, `WARN` for a recoverable problem and `INFO` for a hint. The stack follows on the next lines, each starting with a tab.
+
+```text
+ERROR ClientErrorReportService : Client error report [version=9.8.0, url=/courses/1/exams/2, authenticated=true, userAgent=Mozilla/5.0 ..., tags={feature=quiz}, extra={exerciseId=42}]: Unknown question type: foo
+	Error: Unknown question type: foo
+	    at ...
+```
+
+Every node that receives a report writes it to its own log, so search the aggregated log of your deployment for `Client error report` to see the reports of all nodes together.
+
+## Privacy
+
+The endpoint is open to clients that are not signed in, so the server does not trust what it receives. Before an entry is logged, every value is shortened to its limit, control characters and line breaks are removed so that a sender cannot forge a log line, and personal data is removed: email addresses, `user=` assignments, `User{...}` dumps and the participant in the url of a repository. Query strings and fragments of the page url are dropped.
+
+## Rate limit
+
+An error often happens where nobody is signed in, for example on the login page, so the endpoint `POST /api/core/public/client-errors` needs no authentication. Every report writes a log entry, so a client that is not authenticated is limited per address. Reports of signed-in users are not limited by the server, as the client already limits them.
+
+```yaml
+artemis:
+  rate-limiting:
+    enabled: true
+    client-error-report-requests-per-minute: 60
+```
+
+<Callout variant={CalloutVariant.warning}>
+
+  Rate limiting is switched off by default. Until you set `artemis.rate-limiting.enabled` to `true`, anybody who can reach the server can fill its log through this endpoint. Enable it on every installation that is reachable from the internet. See [Security](/admin/production-setup/security#rate-limiting) for the other limits and for the addresses that can be exempt.
+
+</Callout>
+
+The limit is shared by all clients behind the same address, for example a lecture hall behind one NAT. The default of 60 reports per minute leaves room for that. If the limit is exceeded, the server answers with status 429 and the client does not retry.
+
+## Replacing Sentry
+
+Earlier versions of Artemis could send errors, traces and performance data to a Sentry server. That integration is gone, and the properties `sentry.dsn` and `info.sentry.dsn` are ignored. Remove them from your deployment configuration.

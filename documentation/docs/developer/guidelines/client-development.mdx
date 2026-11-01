@@ -810,6 +810,21 @@ https://auth0.com/blog/four-types-of-leaks-in-your-javascript-code-and-how-to-ge
 
 RXJS subscriptions not being unsubscribed: https://www.twilio.com/blog/prevent-memory-leaks-angular-observable-ngondestroy
 
+### Reporting unexpected errors
+
+A bare `console` call is invisible in production, and ESLint rejects it in application code. Report a state that should never happen, and that the
+application recovers from, with `captureException` from `app/core/error-reporting/capture-exception`. It sends the report to the server, which
+writes it to its log, see [Client Error Reports](/admin/client-error-reports).
+
+Pass an `Error` where you can, and wrap the cause of a failure with `new Error('What failed', { cause: error })`, so that the stack of both reaches the log.
+Use the context for what helps to find the problem: `extra` for the identifiers of the affected entities and `tags` for a short label of the feature. Do not put
+whole entities or personal data into it, as every value is shortened to 500 characters and the log is read by operators. Set `severity` to `WARN` or `INFO` for a
+problem that needs no action right away; the default is `ERROR`.
+
+Unhandled errors and failed requests with a status of 500 or higher are reported by the `ClientErrorHandler`, so a `catch` that only rethrows needs no report of
+its own. Do not report an error that the user is told about and that is expected, such as a rejected input, and do not call `captureException` in a loop:
+the client sends the same error only once per minute, and at most ten reports per minute from one page.
+
 ## UI/UX & Layout
 
 <Callout variant={CalloutVariant.info}>
