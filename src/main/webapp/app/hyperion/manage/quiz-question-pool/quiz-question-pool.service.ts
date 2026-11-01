@@ -8,7 +8,15 @@ import { QuizQuestionPoolItem } from 'app/openapi/model/quiz-question-pool-item'
 import { QuizQuestionPoolProgress } from 'app/openapi/model/quiz-question-pool-progress';
 import { HyperionCourseSettings } from 'app/openapi/model/hyperion-course-settings';
 import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
-import { PoolBuildStart, PoolProgress, PoolQuestion, PoolReviewState, PoolSettings } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool.types';
+import {
+    PoolBuildStart,
+    PoolProgress,
+    PoolQuestion,
+    PoolQuestionPage,
+    PoolQuestionQuery,
+    PoolReviewState,
+    PoolSettings,
+} from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool.types';
 
 @Service()
 export class QuizQuestionPoolService {
@@ -24,13 +32,21 @@ export class QuizQuestionPoolService {
     }
 
     /**
-     * Loads the pool questions of the course with their filter decisions and lecture units, in cell order.
+     * Loads one page of the pool's questions in pool order, optionally only those of one competency or only those flagged for
+     * review, the undecided ones first.
      *
-     * @param courseId     the course
-     * @param competencyId restricts the result to one competency when given
+     * @param courseId the course
+     * @param query    the competency filter, the review filter and the page to load
+     * @returns the page with its items, the matching total and the competencies that have questions
      */
-    getQuestions(courseId: number, competencyId?: number): Observable<PoolQuestion[]> {
-        return this.api.getQuizQuestionPoolQuestions(courseId, competencyId).pipe(map((items) => items.map((item) => this.toPoolQuestion(item))));
+    getQuestions(courseId: number, query: PoolQuestionQuery): Observable<PoolQuestionPage> {
+        return this.api.getQuizQuestionPoolQuestions(courseId, query.competencyId, query.flagged ?? false, query.page, query.size).pipe(
+            map((page) => ({
+                items: (page.items ?? []).map((item) => this.toPoolQuestion(item)),
+                totalCount: page.totalCount,
+                competencies: (page.competencies ?? []).map((competency) => ({ id: competency.id, title: competency.title ?? '' })),
+            })),
+        );
     }
 
     /**
@@ -44,6 +60,16 @@ export class QuizQuestionPoolService {
             map((result) => ({ started: !!result.started, enqueued: result.enqueued ?? 0 })),
             catchError((error: HttpErrorResponse) => (error.status === 409 ? of({ started: false, enqueued: 0 }) : throwError(() => error))),
         );
+    }
+
+    /**
+     * Asks the running build to stop after its current step; the build drops the questions it has not generated yet. A 409 means
+     * that no build is running.
+     *
+     * @param courseId the course
+     */
+    cancelBuild(courseId: number): Observable<void> {
+        return this.api.cancelQuizQuestionPoolBuild(courseId).pipe(map(() => undefined));
     }
 
     /**
@@ -76,6 +102,27 @@ export class QuizQuestionPoolService {
         return this.api.updateQuizQuestionPoolReview(courseId, questionId, { reviewState }).pipe(map((item) => this.toPoolQuestion(item)));
     }
 
+    /**
+     * Removes one question from the pool; the next build generates a new one for its slot.
+     *
+     * @param courseId   the course
+     * @param questionId the pool item
+     */
+    deleteQuestion(courseId: number, questionId: number): Observable<void> {
+        return this.api.deleteQuizQuestionPoolQuestion(courseId, questionId).pipe(map(() => undefined));
+    }
+
+    /**
+     * Removes every question of the pool, or of one competency; the next build generates them anew.
+     *
+     * @param courseId     the course
+     * @param competencyId the competency to clear, or undefined for the whole pool
+     * @returns how many questions were removed
+     */
+    deleteQuestions(courseId: number, competencyId?: number): Observable<number> {
+        return this.api.deleteQuizQuestionPoolQuestions(courseId, competencyId).pipe(map((result) => result.deleted));
+    }
+
     private toProgress(progress: QuizQuestionPoolProgress): PoolProgress {
         return {
             running: !!progress.running,
@@ -86,6 +133,7 @@ export class QuizQuestionPoolService {
             accepted: progress.accepted ?? 0,
             rejected: progress.rejected ?? 0,
             failed: progress.failed ?? 0,
+            buildSettings: progress.buildSettings ? this.toSettings(progress.buildSettings) : undefined,
         };
     }
 
@@ -95,6 +143,8 @@ export class QuizQuestionPoolService {
             singleChoiceQuestionsPerLectureUnit: settings.singleChoiceQuestionsPerLectureUnit,
             multipleChoiceEnabled: settings.multipleChoiceEnabled,
             multipleChoiceQuestionsPerLectureUnit: settings.multipleChoiceQuestionsPerLectureUnit,
+            multipleChoiceMinCorrectOptions: settings.multipleChoiceMinCorrectOptions,
+            multipleChoiceMaxCorrectOptions: settings.multipleChoiceMaxCorrectOptions,
             easyPercent: settings.easyPercent,
             mediumPercent: settings.mediumPercent,
             hardPercent: settings.hardPercent,
@@ -113,6 +163,7 @@ export class QuizQuestionPoolService {
             difficulty: item.difficulty,
             state: item.state,
             reviewState: item.reviewState,
+            flagged: item.flagged ?? undefined,
             question: item.question ? this.toGeneratedQuestion(item.question, item.id) : undefined,
             decision: item.decision
                 ? {
@@ -123,6 +174,7 @@ export class QuizQuestionPoolService {
                           severity: verdict.severity ?? 0,
                           triggered: !!verdict.triggered,
                           justification: verdict.justification ?? undefined,
+                          flagged: !!verdict.flagged,
                       })),
                       rationale: item.decision.rationale ?? undefined,
                   }

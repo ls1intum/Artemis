@@ -7,10 +7,10 @@
                 "intro": "Hyperion generiert Multiple-Choice-Fragen zu jeder Vorlesungseinheit, die mit einer Kompetenz dieses Kurses verknüpft ist, gestützt auf die Folien, das Transkript oder den Text der Einheit, und prüft jede Frage, bevor du sie siehst. Übernimm die Fragen, die du in Quizzen verwenden willst, und schließe die anderen aus. Die übernommenen Fragen ermöglichen später außerdem personalisiertes Lernen: Studierende üben mit Fragen, die auf ihre Stärken und Schwächen zugeschnitten sind.",
                 "progress": {
                     "title": "Pool",
-                    "total": "{{ count }} Fragen geplant",
-                    "ready": "{{ count }} generiert und geprüft",
-                    "pending": "{{ count }} werden noch generiert",
-                    "failed": "{{ count }} konnten in drei Versuchen nicht generiert werden",
+                    "total": "geplant",
+                    "ready": "generiert und geprüft",
+                    "pending": "werden noch generiert",
+                    "failed": "konnten in drei Versuchen nicht generiert werden",
                     "running": "Ein Lauf ist aktiv",
                     "idle": "Kein Lauf ist aktiv.",
                     "empty": "Noch keine Fragen. Starte einen Lauf, um den Pool zu füllen.",
@@ -18,7 +18,18 @@
                     "refresh": "Aktualisieren",
                     "started": "Lauf gestartet, {{ count }} neue Fragen werden generiert.",
                     "alreadyRunning": "Für diesen Pool läuft bereits ein Lauf.",
-                    "buildFailed": "Der Lauf konnte nicht gestartet werden."
+                    "buildFailed": "Der Lauf konnte nicht gestartet werden.",
+                    "emptyTitle": "Noch keine Fragen",
+                    "deleteAll": "Alle Fragen löschen",
+                    "cancel": "Lauf abbrechen",
+                    "cancelling": "Wird beendet…",
+                    "cancelConfirmHeader": "Lauf abbrechen?",
+                    "cancelConfirmMessage": "Der Lauf endet nach dem Schritt, an dem er gerade arbeitet. Noch nicht generierte Fragen werden aus dem Plan entfernt; der nächste Lauf plant sie mit den dann gültigen Einstellungen neu.",
+                    "cancelConfirmAccept": "Lauf abbrechen",
+                    "cancelConfirmReject": "Weiterlaufen lassen",
+                    "cancelRequested": "Der Lauf endet nach dem aktuellen Schritt.",
+                    "cancelNotRunning": "Es läuft kein Lauf.",
+                    "cancelFailed": "Der Lauf konnte nicht abgebrochen werden."
                 },
                 "settings": {
                     "title": "Einstellungen",
@@ -27,6 +38,11 @@
                     "multipleChoiceEnabled": "Zusätzlich Multiple-Choice-Fragen generieren",
                     "multipleChoiceHelp": "Bei einer Multiple-Choice-Frage können mehrere Antwortoptionen richtig sein.",
                     "multipleChoiceQuestionsPerLectureUnit": "Multiple-Choice-Fragen pro Vorlesungseinheit",
+                    "correctOptions": "Richtige Antwortoptionen pro Multiple-Choice-Frage",
+                    "minCorrectOptions": "Mindestens",
+                    "maxCorrectOptions": "Höchstens",
+                    "correctOptionsHelp": "Jede Multiple-Choice-Frage wird mit einer Anzahl richtiger Antwortoptionen aus diesem Bereich generiert, der Reihe nach, sodass die Anzahl zwischen den Fragen variiert. Zwischen {{ min }} und {{ max }}.",
+                    "correctOptionsOrder": "Die kleinste Anzahl darf die größte nicht übersteigen.",
                     "difficultyMix": "Schwierigkeitsverteilung",
                     "difficultyMixHelp": "Anteil der Fragen jeder Vorlesungseinheit, die in der jeweiligen Schwierigkeit generiert werden. Die drei Anteile müssen zusammen 100 % ergeben.",
                     "difficultyMixSum": "Die Anteile ergeben zusammen {{ sum }} % statt 100 %.",
@@ -38,7 +54,21 @@
                     "save": "Einstellungen speichern",
                     "saved": "Einstellungen gespeichert.",
                     "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",
-                    "unsaved": "Ungespeicherte Änderungen"
+                    "open": "Einstellungen",
+                    "cancel": "Abbrechen",
+                    "summarySingle": "{{ count }} Single-Choice-Fragen pro Vorlesungseinheit",
+                    "summaryMultipleOn": "{{ count }} Multiple-Choice-Fragen pro Vorlesungseinheit mit {{ min }} bis {{ max }} richtigen Optionen",
+                    "summaryMultipleOnFixed": "{{ count }} Multiple-Choice-Fragen pro Vorlesungseinheit mit {{ min }} richtigen Optionen",
+                    "summaryMultipleOff": "keine Multiple-Choice-Fragen",
+                    "summaryMix": "Schwierigkeit {{ easy }} / {{ medium }} / {{ hard }} %",
+                    "summaryOvernightOn": "nächtliche Läufe an",
+                    "summaryOvernightOff": "nächtliche Läufe aus",
+                    "countHint": "Zwischen {{ min }} und {{ max }}.",
+                    "summaryRunningBuild": "Aktueller Lauf:",
+                    "summaryNextBuild": "Nächster Lauf:",
+                    "nextBuildHeader": "Ein Lauf ist aktiv",
+                    "nextBuildMessage": "Der aktive Lauf behält die Einstellungen, mit denen er gestartet wurde. Die gespeicherten Einstellungen gelten ab dem nächsten Lauf.",
+                    "nextBuildAccept": "Für den nächsten Lauf speichern"
                 },
                 "filter": {
                     "competency": "Kompetenz",
@@ -76,10 +106,30 @@
                         "OFF_TOPIC": "Nicht zum Thema",
                         "NEAR_DUPLICATE": "Reines Abfragen",
                         "ILL_FORMED_DISTRACTORS": "Schwache Distraktoren"
-                    }
+                    },
+                    "triggered": "markiert",
+                    "loadMore": "Mehr laden ({{ count }} verbleibend)",
+                    "loaded": "{{ loaded }} von {{ total }} Fragen geladen",
+                    "delete": "Löschen",
+                    "deleteConfirmHeader": "Diese Frage löschen?",
+                    "deleteConfirmMessage": "Die Frage verlässt den Pool. Der nächste Lauf generiert eine neue Frage für ihren Platz.",
+                    "deleted": "Frage gelöscht.",
+                    "deleteFailed": "Die Frage konnte nicht gelöscht werden.",
+                    "allReviewed": "Alle markierten Fragen geprüft",
+                    "needsReviewToggle": "Markierte Fragen ein- oder ausblenden",
+                    "deleteCompetency": "Fragen dieser Kompetenz löschen",
+                    "deleteBlocked": "Während ein Lauf läuft, können keine Fragen gelöscht werden."
                 },
                 "errors": {
-                    "loadFailed": "Der Quizfragen-Pool konnte nicht geladen werden."
+                    "loadFailed": "Der Quizfragen-Pool konnte nicht geladen werden.",
+                    "buildRunning": "Warte, bis der laufende Lauf beendet ist."
+                },
+                "deleteDialog": {
+                    "questionAll": "Alle {{ count }} Fragen dieses Pools löschen, auch die, die nicht generiert werden konnten? Der nächste Lauf generiert den Pool neu.",
+                    "questionCompetency": "Alle Fragen zu {{ competency }} löschen, auch die, die nicht generiert werden konnten? Der nächste Lauf generiert sie neu.",
+                    "typeCourseTitle": "Gib den Titel des Kurses ein, um zu bestätigen.",
+                    "deleted": "{{ count }} Fragen gelöscht.",
+                    "failed": "Die Fragen konnten nicht gelöscht werden."
                 }
             }
         }

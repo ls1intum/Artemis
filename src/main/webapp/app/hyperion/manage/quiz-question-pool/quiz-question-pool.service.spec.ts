@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { QuizQuestionPoolService } from './quiz-question-pool.service';
-import { PoolBuildStart, PoolProgress, PoolQuestion, PoolSettings } from './quiz-question-pool.types';
+import { PoolBuildStart, PoolProgress, PoolQuestion, PoolQuestionPage, PoolSettings } from './quiz-question-pool.types';
 
 describe('QuizQuestionPoolService', () => {
     let service: QuizQuestionPoolService;
@@ -35,32 +35,47 @@ describe('QuizQuestionPoolService', () => {
         updatedAt: '2026-10-13T10:00:00Z',
     };
 
-    it('should load and map the pool questions', () => {
-        let result: PoolQuestion[] | undefined;
-        service.getQuestions(7).subscribe((questions) => (result = questions));
+    it('should load and map one page of the pool questions', () => {
+        let result: PoolQuestionPage | undefined;
+        service.getQuestions(7, { page: 0, size: 100 }).subscribe((page) => (result = page));
 
-        const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/hyperion/courses/7/quiz-question-pool/questions');
-        req.flush([item]);
+        const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/hyperion/courses/7/quiz-question-pool/questions?flagged=false&page=0&size=100');
+        req.flush({ items: [{ ...item, flagged: true }], totalCount: 250, competencies: [{ id: 9, title: 'Arrays' }, { id: 10 }] });
 
-        expect(result).toHaveLength(1);
-        expect(result![0].question!.id).toBe('pool-11');
-        expect(result![0].question!.options[1].correct).toBe(false);
-        expect(result![0].decision).toEqual({
+        expect(result!.totalCount).toBe(250);
+        expect(result!.competencies).toEqual([
+            { id: 9, title: 'Arrays' },
+            { id: 10, title: '' },
+        ]);
+        expect(result!.items).toHaveLength(1);
+        expect(result!.items[0].flagged).toBe(true);
+        expect(result!.items[0].question!.id).toBe('pool-11');
+        expect(result!.items[0].question!.options[1].correct).toBe(false);
+        expect(result!.items[0].decision).toEqual({
             accepted: true,
             aggregateScore: 0.7,
-            verdicts: [{ mode: 'OFF_TOPIC', severity: 0.3, triggered: false, justification: 'slightly off' }],
+            verdicts: [{ mode: 'OFF_TOPIC', severity: 0.3, triggered: false, justification: 'slightly off', flagged: false }],
             rationale: 'ok',
         });
-        expect(result![0].competencyTitle).toBe('Arrays');
-        expect(result![0].lectureUnitId).toBe(4);
-        expect(result![0].lectureUnitName).toBe('Arrays in Java');
+        expect(result!.items[0].competencyTitle).toBe('Arrays');
+        expect(result!.items[0].lectureUnitId).toBe(4);
+        expect(result!.items[0].lectureUnitName).toBe('Arrays in Java');
     });
 
-    it('should pass the competency filter as a query parameter', () => {
-        service.getQuestions(7, 9).subscribe();
+    it('should pass the competency and flag filters as query parameters', () => {
+        service.getQuestions(7, { competencyId: 9, flagged: true, page: 2, size: 50 }).subscribe();
 
-        const req = httpMock.expectOne((r) => r.url === '/api/hyperion/courses/7/quiz-question-pool/questions?competencyId=9');
-        req.flush([]);
+        const req = httpMock.expectOne((r) => r.url === '/api/hyperion/courses/7/quiz-question-pool/questions?competencyId=9&flagged=true&page=2&size=50');
+        req.flush({ items: [], totalCount: 0, competencies: [] });
+    });
+
+    it('should ask the server to cancel the running build', () => {
+        let completed = false;
+        service.cancelBuild(7).subscribe(() => (completed = true));
+
+        httpMock.expectOne((r) => r.method === 'POST' && r.url === '/api/hyperion/courses/7/quiz-question-pool/build/cancel').flush(null, { status: 202, statusText: 'Accepted' });
+
+        expect(completed).toBe(true);
     });
 
     it('should map progress with defaults for omitted counts', () => {
@@ -102,6 +117,8 @@ describe('QuizQuestionPoolService', () => {
             singleChoiceQuestionsPerLectureUnit: 12,
             multipleChoiceEnabled: false,
             multipleChoiceQuestionsPerLectureUnit: 12,
+            multipleChoiceMinCorrectOptions: 1,
+            multipleChoiceMaxCorrectOptions: 4,
             easyPercent: 20,
             mediumPercent: 50,
             hardPercent: 30,

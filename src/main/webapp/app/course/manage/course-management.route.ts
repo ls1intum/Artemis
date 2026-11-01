@@ -136,7 +136,6 @@ export const courseManagementRoutes: Routes = [
                     pageTitle: 'artemisApp.hyperion.quizQuestionPool.title',
                 },
                 canActivate: [UserRouteAccessService, HyperionGuard],
-                canDeactivate: [PendingChangesGuard],
             },
             {
                 path: ':courseId/lectures',

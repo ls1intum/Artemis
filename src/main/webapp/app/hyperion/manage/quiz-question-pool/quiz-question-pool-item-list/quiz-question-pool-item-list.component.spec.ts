@@ -16,6 +16,7 @@ describe('QuizQuestionPoolItemListComponent', () => {
             severity: 0,
             triggered: false,
             justification: `${mode} is fine`,
+            flagged: false,
         }));
         for (const override of overrides) {
             Object.assign(
@@ -44,6 +45,7 @@ describe('QuizQuestionPoolItemListComponent', () => {
             difficulty: 'MEDIUM',
             state,
             reviewState: options.reviewState ?? 'PENDING',
+            flagged: judged ? allVerdicts.some((verdict) => verdict.flagged) : undefined,
             question: judged
                 ? {
                       id: `pool-${id}`,
@@ -74,8 +76,8 @@ describe('QuizQuestionPoolItemListComponent', () => {
 
     const defaultQuestions = (): PoolQuestion[] => [
         question(1),
-        question(2, { flagged: [{ mode: 'NEAR_DUPLICATE', severity: 0.5, triggered: true }] }),
-        question(3, { accepted: false, flagged: [{ mode: 'FACTUAL_ERROR', severity: 1, triggered: true }] }),
+        question(2, { flagged: [{ mode: 'ILL_FORMED_DISTRACTORS', severity: 0.5, flagged: true }] }),
+        question(3, { accepted: false, flagged: [{ mode: 'FACTUAL_ERROR', severity: 1, triggered: true, flagged: true }] }),
         question(4, { state: 'PENDING' }),
         question(5, { state: 'FAILED_GENERATION' }),
     ];
@@ -103,7 +105,7 @@ describe('QuizQuestionPoolItemListComponent', () => {
     it('should show the empty note when there is nothing to list', () => {
         setup([]);
 
-        expect(fixture.debugElement.query(By.css('.pool-list-empty'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="pool-list-empty"]'))).not.toBeNull();
     });
 
     it('should number questions across the sections', () => {
@@ -118,54 +120,58 @@ describe('QuizQuestionPoolItemListComponent', () => {
         setup([
             question(7, {
                 flagged: [
-                    { mode: 'OFF_TOPIC', severity: 0.3 },
-                    { mode: 'FACTUAL_ERROR', severity: 0.5 },
-                    { mode: 'NEAR_DUPLICATE', triggered: true },
+                    { mode: 'OFF_TOPIC', severity: 0.3, flagged: true },
+                    { mode: 'FACTUAL_ERROR', severity: 0.5, flagged: true },
+                    { mode: 'NEAR_DUPLICATE', severity: 0.9, triggered: true },
                 ],
             }),
         ]);
 
         const [item] = component.needsReviewViews();
-        expect(item.flaggedVerdicts.map((flagged) => flagged.verdict.mode)).toEqual(['FACTUAL_ERROR', 'OFF_TOPIC', 'NEAR_DUPLICATE']);
-        expect(item.flaggedVerdicts.map((flagged) => flagged.percent)).toEqual([50, 30, 0]);
+        expect(item.flaggedVerdicts.map((flagged) => flagged.verdict.mode)).toEqual(['FACTUAL_ERROR', 'OFF_TOPIC']);
+        expect(item.flaggedVerdicts.map((flagged) => flagged.percent)).toEqual([50, 30]);
         expect(item.verdicts).toHaveLength(5);
-        expect(item.scorePercent).toBe(50);
+        expect(item.scorePercent).toBe(10);
+    });
+
+    it('should follow the server flags and keep unflagged verdicts in the rationale only', () => {
+        setup([
+            question(1, { flagged: [{ mode: 'NEAR_DUPLICATE', severity: 0.9, triggered: true }] }),
+            question(2, { flagged: [{ mode: 'ILL_FORMED_DISTRACTORS', severity: 0.2 }] }),
+            question(3, { flagged: [{ mode: 'ILL_FORMED_DISTRACTORS', severity: 0.4, flagged: true }] }),
+        ]);
+
+        expect(component.needsReviewViews().map((item) => item.question.id)).toEqual([3]);
+        expect(component.acceptedViews().map((item) => item.question.id)).toEqual([1, 2]);
+        expect(component.acceptedViews().map((item) => item.flaggedVerdicts.length)).toEqual([0, 0]);
+        expect(component.acceptedViews()[0].verdicts.find((entry) => entry.verdict.mode === 'NEAR_DUPLICATE')?.percent).toBe(90);
     });
 
     it('should toggle the rationale of a question', () => {
         setup(defaultQuestions());
 
         expect(fixture.debugElement.query(By.css('[data-testid="pool-rationale-2"]'))).toBeNull();
-        component.toggleRationale(2);
+        fixture.debugElement.queryAll(By.css('[data-testid="pool-item-2"] button'))[0].nativeElement.click();
         fixture.detectChanges();
         expect(component.needsReviewViews()[0].expanded).toBe(true);
         expect(fixture.debugElement.query(By.css('[data-testid="pool-rationale-2"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="pool-verdict-2-ILL_FORMED_DISTRACTORS"]'))).not.toBeNull();
         component.toggleRationale(2);
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('[data-testid="pool-rationale-2"]'))).toBeNull();
     });
 
-    it('should emit the review decision and return to pending when the same decision is taken again', () => {
-        setup(defaultQuestions());
-        const emitted = vi.fn();
-        component.review.subscribe(emitted);
-
-        component.setReview(question(2), 'APPROVED');
-        component.setReview(question(2, { reviewState: 'APPROVED' }), 'APPROVED');
-        component.setReview(question(3, { reviewState: 'APPROVED' }), 'EXCLUDED');
-
-        expect(emitted).toHaveBeenNthCalledWith(1, { questionId: 2, reviewState: 'APPROVED' });
-        expect(emitted).toHaveBeenNthCalledWith(2, { questionId: 2, reviewState: 'PENDING' });
-        expect(emitted).toHaveBeenNthCalledWith(3, { questionId: 3, reviewState: 'EXCLUDED' });
-    });
-
     it('should emit from the buttons and hide them without review rights', () => {
-        setup(defaultQuestions());
+        setup([question(1), question(2, { reviewState: 'APPROVED' })]);
         const emitted = vi.fn();
         component.review.subscribe(emitted);
 
         fixture.debugElement.query(By.css('[data-testid="pool-approve-1"]')).nativeElement.click();
         expect(emitted).toHaveBeenCalledWith({ questionId: 1, reviewState: 'APPROVED' });
+        fixture.debugElement.query(By.css('[data-testid="pool-approve-2"]')).nativeElement.click();
+        expect(emitted).toHaveBeenCalledWith({ questionId: 2, reviewState: 'PENDING' });
+        fixture.debugElement.query(By.css('[data-testid="pool-exclude-2"]')).nativeElement.click();
+        expect(emitted).toHaveBeenCalledWith({ questionId: 2, reviewState: 'EXCLUDED' });
 
         fixture.componentRef.setInput('canReview', false);
         fixture.detectChanges();
