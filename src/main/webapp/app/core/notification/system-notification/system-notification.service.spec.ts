@@ -29,7 +29,7 @@ describe('SystemNotificationService generated HTTP boundary', () => {
     it('finds a body model with the same instants without mutating the wire DTO', () => {
         let result: SystemNotification | undefined;
         service.find(1).subscribe((notification) => (result = notification));
-        httpMock.expectOne({ method: 'GET', url: '/api/notification/system-notifications/1' }).flush(wire);
+        httpMock.expectOne({ method: 'GET', url: '/api/notification/admin/system-notifications/1' }).flush(wire);
         expect(result?.id).toBe(1);
         expect(dayjs.isDayjs(result?.notificationDate)).toBe(true);
         expect(result?.notificationDate?.toISOString()).toBe('2026-10-25T00:30:00.000Z');
@@ -41,17 +41,29 @@ describe('SystemNotificationService generated HTTP boundary', () => {
     it('propagates a missing notification error instead of manufacturing a response', () => {
         let error: HttpErrorResponse | undefined;
         service.find(99).subscribe({ error: (response: HttpErrorResponse) => (error = response) });
-        httpMock.expectOne('/api/notification/system-notifications/99').flush(null, { status: 404, statusText: 'Not Found' });
+        httpMock.expectOne('/api/notification/admin/system-notifications/99').flush(null, { status: 404, statusText: 'Not Found' });
         expect(error?.status).toBe(404);
+    });
+
+    it('propagates forbidden admin reads without falling back to a public endpoint', () => {
+        let listError: HttpErrorResponse | undefined;
+        let detailError: HttpErrorResponse | undefined;
+        service.query().subscribe({ error: (error: HttpErrorResponse) => (listError = error) });
+        service.find(1).subscribe({ error: (error: HttpErrorResponse) => (detailError = error) });
+        httpMock.expectOne('/api/notification/admin/system-notifications').flush(null, { status: 403, statusText: 'Forbidden' });
+        httpMock.expectOne('/api/notification/admin/system-notifications/1').flush(null, { status: 403, statusText: 'Forbidden' });
+        expect(listError?.status).toBe(403);
+        expect(detailError?.status).toBe(403);
+        httpMock.expectNone('/api/notification/public/system-notifications/active');
     });
 
     it('preserves ordered repeated sorts, page zero, pagination headers and response metadata', () => {
         let result: HttpResponse<SystemNotification[]> | undefined;
-        const link = '</api/notification/system-notifications?page=1&size=10>; rel="next"';
+        const link = '</api/notification/admin/system-notifications?page=1&size=10>; rel="next"';
         service.query({ page: 0, size: 10, sort: ['notificationDate,desc', 'id,asc'] }).subscribe((response) => (result = response));
         const request = httpMock.expectOne((req) => req.method === 'GET');
         const url = new URL(request.request.urlWithParams, 'https://artemis.example');
-        expect(url.pathname).toBe('/api/notification/system-notifications');
+        expect(url.pathname).toBe('/api/notification/admin/system-notifications');
         expect(url.searchParams.get('page')).toBe('0');
         expect(url.searchParams.get('size')).toBe('10');
         expect(url.searchParams.getAll('sort')).toEqual(['notificationDate,desc', 'id,asc']);
@@ -67,7 +79,7 @@ describe('SystemNotificationService generated HTTP boundary', () => {
     it('leaves omitted paging options to the server and preserves an empty page and total zero', () => {
         let result: HttpResponse<SystemNotification[]> | undefined;
         service.query().subscribe((response) => (result = response));
-        httpMock.expectOne('/api/notification/system-notifications').flush([], { headers: { 'X-Total-Count': '0' } });
+        httpMock.expectOne('/api/notification/admin/system-notifications').flush([], { headers: { 'X-Total-Count': '0' } });
         expect(result?.body).toEqual([]);
         expect(result?.headers.get('X-Total-Count')).toBe('0');
     });
@@ -75,7 +87,7 @@ describe('SystemNotificationService generated HTTP boundary', () => {
     it('preserves a null list body', () => {
         let result: HttpResponse<SystemNotification[]> | undefined;
         service.query().subscribe((response) => (result = response));
-        httpMock.expectOne('/api/notification/system-notifications').flush(null);
+        httpMock.expectOne('/api/notification/admin/system-notifications').flush(null);
         expect(result?.body).toBeNull();
     });
 

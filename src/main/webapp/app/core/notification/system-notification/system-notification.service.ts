@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { SystemNotification } from 'app/admin/system-notification-management/system-notification.model';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
-import { SystemNotificationApi } from 'app/openapi/api/system-notification-api';
+import { AdminSystemNotificationApi } from 'app/openapi/api/admin-system-notification-api';
 import { PublicSystemNotificationApi } from 'app/openapi/api/public-system-notification-api';
 import { SystemNotification as SystemNotificationDto } from 'app/openapi/model/system-notification';
 import { Observable, map } from 'rxjs';
@@ -13,7 +13,7 @@ type SystemNotificationQueryOptions = { page?: number; size?: number; sort?: str
 /** Keeps instant conversion at the boundary; all REST transport is generated. */
 @Service()
 export class SystemNotificationService {
-    private api = inject(SystemNotificationApi);
+    private api = inject(AdminSystemNotificationApi);
     private publicApi = inject(PublicSystemNotificationApi);
 
     find(systemNotificationId: number): Observable<SystemNotification> {

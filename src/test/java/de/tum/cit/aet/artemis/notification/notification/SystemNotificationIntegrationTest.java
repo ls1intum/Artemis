@@ -233,23 +233,21 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(roles = "TA")
-    void shouldAllowTutorPagingWithRepeatedSortButForbidDetailAndAdminOperations() throws Exception {
-        request.performMvcRequest(get("/api/notification/system-notifications").param("page", "0").param("size", "1").param("sort", "notificationDate,desc", "id,asc"))
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void shouldAllowAdminPagingWithRepeatedSortAndDetail() throws Exception {
+        request.performMvcRequest(get("/api/notification/admin/system-notifications").param("page", "0").param("size", "1").param("sort", "notificationDate,desc", "id,asc"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(systemNotificationFuture.getId()))
                 .andExpect(header().string("X-Total-Count", "3"))
                 .andExpect(header().string("Link", org.hamcrest.Matchers.allOf(org.hamcrest.Matchers.containsString("page=1"), org.hamcrest.Matchers.containsString("rel=\"next\""),
                         org.hamcrest.Matchers.containsString("sort=notificationDate,desc"), org.hamcrest.Matchers.containsString("sort=id,asc"))));
-        request.get("/api/notification/system-notifications/" + systemNotificationActive.getId(), HttpStatus.FORBIDDEN, SystemNotificationDTO.class);
-        request.get("/api/notification/admin/system-notifications/maintenance-recipients-count", HttpStatus.FORBIDDEN, Long.class);
-        request.post("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), HttpStatus.FORBIDDEN);
+        request.get("/api/notification/admin/system-notifications/" + systemNotificationActive.getId(), HttpStatus.OK, SystemNotificationDTO.class);
+        request.get("/api/notification/admin/system-notifications/" + Long.MAX_VALUE, HttpStatus.NOT_FOUND, SystemNotificationDTO.class);
     }
 
     @Test
     @WithMockUser(roles = "EDITOR")
-    void shouldAllowEditorDetailButForbidAdminWrites() throws Exception {
-        request.get("/api/notification/system-notifications/" + systemNotificationActive.getId(), HttpStatus.OK, SystemNotificationDTO.class);
-        request.get("/api/notification/system-notifications/" + Long.MAX_VALUE, HttpStatus.NOT_FOUND, SystemNotificationDTO.class);
+    void shouldForbidEditorAdministrationReadsAndWrites() throws Exception {
+        assertAdministrationReadsForbidden();
         request.post("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), HttpStatus.FORBIDDEN);
         request.put("/api/notification/admin/system-notifications", toUpdateDTO(systemNotificationActive), HttpStatus.FORBIDDEN);
         request.delete("/api/notification/admin/system-notifications/" + systemNotificationActive.getId(), HttpStatus.FORBIDDEN);
@@ -258,8 +256,31 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(roles = "USER")
     void shouldForbidStudentAdministrationReads() throws Exception {
-        request.getList("/api/notification/system-notifications", HttpStatus.FORBIDDEN, SystemNotificationDTO.class);
-        request.get("/api/notification/system-notifications/" + systemNotificationActive.getId(), HttpStatus.FORBIDDEN, SystemNotificationDTO.class);
+        assertAdministrationReadsForbidden();
+    }
+
+    @Test
+    @WithMockUser(roles = "TA")
+    void shouldForbidTutorAdministrationReads() throws Exception {
+        assertAdministrationReadsForbidden();
+    }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR")
+    void shouldForbidInstructorAdministrationReads() throws Exception {
+        assertAdministrationReadsForbidden();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void shouldRequireAuthenticationForAdministrationReads() throws Exception {
+        request.getList("/api/notification/admin/system-notifications", HttpStatus.UNAUTHORIZED, SystemNotificationDTO.class);
+        request.get("/api/notification/admin/system-notifications/" + systemNotificationActive.getId(), HttpStatus.UNAUTHORIZED, SystemNotificationDTO.class);
+    }
+
+    private void assertAdministrationReadsForbidden() throws Exception {
+        request.getList("/api/notification/admin/system-notifications", HttpStatus.FORBIDDEN, SystemNotificationDTO.class);
+        request.get("/api/notification/admin/system-notifications/" + systemNotificationActive.getId(), HttpStatus.FORBIDDEN, SystemNotificationDTO.class);
         request.get("/api/notification/admin/system-notifications/maintenance-recipients-count", HttpStatus.FORBIDDEN, Long.class);
     }
 
