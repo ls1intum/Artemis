@@ -19,8 +19,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 /**
  * Test suite for TextBlockAssessmentCardComponent.
@@ -283,12 +281,11 @@ describe('TextblockAssessmentCardComponent', () => {
         textBlockRef.initFeedback();
         reapplyTextBlockRef(textBlockRef);
 
-        const openDeleteDialog = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog');
-        const deleteButton = fixture.debugElement.nativeElement.querySelector('[data-testid="delete-feedback"]') as HTMLButtonElement;
+        const deleteButton = fixture.debugElement.nativeElement.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement;
         expect(deleteButton).toBeTruthy();
         deleteButton.click();
         expect(textBlockRef.feedback).toBeDefined();
-        triggerDeleteDialogDelete(openDeleteDialog.mock.calls[0][0].delete);
+        deleteButton.click();
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.textBlockRef().feedback).toBeUndefined();
@@ -323,14 +320,13 @@ describe('TextblockAssessmentCardComponent', () => {
         fixture.componentRef.setInput('textBlockRef', textBlockRef);
         fixture.changeDetectorRef.detectChanges();
 
-        const openDeleteDialog = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog');
-        const deleteButton = fixture.debugElement.query(By.css('[data-testid="delete-feedback"]'));
+        const deleteButton = fixture.debugElement.query(By.css('[data-testid="delete-feedback"] button'));
         expect(deleteButton).toBeTruthy();
 
         // No change detection afterwards on purpose: confirming deletion emits didSelect(undefined) synchronously, and the real parent destroys this editor.
         deleteButton.nativeElement.click();
         expect(textBlockRef.feedback).toBeDefined();
-        triggerDeleteDialogDelete(openDeleteDialog.mock.calls[0][0].delete);
+        deleteButton.nativeElement.click();
 
         expect(textBlockRef.feedback).toBeUndefined();
     });

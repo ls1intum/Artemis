@@ -16,7 +16,7 @@
     >
         <ng-container ngProjectAs="[unifiedFeedbackBeforeDetail]">
             @if (!readOnly() && selectionService.hasArmedInstruction()) {
-                <button tumAetUiButton size="small" type="button" variant="outlined" severity="secondary" (click)="applyArmedInstruction()">
+                <button class="assessment-apply-instruction" tumAetUiButton size="small" type="button" variant="outlined" severity="secondary" (click)="applyArmedInstruction()">
                     <span jhiTranslate="artemisApp.exercise.applyArmedInstruction"></span>
                 </button>
             }

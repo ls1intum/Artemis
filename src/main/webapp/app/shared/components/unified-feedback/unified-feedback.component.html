@@ -100,20 +100,14 @@
                             }
                             @if (!readOnly()) {
                                 @if (assessmentLayout()) {
-                                    <button
-                                        type="button"
-                                        jhiDeleteButton
-                                        class="unified-feedback-icon-btn"
+                                    <jhi-confirm-icon
                                         data-testid="delete-feedback"
-                                        [renderButtonStyle]="false"
-                                        [renderButtonText]="false"
-                                        deleteQuestion="artemisApp.feedback.delete.question"
-                                        [translateValues]="{ text: '' }"
-                                        [attr.aria-label]="dismissTooltip()"
-                                        (delete)="handleDeleteConfirmed()"
-                                    >
-                                        <fa-icon [icon]="faTrashAlt" />
-                                    </button>
+                                        [initialIcon]="faTrashAlt"
+                                        [confirmIcon]="faTimes"
+                                        [initialTooltip]="dismissTooltip()"
+                                        [confirmTooltip]="dismissConfirmTooltip()"
+                                        (confirmEvent)="handleDeleteConfirmed()"
+                                    />
                                 } @else if (canDismissWithoutConfirm()) {
                                     <button
                                         type="button"

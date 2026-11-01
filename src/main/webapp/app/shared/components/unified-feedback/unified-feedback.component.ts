@@ -15,7 +15,6 @@ import {
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
@@ -42,7 +41,6 @@ interface FeedbackTypeConfig {
         TumAetUiTooltipDirective,
         FormsModule,
         ConfirmIconComponent,
-        DeleteButtonDirective,
         GradingInstructionLinkIconComponent,
         FeedbackSuggestionBadgeComponent,
         AssessmentCorrectionRoundBadgeComponent,
@@ -143,7 +141,6 @@ export class UnifiedFeedbackComponent {
     private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
     private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
     private readonly confirmIcon = viewChild(ConfirmIconComponent);
-    private readonly deleteButton = viewChild(DeleteButtonDirective);
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
         correct: { icon: faCheck, alertClass: 'unified-feedback--success' },
@@ -395,9 +392,7 @@ export class UnifiedFeedbackComponent {
     }
 
     toggleDeleteConfirm(): void {
-        if (this.assessmentLayout()) {
-            this.deleteButton()?.openDeleteDialog();
-        } else if (this.canDismissWithoutConfirm()) {
+        if (!this.assessmentLayout() && this.canDismissWithoutConfirm()) {
             this.handleDeleteConfirmed();
         } else {
             this.confirmIcon()?.toggle();

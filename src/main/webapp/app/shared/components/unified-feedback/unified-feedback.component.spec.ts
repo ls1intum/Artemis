@@ -1,5 +1,3 @@
-import { triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
@@ -16,7 +14,7 @@ import { By } from '@angular/platform-browser';
 import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { vi } from 'vitest';
-import { faExclamationTriangle, faMinus } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faMinus, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { typeIntoInputNumber } from 'test/helpers/input-number-test-helpers';
 
 describe('UnifiedFeedbackComponent', () => {
@@ -26,7 +24,7 @@ describe('UnifiedFeedbackComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [UnifiedFeedbackComponent],
-            providers: [{ provide: DeleteDialogService, useValue: { openDeleteDialog: vi.fn() } }, provideTranslateService()],
+            providers: [provideTranslateService()],
         }).compileComponents();
 
         const translateService = TestBed.inject(TranslateService);
@@ -40,22 +38,37 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.detectChanges();
     });
 
-    it('opens a delete popup for assessment cards and deletes only after confirmation', () => {
+    it.each([false, true])('requires two clicks to delete an assessment card (linked: %s)', (linked) => {
         fixture.componentRef.setInput('assessmentLayout', true);
         fixture.componentRef.setInput('editable', true);
-        component.feedbackDetail.set('Tutor comment');
+        if (linked) {
+            fixture.componentRef.setInput('feedback', { gradingInstruction: { id: 1 } });
+        }
         fixture.detectChanges();
         const deleted = vi.fn();
         component.onDelete.subscribe(deleted);
-        const dialog = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog');
-        (fixture.nativeElement.querySelector('[data-testid="delete-feedback"]') as HTMLButtonElement).click();
-        expect(dialog).toHaveBeenCalledOnce();
+        const button = fixture.nativeElement.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement;
+        expect(button.querySelector(`[data-icon="${faTrashAlt.iconName}"]`)).not.toBeNull();
+        button.click();
+        fixture.detectChanges();
         expect(deleted).not.toHaveBeenCalled();
-        const data = dialog.mock.calls[0][0];
-        expect(data.deleteQuestion).toBe('artemisApp.feedback.delete.question');
-        expect(data.translateValues).toEqual({ text: '' });
-        triggerDeleteDialogDelete(data.delete);
+        expect(button.querySelector(`[data-icon="${faTimes.iconName}"]`)).not.toBeNull();
+        expect(button.getAttribute('aria-label')).toBe(component.dismissConfirmTooltip());
+        button.click();
         expect(deleted).toHaveBeenCalledOnce();
+    });
+
+    it('resets assessment deletion confirmation when focus leaves', () => {
+        fixture.componentRef.setInput('assessmentLayout', true);
+        fixture.componentRef.setInput('editable', true);
+        fixture.detectChanges();
+        const deleted = vi.fn();
+        component.onDelete.subscribe(deleted);
+        const button = fixture.nativeElement.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement;
+        button.click();
+        button.dispatchEvent(new FocusEvent('blur'));
+        button.click();
+        expect(deleted).not.toHaveBeenCalled();
     });
 
     it('keeps missing-comment validation without coloring the assessment textarea', () => {

@@ -1,5 +1,3 @@
-import { triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -54,7 +52,6 @@ describe('TextBlockFeedbackEditorComponent', () => {
         await TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip), FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
             providers: [
-                { provide: DeleteDialogService, useValue: { openDeleteDialog: vi.fn() } },
                 MockProvider(ChangeDetectorRef),
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -103,7 +100,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(input).toBeTruthy();
     });
 
-    it('offers the confirmation-dialog delete action for both empty and populated assessment feedback', () => {
+    it('offers the two-step delete action for both empty and populated assessment feedback', () => {
         for (const [credits, detailText] of [
             [0, ''],
             [1, ''],
@@ -113,7 +110,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
             component.feedback().credits = credits;
             component.feedback().detailText = detailText;
             reapplyFeedback();
-            expect(compiled.querySelector('[data-testid="delete-feedback"]')).not.toBeNull();
+            expect(compiled.querySelector('[data-testid="delete-feedback"] button')).not.toBeNull();
             expect(compiled.querySelector('#dismiss-icon')).toBeNull();
             expect(compiled.querySelector('#confirm-icon')).toBeNull();
         }
@@ -133,16 +130,15 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(component.escKeyup).toHaveBeenCalledOnce();
     });
 
-    it('keeps the feedback until the tutor confirms the delete popup', () => {
+    it('keeps the feedback until the tutor clicks the delete control twice', () => {
         component.feedback().credits = 1;
         reapplyFeedback();
-        const dialog = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog');
         const close = vi.fn();
         component.onClose.subscribe(close);
-        (compiled.querySelector('[data-testid="delete-feedback"]') as HTMLButtonElement).click();
-        expect(dialog).toHaveBeenCalledOnce();
+        (compiled.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement).click();
         expect(close).not.toHaveBeenCalled();
-        triggerDeleteDialogDelete(dialog.mock.calls[0][0].delete);
+        fixture.detectChanges();
+        (compiled.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement).click();
         expect(close).toHaveBeenCalledOnce();
     });
 

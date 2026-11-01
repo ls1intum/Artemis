@@ -529,3 +529,10 @@
         color: var(--secondary);
     }
 }
+
+:host ::ng-deep .assessment-apply-instruction {
+    max-width: 100%;
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}

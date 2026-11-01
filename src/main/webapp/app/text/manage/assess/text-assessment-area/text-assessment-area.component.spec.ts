@@ -22,8 +22,6 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 describe('TextAssessmentAreaComponent', () => {
     let component: TextAssessmentAreaComponent;
@@ -303,7 +301,7 @@ describe('TextAssessmentAreaComponent', () => {
         const feedbackTextareas = (): HTMLTextAreaElement[] => Array.from(fixture.nativeElement.querySelectorAll('textarea.unified-feedback-detail-input'));
 
         const deleteFeedbackOfNewBlock = () => {
-            // Escape opens the delete confirmation for an assessment feedback card.
+            // Escape arms the inline delete confirmation.
             const unifiedFeedback = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent));
             unifiedFeedback.nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
             fixture.detectChanges();
@@ -347,10 +345,9 @@ describe('TextAssessmentAreaComponent', () => {
 
         it('should not throw when the feedback of the new block is deleted while Alt is still held', async () => {
             const handleErrorSpy = vi.spyOn(TestBed.inject(ErrorHandler), 'handleError');
-            const openDeleteDialog = vi.spyOn(TestBed.inject(DeleteDialogService), 'openDeleteDialog');
             selectWordsManually();
             deleteFeedbackOfNewBlock();
-            triggerDeleteDialogDelete(openDeleteDialog.mock.calls[0][0].delete);
+            (fixture.nativeElement.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement).click();
             fixture.detectChanges();
             expect(feedbackTextareas()).toHaveLength(0);
 
