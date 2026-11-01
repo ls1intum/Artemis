@@ -24,6 +24,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.read.ListAppender;
 import ch.qos.logback.core.spi.FilterReply;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 
 @Isolated("Captures JVM-wide logger state; concurrent Spring bootstrap temporarily suppresses logging.")
@@ -63,6 +64,16 @@ class LoggingAspectTest {
     void routineAuthenticationFailuresAreNotLogged(String message) {
         var joinPoint = mock(ProceedingJoinPoint.class);
         new LoggingAspect(new MockEnvironment()).logAfterThrowing(joinPoint, new LocalVCAuthException(message));
+        assertThat(appender.list).isEmpty();
+        verifyNoInteractions(joinPoint);
+    }
+
+    @Test
+    void aRejectedRequestOfARateLimitIsNotLoggedAsAnError() {
+        var joinPoint = mock(ProceedingJoinPoint.class);
+
+        new LoggingAspect(new MockEnvironment()).logAfterThrowing(joinPoint, new RateLimitExceededException(12));
+
         assertThat(appender.list).isEmpty();
         verifyNoInteractions(joinPoint);
     }

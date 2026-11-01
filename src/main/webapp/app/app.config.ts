@@ -5,7 +5,16 @@ import { FullscreenOverlayContainer, OVERLAY_DEFAULT_CONFIG, OverlayContainer } 
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { ApplicationConfig, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
+import {
+    ApplicationConfig,
+    ErrorHandler,
+    LOCALE_ID,
+    importProvidersFrom,
+    inject,
+    provideAppInitializer,
+    provideBrowserGlobalErrorListeners,
+    provideZonelessChangeDetection,
+} from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouteReuseStrategy, provideRouter, withPreloading, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
@@ -17,6 +26,7 @@ import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/inter
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
+import { ClientErrorHandler } from 'app/core/error-reporting/client-error.handler';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -56,6 +66,8 @@ export const appConfig: ApplicationConfig = {
             },
         }),
         provideZonelessChangeDetection(),
+        // Without zone.js nothing else forwards an uncaught error or an unhandled promise rejection to the ErrorHandler, which reports it
+        provideBrowserGlobalErrorListeners(),
 
         // TODO: we should add withComponentInputBinding here
         //  this would set non-route inputs to undefined, which not all components can handle, currently
@@ -72,6 +84,7 @@ export const appConfig: ApplicationConfig = {
         provideHttpClient(withInterceptorsFromDi()),
         Title,
         { provide: LOCALE_ID, useValue: 'en' },
+        { provide: ErrorHandler, useClass: ClientErrorHandler },
         { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
         provideAppInitializer(() => {

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.admin.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getIpStringFromRequest;
+import static de.tum.cit.aet.artemis.core.util.HttpRequestUtils.getPeerIpAddress;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -59,8 +60,8 @@ public class RateLimitService {
      * @throws RateLimitExceededException if the rate limit is exceeded
      */
     public void enforcePerMinute(IPAddress clientId, RateLimitType rpmType) {
-        // Skip rate limiting if disabled globally or disabled via feature toggle
-        if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit)) {
+        // Skip rate limiting if disabled globally or disabled via feature toggle, except for a limit that cannot be disabled
+        if (isSwitchedOff(rpmType)) {
             log.debug("Rate limiting is disabled globally, skipping enforcement for client {} at {}", clientId, rpmType.name());
             return;
         }
@@ -78,7 +79,13 @@ public class RateLimitService {
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             long seconds = Math.max(1, probe.getNanosToWaitForRefill() / 1_000_000_000L);
-            log.warn("Rate limit exceeded for client {} at {}, retry after {} seconds", clientId, rpmType.name(), seconds);
+            if (rpmType.isRejectionLogged()) {
+                log.warn("Rate limit exceeded for client {} at {}, retry after {} seconds", clientId, rpmType.name(), seconds);
+            }
+            else {
+                // a limit that exists to bound the log must not write a line for every request that it rejects
+                log.debug("Rate limit exceeded for client {} at {}, retry after {} seconds", clientId, rpmType.name(), seconds);
+            }
             throw new RateLimitExceededException(seconds);
         }
 
@@ -99,7 +106,7 @@ public class RateLimitService {
      * @return whether the client may still be served, {@code true} when rate limiting is off or the client is exempt
      */
     public boolean hasRemainingBudget(IPAddress clientId, RateLimitType rpmType) {
-        if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit) || configurationService.isExempt(clientId)) {
+        if (isSwitchedOff(rpmType) || configurationService.isExempt(clientId)) {
             return true;
         }
         return getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).getAvailableTokens() > 0;
@@ -115,10 +122,17 @@ public class RateLimitService {
      * @param rpmType  the rate limit type to determine the RPM configuration
      */
     public void consumePerMinute(IPAddress clientId, RateLimitType rpmType) {
-        if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit) || configurationService.isExempt(clientId)) {
+        if (isSwitchedOff(rpmType) || configurationService.isExempt(clientId)) {
             return;
         }
         getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).tryConsume(1);
+    }
+
+    /**
+     * Whether the limit of a type is not enforced because rate limiting is disabled. A type that is always enforced is never switched off.
+     */
+    private boolean isSwitchedOff(RateLimitType rpmType) {
+        return !rpmType.isAlwaysEnforced() && (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit));
     }
 
     private Bucket getOrCreatePerMinuteBucket(IPAddress clientId, RateLimitType rpmType, int rpm) {
@@ -155,6 +169,33 @@ public class RateLimitService {
             log.warn("Failed to parse IP address '{}' for rate limiting", ipString);
         }
 
+        return address;
+    }
+
+    /**
+     * Resolves the address of the TCP peer of the current request, which a sender cannot choose.
+     *
+     * <p>
+     * Unlike {@link #resolveClientId()}, this never reads {@code X-Forwarded-For} or any other header itself, so a sender cannot pick a new
+     * rate limit budget for every request, or pick an exempt address, by sending a header. The address is what Tomcat concluded:
+     * with {@code server.forward-headers-strategy: native} it believes the forwarding headers only of the proxies in
+     * {@code server.tomcat.remoteip.internal-proxies}, which by default are the private networks. Behind a reverse proxy
+     * outside of them, every client has the address of the proxy until that setting names it.
+     * </p>
+     *
+     * @return the address of the peer, or {@code null} if there is no request or the address cannot be parsed
+     */
+    public IPAddress resolvePeerId() {
+        HttpServletRequest request = currentRequest();
+        if (request == null) {
+            log.warn("Unable to resolve HTTP request context for rate limiting");
+            return null;
+        }
+        // nobody is trusted to forward an address here, so the header is never consulted
+        IPAddress address = getPeerIpAddress(request, _ -> false).orElse(null);
+        if (address == null) {
+            log.warn("Failed to parse the peer address {} for rate limiting", request.getRemoteAddr());
+        }
         return address;
     }
 

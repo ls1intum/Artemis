@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 152 features, 1152 REST endpoints in 29 modules, and 64 interaction overrides.
+Currently 20 product areas, 152 features, 1153 REST endpoints in 29 modules, and 65 interaction overrides.
 
 ## Courses
 
@@ -1402,6 +1402,7 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 | admin | `AdminMetricsResource` | 0 | 1 | 0 | 0 |
 | admin | `AdminScheduleResource` | 0 | 2 | 0 | 0 |
 | admin | `AdminWebsocketResource` | 1 | 0 | 1 | 0 |
+| core | `PublicClientErrorResource` | 0 | 0 | 1 | 0 |
 
 ### Usage statistics
 
@@ -1545,6 +1546,7 @@ The endpoints whose calls do not count the way their HTTP verb suggests, grouped
 * `GET api/programming/programming-exercises/{exerciseId}/selected-build-runs/{selectedBuildRunId}` (`PROGRAMMING_REEVALUATION`)
 * `GET api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title` (`TUTORIAL_GROUPS`)
 * `PATCH api/communication/courses/{courseId}/conversations/{conversationId}/mark-as-read` (`CONVERSATION_ORGANIZATION`)
+* `POST api/core/public/client-errors` (`MONITORING`)
 * `POST api/iris/chat/sessions/current` (`IRIS_CHAT`)
 * `POST api/iris/tutor-suggestion/posts/{postId}/sessions/current` (`IRIS_TUTOR_SUGGESTIONS`)
 * `PUT api/notification/courses/{courseId}/seen` (`COURSE_NOTIFICATIONS`)
