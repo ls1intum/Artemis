@@ -840,29 +840,22 @@ export class ExamScoresComponent implements OnInit {
             const regularCalculation = {
                 scoreAchieved: overallScore,
                 pointsAchieved: overAllPoints,
-                userId: studentResult.userId,
-                userLogin: studentResult.login,
             };
             // checking if the same as in the exam scores map
             const examScoreDTO = this.studentIdToExamScoreDTOs.get(studentResult.userId);
             if (!examScoreDTO) {
-                const errorMessage = `Exam scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
-                this.reportScoreCalculationError(errorMessage);
+                // Only the id of the student locates the discrepancy. The report must not contain the login or the scores of a student,
+                // as it is written to the console of whoever has this page open.
+                this.reportScoreCalculationError(`Exam scores of the student with the ID ${studentResult.userId} are not included in the new calculation`);
             } else {
                 examScoreDTO.scoreAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.scoreAchieved, this.course());
                 examScoreDTO.pointsAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.pointsAchieved, this.course());
 
                 if (Math.abs(examScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
-                    const errorMessage = `Different exam points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
-                        examScoreDTO,
-                    )}`;
-                    this.reportScoreCalculationError(errorMessage);
+                    this.reportScoreCalculationError(`Different exam points of the student with the ID ${studentResult.userId} in the new calculation`);
                 }
                 if (Math.abs(examScoreDTO.scoreAchieved - regularCalculation.scoreAchieved) > 0.1) {
-                    const errorMessage = `Different exam score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
-                        examScoreDTO,
-                    )}`;
-                    this.reportScoreCalculationError(errorMessage);
+                    this.reportScoreCalculationError(`Different exam score of the student with the ID ${studentResult.userId} in the new calculation`);
                 }
             }
         }
