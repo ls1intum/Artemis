@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ActionType, DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { EventEmitter } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
@@ -13,13 +13,13 @@ import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('Delete Dialog Service', () => {
     let service: DeleteDialogService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let alertService: AlertService;
 
     const mockDialogRef = {
         onClose: new Subject<void>(),
         close: vi.fn(),
-    } as unknown as DynamicDialogRef;
+    } as unknown as TumAetUiDialogRef;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -27,7 +27,7 @@ describe('Delete Dialog Service', () => {
                 DeleteDialogService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
-                    provide: DialogService,
+                    provide: TumAetUiDialogService,
                     useValue: {
                         open: vi.fn().mockReturnValue(mockDialogRef),
                     },
@@ -42,7 +42,7 @@ describe('Delete Dialog Service', () => {
             ],
         });
         service = TestBed.inject(DeleteDialogService);
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         alertService = TestBed.inject(AlertService);
     });
 
@@ -70,8 +70,7 @@ describe('Delete Dialog Service', () => {
             DeleteDialogComponent,
             expect.objectContaining({
                 header: expect.any(String),
-                width: '50rem',
-                modal: true,
+                size: 'medium',
                 closable: true,
                 closeOnEscape: true,
                 dismissableMask: false,

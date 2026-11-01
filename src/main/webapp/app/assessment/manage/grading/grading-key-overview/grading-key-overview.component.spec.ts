@@ -89,6 +89,17 @@ describe('GradingKeyOverviewComponent', () => {
         expect(printSpy).toHaveBeenCalledTimes(1);
     });
 
+    it.each([false, true])('returns an instructor to the student exam summary for bonus=%s', (forBonus) => {
+        route.snapshot.params['studentExamId'] = '373';
+        route.snapshot.data['forBonus'] = forBonus;
+        fixture.detectChanges();
+        const navigateBack = vi.spyOn(TestBed.inject(ArtemisNavigationUtilService), 'navigateBack');
+
+        component.previousState();
+
+        expect(navigateBack).toHaveBeenCalledWith(['course-management', '345', 'exams', '123', 'student-exams', '373', 'summary']);
+    });
+
     it.each([456, undefined])('should call the back method on the nav util service on previousState for examId %s', (examId) => {
         const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
         const navUtilServiceSpy = vi.spyOn(navUtilService, 'navigateBack');

@@ -1,0 +1,22 @@
+<div class="tumaet-ui-splitter-panel" [style.flex-grow]="size()">
+    <ng-container [ngTemplateOutlet]="panels()[0]" />
+</div>
+<div
+    class="tumaet-ui-splitter-separator"
+    role="separator"
+    tabindex="0"
+    [attr.aria-label]="separatorLabel()"
+    [attr.aria-orientation]="layout() === 'horizontal' ? 'vertical' : 'horizontal'"
+    [attr.aria-valuenow]="size()"
+    [attr.aria-valuemin]="minimum()"
+    [attr.aria-valuemax]="maximum()"
+    (pointerdown)="startResize($event)"
+    (pointermove)="moveResize($event)"
+    (pointerup)="finishResize($event)"
+    (pointercancel)="finishResize($event)"
+    (lostpointercapture)="finishResize($event)"
+    (keydown)="resizeWithKeyboard($event)"
+></div>
+<div class="tumaet-ui-splitter-panel" [style.flex-grow]="100 - size()">
+    <ng-container [ngTemplateOutlet]="panels()[1]" />
+</div>

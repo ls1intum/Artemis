@@ -17,8 +17,7 @@ import { CourseGroupComponent } from 'app/course/shared/course-group/course-grou
 import * as csvUtils from 'app/shared-ui/user-import/util/write-users-to-csv';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockProvider } from 'ng-mocks';
-import { TableLazyLoadEvent } from 'primeng/table';
-import { TableViewComponent } from 'app/shared-ui/table-view/table-view';
+import { TableViewComponent, TableViewLazyLoadEvent } from 'app/shared-ui/table-view/table-view';
 import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
@@ -46,17 +45,14 @@ describe('CourseGroupComponent', () => {
     const user1 = new User(1, 'user1');
     const user2 = new User(2, 'user2');
 
-    const mockLazyEvent: TableLazyLoadEvent = { first: 0, rows: 50 };
+    const mockLazyEvent: TableViewLazyLoadEvent = { first: 0, rows: 50 };
 
-    // Uses the real TableViewComponent (only its internal `dt` PrimeNG viewChild is mocked, matching TableViewComponent's
-    // own spec) instead of a plain-object stub, so reactive reads inside methods like reset() are part of the test.
+    // Use the real table so reactive reads inside methods such as reset() remain part of the test.
     function createRealTableView(): TableViewComponent<CourseRoleMember> {
         const tableViewFixture = TestBed.createComponent(TableViewComponent<CourseRoleMember>);
         const tableView = tableViewFixture.componentInstance;
         tableViewFixture.componentRef.setInput('cols', []);
         tableViewFixture.componentRef.setInput('vals', []);
-        const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
-        vi.spyOn(tableView, 'dt').mockReturnValue(mockTable as any);
         tableViewFixture.detectChanges();
         (comp as any).tableViewRef = () => tableView;
         return tableView;
