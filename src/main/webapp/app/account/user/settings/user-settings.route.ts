@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_STUDENT, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { DataGuard } from 'app/account/user/settings/data-guard.service';
+import { agentAccessGuard } from 'app/account/user/settings/agent-access-settings/agent-access.guard';
 import { learnerProfileGuard } from 'app/account/user/settings/learner-profile/learner-profile.guard';
 import { scienceSettingsGuard } from 'app/account/user/settings/science-settings/science-settings.guard';
 
@@ -115,6 +116,14 @@ export const routes: Routes = [
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.PASSKEYS',
                 },
+            },
+            {
+                path: 'agent-access',
+                loadComponent: () => import('app/account/user/settings/agent-access-settings/agent-access-settings.component').then((m) => m.AgentAccessSettingsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.agentAccess.title',
+                },
+                canActivate: [agentAccessGuard],
             },
             {
                 path: 'ide-preferences',

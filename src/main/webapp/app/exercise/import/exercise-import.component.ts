@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, DestroyRef, Injector, OnInit, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Injector, OnInit, afterNextRender, computed, inject, input, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -16,14 +16,12 @@ import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
-import { PaginatorModule } from 'primeng/paginator';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { faArrowLeft, faEye } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizQuestionPreviewComponent } from 'app/quiz/manage/quiz-question-preview/quiz-question-preview.component';
@@ -51,14 +49,14 @@ const DEFAULT_SORT_COLUMN = 'ID';
         SortDirective,
         SortByDirective,
         FaIconComponent,
-        NgbHighlight,
-        ButtonComponent,
-        PaginatorModule,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
         ExerciseCourseTitlePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
         TumAetUiButtonComponent,
-        TumAetUiDialogComponent,
         TumAetUiTooltipDirective,
         QuizQuestionPreviewComponent,
     ],
@@ -67,8 +65,9 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     private injector = inject(Injector);
     private quizExerciseService = inject(QuizExerciseService);
     private alertService = inject(AlertService);
-    private document = inject(DOCUMENT);
     private previewDestroyRef = inject(DestroyRef);
+    private host = inject<ElementRef<HTMLElement>>(ElementRef);
+    private document = inject(DOCUMENT);
     readonly ExerciseType = ExerciseType;
 
     exerciseType = input<ExerciseType | undefined>();
@@ -88,14 +87,16 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     readonly isExamFilter = signal(true);
 
     protected readonly faEye = faEye;
+    protected readonly faArrowLeft = faArrowLeft;
     /** A preview shows the questions of a quiz, which the other exercise types do not have. */
     protected readonly isPreviewAvailable = computed(() => this.selectedExerciseType() === ExerciseType.QUIZ);
+    /** The quiz shown instead of the list, if any. */
     readonly preview = signal<ExerciseImportPreview | undefined>(undefined);
-    readonly previewVisible = signal(false);
     /** The id of the exercise whose quiz is currently loaded for the preview. */
     readonly previewLoadingId = signal<number | undefined>(undefined);
-    /** The button that opened the preview. It is disabled while the quiz loads, so the dialog cannot restore the focus to it on its own. */
+    /** The button that opened the preview, which gets the focus back when the preview is closed. */
     private previewTrigger?: HTMLElement;
+    private readonly previewHeading = viewChild('previewHeading', { read: ElementRef<HTMLElement> });
     protected readonly previewTotalPoints = computed(() => (this.preview()?.quiz.quizQuestions ?? []).reduce((total, question) => total + (question.points ?? 0), 0));
 
     titleKey?: string;
@@ -106,22 +107,11 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         // Therefore we temporally use this empty paging service which directly gets overwritten in ngOnInit().
         super(undefined);
 
-        // The preview is a dialog of its own on top of the PrimeNG import dialog, which closes on every Escape press at document level.
-        // Handle Escape for the preview first, so that it closes only the preview and the import dialog stays open.
-        effect((onCleanup) => {
-            if (!this.previewVisible()) {
-                return;
-            }
-            const closePreviewOnEscape = (event: KeyboardEvent) => {
-                if (event.key === 'Escape') {
-                    event.stopPropagation();
-                    this.previewVisible.set(false);
-                }
-            };
-            // eslint-disable-next-line localRules/enforce-cleanup-on-destroy -- removed via the effect's onCleanup, which runs on destroy
-            this.document.addEventListener('keydown', closePreviewOnEscape, true);
-            onCleanup(() => this.document.removeEventListener('keydown', closePreviewOnEscape, true));
-        });
+        // Escape closes the dialog that hosts this component, whichever of its controls has the focus. While the preview is shown,
+        // it leads back to the list instead. The capture phase of the document sees the key before the handler of the dialog does.
+        const onKeydown = (event: KeyboardEvent) => this.onPreviewEscape(event);
+        this.document.addEventListener('keydown', onKeydown, true);
+        this.previewDestroyRef.onDestroy(() => this.document.removeEventListener('keydown', onKeydown, true));
     }
 
     override ngOnInit(): void {
@@ -203,7 +193,7 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     }
 
     /**
-     * Loads the complete quiz of the given row, which the paged search does not contain, and shows it in the preview dialog.
+     * Loads the complete quiz of the given row, which the paged search does not contain, and shows it instead of the list.
      * Only one quiz is loaded at a time.
      *
      * @param exercise the row the user wants to preview
@@ -215,30 +205,61 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         }
         this.previewTrigger = event?.currentTarget instanceof HTMLElement ? event.currentTarget : undefined;
         this.previewLoadingId.set(exercise.id);
-        this.quizExerciseService
-            .find(exercise.id)
+        (exercise.exerciseGroup ? this.quizExerciseService.findForExam(exercise.id) : this.quizExerciseService.find(exercise.id))
             .pipe(takeUntilDestroyed(this.previewDestroyRef))
             .subscribe({
                 next: (quiz) => {
                     this.previewLoadingId.set(undefined);
                     this.preview.set({ exercise, quiz });
-                    this.previewVisible.set(true);
+                    // The heading exists after the next render. Moving the focus there keeps it from staying on the now hidden row.
+                    afterNextRender(() => this.previewHeading()?.nativeElement.focus(), { injector: this.injector });
                 },
                 error: () => {
                     this.previewLoadingId.set(undefined);
                     this.alertService.error('artemisApp.exercise.import.preview.loadFailed');
+                    // The button was disabled while loading, which moved the focus away from it.
+                    this.restoreFocusToList();
                 },
             });
     }
 
     /**
-     * Forgets the previewed quiz once its dialog is gone and gives the focus back to the button that opened it.
-     * The dialog restores the focus on its own only to what was focused when it opened, and that is no longer the button.
+     * Shows the list again and gives the focus back to the button that opened the preview.
      */
-    protected onPreviewHidden(): void {
+    protected closePreview(): void {
         this.preview.set(undefined);
-        this.previewTrigger?.focus();
+        // The list is only visible after the next render, and an element of a hidden list cannot take the focus.
+        this.restoreFocusToList();
+    }
+
+    /**
+     * Keeps Escape from closing the import dialog while the preview is shown, and shows the list instead.
+     * Without a preview, Escape is left to the dialog that hosts this component.
+     *
+     * @param event the keydown event, which only matters if it is the Escape key
+     */
+    private onPreviewEscape(event: KeyboardEvent): void {
+        if (!this.preview() || event.key !== 'Escape' || event.isComposing) {
+            return;
+        }
+        event.stopPropagation();
+        this.closePreview();
+    }
+
+    /**
+     * Focuses the preview button that was clicked last. The row of that button is gone if the list has changed in the meantime,
+     * so the first preview button of the list takes the focus then.
+     */
+    private restoreFocusToList(): void {
+        const trigger = this.previewTrigger;
         this.previewTrigger = undefined;
+        afterNextRender(
+            () => {
+                const target = trigger?.isConnected ? trigger : this.host.nativeElement.querySelector<HTMLElement>('[data-testid^="preview-exercise-"] button');
+                target?.focus();
+            },
+            { injector: this.injector },
+        );
     }
 
     /**
@@ -249,8 +270,25 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         if (!preview) {
             return;
         }
-        this.previewVisible.set(false);
         this.selectImport(preview.exercise);
+    }
+
+    highlightParts(value: string | undefined): { text: string; highlighted: boolean }[] {
+        if (!value || !this.searchTerm) {
+            return [{ text: value ?? '', highlighted: false }];
+        }
+        const parts: { text: string; highlighted: boolean }[] = [];
+        const term = this.searchTerm.toLocaleLowerCase();
+        let start = 0;
+        let match = value.toLocaleLowerCase().indexOf(term);
+        while (match !== -1) {
+            parts.push({ text: value.slice(start, match), highlighted: false });
+            parts.push({ text: value.slice(match, match + term.length), highlighted: true });
+            start = match + term.length;
+            match = value.toLocaleLowerCase().indexOf(term, start);
+        }
+        parts.push({ text: value.slice(start), highlighted: false });
+        return parts;
     }
 
     asProgrammingExercise(exercise: Exercise): ProgrammingExercise {

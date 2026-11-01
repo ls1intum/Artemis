@@ -1,6 +1,0 @@
-{
-    "targets": {
-        "node": 20
-    },
-    "presets": ["@babel/preset-env"]
-}

@@ -1,12 +1,13 @@
-import { Component, OnInit, inject, input, output, viewChild } from '@angular/core';
-import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
+import { Component, DestroyRef, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import { Observable, Subject, combineLatest, of } from 'rxjs';
 import { User } from 'app/account/user/user.model';
-import { catchError, debounceTime, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -14,14 +15,13 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-team-owner-search',
     templateUrl: './team-owner-search.component.html',
-    imports: [FormsModule, NgbTypeahead, ArtemisTranslatePipe],
+    imports: [FormsModule, TumAetUiAutoCompleteComponent, ArtemisTranslatePipe],
 })
 export class TeamOwnerSearchComponent implements OnInit {
     private courseService = inject(CourseManagementService);
+    private readonly destroyRef = inject(DestroyRef);
 
-    readonly ngbTypeahead = viewChild.required<NgbTypeahead>('instance');
-    focus = new Subject<string>();
-    click = new Subject<string>();
+    readonly autocomplete = viewChild<TumAetUiAutoCompleteComponent>('autocomplete');
 
     readonly inputDisabled = input(false);
 
@@ -39,7 +39,13 @@ export class TeamOwnerSearchComponent implements OnInit {
     ownerOptions: User[] = [];
     ownerOptionsLoaded = false;
 
-    inputDisplayValue = '';
+    private readonly displayValue = signal('');
+    get inputDisplayValue(): string {
+        return this.displayValue();
+    }
+    set inputDisplayValue(value: string) {
+        this.displayValue.set(value);
+    }
 
     /**
      * Life cycle hook to indicate component creation is done
@@ -49,6 +55,28 @@ export class TeamOwnerSearchComponent implements OnInit {
         if (team.owner) {
             this.owner = deepClone(team.owner);
             this.inputDisplayValue = this.searchResultFormatter(this.owner);
+        }
+    }
+
+    readonly suggestions = signal<{ label: string; value: User; disabled: boolean }[]>([]);
+    private readonly searchQuery = new Subject<string>();
+
+    constructor() {
+        this.onSearch(this.searchQuery)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((values) => {
+                this.suggestions.set(values.map((value) => ({ label: this.searchResultFormatter(value), value, disabled: false })));
+            });
+    }
+
+    requestSearch(query: string): void {
+        this.searchQuery.next(query);
+    }
+
+    selectOption(event: TumAetUiAutoCompleteOptionEvent): void {
+        const option = this.suggestions().find((suggestion) => suggestion === event.value);
+        if (option && !option.disabled) {
+            this.onAutocompleteSelect(option.value);
         }
     }
 
@@ -78,15 +106,14 @@ export class TeamOwnerSearchComponent implements OnInit {
     }
 
     onSearch = (text$: Observable<string>) => {
-        const clicksWithClosedPopup$ = this.click.pipe(filter(() => !this.ngbTypeahead().isPopupOpen()));
-        const inputFocus$ = this.focus;
-
         // Mirror the debounce/distinctUntilChanged pattern used in the sibling
         // team-student-search component: under heavy typing each keystroke would otherwise
         // fire an HTTP via switchMap and cancel the previous one, so the final response
         // can take 10-30s under load and the listbox never appears. Coalesce rapid typing
         // and drop duplicates before the request fires.
-        return merge(text$.pipe(debounceTime(200), distinctUntilChanged()), inputFocus$, clicksWithClosedPopup$).pipe(
+        return text$.pipe(
+            debounceTime(200),
+            distinctUntilChanged(),
             tap(() => {
                 this.searchNoResults.emit(undefined);
             }),

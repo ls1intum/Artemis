@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompe
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.StandardizedCompetencyService;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -58,7 +58,7 @@ public class StandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing the standardized competency, or with status 404 (Not Found)
      */
     @GetMapping("{competencyId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     public ResponseEntity<StandardizedCompetencyResultDTO> getStandardizedCompetency(@PathVariable long competencyId) {
         log.debug("REST request to get standardized competency with id : {}", competencyId);
 
@@ -73,7 +73,7 @@ public class StandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing the knowledge areas
      */
     @GetMapping("for-tree-view")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     public ResponseEntity<List<KnowledgeAreaResultDTO>> getAllForTreeView() {
         log.debug("REST request to all knowledge areas for tree view");
 
@@ -88,7 +88,7 @@ public class StandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing the list of sources
      */
     @GetMapping("sources")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     public ResponseEntity<List<SourceDTO>> getSources() {
         log.debug("REST request to get all sources");
 

@@ -1,18 +1,15 @@
-@use 'src/main/webapp/content/scss/themes/default-variables' as light;
-@use 'src/main/webapp/content/scss/themes/dark-variables' as dark;
-
 jhi-attachment-video-unit {
-    --lecture-combined-view-bg: #{light.$gray-100};
-    --lecture-combined-view-surface: #{light.$card-bg};
-    --lecture-combined-view-border: #{light.$card-border-color};
-    --lecture-combined-view-hover: #{light.$gray-200};
+    --lecture-combined-view-bg: var(--module-bg);
+    --lecture-combined-view-surface: var(--card-bg);
+    --lecture-combined-view-border: var(--border-color);
+    --lecture-combined-view-hover: var(--hover-slightly-darker-body-bg);
     --lecture-combined-view-radius: 0.15rem;
 
     &.dark-mode {
-        --lecture-combined-view-bg: #{dark.$gray-900};
-        --lecture-combined-view-surface: #{dark.$card-bg};
-        --lecture-combined-view-border: #{dark.$card-border-color};
-        --lecture-combined-view-hover: #{dark.$gray-700};
+        --lecture-combined-view-bg: var(--module-bg);
+        --lecture-combined-view-surface: var(--card-bg);
+        --lecture-combined-view-border: var(--border-color);
+        --lecture-combined-view-hover: var(--hover-slightly-darker-body-bg);
     }
 }
 
@@ -35,13 +32,13 @@ jhi-attachment-video-unit {
     .lecture-sync-toggle__label {
         font-size: 0.95rem;
         line-height: 1.3;
-        color: var(--bs-body-color);
+        color: var(--body-color);
     }
 
     .lecture-sync__notice {
         font-size: 0.8rem;
         line-height: 1.3;
-        color: var(--p-text-muted-color);
+        color: var(--text-body-secondary);
     }
 
     .sidebar-content {

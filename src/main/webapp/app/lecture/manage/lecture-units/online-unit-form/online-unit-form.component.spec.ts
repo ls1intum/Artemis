@@ -5,12 +5,11 @@ import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
 import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -28,7 +27,6 @@ describe('OnlineUnitFormComponent', () => {
             imports: [
                 ReactiveFormsModule,
                 FormsModule,
-                MockModule(NgbTooltipModule),
                 FontAwesomeTestingModule,
                 OnlineUnitFormComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -44,6 +42,7 @@ describe('OnlineUnitFormComponent', () => {
 
         onlineUnitFormComponentFixture = TestBed.createComponent(OnlineUnitFormComponent);
         onlineUnitFormComponent = onlineUnitFormComponentFixture.componentInstance;
+        onlineUnitFormComponentFixture.componentRef.setInput('courseId', 42);
     });
 
     afterEach(() => {
@@ -170,6 +169,7 @@ describe('OnlineUnitFormComponent', () => {
 
         // THEN
         expect(getOnlineResourceStub).toHaveBeenCalledTimes(1);
+        expect(getOnlineResourceStub).toHaveBeenCalledWith('https://example.com', 42);
         expect(onlineUnitFormComponent.sourceControl?.valid).toBe(true);
         expect(onlineUnitFormComponent.sourceControl?.value).toBe('https://example.com');
         expect(onlineUnitFormComponent.nameControl?.value).toEqual(resourceDto.title);

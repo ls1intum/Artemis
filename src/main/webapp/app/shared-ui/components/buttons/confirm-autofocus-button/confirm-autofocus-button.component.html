@@ -1,4 +1,33 @@
-<jhi-button [icon]="icon()" [title]="title()" [tooltip]="tooltip()" [disabled]="disabled()" [isLoading]="isLoading()" [btnType]="btnType()" (onClick)="onOpenConfirmationModal()" />
-<ng-template #content>
+<button
+    tumAetUiButton
+    type="button"
+    [severity]="severity()"
+    [variant]="variant()"
+    [disabled]="disabled() || isLoading()"
+    [tumAetUiTooltip]="tooltip() | artemisTranslate"
+    (click)="onOpenConfirmationModal()"
+>
+    @if (isLoading()) {
+        <fa-icon [icon]="faCircleNotch" animation="spin" />
+    } @else if (icon(); as buttonIcon) {
+        <fa-icon [icon]="buttonIcon" />
+    }
+    <span [jhiTranslate]="title()"></span>
+</button>
+<tumaet-ui-dialog
+    [(visible)]="visible"
+    [header]="confirmationTitle() || 'global.form.confirm' | artemisTranslate: confirmationTitleTranslationParams()"
+    size="medium"
+    (hidden)="onHidden()"
+>
+    @if (textIsMarkdown()) {
+        <div [innerHTML]="markdown()"></div>
+    } @else {
+        <p class="whitespace-pre-line">{{ translateText() ? (confirmationText() | artemisTranslate) : confirmationText() }}</p>
+    }
     <ng-content />
-</ng-template>
+    <ng-template #footer>
+        <button tumAetUiButton type="button" severity="secondary" (click)="visible.set(false)" jhiTranslate="global.form.cancel"></button>
+        <button tumAetUiButton type="button" severity="danger" cdkFocusInitial (click)="confirm()" jhiTranslate="global.form.confirm"></button>
+    </ng-template>
+</tumaet-ui-dialog>

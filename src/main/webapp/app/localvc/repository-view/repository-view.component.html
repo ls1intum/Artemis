@@ -43,20 +43,25 @@
 
                 @if (exercise()?.allowOfflineIde) {
                     <jhi-code-button
-                        [loading]="!!exercise()!.loading"
-                        [smallButtons]="false"
-                        [participations]="participation() ? [participation()] : []"
-                        [exercise]="exercise()"
+                        [disabled]="!!exercise()!.loading"
+                        [programmingLanguage]="exercise()?.programmingLanguage"
+                        [allowOnlineIde]="exercise()?.allowOnlineIde ?? false"
+                        [exerciseId]="exercise().id!"
                         [repositoryUri]="repositoryUri()"
-                        [repositoryType]="repositoryType()"
-                        [auxiliaryRepositoryId]="auxiliaryRepositoryId()"
-                        [routerLinkForRepositoryView]="[]"
+                        [repositoryViewLink]="[]"
+                        [vcsAccessTokenSourceInfo]="vcsAccessTokenDataForCodeButton()"
+                        size="small"
                     />
                 }
 
                 @if (exercise()?.id) {
                     @if (repositoryType() === 'USER') {
-                        <jhi-programming-exercise-student-repo-download [buttonSize]="ButtonSize.MEDIUM" [exerciseId]="exercise()!.id!" [participationId]="participation().id!" />
+                        <jhi-programming-exercise-student-repo-download
+                            [buttonSize]="ButtonSize.MEDIUM"
+                            [exerciseId]="exercise()!.id!"
+                            [participationId]="participation().id!"
+                            [audience]="ownsParticipation() ? 'owner' : exercise().isAtLeastInstructor ? 'instructor' : 'tutor'"
+                        />
                     } @else {
                         <jhi-programming-exercise-instructor-repo-download
                             [repositoryType]="repositoryType()"

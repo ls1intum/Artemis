@@ -37,106 +37,106 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
 
     @Disabled // TODO figure out a way to correctly mock repo URLs, alternatively: implement https://github.com/ls1intum/Artemis/issues/10318 which should fix the core issue too
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateValidAuxiliaryRepository() throws Exception {
         programmingExerciseIntegrationTestService.testValidateValidAuxiliaryRepository();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryIdSetOnRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryWithoutName() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithoutName();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryWithTooLongName() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithTooLongName();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryWithDuplicatedName() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithDuplicatedName();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryWithRestrictedName() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithRestrictedName();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory();
     }
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithoutCheckoutDirectory();
     }
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryWithNullCheckoutDirectory() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithNullCheckoutDirectory();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryWithTooLongDescription() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithTooLongDescription();
     }
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
         programmingExerciseIntegrationTestService.testValidateAuxiliaryRepositoryWithoutDescription();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
         programmingExerciseIntegrationTestService.testGetAuxiliaryRepositoriesMissingExercise();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAuxiliaryRepositoriesOk() throws Exception {
         programmingExerciseIntegrationTestService.testGetAuxiliaryRepositoriesOk();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
         programmingExerciseIntegrationTestService.testGetAuxiliaryRepositoriesEmptyOk();
     }
@@ -154,86 +154,86 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportAuxiliaryRepositoryUnprocessableContent() throws Exception {
         programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryUnprocessableContent();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportAuxiliaryRepositoryExerciseAccessForbidden() throws Exception {
         programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryExerciseAccessForbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
         programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryRepositoryNotFound();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
-        programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_notFound();
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testReEvaluateAndUpdateProgrammingExercise_unknownExercise_forbidden() throws Exception {
+        programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_unknownExercise_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         programmingExerciseIntegrationTestService.testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetTemplateRepositoryFilesWithContent() throws Exception {
         programmingExerciseIntegrationTestService.testGetTemplateRepositoryFilesWithContent();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetTemplateRepositoryFilesWithContentAndOmitBinaries() throws Exception {
         programmingExerciseIntegrationTestService.testGetTemplateRepositoryFilesWithContentOmitBinaries();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetTemplateRepositoryFilesWithContentReflectsLatestCommit() throws Exception {
         programmingExerciseIntegrationTestService.testGetTemplateRepositoryFilesWithContentReflectsLatestCommit();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetSolutionRepositoryFilesWithContent() throws Exception {
         programmingExerciseIntegrationTestService.testGetSolutionRepositoryFilesWithContent();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetParticipationFilesWithContentAtCommitShouldRedirect() throws Exception {
         programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommit(TEST_PREFIX);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetParticipationFilesWithContentAtCommitEditorForbidden() throws Exception {
         programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(TEST_PREFIX);
     }
 
     @ParameterizedTest
     @EnumSource(value = RepositoryType.class, names = { "TEMPLATE", "SOLUTION", "TESTS" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportInstructorRepositories(RepositoryType repositoryType) throws Exception {
         programmingExerciseIntegrationTestService.exportInstructorRepositories_shouldReturnFile(repositoryType);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportAuxiliaryRepository_shouldReturnFile() throws Exception {
         programmingExerciseIntegrationTestService.exportInstructorAuxiliaryRepository_shouldReturnFile();
     }

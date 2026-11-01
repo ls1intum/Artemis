@@ -241,7 +241,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
                 this.currentExam.set(res.body ?? undefined);
             });
         } else {
-            this.courseService.find(course.id).subscribe((res) => {
+            this.courseService.findForInstructor(course.id).subscribe((res) => {
                 this.currentCourse.set(res.body ?? undefined);
             });
         }

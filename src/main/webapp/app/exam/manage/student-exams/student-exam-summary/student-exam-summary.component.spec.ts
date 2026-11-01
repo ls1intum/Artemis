@@ -95,4 +95,16 @@ describe('StudentExamSummaryComponent', () => {
             expect(tag!.previousElementSibling).toBe(title.querySelector('h5'));
         });
     });
+    it('supplies explicit management viewing purpose to the shared summary', () => {
+        fixture.detectChanges();
+        expect(component.summaryComponent()?.instructorView()).toBe(true);
+        expect(component.summaryComponent()?.studentExam()).toEqual(studentExamValue);
+        expect(component.summaryComponent()?.managementGradeInfo()).toEqual({ studentExam: studentExamValue });
+    });
+    it('prints the displayed management summary', () => {
+        fixture.detectChanges();
+        const print = vi.spyOn(component.summaryComponent()!, 'printPDF');
+        component.printPDF();
+        expect(print).toHaveBeenCalledOnce();
+    });
 });

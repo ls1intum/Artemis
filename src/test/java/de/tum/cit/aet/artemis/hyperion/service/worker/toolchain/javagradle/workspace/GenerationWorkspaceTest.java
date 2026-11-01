@@ -166,4 +166,13 @@ class GenerationWorkspaceTest {
             }
         }
     }
+
+    @Test
+    void binarySeedFilesCompareByContent() {
+        var file = new GenerationWorkspace.BinarySeedFile(new byte[] { 1, 2, 3 });
+
+        assertThat(file).isEqualTo(new GenerationWorkspace.BinarySeedFile(new byte[] { 1, 2, 3 })).hasSameHashCodeAs(new GenerationWorkspace.BinarySeedFile(new byte[] { 1, 2, 3 }))
+                .isNotEqualTo(new GenerationWorkspace.BinarySeedFile(new byte[] { 1, 2, 4 }));
+        assertThat(file).hasToString("BinarySeedFile[3 bytes]");
+    }
 }

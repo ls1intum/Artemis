@@ -81,7 +81,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExerciseBasis_baseReferencesGotCloned() {
         // Re-fetch the imported exercise with all references eagerly initialized instead of relying on lazy proxies:
         // the import runs without an open session, so a returned lazy collection could not be read here.
@@ -118,7 +118,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("submissionPolicyProvider")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExerciseBasisWithSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         final var imported = importExerciseBaseWithSubmissionPolicy(submissionPolicy);
         assertThat(imported.getSubmissionPolicy()).isNotNull();
@@ -127,15 +127,15 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void importExercise_tutor_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
         request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
-    void importExercise_user_forbidden() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void importExercise_student_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
         request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
     }
@@ -145,7 +145,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
      * request record ignores them, so the request must fail on the source exercise, never on the payload.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExercise_payloadWithUnknownFields_isTolerated() throws Exception {
         ObjectNode body = objectMapper.valueToTree(createToBeImported());
         body.put("removedLegacyProperty", "legacy value");
@@ -165,7 +165,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other" + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "other" + "instructor42", roles = "USER")
     void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
         final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));
@@ -173,7 +173,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("Programming");
         final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));
@@ -181,7 +181,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testInstructorSearchTermMatchesId() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         testSearchTermMatchesId();
@@ -209,7 +209,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCourseAndExamFiltersAsInstructor(boolean withSCA) throws Exception {
         testCourseAndExamFilters(withSCA, "testCourseAndExamFiltersAsInstructor" + withSCA);
     }
@@ -247,7 +247,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSearchProgrammingExercisesWithProperSearchTerm() throws Exception {
         programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13", TEST_PREFIX);
         programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases("Python", TEST_PREFIX);
@@ -284,7 +284,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSearchResultsCarryTheImportTableFieldSet() throws Exception {
         var title = "importTableFieldSet-Programming";
         programmingExercise.setTitle(title);
@@ -312,7 +312,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testNoBuildPlanAccessSecretForImportedExercise() {
         var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), createToBeImported(), null);
         assertThat(programmingExerciseUtilService.buildConfigOf(programmingExercise).getBuildPlanAccessSecret())
@@ -320,7 +320,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExerciseBasis_initializesOmittedTestCasesAndTasks() {
         var toBeImported = createToBeImported();
         toBeImported.setTestCases(null);
@@ -334,7 +334,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDifferentBuildPlanAccessSecretForImportedExercise() {
         programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "text");
         var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, sourceBuildConfig(), createToBeImported(), null);
@@ -343,7 +343,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExerciseBasis_rejectsInvalidAutomaticallyComputedBuildAndTestDateBeforePersistence() throws Exception {
         long exerciseCountBeforeImport = programmingExerciseRepository.count();
         ZonedDateTime dueDate = ZonedDateTime.now().plusDays(7);
@@ -363,7 +363,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void findForCreationById_assemblesTheCompleteGraphFromItsSeparateQueries() {
         // findForCreationById combines three queries: the main graph plus one each for the grading criteria (with their
         // structured instructions) and the competency links, which would otherwise multiply the main query's result set.
@@ -389,7 +389,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExerciseBasis_doesNotRollBackWhenItFailsPartway() {
         // The import deliberately runs without a surrounding transaction, so a failure partway does NOT roll back what was
         // already written - the caller (e.g. ExamImportService) reports such an exercise as incomplete instead. Pin that

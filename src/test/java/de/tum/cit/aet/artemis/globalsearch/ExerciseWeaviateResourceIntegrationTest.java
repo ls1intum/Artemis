@@ -430,7 +430,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void testTutorCannotSeeNotEndedExamExercises() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -439,7 +439,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void testTutorCanSeeEndedExamExercises() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -448,7 +448,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void testTutorCanSeeUnreleasedExercises() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -457,7 +457,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void testEditorCanSeeAllExercises() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -467,7 +467,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testInstructorCanSeeAllExercises() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -491,7 +491,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testGlobalSearchInstructorSeesAll() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX, HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -527,7 +527,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void testEditorCanSeeAllExercises() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exercise&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -623,7 +623,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * of ended exam exercises so the client can route them to the exercise management page.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testInstructorReceivesIsAtLeastEditorFlagOnEndedExamExercise() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended%20Exam%20Exercise&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
@@ -634,7 +634,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void testEditorReceivesIsAtLeastEditorFlagOnEndedExamExercise() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended%20Exam%20Exercise&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
@@ -649,7 +649,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * client routes them to the assessment dashboard instead of the exercise management page.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void testTutorReceivesIsAtLeastTutorFlagOnEndedExamExercise() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended%20Exam%20Exercise&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var endedExamResult = results.stream().filter(r -> (SEARCH_PREFIX + " Ended Exam Exercise").equals(r.title())).findFirst();
@@ -678,7 +678,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * client for routing (e.g. tutors to student view, editors to management page).
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testStaffFlagsPresentOnRegularExercise() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Released&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var regularResult = results.stream().filter(r -> (SEARCH_PREFIX + " Released Exercise").equals(r.title())).findFirst();
@@ -696,7 +696,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * since there is no assessment dashboard for them to use.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void testTutorCannotSeeExamProgrammingExerciseWithAutomaticAssessment() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20ExamProg&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -708,7 +708,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * Tutors CAN see exam programming exercises with semi-automatic (manual) assessment.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void testTutorCanSeeExamProgrammingExerciseWithSemiAutomaticAssessment() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20ExamProg&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -720,7 +720,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * Editors can see all exam programming exercises regardless of assessment type.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void testEditorCanSeeAllExamProgrammingExercises() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20ExamProg&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -733,7 +733,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * regardless of their assessment type.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void testTutorCanSeeNonProgrammingExamExercises() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ended%20Exam%20Exercise&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -808,7 +808,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * Editors should still see all exam exercises regardless of StudentExam registration.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void testEditorSeesAllExamExercisesRegardlessOfRegistration() throws Exception {
             // Create an exam that no one is registered for
             Exam noRegExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(2), ZonedDateTime.now().plusHours(1), false);
@@ -898,7 +898,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * Editors should see all exams regardless of registration.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void testEditorCanSeeAllExamsRegardlessOfRegistration() throws Exception {
             Exam noRegExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3), false);
             noRegExam.setTitle(SEARCH_PREFIX + " NoRegEditorExam");
@@ -919,7 +919,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * Asking for exams expands to the exercises inside them, which is what makes the Exams filter useful.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testExamTypeAlsoReturnsItsExercises() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ongoing%20Exam%20Exercise&types=exam&courseIds=" + course.getId(), HttpStatus.OK,
                     GlobalSearchResultDTO.class);
@@ -935,7 +935,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * exclusion is carried under its own name precisely so the two cases stay distinguishable here.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testExcludingExercisesAlsoHidesExamExercises() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "%20Ongoing%20Exam%20Exercise&excludeTypes=exercise&courseIds=" + course.getId(), HttpStatus.OK,
                     GlobalSearchResultDTO.class);
@@ -948,7 +948,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * so the client can route them to the exam management page.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testInstructorReceivesIsAtLeastEditorFlagOnExam() throws Exception {
             Exam visibleExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3), false);
             visibleExam.setTitle(SEARCH_PREFIX + " InstrEditorExam");
@@ -971,7 +971,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * so the client routes them to the exam assessment dashboard.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void testTutorReceivesIsAtLeastTutorFlagOnExam() throws Exception {
             Exam visibleExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3), false);
             visibleExam.setTitle(SEARCH_PREFIX + " TutorExamMeta");
@@ -1024,7 +1024,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * exam exercises so that searching for exam content returns both the exam and its exercises.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void testExamTypeFilterIncludesExamExercises() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exam&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
@@ -1041,7 +1041,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * (the buildExamExerciseDisjunct is skipped when exercise type is already requested).
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void testExamAndExerciseTypeFiltersDoNotDuplicateResults() throws Exception {
             var results = request.getList("/api/search?q=" + SEARCH_PREFIX + "&types=exam,exercise&courseIds=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var exerciseTitles = results.stream().filter(r -> SearchableEntitySchema.TypeValues.EXERCISE.equals(r.type())).map(GlobalSearchResultDTO::title).toList();
@@ -1083,7 +1083,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * Tutors should see exams whose visible date has passed.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void testTutorCanSeeVisibleExam() throws Exception {
             Exam visibleExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3), false);
             visibleExam.setTitle(SEARCH_PREFIX + " TutorVisibleExam");
@@ -1100,7 +1100,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
          * Tutors should NOT see exams whose visible date has not yet passed.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void testTutorCannotSeeNotYetVisibleExam() throws Exception {
             Exam futureExam = ExamFactory.generateExam(course, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(3), false);
             futureExam.setTitle(SEARCH_PREFIX + " TutorFutureExam");
@@ -1123,7 +1123,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
     class ArchivedChannelSearchTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testArchivedChannelIsExcludedFromSearch() throws Exception {
             User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
@@ -1162,7 +1162,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testChannelIsFoundByItsNameButNotByItsDescription() throws Exception {
             User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
@@ -1235,7 +1235,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testInstructorSeesExamChannelBeforeVisibleDate() throws Exception {
             indexChannelOfExam(ZonedDateTime.now().plusDays(1), "staff-sees-exam-channel");
 
@@ -1280,7 +1280,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testInstructorSeesTheChannelOfAnUnreleasedExercise() throws Exception {
             indexChannelOfExercise(ZonedDateTime.now().plusDays(2), "staff-sees-exercise-channel");
 
@@ -1343,7 +1343,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
     class CommunicationFilteringTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCommunicationChannelsFilteredByCourseConfig() throws Exception {
             User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 

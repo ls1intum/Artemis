@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { OnlineTeamStudent, Team } from 'app/exercise/shared/entities/team/team.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -11,7 +12,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { captureException } from '@sentry/angular';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -20,7 +21,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     templateUrl: './team-students-online-list.component.html',
     styleUrls: ['./team-students-online-list.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [NgClass, FaIconComponent, NgbTooltip],
+    imports: [TumAetUiButtonDirective, NgClass, FaIconComponent, TumAetUiTooltipDirective],
 })
 export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);

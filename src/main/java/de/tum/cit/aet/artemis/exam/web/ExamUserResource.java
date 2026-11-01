@@ -32,9 +32,8 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -97,7 +96,8 @@ public class ExamUserResource {
      */
     @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExamUserDTO> updateExamUser(@RequestPart ExamUserDTO examUserDTO, @RequestPart(value = "file", required = false) MultipartFile signatureFile,
             @PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to update {} as exam user to exam : {}", examUserDTO.login(), examId);
@@ -148,7 +148,8 @@ public class ExamUserResource {
      * @return list of not found student matriculation numbers ResponseEntity with status 200 (OK)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exam-users-save-images")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExamUsersNotFoundDTO> saveUsersImages(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam("file") MultipartFile file) {
         log.debug("REST request to parse pdf : {}", file.getOriginalFilename());
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -164,7 +165,8 @@ public class ExamUserResource {
      */
     @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @GetMapping("courses/{courseId}/exams/{examId}/verify-exam-users")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Set<ExamUserAttendanceCheckDTO>> getAllWhoDidNotSign(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all students who did not sign for exam with id: {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -198,7 +200,8 @@ public class ExamUserResource {
      * @return ResponseEntity containing a page of {@link ExamStudentDTO} with status 200 (OK) and pagination headers
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exam-students/paged")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, @Valid ExamStudentSearchDTO search) {
         log.debug("REST request to get paged exam-students for exam: {}", examId);
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
@@ -215,7 +218,8 @@ public class ExamUserResource {
      * @return export information for all exam users
      */
     @GetMapping("courses/{courseId}/exams/{examId}/export-students")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<ExportExamUserDTO>> exportExamUsers(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to export exam users for exam with id: {}", examId);
 
@@ -237,7 +241,8 @@ public class ExamUserResource {
      * @return a page of {@link UserForRegistrationDTO} with {@code X-Total-Count} and Link pagination headers
      */
     @GetMapping("courses/{courseId}/exams/{examId}/students/search")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<UserForRegistrationDTO>> searchStudentsForExamRegistration(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam String searchTerm,
             @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) @Max(200) int size) {
         log.debug("REST request to search users for exam {} registration with term: {}", examId, searchTerm);

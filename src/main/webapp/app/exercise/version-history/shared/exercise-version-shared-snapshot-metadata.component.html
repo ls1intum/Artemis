@@ -1,4 +1,4 @@
-<p-panel styleClass="version-meta-panel">
+<tumaet-ui-panel class="version-meta-panel">
     <section class="metadata-section">
         <h4 jhiTranslate="artemisApp.exercise.sections.general"></h4>
         <div class="metadata-list">
@@ -11,7 +11,7 @@
         </div>
     </section>
 
-    <p-divider />
+    <hr class="my-4! border-border" />
 
     <section class="metadata-section">
         <h4 jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel"></h4>
@@ -25,14 +25,14 @@
         </div>
     </section>
 
-    <p-divider />
+    <hr class="my-4! border-border" />
 
     <section class="metadata-section">
         <h4 jhiTranslate="artemisApp.exercise.categories"></h4>
         @if (categories().length > 0) {
             <div class="category-list">
                 @for (category of categories(); track category) {
-                    <p-tag [value]="category" severity="secondary" />
+                    <tumaet-ui-tag [value]="category" severity="secondary" />
                 }
             </div>
         } @else {
@@ -40,7 +40,7 @@
         }
     </section>
 
-    <p-divider />
+    <hr class="my-4! border-border" />
 
     <section class="metadata-section">
         <h4 jhiTranslate="artemisApp.programmingExercise.timeline.complaintsAllowed"></h4>
@@ -54,7 +54,7 @@
         </div>
     </section>
 
-    <p-divider />
+    <hr class="my-4! border-border" />
 
     <section class="metadata-section metadata-section--problem">
         <h4 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h4>
@@ -66,10 +66,10 @@
     </section>
 
     @if (gradingInstructions(); as gradingInstructions) {
-        <p-divider />
+        <hr class="my-4! border-border" />
         <section class="metadata-section">
             <h4 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle"></h4>
             <div class="markdown-block markdown-preview" [innerHTML]="gradingInstructions"></div>
         </section>
     }
-</p-panel>
+</tumaet-ui-panel>

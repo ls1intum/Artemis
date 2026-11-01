@@ -1,3 +1,4 @@
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
@@ -10,7 +11,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
@@ -70,7 +71,7 @@ describe('ResultHistoryDropdownComponent', () => {
             providers: [
                 MockProvider(ResultService),
                 MockProvider(ExerciseService),
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: Router, useValue: mockRouter },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -275,7 +276,7 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
 
-            component.resultsPopover()?.show(new Event('click'));
+            component.resultsPopover()?.open(fixture.nativeElement);
             fixture.detectChanges();
 
             const indicator = document.querySelector<HTMLElement>('[data-testid="ai-feedback-indicator"]');
@@ -290,7 +291,7 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
 
-            component.resultsPopover()?.show(new Event('click'));
+            component.resultsPopover()?.open(fixture.nativeElement);
             fixture.detectChanges();
 
             const indicator = document.querySelector<HTMLElement>('[data-testid="ai-feedback-indicator"]');
@@ -304,7 +305,7 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
 
-            component.resultsPopover()?.show(new Event('click'));
+            component.resultsPopover()?.open(fixture.nativeElement);
             fixture.detectChanges();
 
             const indicator = document.querySelector<HTMLElement>('[data-testid="ai-feedback-indicator"]');
@@ -317,7 +318,7 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
 
-            component.resultsPopover()?.show(new Event('click'));
+            component.resultsPopover()?.open(fixture.nativeElement);
             fixture.detectChanges();
 
             expect(document.querySelector('[data-testid="ai-feedback-indicator"]')).toBeNull();
@@ -617,7 +618,7 @@ describe('ResultHistoryDropdownComponent', () => {
 
     describe('showFeedback', () => {
         it('should not open modal when result has no participation', () => {
-            const dialogService = TestBed.inject(DialogService);
+            const dialogService = TestBed.inject(TumAetUiDialogService);
             const openSpy = vi.spyOn(dialogService, 'open');
 
             const result = { id: 1, submission: { id: 1 } } as unknown as Result;
@@ -629,7 +630,7 @@ describe('ResultHistoryDropdownComponent', () => {
         });
 
         it('should open feedback modal when result has participation', () => {
-            const dialogService = TestBed.inject(DialogService);
+            const dialogService = TestBed.inject(TumAetUiDialogService);
             const openSpy = vi.spyOn(dialogService, 'open');
 
             const participation: Participation = { id: 1 } as Participation;
@@ -645,17 +646,11 @@ describe('ResultHistoryDropdownComponent', () => {
                 FeedbackComponent,
                 expect.objectContaining({
                     header: 'artemisApp.result.detail.feedback',
-                    width: '80rem',
-                    breakpoints: {
-                        '1400px': '75vw',
-                        '1200px': '85vw',
-                        '992px': '95vw',
-                    },
-                    modal: true,
+                    size: 'large',
                     closable: true,
                     closeOnEscape: true,
                     dismissableMask: true,
-                    focusOnShow: false,
+                    autoFocus: 'dialog',
                     inputValues: expect.objectContaining({ exercise: defaultExercise, result, participation }),
                 }),
             );
@@ -692,14 +687,14 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.componentRef.setInput('sortedHistoryResults', [result]);
             fixture.detectChanges();
 
-            component.resultsPopover()?.show(new Event('click'));
+            component.resultsPopover()?.open(fixture.nativeElement);
             fixture.detectChanges();
 
             const row = document.querySelector<HTMLElement>('[data-testid="result-history-row"]');
             expect(row?.textContent).toContain('AI feedback request is being processed');
             expect(row?.textContent).not.toContain('0%');
             expect(row?.textContent).not.toContain('artemisApp.result.progressString.stuck');
-            expect(row?.querySelector('p-tag')).toBeNull();
+            expect(row?.querySelector('tumaet-ui-tag')).toBeNull();
             expect(row?.getAttribute('role')).toBeNull();
         });
     });

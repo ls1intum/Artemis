@@ -23,7 +23,6 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLEnabled;
@@ -532,18 +531,21 @@ public class AtlasMLService {
 
         try {
             JsonMapper objectMapper = JsonObjectMapper.get();
-            JsonNode root = objectMapper.readTree(responseBody);
+            AtlasMLHealthResponse healthResponse = objectMapper.readValue(responseBody, AtlasMLHealthResponse.class);
             boolean isHealthy = isHttpHealthy;
+            if (healthResponse == null) {
+                // the payload is the JSON literal null, which carries neither a status nor components
+                return new ConnectorHealth(isHealthy, additionalInfo);
+            }
 
-            String overallStatus = getText(root, "status");
+            String overallStatus = nonBlankOrNull(healthResponse.status());
             if (overallStatus != null) {
                 additionalInfo.put("status", summarizeStatus(overallStatus, null));
                 isHealthy = isHealthy && isHealthyStatus(overallStatus);
             }
 
-            JsonNode components = root.path("components");
-            if (components.isObject()) {
-                components.properties().forEach(entry -> flattenComponentHealthInto(additionalInfo, entry.getKey(), entry.getValue()));
+            if (healthResponse.components() != null) {
+                healthResponse.components().forEach((componentName, component) -> flattenComponentHealthInto(additionalInfo, componentName, component));
             }
 
             return new ConnectorHealth(isHealthy, additionalInfo);
@@ -554,14 +556,14 @@ public class AtlasMLService {
         }
     }
 
-    private void flattenComponentHealthInto(Map<String, Object> additionalInfo, String componentName, JsonNode componentNode) {
-        String componentStatus = getText(componentNode, "status");
-        String componentMessage = getText(componentNode, "message");
+    private void flattenComponentHealthInto(Map<String, Object> additionalInfo, String componentName, AtlasMLHealthResponse.ComponentHealth component) {
+        String componentStatus = component != null ? nonBlankOrNull(component.status()) : null;
+        String componentMessage = component != null ? nonBlankOrNull(component.message()) : null;
         additionalInfo.put(componentName, summarizeStatus(componentStatus, componentMessage));
 
-        JsonNode collections = componentNode.path("collections");
-        if (collections.isObject()) {
-            collections.properties().forEach(entry -> additionalInfo.put("collection " + entry.getKey(), summarizeStatus(getText(entry.getValue(), "status"), null)));
+        if (component != null && component.collections() != null) {
+            component.collections().forEach((collectionName, collection) -> additionalInfo.put("collection " + collectionName,
+                    summarizeStatus(collection != null ? nonBlankOrNull(collection.status()) : null, null)));
         }
     }
 
@@ -618,12 +620,7 @@ public class AtlasMLService {
         return status.toLowerCase(Locale.ROOT);
     }
 
-    private static String getText(JsonNode node, String fieldName) {
-        JsonNode child = node.path(fieldName);
-        if (child.isMissingNode() || child.isNull() || !child.isValueNode()) {
-            return null;
-        }
-        String value = child.asString();
+    private static String nonBlankOrNull(String value) {
         return value == null || value.isBlank() ? null : value;
     }
 }

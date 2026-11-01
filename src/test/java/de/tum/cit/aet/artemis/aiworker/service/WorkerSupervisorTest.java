@@ -49,8 +49,10 @@ class WorkerSupervisorTest {
         DistributedMap<String, String> chunks = org.mockito.Mockito.spy(provider.getMap("aiworker-event-chunks"));
         org.mockito.Mockito.when(provider.<String, String>getMap("aiworker-event-chunks")).thenReturn(chunks);
         var unavailable = new AtomicBoolean();
+        // Recovery flips a flag instead of re-stubbing: the worker thread may still call the spy, and Mockito stubbing is not thread-safe.
+        var recovered = new AtomicBoolean();
         org.mockito.Mockito.doAnswer(invocation -> {
-            if (unavailable.get()) {
+            if (unavailable.get() && !recovered.get()) {
                 throw new IllegalStateException("chunk storage is temporarily unavailable");
             }
             return invocation.callRealMethod();
@@ -82,8 +84,7 @@ class WorkerSupervisorTest {
                 // Drain successful events before the incomplete manifest.
             }
             assertThat(delivered).noneMatch(event -> event.type() == WorkerEventType.FINISHED);
-            org.mockito.Mockito.doAnswer(invocation -> invocation.callRealMethod()).when(chunks).put(org.mockito.ArgumentMatchers.anyString(),
-                    org.mockito.ArgumentMatchers.anyString());
+            recovered.set(true);
             org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
                 worker.heartbeat();
                 while (reader.receive(command.identity(), delivered::add)) {
