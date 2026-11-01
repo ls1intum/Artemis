@@ -1,4 +1,5 @@
 import { Signal } from '@angular/core';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 /** The purpose of an editor read, chosen by its route or container. */
 export type EditorViewingPurpose = 'owner' | 'staff-preview';
@@ -18,6 +19,12 @@ export interface ExerciseSubmission {
      * A signal rather than a method, because the shell reads it from a computed.
      */
     readonly canSubmitExercise?: Signal<boolean>;
+
+    /**
+     * The participation narrowed to an earlier submission and result that the surface shows, so the shell's problem statement shows
+     * the tasks of that result rather than of the latest one. Undefined while the latest submission is shown.
+     */
+    readonly earlierSubmissionParticipation?: Signal<StudentParticipation | undefined>;
 }
 
 /**

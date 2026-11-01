@@ -22,6 +22,7 @@ import {
     isAIResultAndFailed,
     isAIResultAndTimedOut,
     isAthenaAIResult,
+    isPreliminaryProgrammingAIFeedback,
 } from 'app/exercise/result/result.utils';
 
 import { NavigationEnd, Router } from '@angular/router';
@@ -34,6 +35,7 @@ import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedba
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { participationChildRouteSegments } from 'app/course/overview/exercise-details/participation-child-route';
 
 /**
@@ -202,7 +204,7 @@ export class ResultHistoryDropdownComponent {
     }
 
     shouldShowResultScore(result: Result): boolean {
-        return result.score !== undefined && !this.isUnfinishedAthenaFeedback(result);
+        return result.score !== undefined && !this.isUnfinishedAthenaFeedback(result) && !isPreliminaryProgrammingAIFeedback(result, this.exercise().type);
     }
 
     shouldShowResultMetadata(result: Result): boolean {
@@ -241,6 +243,9 @@ export class ResultHistoryDropdownComponent {
             if (result.successful === undefined) {
                 return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
             }
+            if (isPreliminaryProgrammingAIFeedback(result, this.exercise().type)) {
+                return this.translateService.instant('artemisApp.result.progressString.aiFeedbackReceived');
+            }
         }
 
         const submission = result.submission;
@@ -254,12 +259,12 @@ export class ResultHistoryDropdownComponent {
         }
 
         const sortedResults = this.sortedHistoryResults();
-        const currentResultIndex = sortedResults.indexOf(result);
+        const previousResult = sortedResults.slice(sortedResults.indexOf(result) + 1).find((olderResult) => !isPreliminaryProgrammingAIFeedback(olderResult, this.exercise().type));
 
-        if (currentResultIndex === sortedResults.length - 1) {
+        if (!previousResult) {
             return this.translateService.instant(currentScore > 0 ? 'artemisApp.result.progressString.niceProgress' : 'artemisApp.result.progressString.stuck');
         }
-        const previousScore = sortedResults[currentResultIndex + 1].score ?? 0;
+        const previousScore = previousResult.score ?? 0;
         if (currentScore > previousScore) {
             return this.translateService.instant('artemisApp.result.progressString.niceProgress');
         } else if (currentScore < previousScore) {
@@ -279,7 +284,9 @@ export class ResultHistoryDropdownComponent {
 
     isRowClickable(result?: Result): boolean {
         const type = this.exercise().type;
-        const exerciseTypeSupportsNavigation = type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.QUIZ;
+        // A programming exercise shows an earlier result in its online editor; without the editor there is nowhere to show it
+        const programmingEditorShowsResults = type === ExerciseType.PROGRAMMING && !!(this.exercise() as ProgrammingExercise).allowOnlineEditor;
+        const exerciseTypeSupportsNavigation = type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.QUIZ || programmingEditorShowsResults;
         return exerciseTypeSupportsNavigation && (!result || (!!result.id && !this.isUnfinishedAthenaFeedback(result)));
     }
 
@@ -315,6 +322,22 @@ export class ResultHistoryDropdownComponent {
         }
 
         const submissionId = result.submission?.id;
+        if (exercise.type === ExerciseType.PROGRAMMING) {
+            void this.router.navigate([
+                '/courses',
+                courseId,
+                'exercises',
+                'programming-exercises',
+                exercise.id,
+                'code-editor',
+                participation.id,
+                'submission',
+                submissionId,
+                'result',
+                result.id,
+            ]);
+            return;
+        }
         const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
         void this.router.navigate([
             '/courses',

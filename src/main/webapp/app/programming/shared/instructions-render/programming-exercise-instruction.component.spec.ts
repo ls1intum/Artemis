@@ -9,7 +9,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
-import { Subscription, of, throwError } from 'rxjs';
+import { Subject, Subscription, of, throwError } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
@@ -27,6 +27,10 @@ import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/sha
 import { ProgrammingExercisePlantUmlService } from 'app/programming/shared/instructions-render/services/programming-exercise-plant-uml.service';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { HttpResponse } from '@angular/common/http';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -166,6 +170,113 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         } finally {
             vi.useRealTimers();
         }
+    });
+
+    it('should keep the given result when it does not follow the latest result', () => {
+        const exercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            isAtLeastTutor: true,
+            problemStatement: 'lorem ipsum dolor sit amet',
+        };
+        const earlierResult: Result = { id: 1, feedbacks: [] };
+        const participation: Participation = { id: 2, submissions: [{ results: [earlierResult] }] };
+        // a newer build that finishes while the earlier submission is open
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of({ id: 3, feedbacks: [] } as Result));
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', participation);
+        fixture.componentRef.setInput('followLatestResult', false);
+
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(subscribeForLatestResultOfParticipationStub).not.toHaveBeenCalled();
+        expect(comp.latestResult?.id).toBe(earlierResult.id);
+    });
+
+    it('should show the newest test result of the submission instead of its AI feedback', () => {
+        const exercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            assessmentDueDate: dayjs().add(1, 'day'),
+            problemStatement: 'lorem ipsum dolor sit amet',
+        };
+        const aiFeedback: Result = { id: 5, assessmentType: AssessmentType.AUTOMATIC_ATHENA, feedbacks: [] };
+        const testResult: Result = { id: 3, assessmentType: AssessmentType.AUTOMATIC };
+        const testFeedback: Feedback[] = [{ id: 7, positive: true }];
+        // a manual result before the assessment due date is not shown to the student
+        const unreleasedManualResult: Result = { id: 4, assessmentType: AssessmentType.SEMI_AUTOMATIC, completionDate: dayjs() };
+        const getAllResults = vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(
+            of({
+                id: 2,
+                submissions: [
+                    { id: 8, results: [{ id: 1, assessmentType: AssessmentType.AUTOMATIC }] },
+                    { id: 9, results: [testResult, unreleasedManualResult, aiFeedback] },
+                ],
+            } as ProgrammingExerciseStudentParticipation),
+        );
+        vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: testFeedback })));
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 2, submissions: [{ id: 9, results: [aiFeedback] }] } as Participation);
+
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(getAllResults).toHaveBeenCalledWith(2);
+        expect(comp.latestResult?.id).toBe(testResult.id);
+        expect(comp.latestResult?.feedbacks).toEqual(testFeedback);
+    });
+
+    it('should not let the pending lookup of an earlier submission overwrite the result of a newer build', () => {
+        const exercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            problemStatement: 'lorem ipsum dolor sit amet',
+        };
+        const pendingLookup = new Subject<ProgrammingExerciseStudentParticipation>();
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(pendingLookup);
+        vi.spyOn(TestBed.inject(ResultService), 'getFeedbackDetailsForResult').mockReturnValue(of(new HttpResponse({ body: [] })));
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        fixture.componentRef.setInput('exercise', exercise);
+        // submission A's latest result is AI feedback, so its test result is looked up
+        fixture.componentRef.setInput('participation', {
+            id: 2,
+            submissions: [{ id: 9, results: [{ id: 5, assessmentType: AssessmentType.AUTOMATIC_ATHENA, feedbacks: [] }] }],
+        } as Participation);
+        fixture.changeDetectorRef.detectChanges();
+
+        // submission B's build arrives before the lookup for A completes
+        const newerBuild: Result = { id: 6, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [] };
+        fixture.componentRef.setInput('participation', { id: 2, submissions: [{ id: 10, results: [newerBuild] }] } as Participation);
+        fixture.changeDetectorRef.detectChanges();
+        expect(comp.latestResult?.id).toBe(newerBuild.id);
+
+        pendingLookup.next({ id: 2, submissions: [{ id: 9, results: [{ id: 3, assessmentType: AssessmentType.AUTOMATIC }] }] } as ProgrammingExerciseStudentParticipation);
+
+        expect(comp.latestResult?.id).toBe(newerBuild.id);
+    });
+
+    it('should keep the test result when AI feedback arrives over the websocket', () => {
+        const exercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            problemStatement: 'lorem ipsum dolor sit amet',
+        };
+        const testResult: Result = { id: 3, assessmentType: AssessmentType.AUTOMATIC, feedbacks: [] };
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of({ id: 5, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result));
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { id: 2, submissions: [{ id: 9, results: [testResult] }] } as Participation);
+
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(comp.latestResult?.id).toBe(testResult.id);
     });
 
     it('should properly assign and cleanup generateHtmlSubscription when generateHtmlEvents is provided', async () => {
@@ -899,6 +1010,40 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         expect(hiddenContainers[0].querySelector('svg')).not.toBeNull();
         expect(visibleContainers[0].querySelector('svg')).not.toBeNull();
         expect(hiddenContainers[0].id).not.toBe(visibleContainers[0].id);
+
+        hiddenInstance.comp.ngOnDestroy();
+        visibleInstance.comp.ngOnDestroy();
+    });
+
+    it('should keep the tasks of its own problem statement when another component of the same exercise renders again', async () => {
+        // The online editor keeps a hidden problem statement of the same exercise beside the visible one. Its tasks used to be looked up in
+        // the whole document, so it took over the task containers of the visible one, and destroyed them, with their titles, on its next render.
+        vi.spyOn(TestBed.inject(ProgrammingExerciseParticipationService), 'getLatestResultWithFeedback').mockReturnValue(of(undefined as unknown as Result));
+        const hiddenInstance = createComponentInstance();
+        const visibleInstance = createComponentInstance();
+        const exercise = createExercise(10, problemStatementWithIds);
+        document.body.append(hiddenInstance.fixture.nativeElement, visibleInstance.fixture.nativeElement);
+
+        for (const { fixture, comp } of [hiddenInstance, visibleInstance]) {
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', { id: 110 });
+            internals(comp).setupMarkdownSubscriptions();
+        }
+        const settle = async () => {
+            hiddenInstance.fixture.detectChanges();
+            visibleInstance.fixture.detectChanges();
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            TestBed.inject(ApplicationRef).tick();
+        };
+        await settle();
+
+        hiddenInstance.comp.forceReRenderProblemStatement();
+        await settle();
+
+        const visibleTask: HTMLElement = visibleInstance.fixture.nativeElement.querySelector('.pe-10-task-0');
+        expect(visibleTask.textContent).toContain('Implement Bubble Sort');
+        expect(internals(hiddenInstance.comp).taskComponentRefs).toHaveLength(2);
+        expect(internals(visibleInstance.comp).taskComponentRefs).toHaveLength(2);
 
         hiddenInstance.comp.ngOnDestroy();
         visibleInstance.comp.ngOnDestroy();

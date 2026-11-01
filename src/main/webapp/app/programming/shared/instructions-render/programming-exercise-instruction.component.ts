@@ -3,6 +3,7 @@ import {
     ChangeDetectionStrategy,
     Component,
     ComponentRef,
+    ElementRef,
     EnvironmentInjector,
     OnDestroy,
     OnInit,
@@ -46,6 +47,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { isAthenaAIResult, isManualResult } from 'app/exercise/result/result.utils';
+import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { setInputs } from 'app/foundation/util/set-inputs.util';
 
@@ -60,6 +63,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private static nextInstanceId = 0;
 
     private viewContainerRef = inject(ViewContainerRef);
+    private elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
     private resultService = inject(ResultService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private programmingExerciseTaskWrapper = inject(ProgrammingExerciseTaskExtensionWrapper);
@@ -79,6 +83,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     readonly participation = input<Participation | undefined>(undefined);
     readonly generateHtmlEvents = input<Observable<void>>();
     readonly personalParticipation = input.required<boolean>();
+    /** Whether a newer result of the participation replaces the shown one. False keeps the given result, e.g. for an earlier submission. */
+    readonly followLatestResult = input(true);
 
     readonly onNoInstructionsAvailable = output();
 
@@ -97,6 +103,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     // callbacks, and while the loading branch is shown no other tracked signal is live in the
     // template — a plain field write would never schedule the render that swaps the branches.
     protected readonly isLoading = signal(false);
+    /** Counts participation changes, so an initial-result load of an earlier participation is discarded instead of overwriting a newer result. */
+    private initialResultLoad = 0;
     readonly latestResultValue = signal<Result | undefined>(undefined);
     // Page-scoped so multiple problem statements (e.g. across exam exercise tabs) don't collide.
     private taskIndex = 0;
@@ -213,6 +221,9 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 tap((participationHasChanged: boolean) => {
                     if (participationHasChanged) {
                         this.isInitial = true;
+                        // A pending load belongs to the previous participation: discard it and load the new one instead of skipping it.
+                        this.initialResultLoad++;
+                        this.isLoading.set(false);
                         // Always tear down the previous result websocket when the participation
                         // changes — including when the new participation is undefined — otherwise
                         // the stale subscription leaks and continues delivering results for the
@@ -221,7 +232,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                             this.participationSubscription.unsubscribe();
                             this.participationSubscription = undefined;
                         }
-                        if (this.participation() && this.exercise()) {
+                        if (this.participation() && this.exercise() && this.followLatestResult()) {
                             this.setupResultWebsocket();
                         }
                     }
@@ -230,12 +241,14 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                     const currentExercise = this.exercise();
                     if (!this.isLoading() && currentExercise && this.participation() && (this.isInitial || participationHasChanged)) {
                         this.isLoading.set(true);
+                        const load = this.initialResultLoad;
                         return of(currentExercise.problemStatement).pipe(
                             tap((problemStatement) => {
                                 this.problemStatement = problemStatement?.trim() || undefined;
                                 this.lastSeenProblemStatement = currentExercise.problemStatement;
                             }),
                             switchMap(() => this.loadInitialResult()),
+                            filter(() => load === this.initialResultLoad),
                             tap((latestResult) => {
                                 this.latestResult = latestResult;
                             }),
@@ -293,7 +306,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         }
         this.participationSubscription = this.participationWebsocketService
             .subscribeForLatestResultOfParticipation(this.participation()!.id!, this.personalParticipation(), this.exercise()!.id)
-            .pipe(filter((result) => !!result))
+            // AI feedback carries no test results, so the tasks keep showing the test result it was requested for
+            .pipe(filter((result): result is Result => !!result && !isAthenaAIResult(result)))
             .subscribe((result: Result) => {
                 this.latestResult = result;
                 this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResult);
@@ -383,6 +397,10 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             if (!latestResult) {
                 return of(undefined);
             }
+            if (isAthenaAIResult(latestResult)) {
+                const submissionId = participation.submissions?.find((submission) => submission.results?.includes(latestResult))?.id;
+                return this.loadLatestTestResultOfSubmission(submissionId);
+            }
             return latestResult.feedbacks ? of(latestResult) : this.loadAndAttachResultDetails(latestResult);
         } else if (participation && participation.id) {
             // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
@@ -400,6 +418,23 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation()!.id!).pipe(
             catchError(() => of(undefined)),
             mergeMap((latestResult: Result | undefined) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
+        );
+    }
+
+    /**
+     * AI feedback carries no test results, so the tasks show the newest other result of the submission it was requested for, like
+     * the tutor assessment starts from. The participation only comes with the AI feedback then, so the other results are loaded.
+     * A manual result counts only once the assessment due date has passed, as for the latest result of the editor.
+     * @param submissionId the submission of the AI feedback
+     */
+    private loadLatestTestResultOfSubmission(submissionId: number | undefined): Observable<Result | undefined> {
+        const assessmentDueDate = this.exercise()?.assessmentDueDate;
+        const isVisible = (result: Result) =>
+            !isAthenaAIResult(result) && (!isManualResult(result) || (!!result.completionDate && (!assessmentDueDate || dayjs().isAfter(assessmentDueDate))));
+        return this.programmingExerciseParticipationService.getStudentParticipationWithAllResults(this.participation()!.id!).pipe(
+            map((participation) => findLatestResult(participation.submissions?.find((submission) => submission.id === submissionId)?.results?.filter(isVisible))),
+            catchError(() => of(undefined)),
+            mergeMap((result) => (result ? this.loadAndAttachResultDetails(result) : of(undefined))),
         );
     }
 
@@ -526,7 +561,8 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
 
     private injectTasksIntoDocument = () => {
         this.tasks().forEach(({ id, taskName, testIds }) => {
-            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise()?.id}-task-${id}`);
+            // Only this component's own markdown: another instance of the same exercise on the page, e.g. the editor's hidden one, has the same class names
+            const taskHtmlContainers = this.elementRef.nativeElement.getElementsByClassName(`pe-${this.exercise()?.id}-task-${id}`);
 
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const taskHtmlContainer = taskHtmlContainers[i];

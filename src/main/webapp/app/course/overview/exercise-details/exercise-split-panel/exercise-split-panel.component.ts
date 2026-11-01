@@ -80,6 +80,8 @@ export class ExerciseSplitPanelComponent {
     private readonly _quizComponent = signal<QuizParticipationBase | undefined>(undefined);
     /** The routed participation component, so `canSubmit` can ask a read-only surface to withdraw the Submit action. */
     private readonly _submissionComponent = signal<ExerciseSubmission | undefined>(undefined);
+    /** The earlier submission the editor shows, whose tasks the problem statement shows instead of the latest result's. */
+    protected readonly earlierSubmissionParticipation = computed(() => this._submissionComponent()?.earlierSubmissionParticipation?.());
     private quizStartedSubscription: { unsubscribe(): void } | undefined;
     private quizSubmittedSubscription: { unsubscribe(): void } | undefined;
     private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;

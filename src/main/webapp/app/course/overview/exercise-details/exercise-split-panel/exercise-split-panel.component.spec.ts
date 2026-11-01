@@ -507,6 +507,28 @@ describe('ExerciseSplitPanelComponent details panel with its real template', () 
         expect(downloads[1].componentInstance.includeTests()).toBe(true);
     });
 
+    it('should show the tasks of the earlier submission the editor shows, and the latest ones again afterwards', () => {
+        fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+        render({ type: ExerciseType.PROGRAMMING }, 'graded');
+        const problemStatement = () => fixture.debugElement.query(By.directive(ProblemStatementComponent)).componentInstance as ProblemStatementComponent;
+        expect(problemStatement().participationInput()).toBe(gradedParticipation);
+        expect(problemStatement().followLatestResult()).toBe(true);
+
+        const earlierSubmission = { id: 1, submissions: [{ id: 7 }] } as StudentParticipation;
+        const viewed = signal<StudentParticipation | undefined>(earlierSubmission);
+        fixture.componentInstance.onOutletActivate({ submitExercise: () => {}, earlierSubmissionParticipation: viewed });
+        fixture.detectChanges();
+
+        expect(problemStatement().participationInput()).toBe(earlierSubmission);
+        expect(problemStatement().followLatestResult()).toBe(false);
+
+        viewed.set(undefined);
+        fixture.detectChanges();
+
+        expect(problemStatement().participationInput()).toBe(gradedParticipation);
+        expect(problemStatement().followLatestResult()).toBe(true);
+    });
+
     it('should explain at the top of the details of a team exercise that practice is individual', () => {
         render({ type: ExerciseType.TEXT, teamMode: true }, 'graded');
 

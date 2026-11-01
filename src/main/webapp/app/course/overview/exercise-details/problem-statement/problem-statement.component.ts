@@ -25,6 +25,8 @@ export class ProblemStatementComponent implements OnInit {
 
     public readonly exerciseInput = input<Exercise>();
     readonly participationInput = input<StudentParticipation>();
+    /** Whether a newer result replaces the shown one; false while an earlier submission is shown. */
+    readonly followLatestResult = input(true);
 
     private readonly fetchedExercise = signal<Exercise | undefined>(undefined);
     private readonly fetchedParticipation = signal<StudentParticipation | undefined>(undefined);

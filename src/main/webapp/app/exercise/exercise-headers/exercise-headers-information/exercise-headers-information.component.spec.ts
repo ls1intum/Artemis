@@ -25,6 +25,8 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 describe('ExerciseHeadersInformationComponent', () => {
@@ -48,6 +50,8 @@ describe('ExerciseHeadersInformationComponent', () => {
                 MockProvider(ComplaintService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: TumAetUiDialogService, useClass: MockDialogService },
+                // A programming exercise creates the programming submission service, which reads the profile info
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideTranslateService(),
@@ -300,6 +304,55 @@ describe('ExerciseHeadersInformationComponent', () => {
         expect(component.achievedPoints()).toBe(8);
     });
 
+    describe('AI feedback in achievedPoints', () => {
+        const testResult = { id: 1, score: 80, rated: true, assessmentType: AssessmentType.AUTOMATIC } as Result;
+        const aiFeedback = { id: 2, score: 0, rated: true, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result;
+
+        it('should take the points of a programming exercise from the latest test result, not from newer AI feedback', () => {
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, maxPoints: 10 });
+            fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [testResult, aiFeedback] }] } as StudentParticipation);
+            fixture.detectChanges();
+
+            expect(component.relevantResult()).toEqual(testResult);
+            expect(component.achievedPoints()).toBe(8);
+        });
+
+        it('should show no points for a programming exercise whose only result is AI feedback', () => {
+            // Feedback requested before the first build finished: there is no test result yet, and the AI feedback has none to show.
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, maxPoints: 10 });
+            fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [{ ...aiFeedback, score: 80 }] }] } as StudentParticipation);
+            fixture.detectChanges();
+
+            expect(component.relevantResult()).toBeUndefined();
+            expect(component.achievedPoints()).toBe(0);
+        });
+
+        it('should take the points of a selected programming AI feedback from the test result of its submission', () => {
+            // Feedback requested before the first build keeps a copied score of 0, while the tests of that submission later report 60%.
+            const earlyAiFeedback = { ...aiFeedback, id: 3, score: 0 };
+            const laterTestResult = { ...testResult, id: 4, score: 60 };
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, maxPoints: 10 });
+            fixture.componentRef.setInput('studentParticipation', {
+                submissions: [{ results: [testResult] }, { results: [earlyAiFeedback, laterTestResult] }],
+            } as StudentParticipation);
+            fixture.detectChanges();
+
+            component.displayedResult.set(earlyAiFeedback);
+
+            expect(component.relevantResult()).toEqual(earlyAiFeedback);
+            expect(component.achievedPoints()).toBe(6);
+        });
+
+        it('should still take the points of a text exercise from its latest AI feedback', () => {
+            fixture.componentRef.setInput('exercise', { ...baseExercise, maxPoints: 10 });
+            fixture.componentRef.setInput('studentParticipation', { submissions: [{ results: [testResult, aiFeedback] }] } as StudentParticipation);
+            fixture.detectChanges();
+
+            expect(component.relevantResult()).toEqual(aiFeedback);
+            expect(component.achievedPoints()).toBe(0);
+        });
+    });
+
     describe('selected history result', () => {
         const latestResult = { id: 2, score: 80, rated: true } as Result;
         const previousResult = { id: 1, score: 30, rated: true } as Result;
@@ -498,23 +551,17 @@ describe('ExerciseHeadersInformationComponent', () => {
             expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(true);
         });
 
-        it('should show the AI feedback item for a programming exercise with semi-automatic assessment', () => {
-            fixture.componentRef.setInput('athenaEnabled', true);
-            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.SEMI_AUTOMATIC });
-            fixture.componentRef.setInput('course', athenaCourse);
-            fixture.detectChanges();
+        it.each([AssessmentType.SEMI_AUTOMATIC, AssessmentType.AUTOMATIC])(
+            'should show the AI feedback item for a programming exercise whatever its assessment type (%s)',
+            (assessmentType: AssessmentType) => {
+                fixture.componentRef.setInput('athenaEnabled', true);
+                fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, assessmentType });
+                fixture.componentRef.setInput('course', athenaCourse);
+                fixture.detectChanges();
 
-            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(true);
-        });
-
-        it('should not show the AI feedback item for a programming exercise without semi-automatic assessment', () => {
-            fixture.componentRef.setInput('athenaEnabled', true);
-            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.AUTOMATIC });
-            fixture.componentRef.setInput('course', athenaCourse);
-            fixture.detectChanges();
-
-            expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(false);
-        });
+                expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests')).toBe(true);
+            },
+        );
 
         it('should not show the AI feedback item for a file-upload exercise even when Athena is enabled course-wide', () => {
             fixture.componentRef.setInput('athenaEnabled', true);
