@@ -366,6 +366,7 @@ These workflows are intentionally NOT folded into the umbrella:
 |---|---|
 | `codeql-analysis.yml` | Holds only the weekly `schedule:` cron (cron cannot live in a `workflow_call` child). The PR/push CodeQL signal is folded into the umbrella as the advisory `codeql` job (→ `ci-codeql.yml`), which the scheduled remnant also reuses. |
 | `test-android.yml` | Different self-hosted runner pool, clones a separate repo, 60-minute job. |
+| `publish-hyperion-sandbox-image.yml` | Manual publication of independently versioned Hyperion toolchain images; separate from Artemis application releases. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
 | `dependency-submission.yml` | Submits the Gradle dependency graph on `develop` pushes that change a build file, weekly, and on demand (`workflow_dispatch`). Replaces the repository setting "Automatic dependency submission", which ran on every branch and pull request although GitHub discards a snapshot of any non-default branch. Keep that setting off. |
@@ -605,3 +606,10 @@ server-side verdict directly.
      branch-protection change is needed; the gate's `name:` field is what's required.
    - Add `<name>` to `ci-summary`'s `needs:` so it appears in the Summary table. For an
      **advisory** check, add it to `ci-summary`'s `ADVISORY` env **instead of** the gate's `needs:`.
+
+### Hyperion sandbox image
+
+`publish-hyperion-sandbox-image.yml` publishes independently versioned toolchain images on manual dispatch.
+It is separate from Artemis release CI, like the build agents' build-image lifecycle.
+See [the sandbox operations guide](../../deployment/docker/hyperion/README.md#offline-java-build-image-gradle-and-maven)
+for publication, version updates and the first-publication check.

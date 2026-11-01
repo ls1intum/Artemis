@@ -13,7 +13,10 @@ successfully is not a generation qualification test.
 Use a dedicated worker VM for staging and production. The supervisor's Docker socket
 is host-level authority; never share core's, the database's or an exam build agent's
 daemon. Generated code runs with a read-only root filesystem and without networking.
-Pin the Artemis and sandbox images by digest and coordinate core and worker
+Pin the Artemis image by digest when promoting a verified build. Leave the sandbox
+image unset to use the shipped versioned default. Custom sandbox overrides accept
+a versioned tag, registry digest or local image ID; the worker resolves them to an
+immutable local ID before admission. Coordinate core and worker
 upgrades after draining active work. Worker process loss is not a durable local-outbox
 guarantee: core must fence the lost incarnation using the evidence it already holds.
 
@@ -26,11 +29,36 @@ for other workloads. Keep the worker process in an isolated VM.
 
 ## Offline Java build image (Gradle and Maven)
 
-Build the sandbox image from the repository root:
+This image has an independent toolchain version, like the build agents' build images.
+The worker's shipped default is `ghcr.io/ls1intum/artemis-hyperion-sandbox:java25-1`.
+It reuses a cached image or pulls it when missing, then uses the immutable local image ID.
+Normal Artemis upgrades and PR builds use the same default; no per-commit image is required.
+
+Maintainers publish toolchain versions through **Publish Hyperion Sandbox Image**
+(`publish-hyperion-sandbox-image.yml`). The workflow reads the tag from the selected revision's
+`application-aiworker.yml`; there is no version input. It builds amd64 and arm64 images with the
+same shared publisher as Artemis. Always use a new version; do not overwrite published tags.
+For later versions, change the default in a reviewed branch, publish and qualify that version,
+then merge the default change.
+
+The first `java25-1` publication needs a bootstrap step because GitHub only permits manual
+dispatch after the workflow exists on the default branch:
+
+1. Merge the workflow and default configuration. Keep existing workers on their explicit image
+   configuration; do not deploy workers that rely on the new default yet.
+2. Dispatch **Publish Hyperion Sandbox Image** from that merged revision.
+3. Confirm the GHCR package is publicly readable and qualify the published image on staging.
+4. Deploy workers without an image override.
+
+The sandbox has a separate release lifecycle: ordinary Artemis releases do not publish it.
+When the canonical harness, JDK or dependencies change, build and test a new sandbox version and
+update the shipped default in the same change. Retain previous versions for rollback.
+
+For a custom sandbox, build from the repository root:
 
 ```sh
-docker build -f deployment/docker/hyperion/gradle-sandbox.Dockerfile -t hyperion-gradle-sandbox:local .
-docker image inspect hyperion-gradle-sandbox:local --format '{{.Id}}'
+docker build -f deployment/docker/hyperion/Dockerfile -t hyperion-sandbox:local .
+docker image inspect hyperion-sandbox:local --format '{{.Id}}'
 ```
 
 Use the emitted immutable image ID as `AI_WORKER_SANDBOX_IMAGE` on this host.
@@ -58,7 +86,7 @@ bindings. The shared LocalCI report parser is not modified to rename tests.
 Qualify the image against actual isolated builds:
 
 ```sh
-HYPERION_GRADLE_TEST_IMAGE=$(docker image inspect hyperion-gradle-sandbox:local --format '{{.Id}}') \
+HYPERION_GRADLE_TEST_IMAGE=$(docker image inspect hyperion-sandbox:local --format '{{.Id}}') \
   ./gradlew test --tests '*DockerGradleBuildTest' -x webapp
 ```
 
