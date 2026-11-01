@@ -2188,6 +2188,41 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLatestResultWithFeedbacks_hidesUnpublishedTextExamResult() throws Exception {
+        // The latest-result-with-feedbacks endpoint also serves non-programming participations, so an unpublished text exam result must stay hidden there as well.
+        String studentLogin = TEST_PREFIX + "student1";
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        Exam exam = examTextExercise.getExam();
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        exam.setPublishResultsDate(ZonedDateTime.now().plusHours(1));
+        examTestRepository.save(exam);
+        User student = userUtilService.getUserByLogin(studentLogin);
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, student);
+        studentExam.setExercises(List.of(examTextExercise));
+        studentExamRepository.save(studentExam);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(examTextExercise, studentLogin);
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));
+        var result = ParticipationFactory.generateResult(true, 88D);
+        result.submission(submission).setCompletionDate(ZonedDateTime.now().minusMinutes(30));
+        result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        result.setExerciseId(examTextExercise.getId());
+        result = resultRepository.save(result);
+        submission.addResult(result);
+
+        String url = "/api/programming/programming-exercise-participations/" + participation.getId() + "/latest-result-with-feedbacks";
+        assertThat(request.get(url, HttpStatus.OK, Result.class)).as("An unpublished text exam result must not leak via latest-result-with-feedbacks").isNull();
+
+        // Once the exam results are published, the result becomes visible through the same endpoint.
+        exam.setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
+        examTestRepository.save(exam);
+        var publishedResult = request.get(url, HttpStatus.OK, Result.class);
+        assertThat(publishedResult).isNotNull();
+        assertThat(publishedResult.getId()).isEqualTo(result.getId());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getSubmissionOfParticipation() throws Exception {
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");

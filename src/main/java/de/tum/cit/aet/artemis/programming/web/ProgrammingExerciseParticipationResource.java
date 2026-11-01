@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
@@ -284,8 +285,9 @@ public class ProgrammingExerciseParticipationResource {
         var participation = participationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
-                && participationAuthCheckService.shouldHideExamExerciseResults(programmingExerciseStudentParticipation)) {
+        // This endpoint also serves text and other student participations (findByIdElseThrow is not restricted to programming), so the exam hiding must apply to every student
+        // participation, not only programming ones; otherwise an unpublished exam result of a non-programming exercise would leak here.
+        if (participation instanceof StudentParticipation studentParticipation && participationAuthCheckService.shouldHideExamExerciseResults(studentParticipation)) {
             return ResponseEntity.ok(null);
         }
 
