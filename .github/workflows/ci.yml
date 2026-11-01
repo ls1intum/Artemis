@@ -127,6 +127,8 @@ jobs:
               - '!src/test/playwright/**'
               - '!packages/**'
               - '!skills/**'
+              - '!config/stylelint/stylelint.config.json'
+              - '!config/stylelint/stylelint.config.js'
             # `build.gradle` and `gradle/` are deliberately absent: supporting_scripts/client/prebuild.mjs
             # reads the app version from build.gradle, and prebuild runs in front of every client test;
             # config/eslint/rules/tum-aet-ui-package.spec.mjs reads gradle/profile_{dev,prod}.gradle.

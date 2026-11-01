@@ -35,7 +35,10 @@ SERVER_DISK_INPUT_FILES = {"documentation/docs/developer/feature-usage-catalogue
 NON_SERVER_PREFIXES = (
     "documentation/", "src/main/webapp/", "src/test/playwright/", "packages/tum-aet-ui/",
 )
-NON_SERVER_FILES = {"README.md", "AGENTS.md", "CLAUDE.md", "LICENSE"}
+NON_SERVER_FILES = {
+    "README.md", "AGENTS.md", "CLAUDE.md", "LICENSE",
+    "config/stylelint/stylelint.config.json", "config/stylelint/stylelint.config.js",
+}
 IDENTIFIER = r"[A-Za-z_$][A-Za-z0-9_$]*"
 QUALIFIED = rf"{IDENTIFIER}(?:\.{IDENTIFIER})*"
 LEXEMES = re.compile(
