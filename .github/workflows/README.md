@@ -370,6 +370,19 @@ These workflows are intentionally NOT folded into the umbrella:
 
 ## E2E image identity and readiness
 
+PR images are deliberately retained after a PR closes. Immediate deletion is housekeeping,
+and GitHub currently provides container-image storage and bandwidth free of charge
+([billing policy](https://docs.github.com/en/billing/concepts/product-billing/github-packages)).
+The same image version carries both `pr-<number>` and `sha-<commit>` tags; deleting the version
+can break CI still pulling it after a merge and remove images needed for later reproduction or
+redeployment.
+Registry deletion also does not reclaim Docker disk space on self-hosted runners.
+
+There is no PR-close image-cleanup workflow. Automatic deletion would require package **Admin**
+access, expanding the capabilities of repository jobs with package-write tokens across the shared
+PR/release package. Keep the current package permissions. If registry growth becomes a practical
+problem, design a separate retention policy that protects release images and images still in use.
+
 Both build paths upload a `docker-tag` artifact containing `sha-<commit_sha>` for the exact
 revision checked out by the build. E2E setup rejects an artifact for any other revision;
 branch names and PR aliases remain convenient publishing tags but are never E2E inputs.

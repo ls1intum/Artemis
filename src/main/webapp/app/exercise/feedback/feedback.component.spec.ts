@@ -333,7 +333,7 @@ describe('FeedbackComponent', () => {
         fixture.detectChanges();
 
         expect(comp.participation()!.exercise).toBeUndefined();
-        const tagTexts = [...fixture.nativeElement.querySelectorAll('p-tag')].map((tag: Element) => tag.textContent?.trim());
+        const tagTexts = [...fixture.nativeElement.querySelectorAll('tumaet-ui-tag')].map((tag: Element) => tag.textContent?.trim());
         expect(tagTexts).toContain('ARTEMISAPP.RESULT.PRELIMINARY');
     });
 
@@ -645,9 +645,9 @@ describe('FeedbackComponent', () => {
         expect(createSpy).toHaveBeenCalledWith(feedbacks, true);
     });
 
-    describe('when opened via DialogService (inputValues forwarded via setInput)', () => {
+    describe('when opened via TumAetUiDialogService (inputValues forwarded via setInput)', () => {
         it('reads the inputs forwarded by the dialog before initializing feedback', () => {
-            // The standalone-feedback page binds inputs via the template; PrimeNG's DialogService forwards `inputValues`
+            // The standalone-feedback page binds inputs via the template; PrimeNG's TumAetUiDialogService forwards `inputValues`
             // by calling componentRef.setInput on the same signal inputs. This verifies that dialog-forwarded path.
             TestBed.resetTestingModule();
 

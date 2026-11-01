@@ -1,3 +1,5 @@
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -5,7 +7,7 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/share
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { faBook, faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
 import { NgClass } from '@angular/common';
-import { TooltipModule } from 'primeng/tooltip';
+
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgressBarComponent } from './progress-bar/progress-bar.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -16,7 +18,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
     templateUrl: './tutor-participation-graph.component.html',
     styleUrls: ['./tutor-participation-graph.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [NgClass, TooltipModule, FaIconComponent, ProgressBarComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiTooltipDirective, NgClass, FaIconComponent, ProgressBarComponent, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorParticipationGraphComponent {

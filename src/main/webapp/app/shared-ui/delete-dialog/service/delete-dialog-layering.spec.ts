@@ -1,35 +1,40 @@
 import { vi } from 'vitest';
+import { ApplicationRef, Component, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Logger, compile } from 'sass';
 import { PrimeNG } from 'primeng/config';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
-import { EventEmitter } from '@angular/core';
-import { Subject } from 'rxjs';
-import { CONFIRMATION_DIALOG_BASE_Z_INDEX, DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { ActionType, DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
-/**
- * Layering contract between the CDK overlay container and the PrimeNG confirmation dialog.
- *
- * The TUM AET UI dialog (presentation edit dialog) and everything the kit opens (calendars, select panels) live in
- * `.cdk-overlay-container`; the delete confirmation is a PrimeNG dynamic dialog. The container has to stay above the first
- * PrimeNG dialog so a calendar inside a PrimeNG dialog is visible, and the confirmation has to stay above the container so it
- * is not hidden by the kit dialog that opened it. `theme-default.scss`, which pulls in `global.scss`, is compiled here so the check sees the shipped value instead of
- * a re-typed copy.
- */
 const THEME_STYLES = 'src/main/webapp/content/scss/themes/theme-default.scss';
-
-/** Bootstrap's `$zindex-modal`; an NgbModal opened from a kit dialog was already below the container before the date picker change. */
 const BOOTSTRAP_MODAL_Z_INDEX = 1055;
-
-/** Alerts must stay above every dialog so an error after a failed delete is readable. */
 const ALERT_OVERLAY_Z_INDEX = 100000;
+const deleteData: DeleteDialogData = {
+    entityTitle: 'presentation',
+    deleteQuestion: 'artemisApp.presentationAssessment.delete.question',
+    translateValues: {},
+    actionType: ActionType.Delete,
+    buttonType: ButtonType.ERROR,
+    delete: vi.fn<(additionalChecksValues: Record<string, boolean>) => void>(),
+    requireConfirmationOnlyForAdditionalChecks: false,
+};
 
-/** Reads the `z-index` declared for `.cdk-overlay-container` from the compiled global styles. */
+@Component({ template: '<button type="button" (click)="openConfirmation()">Delete presentation</button>' })
+class PresentationDialogComponent {
+    private readonly deleteDialogService = inject(DeleteDialogService);
+
+    openConfirmation(): void {
+        this.deleteDialogService.openDeleteDialog(deleteData);
+    }
+}
+
+/** The compiled application CSS owns the shared overlay container's relationship to legacy dialogs and alerts. */
 function compileOverlayContainerZIndex(): number {
     const { css } = compile(THEME_STYLES, {
         loadPaths: [process.cwd()],
@@ -45,56 +50,49 @@ function compileOverlayContainerZIndex(): number {
 }
 
 describe('DeleteDialogService layering', () => {
-    let service: DeleteDialogService;
-    let dialogService: { open: ReturnType<typeof vi.fn> };
-    let primeNgModalZIndex: number;
-
-    const data: DeleteDialogData = {
-        entityTitle: 'title',
-        deleteQuestion: 'artemisApp.presentationAssessment.delete.question',
-        translateValues: {},
-        actionType: ActionType.Delete,
-        buttonType: ButtonType.ERROR,
-        delete: new EventEmitter<any>(),
-        requireConfirmationOnlyForAdditionalChecks: false,
-    };
-
-    beforeEach(() => {
-        dialogService = { open: vi.fn().mockReturnValue({ onClose: new Subject<void>(), close: vi.fn() }) };
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [PresentationDialogComponent, DeleteDialogComponent],
             providers: [
                 DeleteDialogService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useValue: dialogService },
                 { provide: AlertService, useValue: { closeAll: vi.fn(), error: vi.fn() } },
             ],
-        });
-        service = TestBed.inject(DeleteDialogService);
-        primeNgModalZIndex = TestBed.inject(PrimeNG).zIndex.modal;
+        }).compileComponents();
     });
 
-    /** z-index PrimeNG gives the confirmation when no other PrimeNG layer is open (base + 2, see ZIndexUtils.generateZIndex). */
-    function openConfirmationZIndex(): number {
-        service.openDeleteDialog(data);
-        const config = dialogService.open.mock.calls[0][1] as { baseZIndex?: number };
-        return primeNgModalZIndex + (config.baseZIndex ?? 0) + 2;
-    }
+    afterEach(() => TestBed.inject(TumAetUiDialogService).closeAll());
 
-    it('opens the confirmation above the CDK overlay container that hosts the dialog it was opened from', () => {
-        const containerZIndex = compileOverlayContainerZIndex();
+    it('opens a confirmation after its parent in the shared overlay and restores the parent focus on cancellation', async () => {
+        const dialogs = TestBed.inject(TumAetUiDialogService);
+        dialogs.open(PresentationDialogComponent, { header: 'Edit presentation' });
+        await TestBed.inject(ApplicationRef).whenStable();
+        const parent = document.querySelector('[role="dialog"]')!;
+        const trigger = Array.from(parent.querySelectorAll('button')).find((button) => button.textContent?.includes('Delete presentation'))!;
+        trigger.focus();
+        trigger.click();
+        await TestBed.inject(ApplicationRef).whenStable();
 
-        expect(openConfirmationZIndex()).toBeGreaterThan(containerZIndex);
+        const layers = document.querySelectorAll('[role="dialog"]');
+        expect(layers).toHaveLength(2);
+        expect(layers[0]).toBe(parent);
+        expect(layers[1].textContent).toContain('entity.delete.title');
+        const cancel = Array.from(layers[1].querySelectorAll('button')).find((button) => button.textContent?.includes('entity.action.cancel'))!;
+        cancel.click();
+        await TestBed.inject(ApplicationRef).whenStable();
+
+        expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1);
+        expect(document.activeElement).toBe(trigger);
+        expect(deleteData.delete).not.toHaveBeenCalled();
     });
 
-    it('keeps the CDK overlay container above the first PrimeNG dialog so a calendar inside it is visible', () => {
+    it('keeps the shared dialog and calendar container above legacy dialogs', () => {
         const containerZIndex = compileOverlayContainerZIndex();
-
-        expect(containerZIndex).toBeGreaterThan(primeNgModalZIndex + 2);
+        expect(containerZIndex).toBeGreaterThan(TestBed.inject(PrimeNG).zIndex.modal + 2);
         expect(containerZIndex).toBeGreaterThan(BOOTSTRAP_MODAL_Z_INDEX);
     });
 
-    it('keeps the confirmation below the alert overlay', () => {
-        expect(openConfirmationZIndex()).toBeLessThan(ALERT_OVERLAY_Z_INDEX);
-        expect(CONFIRMATION_DIALOG_BASE_Z_INDEX).toBeGreaterThan(0);
+    it('keeps confirmations below the alert overlay so a failed operation remains readable', () => {
+        expect(compileOverlayContainerZIndex()).toBeLessThan(ALERT_OVERLAY_Z_INDEX);
     });
 });

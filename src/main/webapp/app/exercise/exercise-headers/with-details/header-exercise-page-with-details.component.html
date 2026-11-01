@@ -4,7 +4,7 @@
             <div class="title-row">
                 <div class="inner-row">
                     @if (exercise().type) {
-                        <fa-icon [icon]="getIcon(exercise().type)" [ngbTooltip]="getIconTooltip(exercise().type) | artemisTranslate" />
+                        <fa-icon [icon]="getIcon(exercise().type)" [tumAetUiTooltip]="getIconTooltip(exercise().type) | artemisTranslate" />
                     }
                     &nbsp;
                     <ng-content select="[pagetitle]" />
@@ -37,7 +37,7 @@
                             <div>
                                 {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}
                                 {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise().assessmentType | artemisTranslate }}
-                                <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise().assessmentType | artemisTranslate }}" />
+                                <fa-icon [icon]="faQuestionCircle" tumAetUiTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise().assessmentType | artemisTranslate }}" />
                             </div>
                         </span>
                     }
@@ -58,7 +58,9 @@
                         }}
                         <fa-icon
                             [icon]="faQuestionCircle"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy()!.type + '.tooltip' | artemisTranslate }}"
+                            tumAetUiTooltip="{{
+                                'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy()!.type + '.tooltip' | artemisTranslate
+                            }}"
                         />
                     </div>
                 </div>
@@ -71,12 +73,12 @@
                 <ng-container [ngTemplateOutlet]="presentationScoreSummary" />
             }
             @if (dueDate()) {
-                <div class="fw-500">
+                <div class="font-medium">
                     {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
                     <span
                         [ngClass]="dueDateStatusBadge()"
-                        class="badge"
-                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate() | artemisDate }"
+                        class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold"
+                        [tumAetUiTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate() | artemisDate }"
                     >
                         {{ dueDate() | artemisTimeAgo }}
                     </span>
@@ -88,11 +90,13 @@
                 <ng-container [ngTemplateOutlet]="presentationScoreSummary" />
             }
             @if (!nextRelevantDate() && canComplainLaterOn()) {
-                <div class="fw-500">
+                <div class="font-medium">
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
                     <span
-                        class="badge bg-success"
-                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate: { days: effectiveCourse()?.maxComplaintTimeDays }"
+                        class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-state-success"
+                        [tumAetUiTooltip]="
+                            'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate: { days: effectiveCourse()?.maxComplaintTimeDays }
+                        "
                         jhiTranslate="global.generic.yes"
                     ></span>
                 </div>
@@ -103,12 +107,14 @@
 
 <ng-template #nextRelevantDateBadge>
     @if (nextRelevantDate() && (!exam() || !isTestRun())) {
-        <div class="fw-500">
+        <div class="font-medium">
             {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() | artemisTranslate }}
             <span
                 [ngClass]="nextRelevantDateStatusBadge()"
-                class="badge"
-                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate }"
+                class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold"
+                [tumAetUiTooltip]="
+                    'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate }
+                "
             >
                 {{ nextRelevantDate() | artemisTimeAgo }}
             </span>
@@ -118,24 +124,24 @@
 
 <ng-template #presentationScoreSummary>
     @if (exercise().presentationScoreEnabled) {
-        <div>
+        <div data-testid="presentation-score-summary">
             @if (effectiveCourse()?.presentationScore) {
                 {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
                 @if ((studentParticipation()?.presentationScore ?? 0) > 0) {
-                    <span class="badge bg-success" jhiTranslate="global.generic.yes"></span>
+                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-state-success" jhiTranslate="global.generic.yes"></span>
                 }
                 @if ((studentParticipation()?.presentationScore ?? 0) <= 0) {
-                    <span class="badge bg-secondary" jhiTranslate="global.generic.no"></span>
+                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-surface-sunken" jhiTranslate="global.generic.no"></span>
                 }
             } @else {
                 {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
                 @if (studentParticipation()?.presentationScore) {
-                    <span class="badge bg-success">
+                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-state-success">
                         {{ studentParticipation()!.presentationScore + '%' }}
                     </span>
                 }
                 @if (!studentParticipation()?.presentationScore) {
-                    <span class="badge bg-secondary" jhiTranslate="global.generic.unset"></span>
+                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-surface-sunken" jhiTranslate="global.generic.unset"></span>
                 }
             }
         </div>
