@@ -29,11 +29,21 @@ Every node that receives a report writes it to its own log, so search the aggreg
 
 ## Privacy
 
-The endpoint is open to clients that are not signed in, so the server does not trust what it receives. Before an entry is logged, every value is shortened to its limit, control characters and line breaks are removed so that a sender cannot forge a log line, and personal data is removed: email addresses, `user=` assignments, `User{...}` dumps and the participant in the url of a repository. Query strings and fragments of the page url are dropped.
+The endpoint is open to clients that are not signed in, so the server does not trust what it receives. Before an entry is logged, every value is shortened to its limit, and control characters and line breaks are removed so that a sender cannot forge a log line. Query strings and fragments of the page url are dropped. A failed request that a client reports is described by its status and its path, without its query and without the body of the response.
+
+The server removes these kinds of personal data from the message, the stack and the additional values of a report, and nothing else:
+
+- email addresses
+- `user=` assignments
+- `User{...}` dumps, also one that the client cut off before the closing brace
+- the value of a field named `userLogin`, `studentLogin`, `login` or `username` in serialized data, as in `{"userLogin":"ge12abc"}`
+- the participant in the url of a repository
+
+A name, a student identifier or any other personal data that is written into a message in another form stays in the log, exactly as the client sent it. The server cannot recognize it, so do not put it into a message or into the additional values of a report, see [Reporting unexpected errors](/developer/guidelines/client-development#reporting-unexpected-errors). The log of Artemis is only readable by those who operate it.
 
 ## Rate limit
 
-An error often happens where nobody is signed in, for example on the login page, so the endpoint `POST /api/core/public/client-errors` needs no authentication. Every report writes a log entry, so a client that is not authenticated is limited per address. Reports of signed-in users are not limited by the server, as the client already limits them.
+An error often happens where nobody is signed in, for example on the login page, so the endpoint `POST /api/core/public/client-errors` needs no authentication. Every report writes a log entry, so a client that is not authenticated is limited per address. Reports of signed-in users are not limited by the server, as the client already limits them. A request that exceeds the limit is answered with status 429 and is not written to the log of Artemis above debug level, because a limit that bounds the log must not write a line for every request that it rejects. Your reverse proxy still records it in its own access log.
 
 ```yaml
 artemis:
@@ -47,6 +57,8 @@ artemis:
   This limit cannot be switched off. Unlike the other rate limits, it also applies when `artemis.rate-limiting.enabled` is `false` or the rate limit feature is toggled off, because anybody who can reach the server could otherwise fill its log through this endpoint. Only an address in `artemis.rate-limiting.exempt-addresses` is not limited, see [Security](/admin/production-setup/security#rate-limiting).
 
 </Callout>
+
+The limit counts the address of the TCP peer as Tomcat resolved it. Artemis does not read `X-Forwarded-For` for this limit, because a sender could put any address into the header and receive a new budget for every request. Tomcat believes the forwarding headers only of the proxies in `server.tomcat.remoteip.internal-proxies`, which by default are the private networks. If your reverse proxy is not in a private network, all clients have the address of the proxy until you name it there, and then they share one budget of 60 reports per minute, which drops the surplus reports. The other rate limits of Artemis still use the first value of `X-Forwarded-For`.
 
 The limit is shared by all clients behind the same address, for example a lecture hall behind one NAT. The default of 60 reports per minute leaves room for that. If the limit is exceeded, the server answers with status 429 and the client does not retry.
 
