@@ -1,6 +1,6 @@
 import { Injector, Service, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';

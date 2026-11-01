@@ -13,7 +13,7 @@ import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({

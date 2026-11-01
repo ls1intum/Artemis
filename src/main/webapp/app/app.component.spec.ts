@@ -25,7 +25,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 
 class MockThemeService {
@@ -62,7 +61,6 @@ describe('AppComponent', () => {
                     provide: FeatureToggleService,
                     useValue: { getFeatureToggleActive: () => of(false), subscribeFeatureToggleUpdates: () => {}, unsubscribeFeatureToggleUpdates: () => {} },
                 },
-                { provide: SentryErrorHandler, useValue: { initSentry: vi.fn() } },
                 { provide: JhiLanguageHelper, useValue: { updateTitle: vi.fn() } },
                 { provide: LazyRouteRecoveryService, useValue: { handleNavigationError } },
                 provideHttpClient(),

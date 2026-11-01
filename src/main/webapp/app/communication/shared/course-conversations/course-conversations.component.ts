@@ -22,7 +22,7 @@ import {
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { DialogService } from 'primeng/dynamicdialog';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
@@ -398,7 +398,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
                         this.prepareSidebarData();
                     },
                     error: (error) => {
-                        captureException('Error creating channel:', error);
+                        captureException(new Error('Error creating channel', { cause: error }));
                     },
                 });
         }
