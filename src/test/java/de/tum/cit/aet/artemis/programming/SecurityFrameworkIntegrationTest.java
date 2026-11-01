@@ -153,8 +153,15 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void tutorsCannotReadTheState() throws Exception {
+    void tutorsCannotReadOrChangeTheSandbox() throws Exception {
+        String headBefore = pushedHead();
+
         request.get(basePath, HttpStatus.FORBIDDEN, SecurityFrameworkConfigDTO.class);
+        put("deactivate", null, HttpStatus.FORBIDDEN);
+        put("activate", "2.2.1", HttpStatus.FORBIDDEN);
+        put("framework-version", "2.2.1", HttpStatus.FORBIDDEN);
+
+        assertThat(pushedHead()).isEqualTo(headBefore);
     }
 
     @Test
@@ -174,6 +181,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
         request.get(basePath, HttpStatus.FORBIDDEN, SecurityFrameworkConfigDTO.class);
         put("deactivate", null, HttpStatus.FORBIDDEN);
         put("activate", "2.2.1", HttpStatus.FORBIDDEN);
+        put("framework-version", "2.2.1", HttpStatus.FORBIDDEN);
 
         assertThat(pushedHead()).isEqualTo(headBefore);
     }
@@ -283,6 +291,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
 
         put("deactivate", null, HttpStatus.BAD_REQUEST);
         put("activate", "2.2.1", HttpStatus.BAD_REQUEST);
+        put("framework-version", "2.2.1", HttpStatus.BAD_REQUEST);
         assertThat(pushedHead()).isEqualTo(headBefore);
     }
 
