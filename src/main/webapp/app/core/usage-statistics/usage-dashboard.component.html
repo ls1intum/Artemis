@@ -1,6 +1,6 @@
 <div class="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8" data-testid="usage-dashboard">
     <header class="flex flex-col gap-2">
-        <h1 class="m-0 text-3xl font-bold" jhiTranslate="artemisApp.usageDashboard.title"></h1>
+        <h1 class="m-0 text-3xl font-bold">{{ 'artemisApp.usageDashboard.title' | artemisTranslate }}</h1>
         <p class="m-0 text-text-secondary" jhiTranslate="artemisApp.usageDashboard.subtitle"></p>
     </header>
 
@@ -49,7 +49,7 @@
         </section>
 
         <section class="flex flex-col gap-3" data-testid="usage-exercise-types">
-            <h2 class="m-0 text-xl font-semibold" jhiTranslate="artemisApp.usageDashboard.exercisesByType"></h2>
+            <h2 class="m-0 text-xl font-semibold">{{ 'artemisApp.usageDashboard.exercisesByType' | artemisTranslate }}</h2>
             <ul class="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-5">
                 @for (type of exerciseTypes; track type) {
                     <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" [attr.data-testid]="'usage-type-' + type">
@@ -61,7 +61,7 @@
         </section>
 
         <section class="flex flex-col gap-3" data-testid="usage-trend">
-            <h2 class="m-0 text-xl font-semibold" jhiTranslate="artemisApp.usageDashboard.activeStudentsTrend"></h2>
+            <h2 class="m-0 text-xl font-semibold">{{ 'artemisApp.usageDashboard.activeStudentsTrend' | artemisTranslate }}</h2>
             <ul class="m-0 flex list-none flex-col gap-2 p-0">
                 @for (option of semesters(); track option.label) {
                     <li class="flex items-center gap-3">
@@ -76,15 +76,15 @@
         </section>
 
         <section class="flex flex-col gap-2 text-sm text-text-secondary" data-testid="usage-definitions">
-            <h2 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.usageDashboard.definitions.title"></h2>
+            <h2 class="m-0 text-base font-semibold">{{ 'artemisApp.usageDashboard.definitions.title' | artemisTranslate }}</h2>
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.course"></p>
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.students"></p>
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.activeStudents"></p>
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.privacy"></p>
         </section>
     } @else if (statistics()) {
-        <p class="text-text-secondary" role="status" data-testid="usage-empty" jhiTranslate="artemisApp.usageDashboard.empty"></p>
+        <output class="block text-text-secondary" data-testid="usage-empty">{{ 'artemisApp.usageDashboard.empty' | artemisTranslate }}</output>
     } @else {
-        <p class="text-text-secondary" role="status" data-testid="usage-loading" jhiTranslate="artemisApp.usageDashboard.loading"></p>
+        <output class="block text-text-secondary" data-testid="usage-loading">{{ 'artemisApp.usageDashboard.loading' | artemisTranslate }}</output>
     }
 </div>
