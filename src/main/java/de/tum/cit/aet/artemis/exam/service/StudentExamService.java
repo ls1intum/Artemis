@@ -437,7 +437,9 @@ public class StudentExamService {
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
             // add participation with submission and result to each exercise
-            examService.filterParticipationForExercise(studentExam, exercise, participations, true);
+            if (exercise != null) {
+                examService.filterParticipationForExercise(studentExam, exercise, participations, ExamReadAudience.INSTRUCTOR);
+            }
         }
 
         studentExam.getUser().setVisibleRegistrationNumber();

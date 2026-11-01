@@ -19,12 +19,12 @@
 
         th,
         td {
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--tumaet-ui-border-color);
             padding: 0.5rem;
             text-align: left;
 
             &.danger {
-                background-color: var(--danger);
+                background-color: var(--tumaet-ui-state-danger);
             }
         }
     }

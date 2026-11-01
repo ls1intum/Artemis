@@ -23,14 +23,15 @@
             <div class="question-card-header-inputs">
                 <div class="question-score">
                     <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                    <p-inputnumber
+                    <jhi-points-input
                         inputId="score"
-                        styleClass="score-input"
+                        class="score-input"
+                        [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                        fluid
                         [(ngModel)]="question().points!"
                         (ngModelChange)="questionUpdated.emit()"
                         [min]="0"
                         [max]="MAX_POINTS"
-                        [maxFractionDigits]="2"
                     />
                 </div>
                 <div class="question-action-buttons">
@@ -114,14 +115,12 @@
                 <div class="col-12 col-md-2">
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                        <input
-                            [attr.aria-label]="'artemisApp.quizQuestion.score' | artemisTranslate"
-                            class="form-control point-input"
-                            title="score"
-                            type="number"
-                            [value]="question().points"
-                            disabled
-                            style="width: 100%"
+                        <jhi-points-input
+                            [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
+                            fluid
+                            [ngModel]="question().points"
+                            [ngModelOptions]="{ standalone: true }"
+                            [disabled]="true"
                         />
                     </div>
                 </div>

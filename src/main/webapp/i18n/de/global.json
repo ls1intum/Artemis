@@ -22,7 +22,9 @@
             "expandMenu": "Menü aufklappen (Strg + M)",
             "collapseMenu": "Menü einklappen (Strg + M)",
             "enabled": "Aktiviert",
-            "disabled": "Deaktiviert"
+            "disabled": "Deaktiviert",
+            "resizePanels": "Bereichsgröße ändern",
+            "selectAllRows": "Alle Zeilen auswählen"
         },
         "weekdays": {
             "monday": "Montag",
@@ -453,6 +455,13 @@
         },
         "imageCropper": {
             "sourceImage": "Bild zum Zuschneiden"
+        },
+        "stepState": {
+            "pending": "Noch nicht begonnen",
+            "current": "Läuft",
+            "complete": "Fertig",
+            "failed": "Fehlgeschlagen",
+            "skipped": "Übersprungen"
         }
     },
     "entity": {

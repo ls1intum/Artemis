@@ -1,0 +1,34 @@
+{
+    "artemisApp": {
+        "usageDashboard": {
+            "title": "Artemis in numbers",
+            "subtitle": "Anonymous, aggregated usage of this Artemis instance during the last four semesters.",
+            "loading": "Loading usage numbers...",
+            "error": "The usage numbers could not be loaded. Please try again later.",
+            "empty": "There are not enough courses yet to show usage numbers.",
+            "semesterSelection": "Select a semester",
+            "courses": "Courses",
+            "students": "Students",
+            "activeStudents": "Active students",
+            "submissions": "Submissions",
+            "exercises": "Exercises",
+            "lectures": "Lectures",
+            "exercisesByType": "Exercises by type",
+            "activeStudentsTrend": "Active students per semester",
+            "exerciseTypes": {
+                "programming": "Programming",
+                "quiz": "Quiz",
+                "text": "Text",
+                "modeling": "Modeling",
+                "file-upload": "File upload"
+            },
+            "definitions": {
+                "title": "How these numbers are counted",
+                "course": "A course counts if it is no test course, has at least 5 students and starts in the semester. Semesters with fewer than 3 such courses are not shown.",
+                "students": "Students are unique people enrolled as student in at least one counted course.",
+                "activeStudents": "Active students are counted students who made at least one submission in an exercise or exam of these courses.",
+                "privacy": "Only totals are shown, never single courses or people, and results based on too few courses are hidden. The numbers are refreshed about once per hour."
+            }
+        }
+    }
+}

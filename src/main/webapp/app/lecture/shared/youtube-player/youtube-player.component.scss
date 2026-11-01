@@ -24,7 +24,7 @@
         flex: 3;
         position: relative;
         aspect-ratio: 16 / 9;
-        background: #000;
+        background: var(--lecture-media-background);
         min-width: 300px;
 
         @media (max-width: 992px) {
@@ -35,19 +35,14 @@
     }
 
     .resizer-handle {
-        // A flex item between the video and transcript columns (the divider), not overlapping the video.
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        // A flex item between the video and transcript columns (the divider), not overlapping the video. Width and grip
+        // come from `.panel-divider-x`.
         align-self: stretch;
-        width: 16px;
         cursor: col-resize;
         background: transparent;
         transition: background-color 0.2s;
-        flex-shrink: 0;
         user-select: none;
         touch-action: none;
-        color: var(--gray-500);
         border: none;
         padding: 0;
         margin: 0;
@@ -55,15 +50,13 @@
 
         &:hover,
         &:active {
-            background-color: rgba(var(--bs-primary-rgb), 0.1);
-            color: var(--primary);
+            background-color: color-mix(in srgb, var(--primary) 10%, transparent);
         }
 
         &:focus-visible {
             outline: 2px solid var(--primary);
-            outline-offset: -2px;
-            background-color: rgba(var(--bs-primary-rgb), 0.1);
-            color: var(--primary);
+            outline-offset: 0;
+            background-color: color-mix(in srgb, var(--primary) 10%, transparent);
         }
 
         @media (max-width: 992px) {
@@ -79,8 +72,8 @@
         width: 100% !important;
         height: 100% !important;
         border-radius: 0.5rem;
-        box-shadow: 0 0 0.625rem rgba(0, 0, 0, 0.2);
-        background: #000;
+        box-shadow: 0 0 0.625rem color-mix(in srgb, var(--lecture-scrim-color) 20%, transparent);
+        background: var(--lecture-media-background);
     }
 
     /* The YouTube IFrame API injects inline pixel dimensions into nested wrapper

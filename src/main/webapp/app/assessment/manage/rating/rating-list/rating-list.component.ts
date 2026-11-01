@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiPaginatorComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { RatingListItem } from 'app/assessment/shared/entities/rating-list-item.model';
@@ -10,14 +11,22 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StarRatingComponent } from '../star-rating/star-rating.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-rating-list',
     templateUrl: './rating-list.component.html',
-    imports: [TranslatePipe, SortDirective, SortByDirective, FaIconComponent, StarRatingComponent, PaginatorModule, NgbTooltip],
+    imports: [
+        TranslatePipe,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        StarRatingComponent,
+        TumAetUiPaginatorComponent,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+    ],
 })
 export class RatingListComponent implements OnInit {
     private ratingService = inject(RatingService);
@@ -26,7 +35,7 @@ export class RatingListComponent implements OnInit {
 
     readonly ratings = signal<RatingListItem[]>([]);
     readonly totalElements = signal(0);
-    readonly page = signal(1); // 1-indexed (PrimeNG paginator is 0-indexed; converted in onPageChange)
+    readonly page = signal(1); // 1-indexed (TUM AET UI paginator is 0-indexed; converted in onPageChange)
     public pageSize = 20;
 
     private courseId!: number; // set in ngOnInit() from route params
@@ -59,8 +68,8 @@ export class RatingListComponent implements OnInit {
         this.loadRatings();
     }
 
-    onPageChange(event: PaginatorState): void {
-        this.page.set((event.page ?? 0) + 1);
+    onPageChange(page: number): void {
+        this.page.set(page + 1);
         this.loadRatings();
     }
 

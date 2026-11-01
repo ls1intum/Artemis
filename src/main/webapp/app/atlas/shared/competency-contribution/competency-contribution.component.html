@@ -1,34 +1,66 @@
 @if (atlasEnabled() && competencies().length) {
-    <div class="mt-4 mb-2">
-        <h5 [jhiTranslate]="'artemisApp.competency.competencyContribution.title'"></h5>
+    <section class="mt-6! mb-2" [attr.aria-label]="'artemisApp.competency.competencyContribution.title' | artemisTranslate">
+        <div class="mb-2 flex items-center justify-between gap-2">
+            <h3 class="m-0 text-lg font-medium" jhiTranslate="artemisApp.competency.competencyContribution.title"></h3>
+            @if (competencies().length > 3) {
+                <div class="flex gap-2">
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        size="small"
+                        variant="text"
+                        severity="secondary"
+                        data-testid="competency-contribution-previous"
+                        [attr.aria-label]="'entity.action.previous' | artemisTranslate"
+                        (click)="move(-1)"
+                    >
+                        <fa-icon [icon]="faChevronLeft" aria-hidden="true" />
+                    </button>
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        size="small"
+                        variant="text"
+                        severity="secondary"
+                        data-testid="competency-contribution-next"
+                        [attr.aria-label]="'entity.action.next' | artemisTranslate"
+                        (click)="move(1)"
+                    >
+                        <fa-icon [icon]="faChevronRight" aria-hidden="true" />
+                    </button>
+                </div>
+            }
+        </div>
+        <ul class="m-0 grid list-none grid-cols-1 gap-4! p-0 sm:grid-cols-3" aria-live="polite" data-testid="competency-contribution-cards">
+            @for (competency of visibleCompetencies(); track competency.competencyId) {
+                <li class="min-w-0">
+                    <jhi-competency-contribution-card
+                        [competencyId]="competency.competencyId"
+                        [courseId]="courseId()"
+                        [title]="competency.title"
+                        [weight]="competency.weight"
+                        [mastery]="competency.mastery"
+                    />
+                </li>
+            }
+        </ul>
         @if (competencies().length > 3) {
-            <p-carousel [value]="competencies()" [numVisible]="3" [numScroll]="1" [circular]="true">
-                <ng-template let-competency #item>
-                    <div class="p-2">
-                        <jhi-competency-contribution-card
-                            [competencyId]="competency.competencyId"
-                            [courseId]="courseId()"
-                            [title]="competency.title"
-                            [weight]="competency.weight"
-                            [mastery]="competency.mastery"
-                        />
-                    </div>
-                </ng-template>
-            </p-carousel>
-        } @else {
-            <div class="row row-cols-3">
-                @for (competency of competencies(); track competency.competencyId) {
-                    <div class="col">
-                        <jhi-competency-contribution-card
-                            [competencyId]="competency.competencyId"
-                            [courseId]="courseId()"
-                            [title]="competency.title"
-                            [weight]="competency.weight"
-                            [mastery]="competency.mastery"
-                        />
-                    </div>
+            <nav class="mt-2 flex flex-wrap justify-center gap-1" [attr.aria-label]="'artemisApp.competency.competencyContribution.title' | artemisTranslate">
+                @for (competency of competencies(); track competency.competencyId; let index = $index) {
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        size="small"
+                        severity="secondary"
+                        [variant]="firstVisibleIndex() === index ? 'solid' : 'text'"
+                        [attr.aria-current]="firstVisibleIndex() === index ? 'page' : undefined"
+                        [attr.data-testid]="'competency-contribution-page-' + index"
+                        (click)="selectPage(index)"
+                    >
+                        {{ index + 1 }}
+                    </button>
                 }
-            </div>
+            </nav>
         }
-    </div>
+    </section>
 }

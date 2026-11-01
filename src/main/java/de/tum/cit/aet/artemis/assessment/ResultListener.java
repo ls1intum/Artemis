@@ -49,6 +49,9 @@ public class ResultListener {
     @PostPersist
     @PostUpdate
     public void createOrUpdateResult(Result result) {
+        if (result.isAthenaBased() && !Boolean.TRUE.equals(result.isSuccessful())) {
+            return;
+        }
         if (result.getSubmission() != null && result.getSubmission().getParticipation() instanceof StudentParticipation participation
                 && ParticipantScoreScheduleService.hasParticipantScore(participation)) {
             instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), null);
@@ -63,6 +66,9 @@ public class ResultListener {
      */
     @PreRemove
     public void removeResult(Result result) {
+        if (result.isAthenaBased() && !Boolean.TRUE.equals(result.isSuccessful())) {
+            return;
+        }
         // We can not retrieve the participation in a @PostRemove callback, so we use @PreRemove here
         // Then, we pass the result id to the scheduler to assure it is not used during the calculation of the new score
         // If the participation does not exist, we assume it will be deleted as well (no need to update the score in that case)

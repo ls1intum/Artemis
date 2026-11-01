@@ -22,7 +22,7 @@ import {
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { DialogService } from 'primeng/dynamicdialog';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
@@ -204,6 +204,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     readonly sidebarConversations = signal<SidebarCardElement[]>([]);
     // the unread state of the conversations as the sidebar was built, to notice that a count was raised in place afterwards
     private renderedUnreadState = '';
+    private renderedConversations: ConversationDTO[] = [];
     readonly isCollapsed = signal(false);
     readonly pageTitle = signal<string>('');
     readonly focusPostId = signal<number | undefined>(undefined);
@@ -397,7 +398,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
                         this.prepareSidebarData();
                     },
                     error: (error) => {
-                        captureException('Error creating channel:', error);
+                        captureException(new Error('Error creating channel', { cause: error }));
                     },
                 });
         }
@@ -547,12 +548,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     private subscribeToConversationsOfUser() {
         this.courseConversationsService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.conversationsOfUser.set(conversations ?? []);
-            if (!this.sidebarData() || this.conversationsToShowInSidebar().some((conversation) => !this.isListedInSidebar(conversation.id!) && isOneToOneChatDTO(conversation))) {
-                // Accepted metadata can initialize the sidebar after a cancelled foreground refresh, or add a formerly empty direct message.
-                this.rebuildSidebarData();
-            } else if (this.sidebarData() && this.unreadStateOf(this.conversationsToShowInSidebar()) !== this.renderedUnreadState) {
-                // The service raises the unread count of the cached conversation in place when a message or a reply arrives. The sidebar cards
-                // read it from that object, so they do not notice and keep showing the old count until the sidebar is built again.
+            const visibleConversations = this.conversationsToShowInSidebar();
+            if (
+                !this.sidebarData() ||
+                visibleConversations.length !== this.renderedConversations.length ||
+                visibleConversations.some((conversation, index) => conversation !== this.renderedConversations[index]) ||
+                this.unreadStateOf(visibleConversations) !== this.renderedUnreadState
+            ) {
+                // Membership events replace DTOs, while message events can change unread state in place.
+                // Rebuild from the accepted cache so new chats and membership changes appear without another request.
                 this.rebuildSidebarData();
             }
         });
@@ -666,6 +670,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
      */
     private rebuildSidebarData() {
         const conversations = this.conversationsToShowInSidebar();
+        this.renderedConversations = [...conversations];
         this.renderedUnreadState = this.unreadStateOf(conversations);
         this.sidebarConversations.set(this.courseOverviewService.mapConversationsToSidebarCardElements(conversations));
         this.accordionConversationGroups.set(this.courseOverviewService.groupConversationsByChannelType(this.course()!, conversations, this.messagingEnabled));

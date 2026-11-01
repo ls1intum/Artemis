@@ -6,7 +6,15 @@ import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/account/user/user.model';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LTI, PROFILE_LOCALCI, VERSION } from 'app/app.constants';
+import {
+    MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_EXAM,
+    MODULE_FEATURE_HYPERION,
+    MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+    MODULE_FEATURE_LTI,
+    PROFILE_LOCALCI,
+    VERSION,
+} from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -33,7 +41,6 @@ import { ActiveMenuDirective } from './active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
-import { VariantGenerationTrayComponent } from 'app/core/navbar/variant-generation-tray/variant-generation-tray.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
@@ -43,7 +50,7 @@ import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRout
 import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSignal';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
+import { HyperionActivityTrayComponent } from 'app/hyperion/activity-tray/hyperion-activity-tray.component';
 
 @Component({
     selector: 'jhi-navbar',
@@ -74,8 +81,8 @@ import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise
         GlobalSearchNavbarComponent,
         ImageComponent,
         SlicePipe,
-        VariantGenerationTrayComponent,
         CourseNotificationOverviewComponent,
+        HyperionActivityTrayComponent,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
@@ -94,7 +101,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private readonly titleService = inject(Title);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly courseStorageService = inject(CourseStorageService);
-    protected readonly variantGenerationService = inject(ExerciseVariantGenerationService);
 
     protected readonly faBars = faBars;
     protected readonly faUser = faUser;
@@ -134,6 +140,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ltiEnabled = false;
     standardizedCompetenciesEnabled = false;
     readonly globalSearchEnabled = signal(false);
+    readonly hyperionEnabled = signal(false);
+    readonly hyperionExerciseGenerationEnabled = signal(false);
     readonly isExamStarted = signal(false);
     readonly currentCourse = this.courseStorageService.currentCourse;
     readonly currentRoute = getCurrentRouteSignal(this.router);
@@ -204,6 +212,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
         this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
         this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
+        this.hyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
+        this.hyperionExerciseGenerationEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;
@@ -255,6 +265,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     breadcrumbTranslation: { [key: string]: string } = {
+        generation: 'artemisApp.hyperion.generation.run.breadcrumb',
         admin: 'global.menu.admin.main',
         new: 'global.generic.create',
         process: 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.pageTitle',
@@ -678,7 +689,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private addExerciseCrumb(exerciseId: number, currentPath: string): void {
         // Add dummy breadcrumb
         const crumb = this.addBreadcrumb('', '', false);
-        this.exerciseService.find(exerciseId).subscribe({
+        const exerciseSource = currentPath.startsWith('/course-management/')
+            ? currentPath.includes('/exams/')
+                ? this.exerciseService.findForExamManagement(exerciseId)
+                : this.exerciseService.findForStaff(exerciseId)
+            : this.exerciseService.find(exerciseId);
+        exerciseSource.subscribe({
             next: (response: HttpResponse<Exercise>) => {
                 // If the response doesn't contain the needed data, remove the breadcrumb as we can not successfully link to it
                 if (!response?.body?.title || !response?.body?.type) {

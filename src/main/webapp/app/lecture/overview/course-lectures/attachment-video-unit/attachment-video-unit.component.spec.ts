@@ -15,7 +15,6 @@ import { ScienceService } from 'app/foundation/science/science.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { Subject, of } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/foundation/service/alert.service';
 import {
     IconDefinition,
@@ -73,8 +72,8 @@ describe('AttachmentVideoUnitComponent', () => {
 
     let mockLectureTranscriptionService: any;
 
-    function expectPlaylistRequest(url: string, response: string | null) {
-        const req = httpMock.expectOne((request) => request.url === '/api/videosource/playlist' && request.params.get('url') === url);
+    function expectPlaylistRequest(unitId: number, response: string | null) {
+        const req = httpMock.expectOne((request) => request.url === `api/lecture/lecture-units/${unitId}/playlist`);
         expect(req.request.method).toBe('GET');
         req.flush(response);
     }
@@ -96,7 +95,6 @@ describe('AttachmentVideoUnitComponent', () => {
                 MockProvider(ScienceService),
                 { provide: LectureTranscriptionService, useValue: mockLectureTranscriptionService },
                 AttachmentVideoUnitService,
-                MockProvider(NgbModal),
                 MockProvider(AlertService),
                 MockProvider(ProfileService),
                 MockProvider(IrisChatService, { pointOut$: of() }),
@@ -105,8 +103,8 @@ describe('AttachmentVideoUnitComponent', () => {
             // Replace the real engine-backed PDF viewer with a lightweight stub: the unit tests here drive the
             // viewer purely through its public input/output contract (and override `pdfViewer` where needed).
             // The Iris sidebar's chatbot goes the same way — it renders as soon as a test enables Iris and opens
-            // the combined view, and it drives the whole Iris chat stack (down to PrimeNG's DialogService), none
-            // of which this TestBed provides for. The Iris specs cover the chat itself.
+            // the combined view, and it drives the whole Iris chat stack, which this TestBed does not provide.
+            // The Iris specs cover the chat itself.
             .overrideComponent(AttachmentVideoUnitComponent, {
                 remove: { imports: [PdfViewerComponent, LectureChatbotComponent] },
                 add: { imports: [MockComponent(PdfViewerComponent), MockComponent(LectureChatbotComponent)] },
@@ -140,6 +138,123 @@ describe('AttachmentVideoUnitComponent', () => {
 
         component['onFullscreenChange'](false);
         expect(component.isFullscreen()).toBe(false);
+    });
+
+    describe('fullscreen change of a unit with a video and a PDF', () => {
+        /** A viewer and a player that are ready, or that have not reached their start position yet (no document, not seekable). */
+        function stubViewers(currentTime: number | undefined, currentPage: number, ready = true) {
+            Object.defineProperty(component, 'pdfViewer', {
+                value: () => ({ getCurrentPage: () => currentPage, getTotalPages: () => (ready ? 20 : 0), goToPage: vi.fn(() => true) }),
+                writable: true,
+                configurable: true,
+            });
+            Object.defineProperty(component, 'videoPlayer', {
+                value: () => ({ getCurrentTime: () => currentTime, isSeekable: () => ready, seekTo: vi.fn(() => true) }),
+                writable: true,
+                configurable: true,
+            });
+        }
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, videoSource: 'https://example.com/video.mp4' });
+        });
+
+        it.each([true, false])('starts the recreated video player and PDF viewer where the student stopped when fullscreen changes to %s', (isFullscreen) => {
+            stubViewers(42, 3);
+
+            component['onFullscreenChange'](isFullscreen);
+
+            expect(component.videoInitialTimestamp()).toBe(42);
+            expect(component.pdfInitialPage()).toBe(3);
+        });
+
+        it('does not let the page the recreated PDF viewer reports on start move the video', () => {
+            stubViewers(42, 3);
+
+            component['onFullscreenChange'](true);
+
+            expect(component['pendingPdfTargetPage']).toBe(3);
+        });
+
+        it('waits for no page report when the PDF viewer restarts on its first page, because it reports none', () => {
+            stubViewers(42, 1);
+
+            component['onFullscreenChange'](true);
+
+            expect(component['pendingPdfTargetPage']).toBeUndefined();
+        });
+
+        it('keeps the page and the time of a pending deep link when the viewer and the player have not reached them yet', () => {
+            fixture.componentRef.setInput('deepLink', { unitId: 1, page: 5, timestamp: 12 });
+            stubViewers(0, 1, false);
+
+            component['onFullscreenChange'](true);
+
+            expect(component.pdfInitialPage()).toBe(5);
+            expect(component.videoInitialTimestamp()).toBe(12);
+            expect(component['pendingPdfTargetPage']).toBeUndefined();
+        });
+
+        /** Navigates to a new deep link the way the unit receives it: the input changes and the link is applied to the viewers that are there. */
+        function navigateTo(deepLink: { unitId: number; page?: number; timestamp?: number }) {
+            fixture.componentRef.setInput('deepLink', deepLink);
+            component['applyDeepLink'](deepLink);
+        }
+
+        it('lets a new deep link with a page and a time take precedence over the position the viewers resumed from', () => {
+            stubViewers(42, 3);
+            component['onFullscreenChange'](true);
+            expect(component.videoInitialTimestamp()).toBe(42);
+            expect(component.pdfInitialPage()).toBe(3);
+
+            navigateTo({ unitId: 1, page: 8, timestamp: 9 });
+
+            expect(component.videoInitialTimestamp()).toBe(9);
+            expect(component.pdfInitialPage()).toBe(8);
+        });
+
+        it('keeps the resumed time when a new deep link names only a page, because a live player would cue its video again', () => {
+            stubViewers(42, 3);
+            component['onFullscreenChange'](true);
+
+            navigateTo({ unitId: 1, page: 8 });
+
+            expect(component.videoInitialTimestamp()).toBe(42);
+            expect(component.pdfInitialPage()).toBe(8);
+        });
+
+        it('keeps the resumed page when a new deep link names only a time', () => {
+            stubViewers(42, 3);
+            component['onFullscreenChange'](true);
+
+            navigateTo({ unitId: 1, timestamp: 9 });
+
+            expect(component.videoInitialTimestamp()).toBe(9);
+            expect(component.pdfInitialPage()).toBe(3);
+        });
+
+        it('starts the viewers from the deep link again when the unit is collapsed, because the viewers that started from the resumed positions are gone', () => {
+            fixture.componentRef.setInput('deepLink', { unitId: 1, page: 5, timestamp: 12 });
+            stubViewers(42, 3);
+            component['onFullscreenChange'](true);
+            expect(component.videoInitialTimestamp()).toBe(42);
+            expect(component.pdfInitialPage()).toBe(3);
+
+            component.toggleCollapse(true);
+
+            expect(component.videoInitialTimestamp()).toBe(12);
+            expect(component.pdfInitialPage()).toBe(5);
+        });
+
+        it('keeps the initial positions of a unit without a PDF, whose layout does not change', () => {
+            fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, attachment: undefined, videoSource: 'https://example.com/video.mp4' });
+            stubViewers(42, 3);
+
+            component['onFullscreenChange'](true);
+
+            expect(component.videoInitialTimestamp()).toBeUndefined();
+            expect(component.pdfInitialPage()).toBeUndefined();
+        });
     });
 
     it('should get file name', () => {
@@ -272,7 +387,7 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.playlistUrl()).toBeUndefined();
         expect(component.isLoading()).toBe(true);
 
-        expectPlaylistRequest(src, playlist);
+        expectPlaylistRequest(1, playlist);
         await fixture.whenStable();
 
         expect(component.playlistUrl()).toBe(playlist);
@@ -291,7 +406,7 @@ describe('AttachmentVideoUnitComponent', () => {
         component.toggleCollapse(false);
         expect(component.isLoading()).toBe(true);
 
-        const req = httpMock.expectOne((request) => request.url === '/api/videosource/playlist');
+        const req = httpMock.expectOne((request) => request.url === 'api/lecture/lecture-units/1/playlist');
         req.flush('Not found', { status: 404, statusText: 'Not Found' });
         await fixture.whenStable();
 
@@ -307,7 +422,7 @@ describe('AttachmentVideoUnitComponent', () => {
         component.isLoading.set(true);
         component.toggleCollapse(false);
 
-        expectPlaylistRequest('https://example.com/some-video', null);
+        expectPlaylistRequest(1, null);
         await fixture.whenStable();
 
         expect(getTranscriptionSpy).not.toHaveBeenCalled();
@@ -336,7 +451,7 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(true);
 
         // Mock the HTTP request (even .m3u8 URLs go through the API)
-        const req = httpMock.expectOne((request) => request.url === '/api/videosource/playlist' && request.params.get('url') === m3u8Url);
+        const req = httpMock.expectOne((request) => request.url === 'api/lecture/lecture-units/1/playlist');
         expect(req.request.method).toBe('GET');
         req.flush(m3u8Url);
 
@@ -376,7 +491,7 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.isLoading()).toBe(true);
 
         // Mock the HTTP request to return null (no playlist found)
-        const req = httpMock.expectOne((request) => request.url === '/api/videosource/playlist' && request.params.get('url') === nonTumLiveUrl);
+        const req = httpMock.expectOne((request) => request.url === 'api/lecture/lecture-units/1/playlist');
         req.flush(null);
 
         await fixture.whenStable();
@@ -405,7 +520,6 @@ describe('AttachmentVideoUnitComponent', () => {
         component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
         component.transcriptSegments.set([{ startTime: 0, endTime: 10, text: 'Slide 7', slideNumber: 7 }]);
         component.isLoading.set(false);
-        component['isTranscriptLoading'].set(false);
         const pointOut = { lectureUnitId: 1, timestamp: 42 } as IrisPointOut;
 
         component.onPlayerFailed();
@@ -435,14 +549,12 @@ describe('AttachmentVideoUnitComponent', () => {
         staleTranscript.complete();
 
         expect(component.transcriptSegments()).toEqual([]);
-        expect(component['isTranscriptLoading']()).toBe(true);
 
         const currentSegments = [{ startTime: 0, endTime: 2, text: 'Current transcript', slideNumber: 3 }];
         currentTranscript.next({ lectureUnitId: 1, language: 'en', segments: currentSegments });
         currentTranscript.complete();
 
         expect(component.transcriptSegments()).toEqual(currentSegments);
-        expect(component['isTranscriptLoading']()).toBe(false);
     });
 
     it('hasAttachment / hasVideo and getFileName() when no attachment', () => {
@@ -520,11 +632,25 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.detectChanges();
 
             // Flush the HTTP request triggered by the deep link expanding the unit.
-            expectPlaylistRequest(src, playlist);
+            expectPlaylistRequest(2, playlist);
             await fixture.whenStable();
             fixture.detectChanges();
 
             expect(fixture.nativeElement.querySelector('jhi-video-player')).toBeTruthy();
+        });
+
+        it('renders the video player for a TUM Live playlist without a transcript', async () => {
+            vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+            fixture.componentRef.setInput('lectureUnit', { id: 4, videoSourceType: 'TUM_LIVE', videoSource: 'https://live.rbg.tum.de/w/abcd/1234' } as any);
+            fixture.componentRef.setInput('deepLink', { unitId: 4 });
+            fixture.detectChanges();
+
+            expectPlaylistRequest(4, 'https://cdn.tum/vod/1234/COMB/playlist.m3u8?jwt=signed');
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-video-player')).toBeTruthy();
+            expect(fixture.nativeElement.querySelector('iframe')).toBeFalsy();
         });
 
         it('renders iframe fallback for non-YouTube, non-TUM-Live source', async () => {
@@ -536,7 +662,7 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.detectChanges();
 
             // The deep link triggers toggleCollapse → playlist request.
-            expectPlaylistRequest('https://youtu.be/dQw4w9WgXcQ', null);
+            expectPlaylistRequest(3, null);
             await fixture.whenStable();
             fixture.detectChanges();
 
@@ -722,7 +848,7 @@ describe('AttachmentVideoUnitComponent', () => {
             component.toggleCollapse(false);
 
             // Mock video playlist request
-            const videoReq = httpMock.expectOne((request) => request.url === '/api/videosource/playlist');
+            const videoReq = httpMock.expectOne((request) => request.url === 'api/lecture/lecture-units/1/playlist');
             videoReq.flush(playlist);
 
             await fixture.whenStable();
@@ -1571,18 +1697,13 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
-        // Both end in the bare iframe, which cannot be seeked, so no player will ever show up for the target to be
-        // applied to: no playlist and no YouTube video at all, or a resolved playlist whose transcript came back
-        // empty — the video player renders only with both. Treating the playlist alone as proof of a player would
-        // leave the target pending forever and make the waiting pipeline sit out its full ack timeout.
-        it.each([
-            ['no seekable player can appear', undefined],
-            ['the playlist resolved but the transcript came back empty', 'https://cdn.example.com/playlist.m3u8'],
-        ])('gives up on a timestamp target when %s', (_reason, playlistUrl) => {
+        // Without a playlist and a YouTube video the unit ends in the bare iframe, which cannot be seeked, so no player
+        // will ever show up for the target to be applied to. Holding on would make the waiting pipeline sit out its
+        // full ack timeout.
+        it('gives up on a timestamp target when no seekable player can appear', () => {
             component['fullscreenState'].set(true);
             component.isLoading.set(false);
-            component['isTranscriptLoading'].set(false);
-            component.playlistUrl.set(playlistUrl);
+            component.playlistUrl.set(undefined);
             component.transcriptSegments.set([]);
 
             component['handlePointOut'](pointOutRequest({ correlationId: 'c12', timestamp: 42 }));
@@ -1603,7 +1724,6 @@ describe('AttachmentVideoUnitComponent', () => {
             });
             component['fullscreenState'].set(true);
             component.isLoading.set(false);
-            component['isTranscriptLoading'].set(false);
             component.playlistUrl.set('https://cdn.example.com/live.m3u8');
             component.transcriptSegments.set([{ startTime: 0, endTime: 10, text: 'Slide 7', slideNumber: 7 }]);
 
@@ -1614,9 +1734,9 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
-        it('gives up on a timestamp target immediately when the player failed while the transcript is still loading', () => {
+        it('gives up on a timestamp target immediately when the player failed while the video source is still loading', () => {
             component['fullscreenState'].set(true);
-            component['isTranscriptLoading'].set(true);
+            component.isLoading.set(true);
             component.onPlayerFailed();
 
             component['handlePointOut'](pointOutRequest({ correlationId: 'c19', timestamp: 42 }));
@@ -1626,10 +1746,8 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component['pendingPointOut']()).toBeUndefined();
         });
 
-        it('keeps a timestamp target pending while the video source and its transcript are still being resolved', () => {
-            // The playlist is only known once loading has finished, and the transcript is requested just before the
-            // loading flag clears and settles only after it — so an empty transcript is not an answer at either point.
-            // Judging by the loading flag alone would report a perfectly good point-out as not applied.
+        it('keeps a timestamp target pending while the video source is resolved and its player is coming up', () => {
+            // The playlist is only known once loading has finished; until then its absence is not an answer.
             component['fullscreenState'].set(true);
             component.isLoading.set(true);
 
@@ -1639,22 +1757,14 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(ackSpy).not.toHaveBeenCalled();
             expect(component['pendingPointOut']()).toBeDefined();
 
-            // Loading has finished, but the transcript request it started is still in flight.
+            // A playlist without a transcript still gets the video player, so the target waits for it.
             component.isLoading.set(false);
-            component['isTranscriptLoading'].set(true);
             component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
             component.transcriptSegments.set([]);
             fixture.detectChanges();
 
             expect(ackSpy).not.toHaveBeenCalled();
             expect(component['pendingPointOut']()).toBeDefined();
-
-            // Once the request settles without segments the answer is final and the target is released right away.
-            component['isTranscriptLoading'].set(false);
-            fixture.detectChanges();
-
-            expect(ackSpy).toHaveBeenCalledWith('c13', false);
-            expect(component['pendingPointOut']()).toBeUndefined();
         });
 
         it('waits for a player that can judge the target, not merely for its wrapper component', () => {

@@ -43,7 +43,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void reportsUnavailableWhenBindingServiceIsDisabled() throws Exception {
         GocastBindingDTO result = request.get(endpoint(), HttpStatus.OK, GocastBindingDTO.class);
 
@@ -55,13 +55,13 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void rejectsEditor() throws Exception {
         request.get(endpoint(), HttpStatus.FORBIDDEN, GocastBindingDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void rejectsTutor() throws Exception {
         request.post(endpoint() + "/approval", null, HttpStatus.FORBIDDEN);
     }
@@ -81,7 +81,7 @@ class GocastIntegrationResourceTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "USER")
     void rejectsInstructorFromAnotherCourse() throws Exception {
         request.get(endpoint(), HttpStatus.FORBIDDEN, GocastBindingDTO.class);
     }

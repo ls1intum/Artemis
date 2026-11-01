@@ -2,11 +2,6 @@ import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entitie
 import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
 import { ActiveFeatureToggles } from 'app/foundation/feature-toggle/feature-toggle.service';
 
-/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
-export class SentryConfig {
-    public dsn?: string;
-}
-
 export interface GitCommitId {
     describe?: string;
     abbrev: string;
@@ -161,7 +156,6 @@ export class ProfileInfo {
     public registrationEnabled?: boolean;
     public repositoryAuthenticationMechanisms!: string[];
     public saml2?: Saml2Config;
-    public sentry!: SentryConfig;
     public sshCloneURLTemplate!: string;
     public studentExamStoreSessionData!: boolean;
     public testServer!: boolean;

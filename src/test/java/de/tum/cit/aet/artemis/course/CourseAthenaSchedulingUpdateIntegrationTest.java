@@ -106,7 +106,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_enablingGradingFeedback_reschedulesExistingExercises() throws Exception {
         var updated = updateAthenaConfig(new CourseAthenaConfigUpdateDTO(true, null, null, null));
 
@@ -116,7 +116,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_disablingGradingFeedback_reschedulesExistingExercises() throws Exception {
         persistCourseGradingFeedbackEnabled(true);
         reset(instanceMessageSendService);
@@ -129,7 +129,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_gradingFeedbackResentUnchanged_doesNotRescheduleExercises() throws Exception {
         persistCourseGradingFeedbackEnabled(true);
         reset(instanceMessageSendService);
@@ -144,7 +144,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateAthenaConfig_onlyFormativeFeedbackChanged_doesNotRescheduleExercises() throws Exception {
         var updated = updateAthenaConfig(new CourseAthenaConfigUpdateDTO(null, true, null, null));
 
@@ -155,7 +155,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_doesNotRescheduleExercises() throws Exception {
         // The course update endpoint no longer carries the Athena configuration, so saving the course settings must
         // neither change the flags nor touch Athena scheduling.
@@ -175,7 +175,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_preservesDefaultConfigurationAndLaterSwitch() throws Exception {
         var originalConfigId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId());
         assertThat(originalConfigId).isPresent();
@@ -195,7 +195,7 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "USER")
     void updateCourse_asInstructorOfAnotherCourse_isForbiddenAndPreservesConfig() throws Exception {
         userUtilService.addInstructor(TEST_PREFIX + "instructor2");
         var originalConfigId = courseAthenaConfigRepository.findAthenaConfigIdByCourseId(course.getId());

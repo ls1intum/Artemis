@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective, TumAetUiProgressSpinnerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
@@ -18,13 +19,12 @@ import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import type { PdfDocumentObject } from '@embedpdf/models';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbPopover, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { finalize } from 'rxjs/operators';
 import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { cloneWith, deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
@@ -95,16 +95,18 @@ export interface HiddenPageMap {
     templateUrl: './pdf-preview.component.html',
     styleUrls: ['./pdf-preview.component.scss'],
     imports: [
+        TumAetUiButtonDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiTooltipDirective,
         PdfPreviewThumbnailGridComponent,
         ArtemisTranslatePipe,
         FontAwesomeModule,
-        NgbTooltipModule,
-        NgbPopover,
         RouterModule,
         DeleteButtonDirective,
         TranslateDirective,
         ConfirmAutofocusButtonComponent,
-        ButtonComponent,
         PdfPreviewDateBoxComponent,
     ],
 })
@@ -118,7 +120,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     private readonly pdfEngineService = inject(PdfEngineService);
 
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
-    showPopover = viewChild.required<NgbPopover>('showPopover');
+    showPopover = viewChild.required<TumAetUiPopoverComponent>('showPagePopover');
 
     attachmentVideoUnitSub?: Subscription;
 

@@ -21,7 +21,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { convertTutorialGroupSummaryArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 @Component({
@@ -62,6 +62,8 @@ export class CourseTutorialGroupsComponent implements SidebarView {
     tutorialGroups = signal<TutorialGroup[] | undefined>(undefined);
     tutorialLectures = signal<Lecture[] | undefined>(undefined);
     sidebarData = signal<SidebarData | undefined>(undefined);
+    // Student-facing filter: when on, the sidebar lists only groups that still have an open spot.
+    readonly freeSpotsOnly = signal(false);
     itemSelected = this.getItemSelectedSignal();
     readonly isCollapsed = signal(false);
     readonly pageTitle = signal<string>('');
@@ -97,12 +99,25 @@ export class CourseTutorialGroupsComponent implements SidebarView {
         effect(() => {
             const tutorialGroups = this.tutorialGroups();
             const tutorialLectures = this.tutorialLectures();
+            const freeSpotsOnly = this.freeSpotsOnly();
             // Rebuild as soon as either side has loaded, empty result included. Skipping the rebuild when both came
             // back empty left the previous course's — or a since-deleted group's — cards on screen after a refresh.
             if (tutorialGroups === undefined && tutorialLectures === undefined) {
                 return;
             }
-            this.prepareSidebarData(tutorialGroups ?? [], tutorialLectures ?? []);
+            const groups = tutorialGroups ?? [];
+            const visibleGroups = freeSpotsOnly ? groups.filter((group) => this.hasFreeSpots(group)) : groups;
+            this.prepareSidebarData(visibleGroups, tutorialLectures ?? []);
+        });
+
+        // Auto-navigate reacts to the loaded data and the selection, not to the filter, so toggling it never nudges
+        // the empty state into a group.
+        effect(() => {
+            const tutorialGroups = this.tutorialGroups();
+            const tutorialLectures = this.tutorialLectures();
+            if (tutorialGroups === undefined && tutorialLectures === undefined) {
+                return;
+            }
             this.autoNavigateToLastSelectedOrUpcomingTutorialGroup(tutorialGroups ?? []);
         });
 
@@ -145,7 +160,7 @@ export class CourseTutorialGroupsComponent implements SidebarView {
     private loadAndSetTutorialGroups(courseId: number) {
         this.tutorialGroupApiService
             .getTutorialGroupsForCourse(courseId)
-            .pipe(map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)))
+            .pipe(map((tutorialGroups) => convertTutorialGroupSummaryArrayDatesFromServer(tutorialGroups)))
             .subscribe({
                 next: (tutorialGroups) => {
                     this.tutorialGroups.set(tutorialGroups);
@@ -259,6 +274,11 @@ export class CourseTutorialGroupsComponent implements SidebarView {
         } else if (nothingSelected && upcomingTutorialGroup) {
             void this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
         }
+    }
+
+    // Relies on the server-derived flag: students never receive the registration count, so only capacityReached is reliable.
+    private hasFreeSpots(tutorialGroup: TutorialGroup): boolean {
+        return tutorialGroup.capacityReached !== true;
     }
 
     private getLastSelectedSubRoute(): string | undefined {

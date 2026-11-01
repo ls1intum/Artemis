@@ -28,6 +28,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { Component, forwardRef, input, model, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -42,12 +43,12 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService, TumAetUiSelectComponent } from '@tumaet/ui-angular';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -200,7 +201,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 {
                     provide: CourseManagementService,
                     useValue: {
-                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
+                        findForManagement: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
                         findAllCategoriesOfCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: [] }))),
                     },
                 },
@@ -218,9 +219,10 @@ describe('ModelingExerciseUpdateComponent', () => {
                     },
                 },
                 {
-                    provide: DialogService,
+                    provide: TumAetUiDialogService,
                     useValue: {
                         open: vi.fn(),
+                        hasOpenDialogs: vi.fn().mockReturnValue(false),
                     },
                 },
                 {
@@ -253,6 +255,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 set: {
                     imports: [
                         FormsModule,
+                        PointsInputComponent,
                         MockDirective(TranslateDirective),
                         FaIconComponent,
                         NgbTooltip,
@@ -265,7 +268,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                         MockComponent(DocumentationButtonComponent),
                         MockComponent(FormStatusBarComponent),
                         MockComponent(FormFooterComponent),
-                        MockComponent(CategorySelectorPrimengComponent),
+                        MockComponent(CategorySelectorComponent),
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
@@ -955,6 +958,18 @@ describe('ModelingExerciseUpdateComponent', () => {
         });
 
         // The bug class a computed() can introduce: a reason that stays after the user fixed the field, or does not come back.
+        it('should take decimal points and bonus points typed with a comma or a point', async () => {
+            const exercise = filledInExercise();
+            await render(exercise);
+
+            await typeInto('#field_points', '2,5');
+            await typeInto('#field_bonusPoints', '0.75');
+
+            expect(exercise.maxPoints).toBe(2.5);
+            expect(exercise.bonusPoints).toBe(0.75);
+            expect(comp.invalidReasons()).toEqual([]);
+        });
+
         it('should drop the points reason once points are typed and bring it back when they are cleared', async () => {
             const exercise = filledInExercise();
             exercise.maxPoints = undefined;

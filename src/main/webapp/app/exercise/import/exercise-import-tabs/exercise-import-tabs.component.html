@@ -1,16 +1,10 @@
-<ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs">
-    <li [ngbNavItem]="1">
-        <a id="tab1" ngbNavLink jhiTranslate="artemisApp.exercise.import.tabTitle"></a>
-        <ng-template ngbNavContent>
-            <jhi-exercise-import [exerciseType]="selectedExerciseType()" />
-        </ng-template>
-    </li>
-    <li id="tab2" [ngbNavItem]="2">
-        <a ngbNavLink jhiTranslate="artemisApp.exercise.importFromFile.tabTitle"></a>
-        <ng-template ngbNavContent>
-            <jhi-exercise-import-from-file [exerciseType]="selectedExerciseType()" />
-        </ng-template>
-    </li>
-</ul>
-
-<div [ngbNavOutlet]="nav" class="mt-2"></div>
+<tumaet-ui-tabs [(value)]="activeTab">
+    <tumaet-ui-tab-list>
+        <tumaet-ui-tab [value]="1"><span jhiTranslate="artemisApp.exercise.import.tabTitle"></span></tumaet-ui-tab>
+        <tumaet-ui-tab [value]="2"><span jhiTranslate="artemisApp.exercise.importFromFile.tabTitle"></span></tumaet-ui-tab>
+    </tumaet-ui-tab-list>
+    <tumaet-ui-tab-panels>
+        <tumaet-ui-tab-panel [value]="1"><jhi-exercise-import [exerciseType]="selectedExerciseType()" /></tumaet-ui-tab-panel>
+        <tumaet-ui-tab-panel [value]="2"><jhi-exercise-import-from-file [exerciseType]="selectedExerciseType()" /></tumaet-ui-tab-panel>
+    </tumaet-ui-tab-panels>
+</tumaet-ui-tabs>

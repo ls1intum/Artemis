@@ -15,6 +15,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record WorkspaceSnapshot(@JsonInclude List<WorkspaceFile> files) {
 
+    private static final List<String> AUTHORED_ROOTS = List.of("solution/src/", "template/src/", "tests/test/", "tests/behavior/test/", "tests/structural/test/");
+
     public static final int MAX_FILES = 10_000;
 
     public static final long MAX_BYTES = 32L * 1024 * 1024;
@@ -40,6 +42,20 @@ public record WorkspaceSnapshot(@JsonInclude List<WorkspaceFile> files) {
                 throw new IllegalArgumentException("Snapshot exceeds the total byte limit");
             }
         }
+    }
+
+    /**
+     * Selects the canonical seed for authoring. Regeneration clears authored roots, including their binary files.
+     *
+     * @param mode generation or adaptation
+     * @return seed used consistently for sandbox verification, output sealing and core validation
+     */
+    public WorkspaceSnapshot forMode(ExerciseBrief.Mode mode) {
+        if (mode == ExerciseBrief.Mode.ADAPT) {
+            return this;
+        }
+        List<WorkspaceFile> retained = files.stream().filter(file -> AUTHORED_ROOTS.stream().noneMatch(file.path()::startsWith)).toList();
+        return retained.size() == files.size() ? this : new WorkspaceSnapshot(retained);
     }
 
     /** SHA-256 over length-prefixed UTF-8 paths, executable flags and file bytes in sorted path order. */

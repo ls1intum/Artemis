@@ -58,7 +58,9 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.QueueItemEvent;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectMessage;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionService.ControlAction;
+import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationRunStoreService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationBaseline;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
@@ -106,12 +108,15 @@ class DistributedDataSurfaceTest {
      * nodes, the entries the Hyperion, OIDC and Atlas agent caches hold, and the concrete envelopes published through
      * distributed topics and map/queue notification topics.
      */
+    // Activity entries are new expiring wire types; no released cache value changes.
+    // Whole-exercise replay (including variant source identity) is new in this release; no previously released wire type changes.
     private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class,
             BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, GenerationJobService.JobInfo.class,
             de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot.class, GenerationJobService.JobTranscript.class,
-            GenerationJobService.JobFileChangeIndex.class, GenerationJobService.JobArtifacts.class, ExerciseGenerationBaseline.class,
-            OIDCExchangeCodeService.ExchangeCodeEntry.class, AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class,
-            PublicKeyCredentialCreationOptionsDTO.class, QueueItemEvent.class, MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class);
+            GenerationJobService.JobFileChangeIndex.class, GenerationJobService.JobArtifacts.class, ExerciseGenerationBaseline.class, AuthoringRun.class,
+            GenerationRunStoreService.Mutation.class, GenerationRunStoreService.RunReference.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
+            AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class, PublicKeyCredentialCreationOptionsDTO.class, QueueItemEvent.class,
+            MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class);
 
     /**
      * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map} stores them polymorphically, so the
@@ -259,7 +264,7 @@ class DistributedDataSurfaceTest {
         assertThat(surface).as("notification and direct-topic payloads must remain part of the compatibility gate").contains(named(QueueItemEvent.class),
                 named(QueueItemEvent.EventType.class), named(MapItemEvent.class), named(MapItemEvent.EventType.class), named(PerNodeCacheEviction.class),
                 named(WebsocketBrokerReconnectMessage.class), named(ControlAction.class));
-        // The link preview is the remaining @Cacheable value served by the distributed manager, so it is the sentinel
+        // The link preview is one of the @Cacheable values served by the distributed manager, so it is the sentinel
         // that proves this gate still covers Spring cache values at all.
         assertThat(surface).as("values stored through the distributed Spring cache must remain part of the compatibility gate").contains(named(LinkPreviewDTO.class));
 

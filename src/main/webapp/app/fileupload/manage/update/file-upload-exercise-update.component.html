@@ -25,7 +25,7 @@
             <div class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
                 <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
-                <jhi-category-selector-primeng [categories]="exerciseCategories()" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
+                <jhi-category-selector [categories]="exerciseCategories()" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
             </div>
         }
         <hr class="mb-5" />
@@ -117,14 +117,13 @@
                     <div class="form-group">
                         <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label
                         ><span class="text-state-danger" aria-hidden="true">*</span>
-                        <input
+                        <jhi-points-input
                             required
-                            type="number"
-                            class="form-control"
-                            min="1"
-                            max="9999"
+                            fluid
+                            [min]="1"
+                            [max]="9999"
                             name="points"
-                            id="field_points"
+                            inputId="field_points"
                             [ngModel]="fileUploadExercise().maxPoints"
                             (ngModelChange)="exerciseState.patch('maxPoints', $event)"
                             #points="ngModel"
@@ -143,14 +142,13 @@
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label
                             ><span class="text-state-danger" aria-hidden="true">*</span>
-                            <input
-                                type="number"
+                            <jhi-points-input
                                 required
-                                class="form-control"
-                                min="0"
-                                max="9999"
+                                fluid
+                                [min]="0"
+                                [max]="9999"
                                 name="bonusPoints"
-                                id="field_bonusPoints"
+                                inputId="field_bonusPoints"
                                 [ngModel]="fileUploadExercise().bonusPoints"
                                 (ngModelChange)="exerciseState.patch('bonusPoints', $event)"
                                 #bonusPoints="ngModel"

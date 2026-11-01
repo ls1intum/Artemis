@@ -307,7 +307,7 @@
             },
             "autoOrchestration": {
                 "label": "Atlas Auto-Orchestration Enabled",
-                "tooltip": "Lets Atlas automatically review and update this course's competencies whenever an exercise's content changes. Disabled by default; turn it on only for courses where you want the AI to maintain competency links on its own.",
+                "tooltip": "Lets Atlas update this course's competencies and their links to exercises and lecture units without asking for approval, whenever exercises or lecture units are created or their content changes. Only changes made after you turn it on are considered. Disabled by default; turn it on only for courses where you want the AI to maintain competency links on its own.",
                 "overridePlaceholder": "Use default",
                 "overridePlaceholderWithValue": "Use default ({{ value }})",
                 "debounceWindowSecondsOverride": {

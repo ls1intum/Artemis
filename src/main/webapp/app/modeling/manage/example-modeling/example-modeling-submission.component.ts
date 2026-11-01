@@ -204,7 +204,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     private loadAll(): void {
-        let exerciseSource$ = this.exerciseService.find(this.exerciseId);
+        const training = this.readOnly() || this.toComplete();
+        const exam = this.route.snapshot.paramMap.has('examId');
+        let exerciseSource$ = exam
+            ? training
+                ? this.exerciseService.findForExamAssessment(this.exerciseId)
+                : this.exerciseService.findForExamManagement(this.exerciseId)
+            : this.exerciseService.findForStaff(this.exerciseId);
 
         if (this.isNewSubmission()) {
             this.exampleSubmission.set(new ExampleSubmission());

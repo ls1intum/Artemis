@@ -11,7 +11,7 @@ import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-compo
 import { MockExamChecklistService } from 'test/helpers/mocks/service/mock-exam-checklist.service';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import * as Sentry from '@sentry/angular';
+import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -337,11 +337,11 @@ describe('ExamChecklistComponent', () => {
             expect(successSpy).not.toHaveBeenCalled();
         });
 
-        it.each(actions)('should report $action to Sentry and not call the server without ids', ({ action }) => {
+        it.each(actions)('should report $action as an error and not call the server without ids', ({ action }) => {
             setUp({ id: undefined });
             examChecklistComponentFixture.detectChanges();
             const serviceSpy = vi.spyOn(examManagementService, action);
-            const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
+            const captureSpy = vi.spyOn(ErrorReporting, 'captureException').mockImplementation(() => '');
 
             component[action]();
 

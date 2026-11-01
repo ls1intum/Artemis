@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { OnDestroy, Service, inject } from '@angular/core';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EMPTY, Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
