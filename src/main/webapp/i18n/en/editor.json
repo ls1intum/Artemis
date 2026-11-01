@@ -29,6 +29,7 @@
             "refreshingFiles": "Refreshing...",
             "submit": "Submit",
             "submitDescription": "Stage, commit, push, build and test your changes.",
+            "committedOutsideBuildWindow": "Your changes were committed, but not built, because this exercise only builds submissions inside its build time window.",
             "buildOutput": "&nbsp; Build Output",
             "building": "Building and testing...",
             "queued": "Queued...",

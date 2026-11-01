@@ -6,6 +6,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
+
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.junit.jupiter.api.AfterEach;
@@ -25,6 +27,8 @@ import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.read.ListAppender;
 import ch.qos.logback.core.spi.FilterReply;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
+import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 
 @Isolated("Captures JVM-wide logger state; concurrent Spring bootstrap temporarily suppresses logging.")
 class LoggingAspectTest {
@@ -63,6 +67,14 @@ class LoggingAspectTest {
     void routineAuthenticationFailuresAreNotLogged(String message) {
         var joinPoint = mock(ProceedingJoinPoint.class);
         new LoggingAspect(new MockEnvironment()).logAfterThrowing(joinPoint, new LocalVCAuthException(message));
+        assertThat(appender.list).isEmpty();
+        verifyNoInteractions(joinPoint);
+    }
+
+    @Test
+    void pushOutsideTheBuildTimeWindowIsNotLogged() {
+        var joinPoint = mock(ProceedingJoinPoint.class);
+        new LoggingAspect(new MockEnvironment()).logAfterThrowing(joinPoint, new BuildOutsideTimeWindowException(1L, new BuildTimeWindow(null, ZonedDateTime.now())));
         assertThat(appender.list).isEmpty();
         verifyNoInteractions(joinPoint);
     }

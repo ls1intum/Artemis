@@ -236,6 +236,22 @@
                 "title": "Regular Expression for the branch name",
                 "description": "Custom branches names must match the regular expression."
             },
+            "buildTimeWindow": {
+                "title": "Build Time Window",
+                "message": "Optionally limit when pushes to student repositories are built. Pushes outside the window are saved, but not built, and do not create a submission. Leave both fields empty to build every push.",
+                "description": "Pushes of students outside of this window are accepted into the repository, but not built, tested or graded. Either bound can stay empty: with only a start, builds begin at that time, with only an end, builds stop at that time. Both bounds are inclusive. Editors and instructors, the practice mode and builds triggered by instructors are not affected. The window must lie between the start date (or release date) and the due date of the exercise. For a student with an individual due date extension, the end of the window moves by the same extension.",
+                "start": "Build window start",
+                "end": "Build window end",
+                "endNotAfterStart": "The end of the build time window must be after its start.",
+                "outsideExerciseDates": "The build time window must lie between the start date (or release date) and the due date of the exercise.",
+                "invalidInput": "The build time window contains a date that cannot be read.",
+                "triggerDisabled": "Builds cannot be triggered outside of the build time window.",
+                "notice": {
+                    "before": "Builds start on {{ start }}. Pushes before that are saved, but not built or graded.",
+                    "during": "Builds are active until {{ end }}.",
+                    "after": "The build window ended on {{ end }}. Pushes are saved, but not built."
+                }
+            },
             "showTestNamesToStudents": "Show Test Names to Students",
             "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
             "participationMode": "Participation Mode",

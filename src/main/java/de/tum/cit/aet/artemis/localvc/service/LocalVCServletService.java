@@ -86,6 +86,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
+import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
@@ -1483,18 +1484,16 @@ public class LocalVCServletService {
 
             // Process push to any repository other than the test repository. The repository type is passed on so the build
             // trigger can reuse the hash this push already carries instead of reading it back off the repository.
-            processNewPushToRepository(participation, commit, user, repositoryType);
+            try {
+                processNewPushToRepository(participation, commit, user, repositoryType);
+            }
+            catch (BuildOutsideTimeWindowException e) {
+                // the push is valid and stays in the repository, so it has to remain auditable although no build follows
+                finalizeVcsAccessLog(participation, commitHash, vcsAccessLog);
+                throw e;
+            }
 
-            // For push the correct commitHash is only available here, therefore the preliminary value is overwritten
-            String finalCommitHash = commitHash;
-            if (vcsAccessLog.isPresent()) {
-                vcsAccessLog.get().setCommitHash(finalCommitHash);
-                vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(vcsAccessLog.get()));
-            }
-            else {
-                var finalParticipation = participation;
-                vcsAccessLogService.ifPresent(service -> service.updateCommitHash(finalParticipation, finalCommitHash));
-            }
+            finalizeVcsAccessLog(participation, commitHash, vcsAccessLog);
         }
         catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
@@ -1505,6 +1504,19 @@ public class LocalVCServletService {
 
         log.debug("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUri.getURI(), commitHash,
                 TimeLogUtil.formatDurationFrom(timeNanoStart));
+    }
+
+    /**
+     * For a push the correct commit hash is only known after it was processed, therefore the preliminary value of the access log is overwritten.
+     */
+    private void finalizeVcsAccessLog(ProgrammingExerciseParticipation participation, String commitHash, Optional<VcsAccessLog> vcsAccessLog) {
+        if (vcsAccessLog.isPresent()) {
+            vcsAccessLog.get().setCommitHash(commitHash);
+            vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(vcsAccessLog.get()));
+        }
+        else {
+            vcsAccessLogService.ifPresent(service -> service.updateCommitHash(participation, commitHash));
+        }
     }
 
     private ProgrammingExerciseParticipation retrieveSolutionParticipation(ProgrammingExercise exercise) {

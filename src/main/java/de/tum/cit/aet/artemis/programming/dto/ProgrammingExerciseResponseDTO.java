@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -191,11 +192,30 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         return of(exercise, buildConfigEntity, gradingInstructionFeedbackUsed, false);
     }
 
+    /**
+     * Creates the response for a student: like {@link #of(ProgrammingExercise)}, but with the build time window of the exercise as the only part of the build
+     * configuration, because the students' pages tell them why a push is not built.
+     *
+     * @param exercise        the exercise to convert (may be {@code null})
+     * @param buildTimeWindow the build time window of the exercise, {@code null} if pushes are always built
+     * @return the corresponding DTO, or {@code null} if the input was {@code null}
+     */
+    public static ProgrammingExerciseResponseDTO ofForStudent(ProgrammingExercise exercise, @Nullable BuildTimeWindow buildTimeWindow) {
+        return of(exercise, UpdateProgrammingExerciseBuildConfigDTO.ofBuildTimeWindow(buildTimeWindow), exercise == null ? null : exercise.isGradingInstructionFeedbackUsed(),
+                false);
+    }
+
     private static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, @Nullable ProgrammingExerciseBuildConfig buildConfigEntity,
+            Boolean gradingInstructionFeedbackUsed, boolean forExport) {
+        return of(exercise, UpdateProgrammingExerciseBuildConfigDTO.of(buildConfigEntity), gradingInstructionFeedbackUsed, forExport);
+    }
+
+    private static ProgrammingExerciseResponseDTO of(ProgrammingExercise exercise, @Nullable UpdateProgrammingExerciseBuildConfigDTO buildConfigDto,
             Boolean gradingInstructionFeedbackUsed, boolean forExport) {
         if (exercise == null) {
             return null;
         }
+        UpdateProgrammingExerciseBuildConfigDTO buildConfig = buildConfigDto;
 
         ProgrammingExerciseCourseDTO course = ProgrammingExerciseCourseDTO.ofCourseExercise(exercise);
         ProgrammingExerciseExamGroupDTO exerciseGroup = ProgrammingExerciseExamGroupDTO.ofExamExercise(exercise);
@@ -240,7 +260,6 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         var submissionPolicyEntity = exercise.getSubmissionPolicy();
         SubmissionPolicyDTO submissionPolicy = submissionPolicyEntity != null && Hibernate.isInitialized(submissionPolicyEntity) ? SubmissionPolicyDTO.of(submissionPolicyEntity)
                 : null;
-        UpdateProgrammingExerciseBuildConfigDTO buildConfig = UpdateProgrammingExerciseBuildConfigDTO.of(buildConfigEntity);
         TemplateSolutionParticipationDTO templateParticipation = TemplateSolutionParticipationDTO.ofTemplate(exercise.getTemplateParticipation());
         TemplateSolutionParticipationDTO solutionParticipation = TemplateSolutionParticipationDTO.ofSolution(exercise.getSolutionParticipation());
 

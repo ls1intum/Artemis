@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
+import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
@@ -310,7 +311,13 @@ public abstract class RepositoryResource {
         var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
 
         // Trigger a build, and process the result. Jenkins webhooks perform the equivalent notification for remote repositories.
-        localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog, createdCommitHash);
+        try {
+            localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog, createdCommitHash);
+        }
+        catch (BuildOutsideTimeWindowException e) {
+            // The commit is saved, it is only not built. The client knows the build time window and tells the student, so this is no error.
+            log.debug("Commit {} of the online editor was not built: {}", createdCommitHash, e.getMessage());
+        }
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

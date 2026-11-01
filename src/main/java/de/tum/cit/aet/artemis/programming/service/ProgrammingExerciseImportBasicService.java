@@ -344,7 +344,10 @@ public class ProgrammingExerciseImportBasicService {
             newBuildConfig.setId(null);
             return newBuildConfig;
         }
-        return new ProgrammingExerciseBuildConfig(sourceBuildConfig);
+        var copiedBuildConfig = new ProgrammingExerciseBuildConfig(sourceBuildConfig);
+        // the dates of an imported exercise differ from the source, so the window of the source would no longer fit them
+        copiedBuildConfig.setBuildTimeWindow(null);
+        return copiedBuildConfig;
     }
 
     /**

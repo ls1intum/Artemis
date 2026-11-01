@@ -278,6 +278,7 @@ public class ProgrammingExerciseUpdateResource {
 
             // Verify that the programming language supports the selected network access option
             programmingExerciseValidationService.validateDockerFlags(buildConfig);
+            programmingExerciseValidationService.validateBuildTimeWindow(updatedProgrammingExercise, buildConfig);
 
             // Verify that a theia image is provided when the online IDE is enabled
             if (updatedProgrammingExercise.isAllowOnlineIde() && buildConfig.getTheiaImage() == null) {
@@ -477,6 +478,7 @@ public class ProgrammingExerciseUpdateResource {
         buildConfig.setOnlineIdeExperienceLevel(dto.onlineIdeExperienceLevel());
         buildConfig.setAllowBranching(dto.allowBranching());
         buildConfig.setBranchRegex(dto.branchRegex());
+        buildConfig.setBuildTimeWindow(dto.advancedSettings() != null ? dto.advancedSettings().buildTimeWindow() : null);
     }
 
     /**
@@ -547,6 +549,7 @@ public class ProgrammingExerciseUpdateResource {
             update(updateDTO, programmingExercise, buildConfig, hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
             PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
             programmingExerciseValidationService.validateBuildConfigSize(buildConfig);
+            programmingExerciseValidationService.validateBuildTimeWindow(programmingExercise, buildConfig);
 
             programmingExerciseCreationUpdateService.prepareAndValidateTimelineForUpdate(programmingExercise, buildConfig, originalBuildAndTestOffset);
 

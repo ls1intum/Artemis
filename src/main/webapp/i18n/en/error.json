@@ -150,6 +150,10 @@
         "cpuCountInvalid": "The CPU count is invalid. Please make sure it is a positive integer.",
         "memorySwapLimitInvalid": "The memory swap limit is invalid. Please make sure it is larger or equal to 0.",
         "dockerFlagsParsingError": "Error while parsing the docker flags.",
+        "buildTimeWindowEndBeforeStart": "The end of the build time window must be after its start.",
+        "buildTimeWindowOutsideExerciseDates": "The build time window must lie between the start date (or release date) and the due date of the exercise.",
+        "buildTimeWindowNotSupportedForExams": "The build time window is not available for exam exercises.",
+        "buildOutsideTimeWindow": "Builds cannot be triggered outside of the build time window of this exercise.",
         "dueDateOver": {
             "noParticipationPossible": "The exercise due date is already over, you can no longer participate in this exercise.",
             "participationInPracticeMode": "The exercise due date is already over, a regular participation in the exercise is no longer possible. You can use the Practice Mode to solve the exercise.",

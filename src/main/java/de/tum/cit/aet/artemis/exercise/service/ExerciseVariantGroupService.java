@@ -349,6 +349,8 @@ public class ExerciseVariantGroupService {
                     ENTITY_NAME, "automaticTestRunAfterAssessmentDueDate");
         }
         programmingExercise.validateDates();
+        // part of the preflight: the timeline update flow checks it too, but only after the group and its other members were saved
+        programmingExerciseCreationUpdateService.validateBuildTimeWindowFitsDates(programmingExercise);
     }
 
     /**
