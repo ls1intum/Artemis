@@ -148,7 +148,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void queuedCompleteSnapshotCannotReadRepositoryHeadsDuringSave() throws Exception {
         ProgrammingExercise exercise = createProgrammingExercise();
         User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
@@ -218,7 +218,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @ParameterizedTest
     @EnumSource(ExerciseType.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExerciseVersionOnCreate(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
@@ -227,7 +227,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @ParameterizedTest
     @EnumSource(ExerciseType.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExerciseVersionOrThrow_returnsTheCreatedVersionId(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
         User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
@@ -240,7 +240,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @ParameterizedTest
     @EnumSource(ExerciseType.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExerciseVersionOrThrow_returnsNullWhenSnapshotIsUnchanged(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
         User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
@@ -253,7 +253,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExerciseVersionSynchronouslyUsesExactCallerCapturedCommitIds() {
         ProgrammingExercise exercise = createProgrammingExercise();
         User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
@@ -273,7 +273,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @ParameterizedTest
     @EnumSource(ExerciseType.class)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExerciseVersionOnUpdate(ExerciseType exerciseType) throws Exception {
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
@@ -304,7 +304,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @ParameterizedTest
     @EnumSource(value = ExerciseType.class, names = "QUIZ", mode = EnumSource.Mode.EXCLUDE)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExerciseVersionOnInvalidUpdate(ExerciseType exerciseType) throws Exception {
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
@@ -334,7 +334,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExerciseVersionOnNullExercise() {
         var previousCount = exerciseVersionRepository.count();
         exerciseVersionService.createExerciseVersion(null);
@@ -344,7 +344,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExerciseVersionOnNullExerciseId() {
         Exercise exercise = createExerciseByType(ExerciseType.TEXT);
         exercise.setId(null);
@@ -355,7 +355,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateExerciseVersionOnNullUser() {
         Exercise exercise = createExerciseByType(ExerciseType.TEXT);
         var previousCount = exerciseVersionRepository.count();
@@ -372,7 +372,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
      * multi-query fetch failed to load or merge would fail here rather than silently drop data from the version snapshot.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testFindForVersioningByIdLoadsAllIndependentCollections() {
         // Set up a programming exercise with the independent collections that previously formed the Cartesian product:
         // test cases, tasks (each linked to its test cases) and static code analysis categories.
@@ -535,7 +535,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
      * Ensures no synchronization messages are sent for the initial version.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testNoSynchronizationBroadcastWhenNoPreviousVersion() {
         ProgrammingExercise exercise = createProgrammingExercise();
         reset(websocketMessagingService);
@@ -547,7 +547,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSynchronizationBroadcastForEveryChangedAuxiliaryRepository() throws Exception {
         ProgrammingExercise exercise = createProgrammingExercise();
         String repositoryBaseUrl = exercise.getTestRepositoryUri().substring(0, exercise.getTestRepositoryUri().lastIndexOf('/') + 1);
@@ -592,7 +592,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
      * Ensures metadata alerts are broadcast when metadata changes without commit changes.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testMetadataSynchronizationBroadcastWhenNoCommitChanges() {
         ProgrammingExercise exercise = createProgrammingExercise();
         exerciseVersionService.createExerciseVersion(exercise);
@@ -620,7 +620,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
      * Ensures channel name changes are reported via metadata alerts.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testMetadataSynchronizationBroadcastWhenChannelNameChanges() {
         ProgrammingExercise exercise = createProgrammingExercise();
         exerciseVersionService.createExerciseVersion(exercise);
@@ -646,7 +646,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
      * Ensures auxiliary repository metadata changes are reported via metadata alerts.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testMetadataSynchronizationBroadcastWhenAuxiliaryRepositoryMetadataChanges() {
         ProgrammingExercise exercise = createProgrammingExercise();
         exerciseVersionService.createExerciseVersion(exercise);
@@ -670,7 +670,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
      * Ensures review thread updates are synchronized when line references change after a new exercise version.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReviewThreadSynchronizationBroadcastWhenThreadLocationChanges() {
         ProgrammingExercise exercise = createProgrammingExercise();
         exercise.setProblemStatement("line-1\nline-2\nline-3\n");
@@ -718,9 +718,10 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         Set<String> allFields = Arrays.stream(ExerciseSnapshotDTO.class.getRecordComponents()).map(RecordComponent::getName).collect(Collectors.toSet());
 
         // Fields covered by addIfChanged calls in ExerciseVersionService.collectChangedFields
-        Set<String> coveredFields = Set.of("title", "shortName", "channelName", "competencyLinks", "maxPoints", "bonusPoints", "assessmentType", "releaseDate", "startDate",
-                "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "difficulty", "mode", "allowComplaintsForAutomaticAssessments", "includedInOverallScore",
-                "gradingInstructions", "categories", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "gradingCriteria", "plagiarismDetectionConfig");
+        Set<String> coveredFields = Set.of("variantGroupId", "title", "shortName", "channelName", "competencyLinks", "maxPoints", "bonusPoints", "assessmentType", "releaseDate",
+                "startDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "difficulty", "mode", "allowComplaintsForAutomaticAssessments",
+                "includedInOverallScore", "gradingInstructions", "categories", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "gradingCriteria",
+                "plagiarismDetectionConfig");
 
         // Fields intentionally excluded from metadata sync change detection
         Set<String> excludedFields = Set.of("id", // structural identifier, not editable metadata
@@ -791,9 +792,9 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
         // Administrative / structural fields that must NOT trigger. competencyLinks is intentionally
         // here (not content-bearing): an orchestrator-driven link edit must not re-arm the pipeline.
-        Set<String> competencyIrrelevant = Set.of("id", "channelName", "competencyLinks", "maxPoints", "bonusPoints", "assessmentType", "releaseDate", "startDate", "dueDate",
-                "assessmentDueDate", "exampleSolutionPublicationDate", "mode", "allowComplaintsForAutomaticAssessments", "includedInOverallScore", "gradingInstructions",
-                "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "gradingCriteria", "plagiarismDetectionConfig",
+        Set<String> competencyIrrelevant = Set.of("variantGroupId", "id", "channelName", "competencyLinks", "maxPoints", "bonusPoints", "assessmentType", "releaseDate",
+                "startDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "mode", "allowComplaintsForAutomaticAssessments", "includedInOverallScore",
+                "gradingInstructions", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "gradingCriteria", "plagiarismDetectionConfig",
                 // classified per-field via the dotted allowlist entries: repo commits for programmingData,
                 // the extracted components for modelingData / quizData.
                 "programmingData", "modelingData", "quizData");
@@ -817,7 +818,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
      * change yields an empty set.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCollectChangedFieldsForEventIncludesContentFields() {
         ProgrammingExercise exercise = createProgrammingExercise();
         exercise.setProblemStatement("Original problem statement");
@@ -852,7 +853,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
      * change Atlas' orchestration input, so they must not consume the course's capped daily budget.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCollectChangedFieldsForEventDoesNotTriggerOnUnextractedTypeSpecificFields() {
         ModelingExercise modelingExercise = createModelingExercise();
         ExerciseSnapshotDTO previousModeling = ExerciseSnapshotDTO.of(fetchExerciseForComparison(modelingExercise), null, null);

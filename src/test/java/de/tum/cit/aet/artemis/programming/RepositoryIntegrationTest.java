@@ -198,8 +198,24 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         if (testsRepository != null) {
             testsRepository.deleteWorkingCopy();
         }
-        deleteDirectoryIfExists(Path.of("local/server-integration-test/repos"));
-        deleteDirectoryIfExists(Path.of("local/server-integration-test/repos-download"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "local/server-integration-test/repos", "local/server-integration-test/repos-download" })
+    void tearDownPreservesUnrelatedCheckoutDirectories(String sharedParent) throws IOException {
+        Path checkout = tempFileUtilService.createTempDirectory(Path.of(sharedParent), "unrelated-checkout-");
+        Path activePack = checkout.resolve(".git/objects/pack/in-progress.pack");
+        try {
+            FileUtils.writeStringToFile(activePack.toFile(), "another test's active clone", StandardCharsets.UTF_8);
+
+            tearDown();
+
+            assertThat(activePack).exists();
+            assertThat(studentRepository.workingCopyPath()).doesNotExist();
+        }
+        finally {
+            FileUtils.deleteDirectory(checkout.toFile());
+        }
     }
 
     @Test
@@ -234,7 +250,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesWithContentAndFileAndDirectoryFilter() throws Exception {
         // This case tests the FileAndDirectoryFilter inner class in GitRepositoryExportService
         // by calling the files-content endpoint which internally uses the filter
@@ -279,7 +295,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesWithContent() throws Exception {
         var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-content", HttpStatus.OK, String.class, String.class);
         assertThat(files).isNotEmpty();
@@ -292,7 +308,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesWithContentSkipsUndecodableFilesWithoutWarning() throws Exception {
         // The seeded repository contains a .jar whose bytes are not valid UTF-8. It can never be part of the response,
         // because the content is returned as a String, so it is skipped. That is an entirely expected outcome and must
@@ -318,7 +334,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesWithContentKeepsTextFilesWithBinaryExtensions() throws Exception {
         // The extension classifier also lists formats that are plain text (.sh, .bat, .ll, .wast, .hex). Those must
         // still be returned when the caller did not ask for binaries to be omitted, otherwise the code editor would
@@ -333,7 +349,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesWithOmitBinaries() throws Exception {
         var queryParams = "?omitBinaries=true";
         var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-content" + queryParams, HttpStatus.OK, String.class, String.class);
@@ -349,7 +365,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFilesAtCommitInstructorNotInCourseForbidden() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopy());
@@ -359,7 +375,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesAtCommitTutorNotInCourseForbidden() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopy());
@@ -369,7 +385,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetFilesAtCommitEditorNotInCourseForbidden() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopy());
@@ -378,9 +394,31 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetFilesAtCommitOtherStudentForbidden() throws Exception {
+        prepareRepository();
+        String commitHash = getCommitHash(studentRepository.workingCopy());
+        // the participation belongs to student1, so another student of the course must not read its files
+        request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetFilesWithInfoAboutChange_otherStudentForbidden() throws Exception {
+        request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-change", HttpStatus.FORBIDDEN, String.class, Boolean.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetFilesWithInfoAboutChange_ownerForbidden() throws Exception {
+        // the comparison reads the template repository, which is only for staff, so not even the owner of the participation may request it
+        request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-change", HttpStatus.FORBIDDEN, String.class, Boolean.class);
+    }
+
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFilesWithContentAtCommit() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopy());
@@ -395,13 +433,13 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFilesWithContentAtCommitParticipationNotFound() throws Exception {
         request.getMap(filesContentBaseUrl + "abc&participationId=" + UUID.randomUUID().getLeastSignificantBits(), HttpStatus.NOT_FOUND, String.class, String.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFilesAtCommitWithoutParticipationIdBadRequest() throws Exception {
         request.getMap(filesContentBaseUrl + "HEAD", HttpStatus.BAD_REQUEST, String.class, String.class);
     }
@@ -421,7 +459,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesAtCommitWithRepositoryTypeRequiresEditorForTutor() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopy());
@@ -429,23 +467,41 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetFilesAtCommitWithRepositoryTypeAllowedForEditor() throws Exception {
         String markerFileName = commitFileOnlyInTestRepository();
 
-        var files = request.getMap(filesContentBaseUrl + "HEAD&participationId=" + participation.getId() + "&repositoryType=TESTS", HttpStatus.OK, String.class, String.class);
+        var files = request.getMap(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/repository-files-content/TESTS?commitId=HEAD&participationId=" + participation.getId(),
+                HttpStatus.OK, String.class, String.class);
 
         assertThat(files).containsEntry(markerFileName, testRepositoryOnlyContent);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFilesAtCommitWithRepositoryTypeAllowedForInstructor() throws Exception {
         String markerFileName = commitFileOnlyInTestRepository();
 
-        var files = request.getMap(filesContentBaseUrl + "HEAD&participationId=" + participation.getId() + "&repositoryType=TESTS", HttpStatus.OK, String.class, String.class);
+        var files = request.getMap(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/repository-files-content/TESTS?commitId=HEAD&participationId=" + participation.getId(),
+                HttpStatus.OK, String.class, String.class);
 
         assertThat(files).containsEntry(markerFileName, testRepositoryOnlyContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void editorRepositoryContentRetainsSourceParticipationAndExerciseBindings() throws Exception {
+        var otherCourse = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        var otherExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        String source = "?commitId=HEAD&participationId=" + participation.getId();
+        request.getMap("/api/programming/programming-exercises/" + otherExercise.getId() + "/repository-files-content/TESTS" + source, HttpStatus.FORBIDDEN, String.class,
+                String.class);
+        String url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/repository-files-content/";
+        request.getMap(url + "USER" + source, HttpStatus.BAD_REQUEST, String.class, String.class);
+        request.getMap(url + "TESTS?commitId=HEAD", HttpStatus.BAD_REQUEST, String.class, String.class);
+        request.getMap(filesContentBaseUrl + "HEAD&participationId=" + participation.getId() + "&repositoryType=TESTS", HttpStatus.FORBIDDEN, String.class, String.class);
     }
 
     /**
@@ -486,7 +542,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesWithContent_shouldNotThrowException() throws Exception {
         MockedStatic<Files> mockedFiles = mockStatic(Files.class, CALLS_REAL_METHODS);
         mockedFiles.when(() -> Files.readString(any(Path.class), eq(StandardCharsets.UTF_8))).thenThrow(IOException.class);
@@ -497,7 +553,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesWithInfoAboutChange_noChange() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
         var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-change", HttpStatus.OK, String.class, Boolean.class);
@@ -513,7 +569,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesWithInfoAboutChange_withChange() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "student1");
         request.put(participationsBaseUrl + participation.getId() + "/repository/files?commit=false", getFileSubmissions("newContent123"), HttpStatus.OK);
@@ -534,7 +590,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesWithInfoAboutChange_withNewFile() throws Exception {
         var newSubmission = new FileSubmission();
         String newFileName = "newFile";
@@ -564,7 +620,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
      * pushes another commit from a local clone. The assessment must show the pushed commit, not the working copy.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesAtCommitOfParticipation_ignoresUnsubmittedOnlineEditorChanges() throws Exception {
         String submittedContent = "submitted from the local clone";
         String unsubmittedContent = "saved in the online editor but never submitted";
@@ -583,7 +639,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesAtCommitOfParticipation_olderCommitIsNotReplacedByNewerOne() throws Exception {
         String firstContent = "first submitted content";
         String firstCommit = pushCommitFromLocalClone(firstContent);
@@ -594,7 +650,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesAtCommitOfParticipation_onlyContainsFilesOfTheCommit() throws Exception {
         String firstCommit = pushCommitFromLocalClone("content");
         String newFileName = "addedLater.txt";
@@ -609,7 +665,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesWithInformationAboutChangeAtCommit_ignoresUnsubmittedOnlineEditorChanges() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "student1");
         // an unsubmitted edit of an otherwise unchanged file must not be reported as a change of the submission
@@ -625,14 +681,14 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesAtCommitOfParticipation_invalidCommitIsBadRequest() throws Exception {
         request.getMap(commitUrl("HEAD", "/files"), HttpStatus.BAD_REQUEST, String.class, FileType.class);
         request.getMap(commitUrl("abc", "/files"), HttpStatus.BAD_REQUEST, String.class, FileType.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesAtCommitOfParticipation_unknownCommitIsNotFound() throws Exception {
         request.getMap(commitUrl("0123456789abcdef0123456789abcdef01234567", "/files"), HttpStatus.NOT_FOUND, String.class, FileType.class);
     }
@@ -657,7 +713,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
      * the pulled commit and reports "unsubmitted changes", while the submission has the original content.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetFilesAtCommitOfParticipation_doesNotShowUnsubmittedEditOfUntouchedFile() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "student1");
         request.put(participationsBaseUrl + participation.getId() + "/repository/files?commit=false", getFileSubmissions("saved in the online editor but never submitted"),
@@ -675,7 +731,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void manualAssessmentDeadlineClosesLiveRepositoryButKeepsAnonymousSubmittedCode() throws Exception {
         String commit = pushCommitFromLocalClone("submitted code");
         var submission = new ProgrammingSubmission();
@@ -698,7 +754,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void tutorCannotReadAnUnsubmittedCommitAfterTheDeadline(boolean submittedForAnotherParticipation) throws Exception {
         String commit = pushCommitFromLocalClone("not submitted for this participation");
         if (submittedForAnotherParticipation) {
@@ -722,7 +778,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void tutorCannotUsePlagiarismEndpointsToBypassAnonymousAssessment(boolean exam) throws Exception {
         if (exam) {
             programmingExercise = createProgrammingExerciseForExam();
@@ -749,7 +805,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void tutorCanUseLivePlagiarismEndpointsDuringSupportWindow() throws Exception {
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
@@ -787,7 +843,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFiles_solutionParticipation() throws Exception {
         var files = request.getMap(participationsBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/repository/files", HttpStatus.OK, String.class,
                 FileType.class);
@@ -906,7 +962,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCanGetFileAsInstructorWithRelevantPlagiarismCaseBeforeExerciseDueDate() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(programmingExercise);
@@ -921,7 +977,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetFileAsInstructorWithRelevantPlagiarismCaseAfterExam() throws Exception {
         programmingExercise = createProgrammingExerciseForExam();
         Exam exam = programmingExercise.getExerciseGroup().getExam();
@@ -1166,7 +1222,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSaveFilesAfterDueDateAsInstructor() throws Exception {
         // Instructors should be able to push to their personal assignment repository after the due date of the exercise has passed.
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
@@ -1518,7 +1574,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testResetNotAllowedBeforeDueDate() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
@@ -1530,7 +1586,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testResetNotAllowedForExamBeforeDueDate() throws Exception {
         programmingExercise = createProgrammingExerciseForExam();
         // A tutor is not allowed to reset the repository during the exam time
@@ -1643,10 +1699,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         catch (Exception ex) {
             log.warn("Failed to delete LocalVC project {} before test execution", normalizedProjectKey, ex);
         }
-    }
-
-    private void deleteDirectoryIfExists(Path path) throws IOException {
-        RepositoryExportTestUtil.safeDeleteDirectory(path);
     }
 
     private Path checkoutPathOf(ProgrammingExerciseStudentParticipation studentParticipation) {

@@ -1,3 +1,5 @@
+import { PanelModule } from 'primeng/panel';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -184,6 +186,7 @@ describe('ExerciseSplitPanelComponent', () => {
         beforeEach(() => {
             router = TestBed.inject(Router);
             route = TestBed.inject(ActivatedRoute);
+            (route as unknown as { firstChild: unknown }).firstChild = { snapshot: { url: [{ path: 'live' }], paramMap: convertToParamMap({}) } };
             fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.QUIZ } as Exercise);
             fixture.detectChanges();
             vi.mocked(router.navigate).mockClear();
@@ -194,14 +197,14 @@ describe('ExerciseSplitPanelComponent', () => {
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 7], { relativeTo: route.parent });
+            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 7], { relativeTo: route.parent, replaceUrl: false });
         });
 
         it('should start the first practice attempt when toggling to practice without an existing participation', () => {
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent });
+            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent, replaceUrl: false });
         });
 
         it('should start a fresh attempt rather than reopen a graded participation surfaced as a fallback', () => {
@@ -210,8 +213,8 @@ describe('ExerciseSplitPanelComponent', () => {
             fixture.componentRef.setInput('participationMode', 'practice');
             fixture.detectChanges();
 
-            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent });
-            expect(router.navigate).not.toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 42], { relativeTo: route.parent });
+            expect(router.navigate).toHaveBeenCalledWith(['quiz-exercises', 1, 'practice'], { relativeTo: route.parent, replaceUrl: false });
+            expect(router.navigate).not.toHaveBeenCalledWith(['quiz-exercises', 1, 'practice', 42], { relativeTo: route.parent, replaceUrl: false });
         });
 
         it('should not re-navigate while a fresh practice attempt is in progress (bare practice route)', () => {
@@ -457,6 +460,8 @@ describe('ExerciseSplitPanelComponent details panel with its real template', () 
                         ResizablePanelsComponent,
                         PanelDirective,
                         TeamPracticeHintComponent,
+                        PanelModule,
+                        MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
                         MockComponent(ExerciseHeadersInformationComponent),
                         MockComponent(ProblemStatementComponent),
                         MockComponent(CompetencyContributionComponent),
@@ -487,6 +492,20 @@ describe('ExerciseSplitPanelComponent details panel with its real template', () 
         fixture.componentRef.setInput('practiceParticipation', practice);
         fixture.detectChanges();
     };
+
+    it.each([false, true])('passes the known course staff purpose %s to both snapshot downloads', (isAtLeastTutor) => {
+        fixture.componentRef.setInput('exampleSolutionInfo', {
+            exampleSolutionPublished: true,
+            programmingExercise: { releaseTestsWithExampleSolution: true },
+        });
+        render({ type: ExerciseType.PROGRAMMING, isAtLeastTutor }, 'graded');
+        const downloads = fixture.debugElement.queryAll(By.directive(ProgrammingExerciseExampleSolutionRepoDownloadComponent));
+        expect(downloads).toHaveLength(2);
+        for (const download of downloads) {
+            expect(download.componentInstance.forStaff()).toBe(isAtLeastTutor);
+        }
+        expect(downloads[1].componentInstance.includeTests()).toBe(true);
+    });
 
     it('should explain at the top of the details of a team exercise that practice is individual', () => {
         render({ type: ExerciseType.TEXT, teamMode: true }, 'graded');

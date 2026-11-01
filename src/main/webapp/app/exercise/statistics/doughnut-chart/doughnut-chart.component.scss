@@ -1,3 +1,11 @@
+:host {
+    min-width: 0;
+}
+
+.doughnut-chart-heading {
+    overflow-wrap: anywhere;
+}
+
 .doughnut-chart-container {
     display: flex;
     align-items: center;
@@ -13,8 +21,9 @@
     // size written as `h-50 w-50` is either never generated or, worse, resolved by Bootstrap's percentage
     // utility of the same name, which shrank the ring to a fraction of the label sitting on top of it.
     tumaet-ui-doughnut-chart {
-        width: 200px;
-        height: 200px;
+        width: min(200px, 100%);
+        height: auto;
+        aspect-ratio: 1;
     }
 }
 

@@ -1,3 +1,6 @@
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
@@ -15,17 +18,27 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
     templateUrl: './external-submission-dialog.component.html',
-    imports: [FormsModule, TranslateDirective, NgClass, FaIconComponent, MarkdownDirective, ArtemisTranslatePipe],
+    imports: [
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiButtonDirective,
+        FormsModule,
+        TranslateDirective,
+        NgClass,
+        FaIconComponent,
+        MarkdownDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
     private externalSubmissionService = inject(ExternalSubmissionService);
-    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogRef = inject(TumAetUiDialogRef);
     private eventManager = inject(EventManager);
 
     readonly SCORE_PATTERN = SCORE_PATTERN;
@@ -69,7 +82,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
      * Close modal window.
      */
     clear() {
-        this.dialogRef.close('cancel');
+        this.dialogRef.dismiss('cancel');
     }
 
     /**

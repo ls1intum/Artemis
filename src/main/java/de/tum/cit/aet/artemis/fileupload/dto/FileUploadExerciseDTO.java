@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -70,7 +71,7 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
         @Nullable Boolean presentationScoreEnabled, @Nullable Boolean secondCorrectionEnabled, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
         @Nullable String exampleSolution, @Nullable String filePattern, boolean gradingInstructionFeedbackUsed, @Nullable CourseContextDTO course,
-        @Nullable ExerciseGroupContextDTO exerciseGroup, @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup, @Nullable Set<GradingCriterionDTO> gradingCriteria,
+        @Nullable ExerciseGroupContextDTO exerciseGroup, @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup, @Nullable List<GradingCriterionDTO> gradingCriteria,
         @Nullable Set<CompetencyLinkDTO> competencyLinks, @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CourseManagementExerciseDTO {
 
     /**
@@ -124,7 +125,7 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
         if (forExport && teamAssignmentConfig != null) {
             teamAssignmentConfig = teamAssignmentConfig.withoutId();
         }
-        Set<GradingCriterionDTO> gradingCriteria = includeInitializedAssociations ? mapGradingCriteria(exercise.getGradingCriteria()) : null;
+        List<GradingCriterionDTO> gradingCriteria = includeInitializedAssociations ? mapGradingCriteria(exercise.getGradingCriteria()) : null;
         Set<CompetencyLinkDTO> competencyLinks = includeInitializedAssociations && initialized(exercise.getCompetencyLinks())
                 ? exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())
                 : null;
@@ -144,12 +145,12 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
                 plagiarismDetectionConfig);
     }
 
-    private static Set<GradingCriterionDTO> mapGradingCriteria(@Nullable Set<GradingCriterion> gradingCriteria) {
+    private static List<GradingCriterionDTO> mapGradingCriteria(@Nullable Set<GradingCriterion> gradingCriteria) {
         if (!initialized(gradingCriteria)
                 || gradingCriteria.stream().map(GradingCriterion::getStructuredGradingInstructions).anyMatch(instructions -> !Hibernate.isInitialized(instructions))) {
             return null;
         }
-        return gradingCriteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        return GradingCriterionDTO.ofAll(gradingCriteria);
     }
 
     private static boolean initialized(@Nullable Object association) {

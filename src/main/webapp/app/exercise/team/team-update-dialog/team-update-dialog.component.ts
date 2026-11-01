@@ -1,6 +1,10 @@
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { AbstractControl, FormsModule, NgForm } from '@angular/forms';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -28,17 +32,30 @@ export type StudentTeamConflict = { studentLogin: string; teamId: string };
     templateUrl: './team-update-dialog.component.html',
     styleUrls: ['./team-update-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, TeamOwnerSearchComponent, TeamStudentSearchComponent, KeyValuePipe, RemoveKeysPipe],
+    imports: [
+        ArtemisTranslatePipe,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiButtonDirective,
+        FormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        FaIconComponent,
+        TeamOwnerSearchComponent,
+        TeamStudentSearchComponent,
+        KeyValuePipe,
+        RemoveKeysPipe,
+    ],
 })
 export class TeamUpdateDialogComponent implements OnInit {
     private teamService = inject(TeamService);
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+    private readonly dialogRef = inject<TumAetUiDialogRef<Team, TeamUpdateDialogComponent>>(TumAetUiDialogRef);
+    private readonly dialogConfig = inject<TumAetUiDialogConfig<{ team: Team; exercise: Exercise }>>(TumAetUiDialogConfig);
 
     readonly editForm = viewChild.required<NgForm>('editForm');
 
-    team = signal<Team>(this.dialogConfig.data.team);
-    exercise = signal<Exercise>(this.dialogConfig.data.exercise);
+    team = signal<Team>(this.dialogConfig.data!.team);
+    exercise = signal<Exercise>(this.dialogConfig.data!.exercise);
 
     pendingTeam: Team = deepClone(this.team());
     readonly isSaving = signal(false);
@@ -217,7 +234,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      * @param {HttpResponse<Team>}team - The successful updated team
      */
     onSaveSuccess(team: HttpResponse<Team>) {
-        this.dialogRef.close(team.body);
+        this.dialogRef.close(team.body ?? undefined);
         this.isSaving.set(false);
     }
 

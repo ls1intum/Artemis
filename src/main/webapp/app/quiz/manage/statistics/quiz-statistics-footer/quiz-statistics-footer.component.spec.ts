@@ -4,12 +4,12 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizStatisticsFooterComponent } from 'app/quiz/manage/statistics/quiz-statistics-footer/quiz-statistics-footer.component';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -24,7 +24,7 @@ const question = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as QuizQuesti
 const course = { id: 2 } as Course;
 let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
 let examQuizExercise = { id: 43, quizStarted: true, course, quizQuestions: [question], exerciseGroup: { id: 11, exam: { id: 10 } } } as QuizExercise;
-const route = { params: of({ questionId: 1, exerciseId: 42 }) };
+const route = { params: of({ questionId: 1, exerciseId: 42 }), snapshot: { pathFromRoot: [{ params: {} as Params }] } };
 
 describe('QuizStatisticsFooterComponent', () => {
     let comp: QuizStatisticsFooterComponent;
@@ -69,13 +69,22 @@ describe('QuizStatisticsFooterComponent', () => {
         router = fixture.debugElement.injector.get(Router);
         routerSpy = vi.spyOn(router, 'navigateByUrl');
         accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-        quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(quizExercise));
     });
 
     afterEach(() => {
         comp.ngOnDestroy();
         quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
         examQuizExercise = { id: 43, quizStarted: true, course, quizQuestions: [question], exerciseGroup: { id: 11, exam: { id: 10 } } } as QuizExercise;
+    });
+
+    it('loads exam statistics footer details from ancestor context', () => {
+        route.snapshot = { pathFromRoot: [{ params: { examId: 7 } }] };
+        const examFind = vi.spyOn(quizService, 'findForExam').mockReturnValue(of(examQuizExercise));
+        comp.ngOnInit();
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(42);
+        expect(quizServiceFindSpy).not.toHaveBeenCalled();
+        route.snapshot = { pathFromRoot: [{ params: {} }] };
     });
 
     it('should load Quiz on Init', async () => {

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -44,6 +45,23 @@ public class StudentExamAccessService {
         this.authorizationCheckService = authorizationCheckService;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
+    }
+
+    /**
+     * Checks the persisted attempt's exam and owning course against the requested path before any state is changed.
+     *
+     * @param studentExam the persisted attempt
+     * @param examId      the requested exam
+     * @param courseId    the requested course
+     */
+    public void validateExamRequestParametersElseThrow(StudentExam studentExam, Long examId, Long courseId) {
+        var exam = studentExam.getExam();
+        if (!Objects.equals(exam.getId(), examId)) {
+            throw new ConflictException("The student exam does not belong to the exam", "StudentExam", "studentExamExamConflict");
+        }
+        if (!Objects.equals(exam.getCourse().getId(), courseId)) {
+            throw new ConflictException("The exam does not belong to the course", "Exam", "examCourseConflict");
+        }
     }
 
     /**

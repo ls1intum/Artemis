@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
@@ -290,7 +291,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetParticipationWithLatestResult_canAccessParticipationIfExerciseNotStartedAndNotStudent() throws Exception {
         ZonedDateTime startDate = ZonedDateTime.now().plusDays(1);
         programmingExercise.setStartDate(startDate);
@@ -385,7 +386,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetParticipationWithLatestResult_showsResultsDuringTestRun() throws Exception {
         var participation = setupExamTestRunWithParticipation(TEST_PREFIX + "instructor1");
         var url = participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks";
@@ -400,7 +401,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLatestResultWithFeedbacks_showsResultsDuringTestRun() throws Exception {
         var participation = setupExamTestRunWithParticipation(TEST_PREFIX + "instructor1");
         var url = participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks";
@@ -461,7 +462,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetParticipationWithAllResultsAsAnInstructor_noCompletionDate_notFound() throws Exception {
         var result = addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, null);
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
@@ -487,7 +488,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetAllResultsAsTutor() throws Exception {
         // tutor should have access
         var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
@@ -518,7 +519,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetParticipationAllResults_canAccessParticipationIfExerciseNotStartedAndNotStudent() throws Exception {
         ZonedDateTime startDate = ZonedDateTime.now().plusDays(1);
         programmingExercise.setStartDate(startDate);
@@ -702,7 +703,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetLatestResultWithFeedbacksForTemplateParticipationAsTutor() throws Exception {
         TemplateProgrammingExerciseParticipation participation = addTemplateParticipationWithResult();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
@@ -711,7 +712,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLatestResultWithFeedbacksForTemplateParticipationAsInstructor() throws Exception {
         TemplateProgrammingExerciseParticipation participation = addTemplateParticipationWithResult();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
@@ -727,7 +728,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetLatestResultWithFeedbacksForSolutionParticipationAsTutor() throws Exception {
         SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
@@ -736,7 +737,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLatestResultWithFeedbacksForSolutionParticipationAsInstructor() throws Exception {
         SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
@@ -773,7 +774,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @ParameterizedTest
     @CsvSource({ "student-participation-with-latest-result-and-feedbacks,false", "student-participation-with-all-results,false",
             "student-participation-with-latest-result-and-feedbacks,true", "student-participation-with-all-results,true" })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testParticipationPrivacyForTutor(String endpoint, boolean teamMode) throws Exception {
         var result = createResultForParticipationPrivacyTest(teamMode);
         var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
@@ -795,7 +796,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @ParameterizedTest
     @CsvSource({ "student-participation-with-latest-result-and-feedbacks,false", "student-participation-with-all-results,false",
             "student-participation-with-latest-result-and-feedbacks,true", "student-participation-with-all-results,true" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testParticipationPrivacyPreservesInstructorIdentity(String endpoint, boolean teamMode) throws Exception {
         var result = createResultForParticipationPrivacyTest(teamMode);
         var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
@@ -824,7 +825,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testParticipationPrivacyRejectsTutorRepoNameLookup(boolean teamMode) throws Exception {
         var result = createResultForParticipationPrivacyTest(teamMode);
         var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
@@ -835,7 +836,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testParticipationPrivacyPreservesInstructorRepoNameLookup() throws Exception {
         var result = createResultForParticipationPrivacyTest(false);
         var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
@@ -846,21 +847,21 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @ParameterizedTest
     @CsvSource({ "false, false", "false, true", "true, false", "true, true" })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testNestedParticipationPrivacyForTutor(boolean teamMode, boolean submissionsList) throws Exception {
         assertNestedParticipationPrivacy(teamMode, false, submissionsList);
     }
 
     @ParameterizedTest
     @CsvSource({ "false, false", "false, true", "true, false", "true, true" })
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testNestedParticipationPrivacyForEditor(boolean teamMode, boolean submissionsList) throws Exception {
         assertNestedParticipationPrivacy(teamMode, false, submissionsList);
     }
 
     @ParameterizedTest
     @CsvSource({ "false, false", "false, true", "true, false", "true, true" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testNestedParticipationPrivacyPreservesInstructorIdentity(boolean teamMode, boolean submissionsList) throws Exception {
         assertNestedParticipationPrivacy(teamMode, true, submissionsList);
     }
@@ -906,7 +907,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @ParameterizedTest
     @ValueSource(strings = { "lock", "without-assessment", "without-assessment?lock=true" })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testNestedParticipationPrivacyForAssessmentResponses(String endpoint) throws Exception {
         var result = createResultForParticipationPrivacyTest(false);
         var submission = result.getSubmission();
@@ -942,7 +943,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @ParameterizedTest
     @CsvSource({ "false,AUTOMATIC,-1", "true,AUTOMATIC,-1", "false,SEMI_AUTOMATIC,1", "true,SEMI_AUTOMATIC,1", "false,SEMI_AUTOMATIC,0" })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorSupportRepositoryViewKeepsIdentityBeforeAnonymousAssessment(boolean teamMode, AssessmentType assessmentType, int dueDateOffset) throws Exception {
         var result = createResultForParticipationPrivacyTest(teamMode);
         var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
@@ -1491,7 +1492,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetLatestPendingSubmissionIfExists_ta() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
@@ -1499,7 +1500,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLatestPendingSubmissionIfExists_instructor() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
@@ -1507,7 +1508,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLatestPendingSubmission_notProgrammingParticipation() throws Exception {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation = participationRepository.save(studentParticipation);
@@ -1526,7 +1527,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetLatestPendingSubmissionIfNotExists_ta() throws Exception {
         // The submission has no result yet and its submission date is old enough, so it counts as pending.
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
@@ -1537,7 +1538,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLatestPendingSubmissionIfNotExists_instructor() throws Exception {
         // The submission has no result yet and its submission date is old enough, so it counts as pending.
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
@@ -1559,7 +1560,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getLatestSubmissionsForExercise_instructor() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
@@ -1582,7 +1583,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getLatestSubmissionsForExercise_picksLatestBySubmissionDateNotById() throws Exception {
         // Create a submission with a newer submission date first (so it gets the lower id) ...
         ProgrammingSubmission newerByDate = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(30L));
@@ -1604,7 +1605,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getLatestSubmissionsForExercise_noParticipations_returnsEmptyList() throws Exception {
         // The exercise has no student participations yet, so the two lean queries (participation ids / latest submission
         // ids) return nothing and the endpoint returns an empty list rather than failing.
@@ -1614,7 +1615,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getLatestSubmissionsForExercise_returnsMinimalSubmissionFields() throws Exception {
         // A pending submission carries only the minimal fields the client reads: id, commit hash and submission date.
         ZonedDateTime submissionDate = ZonedDateTime.now().minusSeconds(30L);
@@ -1855,7 +1856,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         @BeforeEach
         void setup() throws Exception {
-            userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
+            userUtilService.addUsers(TEST_PREFIX, 4, 2, 1, 2);
             var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
             programmingExerciseWithAuxRepo = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             programmingExerciseWithAuxRepo = programmingExerciseRepository
@@ -1877,13 +1878,13 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnBadRequestForInvalidRepositoryType() throws Exception {
             request.getList(PATH_PREFIX + "INVALIDTYPE", HttpStatus.BAD_REQUEST, CommitInfoDTO.class);
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldGetListForTemplateRepository() throws Exception {
             var commits = request.getList(PATH_PREFIX + "TEMPLATE", HttpStatus.OK, CommitInfoDTO.class);
             assertThat(commits).isNotEmpty();
@@ -1891,7 +1892,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldGetListForSolutionRepository() throws Exception {
             var commits = request.getList(PATH_PREFIX + "SOLUTION", HttpStatus.OK, CommitInfoDTO.class);
             assertThat(commits).isNotEmpty();
@@ -1899,7 +1900,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldGetListForTestsRepository() throws Exception {
             var commits = request.getList(PATH_PREFIX + "TESTS", HttpStatus.OK, CommitInfoDTO.class);
             assertThat(commits).isNotEmpty();
@@ -1907,7 +1908,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldGetListForAuxiliaryRepository() throws Exception {
             var repositoryId = programmingExerciseWithAuxRepo.getAuxiliaryRepositories().iterator().next().getId();
             var commits = request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + repositoryId, HttpStatus.OK, CommitInfoDTO.class);
@@ -1916,10 +1917,46 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldThrowWithInvalidAuxiliaryRepositoryId() throws Exception {
             long maxId = auxiliaryRepositoryRepository.findAll().stream().mapToLong(DomainObject::getId).max().orElse(0);
             request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + (maxId + 1), HttpStatus.NOT_FOUND, CommitInfoDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+        void editorContentReadsBoundAuxiliaryRepositoryBytes() throws Exception {
+            var auxiliary = ensureAuxiliaryRepositoryConfigured();
+            var files = request.getMap(editorContentPath(programmingExerciseWithAuxRepo.getId()) + "&repositoryId=" + auxiliary.getId(), HttpStatus.OK, String.class, String.class);
+            assertThat(files).containsEntry("auxiliary/Example.md", "Aux repo").doesNotContainKey("solution/Example.java");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+        void editorContentRejectsForeignOrMissingAuxiliaryRepository() throws Exception {
+            assertAuxiliaryContentError(
+                    editorContentPath(programmingExerciseWithAuxRepo.getId()) + "&repositoryId=" + programmingExercise.getAuxiliaryRepositories().iterator().next().getId(),
+                    "error.invalidRepositoryId");
+            assertAuxiliaryContentError(editorContentPath(programmingExerciseWithAuxRepo.getId()), "error.missingRepositoryId");
+            long missingId = auxiliaryRepositoryRepository.findAll().stream().mapToLong(DomainObject::getId).max().orElse(0) + 1;
+            request.getMap(editorContentPath(programmingExerciseWithAuxRepo.getId()) + "&repositoryId=" + missingId, HttpStatus.NOT_FOUND, String.class, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void tutorCannotSelectAuxiliaryRepositoryContent() throws Exception {
+            request.getMap(editorContentPath(programmingExerciseWithAuxRepo.getId()) + "&repositoryId=" + ensureAuxiliaryRepositoryConfigured().getId(), HttpStatus.FORBIDDEN,
+                    String.class, String.class);
+        }
+
+        private void assertAuxiliaryContentError(String url, String errorKey) throws Exception {
+            var response = request.performMvcRequest(get(url)).andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").value(errorKey)).andReturn().getResponse();
+            assertThat(response.getContentAsString()).doesNotContain("Aux repo", "class Solution {}");
+            request.restoreSecurityContext();
+        }
+
+        private String editorContentPath(long exerciseId) {
+            return "/api/programming/programming-exercises/" + exerciseId + "/files-content-commit-details/for-editor?commitId=HEAD&repositoryType=AUXILIARY";
         }
 
         private AuxiliaryRepository ensureAuxiliaryRepositoryConfigured() throws Exception {
@@ -1939,7 +1976,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
      * Tests for programming-exercise-participations/{participationId}/files-content
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getParticipationRepositoryFilesInstructorSuccess() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         Map<String, String> seededFiles = Map.of("README.md", "Instructor view", "src/App.java", "class App {}\n");
@@ -1994,7 +2031,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnBadRequestWithoutAnyProvidedParameters() throws Exception {
             request.getMap(basePath + studentCommitHash, HttpStatus.BAD_REQUEST, String.class, String.class);
         }
@@ -2009,7 +2046,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void shouldLetATutorReadTheFilesOfASubmittedCommitAfterTheSupportWindowClosed() throws Exception {
             closeTheTutorSupportWindow();
             var submission = new ProgrammingSubmission();
@@ -2025,7 +2062,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void shouldNotLetATutorReadTheLiveRepositoryByAReferenceAfterTheSupportWindowClosed() throws Exception {
             closeTheTutorSupportWindow();
             // a name is not a commit of the submission, it reaches whatever the repository holds now
@@ -2036,7 +2073,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void shouldKeepAnEditorsAccessToTheRepositoryOfAStudentAfterTheSupportWindowClosed() throws Exception {
             closeTheTutorSupportWindow();
 
@@ -2046,7 +2083,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void shouldNotLetATutorBrowseTheCommitDetailsAfterTheSupportWindowClosed() throws Exception {
             closeTheTutorSupportWindow();
 
@@ -2054,7 +2091,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnForParticipation() throws Exception {
             var files = request.getMap(basePath + studentCommitHash + "&participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class);
             assertThat(files).containsEntry("student/Example.java", "class StudentExample {}\n");
@@ -2123,23 +2160,77 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+        void participationContentCannotSelectAnEditorRepository() throws Exception {
+            request.getMap(basePath + solutionCommitHash + "&repositoryType=SOLUTION", HttpStatus.BAD_REQUEST, String.class, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+        void editorContentSelectsOnlyItsOwnRepository() throws Exception {
+            String url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/for-editor";
+            var files = request.getMap(url + "?commitId=" + templateCommitHash + "&repositoryType=TEMPLATE", HttpStatus.OK, String.class, String.class);
+            assertThat(files).containsEntry("template/Example.java", "class TemplateDetail {}").doesNotContainKey("student/Example.java");
+            request.getMap(url + "?commitId=" + studentCommitHash + "&repositoryType=SOLUTION", HttpStatus.INTERNAL_SERVER_ERROR, String.class, String.class);
+            request.getMap(url + "?commitId=" + studentCommitHash + "&repositoryType=USER", HttpStatus.BAD_REQUEST, String.class, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void tutorCannotSelectEditorContent() throws Exception {
+            String url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/for-editor";
+            request.getMap(url + "?commitId=" + templateCommitHash + "&repositoryType=TEMPLATE", HttpStatus.FORBIDDEN, String.class, String.class);
+        }
+
+        @ParameterizedTest
+        @ValueSource(booleans = { true, false })
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void tutorCanReadActualBaseParticipationInBothContentModes(boolean template) throws Exception {
+            var actual = template ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
+            String commit = template ? templateCommitHash : solutionCommitHash;
+            String path = template ? "template/Example.java" : "solution/Example.java";
+            String content = template ? "class TemplateDetail {}" : "class SolutionDetail {}";
+            var files = request.getMap(basePath + commit + "&participationId=" + actual.getId(), HttpStatus.OK, String.class, String.class);
+            assertThat(files).containsEntry(path, content);
+            var selected = request.postWithResponseBody(basePath.replace("?commitId=", "/selected?commitId=") + commit + "&participationId=" + actual.getId(), Set.of(path),
+                    Map.class, HttpStatus.OK);
+            assertThat(selected).hasSize(1);
+            assertThat(selected.get(path)).isEqualTo(content);
+        }
+
+        @ParameterizedTest
+        @ValueSource(booleans = { true, false })
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void studentCannotReadActualBaseParticipationInEitherContentMode(boolean template) throws Exception {
+            var actual = template ? programmingExercise.getTemplateParticipation() : programmingExercise.getSolutionParticipation();
+            String commit = template ? templateCommitHash : solutionCommitHash;
+            request.getMap(basePath + commit + "&participationId=" + actual.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
+            request.postWithResponseBody(basePath.replace("?commitId=", "/selected?commitId=") + commit + "&participationId=" + actual.getId(), Set.of("template/Example.java"),
+                    Map.class, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnFilesForTemplateRepository() throws Exception {
-            var files = request.getMap(basePath + templateCommitHash + "&repositoryType=TEMPLATE", HttpStatus.OK, String.class, String.class);
+            var files = request.getMap(
+                    basePath.replace("files-content-commit-details", "files-content-commit-details/for-editor") + templateCommitHash + "&repositoryType=TEMPLATE", HttpStatus.OK,
+                    String.class, String.class);
             assertThat(files).containsEntry("template/Example.java", "class TemplateDetail {}");
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnFilesForSolutionRepository() throws Exception {
-            var files = request.getMap(basePath + solutionCommitHash + "&repositoryType=SOLUTION", HttpStatus.OK, String.class, String.class);
+            var files = request.getMap(
+                    basePath.replace("files-content-commit-details", "files-content-commit-details/for-editor") + solutionCommitHash + "&repositoryType=SOLUTION", HttpStatus.OK,
+                    String.class, String.class);
             assertThat(files).containsEntry("solution/Example.java", "class SolutionDetail {}");
         }
 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void retrieveCommitHistoryInstructorSuccess() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         String commitMessage = "Instructor commit history";
@@ -2150,7 +2241,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void retrieveCommitHistoryGitExceptionEmptyList() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         doThrow(new NoHeadException("error")).when(bareGitRepositoryServiceSpy).getCommitInfos(participation.getVcsRepositoryUri());
@@ -2177,7 +2268,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void retrieveCommitHistoryTutorNotOwningParticipationSuccess() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         String commitMessage = "Tutor view commit";

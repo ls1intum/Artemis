@@ -26,7 +26,7 @@ describe('FeedbackChartService', () => {
     it('extracts colors correctly', () => {
         const exercise = getExercise();
         const feedbackNodes: FeedbackNode[] = [{ color: 'secondary' } as FeedbackNode, { color: 'success' } as FeedbackNode, { color: 'primary' } as FeedbackNode];
-        const expected = ['var(--bs-secondary)', 'var(--bs-success)', 'var(--bs-primary)'];
+        const expected = ['var(--tumaet-ui-muted-color)', 'var(--success)', 'var(--tumaet-ui-primary-color)'];
 
         expect(service.create(feedbackNodes, exercise).colors).toEqual(expected);
     });

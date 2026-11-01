@@ -6,24 +6,27 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseDetailsDTO(@JsonUnwrapped QuizExerciseWithoutQuestionsDTO quizExercise, List<QuizQuestionWithSolutionDTO> quizQuestions, Set<String> categories,
-        Set<CompetencyExerciseLinkDTO> competencyLinks, Set<GradingCriterionDTO> gradingCriteria, String channelName, Boolean testRunParticipationsExist, Boolean isEditable,
-        Boolean canBeEvaluated) {
+        Set<CompetencyExerciseLinkDTO> competencyLinks, List<GradingCriterionDTO> gradingCriteria, String channelName, Boolean testRunParticipationsExist, Boolean isEditable,
+        Boolean canBeEvaluated, @Nullable ExerciseGroupWithIdAndExamDTO exerciseGroup) {
 
     /**
      * Converts a quiz exercise entity to the instructor-facing details DTO.
@@ -38,19 +41,25 @@ public record QuizExerciseDetailsDTO(@JsonUnwrapped QuizExerciseWithoutQuestions
         if (Hibernate.isInitialized(quizExercise.getCompetencyLinks())) {
             competencyExerciseLinkDTOs = quizExercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkDTO::of).collect(Collectors.toSet());
         }
-        Set<GradingCriterionDTO> gradingCriterionDTOs = null;
+        List<GradingCriterionDTO> gradingCriterionDTOs = null;
         if (Hibernate.isInitialized(quizExercise.getGradingCriteria())) {
-            gradingCriterionDTOs = quizExercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriterionDTOs = GradingCriterionDTO.ofAll(quizExercise.getGradingCriteria());
         }
 
+        ExerciseGroupWithIdAndExamDTO exerciseGroup = null;
+        if (quizExercise.isExamExercise()) {
+            var group = quizExercise.getExerciseGroup();
+            var exam = group.getExam();
+            exerciseGroup = new ExerciseGroupWithIdAndExamDTO(group.getId(), new ExamWithIdAndCourseDTO(exam.getId(), new CourseWithIdDTO(exam.getCourse().getId())));
+        }
         return new QuizExerciseDetailsDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise), questionDTOs, categories, competencyExerciseLinkDTOs, gradingCriterionDTOs,
-                quizExercise.getChannelName(), quizExercise.getTestRunParticipationsExist(), null, null);
+                quizExercise.getChannelName(), quizExercise.getTestRunParticipationsExist(), null, null, exerciseGroup);
     }
 
     public static QuizExerciseDetailsDTO of(QuizExercise quizExercise, Boolean isEditable) {
         QuizExerciseDetailsDTO dto = of(quizExercise);
         return new QuizExerciseDetailsDTO(dto.quizExercise, dto.quizQuestions, dto.categories, dto.competencyLinks, dto.gradingCriteria, dto.channelName,
-                dto.testRunParticipationsExist, isEditable, null);
+                dto.testRunParticipationsExist, isEditable, null, dto.exerciseGroup);
     }
 
     /**
@@ -65,7 +74,7 @@ public record QuizExerciseDetailsDTO(@JsonUnwrapped QuizExerciseWithoutQuestions
     public static QuizExerciseDetailsDTO of(QuizExercise quizExercise, Boolean isEditable, boolean effectiveQuizEnded, boolean canBeEvaluated) {
         QuizExerciseDetailsDTO dto = of(quizExercise);
         return new QuizExerciseDetailsDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise, effectiveQuizEnded), dto.quizQuestions, dto.categories, dto.competencyLinks,
-                dto.gradingCriteria, dto.channelName, dto.testRunParticipationsExist, isEditable, canBeEvaluated);
+                dto.gradingCriteria, dto.channelName, dto.testRunParticipationsExist, isEditable, canBeEvaluated, dto.exerciseGroup);
     }
 }
 
@@ -99,26 +108,5 @@ record BaseCompetencyDTO(Long id, String title, String description, CompetencyTa
 
     public static BaseCompetencyDTO of(CourseCompetency courseCompetency) {
         return new BaseCompetencyDTO(courseCompetency.getId(), courseCompetency.getTitle(), courseCompetency.getDescription(), courseCompetency.getTaxonomy());
-    }
-}
-
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-record GradingCriterionDTO(Long id, String title, Set<GradingInstructionDTO> structuredGradingInstructions) {
-
-    public static GradingCriterionDTO of(GradingCriterion gradingCriterion) {
-        Set<GradingInstructionDTO> gradingInstructionDTOs = Set.of();
-        if (Hibernate.isInitialized(gradingCriterion.getStructuredGradingInstructions())) {
-            gradingInstructionDTOs = gradingCriterion.getStructuredGradingInstructions().stream().map(GradingInstructionDTO::of).collect(Collectors.toSet());
-        }
-        return new GradingCriterionDTO(gradingCriterion.getId(), gradingCriterion.getTitle(), gradingInstructionDTOs);
-    }
-}
-
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-record GradingInstructionDTO(Long id, double credits, String gradingScale, String instructionDescription, String feedback, int usageCount) {
-
-    public static GradingInstructionDTO of(GradingInstruction gradingInstruction) {
-        return new GradingInstructionDTO(gradingInstruction.getId(), gradingInstruction.getCredits(), gradingInstruction.getGradingScale(),
-                gradingInstruction.getInstructionDescription(), gradingInstruction.getFeedback(), gradingInstruction.getUsageCount());
     }
 }

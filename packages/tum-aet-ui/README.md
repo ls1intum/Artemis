@@ -76,7 +76,8 @@ Foundations:
   corresponding `--tumaet-ui-line-height-*` properties;
 - shape: `--tumaet-ui-radius-{sm,md,xl,2xl}`;
 - elevation: `--tumaet-ui-shadow-{xs,sm,md,lg,xl}`;
-- focus: `--tumaet-ui-focus-color`.
+- focus: `--tumaet-ui-focus-color`;
+- resizable panel divider: `--tumaet-ui-splitter-divider-size` (defaults to `6px`).
 
 Colors:
 

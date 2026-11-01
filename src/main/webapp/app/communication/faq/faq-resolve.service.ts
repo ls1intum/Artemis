@@ -14,7 +14,7 @@ export class FaqResolve implements Resolve<Faq> {
         const faqId = route.params['faqId'];
         const courseId = route.params['courseId'];
         if (faqId) {
-            return this.faqService.find(courseId, faqId).pipe(
+            return this.faqService.findForManagement(courseId, faqId).pipe(
                 filter((response: HttpResponse<Faq>) => response.ok),
                 map((faq: HttpResponse<Faq>) => faq.body!),
             );

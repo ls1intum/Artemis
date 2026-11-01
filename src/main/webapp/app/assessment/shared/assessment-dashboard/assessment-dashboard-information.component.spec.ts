@@ -116,6 +116,26 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(component.assessmentLocksLink()).toEqual(['/course-management', 10, 'exams', 42, 'assessment-locks']);
     });
 
+    it.each([
+        [true, false, null, null],
+        [true, true, '/course-management/10/exams/42/assessment-locks', null],
+        [false, false, null, '/course-management/10/assessment-locks?tutorId=1'],
+        [false, true, null, '/course-management/10/assessment-locks?tutorId=1'],
+    ])('links only accessible lock scopes for exam=%s and instructor=%s', (isExam, isInstructor, totalHref, ownHref) => {
+        fixture.componentRef.setInput('course', { id: 10, isAtLeastInstructor: isInstructor } as Course);
+        fixture.componentRef.setInput('isExamMode', isExam);
+        fixture.componentRef.setInput('examId', 42);
+        fixture.componentRef.setInput('assessmentLocks', new AssessmentDashboardInformationEntry(4, 1, undefined));
+        fixture.detectChanges();
+
+        const header = fixture.nativeElement.querySelector('[jhiTranslate="artemisApp.assessmentDashboard.assessmentLocks"]') as HTMLElement;
+        const cells = header.closest('tr')!.querySelectorAll('td');
+        expect(cells[0].textContent?.trim()).toBe('4');
+        expect(cells[1].textContent?.trim()).toBe('1');
+        expect(cells[0].querySelector('a')?.getAttribute('href') ?? null).toBe(totalHref);
+        expect(cells[1].querySelector('a')?.getAttribute('href') ?? null).toBe(ownHref);
+    });
+
     it('should compute the right total/missing ratio', () => {
         const complaints = new AssessmentDashboardInformationEntry(0, 10, undefined);
 

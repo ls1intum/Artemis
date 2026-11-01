@@ -49,7 +49,7 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
     private final String filePattern = "png, pdf, jpg";
 
     @BeforeEach
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
@@ -58,7 +58,7 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateFileUploadExercise_createsExerciseVersion() throws Exception {
         // Arrange
         FileUploadExercise newExercise = FileUploadExerciseFactory.generateFileUploadExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7),
@@ -80,7 +80,7 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateFileUploadExercise_createsExerciseVersion(boolean reEvaluate) throws Exception {
         // Arrange: Get existing exercise
         Long exerciseId = fileUploadExercise.getId();
@@ -113,7 +113,7 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportFileUploadExercise_createsExerciseVersion() throws Exception {
         // Arrange: Create target course
         Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
