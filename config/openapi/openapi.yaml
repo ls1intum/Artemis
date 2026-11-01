@@ -1851,6 +1851,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/StudentQuizParticipation'}
+  /api/quiz/quiz-exercises/{exerciseId}/export:
+    get:
+      tags: [quiz-exercise]
+      operationId: exportExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: string, format: binary}
   /api/quiz/exams/{examId}/quiz-exercises:
     get:
       tags: [quiz-exercise-retrieval]
@@ -5249,9 +5264,9 @@ components:
         subTypeReferenceId: {type: integer, format: int64}
         subTypeReferenceStartDate: {type: string, format: date-time}
         subTypeReferenceEndDate: {type: string, format: date-time}
+        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
     ShortAnswerQuizQuestionWithSolution:
       required: [type]
       type: object
