@@ -24,6 +24,10 @@ import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSettingInfoDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSettingSpecificationRequestDTO;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPresetRegistryService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -48,12 +52,14 @@ public class UserCourseNotificationSettingResource {
     }
 
     /**
-     * GET communication/notification/{courseId}/settings: Get setting information for the current user
+     * GET /api/notification/courses/{courseId}/settings: Get setting information for the current user
      *
      * @param courseId the ID of the course
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastStudentInCourse
+    @Operation(operationId = "getUserCourseNotificationSettings")
+    @ApiResponse(responseCode = "200", description = "Effective notification settings for the current course member")
     @GetMapping("{courseId}/settings")
     public ResponseEntity<CourseNotificationSettingInfoDTO> getSettingInfo(@PathVariable Long courseId) {
         log.debug("REST request to get notification setting info for course {}", courseId);
@@ -64,15 +70,19 @@ public class UserCourseNotificationSettingResource {
     }
 
     /**
-     * PUT communication/notification/{courseId}/setting-preset: Set a specified setting preset for the current user
+     * PUT /api/notification/courses/{courseId}/setting-preset: Set a specified setting preset for the current user
      *
      * @param courseId the ID of the course
      * @param presetId the ID of the preset
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastStudentInCourse
+    @Operation(operationId = "setUserCourseNotificationPreset", description = "Apply the JSON numeric preset id for the current course member, including custom preset 0")
+    @ApiResponse(responseCode = "200", description = "Preset applied; empty response body", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Missing or unknown preset id", content = @Content(mediaType = "application/problem+json", schema = @Schema(type = "object")))
     @PutMapping("{courseId}/setting-preset")
-    public ResponseEntity<Void> setSettingPreset(@PathVariable Long courseId, @RequestBody Short presetId) {
+    public ResponseEntity<Void> setSettingPreset(@PathVariable Long courseId,
+            @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(type = "integer", format = "int32", minimum = "-32768", maximum = "32767"))) Short presetId) {
         log.debug("REST request to update notification setting preset to {} in course {}", presetId, courseId);
 
         if (presetId == null || !courseNotificationSettingPresetRegistryService.isValidSettingPreset(presetId.intValue())) {
@@ -87,13 +97,15 @@ public class UserCourseNotificationSettingResource {
     }
 
     /**
-     * PUT communication/notification/{courseId}/setting-specification: Set a set of setting specifications for the current user
+     * PUT /api/notification/courses/{courseId}/setting-specification: Set a set of setting specifications for the current user
      *
      * @param courseId                   the ID of the course
      * @param notificationSpecifications the map of notification types and their corresponding setting specifications
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastStudentInCourse
+    @Operation(operationId = "setUserCourseNotificationSpecification", description = "Apply partial channel overrides for the current course member and select custom preset 0")
+    @ApiResponse(responseCode = "200", description = "Specifications applied; empty response body", content = @Content)
     @PutMapping("{courseId}/setting-specification")
     public ResponseEntity<Void> setSettingSpecification(@PathVariable Long courseId, @RequestBody CourseNotificationSettingSpecificationRequestDTO notificationSpecifications) {
         log.debug("REST request to update notification setting specification in course {}", courseId);

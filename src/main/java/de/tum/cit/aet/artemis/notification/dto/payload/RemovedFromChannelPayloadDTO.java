@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -10,5 +12,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param channelId        the channel involved
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record RemovedFromChannelPayloadDTO(String channelModerator, String channelName, Long channelId) implements CourseNotificationPayloadDTO {
+public record RemovedFromChannelPayloadDTO(@Nullable String channelModerator, @Nullable String channelName, @Nullable Long channelId) implements CourseNotificationPayloadDTO {
 }

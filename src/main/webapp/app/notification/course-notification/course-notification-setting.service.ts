@@ -1,14 +1,18 @@
 import { onUserChange } from 'app/core/auth/user-change.util';
 import { OnDestroy, Service, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { CourseNotificationSettingSpecification } from 'app/notification/shared/entities/course-notification/course-notification-setting-specification';
-import { CourseNotificationChannelSetting } from 'app/notification/shared/entities/course-notification/course-notification-channel-setting';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
+import { UserCourseNotificationSettingApi } from 'app/openapi/api/user-course-notification-setting-api';
+import { CourseNotificationSettingInfo as SettingInfoDto } from 'app/openapi/model/course-notification-setting-info';
+import { CourseNotificationSettingSpecificationRequest } from 'app/openapi/model/course-notification-setting-specification-request';
+import { UserCourseNotificationSettingPreset as CourseNotificationSettingPreset } from 'app/openapi/model/user-course-notification-setting-preset';
 import { AccountService } from 'app/core/auth/account.service';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+
+/** UI view: NON_EMPTY may omit an empty wire map; consumers always receive a map without invented channel defaults. */
+export type CourseNotificationSettingInfo = SettingInfoDto & {
+    notificationTypeChannels: NonNullable<SettingInfoDto['notificationTypeChannels']>;
+};
 
 /**
  * Service for managing course notification settings.
@@ -16,10 +20,8 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
  */
 @Service()
 export class CourseNotificationSettingService implements OnDestroy {
-    private http = inject(HttpClient);
+    private api = inject(UserCourseNotificationSettingApi);
     private readonly accountService = inject(AccountService);
-
-    private readonly apiEndpoint = '/api/notification/courses/';
 
     private settingInfoSubjects: Record<number, BehaviorSubject<CourseNotificationSettingInfo | undefined>> = {};
 
@@ -69,23 +71,18 @@ export class CourseNotificationSettingService implements OnDestroy {
         const subject = this.getSettingInfoSubject(courseId);
 
         if (!forceFetch && subject.getValue()) {
-            return subject.asObservable().pipe(map((value) => value as CourseNotificationSettingInfo));
+            return subject.asObservable();
         }
 
         const generation = this.stateGeneration;
-        this.http
-            .get<CourseNotificationSettingInfo>(this.apiEndpoint + courseId + '/settings', { observe: 'response' })
-            .pipe(
-                tap((response) => {
-                    if (this.stateGeneration !== generation) return;
-                    if (response.body) {
-                        subject.next(response.body);
-                    }
-                }),
-            )
-            .subscribe();
+        this.api.getUserCourseNotificationSettings(courseId).subscribe((response) => {
+            if (this.stateGeneration !== generation) return;
+            if (response) {
+                subject.next({ selectedPreset: response.selectedPreset, notificationTypeChannels: response.notificationTypeChannels ?? {} });
+            }
+        });
 
-        return subject.asObservable().pipe(map((value) => value));
+        return subject.asObservable();
     }
 
     /**
@@ -103,13 +100,13 @@ export class CourseNotificationSettingService implements OnDestroy {
         if (currentValue) {
             if (copyPreset) {
                 // A copy: the preset is shared by every course, and the channels of this one are changed on their own afterwards.
-                currentValue.notificationTypeChannels = deepClone(copyPreset.presetMap);
+                currentValue.notificationTypeChannels = deepClone(copyPreset.presetMap ?? {});
             }
             const updatedValue = cloneWith(currentValue, { selectedPreset: presetTypeId });
             subject.next(updatedValue);
         }
 
-        this.http.put(this.apiEndpoint + courseId + '/setting-preset', presetTypeId).subscribe();
+        this.api.setUserCourseNotificationPreset(courseId, presetTypeId).subscribe();
     }
 
     /**
@@ -132,7 +129,7 @@ export class CourseNotificationSettingService implements OnDestroy {
             if (copyPreset) {
                 // Customizing starts from the chosen preset. Without one, the channels in the cache are the ones that apply to the user
                 // and stay as they are, so that changing one channel does not bring back what the effective settings leave out.
-                currentValue.notificationTypeChannels = deepClone(copyPreset.presetMap);
+                currentValue.notificationTypeChannels = deepClone(copyPreset.presetMap ?? {});
             }
             if (currentValue.notificationTypeChannels[notificationSettingSpecification.typeId]) {
                 currentValue.notificationTypeChannels[notificationSettingSpecification.typeId] = notificationSettingSpecification.channelSetting;
@@ -143,28 +140,9 @@ export class CourseNotificationSettingService implements OnDestroy {
             subject.next(updatedValue);
         }
 
-        const notificationSettingSpecifications = [notificationSettingSpecification];
-
-        this.http
-            .put(this.apiEndpoint + courseId + '/setting-specification', {
-                notificationTypeChannels: this.transformNotificationSettingSpecificationToRequestBody(notificationSettingSpecifications),
-            })
-            .subscribe();
-    }
-
-    /**
-     * Transforms an array of notification setting specifications into the format required by the API.
-     *
-     * @param settings - Array of notification setting specifications
-     * @returns Record mapping notification type IDs to channel settings
-     */
-    private transformNotificationSettingSpecificationToRequestBody(settings: CourseNotificationSettingSpecification[]): Record<number, CourseNotificationChannelSetting> {
-        const result: Record<number, CourseNotificationChannelSetting> = {};
-
-        settings.forEach((setting) => {
-            result[setting.typeId] = setting.channelSetting;
-        });
-
-        return result;
+        const input: CourseNotificationSettingSpecificationRequest = {
+            notificationTypeChannels: { [notificationSettingSpecification.typeId]: notificationSettingSpecification.channelSetting },
+        };
+        this.api.setUserCourseNotificationSpecification(courseId, input).subscribe();
     }
 }

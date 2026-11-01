@@ -17,9 +17,9 @@ import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterLink } from '@angular/router';
 import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
-import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
+import { UserCourseNotificationSettingPreset as CourseNotificationSettingPreset } from 'app/openapi/model/user-course-notification-setting-preset';
+import { CourseNotificationInfo } from 'app/openapi/model/course-notification-info';
+import { CourseNotificationSettingInfo } from 'app/openapi/model/course-notification-setting-info';
 import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 
@@ -138,19 +138,15 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
                     from(
                         Promise.all([
                             firstValueFrom(this.courseNotificationService.getInfo()),
-                            firstValueFrom(
-                                this.courseNotificationSettingService
-                                    .getSettingInfo(courseId, false)
-                                    .pipe(filter((value): value is CourseNotificationSettingInfo => value !== undefined)),
-                            ),
+                            firstValueFrom(this.courseNotificationSettingService.getSettingInfo(courseId, false).pipe(filter((value) => value !== undefined))),
                         ]).then(([info, settingInfo]) => ({ info, settingInfo })),
                     ),
                 ),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe(({ info, settingInfo }) => {
-                if (info.body) {
-                    this.info = info.body;
+                if (info) {
+                    this.info = info;
                 }
                 this.settingInfo = settingInfo;
                 if (this.info && this.settingInfo) {
@@ -333,7 +329,7 @@ export class CourseNotificationOverviewComponent implements AfterViewInit {
      * Sets up the selectable presets and the currently selected preset.
      */
     private initializeCourseNotificationValues() {
-        this.selectableSettingPresets.set(this.info!.presets);
+        this.selectableSettingPresets.set(this.info!.presets ?? []);
 
         this.selectedSettingPreset.set(
             this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!,

@@ -1,58 +1,51 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { HttpResponse } from '@angular/common/http';
+import { Observable, defer, map } from 'rxjs';
 import { SystemNotification } from 'app/admin/system-notification-management/system-notification.model';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
+import { AdminSystemNotificationApi } from 'app/openapi/api/admin-system-notification-api';
+import { SystemNotificationUpdate } from 'app/openapi/model/system-notification-update';
 
-type EntityResponseType = HttpResponse<SystemNotification>;
-
+/** Adapts the editor's Dayjs model to the generated write contract. */
 @Service()
 export class AdminSystemNotificationService {
-    private http = inject(HttpClient);
+    private api = inject(AdminSystemNotificationApi);
     private systemNotificationService = inject(SystemNotificationService);
 
-    public resourceUrl = 'api/notification/admin/system-notifications';
-
-    /**
-     * Create a notification on the server using a POST request.
-     * @param notification The notification to create.
-     * @param sendMaintenanceEmail Whether to send maintenance email to instructors of ongoing courses.
-     */
-    create(notification: SystemNotification, sendMaintenanceEmail = false): Observable<EntityResponseType> {
-        const copy = this.systemNotificationService.convertSystemNotificationDatesFromClient(notification);
-        let params = new HttpParams();
-        if (sendMaintenanceEmail) {
-            params = params.set('sendMaintenanceEmail', 'true');
-        }
-        return this.http
-            .post<SystemNotification>(this.resourceUrl, copy, { observe: 'response', params })
-            .pipe(map((res: EntityResponseType) => this.systemNotificationService.convertSystemNotificationResponseDatesFromServer(res)));
+    create(notification: SystemNotification, sendMaintenanceEmail = false): Observable<HttpResponse<SystemNotification>> {
+        return defer(() => this.api.createSystemNotification(this.toUpdate(notification), sendMaintenanceEmail ? true : undefined)).pipe(
+            map((response) => this.systemNotificationService.fromServerResponse(response)),
+        );
     }
 
-    /**
-     * Get the count of instructors who would receive a maintenance email.
-     */
     getMaintenanceRecipientsCount(): Observable<number> {
-        return this.http.get<number>(`${this.resourceUrl}/maintenance-recipients-count`);
+        return this.api.getMaintenanceRecipientsCount();
     }
 
-    /**
-     * Update a notification on the server using a PUT request.
-     * @param notification The notification to update.
-     */
-    update(notification: SystemNotification): Observable<EntityResponseType> {
-        const copy = this.systemNotificationService.convertSystemNotificationDatesFromClient(notification);
-        return this.http
-            .put<SystemNotification>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.systemNotificationService.convertSystemNotificationResponseDatesFromServer(res)));
+    update(notification: SystemNotification): Observable<HttpResponse<SystemNotification>> {
+        return defer(() => this.api.updateSystemNotification(this.toUpdate(notification))).pipe(map((response) => this.systemNotificationService.fromServerResponse(response)));
     }
 
-    /**
-     * Delete a notification on the server using a DELETE request.
-     * @param systemNotificationId The id of the notification to delete.
-     */
     delete(systemNotificationId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${systemNotificationId}`, { observe: 'response' });
+        return this.api.deleteSystemNotification(systemNotificationId);
+    }
+
+    private toUpdate(notification: SystemNotification): SystemNotificationUpdate {
+        const notificationDate = convertDateFromClient(notification.notificationDate);
+        const expireDate = convertDateFromClient(notification.expireDate);
+        // The editor requires both dates. Do not invent dates or hide an invalid model behind a cast.
+        // defer delivers this failure through the normal save error callback, resetting the saving state.
+        if (!notificationDate || !expireDate) {
+            throw new Error('System notification requires both notification and expiration dates');
+        }
+        return {
+            id: notification.id,
+            title: notification.title,
+            text: notification.text,
+            type: notification.type,
+            notificationDate,
+            expireDate,
+        };
     }
 }

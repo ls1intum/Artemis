@@ -1,17 +1,16 @@
 import dayjs from 'dayjs/esm';
-import { User } from 'app/account/user/user.model';
+import { SystemNotificationTypeEnum } from 'app/openapi/model/system-notification';
 
-export const enum SystemNotificationType {
-    WARNING = 'WARNING',
-    INFO = 'INFO',
-}
+export const SystemNotificationType = {
+    WARNING: SystemNotificationTypeEnum.Warning,
+    INFO: SystemNotificationTypeEnum.Info,
+};
 
 export class SystemNotification {
     public id?: number;
     public title?: string;
     public text?: string;
     public notificationDate?: dayjs.Dayjs;
-    public author?: User;
     public expireDate?: dayjs.Dayjs;
-    public type?: SystemNotificationType;
+    public type?: SystemNotificationTypeEnum;
 }

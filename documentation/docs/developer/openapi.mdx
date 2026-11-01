@@ -9,12 +9,16 @@ import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 
 We migrate the Artemis server to an API-driven development approach using OpenAPI specifications. This especially helps us with client generation to avoid subtle bugs that are often unnoticed in code reviews.
 
-Currently, the OpenAPI specs are generated for the `globalsearch`, `tutorialgroup`, `hyperion`, `calendar`, and `quiz` modules. We only support API-driven development for endpoints that are DTO-only and do not return domain objects.
+Currently, the OpenAPI specs are generated for the `globalsearch`, `tutorialgroup`, `hyperion`, `calendar`, `quiz`, and `notification` modules. We only support API-driven development for endpoints that are DTO-only and do not return domain objects.
 
 <Callout variant={CalloutVariant.info}>
     If you want to make use of the OpenAPI specs, you need to ensure that the endpoint you are working on is a DTO-only endpoint. This means that the endpoint should not return or
     expect any domain objects, but only Data Transfer Objects (DTOs) or primitives.
 </Callout>
+
+Declare required DTO properties explicitly with `@Schema(requiredMode = Schema.RequiredMode.REQUIRED)`, preserve optional and nullable fields, and document response headers such as pagination totals so generated callers can access them.
+
+System notification management uses `AdminSystemNotificationApi` and requires administrator access. Active and future notification banners remain available before authentication through `PublicSystemNotificationApi`.
 
 ## Generating OpenAPI Specs and Client Files
 

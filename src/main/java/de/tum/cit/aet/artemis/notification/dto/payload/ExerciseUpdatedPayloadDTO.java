@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -13,6 +15,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param notificationText the message the editor wrote about the update, absent when they wrote none
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseUpdatedPayloadDTO(Long exerciseId, String exerciseTitle, Long examId, Long exerciseGroupId, String exerciseType, String notificationText)
-        implements CourseNotificationPayloadDTO {
+public record ExerciseUpdatedPayloadDTO(@Nullable Long exerciseId, @Nullable String exerciseTitle, @Nullable Long examId, @Nullable Long exerciseGroupId,
+        @Nullable String exerciseType, @Nullable String notificationText) implements CourseNotificationPayloadDTO {
 }

@@ -1,8 +1,6 @@
-import { HttpResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { SystemNotification } from 'app/admin/system-notification-management/system-notification.model';
-import { filter, map } from 'rxjs/operators';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 
 @Service()
@@ -15,10 +13,7 @@ export class SystemNotificationManagementResolve implements Resolve<SystemNotifi
      */
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['id']) {
-            return this.service.find(parseInt(route.params['id'], 10)).pipe(
-                filter((response: HttpResponse<SystemNotification>) => response.ok),
-                map((response: HttpResponse<SystemNotification>) => response.body!),
-            );
+            return this.service.find(parseInt(route.params['id'], 10));
         }
         return new SystemNotification();
     }

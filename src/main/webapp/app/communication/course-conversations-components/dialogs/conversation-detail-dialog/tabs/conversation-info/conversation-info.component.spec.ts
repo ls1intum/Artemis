@@ -13,12 +13,12 @@ import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/g
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ConversationInfoComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
-import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
+import { CourseNotificationSettingInfo, CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
@@ -205,8 +205,24 @@ examples.forEach((activeConversation) => {
             expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, activeConversation.id, false);
         });
 
+        it('keeps notification settings undefined until loaded and treats preset 3 as disabled without changing mute state', () => {
+            const settings = new BehaviorSubject<CourseNotificationSettingInfo | undefined>(undefined);
+            vi.spyOn(TestBed.inject(CourseNotificationSettingService), 'getSettingInfo').mockReturnValue(settings);
+            component.notificationSettings = undefined;
+            component.isNotificationsEnabled.set(false);
+            component['loadNotificationSettings']();
+            expect(component.notificationSettings).toBeUndefined();
+            expect(component.isNotificationsEnabled()).toBe(false);
+            settings.next({ selectedPreset: 3, notificationTypeChannels: {} });
+            expect(component.isNotificationsEnabled()).toBe(false);
+            settings.next({ selectedPreset: 0, notificationTypeChannels: { '1': { EMAIL: false, PUSH: false, WEBAPP: false } } });
+            expect(component.notificationSettings).toEqual(expect.objectContaining({ selectedPreset: 0 }));
+            expect(component.isNotificationsEnabled()).toBe(true);
+            expect(updateIsMutedSpy).not.toHaveBeenCalled();
+        });
+
         it('should show correct notification message and link for ignored preset', () => {
-            component['notificationSettings'] = { selectedPreset: 3, notificationTypeChannels: {} } as any;
+            component['notificationSettings'] = { selectedPreset: 3, notificationTypeChannels: {} };
             component['checkNotificationStatus']();
             fixture.changeDetectorRef.detectChanges();
             const link = fixture.nativeElement.querySelector('#notification-section a');
@@ -228,7 +244,7 @@ examples.forEach((activeConversation) => {
                     conversationMessage: { WEBAPP: true, EMAIL: false, PUSH: false },
                     conversationMention: { WEBAPP: false, EMAIL: false, PUSH: false },
                 },
-            } as any;
+            };
             activeConversation.isMuted = false;
             component['checkNotificationStatus']();
             fixture.changeDetectorRef.detectChanges();
