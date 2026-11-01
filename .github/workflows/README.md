@@ -370,13 +370,18 @@ These workflows are intentionally NOT folded into the umbrella:
 
 ## E2E image identity and readiness
 
-Closed-PR image cleanup (`pullrequest-closed.yml`) authenticates with the job's short-lived
-`GITHUB_TOKEN` and grants `packages: write` only to that job. It does not use the project-board
-PAT. GitHub also requires the publishing repository to have **Admin** access under the package's
-**Manage Actions access** settings. If that access is removed, restore it for `ls1intum/Artemis`
-on the `artemis` package rather than adding another personal token. See
-[GitHub's package deletion permissions](https://docs.github.com/en/packages/learn-github-packages/deleting-and-restoring-a-package#packages-api-support).
-The cleanup workflow checks out no PR code and retains its single `pr-<number>` tag selector.
+PR images are deliberately retained after a PR closes. Immediate deletion is housekeeping,
+and GitHub currently provides container-image storage and bandwidth free of charge
+([billing policy](https://docs.github.com/en/billing/concepts/product-billing/github-packages)).
+The same image version carries both `pr-<number>` and `sha-<commit>` tags; deleting the version
+can break CI still pulling it after a merge and remove images needed for later reproduction or
+redeployment.
+Registry deletion also does not reclaim Docker disk space on self-hosted runners.
+
+There is no PR-close image-cleanup workflow. Automatic deletion would require package **Admin**
+access, expanding the capabilities of repository jobs with package-write tokens across the shared
+PR/release package. Keep the current package permissions. If registry growth becomes a practical
+problem, design a separate retention policy that protects release images and images still in use.
 
 Both build paths upload a `docker-tag` artifact containing `sha-<commit_sha>` for the exact
 revision checked out by the build. E2E setup rejects an artifact for any other revision;
