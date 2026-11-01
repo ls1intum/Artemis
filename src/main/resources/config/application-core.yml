@@ -13,6 +13,8 @@ artemis:
         enabled: false
     iris:
         enabled: false
+    metis:
+        enabled: false
     exam:
         enabled: true
     plagiarism:
