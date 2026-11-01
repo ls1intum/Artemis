@@ -40,7 +40,7 @@ async function verifyFork({ pull, fetchImpl = fetch }) {
         entry.status?.qualityGateStatus !== 'OK'
     ) {
         throw new Error(
-            'No passing Sonar quality gate exists for this exact PR head and target. A maintainer must review and promote this commit to sonar/pr-' +
+            'No passing Sonar quality gate exists for this exact PR head and target. A maintainer must review and promote this commit to chore/sonar/pr-' +
                 pull.number +
                 ', dispatch Sonar with pull_request_number=' +
                 pull.number +
@@ -48,8 +48,9 @@ async function verifyFork({ pull, fetchImpl = fetch }) {
         );
     }
 }
-async function prepareAnalysis({ github, context, core, requestedSha, pullRequest = 0, defaultBranch = false, fetchImpl }) {
+async function prepareAnalysis({ github, context, core, requestedSha, pullRequest = 0, defaultBranch = false, allowScan = true, fetchImpl }) {
     const manual = context.eventName === 'workflow_dispatch';
+    if (context.eventName !== 'pull_request' && !allowScan) throw new Error('A Sonar token is required to perform this analysis');
     const pullNumber = context.eventName === 'pull_request' ? number(context.payload.pull_request.number) : manual ? number(pullRequest) : 0;
     if (context.eventName === 'pull_request' && pullNumber === 0) throw new Error('A positive pull request number is required');
     if (pullNumber && defaultBranch) throw new Error('PR analysis and default-branch recovery cannot be combined');
@@ -61,16 +62,16 @@ async function prepareAnalysis({ github, context, core, requestedSha, pullReques
         pull = await openPull(github, context, pullNumber, manual ? undefined : checkedSha(requestedSha || context.payload.pull_request.head.sha));
         if (manual) {
             // Promotion is a maintainer trust decision. Never automatically check out a fork head with secrets.
-            const ref = await github.rest.git.getRef({ ...context.repo, ref: 'heads/sonar/pr-' + pullNumber });
+            const ref = await github.rest.git.getRef({ ...context.repo, ref: 'heads/chore/sonar/pr-' + pullNumber });
             if (ref.data.object.sha !== pull.head.sha) throw new Error('The internal Sonar promotion branch must point to the current exact PR head');
             sha = ref.data.object.sha;
             core.notice('Scanning maintainer-promoted commit ' + sha + ' under original PR ' + pullNumber);
         } else {
             sha = pull.head.sha;
-            if (pull.head.repo?.full_name !== context.repo.owner + '/' + context.repo.repo) {
+            if (pull.head.repo?.full_name !== context.repo.owner + '/' + context.repo.repo || !allowScan) {
                 await verifyFork({ pull, fetchImpl });
                 scan = false;
-                core.notice('Verified the passing Sonar gate for the exact fork PR source and target without executing fork code or exposing a token.');
+                core.notice('Verified the passing Sonar gate for this exact PR source and target without executing source code or exposing a token.');
             }
         }
         branch = pull.head.ref;

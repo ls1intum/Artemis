@@ -194,6 +194,8 @@ jobs:
               - '.gitattributes'
               - 'angular.json'
               - 'tsconfig*.json'
+              - 'vitest.config.ts'
+              - 'config/testing/**'
               - 'config/client/**'
               - 'packages/tum-aet-ui/package.json'
               - 'packages/tum-aet-ui/tsconfig*.json'
@@ -895,7 +897,9 @@ jobs:
 
   # Prose changes need terminology checks regardless of which area changed.
   terminology:
-    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
+    if: >-
+      (github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')) &&
+      (github.event.action != 'edited' || github.event.changes.base != null)
     name: Terminology
     uses: ./.github/workflows/ci-terminology.yml
     permissions:
@@ -905,7 +909,9 @@ jobs:
 
   # Deleting the last caller can orphan code in any area of the repository.
   dead-code:
-    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
+    if: >-
+      (github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')) &&
+      (github.event.action != 'edited' || github.event.changes.base != null)
     name: Dead Code
     uses: ./.github/workflows/ci-dead-code.yml
     permissions:

@@ -113,8 +113,8 @@ Coverage** (selected execution data). Sonar generates Java XML on a GitHub-hoste
 partial reports never feed full-project badges or Codacy; no test suite is rerun for analysis.
 Missing or failed producer data cannot be imported as successful coverage.
 
-Fork PRs use a secretless exact-head/source-branch/target/public-gate verifier. A maintainer must
-review the exact commit, promote it to internal `sonar/pr-<number>`, dispatch the trusted default
+Fork and token-restricted PRs (including Dependabot) use a secretless exact-head/source-branch/target/public-gate verifier. A maintainer must
+review the exact commit, promote it to internal `chore/sonar/pr-<number>`, dispatch the trusted default
 branch's **Sonar** workflow with `pull_request_number=<number>`, then rerun only the original Sonar
 verification job. Never automatically execute fork build scripts with the token. See the workflow
 policy for the promotion procedure. Head or target changes invalidate evidence. Metadata-only

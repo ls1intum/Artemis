@@ -537,16 +537,16 @@ they are never used for full-project badges or Codacy coverage, and unexecuted c
 as uncovered. The configured Sonar coverage conditions still apply. There are no old-revision
 substitutions, PR coverage exclusions or forced complete suites solely for Sonar.
 
-### Fork PRs
+### Fork and token-restricted PRs
 
-Automatic fork events receive no Sonar token and execute no fork source in the analysis job.
+Automatic fork events, and token-restricted internal PRs such as Dependabot updates, execute no\nsource in the analysis job and do not receive the Sonar token.
 A required secretless verifier accepts only a passing public Sonar record matching the original
 PR number, exact head SHA, source branch and Sonar **target** branch. Missing/stale evidence,
 failed gates, malformed responses and API errors block merging.
 
 After reviewing and accepting that exact commit as trusted, a maintainer can keep the original PR:
 
-1. Push the reviewed exact head to internal `sonar/pr-<number>`. Update this promotion ref explicitly
+1. Push the reviewed exact head to internal `chore/sonar/pr-<number>`. Update this promotion ref explicitly
    if the PR head changes.
 2. Dispatch **Sonar** from the trusted default branch with `pull_request_number=<number>`, leaving
    `analyze_default_branch=false`. The workflow validates the promotion ref against the current open

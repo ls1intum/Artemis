@@ -29,7 +29,7 @@ on:
         type: boolean
         default: false
       pull_request_number:
-        description: 'Scan reviewed code promoted to internal sonar/pr-<number>; 0 analyzes this ref.'
+        description: 'Scan reviewed code promoted to internal chore/sonar/pr-<number>; 0 analyzes this ref.'
         type: number
         default: 0
 
@@ -60,7 +60,7 @@ jobs:
       - name: Check out trusted analysis tools
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository && github.event.pull_request.base.sha || github.workflow_sha }}
+          ref: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || secrets.SONAR_TOKEN == '') && github.event.pull_request.base.sha || github.workflow_sha }}
           path: .sonar-tools
           persist-credentials: false
       - name: Resolve source identity or verify exact fork analysis
@@ -70,12 +70,14 @@ jobs:
           REQUESTED_SHA: ${{ inputs.commit_sha || github.sha }}
           PULL_REQUEST: ${{ inputs.pull_request_number || 0 }}
           DEFAULT_BRANCH: ${{ inputs.analyze_default_branch || false }}
+          HAS_SONAR_TOKEN: ${{ secrets.SONAR_TOKEN != '' }}
         with:
           script: |
             await require('./.sonar-tools/.github/scripts/sonar-pr.js').prepareAnalysis({
               github, context, core, requestedSha: process.env.REQUESTED_SHA,
               pullRequest: process.env.PULL_REQUEST,
               defaultBranch: process.env.DEFAULT_BRANCH === 'true',
+              allowScan: process.env.HAS_SONAR_TOKEN === 'true',
             });
       - name: Check out analyzed source
         if: steps.analysis.outputs.scan == 'true'

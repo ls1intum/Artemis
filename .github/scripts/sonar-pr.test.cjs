@@ -62,9 +62,9 @@ function analysisFixture({ eventName = 'pull_request', fork = false } = {}) {
                 getRef: async (options) => {
                     calls.push(['promotion', options]);
                     assert.equal(eventName, 'workflow_dispatch', 'PR events must never resolve or execute a promotion branch');
-                    assert.deepEqual(options, { ...repo, ref: 'heads/sonar/pr-13999' });
+                    assert.deepEqual(options, { ...repo, ref: 'heads/chore/sonar/pr-13999' });
                     if (state.promotionError) throw state.promotionError;
-                    return { data: { ref: 'refs/heads/sonar/pr-13999', object: { type: 'commit', sha: state.promotionSha } } };
+                    return { data: { ref: 'refs/heads/chore/sonar/pr-13999', object: { type: 'commit', sha: state.promotionSha } } };
                 },
             },
             repos: {
@@ -838,3 +838,36 @@ test('Sonar metadata: fork coverage reporting skips metadata runs before acquiri
     assert.equal(reporter.slice(0, reporter.indexOf('\njobs:')).includes('\nconcurrency:'), false);
     assert.match(reportingJob, /^    concurrency:\n/m);
 });
+
+test('Sonar policy: token-restricted internal PRs use the same secretless exact-source verifier', async () => {
+    const f = analysisFixture();
+    const result = await f.prepare({ allowScan: false, fetchImpl: sonarFetch() });
+    assert.equal(result.scan, false);
+    assert.equal(f.outputs.scan, 'false');
+});
+test('Sonar policy: token-restricted internal PRs cannot pass without exact analysis evidence', async () => {
+    const f = analysisFixture();
+    await assert.rejects(f.prepare({ allowScan: false, fetchImpl: sonarFetch({ pullRequests: [] }) }), /maintainer/);
+    assert.deepEqual(f.outputs, {});
+});
+test('Sonar policy: a manual scan fails before checkout or lookup if its token is unavailable', async () => {
+    const f = analysisFixture({ eventName: 'workflow_dispatch' });
+    await assert.rejects(f.prepare({ allowScan: false }), /Sonar token is required/);
+    assert.deepEqual(f.calls, []);
+});
+for (const name of ['terminology', 'dead-code']) {
+    test('Sonar metadata: independent ' + name + ' checks skip body edits but still run on retargeting', () => {
+        const body = job(name);
+        const condition = (body.match(/    if: >-\n((?:      [^\n]*\n)+)/) ?? body.match(/    if: (.+)\n/))[1];
+        assert.equal(evaluatePolicy(condition, editEvent()), false);
+        assert.equal(evaluatePolicy(condition, editEvent({ retarget: true })), true);
+    });
+}
+for (const file of ['vitest.config.ts', 'config/testing/vitest.monaco.config.ts']) {
+    test('Sonar scope: declared configuration inputs include coverage producer ' + file, () => {
+        const block = workflow.match(/            has_sonar_config:\n((?:              - [^\n]*\n)+)/)[1];
+        const patterns = [...block.matchAll(/- '([^']+)'/g)].map((match) => match[1]);
+        const matchedFiles = new Set(fs.globSync(patterns, { cwd: path.join(__dirname, '../..') }));
+        assert.ok(matchedFiles.has(file), 'A coverage configuration change must trigger the required analysis');
+    });
+}
