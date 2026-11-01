@@ -196,10 +196,11 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           SOURCE_SHA: ${{ steps.source.outputs.sha }}
+          TARGET_BRANCH: ${{ steps.analysis.outputs.base }}
         with:
           script: |
             core.setOutput('run_id', await require('./.sonar-tools/.github/scripts/sonar-pr.js').findPrCoverage({
-              github, context, sha: process.env.SOURCE_SHA,
+              github, context, sha: process.env.SOURCE_SHA, base: process.env.TARGET_BRANCH,
             }));
       - name: Discover scope-labelled coverage artifacts
         if: steps.analysis.outputs.scan == 'true'

@@ -409,6 +409,7 @@ function coverageFixture() {
             { name: 'Test / Client Tests', conclusion: 'success' },
             { name: 'Quality / Server Code Style', conclusion: 'failure' },
         ],
+        targetJob: { name: 'Detect Changed Areas', conclusion: 'success', steps: [{ name: 'Sonar coverage target: develop', conclusion: 'success' }] },
         artifacts: [{ id: 91, name: 'Sonar Client Coverage', expired: false, size_in_bytes: 2048 }],
     };
     const calls = [];
@@ -433,7 +434,7 @@ function coverageFixture() {
                 calls.push(['jobs', options]);
                 assert.equal(options.filter, 'latest');
                 if (state.jobsError) throw state.jobsError;
-                return structuredClone(state.jobsByRun?.[options.run_id] ?? state.jobs);
+                return structuredClone([...(state.jobsByRun?.[options.run_id] ?? state.jobs), ...(state.targetJob ? [state.targetJob] : [])]);
             }
             assert.equal(route, actions.listWorkflowRunArtifacts);
             calls.push(['artifacts', options]);
@@ -441,8 +442,64 @@ function coverageFixture() {
             return structuredClone(state.artifacts);
         },
     };
-    return { state, calls, find: (sha = sourceSha) => findPrCoverage({ github, context: { repo }, sha }) };
+    return { state, calls, find: (sha = sourceSha, base = 'develop') => findPrCoverage({ github, context: { repo }, sha, base }) };
 }
+
+for (const [name, change] of [
+    [
+        'missing target evidence',
+        (f) => {
+            f.state.targetJob = undefined;
+        },
+    ],
+    [
+        'another target',
+        (f) => {
+            f.state.targetJob.steps[0].name = 'Sonar coverage target: main';
+        },
+    ],
+    [
+        'failed target job',
+        (f) => {
+            f.state.targetJob.conclusion = 'failure';
+        },
+    ],
+    [
+        'skipped target marker',
+        (f) => {
+            f.state.targetJob.steps[0].conclusion = 'skipped';
+        },
+    ],
+    [
+        'missing target steps',
+        (f) => {
+            delete f.state.targetJob.steps;
+        },
+    ],
+]) {
+    test(`Sonar promoted coverage: rejects ${name} even for the exact head`, async () => {
+        const f = coverageFixture();
+        change(f);
+        await assert.rejects(f.find(), /exact-source/);
+        assert.equal(
+            f.calls.some(([name]) => name === 'artifacts'),
+            false,
+        );
+    });
+}
+
+test('Sonar promoted coverage: retargeting requires successful coverage for the new target', async () => {
+    const f = coverageFixture();
+    await assert.rejects(f.find(sourceSha, 'release/10.6'), /exact-source/);
+    f.state.targetJob.steps[0].name = 'Sonar coverage target: release/10.6';
+    assert.equal(await f.find(sourceSha, 'release/10.6'), '52');
+});
+
+test('Sonar promoted coverage: missing expected target fails before any API request', async () => {
+    const f = coverageFixture();
+    await assert.rejects(f.find(sourceSha, ''), /target branch/);
+    assert.deepEqual(f.calls, []);
+});
 
 test('Sonar coverage: imports successful exact-source affected client coverage despite unrelated CI failure', async () => {
     const f = coverageFixture();

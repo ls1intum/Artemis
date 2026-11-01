@@ -569,7 +569,9 @@ A standalone **Sonar** dispatch normally analyzes its selected ref. Scanner reco
 `analyze_default_branch=true` to analyze the real default-branch source with the selected workflow
 revision. Recovery and a PR number cannot be combined. Branch recovery imports only verified
 complete exact-source coverage. Promoted PR scans can import complete or explicitly selected
-exact-source coverage with successful producers.
+exact-source coverage with successful producers. Promoted PR recovery additionally requires the
+successful CI run's recorded target branch to match the current PR target. Retargeted PRs and older
+runs without that metadata need a fresh successful CI test run before recovery can reuse coverage.
 
 The scanner has its own heap (`SONAR_SCANNER_JAVA_OPTS=-Xmx6g`). A failed upload leaves old analysis
 and badges unchanged. Verify the processed revision and server gate as well as the job conclusion.

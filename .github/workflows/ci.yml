@@ -87,6 +87,12 @@ jobs:
         with:
           script: await require('./.github/scripts/pr-ready.js')({ github, context, core })
 
+      # Immutable run metadata for promoted Sonar coverage lookup. A same-head run from before
+      # retargeting may have selected different tests, so its coverage cannot prove the new target.
+      - name: 'Sonar coverage target: ${{ github.event.pull_request.base.ref }}'
+        if: github.event_name == 'pull_request' && steps.ready.outputs.current == 'true'
+        run: echo 'Recorded the test-selection target in this run step name.'
+
       # dorny/paths-filter handles the edge cases hand-rolled `git diff` does not:
       # initial commits, force-pushes, missing merge-base, and `merge_group` events.
       # Two passes, because `predicate-quantifier` is per-step. The `relevant` pass uses

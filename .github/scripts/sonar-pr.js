@@ -91,12 +91,16 @@ async function prepareAnalysis({ github, context, core, requestedSha, pullReques
         core.setOutput(key, value);
     return { sha, scan, pullNumber, branch, base: pull?.base.ref || '' };
 }
-async function findPrCoverage({ github, context, sha }) {
+async function findPrCoverage({ github, context, sha, base }) {
+    if (typeof base !== 'string' || !base.trim()) throw new Error('A pull request target branch is required to select Sonar coverage');
     const options = { ...context.repo, per_page: 100 };
     const runs = await github.paginate(github.rest.actions.listWorkflowRuns, { ...options, workflow_id: 'ci.yml', head_sha: checkedSha(sha) });
     for (const run of runs) {
         if (run.head_sha !== sha) continue;
         const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, { ...options, run_id: run.id, filter: 'latest' });
+        const targetJobs = jobs.filter((job) => job.name === 'Detect Changed Areas');
+        if (targetJobs.length !== 1 || targetJobs[0].conclusion !== 'success' || !Array.isArray(targetJobs[0].steps)) continue;
+        if (!targetJobs[0].steps.some((step) => step.name === 'Sonar coverage target: ' + base && step.conclusion === 'success')) continue;
         const tests = jobs.filter((job) => job.name.startsWith('Test / '));
         if (!tests.length || !tests.every((job) => ['success', 'skipped'].includes(job.conclusion))) continue;
         const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, { ...options, run_id: run.id });
@@ -104,7 +108,7 @@ async function findPrCoverage({ github, context, sha }) {
             return String(run.id);
         }
     }
-    throw new Error('No successful exact-source test run with coverage artifacts exists for this promoted PR');
+    throw new Error('No successful exact-source test run with coverage artifacts and verified current target exists for this promoted PR');
 }
 function coverageArtifacts(jobs, artifacts) {
     const tests = jobs.filter((job) => job.name.startsWith('Test / '));
