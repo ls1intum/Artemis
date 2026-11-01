@@ -1,6 +1,6 @@
-<div class="d-flex flex-wrap align-items-center gap-1 flex-shrink-0">
+<div class="flex flex-wrap items-center gap-1 shrink-0">
     @if (plagiarismCaseInfo() && plagiarismCaseInfo()!.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
-        <a class="btn btn-danger btn-sm" [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()!.id]">
+        <a size="small" severity="danger" tumAetUiButton [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()!.id]">
             @if (!plagiarismCaseInfo()?.createdByContinuousPlagiarismControl) {
                 <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></span>
             } @else {
@@ -9,23 +9,24 @@
         </a>
     }
     @if (exercise().isAtLeastTutor) {
-        <div ngbDropdown class="d-inline">
-            <button type="button" id="instructor-actions-dropdown" class="btn btn-secondary" ngbDropdownToggle>
+        <div class="inline">
+            <button severity="secondary" tumAetUiButton type="button" id="instructor-actions-dropdown" [tumAetUiMenuTrigger]="instructorActions">
                 <fa-icon [icon]="faWrench" />
-                <span class="d-none d-md-inline">
+                <span class="hidden md:inline">
                     {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise().isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate }}</span
                 >
             </button>
-            <div ngbDropdownMenu aria-labelledby="instructor-actions-dropdown">
-                @for (instructorActionItem of instructorActionItems(); track instructorActionItem) {
-                    <a class="btn" [routerLink]="instructorActionItem.routerLink" ngbDropdownItem>
-                        @if (instructorActionItem.icon) {
-                            <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-3" />
-                        }
-                        <span [jhiTranslate]="instructorActionItem.translation"></span>
-                    </a>
-                }
-            </div>
+            <ng-template #instructorActions
+                ><tumaet-ui-menu>
+                    @for (instructorActionItem of instructorActionItems(); track instructorActionItem) {
+                        <a [routerLink]="instructorActionItem.routerLink" tumAetUiMenuItem>
+                            @if (instructorActionItem.icon) {
+                                <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-3" />
+                            }
+                            <span [jhiTranslate]="instructorActionItem.translation"></span>
+                        </a>
+                    }</tumaet-ui-menu
+            ></ng-template>
         </div>
     }
     @if (onSubmitExercise()) {
@@ -73,7 +74,7 @@
     @switch (exercise().type) {
         <!-- QUIZ EXERCISE ACTIONS START -->
         @case (ExerciseType.QUIZ) {
-            <div class="btn-group">
+            <div class="inline-flex flex-wrap items-center">
                 @if (showQuizStartPracticeButton()) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
@@ -93,7 +94,7 @@
         <!-- QUIZ EXERCISE ACTIONS END -->
         <!-- PROGRAMMING EXERCISE ACTIONS START -->
         @case (ExerciseType.PROGRAMMING) {
-            <div class="d-flex flex-wrap gap-1" jhi-programming-exercise-participation-actions [actions]="this">
+            <div class="flex flex-wrap gap-1" jhi-programming-exercise-participation-actions [actions]="this">
                 @if (exercise().type === ExerciseType.PROGRAMMING && showFeedbackPopover() && activeParticipationForCode() && programmingExercise()?.allowOnlineEditor === false) {
                     <jhi-request-feedback-button
                         [exercise]="exercise()"
@@ -123,7 +124,7 @@
         <!-- PROGRAMMING EXERCISE ACTIONS END -->
         <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS START -->
         @default {
-            <div class="btn-group gap-1">
+            <div class="inline-flex flex-wrap items-center gap-1">
                 @if (isTeamAvailable()) {
                     <button
                         type="button"
@@ -139,7 +140,7 @@
                 @if (!gradedParticipation() && isStartExerciseAvailable()) {
                     <span
                         [tabindex]="isBeforeStartDateAndStudent ? 0 : -1"
-                        [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
+                        [tumAetUiTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''"
                     >
                         <button
                             type="button"
@@ -199,7 +200,7 @@
                 <p
                     class="m-0! text-muted-color"
                     [jhiTranslate]="'artemisApp.exercise.aiFeedbackPopover.selectedAiType'"
-                    [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | translate) }"
+                    [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | artemisTranslate) }"
                 ></p>
                 <jhi-request-feedback-button
                     [exercise]="exercise()"

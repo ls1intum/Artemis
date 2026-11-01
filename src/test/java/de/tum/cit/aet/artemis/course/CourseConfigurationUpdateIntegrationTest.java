@@ -84,12 +84,12 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCoursePersistsPresentationAssessmentsEnabled(boolean enabled) throws Exception {
         var configuration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
         configuration.setPresentationAssessmentsEnabled(!enabled);
         courseConfigurationRepository.save(configuration);
-        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
         ObjectNode update = request.getObjectMapper().valueToTree(loaded);
         update.put("presentationAssessmentsEnabled", enabled);
 
@@ -100,12 +100,12 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCoursePreservesOmittedPresentationAssessmentsEnabled(boolean enabled) throws Exception {
         var configuration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
         configuration.setPresentationAssessmentsEnabled(enabled);
         courseConfigurationRepository.save(configuration);
-        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
         ObjectNode update = request.getObjectMapper().valueToTree(loaded);
         update.remove("presentationAssessmentsEnabled");
         update.put("description", "Unrelated change preserving presentation settings");
@@ -116,9 +116,9 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getCourse_asInstructor_shouldExposePersistedDataPrivacySettings() throws Exception {
-        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
         CourseConfigurationResponseDTO configuration = loaded.courseConfiguration();
 
         // The settings form reads course.courseConfiguration to initialize its controls, so an absent configuration
@@ -129,12 +129,12 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_unrelatedChange_shouldPreserveDataPrivacySettingsAndRetentionBookkeeping() throws Exception {
         long configurationId = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow().getId();
 
         // Reopen the course the way the settings form does, then save an unrelated field.
-        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
         CourseConfigurationResponseDTO configuration = loaded.courseConfiguration();
         assertThat(configuration).isNotNull();
         ObjectNode update = request.getObjectMapper().valueToTree(loaded);
@@ -159,10 +159,10 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_missingConfigurationRow_shouldRepairItInsteadOfFailing() throws Exception {
         // The form is opened while the course is complete, then the row goes missing like after a creation that failed half-way.
-        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
         assertThat(loaded.courseConfiguration()).isNotNull();
         ObjectNode update = request.getObjectMapper().valueToTree(loaded);
         update.put("description", "Edited after the repair");
@@ -197,4 +197,38 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         update.put("debounceWindowSecondsOverride", configuration.debounceWindowSecondsOverride());
         update.put("maxDailyOrchestrationOverride", configuration.maxDailyOrchestrationOverride());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void changingCourseShortNameIsRejectedWithoutPersistingOtherEdits() throws Exception {
+        String originalTitle = course.getTitle();
+        String originalShortName = course.getShortName();
+        var loaded = request.get("/api/course/courses/" + course.getId() + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.put("shortName", originalShortName + "changed");
+        update.put("title", "Must not be saved");
+        var part = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, request.getObjectMapper().writeValueAsBytes(update));
+        request.performMvcRequest(MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + course.getId()).file(part)).andExpect(status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("shortNameCannotChange"));
+        var persisted = courseRepository.findByIdElseThrow(course.getId());
+        assertThat(persisted.getTitle()).isEqualTo(originalTitle);
+        assertThat(persisted.getShortName()).isEqualTo(originalShortName);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void allowedComplaintsReportsRemainingAllowanceAndRejectsTeamWithoutMembership() throws Exception {
+        course.setMaxComplaints(3);
+        course.setMaxComplaintTimeDays(7);
+        courseRepository.save(course);
+        String url = "/api/course/courses/" + course.getId() + "/allowed-complaints";
+        assertThat(request.get(url, HttpStatus.OK, Long.class)).isEqualTo(3L);
+        request.performMvcRequest(MockMvcRequestBuilders.get(url).param("teamMode", "true")).andExpect(status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("noAssignedTeamInCourse"));
+        course.setMaxComplaintTimeDays(0);
+        courseRepository.save(course);
+        request.performMvcRequest(MockMvcRequestBuilders.get(url)).andExpect(status().isBadRequest())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("complaintsDisabled"));
+    }
+
 }

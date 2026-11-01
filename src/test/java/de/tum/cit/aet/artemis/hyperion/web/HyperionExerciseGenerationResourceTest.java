@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.exception.TooManyRequestsAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -775,8 +775,9 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(status.getAnnotation(EnforceAtLeastEditorInExercise.class)).isNotNull();
         assertThat(cancel.getAnnotation(EnforceAtLeastEditorInExercise.class)).isNotNull();
         assertThat(revert.getAnnotation(EnforceAtLeastEditorInExercise.class)).isNotNull();
-        assertThat(supported.getAnnotation(EnforceAtLeastEditor.class)).isNotNull();
-        assertThat(effortProfiles.getAnnotation(EnforceAtLeastEditor.class)).isNotNull();
+        // Static metadata without any Artemis data, so being authenticated is enough.
+        assertThat(supported.getAnnotation(EnforceAtLeastStudent.class)).isNotNull();
+        assertThat(effortProfiles.getAnnotation(EnforceAtLeastStudent.class)).isNotNull();
         // Asked before the exercise exists, so it is gated on the course the exercise will live in rather than on the exercise.
         assertThat(metadataSuggestion.getAnnotation(EnforceAtLeastEditorInCourse.class)).isNotNull();
     }

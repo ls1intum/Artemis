@@ -1,4 +1,4 @@
-<div class="flex items-center justify-between gap-3 px-4 py-3">
+<div class="flex items-center justify-between gap-4! px-6! py-4!">
     <h2 class="m-0 text-xl font-semibold" data-testid="holiday-calendar-month">{{ monthLabel() }}</h2>
     <div class="flex items-center gap-2">
         <button tumAetUiButton size="small" severity="secondary" variant="outlined" type="button" data-testid="holiday-calendar-today" (click)="showCurrentMonth()">
@@ -34,7 +34,7 @@
 <div class="border-t border-(--tumaet-ui-border-color)" role="grid" data-testid="holiday-calendar-grid" [class.select-none]="isDragging()">
     <div class="grid grid-cols-7 border-b border-(--tumaet-ui-border-color)" role="row">
         @for (weekdayKey of weekdayKeys; track weekdayKey) {
-            <div class="px-3 py-2 text-sm font-semibold" role="columnheader"><span [jhiTranslate]="weekdayKey"></span></div>
+            <div class="px-4! py-2 text-sm font-semibold" role="columnheader"><span [jhiTranslate]="weekdayKey"></span></div>
         }
     </div>
 

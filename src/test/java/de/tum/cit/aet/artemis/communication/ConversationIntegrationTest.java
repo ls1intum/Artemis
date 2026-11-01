@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationUserDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
+import de.tum.cit.aet.artemis.communication.dto.OneToOneChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
@@ -85,7 +86,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @MethodSource("courseConfigurationProvider")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration,
             HttpStatus expectedStatus) throws Exception {
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
@@ -97,15 +98,15 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_shouldReturnConversationsWhereMember() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
         addUsersToConversation(channel.getId(), "tutor1");
         var groupChat = createGroupChat("tutor1", "student1");
         hideConversation(groupChat.getId(), "tutor1");
-        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"),
-                OneToOneChatDTO.class, HttpStatus.CREATED);
+        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats",
+                new OneToOneChatCreationDTO(null, testPrefix + "tutor1"), OneToOneChatDTO.class, HttpStatus.CREATED);
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         // updateLastMessageDateAsync runs in a separate thread; wait for it to commit before
         // querying conversations so the oneToOneChat.lastMessageDate IS NOT NULL condition is met
@@ -164,7 +165,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_onlyFewDatabaseCalls() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
@@ -173,8 +174,8 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var groupChat = createGroupChat("tutor1");
         hideConversation(groupChat.getId(), "tutor1");
 
-        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"),
-                OneToOneChatDTO.class, HttpStatus.CREATED);
+        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats",
+                new OneToOneChatCreationDTO(null, testPrefix + "tutor1"), OneToOneChatDTO.class, HttpStatus.CREATED);
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         this.resetWebsocketMock();
         favoriteConversation(oneToOneChat.getId(), "tutor1");
@@ -197,7 +198,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_shouldCarryTheDatesOfTheReferencedExercise() throws Exception {
         // The sidebar marks a channel as current from these dates. They used to be looked up in the course's exercises,
         // which only worked while the course carried all of its content.
@@ -222,7 +223,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getConversationsOfUser_onlyChannelsIfMessagingDisabled() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX + "1");
@@ -231,8 +232,8 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var groupChat = createGroupChat("tutor1");
         hideConversation(groupChat.getId(), "tutor1");
 
-        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"),
-                OneToOneChatDTO.class, HttpStatus.CREATED);
+        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats",
+                new OneToOneChatCreationDTO(null, testPrefix + "tutor1"), OneToOneChatDTO.class, HttpStatus.CREATED);
         var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
         this.resetWebsocketMock();
         favoriteConversation(oneToOneChat.getId(), "tutor1");
@@ -282,7 +283,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsFavorite_shouldToggleIsFavorite() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -324,7 +325,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsFavorite_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -342,7 +343,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsMuted_shouldToggleIsMuted() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -384,7 +385,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsMuted_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -402,7 +403,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsHidden_shouldToggleIsHidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -444,7 +445,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIsHidden_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -462,7 +463,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchConversationMembers_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
@@ -485,7 +486,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchMembersOfConversation_shouldFindMembersWhereLoginOrNameMatches() throws Exception {
         var channel = createChannel(false, TEST_PREFIX);
         addUsersToConversation(channel.getId(), "student1");
@@ -545,7 +546,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchMembersOfCourseWideChannel_sortedByName_shouldFindMembers() throws Exception {
         Channel courseWideChannel = conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide-member-search");
 
@@ -603,8 +604,8 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void unreadMessages_shouldReturnCorrectValue_Message() throws Exception {
-        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"),
-                OneToOneChatDTO.class, HttpStatus.CREATED);
+        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats",
+                new OneToOneChatCreationDTO(null, testPrefix + "tutor1"), OneToOneChatDTO.class, HttpStatus.CREATED);
         this.postInConversation(oneToOneChat.getId(), "instructor1");
 
         userUtilService.changeUser(testPrefix + "tutor1");
@@ -616,8 +617,8 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void unreadMessages_shouldReturnTrue_ForReplyToOwnMessage() throws Exception {
-        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"),
-                OneToOneChatDTO.class, HttpStatus.CREATED);
+        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats",
+                new OneToOneChatCreationDTO(null, testPrefix + "tutor1"), OneToOneChatDTO.class, HttpStatus.CREATED);
         var ownMessage = this.postInConversation(oneToOneChat.getId(), "student1");
         assertThat(unreadMessagesInCourse()).as("nothing happened yet that the user has not seen").isFalse();
 
@@ -632,8 +633,8 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void unreadMessages_shouldReturnFalse_ForOwnReply() throws Exception {
-        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"),
-                OneToOneChatDTO.class, HttpStatus.CREATED);
+        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats",
+                new OneToOneChatCreationDTO(null, testPrefix + "tutor1"), OneToOneChatDTO.class, HttpStatus.CREATED);
         var ownMessage = this.postInConversation(oneToOneChat.getId(), "student1");
 
         replyToMessage(ownMessage.id());
@@ -643,7 +644,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @CsvSource({ "false,student1", "true,student1", "false,instructor1", "true,instructor1" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletingPost_preservesUnreadRepliesAndDecrementsOnlyUnreadRecipients(boolean postUnread, String deleter) throws Exception {
         var channel = createChannel(false, TEST_PREFIX + "delete-unread");
         addUsersToConversation(channel.getId(), "student1", "tutor1");
@@ -810,7 +811,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @ParameterizedTest
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_AND_MESSAGING", "COMMUNICATION_ONLY" })
     void testEnableCommunication(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);

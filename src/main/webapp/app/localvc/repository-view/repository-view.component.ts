@@ -64,7 +64,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     // and read in the template, so they must be signals to render under zoneless change detection.
     readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
     readonly exercise = signal<ProgrammingExercise>(undefined!);
-    userId!: number; // set asynchronously in ngOnInit() from accountService.identity()
+    readonly userId = signal<number | undefined>(undefined);
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     readonly loadingParticipation = signal(false);
     readonly participationCouldNotBeFetched = signal(false);
@@ -84,6 +84,12 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub?: Subscription;
     differentParticipationSub?: Subscription;
+
+    ownsParticipation(): boolean {
+        const participation = this.participation();
+        const userId = this.userId();
+        return userId !== undefined && (participation?.student?.id === userId || !!participation?.team?.students?.some((student) => student.id === userId));
+    }
 
     /**
      * Unsubscribe from all subscriptions when the component is destroyed
@@ -116,7 +122,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         // Used to check if the assessor is the current user
         void this.accountService.identity().then((user) => {
-            this.userId = user!.id!;
+            this.userId.set(user?.id);
         });
         this.routeCommitHistory.set(this.router.url + '/commit-history');
         this.paramSub = this.route.params.subscribe((params) => {

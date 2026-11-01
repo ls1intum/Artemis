@@ -1,5 +1,5 @@
-<div class="row justify-content-center">
-    <div class="col-md-8">
+<div class="flex flex-wrap justify-center">
+    <div class="w-full md:w-2/3">
         @if (lecture()) {
             <div>
                 <h2><span jhiTranslate="artemisApp.lecture.detail.title"></span> {{ lecture().id }}</h2>
@@ -8,11 +8,17 @@
                     <jhi-detail-overview-list [sections]="detailSections()" />
                 }
                 @if (lecture().course?.isAtLeastEditor) {
-                    <a [routerLink]="['/course-management', lecture().course?.id, 'lectures', lecture().id, 'edit']" class="btn btn-primary">
+                    <a
+                        tumAetUiButton
+                        severity="primary"
+                        variant="solid"
+                        size="default"
+                        [routerLink]="['/course-management', lecture().course?.id, 'lectures', lecture().id, 'edit']"
+                    >
                         <fa-icon [icon]="faPencilAlt" />
                         <span jhiTranslate="entity.action.edit"></span>
                     </a>
-                    <a [routerLink]="['unit-management']" class="btn btn-primary">
+                    <a tumAetUiButton severity="primary" variant="solid" size="default" [routerLink]="['unit-management']">
                         <fa-icon [icon]="faPuzzlePiece" />
                         <span jhiTranslate="entity.action.units"></span>
                     </a>

@@ -112,7 +112,7 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteParticipation_logsFullExceptionAndProceedsWhenRepositoryDeletionFails() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         var programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);

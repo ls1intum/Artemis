@@ -443,7 +443,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (!this.submission()) {
             return;
         }
-        this.complaintService.findBySubmissionId(this.submission()!.id!).subscribe({
+        this.complaintService.findBySubmissionIdForAssessment(this.submission()!.id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;

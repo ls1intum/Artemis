@@ -52,7 +52,18 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * @param exerciseId id of the exercise
      */
     find(exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<FileUploadExerciseDto>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' }).pipe(map((res) => this.processResponse(res)));
+        return this.findDetails(exerciseId, false);
+    }
+
+    /** Loads management details of an exam exercise with the same options and conversion as course details. */
+    findForExam(exerciseId: number): Observable<EntityResponseType> {
+        return this.findDetails(exerciseId, true);
+    }
+
+    private findDetails(exerciseId: number, exam: boolean): Observable<EntityResponseType> {
+        return this.http
+            .get<FileUploadExerciseDto>(`${this.resourceUrl}/${exerciseId}${exam ? '/for-exam' : ''}`, { observe: 'response' })
+            .pipe(map((res) => this.processResponse(res)));
     }
 
     /**

@@ -534,8 +534,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      */
     cancel(): void {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
-        this.cancelBusy.set(true);
         if (confirmCancel && this.exercise && this.submission) {
+            this.cancelBusy.set(true);
             this.assessmentsService.cancelAssessment(this.participation!.id!, this.submission.id!, this.result()?.id).subscribe(() => this.navigateBack());
         }
     }
@@ -640,7 +640,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
 
         this.isLoading.set(true);
-        this.complaintService.findBySubmissionId(this.submission.id!).subscribe({
+        this.complaintService.findBySubmissionIdForAssessment(this.submission.id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;

@@ -299,7 +299,16 @@ function overallVerdict(infrastructureFailed) {
     const gate = workflow.jobs['report-results'].steps.find((step) => step.id === 'overall-status').run;
     const root = sandbox();
     const output = join(root, 'output');
-    const env = { PATH: process.env.PATH, GITHUB_OUTPUT: output, DETERMINE_JOB: 'success' };
+    const env = {
+        PATH: process.env.PATH,
+        GITHUB_OUTPUT: output,
+        DETERMINE_JOB: 'success',
+        IS_PR: 'true',
+        RUN_FULL_SUITE: 'false',
+        RUN_ALL_TESTS: 'false',
+        RELEVANT_TESTS: 'e2e/Login.spec.ts',
+        REMAINING_TESTS: 'e2e/exam/',
+    };
     for (const phase of ['RELEVANT', 'REMAINING', 'ALL_PR', 'ALL_NON_PR']) {
         env[`${phase}_RESULT`] = '';
         env[`${phase}_CLASS`] = '';

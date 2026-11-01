@@ -126,6 +126,14 @@ const routes: Routes = [
         },
     },
     {
+        path: 'usage',
+        loadComponent: () => import('app/core/usage-statistics/usage-dashboard.component').then((m) => m.UsageDashboardComponent),
+        data: {
+            pageTitle: 'artemisApp.usageDashboard.title',
+            usesModuleBackground: true,
+        },
+    },
+    {
         path: 'about',
         loadComponent: () => import('app/core/about-us/about-us.component').then((m) => m.AboutUsComponent),
         data: {

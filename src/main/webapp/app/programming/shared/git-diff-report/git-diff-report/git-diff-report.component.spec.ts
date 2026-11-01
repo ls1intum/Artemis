@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock @sentry/angular module — must be hoisted above imports.
-vi.mock('@sentry/angular', () => ({
+// Mock the error reporter module — must be hoisted above imports.
+vi.mock('app/core/error-reporting/capture-exception', () => ({
     captureException: vi.fn(),
 }));
 
@@ -17,7 +17,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileStatus, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 
 class MockResizeObserver {
     observe() {}

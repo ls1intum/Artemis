@@ -52,12 +52,17 @@
                     [id]="optionId(i)"
                     role="option"
                     [attr.aria-selected]="isAlreadySelected(option) ? 'true' : 'false'"
+                    [attr.aria-disabled]="isOptionDisabled(option) ? 'true' : null"
                     [class]="optionClasses(option, i)"
                     (mousedown)="$event.preventDefault()"
                     (click)="selectOption(option, $event)"
                     (mouseenter)="setActive(i)"
                 >
-                    <span class="tumaet:flex-1 tumaet:truncate">{{ valueLabel(option) }}</span>
+                    @if (optionTemplate(); as template) {
+                        <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: option }" />
+                    } @else {
+                        <span class="tumaet:flex-1 tumaet:truncate">{{ valueLabel(option) }}</span>
+                    }
                 </li>
             } @empty {
                 <li role="option" aria-selected="false" aria-disabled="true" class="tumaet:px-3 tumaet:py-2 tumaet:text-muted">

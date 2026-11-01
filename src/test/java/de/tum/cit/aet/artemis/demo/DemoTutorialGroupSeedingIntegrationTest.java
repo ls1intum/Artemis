@@ -196,7 +196,7 @@ class DemoTutorialGroupSeedingIntegrationTest extends AbstractSpringIntegrationI
     }
 
     @Test
-    @WithMockUser(username = UserDemoService.DEMO_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = UserDemoService.DEMO_INSTRUCTOR_LOGIN, roles = "USER")
     void recreatesDeletedTutorialGroup() throws Exception {
         seed();
         TutorialGroupData seeded = snapshot();

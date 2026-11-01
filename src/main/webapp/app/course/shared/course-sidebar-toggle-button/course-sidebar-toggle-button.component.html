@@ -1,19 +1,19 @@
-<p-button
+<button
+    tumAetUiButton
     type="button"
-    [pTooltip]="'artemisApp.course.toggleSidebar' | artemisTranslate"
-    tooltipPosition="top"
+    data-testid="course-sidebar-toggle"
+    [attr.aria-expanded]="!isCollapsed()"
+    [tumAetUiTooltip]="'artemisApp.course.toggleSidebar' | artemisTranslate"
     size="small"
     severity="secondary"
     [class]="{ 'is-collapsed': isCollapsed(), 'is-communication-module': isCommunicationModule() }"
-    tooltipStyleClass="small-tooltip"
-    class="btn-sidebar-collapse rounded-3"
-    styleClass="tiny-icon-button"
+    class="sidebar-toggle rounded-lg"
     [attr.aria-label]="'artemisApp.course.toggleSidebar' | artemisTranslate"
     (click)="toggleSidebar.emit()"
 >
-    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="btn-sidebar-collapse-icon d-flex justify-content-center align-items-center" size="lg" />
-    <div class="btn-sidebar-collapse-chevron d-flex gap-1">
-        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="btn-sidebar-collapse-chevron-start d-flex justify-content-center align-items-center" size="xs" />
-        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="d-flex justify-content-center align-items-center" size="xs" />
+    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="sidebar-toggle-icon flex justify-center items-center" size="lg" />
+    <div class="sidebar-toggle-chevron flex gap-1">
+        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="sidebar-toggle-chevron-start flex justify-center items-center" size="xs" />
+        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="flex justify-center items-center" size="xs" />
     </div>
-</p-button>
+</button>

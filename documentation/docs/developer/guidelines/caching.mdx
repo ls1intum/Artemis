@@ -172,6 +172,8 @@ Four properties to copy:
 
 For caches whose key is not an entity column — e.g. derived DTO caches keyed by composite parameters — the alternative is `@CacheEvict` on the writer service method that mutates the underlying state. Either pattern is acceptable; what is *not* acceptable is `@Cacheable` without eviction.
 
+An aggregate that is derived from many rows and has no single writer, such as the public usage statistics or the latest released version, has no write to evict on. Its eviction strategy is an expiry time: register the cache in `EXPIRING_CACHES` in `CacheManagerConfiguration` with the longest staleness the page can tolerate (`artemisVersion` and `publicUsageStatistics`, one hour each). The map is keyed by the literal cache name, so a renamed cache silently stops expiring; keep the name constant and the map entry in sync.
+
 ## Adding a new cache — the bar
 
 A new `@Cacheable` is justified only when *all three* of the following hold:

@@ -1,3 +1,13 @@
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiPopoverComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+
 import { ProgrammingExerciseParticipationActionsComponent } from 'app/exercise/participation/programming-exercise-participation-actions/programming-exercise-participation-actions.component';
 import { StudentExerciseActionsDirective } from 'app/exercise/participation/student-exercise-actions.directive';
 import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
@@ -7,9 +17,7 @@ import dayjs from 'dayjs/esm';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faEye, faFileSignature, faListAlt, faPaperPlane, faPlayCircle, faRobot, faSignal, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TranslatePipe } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -33,7 +41,6 @@ import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-d
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision, isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { TumAetUiButtonComponent, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 interface InstructorActionItem {
@@ -48,13 +55,14 @@ export const AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY = 'artemisApp.aiFee
     selector: 'jhi-exercise-header-actions',
     templateUrl: './exercise-header-actions.component.html',
     imports: [
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
         ProgrammingExerciseParticipationActionsComponent,
         FaIconComponent,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownItem,
-        NgbTooltip,
         RouterLink,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -63,9 +71,7 @@ export const AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY = 'artemisApp.aiFee
         StartPracticeModeButtonComponent,
         CodeButtonComponent,
         RequestFeedbackButtonComponent,
-        TranslatePipe,
         TumAetUiButtonComponent,
-        TumAetUiPopoverComponent,
     ],
     providers: [ExternalCloningService],
 })

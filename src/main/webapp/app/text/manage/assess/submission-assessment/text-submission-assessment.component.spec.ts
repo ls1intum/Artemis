@@ -58,7 +58,7 @@ import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { MockAthenaService } from 'test/helpers/mocks/service/mock-athena-service';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -221,6 +221,13 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('loads complaint detail through the assessment audience', () => {
+        const httpMock = TestBed.inject(HttpTestingController);
+        const req = httpMock.expectOne(`api/assessment/complaints/for-assessment?submissionId=${submission.id}`);
+        expect(req.request.method).toBe('GET');
+        req.flush(null);
     });
 
     it('should create and set parameters correctly', async () => {
@@ -624,6 +631,21 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(navigateBackSpy).toHaveBeenCalledOnce();
         expect(cancelAssessmentStub).toHaveBeenCalledOnce();
         expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id, component.result()?.id);
+    });
+
+    it('keeps the assessment usable when cancellation is declined', async () => {
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
+        fixture.detectChanges();
+        await fixture.whenStable();
+        vi.spyOn(window, 'confirm').mockReturnValue(false);
+        const cancelSpy = vi.spyOn(textAssessmentService, 'cancelAssessment');
+        const navigateBackSpy = vi.spyOn(component, 'navigateBack');
+
+        component.cancel();
+
+        expect(component.cancelBusy()).toBe(false);
+        expect(cancelSpy).not.toHaveBeenCalled();
+        expect(navigateBackSpy).not.toHaveBeenCalled();
     });
 
     it('should go to next submission', async () => {

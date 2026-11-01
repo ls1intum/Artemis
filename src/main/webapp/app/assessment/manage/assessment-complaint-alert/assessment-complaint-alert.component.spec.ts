@@ -43,7 +43,7 @@ describe('AssessmentComplaintAlertComponent', () => {
     it('should show complaint alert text for complaint', () => {
         setComplaintOfType(ComplaintType.COMPLAINT);
 
-        const alertNode = fixture.debugElement.query(By.css('.alert-info'));
+        const alertNode = fixture.debugElement.query(By.css('tumaet-ui-message [jhiTranslate]'));
         expect(alertNode).toBeTruthy();
         expect(alertNode.attributes['jhiTranslate']).toBe('artemisApp.complaint.hint');
     });
@@ -51,7 +51,7 @@ describe('AssessmentComplaintAlertComponent', () => {
     it('should show complaint alert text for more feedback request', () => {
         setComplaintOfType(ComplaintType.MORE_FEEDBACK);
 
-        const alertNode = fixture.debugElement.query(By.css('.alert-info'));
+        const alertNode = fixture.debugElement.query(By.css('tumaet-ui-message [jhiTranslate]'));
         expect(alertNode).toBeTruthy();
         expect(alertNode.attributes['jhiTranslate']).toBe('artemisApp.moreFeedback.hint');
     });
