@@ -85,6 +85,12 @@ check before merge. Non-PR events, including manual runs on a draft branch, reta
 required-check name and use full suites when the Test stage is selected. Enable **Bypass change
 detection and run every job** on a manual run to require all stages.
 
+On pull requests, changes confined to `config/stylelint/stylelint.config.json` and its
+`stylelint.config.js` discovery wrapper skip server tests while retaining client validation.
+The server class selector also ignores these two files alongside Java changes, preserving the
+affected Java test selection. Other configuration files, server disk inputs and explicit full
+validation retain their existing server-test requirements.
+
 `quality` (`ci-quality.yml`) is where all static analysis lives, for **both** server and
 client — Java/TypeScript style, lint, type-check, architecture, plus the Java-only analyses
 (class-dependency caps, query over-fetching). `test` (`ci-test.yml`) runs only the server and

@@ -48,6 +48,11 @@ guardrails cannot hide an untested seed. Shared leaf utilities use the import gr
 configuration, missing history and ambiguous dependencies fall back to the full suite. Check the
 actual planner/helper output rather than assuming a PR always ran a subset.
 
+The two Stylelint entry points, `config/stylelint/stylelint.config.json` and
+`config/stylelint/stylelint.config.js`, are client-only inputs. A PR confined to those files skips
+server tests; when mixed with Java changes, they do not expand the affected server class plan.
+Other configuration and server disk-input changes retain the conservative fallback.
+
 Affected runs keep test results but omit whole-project coverage gates and artifacts. The PR coverage
 section states the scope and result; a selected green run does not prove full-suite coverage. E2E
 selects mapped modules plus declared cross-module consumers, changed specs, and login/logout/health smoke
