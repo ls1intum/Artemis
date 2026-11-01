@@ -118,6 +118,7 @@ function coverageArtifacts(jobs, artifacts) {
         if (artifact.name === 'Sonar Server Coverage' && serverExecuted) eligible.add(artifact.name);
         if (artifact.name === 'Server JaCoCo XML' && serverExecuted && shards.length === 7 && succeeded('Test / Server Tests Report')) eligible.add(artifact.name);
     }
+    if (serverExecuted && !eligible.has('Sonar Server Coverage') && !eligible.has('Server JaCoCo XML')) return new Set();
     return eligible;
 }
 module.exports = { prepareAnalysis, verifyFork, findPrCoverage, coverageArtifacts };

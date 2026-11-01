@@ -217,6 +217,9 @@ jobs:
               ...context.repo, run_id: Number(process.env.COVERAGE_RUN), per_page: 100, filter: 'latest',
             });
             const names = require('./.sonar-tools/.github/scripts/sonar-pr.js').coverageArtifacts(jobs, artifacts);
+            if (jobs.some(job => job.name.startsWith('Test / Server Tests (') && job.conclusion === 'success') && names.size === 0) {
+              throw new Error('Executed server tests have no eligible, non-expired Sonar coverage report or execution data. Rerun tests before analysis.');
+            }
             core.setOutput('run_id', process.env.COVERAGE_RUN);
             core.setOutput('server_full', String(names.has('Server JaCoCo XML')));
             core.setOutput('client_full', String(names.has('Vitest Coverage Report')));

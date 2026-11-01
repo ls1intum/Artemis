@@ -871,3 +871,42 @@ for (const file of ['vitest.config.ts', 'config/testing/vitest.monaco.config.ts'
         assert.ok(matchedFiles.has(file), 'A coverage configuration change must trigger the required analysis');
     });
 }
+for (const missing of ['absent', 'expired']) {
+    test('Sonar coverage: valid client coverage cannot hide ' + missing + ' coverage from executed server tests', async () => {
+        const f = coverageFixture();
+        f.state.jobs.push({ name: 'Test / Server Tests (PostgreSQL)', conclusion: 'success' });
+        if (missing === 'expired') f.state.artifacts.push({ name: 'Sonar Server Coverage', expired: true });
+        await assert.rejects(f.find(), /No successful exact-source test run/);
+    });
+}
+test('Sonar coverage: automatic discovery fails explicitly when executed server coverage is missing', async () => {
+    const source = fs.readFileSync(path.join(__dirname, '../workflows/ci-sonar.yml'), 'utf8');
+    const step = source.slice(source.indexOf('      - name: Discover scope-labelled coverage artifacts'));
+    const script = step.match(/          script: \|\n((?:            [^\n]*\n|\n)+)/)[1].replace(/^ {12}/gm, '');
+    const actions = { listWorkflowRunArtifacts() {}, listJobsForWorkflowRun() {} };
+    const github = {
+        rest: { actions },
+        paginate: async (route) =>
+            route === actions.listWorkflowRunArtifacts
+                ? [{ name: 'Sonar Client Coverage', expired: false }]
+                : [
+                      { name: 'Test / Client Tests', conclusion: 'success' },
+                      { name: 'Test / Server Tests (PostgreSQL)', conclusion: 'success' },
+                  ],
+    };
+    const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
+    await assert.rejects(
+        new AsyncFunction('github', 'context', 'core', 'require', 'process', script)(
+            github,
+            { repo },
+            {
+                setOutput() {
+                    assert.fail('Missing server coverage cannot publish usable report flags');
+                },
+            },
+            () => require('./sonar-pr.js'),
+            { env: { COVERAGE_RUN: '52' } },
+        ),
+        /Executed server tests have no eligible/,
+    );
+});
