@@ -330,12 +330,16 @@ export async function executePlan(
     const preparedProjects = [];
     const relatedSources = new Set();
     let fallbackReason;
+    let selectionError;
     let status = 0;
+    const executionErrors = [];
+    const closeErrors = [];
     try {
         for (const configFile of configs) {
             const project = await prepare({ root, configFile, sources: plan.sources, log });
             preparedProjects.push(project);
             if (project.selectionError) {
+                selectionError = project.selectionError;
                 fallbackReason = `Vitest graph selection failed: ${project.selectionError.message}`;
                 break;
             }
@@ -352,19 +356,21 @@ export async function executePlan(
                 }
             }
         }
+    } catch (error) {
+        executionErrors.push(error);
     } finally {
         // Release every graph before a full fallback starts. Each operation restores its own
         // environment, so opening two contexts cannot leave TEST/VITEST set for prebuild.
-        const errors = [];
         for (const project of preparedProjects.reverse()) {
             try {
                 await project.close();
             } catch (error) {
-                errors.push(error);
+                closeErrors.push(error);
             }
         }
-        if (errors.length) throw new AggregateError(errors, 'Cannot close prepared Vitest projects');
     }
+    if (closeErrors.length) throw new AggregateError([...executionErrors, ...(selectionError ? [selectionError] : []), ...closeErrors], 'Cannot close prepared Vitest projects');
+    if (executionErrors.length) throw executionErrors[0];
     return fallbackReason ? runFull(fallbackReason) : status;
 }
 
