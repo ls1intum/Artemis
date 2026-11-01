@@ -240,6 +240,9 @@
     }
 }
 
+@source './app/course/manage/update/course-home-welcome-context-form.component.html';
+@source './app/course/overview/course-home';
+
 @theme inline {
     --color-border: var(--tumaet-ui-border-color);
     --color-surface-sunken: var(--tumaet-ui-control-background);

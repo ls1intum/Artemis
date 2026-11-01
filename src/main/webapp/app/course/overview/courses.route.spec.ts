@@ -32,6 +32,17 @@ describe('course routes', () => {
         expect(courseOverviewRoute?.children?.some((route) => route.path === 'exercises/:exerciseId/teams')).toBe(false);
     });
 
+    it('opens a course on Home while preserving explicit resource links', async () => {
+        TestBed.configureTestingModule({ providers: [provideRouter([{ path: 'courses', children: [stub(courseOverviewRoute!)] }])] });
+        const router = TestBed.inject(Router);
+        await router.navigateByUrl('/courses/42');
+        expect(router.url).toBe('/courses/42/home');
+        for (const url of ['/courses/42/exercises/17', '/courses/42/lectures/7', '/courses/42/communication?conversationId=8&messageId=21']) {
+            await router.navigateByUrl(url);
+            expect(router.url).toBe(url);
+        }
+    });
+
     describe('lectures', () => {
         const segments = (...paths: string[]) => paths.map((path) => new UrlSegment(path, {}));
 

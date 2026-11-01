@@ -54,6 +54,7 @@ export interface CourseCreateDTO {
 
     // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained)
     gradeRelevant: boolean;
+    studentWelcomeContext?: string;
 
     // Atlas auto-orchestration configuration (per-course)
     autoOrchestratorEnabled: boolean;
@@ -113,6 +114,7 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
 
         // Grade-relevance defaults to true when the course has no explicit configuration yet.
         gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
+        studentWelcomeContext: course.courseConfiguration?.studentWelcomeContext,
 
         // Atlas auto-orchestration configuration (per-course)
         autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,

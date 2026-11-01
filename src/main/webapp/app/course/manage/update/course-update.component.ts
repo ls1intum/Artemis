@@ -1,3 +1,4 @@
+import { CourseHomeWelcomeContextFormComponent } from './course-home-welcome-context-form.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Component, DestroyRef, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -138,6 +139,7 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
         PointsInputComponent,
         ImageCropperModalComponent,
         OrganizationSelectorComponent,
+        CourseHomeWelcomeContextFormComponent,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
@@ -185,6 +187,8 @@ export class CourseUpdateComponent implements OnInit {
     readonly originalTimeZone = signal<string | undefined>(undefined);
     /** The browser's time zone, in which the course dates are entered. */
     protected readonly currentTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    protected readonly studentWelcomeContext = new FormControl('', { nonNullable: true, validators: [Validators.maxLength(2000)] });
 
     courseForm!: FormGroup; // built in ngOnInit()
     // `course` is a deep object two-way bound via [(ngModel)]/[(markdown)]="course.X" in the template.
@@ -341,6 +345,7 @@ export class CourseUpdateComponent implements OnInit {
         this.messagingEnabled = isMessagingEnabled(this.course);
         this.athenaFeedbackEnabled.set(!!(this.course.athenaGradingFeedbackEnabled || this.course.athenaFormativeFeedbackEnabled));
 
+        this.studentWelcomeContext.setValue(this.course.courseConfiguration?.studentWelcomeContext ?? '');
         this.courseForm = new FormGroup(
             {
                 id: new FormControl(this.course.id),
@@ -358,6 +363,7 @@ export class CourseUpdateComponent implements OnInit {
                 description: new FormControl(this.course.description, {
                     validators: [Validators.maxLength(this.COURSE_DESCRIPTION_LIMIT)],
                 }),
+                studentWelcomeContext: this.studentWelcomeContext,
                 courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
                 startDate: new FormControl(this.course.startDate, { validators: [Validators.required] }),
                 endDate: new FormControl(this.course.endDate, { validators: [Validators.required] }),
@@ -618,6 +624,7 @@ export class CourseUpdateComponent implements OnInit {
         course.courseConfiguration = {
             id: this.course.courseConfiguration?.id,
             gradeRelevant: rawValue.gradeRelevant ?? true,
+            studentWelcomeContext: rawValue.studentWelcomeContext,
             dataRetentionHold: rawValue.dataRetentionHold ?? false,
             autoOrchestratorEnabled: rawValue.autoOrchestratorEnabled ?? false,
             debounceWindowSecondsOverride: rawValue.debounceWindowSecondsOverride ?? undefined,

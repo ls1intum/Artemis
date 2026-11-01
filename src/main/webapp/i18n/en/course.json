@@ -558,6 +558,11 @@
                     }
                 },
                 "replayWizard": "Replay Setup Wizard"
+            },
+            "studentWelcomeContext": {
+                "label": "Student Home: learning approach",
+                "hint": "Optional guidance on how to learn in this course (up to 2,000 characters). Shown on the first Home visit and used for optional AI welcomes.",
+                "tooLong": "Use at most 2,000 characters."
             }
         },
         "courseStatistics": {

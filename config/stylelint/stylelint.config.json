@@ -64,6 +64,7 @@
                 "src/main/webapp/app/exam/**/*.scss",
                 "src/main/webapp/app/course/manage/user-management-dropdown/**/*.scss",
                 "src/main/webapp/app/course/manage/update/**/*.scss",
+                "src/main/webapp/app/course/overview/course-home/**/*.scss",
                 "src/main/webapp/app/account/**/*.scss",
                 "src/main/webapp/app/lecture/manage/lecture-update/**/*.scss",
                 "src/main/webapp/app/lecture/manage/lecture-period/**/*.scss",

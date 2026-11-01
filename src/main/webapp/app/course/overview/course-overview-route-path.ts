@@ -5,6 +5,7 @@
  * needs these paths, so declaring them next to the routes would make the guard depend on the routes that use it.
  */
 export enum CourseOverviewRoutePath {
+    HOME = 'home',
     IRIS = 'iris',
     EXERCISES = 'exercises',
     EXAMS = 'exams',
