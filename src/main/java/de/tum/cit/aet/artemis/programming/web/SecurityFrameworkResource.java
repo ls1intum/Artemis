@@ -16,10 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -32,7 +31,7 @@ import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkServ
 /**
  * REST controller for the Security Framework activation state of a programming exercise (Objective 1).
  * <p>
- * Reads are open to editors; every mutation requires an instructor. Each mutation commits to the exercise-tests
+ * Reads are open to editors of the exercise's course; every mutation requires an instructor of it. Each mutation commits to the exercise-tests
  * repository and returns the settled state once the commit has been pushed; the transient GENERATING/DELETING
  * states are a client concern.
  */
@@ -47,18 +46,15 @@ public class SecurityFrameworkResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final SecurityFrameworkService securityFrameworkService;
 
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseMutationGuardService mutationGuard;
 
-    public SecurityFrameworkResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authorizationCheckService,
-            SecurityFrameworkService securityFrameworkService, UserRepository userRepository, ProgrammingExerciseMutationGuardService mutationGuard) {
+    public SecurityFrameworkResource(ProgrammingExerciseRepository programmingExerciseRepository, SecurityFrameworkService securityFrameworkService, UserRepository userRepository,
+            ProgrammingExerciseMutationGuardService mutationGuard) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.securityFrameworkService = securityFrameworkService;
         this.userRepository = userRepository;
         this.mutationGuard = mutationGuard;
@@ -71,22 +67,22 @@ public class SecurityFrameworkResource {
      * @return 200 (OK) with the config in the body
      */
     @GetMapping("programming-exercises/{exerciseId}/security-framework")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<SecurityFrameworkConfigDTO> getSecurityFrameworkConfig(@PathVariable Long exerciseId) {
         log.debug("REST request to get the Security Framework config of programming exercise {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
         return ResponseEntity.ok(securityFrameworkService.getConfig(exercise));
     }
 
     /**
      * GET security-framework/versions : the Ares versions an instructor can pin and the version each template starts with. Not exercise-specific, so the
-     * create form can show them before the exercise exists.
+     * create form can show them before the exercise exists. Without a course to check a role in, it is open to every signed-in user; the versions are
+     * server configuration, not course data.
      *
      * @return 200 (OK) with the versions in the body
      */
     @GetMapping("security-framework/versions")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     public ResponseEntity<SecurityFrameworkVersionsDTO> getFrameworkVersions() {
         log.debug("REST request to get the Security Framework versions");
         return ResponseEntity.ok(securityFrameworkService.getFrameworkVersions());
@@ -100,12 +96,11 @@ public class SecurityFrameworkResource {
      * @return 200 (OK) with the resulting config
      */
     @PutMapping("programming-exercises/{exerciseId}/security-framework/activate")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<SecurityFrameworkConfigDTO> activateSecurityFramework(@PathVariable Long exerciseId, @RequestParam String frameworkVersion) {
         log.debug("REST request to activate the Security Framework of programming exercise {} with framework {}", exerciseId, frameworkVersion);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
         // Coordinates with live saves and generation runs that change the same repositories.
         try (var _ = mutationGuard.claimExternalMutation(exerciseId)) {
             return ResponseEntity.ok(securityFrameworkService.activate(exercise, frameworkVersion, user));
@@ -119,12 +114,11 @@ public class SecurityFrameworkResource {
      * @return 200 (OK) with the resulting config
      */
     @PutMapping("programming-exercises/{exerciseId}/security-framework/deactivate")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<SecurityFrameworkConfigDTO> deactivateSecurityFramework(@PathVariable Long exerciseId) {
         log.debug("REST request to deactivate the Security Framework of programming exercise {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
         // Coordinates with live saves and generation runs that change the same repositories.
         try (var _ = mutationGuard.claimExternalMutation(exerciseId)) {
             return ResponseEntity.ok(securityFrameworkService.deactivate(exercise, user));
@@ -139,12 +133,11 @@ public class SecurityFrameworkResource {
      * @return 200 (OK) with the resulting config
      */
     @PutMapping("programming-exercises/{exerciseId}/security-framework/framework-version")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<SecurityFrameworkConfigDTO> updateFrameworkVersion(@PathVariable Long exerciseId, @RequestParam String frameworkVersion) {
         log.debug("REST request to change the Security Framework version of programming exercise {} to {}", exerciseId, frameworkVersion);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
         // Coordinates with live saves and generation runs that change the same repositories.
         try (var _ = mutationGuard.claimExternalMutation(exerciseId)) {
             return ResponseEntity.ok(securityFrameworkService.updateFrameworkVersion(exercise, frameworkVersion, user));

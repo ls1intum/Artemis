@@ -130,7 +130,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void editorsCanReadTheStateAndTheVersions() throws Exception {
         SecurityFrameworkConfigDTO config = getConfig();
 
@@ -140,7 +140,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void editorsCannotChangeTheSandbox() throws Exception {
         String headBefore = pushedHead();
 
@@ -152,21 +152,23 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void tutorsCannotReadTheState() throws Exception {
         request.get(basePath, HttpStatus.FORBIDDEN, SecurityFrameworkConfigDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void studentsCannotReadTheStateOrTheVersions() throws Exception {
+    void studentsCannotReadTheStateButTheVersions() throws Exception {
         request.get(basePath, HttpStatus.FORBIDDEN, SecurityFrameworkConfigDTO.class);
-        request.get("/api/programming/security-framework/versions", HttpStatus.FORBIDDEN, SecurityFrameworkVersionsDTO.class);
+        // The versions are server configuration without a course to check a role in, so every signed-in user may read them.
+        request.get("/api/programming/security-framework/versions", HttpStatus.OK, SecurityFrameworkVersionsDTO.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "USER")
     void instructorsOfAnotherCourseCannotReadOrChangeTheSandbox() throws Exception {
+        userUtilService.addInstructorToCourse(TEST_PREFIX + "instructor2", courseUtilService.addEmptyCourse());
         String headBefore = pushedHead();
 
         request.get(basePath, HttpStatus.FORBIDDEN, SecurityFrameworkConfigDTO.class);
@@ -177,7 +179,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deactivatingAndActivatingChangesTheTestsRepositoryAndRunsThePushProcessing() throws Exception {
         String headBefore = pushedHead();
 
@@ -204,7 +206,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void aMixedStateIsActiveAndActivatingKeepsTheExceptionAndAddsNewTestClasses() throws Exception {
         pushTestFiles(Map.of("test/de/example/ClassTest.java", TEST_CLASS.replace("SortingTest", "ClassTest").replace(ACTIVE_ANNOTATION, INACTIVE_ANNOTATION)));
 
@@ -224,7 +226,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void aMissingPolicyFileIsMisconfiguredAndActivatingRepairsIt() throws Exception {
         testsRepository.workingCopy().pull().call();
         Files.delete(testsRepository.workingCopyPath().resolve("SecurityPolicy.yaml"));
@@ -243,7 +245,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void anUnsupportedRepositoryIsReportedButNeverChanged() throws Exception {
         pushTestFiles(Map.of(SORTING_TEST_PATH, TEST_CLASS.replace("@de.tum.cit.ase.ares.api.jupiter.Public\n", "")));
         String headBefore = pushedHead();
@@ -258,7 +260,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void invalidVersionsAndInactiveVersionChangesAreRejected() throws Exception {
         String headBefore = pushedHead();
 
@@ -273,7 +275,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void nonJavaExercisesAreRejected() throws Exception {
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
         programmingExerciseRepository.save(programmingExercise);
@@ -285,7 +287,7 @@ class SecurityFrameworkIntegrationTest extends AbstractProgrammingIntegrationLoc
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void aRepositoryWithSymbolicLinksIsNeverChanged() throws Exception {
         testsRepository.workingCopy().pull().call();
         Path link = testsRepository.workingCopyPath().resolve("linked.yaml");

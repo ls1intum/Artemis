@@ -145,7 +145,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testFailedAccessVcsAccessLog() {
         // Create participation and ensure it's properly linked to the repository
         var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -267,7 +267,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testVcsAccessLog_sshClientAddressWithHostnameFitsTheColumn() throws UnknownHostException {
         var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         vcsAccessLogRepository.deleteAll();
@@ -393,7 +393,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @Disabled("Submission policy test requires build results to be processed for submission counting")
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPush_studentAssignmentRepository_tooManySubmissions() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 

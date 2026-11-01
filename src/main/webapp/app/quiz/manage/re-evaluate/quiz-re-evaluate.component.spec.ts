@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { asyncScheduler, of } from 'rxjs';
+import { Subject, asyncScheduler, of } from 'rxjs';
 import { observeOn } from 'rxjs/operators';
 import { provideHttpClient } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -22,6 +22,8 @@ import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ReEvaluateDragAndDropQuestionComponent } from 'app/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'src/test/javascript/spec/helpers/mocks/service/mock-account.service';
 
@@ -36,7 +38,7 @@ describe('QuizExercise Re-evaluate Component', () => {
     quizExercise.id = 456;
     quizExercise.title = 'MyQuiz';
 
-    const route = { params: of({ exerciseId: 123 }) } as any as ActivatedRoute;
+    const route = { params: of({ exerciseId: 123 }), snapshot: { pathFromRoot: [{ params: {} }] } } as any as ActivatedRoute;
 
     const createValidMCQuestion = () => {
         const question = new MultipleChoiceQuestion();
@@ -77,6 +79,10 @@ describe('QuizExercise Re-evaluate Component', () => {
     };
 
     beforeEach(() => {
+        const courseSnapshot = new ActivatedRouteSnapshot();
+        courseSnapshot.params = {};
+        vi.spyOn(courseSnapshot, 'pathFromRoot', 'get').mockReturnValue([courseSnapshot]);
+        route.snapshot = courseSnapshot;
         vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [
@@ -105,6 +111,21 @@ describe('QuizExercise Re-evaluate Component', () => {
     afterEach(() => {
         vi.useRealTimers();
         vi.restoreAllMocks();
+    });
+
+    it('loads exam re-evaluation details from route context', () => {
+        const previousSnapshot = route.snapshot;
+        const examSnapshot = new ActivatedRouteSnapshot();
+        examSnapshot.params = { examId: 7 };
+        vi.spyOn(examSnapshot, 'pathFromRoot', 'get').mockReturnValue([examSnapshot]);
+        route.snapshot = examSnapshot;
+        const examFind = vi.spyOn(quizService, 'findForExam').mockReturnValue(of(quizExercise).pipe(observeOn(asyncScheduler)));
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        expect(examFind).toHaveBeenCalledWith(123);
+        expect(quizServiceFindStub).not.toHaveBeenCalled();
+        expect(comp.quizExercise()).toEqual(quizExercise);
+        route.snapshot = previousSnapshot;
     });
 
     it('should initialize quiz exercise', () => {
@@ -318,5 +339,32 @@ describe('QuizExercise Re-evaluate Component', () => {
         // @ts-ignore
         comp.invalidFlaggedQuestions = [question];
         expect(comp.isValidQuiz()).toBe(true);
+    });
+    it.each([false, true])('merges files into the warning dialog and commits only a confirmed change=%s', async (confirmed) => {
+        const fresh = new QuizExercise(course, undefined);
+        fresh.id = 456;
+        fresh.title = 'Fresh quiz';
+        fresh.duration = 60;
+        fresh.quizQuestions = [createValidMCQuestion().question];
+        quizServiceFindStub.mockReturnValue(of(fresh).pipe(observeOn(asyncScheduler)));
+        comp.ngOnInit();
+        vi.advanceTimersByTime(0);
+        const child = TestBed.runInInjectionContext(() => new ReEvaluateDragAndDropQuestionComponent());
+        const file = new File(['image'], 'diagram.png', { type: 'image/png' });
+        child.handleAddFile({ fileName: 'diagram.png', file });
+        vi.spyOn(comp, 'reEvaluateDragAndDropQuestionComponents').mockReturnValue([child]);
+        const close = new Subject<boolean>();
+        const dialog = Object.assign(new DynamicDialogRef(), { onClose: close });
+        const open = vi.spyOn(comp.popupService, 'open').mockResolvedValue(dialog);
+        comp.quizExercise().title = 'Changed title';
+        comp.cacheValidation();
+        expect(comp.pendingChanges()).toBe(true);
+        comp.save();
+        await Promise.resolve();
+        expect(open).toHaveBeenCalledWith(expect.anything(), comp.quizExercise(), new Map([['diagram.png', file]]));
+        close.next(confirmed);
+        expect(comp.pendingChanges()).toBe(!confirmed);
+        expect(comp.savedEntity.title).toBe(confirmed ? 'Changed title' : 'Fresh quiz');
+        expect(comp.quizIsValid()).toBe(comp.isValidQuiz());
     });
 });

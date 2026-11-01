@@ -61,6 +61,13 @@
             {{ 'artemisApp.team.detail.participationsTable.title' | artemisTranslate: { courseTitle: exercise()!.course!.title } }}
             <code class="ms-2 team-short-name">{{ team()!.shortName }}</code>
         </h4>
-        <jhi-team-participation-table [team]="team()!" [course]="exercise()!.course!" [exercise]="exercise()!" [isAdmin]="isAdmin()" [isTeamOwner]="isTeamOwner()" />
+        <jhi-team-participation-table
+            [overviewPurpose]="overviewPurpose"
+            [team]="team()!"
+            [course]="exercise()!.course!"
+            [exercise]="exercise()!"
+            [isAdmin]="isAdmin()"
+            [isTeamOwner]="isTeamOwner()"
+        />
     }
 </div>

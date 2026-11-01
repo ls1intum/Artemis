@@ -45,24 +45,24 @@ public class ProgrammingExerciseImportFromSharingService {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
-    private final SecurityFrameworkService securityFrameworkService;
+    private final AuthorizationCheckService authorizationCheckService;
 
-    private final AuthorizationCheckService authCheckService;
+    private final SecurityFrameworkService securityFrameworkService;
 
     private final CourseService courseService;
 
     public ProgrammingExerciseImportFromSharingService(ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService,
             ExerciseSharingService exerciseSharingService, UserRepository userRepository, CourseRepository courseRepository,
-            CompetencyExerciseLinkService competencyExerciseLinkService, SecurityFrameworkService securityFrameworkService, AuthorizationCheckService authCheckService,
-            CourseService courseService) {
+            CompetencyExerciseLinkService competencyExerciseLinkService, AuthorizationCheckService authorizationCheckService, CourseService courseService,
+            SecurityFrameworkService securityFrameworkService) {
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
         this.exerciseSharingService = exerciseSharingService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
-        this.securityFrameworkService = securityFrameworkService;
-        this.authCheckService = authCheckService;
+        this.authorizationCheckService = authorizationCheckService;
         this.courseService = courseService;
+        this.securityFrameworkService = securityFrameworkService;
     }
 
     /**
@@ -70,8 +70,10 @@ public class ProgrammingExerciseImportFromSharingService {
      * <p>
      * Steps:
      * <ol>
+     * <li>Resolve the target course from {@code sharingSetupInfo.courseId()} (for an exam exercise: the course of its exercise group) and require the
+     * current user to be at least an editor of it</li>
      * <li>Fetch the exported exercise ZIP via {@link ExerciseSharingService getCachedBasketItem(SharingSetupInfo.SharingInfoDTO)}</li>
-     * <li>Resolve the target course from {@code sharingSetupInfo.courseId()} and attach it to a course exercise</li>
+     * <li>Attach the course to a course exercise</li>
      * <li>Resolve the competency links the author picked in the create form, which are competencies of the target
      * course: the client drops the shared exercise's own links before it shows the form</li>
      * <li>Run the standard ZIP import using {@link ProgrammingExerciseImportFromFileService}</li>
@@ -100,10 +102,27 @@ public class ProgrammingExerciseImportFromSharingService {
         ProgrammingExercise exercise = sharingSetupInfo.exercise().toEntity();
         // The build configuration is a row of its own that names the exercise, so it is bound next to it.
         ProgrammingExerciseBuildConfig buildConfig = ProgrammingExerciseRequestDTO.buildConfigOf(sharingSetupInfo.exercise());
-        try (SharingMultipartZipFile zip = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo())) {
 
-            User user = userRepository.getUserWithAuthorities();
-            Course course = courseRepository.findByIdElseThrow(sharingSetupInfo.courseId());
+        User user = userRepository.getUserWithAuthorities();
+        Course course;
+        if (exercise.isExamExercise()) {
+            // The request only names the exercise group by id, so the role is checked in the course the group belongs to.
+            course = courseService.retrieveCourseOverExerciseGroupOrCourseId(exercise);
+        }
+        else {
+            course = courseRepository.findByIdElseThrow(sharingSetupInfo.courseId());
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        // A Security Framework choice changes the imported tests repository, so it needs the instructor role in the target course, like the endpoints that
+        // change the sandbox later.
+        SecurityFrameworkChoiceDTO securityFrameworkChoice = sharingSetupInfo.exercise().securityFramework();
+        if (securityFrameworkChoice != null) {
+            securityFrameworkService.validateChoice(exercise.getProgrammingLanguage(), exercise.getProjectType(), securityFrameworkChoice);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        }
+
+        try (SharingMultipartZipFile zip = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo())) {
 
             // An exam exercise reaches its course over the exercise group, which the request only references by id. A
             // course exercise gets the target course, overwriting the source course the exported details carry: the
@@ -116,16 +135,6 @@ public class ProgrammingExerciseImportFromSharingService {
             // this service resolves. The import runs through the creation pipeline, which reads the links off the
             // exercise, exactly as the entity request body used to leave them there.
             competencyExerciseLinkService.updateCompetencyLinks(sharingSetupInfo.exercise(), exercise);
-
-            // A Security Framework choice changes the imported tests repository, so it needs the instructor role in the target course, like the endpoints that
-            // change the sandbox later.
-            SecurityFrameworkChoiceDTO securityFrameworkChoice = sharingSetupInfo.exercise().securityFramework();
-            if (securityFrameworkChoice != null) {
-                securityFrameworkService.validateChoice(exercise.getProgrammingLanguage(), exercise.getProjectType(), securityFrameworkChoice);
-                // An exam exercise belongs to the course of its exercise group, so the instructor role is checked there.
-                Course targetCourse = exercise.isExamExercise() ? courseService.retrieveCourseOverExerciseGroupOrCourseId(exercise) : course;
-                authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, targetCourse, user);
-            }
 
             return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(exercise, buildConfig, zip, course, user, true, securityFrameworkChoice);
         }

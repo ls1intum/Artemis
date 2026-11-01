@@ -5,7 +5,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TeamService } from 'app/exercise/team/team.service';
+import { TeamOverviewPurpose, TeamService } from 'app/exercise/team/team.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { get } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -52,6 +52,7 @@ export class TeamParticipationTableComponent implements OnInit {
     private router = inject(Router);
     private accountService = inject(AccountService);
 
+    readonly overviewPurpose = input<TeamOverviewPurpose>('student');
     readonly team = input.required<Team>();
     readonly course = input.required<Course>();
     readonly exercise = input.required<Exercise>();
@@ -165,7 +166,7 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     loadAll() {
         this.isLoading.set(true);
-        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team()).subscribe({
+        this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course(), this.team(), this.overviewPurpose()).subscribe({
             next: (courseResponse) => {
                 const exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
                     return cloneWith(exercise, {
@@ -241,6 +242,29 @@ export class TeamParticipationTableComponent implements OnInit {
 
     onActivate() {
         window.scroll(0, 0);
+    }
+
+    /**
+     * Link to the exercise of a row. The staff overview stays in course management, because the student route would
+     * only open exercises the user may read as a student and shows the student projection.
+     * @param exercise the exercise of the row
+     */
+    exerciseLink(exercise: Exercise): (string | number | undefined)[] {
+        if (this.overviewPurpose() === 'staff') {
+            return ['/course-management', this.course().id, exercise.type + '-exercises', exercise.id];
+        }
+        return ['/courses', this.course().id, 'exercises', exercise.id];
+    }
+
+    /**
+     * Link to the team page of a row. The student route requires membership in the team, so staff stay in course management.
+     * @param exercise the exercise of the row, carrying its team
+     */
+    teamLink(exercise: ExerciseForTeam): (string | number | undefined)[] {
+        if (this.overviewPurpose() === 'staff') {
+            return ['/course-management', this.course().id, 'exercises', exercise.id, 'teams', exercise.team?.id];
+        }
+        return ['/courses', this.course().id, 'exercises', exercise.id, 'teams', exercise.team?.id];
     }
 
     /**

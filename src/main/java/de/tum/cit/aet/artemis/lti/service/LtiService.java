@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
-import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
@@ -60,8 +59,6 @@ public class LtiService {
 
     private final UserCourseRoleRepository userCourseRoleRepository;
 
-    private final AuthorityService authorityService;
-
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final JWTCookieService jwtCookieService;
@@ -70,7 +67,7 @@ public class LtiService {
 
     private final UserRecoveryKeyService userRecoveryKeyService;
 
-    public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
+    public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, JWTCookieService jwtCookieService, UserLtiRepository userLtiRepository,
             UserRecoveryKeyService userRecoveryKeyService) {
         this.userCreationService = userCreationService;
@@ -78,7 +75,6 @@ public class LtiService {
         this.userRecoveryKeyService = userRecoveryKeyService;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
-        this.authorityService = authorityService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.jwtCookieService = jwtCookieService;
     }
@@ -183,9 +179,6 @@ public class LtiService {
         if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.STUDENT)) {
             userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.STUDENT));
         }
-        user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
-        user.setAuthorities(authorityService.buildAuthorities(user));
-        userCreationService.saveUser(user);
     }
 
     /**

@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -79,10 +79,16 @@ describe('QuizExerciseUpdateComponent schedule section', () => {
     };
 
     beforeEach(async () => {
+        const snapshot = new ActivatedRouteSnapshot();
+        snapshot.params = { courseId: String(course.id), exerciseId: '456' };
+        snapshot.queryParams = {};
+        vi.spyOn(snapshot, 'pathFromRoot', 'get').mockReturnValue([snapshot]);
+        vi.spyOn(snapshot, 'routeConfig', 'get').mockReturnValue({ path: 'quiz-exercises/:exerciseId/edit' });
+
         await TestBed.configureTestingModule({
             providers: [
                 MockProvider(DialogService),
-                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: 456 }) }, queryParams: of({}) } },
+                { provide: ActivatedRoute, useValue: { snapshot, params: of(snapshot.params), queryParams: of(snapshot.queryParams) } },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },

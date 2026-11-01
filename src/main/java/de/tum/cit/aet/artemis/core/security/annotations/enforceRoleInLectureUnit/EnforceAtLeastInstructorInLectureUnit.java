@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("@elevatedAccessService.hasAtLeastRoleOrAdminAccess(T(de.tum.cit.aet.artemis.core.security.Role).INSTRUCTOR)")
+@PreAuthorize("hasRole('USER')")
 @EnforceRoleInLectureUnit(Role.INSTRUCTOR)
 public @interface EnforceAtLeastInstructorInLectureUnit {
 

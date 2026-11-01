@@ -158,7 +158,10 @@ export class GradingService {
      * @param courseId the course for which the grade steps are queried
      * @param examId if present the grade steps for this exam are queried instead
      */
-    findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {
+    findGradeSteps(courseId: number, examId?: number, purpose: 'student' | 'management' = 'student'): Observable<GradeStepsDTO | undefined> {
+        if (examId !== undefined && purpose === 'management') {
+            return this.findGradingScaleForExam(courseId, examId).pipe(map((response) => response.body?.gradeSteps));
+        }
         let gradeStepsObservable: Observable<HttpResponse<GradeStepsDTO>>;
         if (examId != undefined) {
             gradeStepsObservable = this.findGradeStepsForExam(courseId, examId);
@@ -199,31 +202,13 @@ export class GradingService {
     }
 
     /**
-     * Finds a grade step for an exam that matches the given percentage
-     *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the grade step is retrieved
-     * @param percentage the percentage which will be matched
-     */
-    public matchPercentageToGradeStepForExam(courseId: number, examId: number, percentage: number): Observable<HttpResponse<GradeDTO>> {
-        return this.http.get<GradeDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale/match-grade-step?gradePercentage=${percentage}`, { observe: 'response' });
-    }
-
-    /**
-     * Finds a grade step for an exam or a course that matches the given percentage
+     * Finds a grade step for a course that matches the given percentage
      *
      * @param percentage the percentage which will be matched
      * @param courseId the course for which the matching is done
-     * @param examId if present, the matching is done for this exam instead
      */
-    public matchPercentageToGradeStep(percentage: number, courseId: number, examId?: number): Observable<GradeDTO | undefined> {
-        let responseObservable: Observable<HttpResponse<GradeDTO>>;
-        if (examId != undefined) {
-            responseObservable = this.matchPercentageToGradeStepForExam(courseId, examId, percentage);
-        } else {
-            responseObservable = this.matchPercentageToGradeStepForCourse(courseId, percentage);
-        }
-        return responseObservable.pipe(
+    public matchPercentageToGradeStep(percentage: number, courseId: number): Observable<GradeDTO | undefined> {
+        return this.matchPercentageToGradeStepForCourse(courseId, percentage).pipe(
             map((response) => {
                 if (response && response.body) {
                     return response.body;

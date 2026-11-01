@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { QuizAnswerSelection } from 'app/quiz/shared/util/quiz-answer-selection';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
@@ -391,14 +392,14 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * loads quiz exercise and starts preview mode
      */
     initPreview() {
-        this.quizExerciseService.find(this.quizId).subscribe({
+        (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(this.quizId) : this.quizExerciseService.find(this.quizId)).subscribe({
             next: (quizExercise) => this.startQuizPreviewOrPractice(quizExercise),
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
 
     initShowSolution() {
-        this.quizExerciseService.find(this.quizId).subscribe({
+        (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(this.quizId) : this.quizExerciseService.find(this.quizId)).subscribe({
             next: (quizExercise) => {
                 this.quizExercise.set(quizExercise);
                 this.initQuiz();
