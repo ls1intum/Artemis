@@ -213,7 +213,7 @@ paths:
         required: true
         schema:
           type: string
-          enum: [start-now, end-now, set-visible]
+          enum: [start-now, set-visible]
       responses:
         '200':
           description: OK
