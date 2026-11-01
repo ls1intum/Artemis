@@ -6,7 +6,7 @@
                 "sidebarTitle": "Smart Quizzes",
                 "intro": "Hyperion generates multiple-choice questions for every lecture unit linked to a competency of this course, grounded in that unit's slides, transcript or text, and judges each one before you see it. Approve the questions you want to use in quizzes and exclude the ones you do not. The approved questions will later also drive personalised learning: students practise with questions tailored to their strengths and weaknesses.",
                 "progress": {
-                    "title": "Pool",
+                    "title": "Smart Quizzes Status",
                     "total": "planned",
                     "ready": "generated and checked",
                     "pending": "still being generated",

@@ -514,6 +514,17 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * Folds or unfolds the review queue when a click lands anywhere in its header row. The panel's own toggle button handles its
+     * clicks itself and stays the control for keyboard users.
+     */
+    toggleQueueFromHeader(event: MouseEvent): void {
+        const target = event.target as Element | null;
+        if (target?.closest('.tumaet-ui-panel-header') && !target.closest('.tumaet-ui-panel-toggler')) {
+            this.queueCollapsed.update((collapsed) => !collapsed);
+        }
+    }
+
     /** Asks for confirmation, then stops the running build after its current step. */
     confirmCancelBuild(): void {
         this.confirmationService.confirm({

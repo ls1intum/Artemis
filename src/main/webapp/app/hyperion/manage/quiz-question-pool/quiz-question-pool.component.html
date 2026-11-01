@@ -154,8 +154,10 @@
 
     @if (showNeedsReviewQueue()) {
         <tumaet-ui-panel
+            class="[&_.tumaet-ui-panel-header]:cursor-pointer"
             [toggleable]="true"
             [(collapsed)]="queueCollapsed"
+            (click)="toggleQueueFromHeader($event)"
             [toggleAriaLabel]="'artemisApp.hyperion.quizQuestionPool.list.needsReviewToggle' | artemisTranslate"
             data-testid="pool-needs-review-queue"
         >
@@ -175,6 +177,7 @@
                     [deletionBlocked]="isRunning()"
                     [busyQuestionIds]="busyQuestionIds()"
                     [showContext]="true"
+                    [showSectionHeadings]="false"
                     (review)="review($event)"
                     (delete)="confirmDeleteQuestion($event)"
                 />

@@ -50,6 +50,8 @@ export class QuizQuestionPoolItemListComponent {
     readonly busyQuestionIds = input<ReadonlySet<number>>(new Set());
     /** Shows each question's competency and lecture unit, for lists that mix several units. */
     readonly showContext = input(false);
+    /** Shows the heading of each section; off where the surrounding panel already names the section. */
+    readonly showSectionHeadings = input(true);
     /** Shows a delete button on each question. */
     readonly canDelete = input(false);
     /** Disables the delete buttons and explains why, while a build runs. */

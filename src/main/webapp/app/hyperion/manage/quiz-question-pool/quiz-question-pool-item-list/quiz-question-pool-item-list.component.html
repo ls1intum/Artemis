@@ -16,7 +16,9 @@
 
     @if (needsReviewViews().length) {
         <section class="flex flex-col gap-3" data-testid="pool-section-needs-review">
-            <p class="m-0 font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.needsReview" [translateValues]="{ count: needsReviewViews().length }"></p>
+            @if (showSectionHeadings()) {
+                <p class="m-0 font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.needsReview" [translateValues]="{ count: needsReviewViews().length }"></p>
+            }
             <tumaet-ui-message severity="warn" [text]="'artemisApp.hyperion.quizQuestionPool.list.needsReviewHint' | artemisTranslate" />
             @for (item of needsReviewViews(); track item.question.id) {
                 <jhi-quiz-question-pool-item
@@ -35,7 +37,9 @@
 
     @if (acceptedViews().length) {
         <section class="flex flex-col gap-3" data-testid="pool-section-accepted">
-            <p class="m-0 font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.accepted" [translateValues]="{ count: acceptedViews().length }"></p>
+            @if (showSectionHeadings()) {
+                <p class="m-0 font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.accepted" [translateValues]="{ count: acceptedViews().length }"></p>
+            }
             @for (item of acceptedViews(); track item.question.id) {
                 <jhi-quiz-question-pool-item
                     [item]="item"
@@ -53,11 +57,13 @@
 
     @if (rejectedViews().length) {
         <section class="flex flex-col gap-3" data-testid="pool-section-rejected">
-            <p
-                class="m-0 font-semibold text-muted-color"
-                jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.rejected"
-                [translateValues]="{ count: rejectedViews().length }"
-            ></p>
+            @if (showSectionHeadings()) {
+                <p
+                    class="m-0 font-semibold text-muted-color"
+                    jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.rejected"
+                    [translateValues]="{ count: rejectedViews().length }"
+                ></p>
+            }
             <tumaet-ui-message severity="info" [text]="'artemisApp.hyperion.quizQuestionPool.list.rejectedHint' | artemisTranslate" />
             @for (item of rejectedViews(); track item.question.id) {
                 <jhi-quiz-question-pool-item

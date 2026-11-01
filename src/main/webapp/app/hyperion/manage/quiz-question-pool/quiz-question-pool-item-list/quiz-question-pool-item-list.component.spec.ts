@@ -93,6 +93,18 @@ describe('QuizQuestionPoolItemListComponent', () => {
         expect(fixture.debugElement.query(By.css('[data-testid="pool-section-rejected"]'))).not.toBeNull();
     });
 
+    it('should leave out the section headings when the surrounding panel names the section', () => {
+        setup(defaultQuestions());
+        const headings = () => fixture.debugElement.queryAll(By.css('section > p.font-semibold')).length;
+        expect(headings()).toBe(3);
+
+        fixture.componentRef.setInput('showSectionHeadings', false);
+        fixture.detectChanges();
+
+        expect(headings()).toBe(0);
+        expect(fixture.debugElement.query(By.css('[data-testid="pool-section-needs-review"]'))).not.toBeNull();
+    });
+
     it('should count questions that are not judged yet and questions that failed', () => {
         setup(defaultQuestions());
 

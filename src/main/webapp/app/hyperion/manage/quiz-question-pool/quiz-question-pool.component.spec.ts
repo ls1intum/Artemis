@@ -208,6 +208,26 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.showNeedsReviewQueue()).toBe(false);
     });
 
+    it('should fold and unfold the review queue from anywhere in its header row except the toggle button', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const header = document.createElement('div');
+        header.className = 'tumaet-ui-panel-header';
+        const title = document.createElement('span');
+        const toggler = document.createElement('button');
+        toggler.className = 'tumaet-ui-panel-toggler';
+        header.append(title, toggler);
+        const content = document.createElement('div');
+        const clickOn = (target: Element) => component.toggleQueueFromHeader({ target } as unknown as MouseEvent);
+
+        clickOn(title);
+        expect(component.queueCollapsed()).toBe(true);
+        clickOn(header);
+        expect(component.queueCollapsed()).toBe(false);
+        clickOn(toggler);
+        clickOn(content);
+        expect(component.queueCollapsed()).toBe(false);
+    });
+
     it('should drop the previous course and its polling when the route moves to another course', () => {
         vi.useFakeTimers();
         const params = new Subject<Record<string, string>>();
