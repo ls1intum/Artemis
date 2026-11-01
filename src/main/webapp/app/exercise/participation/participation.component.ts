@@ -1,3 +1,13 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiDatePickerComponent,
+    TumAetUiInputDirective,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Subject, Subscription } from 'rxjs';
@@ -29,7 +39,7 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -37,7 +47,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { TableLazyLoadEvent } from 'primeng/table';
+import { TableViewLazyLoadEvent } from 'app/shared-ui/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { ParticipationManagementDTO } from './participation-management-dto.model';
@@ -58,9 +68,7 @@ import { Range } from 'app/foundation/util/utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { TooltipModule } from 'primeng/tooltip';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
@@ -89,6 +97,12 @@ export enum FilterProp {
     templateUrl: './participation.component.html',
     providers: [ExerciseCacheService],
     imports: [
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiPopoverComponent,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        TumAetUiTagComponent,
         TranslateDirective,
         ParticipationAccessNoticeComponent,
         FormsModule,
@@ -107,9 +121,6 @@ export enum FilterProp {
         TeamStudentsListComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
-        NgbPopover,
-        TooltipModule,
-        TumAetUiTagComponent,
         ExternalSubmissionButtonComponent,
         ExerciseActionButtonComponent,
         ExerciseScoresExportButtonComponent,
@@ -216,7 +227,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     readonly isExamExercise = computed(() => !!this.exercise()?.exerciseGroup);
 
-    private lastLazyEvent: TableLazyLoadEvent | undefined;
+    private lastLazyEvent: TableViewLazyLoadEvent | undefined;
     private currentLoadRequestId = 0;
     // private exerciseSubmissionState: ExerciseSubmissionState = {};
     private paramSub?: Subscription;
@@ -254,7 +265,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly individualDueDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('individualDueDateCellTemplate');
     readonly completionDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('completionDateCellTemplate');
     readonly lastResultCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('lastResultCellTemplate');
-    readonly exportPopover = viewChild<NgbPopover>('exportPopover');
+    readonly exportPopover = viewChild<TumAetUiPopoverComponent>('exportPopover');
 
     /** Whether the result cell names how the result was produced; only meaningful where manual results can exist. */
     readonly showAssessmentType = computed(() => this.newManualResultAllowed() || !!this.exercise()?.allowComplaintsForAutomaticAssessments);
@@ -392,7 +403,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             const course = new Course();
             course.id = Number(params['courseId']);
             this.course.set(course);
-            this.loadExercise(+params['exerciseId']);
+            this.loadExercise(+params['exerciseId'], !!params['examId']);
         });
         this.isAdmin.set(this.accountService.isAdmin());
         this.isLocalCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
@@ -409,9 +420,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.websocketSubscriptions.forEach((sub) => sub.unsubscribe());
     }
 
-    private loadExercise(exerciseId: number) {
+    private loadExercise(exerciseId: number, exam: boolean) {
         this.isLoading.set(true);
-        this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
+        (exam ? this.exerciseService.findForExamManagement(exerciseId) : this.exerciseService.findForStaff(exerciseId)).subscribe((exerciseResponse) => {
             const ex = exerciseResponse.body!;
             this.exercise.set(ex);
             this.newManualResultAllowed.set(areManualResultsAllowed(ex));
@@ -452,7 +463,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.websocketSubscriptions.push(submissionSub, resultSub);
     }
 
-    onLazyLoad(event: TableLazyLoadEvent) {
+    onLazyLoad(event: TableViewLazyLoadEvent) {
         this.lastLazyEvent = event;
         this.loadPage();
     }
@@ -472,7 +483,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             scoreRangeUpper: this.rangeFilter()?.upperBound,
         });
 
-        this.participationService.searchParticipations(ex.id, search).subscribe({
+        this.participationService.searchParticipations(ex.id, search, ex.exerciseGroup ? 'exam' : 'course').subscribe({
             next: (result) => {
                 if (requestId === this.currentLoadRequestId) {
                     this.participations.set(result.content);

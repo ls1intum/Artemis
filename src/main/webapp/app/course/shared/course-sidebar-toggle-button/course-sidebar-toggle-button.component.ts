@@ -1,14 +1,13 @@
 import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { facSidebar } from 'app/foundation/icons/icons';
-import { ButtonModule } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-sidebar-toggle-button',
-    imports: [FaIconComponent, TooltipModule, ButtonModule, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TumAetUiButtonDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
     templateUrl: './course-sidebar-toggle-button.component.html',
     styleUrl: './course-sidebar-toggle-button.component.scss',
 })

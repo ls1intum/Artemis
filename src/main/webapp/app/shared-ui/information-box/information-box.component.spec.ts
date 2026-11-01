@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { InformationBoxComponent } from './information-box.component';
 import { provideTranslateService } from '@ngx-translate/core';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('InformationBoxComponent', () => {
     let component: InformationBoxComponent;
@@ -10,7 +9,7 @@ describe('InformationBoxComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [InformationBoxComponent, NgbTooltipModule],
+            imports: [InformationBoxComponent],
             providers: [provideTranslateService()],
         }).compileComponents();
         fixture = TestBed.createComponent(InformationBoxComponent);

@@ -57,6 +57,19 @@ describe('UserSettingsContainerComponent', () => {
         expect(component.isAtLeastTutor()).toBe(true);
     });
 
+    it('shows the agent access tab only if it is enabled and the user may create tokens', () => {
+        component.isAgentAccessEnabled.set(false);
+        expect(component.showAgentAccess()).toBe(false);
+
+        component.isAgentAccessEnabled.set(true);
+        expect(component.showAgentAccess()).toBe(true);
+
+        vi.spyOn(accountService, 'mayCreateAgentTokens').mockReturnValue(false);
+        component.isAgentAccessEnabled.set(false);
+        component.isAgentAccessEnabled.set(true);
+        expect(component.showAgentAccess()).toBe(false);
+    });
+
     it('follows the profile picture when it changes while the user stays logged in', () => {
         component.ngOnInit();
         expect(component.currentUser()?.imageUrl).toBe('profile-pictures/first.png');

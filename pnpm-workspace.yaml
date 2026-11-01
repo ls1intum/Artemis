@@ -7,67 +7,67 @@ packages:
   - 'packages/*'
 
 catalog:
-  '@analogjs/vite-plugin-angular': 2.9.1
-  '@analogjs/vitest-angular': 2.9.1
+  '@analogjs/vite-plugin-angular': 2.9.2
+  '@analogjs/vitest-angular': 2.9.2
   '@arethetypeswrong/cli': 0.18.5
-  '@angular-devkit/architect': 0.2202.3
-  '@angular-devkit/core': 22.2.3
+  '@angular-devkit/architect': 0.2202.5
+  '@angular-devkit/core': 22.2.5
   # Released from angular/components with @angular/cdk, and peers on exactly that cdk version:
   # move both together.
-  '@angular/aria': 22.2.4
-  '@angular/build': 22.2.3
-  '@angular/cdk': 22.2.4
-  '@angular/cli': 22.2.3
-  '@angular/common': 22.2.3
-  '@angular/compiler': 22.2.3
-  '@angular/compiler-cli': 22.2.3
-  '@angular/core': 22.2.3
-  '@angular/forms': 22.2.3
-  '@angular/localize': 22.2.3
-  '@angular/platform-browser': 22.2.3
+  '@angular/aria': 22.2.5
+  '@angular/build': 22.2.5
+  '@angular/cdk': 22.2.5
+  '@angular/cli': 22.2.5
+  '@angular/common': 22.2.4
+  '@angular/compiler': 22.2.4
+  '@angular/compiler-cli': 22.2.4
+  '@angular/core': 22.2.4
+  '@angular/forms': 22.2.4
+  '@angular/localize': 22.2.4
+  '@angular/platform-browser': 22.2.4
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
   '@playwright/test': 1.64.1
-  '@storybook/addon-a11y': 10.6.3
-  '@storybook/addon-docs': 10.6.3
-  '@storybook/addon-themes': 10.6.3
-  '@storybook/addon-vitest': 10.6.3
-  '@storybook/angular-vite': 10.6.3
+  '@storybook/addon-a11y': 10.6.5
+  '@storybook/addon-docs': 10.6.5
+  '@storybook/addon-themes': 10.6.5
+  '@storybook/addon-vitest': 10.6.5
+  '@storybook/angular-vite': 10.6.5
   '@tailwindcss/postcss': 4.3.3
   # Node 24 is the supported runtime (.nvmrc, `engines`, the Dockerfiles and CI). Stay on the 24.x line: @types/node 25 and 26
   # describe the APIs of Node versions we do not support yet. Move to the next major together with the Node major, not on its own.
   '@types/node': 24.19.2
   '@types/react': 19.2.18
-  '@vitest/browser': 5.0.3
-  '@vitest/browser-playwright': 5.0.3
-  '@vitest/coverage-istanbul': 5.0.3
-  '@vitest/coverage-v8': 5.0.3
+  '@vitest/browser': 5.0.5
+  '@vitest/browser-playwright': 5.0.5
+  '@vitest/coverage-istanbul': 5.0.5
+  '@vitest/coverage-v8': 5.0.5
   chokidar: 5.0.0
   concurrently: 10.0.6
   cross-env: 10.1.0
   dayjs: 1.11.23
   eslint: 10.13.0
-  eslint-plugin-storybook: 10.6.3
+  eslint-plugin-storybook: 10.6.5
   jsdom: 30.0.1
   lodash-es: 4.18.1
-  ng-packagr: 22.2.4
-  postcss: 8.5.31
+  ng-packagr: 22.2.5
+  postcss: 8.5.32
   publint: 0.3.25
   playwright: 1.64.1
   # Only here to satisfy Storybook's peer requirement (packages/tum-aet-ui declares it); Artemis itself is Angular.
   # Must equal the react and react-dom overrides below - see the note there.
   react: 19.2.8
   rxjs: 7.8.2
-  sass: 1.106.0
+  sass: 1.106.1
   semver: 7.8.5
-  storybook: 10.6.3
+  storybook: 10.6.5
   stylelint: 17.16.0
   tailwindcss: 4.3.3
   tslib: 2.8.1
   typescript: 6.0.3
-  vite: 8.3.4
-  vitest: 5.0.3
+  vite: 8.3.5
+  vitest: 5.0.5
   yaml: 2.9.1
   zone.js: 0.16.3
 
@@ -133,13 +133,13 @@ overrides:
   # @angular/localize is only pulled in transitively (e.g. via @ng-bootstrap/ng-bootstrap,
   # whose peer range requires the current Angular major). Without this pin it resolves to a
   # straggler from an older major that violates that peer range; keep it equal to @angular/core.
-  '@angular/localize': 22.2.3
+  '@angular/localize': 22.2.4
   # @angular/animations is never declared either: it arrives as an optional auto-installed peer of
   # @angular/platform-browser. Both sides of that edge pin an exact patch - platform-browser asks for
   # animations of its own version and animations asks for core of its own version - so without this pin
   # an Angular patch bump leaves animations behind on the old patch against the new core. Keep it equal
   # to @angular/core.
-  '@angular/animations': 22.2.3
+  '@angular/animations': 22.2.4
   'babel-plugin-istanbul>test-exclude': '8.0.0'
   '@babel/core': '7.29.7'
   '@babel/runtime': '7.29.10'
@@ -169,13 +169,13 @@ overrides:
   # Held at 30.0.1: in 30.1.0 a detached element's style object no longer passes jsdom's own
   # brand check, so reading a property off it throws "called on an object that is not a valid
   # instance of CSSStyleProperties". PrimeNG's MotionDirective does exactly that while tearing
-  # down, which failed 65 tests across two specs on teardown alone. Still broken in 30.1.2 (re-checked
-  # 2026-10-10). Revisit once PrimeNG or jsdom fixes it; keep this equal to the catalog entry.
+  # down, which failed 65 tests across two specs on teardown alone. Still broken in 30.1.3 (93 failures; re-checked
+  # 2026-10-29). Revisit once PrimeNG or jsdom fixes it; keep this equal to the catalog entry.
   jsdom: '30.0.1'
   # 0.18.11 was published by accident with breaking changes and is deprecated on npm ("Use 0.19.0 instead"); 0.19.0 is the real
   # release of those changes. They only concern the `strict` option (a glyph missing from the font is reported as
   # `symbolNotInFont`), which the markdown renderer leaves at its default. Do not use 0.18.11.
-  katex: '0.19.0'
+  katex: '0.19.1'
   # Must stay >= 0.2.119: 0.2.118 only fixes CVE-2026-102360, 0.2.119 also fixes CVE-2026-102521. Mend flags 0.2.117, reached through yjs,
   # y-protocols, y-monaco and @tumaet/apollon, none of which declare a patched range of their own yet.
   lib0: '0.2.119'
@@ -190,7 +190,7 @@ overrides:
   # (GHSA: custom generators can loop indefinitely when size is zero).
   nanoid: '3.3.20'
   piscina: '5.3.2'
-  postcss: '8.5.31'
+  postcss: '8.5.32'
   punycode: '2.3.1'
   # React and react-dom must resolve to one version each, and to the same one: react-dom asserts this at import time
   # and throws "Incompatible React versions" otherwise. Only Storybook renders React here, but that is enough - the
@@ -207,7 +207,7 @@ overrides:
   react: '19.2.8'
   react-dom: '19.2.8'
   semver: '7.8.5'
-  serialize-javascript: '7.1.2'
+  serialize-javascript: '7.1.4'
   shell-quote: '1.12.0'
   tar: '7.5.22'
   tmp: '0.2.7'
@@ -249,26 +249,16 @@ allowBuilds:
   msgpackr-extract: true
   unrs-resolver: true
 
-# Acknowledged audit advisories that `pnpm audit` should not flag.
-# GHSA-8988-4f7v-96qf (@opentelemetry/core < 2.8.0, moderate: unbounded memory
-# allocation in W3C Baggage propagation) reaches us only through the dev-only
-# chain lighthouse > @sentry/node@9 > @opentelemetry/core@1.30.1. It is never
-# bundled into the production WAR and processes no untrusted baggage in our usage.
-# The fix exists only in @opentelemetry/core >= 2.8.0 (the OTel 2.x train), which
-# requires @sentry/node >= 10, while lighthouse still pins @sentry/node@^9, so there is
-# no in-range upgrade. Revisit when lighthouse moves to @sentry/node 10 — at that point
-# this entry should be removed rather than bumped.
-# (The server-side Java equivalent, GHSA-rcgg-9c38-7xpx, is already handled by the
-# opentelemetry_version pin in gradle.properties.)
-auditConfig:
-  ignoreGhsas:
-    - 'GHSA-8988-4f7v-96qf'
-
 minimumReleaseAgeExclude:
-  - '@angular-devkit/architect@0.2202.3'
-  - '@angular-devkit/core@22.2.3'
-  - '@angular-devkit/schematics@22.2.3'
-  - '@angular/build@22.2.3'
-  - '@angular/cli@22.2.3'
-  - '@schematics/angular@22.2.3'
+  - '@angular/animations@22.2.4'
+  - '@angular/common@22.2.4'
+  - '@angular/compiler-cli@22.2.4'
+  - '@angular/compiler@22.2.4'
+  - '@angular/core@22.2.4'
+  - '@angular/forms@22.2.4'
+  - '@angular/language-service@22.2.4'
+  - '@angular/localize@22.2.4'
+  - '@angular/platform-browser@22.2.4'
+  - '@angular/router@22.2.4'
+  - '@angular/service-worker@22.2.4'
   - '@tumaet/apollon@5.5.0'

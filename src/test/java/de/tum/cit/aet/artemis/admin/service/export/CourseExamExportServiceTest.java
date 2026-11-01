@@ -46,7 +46,7 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseForArchiveExams() throws IOException {
         var course = courseUtilService.createEnrolledCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
         var exam = examRepository.findByCourseId(course.getId()).stream().findFirst().orElseThrow();
@@ -57,7 +57,7 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentBa
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportCourseForArchive() throws IOException {
         // Add tutor for complaint response — created before course so prefix enrollment picks them up
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor5");

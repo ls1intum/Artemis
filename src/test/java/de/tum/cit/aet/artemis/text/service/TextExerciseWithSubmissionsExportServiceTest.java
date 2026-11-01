@@ -42,7 +42,7 @@ class TextExerciseWithSubmissionsExportServiceTest extends AbstractSpringIntegra
     private Path exportDir;
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportTextExerciseWithSubmissions_writesTheExerciseDetailsWithoutTheEntityGraph() throws Exception {
         Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise(TEST_PREFIX);
         TextExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);

@@ -48,19 +48,19 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
         programmingExerciseIntegrationTestService.testProgrammingExerciseIsReleased_IsReleasedAndHasResults();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
         programmingExerciseIntegrationTestService.testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void checkIfProgrammingExerciseIsReleased_IsReleasedAndHasNoResults() throws Exception {
         programmingExerciseIntegrationTestService.checkIfProgrammingExerciseIsReleased_IsReleasedAndHasNoResults();
     }
@@ -72,55 +72,55 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportSubmissionsByParticipationIds_excludePracticeSubmissions() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_excludePracticeSubmissions();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_includePracticeSubmissions();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportSubmissionsByParticipationIds() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportSubmissionAnonymizationCombining() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionAnonymizationCombining();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportSubmissionsByParticipationIds_nonExistentParticipationId_notFound() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_nonExistentParticipationId_notFound();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExportSubmissionsByStudentLogins() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByStudentLogins();
     }
@@ -128,19 +128,19 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     // TODO: enable or remove the test
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testProgrammingExerciseDelete() throws Exception {
         programmingExerciseIntegrationTestService.testProgrammingExerciseDelete();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
         programmingExerciseIntegrationTestService.testProgrammingExerciseDelete_failToDeleteBuildPlan();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testProgrammingExerciseDelete_buildPlanNotFoundInJenkins() throws Exception {
         var programmingExercise = programmingExerciseIntegrationTestService.programmingExercise;
         final var projectKey = programmingExercise.getProjectKey();
@@ -160,7 +160,7 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     // TODO: enable or remove the test
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testProgrammingExerciseDelete_buildPlanFailsInJenkins() throws Exception {
         var programmingExercise = programmingExerciseIntegrationTestService.programmingExercise;
         final var projectKey = programmingExercise.getProjectKey();
@@ -179,147 +179,147 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     // TODO: enable or remove the test
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
         programmingExerciseIntegrationTestService.testProgrammingExerciseDelete_buildPlanDoesntExist();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
         programmingExerciseIntegrationTestService.testProgrammingExerciseDelete_failToDeleteCiProject();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testProgrammingExerciseDelete_failToDeleteVcsProject() throws Exception {
         programmingExerciseIntegrationTestService.testProgrammingExerciseDelete_failToDeleteVcsProject();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testProgrammingExerciseDelete_failToDeleteVcsRepositories() throws Exception {
         programmingExerciseIntegrationTestService.testProgrammingExerciseDelete_failToDeleteVcsRepositories();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {
-        programmingExerciseIntegrationTestService.testProgrammingExerciseDelete_invalidId_notFound();
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testProgrammingExerciseDelete_invalidId_forbidden() throws Exception {
+        programmingExerciseIntegrationTestService.testProgrammingExerciseDelete_invalidId_forbidden();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void testProgrammingExerciseDelete_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testProgrammingExerciseDelete_instructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetProgrammingExercise() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExercise();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetProgrammingExerciseWithStructuredGradingInstruction() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithStructuredGradingInstruction();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExercise_instructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetProgrammingExerciseWithSetupParticipations() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithSetupParticipations();
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation(boolean withSubmissionResults) throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation(withSubmissionResults);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults) throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(withSubmissionResults);
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetProgrammingExerciseWithSetupParticipations_invalidId_notFound() throws Exception {
-        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithSetupParticipations_invalidId_notFound();
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetProgrammingExerciseWithSetupParticipations_invalidId_forbidden() throws Exception {
+        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithSetupParticipations_invalidId_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetProgrammingExercisesForCourse() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExercisesForCourse();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGenerateStructureOracle() throws Exception {
         programmingExerciseIntegrationTestService.testGenerateStructureOracle();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_invalidTemplateBuildPlan_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExercise_idIsNull_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_idIsNull_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExercise_correctlySavesTestIds() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_correctlySavesTestIds();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExercise_staticCodeAnalysisMustNotChange_trueToFalse_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_staticCodeAnalysisMustNotChange_trueToFalse_badRequest();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_instructorNotInCourse_forbidden();
     }
@@ -327,13 +327,13 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     // TODO: enable or remove the test
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_invalidTemplateVcs_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExercise_invalidSolutionBuildPlan_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_invalidSolutionBuildPlan_badRequest();
     }
@@ -341,79 +341,79 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     // TODO: enable or remove the test
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExercise_invalidSolutionRepository_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_invalidSolutionRepository_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExercise_updatingCourseId_conflict() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExerciseShouldFailWithConflictWhenUpdatingCourseId();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateProgrammingExercise_updatingSCAEnabledOption_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExerciseShouldFailWithBadRequestWhenUpdatingSCAOption();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
         programmingExerciseIntegrationTestService.updateExerciseDueDateWithIndividualDueDateUpdate();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExerciseRemoveDueDate() throws Exception {
         programmingExerciseIntegrationTestService.updateExerciseRemoveDueDate();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.updateTimeline_intructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void updateTimeline_invalidId_notFound() throws Exception {
         programmingExerciseIntegrationTestService.updateTimeline_invalidId_notFound();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateTimeline_ok() throws Exception {
         programmingExerciseIntegrationTestService.updateTimeline_ok();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void updateProblemStatement_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.updateProblemStatement_instructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateProblemStatement_invalidId_notFound() throws Exception {
-        programmingExerciseIntegrationTestService.updateProblemStatement_invalidId_notFound();
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateProblemStatement_invalidId_forbidden() throws Exception {
+        programmingExerciseIntegrationTestService.updateProblemStatement_invalidId_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_failToCheckIfProjectExistsInCi() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_failToCheckIfProjectExistsInCi();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_jenkinsJobIsNullOrUrlEmpty() throws Exception {
         var programmingExercise = programmingExerciseIntegrationTestService.programmingExercise;
         programmingExercise.setId(null);
@@ -427,145 +427,145 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_exerciseIsNull_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_exerciseIsNull_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_idIsNotNull_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_idIsNotNull_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void createProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_instructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_titleNull_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_titleNull_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_titleContainsBadCharacter_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_titleContainsBadCharacter_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_invalidShortName_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_invalidShortName_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_invalidCourseShortName_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_invalidCourseShortName_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_emptyRepositoriesUnsupportedLanguage_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_emptyRepositoriesUnsupportedLanguage_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_sameShortNameInCourse_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_shortNameContainsBadCharacters_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_shortNameContainsBadCharacters_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_noProgrammingLanguageSet_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_noProgrammingLanguageSet_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_packageNameContainsBadCharacters_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_packageNameContainsBadCharacters_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_packageNameContainsKeyword_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_packageNameContainsKeyword_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_packageNameElementBeginsWithDigit_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_packageNameElementBeginsWithDigit_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_packageNameIsNull_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_packageNameIsNull_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_packageNameIsTooLong_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_packageNameIsTooLong_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_maxScoreIsNull_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_maxScoreIsNull_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_noParticipationModeSelected_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_noParticipationModeSelected_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_staticCodeAnalysisAndSequential_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_staticCodeAnalysisAndSequential_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_unsupportedProgrammingLanguageForStaticCodeAnalysis_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_unsupportedProgrammingLanguageForStaticCodeAnalysis_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_noStaticCodeAnalysisButMaxPenalty_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_noStaticCodeAnalysisButMaxPenalty_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_maxStaticCodePenaltyNegative_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_maxStaticCodePenaltyNegative_badRequest();
     }
@@ -573,7 +573,7 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     // TODO: enable or remove the test
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest();
     }
@@ -581,25 +581,25 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     // TODO: enable or remove the test
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_projectTypeMissing_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_projectTypeMissing_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_projectTypeNotExpected_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_projectTypeNotExpected_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_onlineCodeEditorNotExpected_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_onlineCodeEditorNotExpected_badRequest();
     }
@@ -610,7 +610,7 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
         return supportedLanguages;
     }
 
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     // It should return a bad request error for all ProgrammingExercises except Haskell
     @MethodSource("generateSupportedLanguagesWithoutHaskell")
@@ -619,79 +619,79 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_notIncludedZeroMaxScore_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_notIncludedZeroMaxScore_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_invalidMaxScore_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_invalidMaxScore_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_includedAsBonus_invalidBonusPoints_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_includedAsBonus_invalidBonusPoints_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_sourceExerciseIdNegative_badRequest();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void importProgrammingExerciseMaxScoreInvalidBadRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExerciseMaxScoreInvalidBadRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExercise_noParticipationModeSelected_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_noParticipationModeSelected_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExercise_noProgrammingLanguage_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_noProgrammingLanguage_badRequest();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_instructorNotInCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExercise_templateIdDoesNotExist_notFound() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_templateIdDoesNotExist_notFound();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_sameShortNameInCourse_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExercise_sameTitleInCourse_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_sameTitleInCourse_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest();
     }
@@ -699,25 +699,25 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     // TODO: enable or remove the test
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExercise_scaChanged_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_scaChanged_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest();
     }
@@ -725,188 +725,215 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
     // TODO: enable or remove the test
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExercise_updatesTestCaseIds() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_updatesTestCaseIds();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testResetForbiddenTutor() throws Exception {
         programmingExerciseIntegrationTestService.testResetForbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbiddenEditor() throws Exception {
         programmingExerciseIntegrationTestService.testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetExerciseNotFound() throws Exception {
         programmingExerciseIntegrationTestService.testResetExerciseNotFound();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
         programmingExerciseIntegrationTestService.testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testResetOnlyRecreateBuildPlansAsEditorSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyRecreateBuildPlansSuccess();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
         programmingExerciseIntegrationTestService.testResetOnlyRecreateBuildPlansSuccess();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void exportSubmissionsByStudentLogins_exportAllAsTutor_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.exportSubmissionsByStudentLogins_exportAllAsTutor_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void generateStructureOracleForExercise_exerciseDoesNotExist_badRequest() throws Exception {
-        programmingExerciseIntegrationTestService.generateStructureOracleForExercise_exerciseDoesNotExist_badRequest();
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void generateStructureOracleForExercise_exerciseDoesNotExist_forbidden() throws Exception {
+        programmingExerciseIntegrationTestService.generateStructureOracleForExercise_exerciseDoesNotExist_forbidden();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void generateStructureOracleForExercise_invalidPackageName_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.generateStructureOracleForExercise_invalidPackageName_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getTestCaseState_exerciseDoesNotExist_notFound() throws Exception {
-        programmingExerciseIntegrationTestService.getTestCaseState_exerciseDoesNotExist_notFound();
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void getTestCaseState_exerciseDoesNotExist_forbidden() throws Exception {
+        programmingExerciseIntegrationTestService.getTestCaseState_exerciseDoesNotExist_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutoralt1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutoralt1", roles = "USER")
     void getTestCaseState_isNotTeachingAssistant_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.getTestCaseState_isNotTeachingAssistant_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getTestCases_asTutor() throws Exception {
         programmingExerciseIntegrationTestService.getTestCases_asTutor();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getTestCases_asStudent_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.getTestCases_asStudent_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other-teaching-assistant1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "other-teaching-assistant1", roles = "USER")
     void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.getTestCases_tutorInOtherCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateTestCases_asInstrutor() throws Exception {
         programmingExerciseIntegrationTestService.updateTestCases_asInstrutor();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateTestCases_asInstrutor_triggerBuildFails() throws Exception {
         programmingExerciseIntegrationTestService.updateTestCases_asInstrutor_triggerBuildFails();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateTestCases_nonExistingExercise_notFound() throws Exception {
-        programmingExerciseIntegrationTestService.updateTestCases_nonExistingExercise_notFound();
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateTestCases_nonExistingExercise_forbidden() throws Exception {
+        programmingExerciseIntegrationTestService.updateTestCases_nonExistingExercise_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "USER")
     void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.updateTestCases_instructorInWrongCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateTestCases_testCaseWeightSmallerThanZero_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateTestCases_testCaseWeightSmallerThanZero_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateTestCases_testCaseMultiplierSmallerThanZero_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateTestCases_testCaseMultiplierSmallerThanZero_badRequest();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateTestCases_testCaseBonusPointsNull() throws Exception {
         programmingExerciseIntegrationTestService.updateTestCases_testCaseBonusPointsNull();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void resetTestCaseWeights_asInstructor() throws Exception {
         programmingExerciseIntegrationTestService.resetTestCaseWeights_asInstructor();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "USER")
     void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.resetTestCaseWeights_instructorInWrongCourse_forbidden();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckPlagiarism() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarism();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckPlagiarismForTeamExercise() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarismForTeamExercise();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckPlagiarismJplagReport() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarismJplagReport();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetPlagiarismResult() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResult();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetPlagiarismResultWithoutResult() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResultWithoutResult();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetPlagiarismResultWithoutExercise() throws Exception {
         programmingExerciseIntegrationTestService.testGetPlagiarismResultWithoutExercise();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void unsupportedProgrammingLanguageIsRejectedByBothPlagiarismActions() throws Exception {
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
+        var exercise = (de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise) course.getExercises().iterator().next();
+        var unsupported = java.util.Arrays.stream(ProgrammingLanguage.values())
+                .filter(language -> !programmingLanguageFeatureService.getProgrammingLanguageFeatures(language).plagiarismCheckSupported()).findFirst().orElseThrow();
+        exercise.setProgrammingLanguage(unsupported);
+        programmingExerciseRepository.saveAndFlush(exercise);
+        long results = resultRepository.count();
+        for (String action : java.util.List.of("check-plagiarism", "check-plagiarism-jplag-report")) {
+            request.performMvcRequest(
+                    org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/programming/programming-exercises/{id}/" + action, exercise.getId())
+                            .param("similarityThreshold", "50").param("minimumScore", "0").param("minimumSize", "1"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("programmingLanguageNotSupported"));
+        }
+        org.assertj.core.api.Assertions.assertThat(resultRepository.count()).isEqualTo(results);
+    }
+
 }

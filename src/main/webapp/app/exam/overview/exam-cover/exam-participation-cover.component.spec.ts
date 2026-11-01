@@ -99,6 +99,13 @@ describe('ExamParticipationCoverComponent', () => {
         vi.clearAllMocks();
     });
 
+    it('should select instructor-owner conduction from known course access before loading', () => {
+        vi.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(studentExam));
+        component.startExam();
+        expect(load).toHaveBeenCalledWith(course.id, exam.id, studentExam.id, 'instructor-owner');
+    });
+
     it('should initialize accountName when identity resolves', async () => {
         const user = { name: 'admin' } as User;
         vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));

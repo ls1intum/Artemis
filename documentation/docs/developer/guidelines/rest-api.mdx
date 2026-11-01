@@ -686,16 +686,20 @@ public record ErrorDTO(
 
 ## Authorization
 
+Artemis knows two kinds of roles:
+
+- **Global authorities** are carried by the session token: `ROLE_USER` (every signed-in user), `ROLE_ADMIN` and `ROLE_SUPER_ADMIN`.
+- **Course roles** (student, tutor, editor, instructor) are held per course. They are stored in `user_course_role` and read from the database whenever they are checked. They are never part of the token or of the authorities of a user, so granting or revoking a course role takes effect with the next request, and a user can be a tutor in one course and a student in another.
+
 To reject unauthorized requests as early as possible, Artemis employs two solutions:
 
 1. **Implicit pre- and post-authorization annotations:**
    - `@AllowedTools(ToolTokenType.__)` ensures tool-based requests can only access specific endpoints following the Principle of Least Privilege
-   - `@EnforceRoleInResource` (e.g., `@EnforceAtLeastInstructorInCourse`) annotations require an authenticated caller at the method-security layer and enforce the role in the authorization aspect, using a lightweight indexed query for the caller's role in that resource
-   - The role in the resource is what decides access; a matching global authority is deliberately not required, because a course role does not always come with one
+   - `@EnforceRoleInResource` (e.g., `@EnforceAtLeastInstructorInCourse`) annotations require an authenticated caller at the method-security layer and enforce the course role in the authorization aspect, using a lightweight indexed query for the caller's role in the course of that resource
    - Currently available: `@EnforceRoleInCourse`, `@EnforceRoleInExercise`, `@EnforceRoleInLecture` and `@EnforceRoleInLectureUnit`
 
-2. **Explicit authorization checks (two-step process):**
-   - `@EnforceAtLeastRole` (e.g., `@EnforceAtLeastInstructor`) blocks users with wrong or missing global authorities without a database query, and additionally accepts request-bound administrator elevation
+2. **Explicit authorization checks:**
+   - `@EnforceAtLeastStudent` only requires a signed-in user. Combine it with `@ManualConfig` when the course role has to be derived from something that the annotations cannot read from the path, such as a participation, a submission, an exam or a request body, and check it with the `AuthorizationCheckService`
    - The `AuthorizationCheckService` checks access rights to individual resources by querying the database (must be performed explicitly)
 
 <Callout variant={CalloutVariant.info}>
@@ -705,21 +709,23 @@ To reject unauthorized requests as early as possible, Artemis employs two soluti
 Data that the server pushes over the websocket needs the same care: every websocket topic declares who may subscribe to it, in the same vocabulary as these annotations. See [WebSocket Topics](/developer/guidelines/websocket).
 
 <Callout variant={CalloutVariant.danger}>
-  **Every REST endpoint must carry an authorization annotation.** A mapping method (<code>@GetMapping</code>/<code>@PostMapping</code>/…) on a <code>@RestController</code> must declare one of the <code>@EnforceAtLeast*</code> / <code>@EnforceRoleIn*</code> annotations, <code>@EnforceAdmin</code>, <code>@EnforceNothing</code> (for genuinely public endpoints, which then live in a <code>…web.open</code> package), or — only when authorization is unavoidably handled in the method body — <code>@ManualConfig</code>. A class-level annotation (e.g. a class-level <code>@EnforceAdmin</code>) covers all of that controller's methods. This is enforced by <code>AuthorizationArchitectureTest#everyRestEndpointMustBeAuthorized</code>, so an endpoint can never be shipped without authorization; the few endpoints that handle authorization differently (e.g. via a shared-secret token or API key) are listed in that test's baseline.
+  **Every REST endpoint must carry an authorization annotation.** A mapping method (<code>@GetMapping</code>/<code>@PostMapping</code>/…) on a <code>@RestController</code> must declare one of the <code>@EnforceAtLeastStudent</code> / <code>@EnforceRoleIn*</code> annotations, <code>@EnforceAdmin</code>, <code>@EnforceNothing</code> (for genuinely public endpoints, which then live in a <code>…web.open</code> package), or — only when authorization is unavoidably handled in the method body — <code>@ManualConfig</code>. A class-level annotation (e.g. a class-level <code>@EnforceAdmin</code>) covers all of that controller's methods. This is enforced by <code>AuthorizationArchitectureTest#everyRestEndpointMustBeAuthorized</code>, so an endpoint can never be shipped without authorization; the few endpoints that handle authorization differently (e.g. via a shared-secret token or API key) are listed in that test's baseline.
 </Callout>
 
 ### Role Hierarchy
 
-Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant/tutor), USER, and ANONYMOUS. Each role has all the access rights of the roles following it (e.g., ANONYMOUS has almost no rights, while ADMIN users can access every page).
+Global authorities follow the hierarchy SUPER_ADMIN, ADMIN, USER. Course roles follow a separate hierarchy: instructor, editor, tutor, student. A higher course role satisfies a lower-role check only within the same course. Anonymous access describes a visitor who has not signed in.
 
-| **Minimum Role** | **Endpoint Annotation**   | **Path Prefix**          | **Package**          |
-|------------------|---------------------------|--------------------------|----------------------|
-| ADMIN            | `@EnforceAdmin`           | `/api/{module}/admin/`   | `{module}.web.admin` |
-| INSTRUCTOR       | `@EnforceAtLeastInstructor` | `/api/{module}/`       | `{module}.web`       |
-| EDITOR           | `@EnforceAtLeastEditor`   | `/api/{module}/`         | `{module}.web`       |
-| TA               | `@EnforceAtLeastTutor`    | `/api/{module}/`         | `{module}.web`       |
-| USER             | `@EnforceAtLeastStudent`  | `/api/{module}/`         | `{module}.web`       |
-| ANONYMOUS        | `@EnforceNothing`         | `/api/{module}/public/`  | `{module}.web.open`  |
+Resource authorization checks permit the administrator override only when administrator elevation is active: the persisted account is still an active administrator, the session carries ADMIN or SUPER_ADMIN, and the session satisfies the configured passkey requirement. An administrator can also use course roles assigned to their account. An endpoint that requires a teaching role belongs to a course, an exercise, a lecture or a lecture unit, whose course role is checked. An endpoint that has no such resource is open to every signed-in user or limited to administrators.
+
+| **Minimum Role** | **Endpoint Annotation**                                  | **Path Prefix**          | **Package**          |
+|------------------|----------------------------------------------------------|--------------------------|----------------------|
+| ADMIN            | `@EnforceAdmin`                                          | `/api/{module}/admin/`   | `{module}.web.admin` |
+| INSTRUCTOR       | `@EnforceAtLeastInstructorIn{Course,Exercise,Lecture,LectureUnit}` | `/api/{module}/` | `{module}.web`   |
+| EDITOR           | `@EnforceAtLeastEditorIn{Course,Exercise,Lecture,LectureUnit}`     | `/api/{module}/` | `{module}.web`   |
+| TA               | `@EnforceAtLeastTutorIn{Course,Exercise,Lecture,LectureUnit}`      | `/api/{module}/` | `{module}.web`   |
+| USER             | `@EnforceAtLeastStudent`                                 | `/api/{module}/`         | `{module}.web`       |
+| ANONYMOUS        | `@EnforceNothing`                                        | `/api/{module}/public/`  | `{module}.web.open`  |
 
 If you need to deviate from these rules, use `@ManualConfig`. Use this annotation only if absolutely necessary as it will exclude the endpoint from automatic authorization tests.
 
@@ -727,11 +733,12 @@ Use the `@Internal` annotation to mark methods or classes that should only be ac
 
 ### Implicit Authorization (Preferred)
 
-The following example makes the call accessible only to ADMIN and INSTRUCTOR users and checks access rights to the course in the database:
+The following example makes the call accessible only to instructors of the course (and to administrators with active elevation):
 
 **Do not write:**
 ```java
-@EnforceAtLeastInstructor
+@EnforceAtLeastStudent
+@ManualConfig
 public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
     var course = courseRepository.findById(courseId);
     authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -749,6 +756,8 @@ public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long cour
 }
 ```
 
+The resource annotation reads the id from the parameter with the name that the annotation declares (`courseId` by default). If a method uses more than one id, for example a course and an exam, the role is derived from one of them and the other one has to be shown to belong to it, as `ExamAccessService.checkExamBelongsToCourseElseThrow` does for exams. Never derive a role from one id and then act on a resource that was found through another, unverified id.
+
 ### Explicit Authorization
 
 <Callout variant={CalloutVariant.warning}>
@@ -759,38 +768,25 @@ public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long cour
   </ol>
 </Callout>
 
-Always annotate your REST endpoints with the annotation for the minimum role that has access:
+Annotate the endpoint with `@EnforceAtLeastStudent` and `@ManualConfig`, and check the minimum role that has access in the method body:
 
 ```java
-@EnforceAtLeastInstructor
-public ResponseEntity<Void> enableLearningPath(@PathVariable long courseId) {
-    var course = courseRepository.findById(courseId);
-    authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+@EnforceAtLeastStudent
+@ManualConfig
+public ResponseEntity<Void> cancelAssessment(@PathVariable long submissionId) {
+    var submission = submissionRepository.findByIdElseThrow(submissionId);
+    authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, submission.getExercise(), null);
     [...]
     return ResponseEntity.ok().build();
 }
 ```
 
-If a user passes pre-authorization, access to individual resources still needs to be checked. For example, a user can be a teaching assistant in one course but only a student in another:
+Access to individual resources always has to be checked against the resource itself. For example, a user can be a teaching assistant in one course but only a student in another:
 
 ```java
 // Pass 'null' instead of a user - the service will fetch the user object
 // and check if the user has at least the given role and access to the resource
 authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-```
-
-Use the `AuthorizationCheckService` to reduce duplication:
-
-```java
-@GetMapping("courses/{courseId}/programming-exercises")
-@EnforceAtLeastTutor
-public ResponseEntity<List<ProgrammingExercise>> getActiveProgrammingExercisesForCourse(@PathVariable Long courseId) {
-    Course course = courseRepository.findByIdElseThrow(courseId);
-    authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-
-    List<ProgrammingExercise> exercises = programmingExerciseService.findActiveExercisesByCourseId(courseId);
-    return ResponseEntity.ok().body(exercises);
-}
 ```
 
 The course repository call throws a `404 Not Found` exception if no matching course exists. The `AuthorizationCheckService` throws a `403 Forbidden` exception if the user is unauthorized.
@@ -840,6 +836,27 @@ Two things are easy to get wrong:
   `com.fasterxml.jackson` is Jackson 2 and is rejected by `ArchitectureTest.testNoJackson2InProductionCode`.
 - **Mappers are immutable.** There is no `configure(...)` or `registerModule(...)` on a built mapper. Derive one
   with `JsonMapper.builder()`, or `existingMapper.rebuild()` to start from an existing configuration.
+
+### Use records, not the tree model
+
+Read and write JSON through records, with `readValue` and `writeValueAsString`. Do not use the Jackson tree model in
+production code: `JsonNode`, `ObjectNode`, `ArrayNode` and the other classes of `tools.jackson.databind.node`, or the
+methods that build or read them (`readTree`, `valueToTree`, `treeToValue`, `createObjectNode`, `createArrayNode`,
+`readValueAsTree`). A `JsonNode` says nothing about what it holds, so a misspelled field name, a number read as text or
+a missing field compiles and then fails, or silently becomes a default, at run time. A record says what the JSON
+contains, is checked by the compiler, is documented and tested like any other DTO, and shows up in the API description.
+
+- **JSON from outside** (an LTI platform, an SBOM file, a response of another service): model the part you use as a
+  record and add `@JsonIgnoreProperties(ignoreUnknown = true)`. A claim that is a list or a map becomes a `List` or a
+  `Map<String, SomeRecord>`, never a `Map<String, Object>`.
+- **A body of several shapes**: a sealed interface with `@JsonTypeInfo`, see [DTO Polymorphism](#dto-polymorphism), or
+  one record with optional fields.
+- **A value that has to be read in a special way**: a `@JsonCreator`, or a deserializer written against the streaming
+  `JsonParser`, into a type that says what the value means.
+- **Passing a body on unchanged**: use the DTO of the endpoint that receives it, as the tools of the MCP endpoint do.
+
+There are no exceptions in production code. `JacksonTreeModelArchitectureTest` fails on any use. Tests may use the tree
+model to inspect JSON, because a test should not need a record for every payload it looks at.
 
 `ArtemisJacksonDefaults` is the single definition of how Artemis configures a mapper. It pins the Jackson 3
 defaults that would otherwise change the JSON on the wire, each with a TODO describing what has to happen before

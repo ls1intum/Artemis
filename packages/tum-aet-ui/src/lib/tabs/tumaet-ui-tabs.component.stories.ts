@@ -90,3 +90,58 @@ export const KeyboardNavigation: Story = {
         await expect(canvas.getByRole('tabpanel')).toHaveTextContent('Course settings');
     },
 };
+
+/** Height-bound editors and chats keep their own scroll area and a visible composer. */
+export const BoundedContent: Story = {
+    render: () => ({
+        props: { value: 'chat', messages: Array.from({ length: 50 }, (_, index) => `Message ${index + 1}`) },
+        template: `
+            <div data-testid="bounded-tabs" style="height: 20rem; width: min(36rem, 100%);">
+                <tumaet-ui-tabs [value]="value" (valueChange)="value = $event" style="height: 100%; min-height: 0;">
+                    <tumaet-ui-tab-list aria-label="Workspace" style="flex-shrink: 0;">
+                        <tumaet-ui-tab value="chat">Chat</tumaet-ui-tab>
+                        <tumaet-ui-tab value="notes">Notes</tumaet-ui-tab>
+                    </tumaet-ui-tab-list>
+                    <tumaet-ui-tab-panels style="flex: 1; min-height: 0; padding: 0; overflow: auto;">
+                        <tumaet-ui-tab-panel value="chat" preserveContent fill>
+                            <section aria-label="Chat conversation" style="height: 100%; min-height: 0; display: flex; flex-direction: column;">
+                                <div role="log" aria-label="Messages" tabindex="0" style="flex: 1; min-height: 0; overflow: auto;">
+                                    @for (message of messages; track message) { <p>{{ message }}</p> }
+                                </div>
+                                <label style="flex-shrink: 0;">Message<textarea aria-label="Message" style="display: block;"></textarea></label>
+                            </section>
+                        </tumaet-ui-tab-panel>
+                        <tumaet-ui-tab-panel value="notes">Workspace notes</tumaet-ui-tab-panel>
+                    </tumaet-ui-tab-panels>
+                </tumaet-ui-tabs>
+            </div>
+        `,
+    }),
+    play: async ({ canvas, userEvent }) => {
+        const bounds = canvas.getByTestId('bounded-tabs');
+        const chat = canvas.getByRole('region', { name: 'Chat conversation' });
+        const messages = canvas.getByRole('log', { name: 'Messages' });
+        const composer = canvas.getByRole('textbox', { name: 'Message' });
+
+        await waitFor(async () => {
+            await expect(chat.getBoundingClientRect().bottom).toBeLessThanOrEqual(bounds.getBoundingClientRect().bottom + 0.5);
+            await expect(chat.getBoundingClientRect().height).toBeGreaterThan(0);
+            await expect(chat.getBoundingClientRect().height).toBeLessThan(bounds.getBoundingClientRect().height);
+            await expect(composer.getBoundingClientRect().bottom).toBeLessThanOrEqual(bounds.getBoundingClientRect().bottom + 0.5);
+            await expect(messages.scrollHeight).toBeGreaterThan(messages.clientHeight);
+            await expect(messages.clientHeight).toBeGreaterThan(0);
+        });
+        await userEvent.type(composer, 'Unsaved draft');
+        const composerTop = composer.getBoundingClientRect().top;
+        messages.scrollTop = messages.scrollHeight;
+        await fireEvent.scroll(messages);
+        await expect(composer.getBoundingClientRect().top).toBeCloseTo(composerTop, 1);
+
+        await userEvent.click(canvas.getByRole('tab', { name: 'Notes' }));
+        await waitFor(() => expect(chat).not.toBeVisible());
+        await userEvent.click(canvas.getByRole('tab', { name: 'Chat' }));
+        await waitFor(() => expect(chat).toBeVisible());
+        await expect(canvas.getByRole('textbox', { name: 'Message' })).toBe(composer);
+        await expect(composer).toHaveValue('Unsaved draft');
+    },
+};

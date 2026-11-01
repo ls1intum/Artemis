@@ -649,20 +649,17 @@ describe('PdfViewerComponent', () => {
 
     it('should handle the page-input enter and focus interactions', async () => {
         await loadPdf();
-        const blur = vi.fn();
-        const select = vi.fn();
-        // PrimeNG 21 InputNumber.input is a plain ElementRef property, so the
-        // component reads it as .input; the mock exposes .input. as the ref object directly.
-        vi.spyOn(component, 'pageInputElement').mockReturnValue({ input: { nativeElement: { blur, select } } } as any);
-        const preventDefault = vi.fn();
-
-        component['onPageInputEnter']({ preventDefault } as unknown as Event);
-        expect(preventDefault).toHaveBeenCalled();
-        expect(blur).toHaveBeenCalled();
-
-        component['onPageInputFocus']();
+        const input = document.createElement('input');
+        const blur = vi.spyOn(input, 'blur');
+        const select = vi.spyOn(input, 'select');
+        const event = new Event('keydown', { cancelable: true });
+        Object.defineProperty(event, 'target', { value: input });
+        component['onPageInputEnter'](event);
+        expect(event.defaultPrevented).toBe(true);
+        expect(blur).toHaveBeenCalledOnce();
+        component['onPageInputFocus'](event);
         await new Promise<void>((resolve) => setTimeout(resolve, 0));
-        expect(select).toHaveBeenCalled();
+        expect(select).toHaveBeenCalledOnce();
     });
 
     it('should trigger a search from the search-input enter handler', async () => {

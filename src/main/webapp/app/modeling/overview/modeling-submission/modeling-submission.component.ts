@@ -7,7 +7,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faDownLeftAndUpRightToCenter, faExclamationTriangle, faTriangleExclamation, faUpRightAndDownLeftFromCenter, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { type CollaborationUser, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -33,7 +33,7 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
-import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
+import { EditorViewingPurpose, ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { ModelingAssessmentPanelDirective } from 'app/modeling/manage/assess/modeling-assessment-panel.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -128,6 +128,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return assessment.type ? `${assessment.type} ${name}` : name;
     }
 
+    viewingPurpose = input<EditorViewingPurpose>('owner');
     participationId = input<number>();
     inputExercise = input<ModelingExercise>();
     inputSubmission = input<ModelingSubmission>();
@@ -292,7 +293,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private fetchLatestSubmission() {
-        return this.modelingSubmissionService.getLatestSubmissionForModelingEditor(this.effectiveParticipationId()).pipe(
+        return this.modelingSubmissionService.getLatestSubmissionForModelingEditor(this.effectiveParticipationId(), this.viewingPurpose()).pipe(
             catchError((error: HttpErrorResponse) => {
                 onError(this.alertService, error);
                 return of(null);
@@ -301,7 +302,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private fetchSubmissionHistory() {
-        return this.modelingSubmissionService.getSubmissionsWithResultsForParticipation(this.effectiveParticipationId()).pipe(
+        return this.modelingSubmissionService.getSubmissionsWithResultsForParticipation(this.effectiveParticipationId(), this.viewingPurpose()).pipe(
             catchError((error: HttpErrorResponse) => {
                 onError(this.alertService, error);
                 return of([]);
@@ -445,7 +446,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.assessmentResult.set(this.modelingAssessmentService.convertResult(result));
                 this.prepareAssessmentData();
             } else if (!this.isAutomaticResult && this.isFeedbackView() && this.resultId && this.submissionId) {
-                this.modelingAssessmentService.getAssessment(this.submissionId, this.resultId).subscribe({
+                this.modelingAssessmentService.getAssessment(this.submissionId, this.resultId, this.viewingPurpose()).subscribe({
                     next: (assessmentResult: Result) => {
                         this.assessmentResult.set(assessmentResult);
                         this.prepareAssessmentData();

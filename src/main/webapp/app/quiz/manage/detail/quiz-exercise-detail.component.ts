@@ -70,7 +70,7 @@ export class QuizExerciseDetailComponent implements OnInit {
     }
 
     load() {
-        this.quizExerciseService.find(this.quizId).subscribe(async (quizExercise) => {
+        (this.isExamMode() ? this.quizExerciseService.findForExam(this.quizId) : this.quizExerciseService.find(this.quizId)).subscribe(async (quizExercise) => {
             this.quizExercise.set(quizExercise);
             this.quizExercise().quizBatches = this.quizExercise().quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
             this.quizExercise().isEditable = (this.quizExercise().isEditable ?? true) && isQuizEditable(this.quizExercise());
@@ -90,6 +90,7 @@ export class QuizExerciseDetailComponent implements OnInit {
         const dndCount = this.quizExercise().quizQuestions?.filter((question) => question.type === QuizQuestionType.DRAG_AND_DROP)?.length ?? 0;
         const shortCount = this.quizExercise().quizQuestions?.filter((question) => question.type === QuizQuestionType.SHORT_ANSWER)?.length ?? 0;
         const generalSection = getExerciseGeneralDetailsSection(exercise);
+        generalSection.details = generalSection.details.filter((detail) => !detail || detail.type !== DetailType.Link || !!detail.data.text);
         const modeSection = getExerciseModeDetailSection(exercise);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
 
