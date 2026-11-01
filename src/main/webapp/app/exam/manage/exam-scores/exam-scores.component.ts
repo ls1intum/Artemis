@@ -22,7 +22,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { declareExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -847,7 +847,7 @@ export class ExamScoresComponent implements OnInit {
             const examScoreDTO = this.studentIdToExamScoreDTOs.get(studentResult.userId);
             if (!examScoreDTO) {
                 const errorMessage = `Exam scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
-                this.logErrorOnSentry(errorMessage);
+                this.reportScoreCalculationError(errorMessage);
             } else {
                 examScoreDTO.scoreAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.scoreAchieved, this.course());
                 examScoreDTO.pointsAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.pointsAchieved, this.course());
@@ -856,19 +856,19 @@ export class ExamScoresComponent implements OnInit {
                     const errorMessage = `Different exam points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
                         examScoreDTO,
                     )}`;
-                    this.logErrorOnSentry(errorMessage);
+                    this.reportScoreCalculationError(errorMessage);
                 }
                 if (Math.abs(examScoreDTO.scoreAchieved - regularCalculation.scoreAchieved) > 0.1) {
                     const errorMessage = `Different exam score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
                         examScoreDTO,
                     )}`;
-                    this.logErrorOnSentry(errorMessage);
+                    this.reportScoreCalculationError(errorMessage);
                 }
             }
         }
     }
 
-    logErrorOnSentry(errorMessage: string) {
+    reportScoreCalculationError(errorMessage: string) {
         captureException(new Error(errorMessage));
     }
 

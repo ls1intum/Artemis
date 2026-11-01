@@ -17,7 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';

@@ -313,23 +313,23 @@ describe('ExamScoresComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should not log error on sentry when correct participant score calculation', () => {
+    it('should not report an error when correct participant score calculation', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
-        const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
+        const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
         fixture.detectChanges();
         expect(errorSpy).not.toHaveBeenCalled();
     });
 
-    it('should log error on sentry when missing participant score calculation', () => {
+    it('should report an error when missing participant score calculation', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [] })));
-        const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
+        const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });
 
-    it('should log error on sentry when wrong points calculation', () => {
+    it('should report an error when wrong points calculation', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         const cs1 = deepClone(examScoreStudent1);
         cs1.pointsAchieved = 99;
@@ -338,12 +338,12 @@ describe('ExamScoresComponent', () => {
         const cs3 = deepClone(examScoreStudent3);
         cs3.pointsAchieved = 99;
         findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
-        const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
+        const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });
 
-    it('should log error on sentry when wrong score calculation', () => {
+    it('should report an error when wrong score calculation', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         const cs1 = deepClone(examScoreStudent1);
         cs1.scoreAchieved = 99;
@@ -352,7 +352,7 @@ describe('ExamScoresComponent', () => {
         const cs3 = deepClone(examScoreStudent3);
         cs3.scoreAchieved = 99;
         findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
-        const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
+        const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });

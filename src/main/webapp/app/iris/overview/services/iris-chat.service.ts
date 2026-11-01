@@ -14,7 +14,7 @@ import { UserService } from 'app/account/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { Router } from '@angular/router';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import dayjs from 'dayjs/esm';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
