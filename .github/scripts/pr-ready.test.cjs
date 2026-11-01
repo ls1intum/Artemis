@@ -5,8 +5,12 @@ const check = require('./pr-ready.js');
 function fixture(action = 'synchronize', draft = false) {
     const outputs = {};
     const calls = [];
-    const context = { eventName: 'pull_request', payload: { action, pull_request: { number: 12, draft, head: { sha: 'expected' } } }, repo: { owner: 'example', repo: 'project' } };
-    const state = { pull: { state: 'open', head: { sha: 'expected' } } };
+    const context = {
+        eventName: 'pull_request',
+        payload: { action, pull_request: { number: 12, draft, head: { sha: 'expected' }, base: { ref: 'develop' } } },
+        repo: { owner: 'example', repo: 'project' },
+    };
+    const state = { pull: { state: 'open', head: { sha: 'expected' }, base: { ref: 'develop' } } };
     const github = {
         rest: {
             pulls: {
@@ -49,7 +53,7 @@ test('promoting the same commit schedules tests instead of reusing draft scope',
 });
 for (const state of [
     { state: 'open', head: { sha: 'newer' } },
-    { state: 'closed', head: { sha: 'expected' } },
+    { state: 'closed', head: { sha: 'expected' }, base: { ref: 'develop' } },
 ]) {
     test(`rejects ${state.state === 'closed' ? 'closed' : 'superseded'} revisions`, async () => {
         const f = fixture();
@@ -81,4 +85,11 @@ test('malformed pull requests fail closed', async () => {
     delete f.context.payload.pull_request.head;
     await assert.rejects(check(f.args), /head/i);
     assert.equal(f.outputs.current, undefined);
+});
+
+test('a retargeted PR invalidates an analysis even when the head SHA is unchanged', async () => {
+    const f = fixture();
+    f.state.pull.base.ref = 'main';
+    await check(f.args);
+    assert.equal(f.outputs.current, 'false');
 });

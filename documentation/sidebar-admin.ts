@@ -8,6 +8,7 @@ const sidebars: SidebarsConfig = {
         'access-rights',
         'artemis-intelligence',
         'course-home-ai',
+        'agent-access',
         'scaling',
         {
             type: 'category',

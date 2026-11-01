@@ -48,6 +48,11 @@ guardrails cannot hide an untested seed. Shared leaf utilities use the import gr
 configuration, missing history and ambiguous dependencies fall back to the full suite. Check the
 actual planner/helper output rather than assuming a PR always ran a subset.
 
+The two Stylelint entry points, `config/stylelint/stylelint.config.json` and
+`config/stylelint/stylelint.config.js`, are client-only inputs. A PR confined to those files skips
+server tests; when mixed with Java changes, they do not expand the affected server class plan.
+Other configuration and server disk-input changes retain the conservative fallback.
+
 Affected runs keep test results but omit whole-project coverage gates and artifacts. The PR coverage
 section states the scope and result; a selected green run does not prove full-suite coverage. E2E
 selects mapped modules plus declared cross-module consumers, changed specs, and login/logout/health smoke
@@ -94,8 +99,9 @@ actual **Build and analyze** step. A scan that exits before publication leaves t
 and badges unchanged. Scanner 6+ has a separate JVM; `SONAR_SCANNER_JAVA_OPTS` sizes its heap,
 while `org.gradle.jvmargs` sizes Gradle. The workflow assigns the scanner 6 GiB.
 
-Manual Sonar runs fail visibly on scanner errors; calls from CI remain advisory. To test a repaired
-workflow and refresh the actual default branch before merging it:
+Sonar is required on relevant ready PRs and is included in **All required CI Passed**. Scanner,
+upload and server-side quality-gate failures block merging. Both PR and branch scans wait for the
+server verdict. To test a repaired workflow and refresh the actual default branch before merging it:
 
 ```bash
 gh workflow run ci-sonar.yml --ref <workflow-fix-branch> -f analyze_default_branch=true
@@ -104,8 +110,20 @@ gh workflow run ci-sonar.yml --ref <workflow-fix-branch> -f analyze_default_bran
 Leave that option false to analyze the selected branch itself. Check the job summary's analyzed
 branch/SHA and the completed Sonar analysis revision. Coverage lookup requires that exact SHA,
 both complete artifacts and successful full test jobs; unrelated CI failures do not invalidate it.
-A green GitHub run alone does not establish that the server processed the analysis or that the
-quality gate passed. See [workflow policy](../../.github/workflows/README.md#the-code-quality-analyses).
+The required scanner waits for the server verdict; still confirm the published source revision
+when diagnosing badges or a manually dispatched recovery. See [workflow policy](../../.github/workflows/README.md#the-code-quality-analyses).
+
+Affected tests emit separate **Sonar Client Coverage** (selected-spec LCOV) and **Sonar Server
+Coverage** (selected execution data). Sonar generates Java XML on a GitHub-hosted runner. These
+partial reports never feed full-project badges or Codacy; no test suite is rerun for analysis.
+Missing or failed producer data cannot be imported as successful coverage.
+
+Fork and token-restricted PRs (including Dependabot) use a secretless exact-head/source-branch/target/public-gate verifier. A maintainer must
+review the exact commit, promote it to internal `chore/sonar/pr-<number>`, dispatch the trusted default
+branch's **Sonar** workflow with `pull_request_number=<number>`, then rerun only the original Sonar
+verification job. Never automatically execute fork build scripts with the token. See the workflow
+policy for the promotion procedure. Head or target changes invalidate evidence. Metadata-only
+edits neither replace canonical validation nor cancel active coverage reporting.
 
 ## Investigate Scorecard findings
 

@@ -6,7 +6,14 @@ import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 
-import tools.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -58,10 +65,10 @@ final class HyperionExerciseMetadataParser {
             return new ModelAnswer("", null);
         }
         String answer = CODE_FENCE.matcher(rawAnswer.strip()).replaceAll("").strip();
-        JsonNode object = readJsonObject(answer);
+        AnswerObject object = readJsonObject(answer);
         if (object != null) {
-            String title = textOf(object, "title");
-            DifficultyLevel difficulty = parseDifficulty(textOf(object, "difficulty"));
+            String title = textOf(object.title());
+            DifficultyLevel difficulty = parseDifficulty(textOf(object.difficulty()));
             if (!title.isBlank()) {
                 return new ModelAnswer(title, difficulty);
             }
@@ -95,24 +102,48 @@ final class HyperionExerciseMetadataParser {
 
     /** Null unless the answer contains something that parses as a JSON object; a model may put a sentence in front of it, so the braces are located rather than assumed. */
     @Nullable
-    private static JsonNode readJsonObject(String answer) {
+    private static AnswerObject readJsonObject(String answer) {
         int start = answer.indexOf('{');
         int end = answer.lastIndexOf('}');
         if (start < 0 || end <= start) {
             return null;
         }
         try {
-            JsonNode node = MAPPER.readTree(answer.substring(start, end + 1));
-            return node != null && node.isObject() ? node : null;
+            return MAPPER.readValue(answer.substring(start, end + 1), AnswerObject.class);
         }
         catch (Exception e) {
             return null;
         }
     }
 
-    private static String textOf(JsonNode object, String field) {
-        JsonNode value = object.get(field);
-        return value == null || !value.isString() ? "" : value.asString().strip();
+    /** The text of a value the model gave as a JSON string, and the empty text for a missing value or one of any other type. */
+    private static String textOf(@Nullable String value) {
+        return value == null ? "" : value.strip();
+    }
+
+    /**
+     * The two fields read out of the JSON object a model answered with; any other field is ignored.
+     *
+     * @param title      the title, absent when it is missing or not a JSON string
+     * @param difficulty the difficulty word, absent when it is missing or not a JSON string
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record AnswerObject(@Nullable @JsonDeserialize(using = StringOnlyDeserializer.class) String title,
+            @Nullable @JsonDeserialize(using = StringOnlyDeserializer.class) String difficulty) {
+    }
+
+    /** Reads a JSON string as it is and skips a value of any other type, which is then absent, because a model may answer with a number or an object where text was asked for. */
+    static final class StringOnlyDeserializer extends ValueDeserializer<String> {
+
+        @Override
+        public String deserialize(JsonParser parser, DeserializationContext context) {
+            if (parser.currentToken() == JsonToken.VALUE_STRING) {
+                return parser.getString();
+            }
+            parser.skipChildren();
+            return null;
+        }
     }
 
     /** Null rather than {@link DifficultyLevel#MEDIUM} for an unrecognised value, so the caller can still try the brief before settling for the default. */

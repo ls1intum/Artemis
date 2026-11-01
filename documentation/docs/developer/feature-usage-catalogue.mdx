@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 151 features, 1147 REST endpoints in 29 modules, and 64 interaction overrides.
+Currently 20 product areas, 152 features, 1155 REST endpoints in 29 modules, and 64 interaction overrides.
 
 ## Courses
 
@@ -797,7 +797,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | communication | `AnswerMessageResource` | 4 | 1 | 0 | 0 |
-| communication | `ConversationMessageResource` | 4 | 2 | 0 | 0 |
+| communication | `ConversationMessageResource` | 5 | 2 | 0 | 0 |
 | core | `FileResource` | 1 | 0 | 1 | 0 |
 | course | `CourseAccessResource` | 0 | 1 | 0 | 0 |
 
@@ -1285,6 +1285,16 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | core | `DataExportResource` | 1 | 4 | 0 | 0 |
+
+### Agent access tokens
+
+`AGENT_ACCESS`: Creating and revoking personal access tokens that let coding agents act on one's behalf.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| account | `AdminPersonalAccessTokenResource` | 1 | 1 | 0 | 0 |
+| account | `PersonalAccessTokenResource` | 2 | 2 | 0 | 0 |
+| core | `AgentMcpResource` | 1 | 0 | 0 | 0 |
 
 ## Integrations
 

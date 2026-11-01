@@ -952,5 +952,5 @@ tasks.named("dependencyUpdates").configure {
 // 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
 // 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp
-// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp
+// 15) Generate OpenAPI spec:                       ./gradlew generateOpenApiDocs pruneOpenApiSpec -x webapp
 // 16) Generate SBOM (Software Bill of Materials):  ./gradlew -Pprod -Psbom cyclonedxBom -x webapp

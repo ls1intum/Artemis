@@ -42,6 +42,7 @@ public enum UserDeletionReferencePolicy {
     PARTICIPATION_TOKEN("participation_vcs_access_token", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     PARTICIPATION("participation", "student_id", UserDeletionDataCategory.PARTICIPATION, UserDeletionAction.DELETE, true),
     PASSKEY("passkey_credential", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
+    AGENT_ACCESS_TOKEN("personal_access_token", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     PLAGIARISM_CASE_STUDENT("plagiarism_case", "student_id", UserDeletionDataCategory.PLAGIARISM, UserDeletionAction.DELETE, true),
     PLAGIARISM_VERDICT_AUTHOR("plagiarism_case", "verdict_by_id", UserDeletionDataCategory.PLAGIARISM, UserDeletionAction.DETACH_ACTOR, true),
     POST_AUTHOR("post", "author_id", UserDeletionDataCategory.COMMUNICATION, UserDeletionAction.DELETE, true),

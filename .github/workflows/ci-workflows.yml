@@ -82,7 +82,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Test revision gate, coverage reporting and affected client/E2E selection
         run: |
-          node --test .github/scripts/pr-ready.test.cjs .github/scripts/ci-policy.test.cjs .github/scripts/update-pr-coverage.test.cjs \
+          node --test .github/scripts/sonar-pr.test.cjs supporting_scripts/tests/sonar-test-artifacts.test.mjs .github/scripts/pr-ready.test.cjs .github/scripts/ci-policy.test.cjs .github/scripts/update-pr-coverage.test.cjs \
             supporting_scripts/client/run-affected-tests.test.mjs \
             supporting_scripts/ci/E2E-tests/selection.test.mjs
           pnpm exec vitest run --config supporting_scripts/ci/E2E-tests/vitest.config.mjs

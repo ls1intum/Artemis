@@ -119,7 +119,8 @@ class IrisChatResultValidationTest {
         IrisMessage message = handleIntermediate("Before\n" + set + "\nAfter");
         assertThat(message.getContent()).hasSize(3);
         assertThat(message.getContent().get(0)).isInstanceOfSatisfying(IrisTextMessageContent.class, text -> assertThat(text.getTextContent()).isEqualTo("Before"));
-        assertThat(message.getContent().get(1)).isInstanceOfSatisfying(IrisJsonMessageContent.class, json -> assertThat(json.getJsonNode().get("questions")).hasSize(1));
+        assertThat(message.getContent().get(1)).isInstanceOfSatisfying(IrisJsonMessageContent.class,
+                json -> assertThat(JsonObjectMapper.get().readTree(json.getContentAsString()).get("questions")).hasSize(1));
         assertThat(message.getContent().get(2)).isInstanceOfSatisfying(IrisTextMessageContent.class, text -> assertThat(text.getTextContent()).isEqualTo("After"));
     }
 
@@ -158,8 +159,8 @@ class IrisChatResultValidationTest {
         verify(messages, org.mockito.Mockito.times(summary != null && !summary.isBlank() ? 1 : 0)).saveMessage(saved.capture(), eq(session), eq(IrisMessageSender.SUMMARY));
         if (summary != null && !summary.isBlank()) {
             assertThat(saved.getValue().getContent()).singleElement().isInstanceOfSatisfying(IrisJsonMessageContent.class, json -> {
-                assertThat(json.getJsonNode().get("summary").asString()).isEqualTo("Summary");
-                assertThat(json.getJsonNode().get("coversThroughMessageId").asLong()).isEqualTo(7L);
+                assertThat(JsonObjectMapper.get().readTree(json.getContentAsString()).get("summary").asString()).isEqualTo("Summary");
+                assertThat(JsonObjectMapper.get().readTree(json.getContentAsString()).get("coversThroughMessageId").asLong()).isEqualTo(7L);
             });
         }
     }

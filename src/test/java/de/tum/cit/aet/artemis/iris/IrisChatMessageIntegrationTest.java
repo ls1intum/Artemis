@@ -46,7 +46,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -900,7 +899,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             });
 
             IrisMessage source = new IrisMessage();
-            source.addContent(new IrisJsonMessageContent(JsonNodeFactory.instance.objectNode().put("k1", "v1").put("k2", "v2").put("k3", "v3")));
+            source.addContent(IrisJsonMessageContent.ofJson("{\"k1\":\"v1\",\"k2\":\"v2\",\"k3\":\"v3\"}"));
             List<IrisMessageContentDTO> contentDtos = source.getContent().stream().map(content -> new IrisMessageContentDTO("json", null, content.getContentAsString())).toList();
             IrisMessageRequestDTO requestDto = new IrisMessageRequestDTO(contentDtos, 42, Map.of(), null, null);
 
@@ -1084,7 +1083,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             var content = sendAndGetLlmResponseContent(mcqJson).getFirst();
 
             assertThat(content).isInstanceOf(IrisJsonMessageContent.class);
-            assertThat(((IrisJsonMessageContent) content).getJsonNode().get("type").asString()).isEqualTo("mcq");
+            assertThat(JsonObjectMapper.get().readTree(((IrisJsonMessageContent) content).getContentAsString()).get("type").asString()).isEqualTo("mcq");
         }
 
         @Test
@@ -1120,7 +1119,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
             assertThat(contents).hasSize(3);
             assertThat(((IrisTextMessageContent) contents.get(0)).getTextContent()).isEqualTo("Here are your questions!");
-            assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asString()).isEqualTo("mcq");
+            assertThat(JsonObjectMapper.get().readTree(((IrisJsonMessageContent) contents.get(1)).getContentAsString()).get("type").asString()).isEqualTo("mcq");
             assertThat(((IrisTextMessageContent) contents.get(2)).getTextContent()).isEqualTo("Good luck!");
         }
 
@@ -1134,7 +1133,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             var contents = sendAndGetLlmResponseContent(mixed);
 
             assertThat(contents).hasSize(3);
-            assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asString()).isEqualTo("mcq-set");
+            assertThat(JsonObjectMapper.get().readTree(((IrisJsonMessageContent) contents.get(1)).getContentAsString()).get("type").asString()).isEqualTo("mcq-set");
         }
 
         @Test
@@ -1155,8 +1154,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
             assertThat(contents).hasSize(1);
             var jsonContent = (IrisJsonMessageContent) contents.getFirst();
-            assertThat(jsonContent.getJsonNode().get("type").asString()).isEqualTo("mcq");
-            assertThat(jsonContent.getJsonNode().get("question").asString()).isEqualTo("What is 2+2?");
+            assertThat(JsonObjectMapper.get().readTree(jsonContent.getContentAsString()).get("type").asString()).isEqualTo("mcq");
+            assertThat(JsonObjectMapper.get().readTree(jsonContent.getContentAsString()).get("question").asString()).isEqualTo("What is 2+2?");
         }
 
         @Test
@@ -1237,6 +1236,48 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             var json = readJsonContent(session, message);
             assertThat(json.get("response").get("selectedIndex").asInt()).isEqualTo(1);
             assertThat(json.get("response").get("submitted").asBoolean()).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_preservesSingleQuestionAndOptionExtensions() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            String content = """
+                    {"type":"mcq","question":"Q?","options":[
+                      {"text":"A","correct":false,"extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0},
+                      {"text":"B","correct":true,"metadata":{"nested":[null,"",[],{},false,0]}}],
+                     "explanation":"E.","metadata":{"nested":[null,"",[],{},false,0]},
+                     "extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0}
+                    """;
+            IrisMessage message = saveLlmMessageWithMcqContent(session, content);
+
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(1, true, null), HttpStatus.OK);
+
+            ObjectNode expected = (ObjectNode) JsonObjectMapper.get().readTree(content);
+            expected.set("response", JsonObjectMapper.get().readTree("{\"selectedIndex\":1,\"submitted\":true}"));
+            assertThat(readJsonContent(session, message)).isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_preservesSetQuestionOptionAndStoredResponseExtensions() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            String content = """
+                    {"type":"mcq-set","metadata":{"nested":[null,"",[],{},false,0]},"questions":[
+                      {"question":"Q1?","options":[{"text":"A","correct":false,"extension":null},{"text":"B","correct":true}],
+                       "explanation":"E1.","extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0},
+                      {"question":"Q2?","options":[{"text":"C","correct":true},{"text":"D","correct":false}],"explanation":"E2."}],
+                     "responses":[
+                       {"questionIndex":0,"selectedIndex":0,"submitted":false,"extension":null,"metadata":{"nested":[null,"",[],{},false,0]}},
+                       {"questionIndex":1,"selectedIndex":1,"submitted":true,"extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0}]}
+                    """;
+            IrisMessage message = saveLlmMessageWithMcqContent(session, content);
+
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(1, true, 0), HttpStatus.OK);
+
+            ObjectNode expected = (ObjectNode) JsonObjectMapper.get().readTree(content);
+            ((ObjectNode) expected.path("responses").get(0)).put("selectedIndex", 1).put("submitted", true);
+            assertThat(readJsonContent(session, message)).isEqualTo(expected);
         }
 
         @Test
@@ -1355,7 +1396,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         private JsonNode readJsonContent(IrisChatSession session, IrisMessage message) {
             var reloaded = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
             var updatedMessage = reloaded.getMessages().stream().filter(m -> m.getId().equals(message.getId())).findFirst().orElseThrow();
-            return ((IrisJsonMessageContent) updatedMessage.getContent().stream().filter(IrisJsonMessageContent.class::isInstance).findFirst().orElseThrow()).getJsonNode();
+            return JsonObjectMapper.get()
+                    .readTree(((IrisJsonMessageContent) updatedMessage.getContent().stream().filter(IrisJsonMessageContent.class::isInstance).findFirst().orElseThrow())
+                            .getContentAsString());
         }
 
         private String mcqResponseUrl(IrisChatSession session, IrisMessage message) {

@@ -138,4 +138,54 @@ describe('DeleteDialogComponent', () => {
         expect(pairs[0]).toHaveLength(2);
         expect(pairs[1]).toHaveLength(1);
     });
+
+    it('exposes each flat summary label as the header of its value', () => {
+        fixture.detectChanges();
+        comp.entitySummary.set({ exercises: 2, participations: 0, hidden: undefined });
+        fixture.detectChanges();
+
+        const rows = Array.from(fixture.nativeElement.querySelectorAll('table tbody tr')) as HTMLTableRowElement[];
+        expect(rows).toHaveLength(2);
+        expect(rows.map((row) => row.querySelector('th[scope="row"] span')?.textContent?.trim())).toEqual(['exercises', 'participations']);
+        expect(rows.map((row) => row.querySelector('td')?.textContent?.trim())).toEqual(['2', '0']);
+    });
+
+    it('associates categorized values with only their own label and category across paired and odd rows', () => {
+        fixture.detectChanges();
+        comp.categorizedEntitySummary.set([
+            {
+                titleKey: 'course',
+                items: [
+                    { labelKey: 'exercises', value: 2 },
+                    { labelKey: 'participations', value: 0 },
+                    { labelKey: 'students', value: 7 },
+                ],
+            },
+            {
+                titleKey: 'exam',
+                items: [
+                    { labelKey: 'exercises', value: 5 },
+                    { labelKey: 'hidden', value: undefined },
+                ],
+            },
+        ]);
+        fixture.detectChanges();
+
+        const table = fixture.nativeElement.querySelector('table') as HTMLTableElement;
+        const values = Array.from(table.querySelectorAll('td')).filter((cell) => cell.textContent?.trim());
+        expect(
+            values.map((cell) => {
+                const headers = cell.headers
+                    .split(' ')
+                    .filter(Boolean)
+                    .map((id) => table.querySelector(`th[id="${id}"] span`)?.textContent?.trim());
+                return { value: cell.textContent?.trim(), headers };
+            }),
+        ).toEqual([
+            { value: '2', headers: ['course', 'exercises'] },
+            { value: '0', headers: ['course', 'participations'] },
+            { value: '7', headers: ['course', 'students'] },
+            { value: '5', headers: ['exam', 'exercises'] },
+        ]);
+    });
 });

@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
 import tools.jackson.databind.DeserializationContext;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ValueDeserializer;
 
 /**
@@ -17,15 +17,20 @@ public class StrictIntegerDeserializer extends ValueDeserializer<Integer> {
 
     @Override
     public Integer deserialize(JsonParser parser, DeserializationContext context) {
-        JsonNode node = parser.readValueAsTree();
-        if (node == null || node.isNull()) {
+        if (parser.currentToken() == JsonToken.VALUE_NULL) {
             return null;
         }
-        // Require an integral JSON number in int range. isIntegralNumber() rejects fractional nodes (e.g. 10.5) that the default deserializer would truncate to 10, and also
-        // rejects textual values; canConvertToInt() guards the int column range. Reported as an input mismatch so Spring maps it to 400 Bad Request instead of 500.
-        if (!node.isIntegralNumber() || !node.canConvertToInt()) {
-            return context.reportInputMismatch(Integer.class, "Expected a whole number, but got: %s", node.asString());
+        // Require an integral JSON number in int range. VALUE_NUMBER_INT rejects fractional numbers (e.g. 10.5) that the default deserializer would truncate to 10, and also
+        // rejects textual values; the range check guards the int column range. Reported as an input mismatch so Spring maps it to 400 Bad Request instead of 500.
+        if (parser.currentToken() == JsonToken.VALUE_NUMBER_INT) {
+            Number number = parser.getNumberValue();
+            if (number instanceof Integer value) {
+                return value;
+            }
+            if (number instanceof Long value && value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
+                return value.intValue();
+            }
         }
-        return node.intValue();
+        return context.reportInputMismatch(Integer.class, "Expected a whole number, but got: %s", parser.getValueAsString(""));
     }
 }

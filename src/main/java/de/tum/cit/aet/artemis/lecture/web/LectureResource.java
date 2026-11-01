@@ -47,6 +47,8 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
@@ -81,6 +83,8 @@ import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing Lecture.
@@ -151,6 +155,13 @@ public class LectureResource {
     @PostMapping("lectures")
     @EnforceAtLeastStudent
     @ManualConfig
+    @AllowedScopes(AgentScope.LECTURES_WRITE)
+    @Operation(summary = "Create a lecture", description = """
+            Creates an empty lecture in a course (set course with its id). title is required; startDate, if set, must not be after \
+            endDate. A lecture has no release date of its own: students see it with its title and description at once, and only \
+            its units can stay hidden with a releaseDate in the future. channelName names the lecture's communication channel and is derived from the \
+            title if omitted.""")
+    @ApiResponse(responseCode = "201", description = "The lecture was created.")
     public ResponseEntity<SimpleLectureDTO> createLecture(@RequestBody SimpleLectureDTO newLectureDto) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", newLectureDto);
         if (newLectureDto.id() != null) {

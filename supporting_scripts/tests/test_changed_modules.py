@@ -645,6 +645,25 @@ class ChangedModulesTest(unittest.TestCase):
         self.change(f"{MAIN}/delta/service/DeltaService.java")
         self.assertEqual(self.selected(), "delta")
 
+    def test_stylelint_configuration_does_not_expand_service_selection(self):
+        for path in ("config/stylelint/stylelint.config.json", "config/stylelint/stylelint.config.js"):
+            with self.subTest(path=path):
+                self.write(path, "Stylelint configuration")
+                self.git("add", path)
+                self.change(f"{MAIN}/delta/service/DeltaService.java")
+                plan = self.plan()
+                self.assertEqual(plan["mode"], "selected", plan)
+                self.assertEqual(plan["modules"], ["delta"])
+                self.assertEqual(plan["tests"], [PACKAGE + ".delta.DeltaTest"])
+                self.git("reset", "-q", "--", path)
+                (self.root / path).unlink()
+
+    def test_unknown_stylelint_directory_file_still_requires_full_server_validation(self):
+        self.write("config/stylelint/unknown-server-input.json", "Unknown configuration")
+        self.git("add", "--all")
+        self.change(f"{MAIN}/delta/service/DeltaService.java")
+        self.assertEqual(self.plan()["mode"], "full")
+
     def test_translation_disk_input_overrides_narrow_service_selection(self):
         self.write("src/main/webapp/i18n/en/global.json", '{"changed": true}')
         self.git("add", "--all")

@@ -6,11 +6,11 @@ module.exports = async function checkPrReady({ github, context, core }) {
         return;
     }
     const pull = context.payload.pull_request;
-    if (!pull?.number || !pull.head?.sha) {
-        throw new Error('The pull request number and expected head SHA are required');
+    if (!pull?.number || !pull.head?.sha || !pull.base?.ref) {
+        throw new Error('The pull request number, expected head SHA and target branch are required');
     }
     const { data } = await github.rest.pulls.get({ ...context.repo, pull_number: pull.number });
-    const current = data.state === 'open' && data.head.sha === pull.head.sha;
+    const current = data.state === 'open' && data.head.sha === pull.head.sha && data.base?.ref === pull.base.ref;
     if (!current) {
         core.notice('This pull request revision has been superseded or closed; expensive jobs will not start.');
     }

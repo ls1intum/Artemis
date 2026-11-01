@@ -26,8 +26,15 @@
         width: auto;
     }
 
-    td {
+    td,
+    th {
         border: 1px solid var(--tumaet-ui-border-color);
+    }
+
+    th {
+        padding: 0.375rem 0.5rem;
+        text-align: start;
+        font-weight: inherit;
     }
 
     .category-header-cell {
