@@ -7,13 +7,14 @@ import ch.qos.logback.core.AppenderBase;
 import de.tum.cit.aet.artemis.core.domain.ErrorLocation;
 import de.tum.cit.aet.artemis.core.domain.ErrorSeverity;
 import de.tum.cit.aet.artemis.core.service.ClientErrorReportService;
-import de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorAnalysisStore;
+import de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorAnalysisBuffer;
 
 /**
- * A Logback appender that hands every warning and error that the server logs to the error analysis.
+ * A Logback appender that hands every warning and error that the server logs to the error analysis. It only adds to a buffer in memory, and the error analysis writes the buffer to
+ * the cluster in batches, so logging never waits for the cluster.
  * <p>
  * Logback creates the appender from {@code logback-spring.xml}, before and outside of Spring, which is why it reaches the
- * analysis through {@link ErrorAnalysisStore#shared()}. It never fails, so a defect of the analysis cannot stop the server from
+ * analysis through {@link ErrorAnalysisBuffer#shared()}. It never fails, so a defect of the analysis cannot stop the server from
  * logging. The entry that writes a report of a client to the log is skipped, because the report is not an error of the server
  * and the analysis counts it as an error of the client.
  */
@@ -28,7 +29,7 @@ public class ErrorAnalysisAppender extends AppenderBase<ILoggingEvent> {
         }
         try {
             ErrorSeverity severity = event.getLevel().isGreaterOrEqual(Level.ERROR) ? ErrorSeverity.ERROR : ErrorSeverity.WARN;
-            ErrorAnalysisStore.shared().record(ErrorLocation.SERVER, severity, describe(event));
+            ErrorAnalysisBuffer.shared().record(ErrorLocation.SERVER, severity, describe(event));
         }
         catch (RuntimeException exception) {
             // nothing to do: the analysis must not make logging fail, and an error here could not be logged without recursion

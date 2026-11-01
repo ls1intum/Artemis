@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,8 +42,10 @@ public class AdminErrorAnalysisResource {
     /**
      * {@code GET /error-analysis} : the errors that happened in a time span, grouped by what they have in common.
      * <p>
-     * The analysis lives in the memory of the node that answers: it starts again when the node restarts, and it counts only the
-     * errors that this node saw.
+     * The analysis is computed again from the distributed data on every call, and the response must not be cached by the browser or
+     * by a proxy, so an administrator who opens the page always sees the current errors of all core nodes. The only delay is the
+     * interval in which a node hands the errors that it collected to the cluster, ten seconds by default, and the node that answers
+     * adds what it has collected itself.
      *
      * @param span        how far to look back from now, the last day if not set
      * @param location    only the errors of the server or only the errors of the clients, all of them if not set
@@ -52,6 +55,6 @@ public class AdminErrorAnalysisResource {
     @GetMapping("error-analysis")
     public ResponseEntity<List<ErrorGroupDTO>> getErrorAnalysis(@RequestParam(defaultValue = "DAY") ErrorAnalysisSpan span, @RequestParam(required = false) ErrorLocation location,
             @RequestParam(defaultValue = "ERROR") ErrorSeverity minSeverity) {
-        return ResponseEntity.ok(errorAnalysisService.getGroups(span, location, minSeverity));
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(errorAnalysisService.getGroups(span, location, minSeverity));
     }
 }

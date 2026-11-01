@@ -2,7 +2,7 @@
     "artemisApp": {
         "errorAnalysis": {
             "title": "Error analysis",
-            "note": "Errors that are alike are one row. The analysis lives in the memory of the server node that answers: it starts again when the node restarts, and it counts only what this node saw. A quiet page is therefore not proof that nothing went wrong.",
+            "note": "Errors that are alike are one row. The counts are shared by all core nodes and computed again every time you open this page. A node hands what it collected to the cluster every ten seconds. The counts are lost when the whole cluster restarts, unless the distributed data provider keeps its data, which Hazelcast does not. Only errors that core nodes log and clients report are counted, so a quiet page is not proof that nothing went wrong.",
             "empty": "No errors in this time span with these filters.",
             "summary": "Groups: {{ groups }}, errors: {{ errors }}",
             "loadError": "The error analysis could not be loaded.",

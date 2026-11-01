@@ -15,7 +15,8 @@ import de.tum.cit.aet.artemis.core.domain.ErrorLocation;
 import de.tum.cit.aet.artemis.core.domain.ErrorSeverity;
 import de.tum.cit.aet.artemis.core.dto.ErrorGroupDTO;
 import de.tum.cit.aet.artemis.core.service.ClientErrorReportService;
-import de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorAnalysisStore;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
+import de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorAnalysisService;
 
 class ErrorAnalysisAppenderTest {
 
@@ -40,8 +41,9 @@ class ErrorAnalysisAppenderTest {
     }
 
     private ErrorGroupDTO groupOf(String text) {
-        return ErrorAnalysisStore.shared().query(ErrorAnalysisSpan.DAY, null, ErrorSeverity.WARN).stream().filter(group -> group.message().contains(marker + text)).findFirst()
-                .orElse(null);
+        // a node answers with what it collected and has not handed to the cluster yet, which is all that this test produces
+        return new ErrorAnalysisService(new LocalDataProviderService()).getGroups(ErrorAnalysisSpan.DAY, null, ErrorSeverity.WARN).stream()
+                .filter(group -> group.message().contains(marker + text)).findFirst().orElse(null);
     }
 
     @Test

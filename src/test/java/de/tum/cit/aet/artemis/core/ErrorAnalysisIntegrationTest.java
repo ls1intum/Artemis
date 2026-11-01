@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 import java.util.Map;
@@ -110,6 +113,22 @@ class ErrorAnalysisIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void rejectsAnUnknownFilter(String parameter) throws Exception {
         request.getList(ANALYSIS_ENDPOINT + "?" + parameter, HttpStatus.BAD_REQUEST, ErrorGroupDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void forbidsCachingTheAnalysisSoThatEveryVisitComputesItAgain() throws Exception {
+        request.performMvcRequest(get(ANALYSIS_ENDPOINT)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void showsAnErrorThatWasReportedMomentsAgoWithoutWaitingForAnyCache() throws Exception {
+        assertThat(analysis(params())).isEmpty();
+
+        report("ERROR", "reported right now");
+
+        assertThat(analysis(params())).hasSize(1);
     }
 
     @Test
