@@ -28,7 +28,7 @@ available to refresh repository settings independently of a push.
 ci.yml                                                            (single entry workflow)
 ├── detect-changes               (current-head check + dorny/paths-filter, emits per-area booleans)
 │
-│   REQUIRED — gated by `All required CI Passed` (fast + deterministic, run when relevant):
+│   REQUIRED — gated by `All required CI Passed` (run when relevant):
 ├── build           ── uses ci-build.yml          (the .war + Docker image)
 ├── test            ── uses ci-test.yml           (server + client + AI worker sandbox tests; deferred on draft PRs)
 ├── quality         ── uses ci-quality.yml        (server + client style/lint/type-check, Java analyses)
@@ -42,6 +42,7 @@ ci.yml                                                            (single entry 
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
 ├── dead-code       ── uses ci-dead-code.yml      (always; unreachable Java classes + unreachable client files)
 ├── liquibase       ── uses ci-liquibase.yml      (if has_liquibase; changelogs, seed data and baseline replayed on PostgreSQL and MySQL)
+├── sonar           ── uses ci-sonar.yml          (after test; required PR/new-code gate; GitHub-hosted)
 ├── e2e             ── uses ci-e2e.yml            (after build; required; known-flaky-only failures are exonerated when history is available)
 │
 │   ADVISORY — runs for signal, never blocks merge:
@@ -51,14 +52,13 @@ ci.yml                                                            (single entry 
 │   DEPLOY — develop only, never on a PR:
 ├── deploy-docs                  (publishes the docs to GitHub Pages; needs `docs`; job-level `pages` concurrency)
 ├── coverage-badge               (publishes the README coverage figure to the orphan `badges` branch; needs a GREEN `test`)
-├── sonar           ── uses ci-sonar.yml          (SonarQube Cloud grade; needs a GREEN `test`; also dispatchable standalone)
 │
 ├── all-required-ci-passed       (jq gate over the required jobs — excludes the advisory codeql/coverage-report — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
 `ci-summary` is a second terminal job (`needs:` every required and advisory job, `if: ${{ !cancelled() }}`).
-The develop-only deploy jobs — `deploy-docs`, `coverage-badge`, `sonar` — are deliberately outside
+The develop-only deploy jobs — `deploy-docs` and `coverage-badge` — are deliberately outside
 its `needs:`, so they never appear in its table and never hold it up. On the run's
 **Summary** page it renders a per-job table (job · required/advisory · result), a failure-only
 local-fix table, and a Gantt timeline (`Kesin11/actions-timeline`) covering the reusable
@@ -68,15 +68,15 @@ Its only permission is `actions: read` (the timeline reads the jobs API).
 
 ### Required vs. advisory
 
-The single required check is `CI / All required CI Passed`. It includes `detect-changes` and gates on every job that is
-**fast and deterministic** — `build`, `test`, `quality`, `gradle-wrapper`, `translation`,
-`docs`, `workflows`, `version-consistency`, `bean-instantiations`. They run in parallel and finish
-within `test`'s window (the lightweight area checks in a minute or two; `bean-instantiations` boots
-the app on H2 in a few minutes; `quality`'s slowest job, the ArchUnit run, still under `test`),
-so requiring them adds no merge latency. The one slow required check is `e2e` (detailed below):
-it is gated too, with a flakiness-aware verdict that exonerates failures known to be flaky.
-Without history, failures after Playwright retries remain blocking. Path-skipped jobs report `skipped`, which the gate
-accepts — so a job only blocks merge when it is *relevant and red*.
+The single required check is `CI / All required CI Passed`. It includes change detection and
+the relevant build, tests, quality, wrapper, translation, docs, workflow, version, bean, skill,
+terminology, dead-code and migration checks, plus **Sonar** and **E2E**.
+
+Sonar waits for measured test coverage and the server-side quality-gate verdict, so it can add merge
+latency. E2E also gates merges, with a flakiness-aware verdict that exonerates failures known to be
+flaky. Without history, failures after Playwright retries remain blocking. Path-skipped jobs report
+`skipped`, which the aggregate accepts. Mandatory scope outputs are validated first so missing
+metadata cannot conceal a required analysis behind a skipped result.
 
 Draft PR runs use the aggregate name **Draft checks passed (tests deferred)**. They do not publish
 the required **All required CI Passed** check for an untested revision. Marking a PR **Ready for review**
@@ -513,70 +513,77 @@ then dispatch the workflow. For local rendering and tests, see
 
 ## The code quality analyses
 
-Two external services grade the code, and neither one gates a merge. The enforcing checks are
-`ci-quality.yml` and `ci-test.yml`; these two publish a figure.
+**SonarQube Cloud is a required pre-merge quality gate** for relevant ready PRs. The scanner waits
+for the server verdict; scanner, upload, timeout and quality-gate failures fail **All required CI
+Passed**. No additional branch-protection check or repository permission is needed. Codacy remains
+a separate external service.
 
-**Codacy** analyzes every `develop` commit on its own infrastructure — nothing in this repo triggers
-it. It serves the `code quality` badge in the root `README.md` from
-`app.codacy.com/project/badge/Grade/…`, and the badge links to the repository dashboard. Its scope
-comes from `.codacy.yaml`, read from the default branch. Note what that grade is and is not: the
-active pattern set is essentially SAST, so an "A" means very few flagged findings per line — it does
-not reflect Spotless, Checkstyle, Modernizer, the ArchUnit rules, the custom ESLint rules, or the
-coverage floors, all of which are enforced here instead. Codacy's *coverage* figure is separately
-stale, which is why the coverage badge is self-hosted (see above).
+PR analysis uses the PR number, exact head SHA, original source branch and actual target branch.
+All configured **new-code** conditions apply: reliability, security, maintainability, coverage,
+duplication and reviewed security hotspots. Existing findings are fixed in source; neither the
+quality gate nor the source/exclusion contract with Codacy is weakened.
 
-**SonarQube Cloud** runs from `ci-sonar.yml` on `develop` pushes, after a green `test`, importing the
-`Server JaCoCo XML` and `Vitest Coverage Report` artifacts that job already uploaded — no suite is
-re-run. It serves five badges in the root `README.md`, straight from `sonarcloud.io/api/project_badges`
-for the `develop` branch: the **quality gate** (which judges the new code of the last 30 days: ratings,
-coverage, duplication, hotspots), the **reliability**, **security** and **maintainability** ratings, and
-the share of **duplicated lines**. Mind what the ratings measure. The badge service reports
-whole-project values and has no badge for the new-code metrics, so the three rating badges grade every
-open finding of the project, including the ones from before the new-code window, while the quality gate
-keeps new code at A. The reliability badge therefore trails the gate until the older bugs are fixed. The
-coverage badge stays the self-hosted one described above. Configuration lives in `gradle/sonar.gradle`.
+### Scope, coverage and runner cost
 
-Three things about it are worth knowing before changing it:
+Analysis runs on GitHub-hosted `ubuntu-latest` with Java 25, Node 24, client dependencies, the TUM
+AET UI package build and compiled Java bytecode. It skips the Angular application bundle and never
+reruns tests. Drafts, superseded revisions and changes entirely outside Sonar's source/configuration
+scope skip analysis. Unknown scope and the 3,000-file API limit expand validation. Draft promotion
+or PR retargeting starts current validation. Body/title edits neither cancel source validation nor
+publish its canonical required check.
 
-1. **Scope is a contract with `.codacy.yaml`.** `gradle/sonar.gradle`'s exclusion list mirrors that
-   file's repository-wide `exclude_paths` floor. Change one without the other and the two grades
-   quietly stop measuring the same code, which is the entire point of running both. The floor is the
-   shared part and not the whole scope: Sonar narrows further to the roots in `sonar.sources`, while
-   `.codacy.yaml` sets no `include_paths`, so Codacy also grades supported repository tooling outside
-   them.
-2. **`compileJava` is required, not an optimization.** Sonar's Java analyzer needs bytecode, and the
-   Gradle plugin only sets `sonar.java.binaries` if the output directory already exists. Without a
-   prior compile the property is silently omitted and the Java half of the analysis degrades with no
-   error, so the job runs `./gradlew compileJava sonar -x webapp`.
-3. **It is dispatchable on its own.** A dispatched run normally analyzes its selected ref. For
-   recovery, enable **Analyze the repository default branch** (`analyze_default_branch=true`) to
-   run the selected workflow revision against the actual default-branch source. The workflow records
-   the checked-out SHA and explicitly publishes that branch/revision, so a workflow repair can
-   refresh develop without labeling feature-branch application code as develop. This boolean is the
-   only dispatch input; it cannot select an arbitrary source SHA or build argument.
+Complete test runs reuse their JaCoCo XML and LCOV artifacts. Affected client runs emit measured
+selected-spec LCOV as **Sonar Client Coverage**, with independent normal/Monaco reports. Affected
+server runs upload existing execution data as **Sonar Server Coverage**. A trusted XML-only Gradle
+task generates the selected Java report on the Sonar runner after compilation, without rerunning
+tests or generating the full module/HTML/coverage-verification graph.
 
-   Coverage is imported only from a completed `ci.yml` run for that exact source SHA with both
-   non-expired artifacts and successful client, server-report and all seven server-shard jobs.
-   An unrelated style or E2E failure does not invalidate complete test coverage. Partial or failed
-   tests, missing artifacts and another source revision never qualify. When no complete result is
-   available the scanner logs a warning and analyzes without coverage, which can make the quality
-   gate report missing new-code coverage.
-4. **The scanner has its own heap.** Scanner 6+ forks a separate JVM, so `org.gradle.jvmargs` does
-   not size it. The analysis step sets `SONAR_SCANNER_JAVA_OPTS=-Xmx6g` to keep the large Java/client
-   scan within its Java heap limit on a GitHub-hosted runner. A scanner crash publishes no analysis;
-   the README badges keep showing the last successful result. Verify the Sonar analysis revision,
-   not just the GitHub run conclusion.
+Only reports with successful matching test producers are imported. Selected reports remain partial:
+they are never used for full-project badges or Codacy coverage, and unexecuted changed lines count
+as uncovered. The configured Sonar coverage conditions still apply. There are no old-revision
+substitutions, PR coverage exclusions or forced complete suites solely for Sonar.
 
-CI calls remain advisory and never appear in another job's `needs:`. Standalone manual runs fail
-visibly on scanner errors, so a failed recovery cannot look like a successful badge refresh.
+### Fork and token-restricted PRs
 
-A completed scanner upload and the server-side quality gate are separate results. SonarQube Cloud's GitHub App posts a second check
-of its own, `SonarCloud Code Analysis`, carrying the quality gate verdict. Nothing in this
-repository produces that check and `continue-on-error` cannot reach it, so a failed gate shows as a
-red X on the `develop` commit while the job beside it is green. It still gates nothing — branch
-protection requires only `All required CI Passed` — but it is the reason `develop` can look red with
-every workflow passing. Which conditions that verdict applies is the quality gate the project is
-assigned in SonarQube Cloud, configured there rather than here.
+Automatic fork events, and token-restricted internal PRs such as Dependabot updates, execute no
+source in the analysis job and do not receive the Sonar token.
+A required secretless verifier accepts only a passing public Sonar record matching the original
+PR number, exact head SHA, source branch and Sonar **target** branch. Missing/stale evidence,
+failed gates, malformed responses and API errors block merging.
+
+After reviewing and accepting that exact commit as trusted, a maintainer can keep the original PR:
+
+1. Push the reviewed exact head to internal `chore/sonar/pr-<number>`. Update this promotion ref explicitly
+   if the PR head changes.
+2. Dispatch **Sonar** from the trusted default branch with `pull_request_number=<number>`, leaving
+   `analyze_default_branch=false`. The workflow validates the promotion ref against the current open
+   PR head before checkout; this input cannot choose an arbitrary SHA.
+3. Wait for a passing quality gate, then rerun only the original PR's **Sonar** verification job.
+   Its dependent aggregate reruns without repeating upstream tests.
+
+Promotion is an explicit maintainer trust decision: promoted build scripts run with the analysis
+token during that manual scan. Never automatically promote or analyze unreviewed fork code with
+secrets. Trusted tools and source use separate checkouts, supporting promoted commits predating
+these helpers.
+
+### Develop analysis and recovery
+
+Successful test runs on `develop` still publish full-branch analysis and README badges. The gate
+badge measures new code; rating badges measure all open project findings. Fixing existing bugs
+therefore accompanies prevention in PRs. Merge-group and relevant manual CI runs also include Sonar.
+
+A standalone **Sonar** dispatch normally analyzes its selected ref. Scanner recovery can use
+`analyze_default_branch=true` to analyze the real default-branch source with the selected workflow
+revision. Recovery and a PR number cannot be combined. Branch recovery imports only verified
+complete exact-source coverage. Promoted PR scans can import complete or explicitly selected
+exact-source coverage with successful producers. Promoted PR recovery additionally requires the
+successful CI run's recorded target branch to match the current PR target. Retargeted PRs and older
+runs without that metadata need a fresh successful CI test run before recovery can reuse coverage.
+
+The scanner has its own heap (`SONAR_SCANNER_JAVA_OPTS=-Xmx6g`). A failed upload leaves old analysis
+and badges unchanged. Verify the processed revision and server gate as well as the job conclusion.
+Sonar's GitHub App may post separate decoration; the required CI aggregate waits for the scanner's
+server-side verdict directly.
 
 ## Adding a new CI check
 

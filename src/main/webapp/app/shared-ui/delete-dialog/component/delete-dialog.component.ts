@@ -29,6 +29,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
 
+let nextSummaryId = 0;
+
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
@@ -50,6 +52,8 @@ export class DeleteDialogComponent implements OnInit {
     private dialogConfig = inject<TumAetUiDialogConfig<DeleteDialogData>>(TumAetUiDialogConfig);
     private alertService = inject(AlertService);
     private destroyRef = inject(DestroyRef);
+
+    protected readonly summaryId = `delete-summary-${nextSummaryId++}`;
 
     protected readonly faBan = faBan;
     protected readonly faSpinner = faSpinner;

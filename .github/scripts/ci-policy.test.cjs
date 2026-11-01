@@ -66,7 +66,7 @@ test('the current-head check shares change detection and its failure remains req
     assert.match(detect, /tests_deferred: \$\{\{ steps.ready.outputs.tests_deferred \}\}/);
     assert.doesNotMatch(workflow, /^  pr-ready:/m);
     assert.match(job('all-required-ci-passed'), /      - detect-changes/);
-    assert.match(workflow, /types: \[opened, synchronize, reopened, ready_for_review\]/);
+    assert.match(workflow, /types: \[opened, synchronize, reopened, ready_for_review, edited\]/);
 });
 test('drafts keep test TypeScript compilation on the public quality runner', () => {
     const quality = fs.readFileSync(path.join(__dirname, '../workflows/ci-quality.yml'), 'utf8');
