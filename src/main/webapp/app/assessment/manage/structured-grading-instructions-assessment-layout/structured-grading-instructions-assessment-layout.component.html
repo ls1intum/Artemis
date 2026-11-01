@@ -34,7 +34,7 @@
                         [draggable]="isDraggable(instruction)"
                         [attr.tabindex]="allowArming() && !selectable() && isDraggable(instruction) ? 0 : null"
                         [attr.role]="allowArming() && !selectable() && isDraggable(instruction) ? 'button' : null"
-                        [attr.aria-pressed]="allowArming() && !selectable() ? selectionService.isArmed(instruction) : null"
+                        [attr.aria-pressed]="allowArming() && !selectable() && isDraggable(instruction) ? selectionService.isArmed(instruction) : null"
                         (keydown)="onInstructionKeydown($event, instruction)"
                         (dragstart)="drag($event, instruction)"
                         id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"

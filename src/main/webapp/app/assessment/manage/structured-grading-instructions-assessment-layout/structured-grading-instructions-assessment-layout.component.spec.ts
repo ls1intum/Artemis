@@ -52,6 +52,21 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(comp.allowDrop()).toBe(false);
     });
 
+    it('removes button semantics when an instruction card stops being draggable', async () => {
+        const instruction: GradingInstruction = { id: 1, credits: 0, gradingScale: 'Scale', instructionDescription: 'Instruction', feedback: 'Feedback' };
+        fixture.componentRef.setInput('criteria', [{ title: 'Criterion', structuredGradingInstructions: [instruction] }]);
+        fixture.componentRef.setInput('readonly', false);
+        await fixture.whenStable();
+        const card: HTMLElement = fixture.nativeElement.querySelector('#criterion-0-instruction-0');
+        expect(card.getAttribute('role')).toBe('button');
+        expect(card.getAttribute('aria-pressed')).toBe('false');
+        fixture.componentRef.setInput('readonly', true);
+        await fixture.whenStable();
+        expect(card.getAttribute('role')).toBeNull();
+        expect(card.getAttribute('tabindex')).toBeNull();
+        expect(card.getAttribute('aria-pressed')).toBeNull();
+    });
+
     it('shows the instruction, feedback wording and signed points in each card', async () => {
         const instruction = { id: 1, feedback: 'Tutor feedback', instructionDescription: 'Assessment instruction', credits: 1 } as GradingInstruction;
         fixture.componentRef.setInput('criteria', [{ title: 'Criterion', structuredGradingInstructions: [instruction] }]);
