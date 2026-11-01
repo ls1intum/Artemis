@@ -24,7 +24,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
+import { AthenaResultNotificationTracker, getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -131,6 +131,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     submissionId: number | undefined;
     resultId: number | undefined;
 
+    private readonly athenaResultNotificationTracker = new AthenaResultNotificationTracker();
+
     ngOnInit() {
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
@@ -202,24 +204,15 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     return;
                 }
                 const changedParticipation = updatedParticipation as StudentParticipation;
-                const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
-                const oldResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
-                // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
-                const lastResult = getNewestResult(results);
-                const previousResult = oldResults.find((result) => lastResult?.id !== undefined && result.id === lastResult.id);
-                const isNewAthenaResult =
-                    lastResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                    lastResult.successful !== undefined &&
-                    (!previousResult || previousResult.successful === undefined);
-                if (isNewAthenaResult) {
-                    if (lastResult?.successful === false) {
+                for (const athenaResult of this.athenaResultNotificationTracker.resultsToNotify(changedParticipation.submissions)) {
+                    if (athenaResult.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise()?.title ?? '' });
                         this.hasAthenaResultForLatestSubmission = true;
                         if (this.isExamSummary() && this.participation()?.id !== undefined) {
-                            this.textService.get(this.participation().id!, lastResult?.id, this.viewingPurpose()).subscribe({
-                                next: (data) => this.updateParticipation(data, this.submissionId, lastResult?.id),
+                            this.textService.get(this.participation().id!, athenaResult.id, this.viewingPurpose()).subscribe({
+                                next: (data) => this.updateParticipation(data, this.submissionId, athenaResult.id),
                                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
                             });
                             return;
@@ -258,6 +251,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         if (this.participation() && this.textExercise()) {
+            this.athenaResultNotificationTracker.markAsNotified(this.participation().submissions);
             this.participationWebsocketService.addParticipation(this.participation(), this.textExercise());
         }
     }
@@ -274,6 +268,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         } else {
             return;
         }
+        // Results that arrive with the participation are already shown, so re-emitting them must not notify.
+        this.athenaResultNotificationTracker.markAsNotified(participation.submissions);
         this.textExercise.set(this.participation().exercise as TextExercise);
         this.examMode.set(!!this.textExercise().exerciseGroup);
         this.textExercise().studentParticipations = [this.participation()];

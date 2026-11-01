@@ -201,6 +201,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     templateFileSession: { [fileName: string]: string } = {};
 
     hasPendingChanges = false;
+    // Incremented whenever a suggestion request starts or an assessment navigation begins, so a response for an
+    // earlier request can recognise that it is stale and must not touch the current assessment.
+    private feedbackSuggestionsRequestGeneration = 0;
 
     // listener, will get notified upon loading of feedback
     readonly onFeedbackLoaded = output();
@@ -261,6 +264,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             // Angular reuses this component for param-only navigations (e.g. to the next submission), so both fatal
             // error states have to be cleared here — otherwise the panel of the previous submission hides the new one.
             this.assessmentNotPossibleYet.set(undefined);
+            // The previous submission stays loaded until the next one arrives, so a suggestion response arriving in
+            // between would otherwise still pass as current. Invalidate it as soon as the navigation starts.
+            this.feedbackSuggestionsRequestGeneration++;
+            this.loadingFeedbackSuggestions.set(false);
             this.resultNotFound.set(false);
 
             this.courseId = Number(params['courseId']);
@@ -456,14 +463,17 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     private async loadFeedbackSuggestions(): Promise<void> {
         // The component is reused across submissions on param-only navigation, so a response for an earlier
-        // submission can arrive after a later one has loaded. Pin the identities here and re-check them below
-        // before mutating anything, mirroring the guard in ModelingAssessmentEditorComponent.fetchAndApplyFeedbackSuggestions.
-        const submissionAtStart = this.submission();
-        const manualResultAtStart = this.manualResult();
+        // submission can arrive after the navigation to a later one has started. Only the latest request may
+        // mutate the assessment, show an error, or clear the loading state.
+        const requestGeneration = ++this.feedbackSuggestionsRequestGeneration;
+        const isStale = () => requestGeneration !== this.feedbackSuggestionsRequestGeneration;
+        // A save or submit that completes while the request is in flight replaces the manual result without starting a new
+        // request, so the generation alone cannot tell that the suggestions would end up on a result they were not requested for.
+        const requestedManualResult = this.manualResult();
         this.loadingFeedbackSuggestions.set(true);
         try {
-            const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), submissionAtStart!.id!))) ?? [];
-            if (this.submission() !== submissionAtStart || this.manualResult() !== manualResultAtStart) {
+            const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), this.submission()!.id!))) ?? [];
+            if (isStale() || this.manualResult() !== requestedManualResult) {
                 return;
             }
             const allFeedback = [...this.referencedFeedback(), ...this.unreferencedFeedback()];
@@ -486,8 +496,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 this.hasPendingChanges = true;
                 this.handleFeedback();
             }
+        } catch {
+            if (!isStale()) {
+                // Not onError(): that also clears the save/submit busy flags, which a pending save still relies on.
+                this.alertService.error('artemisApp.programmingAssessment.loadFeedbackSuggestionsFailed');
+            }
         } finally {
-            if (this.submission() === submissionAtStart) {
+            if (!isStale()) {
                 this.loadingFeedbackSuggestions.set(false);
             }
         }
