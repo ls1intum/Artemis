@@ -29,7 +29,7 @@ class PyrisConnectorFailureTest {
     @BeforeEach
     void setUp() {
         rest = mock(RestTemplate.class);
-        service = new PyrisConnectorService(rest, mock(RestTemplate.class), JsonObjectMapper.get());
+        service = new PyrisConnectorService(rest, mock(RestTemplate.class), JsonObjectMapper.get(), mock(PyrisCallbackTokenService.class));
         ReflectionTestUtils.setField(service, "pyrisUrl", "http://pyris.test");
         ReflectionTestUtils.setField(service, "artemisBaseUrl", "http://artemis.test");
     }

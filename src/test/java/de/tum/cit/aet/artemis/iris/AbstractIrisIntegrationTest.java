@@ -1,25 +1,34 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.Arrays;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentMatcher;
 import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpHeaders;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisCallbackTokenService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -40,7 +49,43 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
+    @Autowired
+    protected PyrisCallbackTokenService pyrisCallbackTokenService;
+
+    @Autowired
+    private PyrisJobService callbackJobService;
+
     private static final long TIMEOUT_MS = 200;
+
+    /**
+     * What a Pyris callback carries: the run id in the URL and the token as Bearer credential.
+     *
+     * @param runId the run id
+     * @param token the callback token of the run
+     */
+    protected record PyrisCallbackCredentials(String runId, String token) {
+
+        /**
+         * @return headers carrying the token as Bearer credential
+         */
+        public HttpHeaders headers() {
+            var headers = new HttpHeaders();
+            headers.set(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
+            return headers;
+        }
+    }
+
+    /**
+     * The credentials Pyris would use for a run, from either what Artemis sent to Pyris (the callback token in the
+     * execution settings) or the run id of a job a test registered directly, for which a token is issued here.
+     *
+     * @param runIdOrToken a callback token, or the run id of a registered job
+     * @return the run id and token to call back with
+     */
+    protected PyrisCallbackCredentials pyrisCallbackCredentials(String runIdOrToken) {
+        return pyrisCallbackTokenService.verify(runIdOrToken).map(verified -> new PyrisCallbackCredentials(verified.runId(), runIdOrToken))
+                .orElseGet(() -> new PyrisCallbackCredentials(runIdOrToken, pyrisCallbackTokenService.issue(callbackJobService.getJob(runIdOrToken))));
+    }
 
     @BeforeEach
     void setup() {
@@ -145,6 +190,25 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
     protected void disableIrisFor(Exercise exercise) {
         disableIrisFor(exercise.getCourseViaExerciseGroupOrCourseMember());
+    }
+
+    /**
+     * Assert that a value never left the server over the websocket: neither in the serialized form the client receives nor in the
+     * string form of any argument, for every message sent since the last reset.
+     *
+     * @param secret the value that must not appear
+     */
+    protected void assertNoWebsocketPayloadContains(String secret) {
+        var payloads = Mockito.mockingDetails(websocketMessagingService).getInvocations().stream().flatMap(invocation -> Arrays.stream(invocation.getArguments())).map(argument -> {
+            try {
+                return JsonObjectMapper.get().writeValueAsString(argument) + " " + argument;
+            }
+            catch (RuntimeException e) {
+                return String.valueOf(argument);
+            }
+        }).toList();
+        assertThat(payloads).as("messages were sent over the websocket").isNotEmpty();
+        assertThat(payloads).as("no websocket payload may contain the value").noneMatch(payload -> payload.contains(secret));
     }
 
     /**
