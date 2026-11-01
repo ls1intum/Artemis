@@ -28,10 +28,7 @@
                                     <th [id]="summaryId + '-item-' + categoryIndex + '-' + pairIndex + '-0'" class="item-label-cell">
                                         <span [jhiTranslate]="pair[0].labelKey"></span>
                                     </th>
-                                    <td
-                                        [attr.headers]="summaryId + '-category-' + categoryIndex + ' ' + summaryId + '-item-' + categoryIndex + '-' + pairIndex + '-0'"
-                                        class="item-value-cell"
-                                    >
+                                    <td headers="{{ summaryId }}-category-{{ categoryIndex }} {{ summaryId }}-item-{{ categoryIndex }}-{{ pairIndex }}-0" class="item-value-cell">
                                         {{ pair[0].value }}
                                     </td>
                                     @if (pair[1]) {
@@ -39,7 +36,7 @@
                                             <span [jhiTranslate]="pair[1].labelKey"></span>
                                         </th>
                                         <td
-                                            [attr.headers]="summaryId + '-category-' + categoryIndex + ' ' + summaryId + '-item-' + categoryIndex + '-' + pairIndex + '-1'"
+                                            headers="{{ summaryId }}-category-{{ categoryIndex }} {{ summaryId }}-item-{{ categoryIndex }}-{{ pairIndex }}-1"
                                             class="item-value-cell"
                                         >
                                             {{ pair[1].value }}
