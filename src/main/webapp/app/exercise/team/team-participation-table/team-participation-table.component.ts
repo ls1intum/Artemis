@@ -1,3 +1,5 @@
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { Component, OnInit, ViewEncapsulation, computed, inject, input, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
@@ -19,8 +21,8 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { areManualResultsAllowed, getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ButtonDirective } from 'primeng/button';
-import { Tooltip } from 'primeng/tooltip';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
@@ -44,13 +46,25 @@ class ExerciseForTeam extends Exercise {
     templateUrl: './team-participation-table.component.html',
     styleUrls: ['./team-participation-table.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [AssessmentWarningComponent, TranslateDirective, RouterLink, ButtonDirective, Tooltip, ArtemisDatePipe, ArtemisTranslatePipe, TableViewComponent],
+    imports: [
+        FaIconComponent,
+        AssessmentWarningComponent,
+        TranslateDirective,
+        RouterLink,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TableViewComponent,
+    ],
 })
 export class TeamParticipationTableComponent implements OnInit {
     private teamService = inject(TeamService);
     private alertService = inject(AlertService);
     private router = inject(Router);
     private accountService = inject(AccountService);
+    readonly faFolderOpen = faFolderOpen;
+    readonly faFlag = faFlag;
 
     readonly overviewPurpose = input<TeamOverviewPurpose>('student');
     readonly team = input.required<Team>();

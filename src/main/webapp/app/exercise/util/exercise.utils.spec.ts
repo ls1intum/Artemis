@@ -375,9 +375,9 @@ describe('ExerciseUtils', () => {
 
         const createWarning = () => ({ confirmed: new Subject<void>(), reEvaluated: new Subject<void>(), canceled: new Subject<void>(), deleteFeedback: () => true });
 
-        const createCommand = (editType: EditType, hasOpenModals = false, warning?: ReturnType<typeof createWarning>) => {
+        const createCommand = (editType: EditType, hasOpenDialogs = false, warning?: ReturnType<typeof createWarning>) => {
             const service = createService();
-            const modalService = { hasOpenModals: vi.fn().mockReturnValue(hasOpenModals) };
+            const modalService = { hasOpenDialogs: vi.fn().mockReturnValue(hasOpenDialogs) };
             const popupService = { checkExerciseBeforeUpdate: vi.fn().mockResolvedValue({ componentInstance: warning }) };
             const command = new SaveExerciseCommand(modalService as any, popupService as any, service, { id: 7 } as Exercise, editType);
             return { command, service, popupService };

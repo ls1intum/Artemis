@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { faCheckCircle, faCircleDot, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -20,7 +20,7 @@ import { safeUnescape } from 'app/foundation/util/security.util';
 })
 export class ProgrammingExerciseInstructionTaskStatusComponent {
     private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private translateService = inject(TranslateService);
 
     TestCaseState = TestCaseState;
@@ -69,11 +69,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         const taskName = this.taskName();
         this.dialogService.open(FeedbackComponent, {
             header: this.translateService.instant('artemisApp.result.detail.feedbackForTask', { taskName: safeUnescape(taskName) ?? taskName }),
-            width: '50rem',
-            breakpoints: {
-                '850px': '95vw',
-            },
-            modal: true,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,

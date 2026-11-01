@@ -1,12 +1,12 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, input, output } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-included-in-overall-score-picker',
     templateUrl: './included-in-overall-score-picker.component.html',
-    imports: [TranslateDirective, NgClass],
+    imports: [TumAetUiButtonDirective, TranslateDirective],
 })
 export class IncludedInOverallScorePickerComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;

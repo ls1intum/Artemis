@@ -1,6 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { Select } from 'primeng/select';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
@@ -126,8 +124,8 @@ describe('FilterDropdownComponent', () => {
     });
 });
 
-describe('FilterDropdownComponent popup', () => {
-    it.each([false, true])('stays open when its scroll container moves (grouped: %s)', async (grouped) => {
+describe('FilterDropdownComponent rendered filters', () => {
+    it.each([false, true])('keeps filter selection usable after ancestor scrolling and allows reset (grouped: %s)', async (grouped) => {
         await TestBed.configureTestingModule({
             imports: [FilterDropdownComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
@@ -138,37 +136,22 @@ describe('FilterDropdownComponent popup', () => {
         if (grouped) {
             fixture.componentRef.setInput('groupedFilters', [{ labelKey: 'Results', items: ['Successful', 'Unsuccessful'] }]);
         }
-        fixture.nativeElement.style.overflow = 'auto';
         fixture.detectChanges();
-        const select: Select = fixture.debugElement.query(By.directive(Select)).componentInstance;
-        select.show();
-        fixture.detectChanges();
-        // JSDOM does not complete CSS enter animations, which normally attach these listeners.
-        select.overlayViewChild!.bindListeners();
-
+        await fixture.whenStable();
+        const select = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
+        let selected: string | undefined;
+        fixture.componentInstance.filterChange.subscribe((filter) => (selected = filter));
         fixture.nativeElement.dispatchEvent(new Event('scroll'));
+        select.selectedIndex = 1;
+        select.dispatchEvent(new Event('change'));
         fixture.detectChanges();
+        expect(selected).toBe('Successful');
+        expect(select.disabled).toBe(false);
+        if (grouped) expect(select.querySelector('optgroup')?.label).toBe('Results');
 
-        expect(select.overlayVisible).toBe(true);
-        const emit = vi.spyOn(fixture.componentInstance.filterChange, 'emit');
-        const option: HTMLElement = fixture.nativeElement.querySelector('[role="option"][aria-label="Successful"]');
-        option.click();
+        select.selectedIndex = 0;
+        select.dispatchEvent(new Event('change'));
         fixture.detectChanges();
-        expect(emit).toHaveBeenCalledExactlyOnceWith('Successful');
-        expect(select.overlayVisible).toBe(false);
-
-        select.show();
-        fixture.detectChanges();
-        select.overlayViewChild!.bindListeners();
-        document.body.click();
-        fixture.detectChanges();
-        expect(select.overlayVisible).toBe(false);
-
-        select.show();
-        fixture.detectChanges();
-        const input: HTMLInputElement = fixture.nativeElement.querySelector('[role="combobox"]');
-        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
-        fixture.detectChanges();
-        expect(select.overlayVisible).toBe(false);
+        expect(selected).toBe('All');
     });
 });

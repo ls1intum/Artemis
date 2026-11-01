@@ -4,7 +4,6 @@ import { TumAetUiButtonSeverity, TumAetUiButtonSize, TumAetUiButtonVariant, tumA
 @Component({
     selector: 'a[tumAetUiButton], button[tumAetUiButton]',
     template: '<ng-content />',
-    styleUrl: './tumaet-ui-button.directive.scss',
     host: {
         '[class]': 'hostClasses()',
     },

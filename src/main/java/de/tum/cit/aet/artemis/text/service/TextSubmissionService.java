@@ -196,8 +196,8 @@ public class TextSubmissionService extends SubmissionService {
      * @return the locked textSubmission
      */
     public TextSubmission lockTextSubmissionToBeAssessed(long textSubmissionId, int correctionRound) {
-        // NOTE: we load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
-        final var textSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(textSubmissionId);
+        // Resuming an assessment must retain its private note as well as its feedback. Assessment preparation loads the text blocks separately.
+        final var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(textSubmissionId);
         lockSubmission(textSubmission, correctionRound);
         return textSubmission;
     }

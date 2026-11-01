@@ -58,7 +58,7 @@ import { TutorParticipationService } from 'app/assessment/shared/assessment-dash
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import dayjs from 'dayjs/esm';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
@@ -175,7 +175,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockProvider(ArtemisDatePipe),
         MockProvider(SortService),
         MockProvider(ArtemisNavigationUtilService),
-        { provide: DialogService, useClass: MockDialogService },
+        { provide: TumAetUiDialogService, useClass: MockDialogService },
         provideHttpClient(),
         provideHttpClientTesting(),
     ];
@@ -518,6 +518,35 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
     });
 
+    it('keeps locked complaint and feedback evaluation links out of keyboard navigation until unlocked', () => {
+        accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
+        fixture.detectChanges();
+        comp.isExamMode.set(false);
+        const submission = { id: 123, participation: { id: 456 }, results: [{ assessmentType: AssessmentType.MANUAL }] } as Submission;
+        const complaint = { result: { submission }, complaintType: ComplaintType.COMPLAINT } as Complaint;
+        comp.submissionsWithComplaints.set([{ submission, complaint }]);
+        comp.submissionsWithMoreFeedbackRequests.set([{ submission, complaint: { ...complaint, complaintType: ComplaintType.MORE_FEEDBACK } }]);
+        const lockedSpy = vi.spyOn(comp, 'isComplaintLocked').mockReturnValue(true);
+        fixture.detectChanges();
+
+        const links = Array.from(fixture.nativeElement.querySelectorAll('a.pointer-events-none')) as HTMLAnchorElement[];
+        expect(links).toHaveLength(2);
+        for (const link of links) {
+            expect(link.getAttribute('href')).toBeNull();
+            expect(link.getAttribute('aria-disabled')).toBe('true');
+            expect(link.tabIndex).toBe(-1);
+        }
+
+        lockedSpy.mockReturnValue(false);
+        fixture.changeDetectorRef.markForCheck();
+        fixture.detectChanges();
+        for (const link of links) {
+            expect(link.getAttribute('href')).toContain('/submissions/123/assessment');
+            expect(link.getAttribute('aria-disabled')).toBeNull();
+            expect(link.tabIndex).toBe(0);
+        }
+    });
+
     describe('openExampleSubmission', () => {
         const courseId = 4;
 
@@ -604,6 +633,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(firstCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBeNull();
         expect(secondCorrectionToggles).toHaveLength(1);
         expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBe(secondCorrectionToggles[0]);
+        const header = secondCorrectionRound.querySelector('[queueHeaderActions]');
+        expect(header?.contains(secondCorrectionToggles[0])).toBe(true);
     });
 
     it('should show the second correction toggle before the instructor participates', () => {

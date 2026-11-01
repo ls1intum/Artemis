@@ -63,6 +63,63 @@ describe('ManageAssessmentButtonsComponent', () => {
         } as Participation);
     });
 
+    it.each([
+        { result: { assessmentType: 'MANUAL', completionDate: undefined }, action: 'continue', cancel: true },
+        { result: { assessmentType: 'MANUAL', completionDate: '2026-10-28T12:00:00Z' }, action: 'open', cancel: false },
+        { result: { assessmentType: 'MANUAL', hasComplaint: true }, action: 'complaint', cancel: true },
+        { result: {}, action: 'assess', cancel: false },
+    ])('names the $action assessment action independently of its responsive text', ({ result, action, cancel }) => {
+        fixture.componentRef.setInput('exercise', { ...exercise, assessmentType: 'SEMI_AUTOMATIC' });
+        fixture.componentRef.setInput('participation', {
+            id: 10,
+            submissionCount: 1,
+            submissions: [{ id: 20, results: [{ id: 30, correctionRound: 0, ...result }] }],
+        });
+        fixture.detectChanges();
+        const link = fixture.nativeElement.querySelector('a') as HTMLAnchorElement;
+        const expected = action === 'complaint' ? 'artemisApp.exerciseAssessmentDashboard.showComplaint' : `artemisApp.assessment.dashboard.actions.${action}`;
+        expect(link.getAttribute('aria-label')).toBe(expected);
+        expect(link.textContent).toContain(expected);
+        const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement | null;
+        if (cancel) {
+            expect(button?.getAttribute('aria-label')).toBe('artemisApp.assessment.dashboard.actions.cancel');
+        } else {
+            expect(button).toBeNull();
+        }
+    });
+
+    it('distinguishes exam correction rounds in visible and accessible action names', () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockImplementation((key, args) => `${key}:${args?.correctionRound}`);
+        fixture.componentRef.setInput('exercise', {
+            ...exercise,
+            assessmentType: 'SEMI_AUTOMATIC',
+            exerciseGroup: { id: 7, exam: { id: 8, numberOfCorrectionRoundsInExam: 2 } },
+        });
+        fixture.componentRef.setInput('participation', {
+            id: 10,
+            submissionCount: 1,
+            submissions: [
+                {
+                    id: 20,
+                    results: [
+                        { id: 30, correctionRound: 0, assessmentType: 'MANUAL', completionDate: '2026-10-28T12:00:00Z' },
+                        { id: 31, correctionRound: 1, assessmentType: 'MANUAL' },
+                    ],
+                },
+            ],
+        });
+        fixture.detectChanges();
+        const links = Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[];
+        expect(links.map((link) => link.getAttribute('aria-label'))).toEqual([
+            'artemisApp.assessment.dashboard.actions.examCorrectionRound.open:1',
+            'artemisApp.assessment.dashboard.actions.examCorrectionRound.continue:2',
+        ]);
+        for (const link of links) {
+            expect(link.textContent).toContain(link.getAttribute('aria-label'));
+        }
+        expect(fixture.nativeElement.querySelector('button').getAttribute('aria-label')).toBe('artemisApp.assessment.dashboard.actions.examCorrectionRound.cancel:2');
+    });
+
     it('checks draft ownership separately for each round and preserves instructor access', () => {
         fixture.componentRef.setInput('correctionRoundsEnabled', 2);
         fixture.componentRef.setInput('ownedCorrectionRounds', [0]);

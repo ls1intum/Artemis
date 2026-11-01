@@ -1,3 +1,11 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiDoughnutChartComponent,
+    TumAetUiDoughnutChartConfig,
+    TumAetUiMessageComponent,
+    TumAetUiTableDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
@@ -39,7 +47,6 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -50,7 +57,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { AssessmentQueueComponent } from './assessment-queue/assessment-queue.component';
@@ -94,7 +100,7 @@ export interface ExampleSubmissionQueryParams {
         ModelingEditorComponent,
         CodeButtonComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         TumAetUiMessageComponent,
         SortDirective,
         SortByDirective,
@@ -105,6 +111,7 @@ export interface ExampleSubmissionQueryParams {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
+        TumAetUiTableDirective,
     ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {

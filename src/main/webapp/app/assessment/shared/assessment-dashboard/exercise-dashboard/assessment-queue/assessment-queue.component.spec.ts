@@ -12,7 +12,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { AssessmentQueueRowDTO } from 'app/exercise/participation/assessment-queue-dto.model';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -33,7 +33,7 @@ describe('AssessmentQueueComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ParticipationService, { searchAssessmentQueue: vi.fn(() => of({ content: [], totalElements: 0 })) }),
                 MockProvider(AlertService),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 MockProvider(SubmissionService, { getExamAssessmentQueue: vi.fn(() => of([])) }),
                 provideRouter([]),
             ],

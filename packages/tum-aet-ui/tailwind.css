@@ -25,6 +25,7 @@
     tumaet-ui-date-picker,
     tumaet-ui-dialog,
     tumaet-ui-doughnut-chart,
+    tumaet-ui-dynamic-dialog-host,
     tumaet-ui-empty-state,
     tumaet-ui-form-field,
     tumaet-ui-icon-field,
@@ -45,6 +46,7 @@
     tumaet-ui-search-field,
     tumaet-ui-select,
     tumaet-ui-select-button,
+    tumaet-ui-splitter,
     tumaet-ui-tab,
     tumaet-ui-tab-list,
     tumaet-ui-tab-panel,
@@ -89,6 +91,42 @@
     )
     :where(button, input, select, textarea) {
     font: inherit;
+}
+
+.tumaet-ui-btn {
+    position: relative;
+    appearance: none;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    border-radius: var(--tumaet-ui-radius-md);
+}
+
+.tumaet-ui-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: transparent;
+    pointer-events: none;
+    transition: background-color 0.15s ease;
+}
+
+.tumaet-ui-btn:hover:not(:disabled):not([aria-disabled='true'])::after {
+    background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
+}
+
+.tumaet-ui-btn[aria-disabled='true'] {
+    cursor: not-allowed;
+}
+
+.tumaet-ui-btn:focus-visible {
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: 2px;
+}
+
+.tumaet-ui-btn:disabled {
+    cursor: default;
 }
 
 .tumaet-ui-button-group {

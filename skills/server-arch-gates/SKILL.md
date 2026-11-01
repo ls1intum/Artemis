@@ -39,6 +39,7 @@ A single class while iterating:
 | Anything that lowercases or uppercases | Case conversion                                     |
 | Anything that serializes JSON          | Jackson version                                     |
 | A websocket topic or message handler   | Websocket topics                                    |
+| An endpoint a coding agent should call | Endpoints opted in to access tokens                 |
 
 The detail for each, with the reason and the failing rule name, is in `reference/gates.md`. Read
 it rather than guessing; several of these rules forbid something that looks completely reasonable.
@@ -122,6 +123,22 @@ is rejected, so a topic that is sent but not declared silently reaches nobody. C
 `/app/...` destinations handled by `@MessageMapping` methods, which check the sender themselves.
 Enforced by `WebsocketTopicArchitectureTest` in
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/`.
+
+**JSON through records, never the tree model.** Production code does not use `JsonNode`, `ObjectNode`, `ArrayNode` or the
+other classes of `tools.jackson.databind.node`, and does not call `readTree`, `valueToTree`, `treeToValue`, `createObjectNode`,
+`createArrayNode` or `readValueAsTree`. Model the JSON as a record and use `readValue` and `writeValueAsString`; there are no
+exceptions. Enforced by `JacksonTreeModelArchitectureTest` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/`, over production classes only.
+
+**Endpoints opted in to access tokens.** Opting an endpoint in with `@AllowedScopes` makes it reachable by a coding agent that
+holds a personal access token, so it needs an `@EnforceAtLeast...` annotation, DTOs only in its request body and response, an
+`@Operation` summary, and an entry in the committed agent specification
+(`./gradlew generateOpenApiDocs -PopenApiGroup=agent pruneOpenApiSpec -x webapp`). Exercise and lecture-unit endpoints with the
+draft-date contract also call `AgentDraftRules`; announcements, competencies and lecture metadata are immediately visible.
+No architecture test checks the draft guard, so add an endpoint test that a token cannot publish through a draft-capable endpoint.
+The other rules are enforced by `AllowedScopesArchitectureTest` in
+`src/test/java/de/tum/cit/aet/artemis/shared/architecture/`. See
+[agent access](../../documentation/docs/developer/agent-access.mdx).
 
 ## Before adding a cache
 

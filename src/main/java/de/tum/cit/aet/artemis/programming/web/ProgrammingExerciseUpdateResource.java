@@ -30,6 +30,8 @@ import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
@@ -60,9 +62,11 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDraftGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
+import io.swagger.v3.oas.annotations.Operation;
 
 /**
  * REST controller for updating complete programming exercise entities.
@@ -114,6 +118,8 @@ public class ProgrammingExerciseUpdateResource {
 
     private final ExerciseVariantGroupService exerciseVariantGroupService;
 
+    private final ProgrammingExerciseDraftGuardService programmingExerciseDraftGuard;
+
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
@@ -121,7 +127,8 @@ public class ProgrammingExerciseUpdateResource {
             AuxiliaryRepositoryService auxiliaryRepositoryService, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository,
             CompetencyExerciseLinkService competencyExerciseLinkService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard,
-            ExerciseVariantGroupService exerciseVariantGroupService) {
+            ExerciseVariantGroupService exerciseVariantGroupService, ProgrammingExerciseDraftGuardService programmingExerciseDraftGuard) {
+        this.programmingExerciseDraftGuard = programmingExerciseDraftGuard;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -154,7 +161,13 @@ public class ProgrammingExerciseUpdateResource {
     @PutMapping("programming-exercises")
     @EnforceAtLeastStudent
     @ManualConfig
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
     @FeatureToggle(Feature.ProgrammingExercises)
+    @Operation(summary = "Update a programming exercise", description = """
+            Replaces the editable settings of an existing programming exercise, so send the whole exercise: omitted flags reset to false. \
+            shortName, staticCodeAnalysisEnabled, the checkout paths and the course cannot be changed. A request with a personal access \
+            token can change only an exercise that students cannot see yet (its releaseDate is in the future) and that has no student \
+            participations, and the change must keep releaseDate in the future. Anything else can be changed only in the Artemis web interface.""")
     public ResponseEntity<ProgrammingExerciseResponseDTO> updateProgrammingExercise(@RequestBody UpdateProgrammingExerciseDTO updateDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText,
             @RequestParam(name = "hyperionCompetencyId", required = false) Set<Long> hyperionCompetencyIds) {
@@ -178,9 +191,11 @@ public class ProgrammingExerciseUpdateResource {
         var user = userRepository.getUserWithAuthorities();
         Course authorizationCourse = courseService.retrieveCourseOfLoadedExercise(authorizationExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, authorizationCourse, user);
+        programmingExerciseDraftGuard.requireDraftForTokenRequest(authorizationExercise, updateDTO.releaseDate(), updateDTO.startDate());
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(updateDTO.id())) {
             var programmingExerciseBeforeUpdate = lease.coordinated() ? programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id()) : authorizationExercise;
+            programmingExerciseDraftGuard.requireDraftForTokenRequest(programmingExerciseBeforeUpdate, updateDTO.releaseDate(), updateDTO.startDate());
             var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(updateDTO.id());
             validateCourseAndExerciseGroupUnchanged(updateDTO, programmingExerciseBeforeUpdate);
 

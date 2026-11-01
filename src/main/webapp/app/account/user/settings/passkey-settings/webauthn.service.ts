@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { WebauthnApiService } from 'app/account/user/settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/foundation/util/base64.util';
 import { InvalidCredentialError } from 'app/account/user/settings/passkey-settings/entities/errors/invalid-credential.error';
