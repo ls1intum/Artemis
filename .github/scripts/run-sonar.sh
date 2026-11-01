@@ -18,7 +18,8 @@ for report in build/test-results/vitest/coverage/lcov.info \
     [[ ! -s "$report" ]] || lcov+=("$report")
 done
 if ((${#lcov[@]})); then
-    args+=("-Dsonar.javascript.lcov.reportPaths=$(IFS=,; echo "${lcov[*]}")")
+    lcov_paths=$(printf '%s,' "${lcov[@]}")
+    args+=("-Dsonar.javascript.lcov.reportPaths=${lcov_paths%,}")
 fi
 if [[ "${SONAR_PULL_REQUEST:-0}" != 0 ]]; then
     : "${SONAR_BASE_BRANCH:?Missing pull request target}"
