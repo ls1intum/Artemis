@@ -121,8 +121,6 @@ export class AthenaCourseConfigState {
      * sent is old news the answer already reflects. The answer is also recorded as the confirmed state of a field the
      * server has not spoken about yet, even one still being switched, so a switch that fails rolls back to what is
      * stored rather than to "disabled".
-     *
-     * Can be called again after a failed load to retry it.
      */
     load(): void {
         this.loadFailed.set(false);

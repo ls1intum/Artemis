@@ -86,28 +86,17 @@ describe('AthenaEnabledComponent', () => {
         expect(disableButton().disabled).toBe(false);
     });
 
-    it('should keep the toggle blocked after a failed load and load again on retry', () => {
-        const getSpy = vi
-            .spyOn(athenaCourseConfigService, 'getCourseConfig')
-            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
-            .mockReturnValueOnce(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: true }));
+    it('should show an error instead of the toggle after a failed load', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
         componentRef.setInput('course', course);
         fixture.detectChanges();
 
-        const disableButton = (): HTMLButtonElement => fixture.nativeElement.querySelector('[data-testid="athena-enabled-disable"]');
+        const element: HTMLElement = fixture.nativeElement;
         expect(comp.loaded()).toBe(false);
         expect(comp.loadFailed()).toBe(true);
-        expect(disableButton().disabled).toBe(true);
-
-        fixture.nativeElement.querySelector('[data-testid="athena-retry"]').click();
-        fixture.detectChanges();
-
-        expect(getSpy).toHaveBeenCalledTimes(2);
-        expect(comp.loaded()).toBe(true);
-        expect(comp.loadFailed()).toBe(false);
-        expect(comp.masterEnabled()).toBe(true);
-        expect(disableButton().disabled).toBe(false);
-        expect(fixture.nativeElement.querySelector('[data-testid="athena-retry"]')).toBeNull();
+        expect(element.querySelector('[data-testid="athena-load-failed"]')?.textContent).toContain('artemisApp.course.athenaConfig.loadFailed');
+        expect(element.querySelector('[data-testid="athena-enabled-disable"]')).toBeNull();
+        expect(element.querySelector('[data-testid="athena-configure-link"]')).toBeTruthy();
     });
 
     describe('setEnabled', () => {

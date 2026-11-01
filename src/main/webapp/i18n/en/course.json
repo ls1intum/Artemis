@@ -247,6 +247,7 @@
                 "enabledLabel": "Enable Athena",
                 "configure": "Configure",
                 "learnMore": "Learn more",
+                "loadFailed": "The Athena configuration of this course could not be loaded. Please reload the page to try again.",
                 "formativeFeedbackEnabled": {
                     "label": "Formative feedback requests",
                     "enabledLabel": "Formative feedback requests are enabled",

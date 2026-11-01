@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params } from '@angular/router';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AthenaSettingsUpdateComponent } from 'app/course/manage/athena-settings-update/athena-settings-update.component';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
@@ -55,6 +55,24 @@ describe('AthenaSettingsUpdateComponent', () => {
         expect(getSpy).toHaveBeenCalledExactlyOnceWith(5);
         expect(comp.gradingEnabled()).toBe(true);
         expect(comp.formativeEnabled()).toBe(false);
+    });
+
+    it('should show the stored state on the switch when a save fails before the next render', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+        vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        createComponent();
+        fixture.detectChanges();
+        const input = (testId: string): HTMLInputElement => fixture.nativeElement.querySelector(`[data-testid="${testId}"] input`);
+
+        // the request fails synchronously, before Angular renders the switched state
+        input('athena-settings-grading-feedback').click();
+        input('athena-settings-formative-feedback').click();
+        fixture.detectChanges();
+
+        expect(comp.gradingEnabled()).toBe(true);
+        expect(comp.formativeEnabled()).toBe(false);
+        expect(input('athena-settings-grading-feedback').checked).toBe(true);
+        expect(input('athena-settings-formative-feedback').checked).toBe(false);
     });
 
     it('should render one toggle per feature', () => {
@@ -227,8 +245,8 @@ describe('AthenaSettingsUpdateComponent', () => {
 
         const element: HTMLElement = fixture.nativeElement;
         const section = element.querySelector('[data-testid="athena-settings-feedback-style"]');
-        // The section sits inside the formative feedback card, since the style only applies to those requests.
-        expect(section?.closest('tumaet-ui-card')?.querySelector('[data-testid="athena-settings-formative-feedback"]')).toBeTruthy();
+        // The section sits inside the formative feedback row, since the style only applies to those requests.
+        expect(section?.parentElement?.querySelector('[data-testid="athena-settings-formative-feedback"]')).toBeTruthy();
         // Each style sits in a box of its own, holding its own ticks.
         for (const field of ['default-feedback-detail', 'default-feedback-formality']) {
             const box = section?.querySelector(`[data-testid="athena-settings-${field}"]`);
@@ -320,26 +338,31 @@ describe('AthenaSettingsUpdateComponent', () => {
         expect(example.querySelectorAll('jhi-unified-feedback')).toHaveLength(1);
     });
 
-    it('should keep the toggles blocked after a failed load and load again on retry', () => {
-        const getSpy = vi
-            .spyOn(athenaCourseConfigService, 'getCourseConfig')
-            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
-            .mockReturnValueOnce(of({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false }));
+    it('should show an error instead of the toggles after a failed load', () => {
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        createComponent();
+        fixture.detectChanges();
+
+        const element: HTMLElement = fixture.nativeElement;
+        expect(comp.loaded()).toBe(false);
+        expect(comp.loadFailed()).toBe(true);
+        expect(element.querySelector('[data-testid="athena-settings-load-failed"]')?.textContent).toContain('artemisApp.course.athenaConfig.loadFailed');
+        expect(fixture.debugElement.queryAll(By.directive(TumAetUiToggleSwitchComponent))).toHaveLength(0);
+    });
+
+    it('should keep the toggles blocked until the configuration has loaded', () => {
+        const pending = new Subject<AthenaCourseConfigDTO>();
+        vi.spyOn(athenaCourseConfigService, 'getCourseConfig').mockReturnValue(pending);
         createComponent();
         fixture.detectChanges();
 
         const toggles = () => fixture.debugElement.queryAll(By.directive(TumAetUiToggleSwitchComponent)).map((toggle) => toggle.componentInstance as TumAetUiToggleSwitchComponent);
-        expect(comp.loaded()).toBe(false);
-        expect(comp.loadFailed()).toBe(true);
         expect(toggles().map((toggle) => toggle.disabled())).toEqual([true, true]);
 
-        fixture.nativeElement.querySelector('[data-testid="athena-settings-retry"]').click();
+        pending.next({ gradingFeedbackEnabled: true, formativeFeedbackEnabled: false });
         fixture.detectChanges();
 
-        expect(getSpy).toHaveBeenCalledTimes(2);
-        expect(comp.loaded()).toBe(true);
-        expect(comp.gradingEnabled()).toBe(true);
         expect(toggles().map((toggle) => toggle.disabled())).toEqual([false, false]);
-        expect(fixture.nativeElement.querySelector('[data-testid="athena-settings-retry"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="athena-settings-load-failed"]')).toBeNull();
     });
 });

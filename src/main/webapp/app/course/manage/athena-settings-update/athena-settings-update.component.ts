@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, viewChildren } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { EMPTY } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -11,7 +10,7 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonDirective, TumAetUiCardComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -42,13 +41,11 @@ interface FeedbackStyleTick {
     imports: [
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
-        FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
-        TumAetUiCardComponent,
+        TumAetUiMessageComponent,
         TumAetUiToggleSwitchComponent,
         TextResultComponent,
-        TumAetUiButtonDirective,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -70,7 +67,7 @@ export class AthenaSettingsUpdateComponent {
     /** Until the configuration has loaded, "disabled" is only a fallback, so the switches cannot be used yet. */
     readonly loaded = computed(() => this.state()?.loaded() ?? false);
 
-    /** A failed load keeps the switches blocked, so the instructor is offered to load it again. */
+    /** After a failed load the switches are hidden, since their state would be a guess; reloading the page loads it again. */
     readonly loadFailed = computed(() => this.state()?.loadFailed() ?? false);
 
     /** The two toggle rows, rendered by one @for so the markup stays in a single place. */
@@ -78,6 +75,8 @@ export class AthenaSettingsUpdateComponent {
         { key: 'gradingFeedbackEnabled' as const, testId: 'athena-settings-grading-feedback', enabled: this.gradingEnabled },
         { key: 'formativeFeedbackEnabled' as const, testId: 'athena-settings-formative-feedback', enabled: this.formativeEnabled },
     ];
+
+    private readonly toggles = viewChildren(TumAetUiToggleSwitchComponent);
 
     /**
      * The course-level feedback style defaults, applied for a student who has not set their own feedback preference
@@ -130,6 +129,16 @@ export class AthenaSettingsUpdateComponent {
             example: this.feedbackFormalityExample,
         },
     ];
+
+    constructor() {
+        // A click shows the new state on the switch at once. A save failing before the next render rolls the state back to the value a binding
+        // would still hold, so it would never write it again. Every switch or rollback replaces the configuration, so each one is written here.
+        effect(() => {
+            this.state()?.config();
+            const toggles = this.toggles();
+            this.features.forEach((feature, index) => toggles[index]?.writeValue(feature.enabled()));
+        });
+    }
 
     /**
      * The track position, in percent, of a level (1/2/3 -> 0/50/100), so the template can position ticks, the fill
@@ -223,12 +232,5 @@ export class AthenaSettingsUpdateComponent {
         }
         event.preventDefault();
         this.selectFeedbackStyleLevel(field, Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, target)));
-    }
-
-    /**
-     * Load the configuration again after it failed to load.
-     */
-    retryLoad() {
-        this.state()?.load();
     }
 }

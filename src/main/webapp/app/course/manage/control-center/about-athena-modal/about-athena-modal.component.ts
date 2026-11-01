@@ -21,7 +21,6 @@ interface FeatureCard {
 @Component({
     selector: 'jhi-about-athena-modal',
     templateUrl: './about-athena-modal.component.html',
-    styleUrl: './about-athena-modal.component.scss',
     imports: [AthenaLogoComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
