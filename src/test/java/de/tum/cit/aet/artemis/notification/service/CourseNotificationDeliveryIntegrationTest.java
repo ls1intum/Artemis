@@ -58,8 +58,7 @@ class CourseNotificationDeliveryIntegrationTest extends AbstractSpringIntegratio
 
         var channels = new SynchronousDeliveryChannels(delivered -> {
             // Model a client displaying the websocket notification immediately, before delivery returns.
-            userCourseNotificationStatusService.updateUserCourseNotificationStatus(recipient, List.of(delivered.notificationId()), UserCourseNotificationStatusType.SEEN,
-                    course.getId());
+            userCourseNotificationStatusService.markDisplayedNotificationsAsSeen(recipient, List.of(delivered.notificationId()), course.getId());
         });
         var service = new CourseNotificationService(courseNotificationRegistryService, courseNotificationSettingService, courseNotificationRepository,
                 courseNotificationParameterRepository, userCourseNotificationStatusService, channels.webappService, channels.pushService, channels.emailService,
