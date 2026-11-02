@@ -66,6 +66,6 @@
             }
         </div>
         <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
-        <jhi-build-phases-editor [phases]="container.phases" [readonly]="true" [isExamMode]="isExamMode()" />
+        <jhi-build-phases-editor [phases]="container.phases" [readonly]="true" [isExamMode]="isExamMode()" [idPrefix]="'container-' + $index + '-'" />
     </div>
 }

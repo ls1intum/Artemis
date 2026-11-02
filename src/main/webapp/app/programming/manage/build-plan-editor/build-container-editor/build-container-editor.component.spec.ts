@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,6 +7,8 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TumAetUiButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { BuildContainerEditorComponent } from './build-container-editor.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phases-editor.component';
+import { BuildPhaseEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phase/build-phase-editor.component';
+import { MonacoEditorFitTextComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { BuildContainer } from 'app/programming/shared/entities/build-plan-phases.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -226,5 +229,66 @@ describe('BuildContainerEditorComponent', () => {
 
             expect(getEnvVarRows()).toHaveLength(2);
         });
+    });
+});
+
+/** two containers on one page, as the build plan editor renders them */
+@Component({
+    imports: [BuildContainerEditorComponent],
+    template: `
+        @for (container of containers; track $index) {
+            <jhi-build-container-editor [container]="container" [containerIndex]="$index" />
+        }
+    `,
+})
+class TwoContainersHostComponent {
+    readonly containers: BuildContainer[] = ['instructor_tests', 'student_tests'].map((name) => ({
+        name,
+        phases: [{ name: 'test', script: 'echo test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
+    }));
+}
+
+describe('BuildContainerEditorComponent with several containers on one page', () => {
+    let root: HTMLElement;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TwoContainersHostComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .overrideComponent(BuildPhaseEditorComponent, {
+                remove: { imports: [MonacoEditorFitTextComponent] },
+                add: { imports: [MockComponent(MonacoEditorFitTextComponent)] },
+            })
+            .compileComponents();
+
+        const fixture = TestBed.createComponent(TwoContainersHostComponent);
+        fixture.detectChanges();
+        root = fixture.nativeElement;
+    });
+
+    const getEditors = () => Array.from(root.querySelectorAll<HTMLElement>('jhi-build-container-editor'));
+
+    it('should give every control of the phase editors an id of its own', () => {
+        const ids = Array.from(root.querySelectorAll('[id]'))
+            .map((element) => element.id)
+            .filter((id) => id.includes('phase'));
+
+        expect(ids.length).toBeGreaterThan(0);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    it('should let every label of a phase target a control of its own container', () => {
+        const editors = getEditors();
+        expect(editors).toHaveLength(2);
+
+        for (const editor of editors) {
+            const phaseLabels = Array.from(editor.querySelectorAll<HTMLLabelElement>('jhi-build-phase label[for]'));
+            expect(phaseLabels.length).toBeGreaterThan(0);
+            for (const label of phaseLabels) {
+                const target = root.querySelector(`[id="${label.htmlFor}"]`);
+                expect(editor.contains(target), `the target of the label for ${label.htmlFor}`).toBe(true);
+            }
+        }
     });
 });

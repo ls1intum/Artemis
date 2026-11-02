@@ -65,8 +65,9 @@ describe('BuildContainersDetailsComponent', () => {
         const phaseEditors = cards.map((card) => card.queryAll(By.directive(BuildPhaseEditorComponent)));
         expect(phaseEditors.map((editors) => editors.length)).toEqual([2, 1]);
         // the add-phase button of a read-only phases editor is hidden
-        const addPhaseButtons = fixture.debugElement.queryAll(By.css('#add-phase-button'));
+        const addPhaseButtons = fixture.debugElement.queryAll(By.css('[id$="add-phase-button"]'));
         expect(addPhaseButtons).toHaveLength(2);
+        expect(new Set(addPhaseButtons.map((button) => (button.nativeElement as HTMLButtonElement).id)).size).toBe(2);
         expect(addPhaseButtons.every((button) => (button.nativeElement as HTMLButtonElement).hidden)).toBe(true);
     });
 

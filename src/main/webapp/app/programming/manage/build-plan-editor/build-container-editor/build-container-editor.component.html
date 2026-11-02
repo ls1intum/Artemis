@@ -244,5 +244,5 @@
 
     <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
     <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.help" />
-    <jhi-build-phases-editor [phases]="container().phases" (phasesChange)="setPhases($event)" [isExamMode]="isExamMode()" />
+    <jhi-build-phases-editor [phases]="container().phases" (phasesChange)="setPhases($event)" [isExamMode]="isExamMode()" [idPrefix]="'container-' + containerIndex() + '-'" />
 </div>
