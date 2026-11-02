@@ -204,9 +204,8 @@ export class Feedback implements BaseEntity {
     public static readonly DEFAULT_TITLE_KEYS = ['artemisApp.feedback.type.positive', 'artemisApp.feedback.type.needsRevision', 'artemisApp.feedback.type.feedback'];
 
     /** The translation key of the default title for the given points: "Positive", "Needs Revision" or "Feedback". */
-    public static getDefaultTitleKey(credits: number | undefined): string {
-        const points = credits ?? 0;
-        return this.DEFAULT_TITLE_KEYS[points > 0 ? 0 : points < 0 ? 1 : 2];
+    public static getDefaultTitleKey(credits = 0): string {
+        return this.DEFAULT_TITLE_KEYS[credits > 0 ? 0 : credits < 0 ? 1 : 2];
     }
 
     /**
