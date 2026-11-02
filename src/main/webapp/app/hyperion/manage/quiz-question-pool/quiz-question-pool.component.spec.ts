@@ -209,6 +209,43 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.showNeedsReviewQueue()).toBe(false);
     });
 
+    it('should count the pending flagged questions of the whole queue, not only the loaded ones', () => {
+        const loaded = Array.from({ length: 20 }, (_, index) => ({ ...question(index + 1, 9, 'Arrays'), flagged: true }));
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => of(query.flagged ? { ...page(loaded, 40), pendingCount: 40 } : page(questions())));
+        component.refresh();
+        expect(component.pendingInQueue()).toBe(40);
+
+        for (const item of loaded) {
+            vi.spyOn(poolService, 'review').mockReturnValue(of({ ...item, reviewState: 'APPROVED' }));
+            component.review({ questionId: item.id, reviewState: 'APPROVED' });
+        }
+
+        expect(component.pendingInQueue()).toBe(20);
+        expect(component.allFlaggedReviewed()).toBe(false);
+        expect(component.queueCollapsed()).toBe(false);
+        expect(component.remainingNeedsReview()).toBe(20);
+    });
+
+    it('should keep the newest review queue when an older queue response arrives later', () => {
+        const flagged = { ...question(1, 9, 'Arrays'), flagged: true };
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const older = new Subject<PoolQuestionPage>();
+        const newer = new Subject<PoolQuestionPage>();
+        const queueResponses = [older, newer];
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => (query.flagged ? queueResponses.shift()!.asObservable() : of(page(questions()))));
+        component.refresh();
+        component.refresh();
+
+        newer.next({ ...page([flagged]), pendingCount: 1 });
+        newer.complete();
+        older.next({ ...page([]), pendingCount: 0 });
+        older.complete();
+
+        expect(component.needsReviewQuestions().map((item) => item.id)).toEqual([1]);
+        expect(component.pendingInQueue()).toBe(1);
+    });
+
     it('should fold and unfold the review queue from anywhere in its header row except the toggle button', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
         const header = document.createElement('div');
@@ -350,6 +387,30 @@ describe('QuizQuestionPoolComponent', () => {
         expect(listCalls(questionsSpy).length).toBe(questionCallsAtStart + 1);
         vi.advanceTimersByTime(3000);
         expect(listCalls(questionsSpy).length).toBe(questionCallsAtStart + 2);
+        expect(progressSpy.mock.calls.length).toBe(progressCallsAtStart + 2);
+        vi.advanceTimersByTime(6000);
+
+        expect(progressSpy.mock.calls.length).toBe(progressCallsAtStart + 2);
+    });
+
+    it('should keep polling until the final review queue arrives as well', () => {
+        vi.useFakeTimers();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'startBuild').mockReturnValue(of({ started: true, enqueued: 12 }));
+        const progressSpy = vi.spyOn(poolService, 'getProgress').mockReturnValue(of({ ...progress, running: false }));
+        let queueFailedOnce = false;
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => {
+            if (query.flagged && !queueFailedOnce) {
+                queueFailedOnce = true;
+                return throwError(() => new Error('network'));
+            }
+            return of(page(questions()));
+        });
+        component.startBuild();
+        const progressCallsAtStart = progressSpy.mock.calls.length;
+
+        vi.advanceTimersByTime(3000);
+        vi.advanceTimersByTime(3000);
         expect(progressSpy.mock.calls.length).toBe(progressCallsAtStart + 2);
         vi.advanceTimersByTime(6000);
 

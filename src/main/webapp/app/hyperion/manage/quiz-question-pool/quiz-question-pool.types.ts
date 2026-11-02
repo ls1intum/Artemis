@@ -131,6 +131,8 @@ export interface PoolQuestionPage {
     items: PoolQuestion[];
     totalCount: number;
     competencies: PoolCompetency[];
+    /** For a request of the flagged questions, how many of them across all pages await a decision. */
+    pendingCount?: number;
 }
 
 /** The request for one page of the question list. */

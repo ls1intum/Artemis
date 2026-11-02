@@ -16,8 +16,8 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleCheck, faCircleInfo, faGear, faPlay, faRotate, faStop, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { EMPTY, Observable, Subject, Subscription, interval } from 'rxjs';
-import { catchError, exhaustMap, finalize, tap, timeout } from 'rxjs/operators';
+import { EMPTY, Observable, Subject, Subscription, forkJoin, interval, of } from 'rxjs';
+import { catchError, defaultIfEmpty, exhaustMap, finalize, map, tap, timeout } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -167,6 +167,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     /** Flagged questions, undecided ones first, shown as a queue above the grouped list while no competency is selected. */
     readonly needsReviewQuestions = signal<PoolQuestion[]>([]);
     readonly needsReviewTotal = signal(0);
+    /** How many flagged questions across the whole queue await a decision, as the server counted them and adjusted by later decisions. */
+    readonly pendingInQueue = signal(0);
     /** Whether the queue is folded away; it folds on its own once every flagged question has a decision. */
     readonly queueCollapsed = signal(false);
     readonly competencyOptions = signal<PoolCompetency[]>([]);
@@ -198,6 +200,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
 
     /** The sequence number of the question-list request whose response the list shows. */
     private appliedQuestionsAt = 0;
+
+    /** The sequence number of the review-queue request whose response the queue shows. */
+    private appliedQueueAt = 0;
 
     readonly isInstructor = computed(() => !!this.course()?.isAtLeastInstructor);
     readonly canReview = computed(() => !!this.course()?.isAtLeastEditor);
@@ -251,8 +256,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     readonly remainingQuestions = computed(() => Math.max(0, this.totalQuestionCount() - this.questions().length));
     readonly remainingNeedsReview = computed(() => Math.max(0, this.needsReviewTotal() - this.needsReviewQuestions().length));
     readonly showNeedsReviewQueue = computed(() => this.selectedCompetencyId() === undefined && this.needsReviewQuestions().length > 0);
-    readonly pendingInQueue = computed(() => this.needsReviewQuestions().filter((question) => question.reviewState === 'PENDING').length);
-    readonly allFlaggedReviewed = computed(() => this.needsReviewQuestions().length > 0 && this.pendingInQueue() === 0);
+    /** Whether every flagged question of the whole queue, loaded or not, has a decision. */
+    readonly allFlaggedReviewed = computed(() => this.needsReviewTotal() > 0 && this.pendingInQueue() === 0);
     readonly groups = computed<CompetencyGroup[]>(() => {
         const groups = new Map<number, CompetencyGroup>();
         for (const question of this.questions()) {
@@ -291,6 +296,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         this.totalQuestionCount.set(0);
         this.needsReviewQuestions.set([]);
         this.needsReviewTotal.set(0);
+        this.pendingInQueue.set(0);
         this.queueCollapsed.set(false);
         this.competencyOptions.set([]);
         this.settings.set(undefined);
@@ -300,6 +306,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         this.isCancelling.set(false);
         this.reviewSequences.clear();
         this.appliedQuestionsAt = 0;
+        this.appliedQueueAt = 0;
     }
 
     private isCurrent(courseId: number): boolean {
@@ -361,18 +368,38 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         if (this.selectedCompetencyId() !== undefined) {
             this.needsReviewQuestions.set([]);
             this.needsReviewTotal.set(0);
+            this.pendingInQueue.set(0);
             return EMPTY;
         }
         const requestedAt = ++this.requestSequence;
         return this.poolService.getQuestions(courseId, { flagged: true, page: 0, size }).pipe(
             tap((page) => {
-                if (this.isCurrent(courseId)) {
-                    this.needsReviewQuestions.update((current) => this.keepNewerDecisions(current, page.items, requestedAt));
-                    this.needsReviewTotal.set(page.totalCount);
-                    this.queueCollapsed.set(this.allFlaggedReviewed());
+                if (!this.isCurrent(courseId) || requestedAt < this.appliedQueueAt) {
+                    return;
                 }
+                this.appliedQueueAt = requestedAt;
+                this.needsReviewQuestions.update((current) => this.keepNewerDecisions(current, page.items, requestedAt));
+                this.needsReviewTotal.set(page.totalCount);
+                this.pendingInQueue.set(this.pendingAfterNewerDecisions(page, requestedAt));
+                this.queueCollapsed.set(this.allFlaggedReviewed());
             }),
         );
+    }
+
+    /**
+     * The server's pending count, corrected for the decisions stored after the request started: the response still counts a question
+     * decided since then as pending, or a question returned to pending since then as decided.
+     */
+    private pendingAfterNewerDecisions(page: PoolQuestionPage, requestedAt: number): number {
+        let pending = page.pendingCount ?? page.items.filter((question) => question.reviewState === 'PENDING').length;
+        const shown = new Map(this.needsReviewQuestions().map((question) => [question.id, question]));
+        for (const question of page.items) {
+            const current = shown.get(question.id);
+            if (current && (this.reviewSequences.get(question.id) ?? 0) > requestedAt && current.reviewState !== question.reviewState) {
+                pending += (current.reviewState === 'PENDING' ? 1 : 0) - (question.reviewState === 'PENDING' ? 1 : 0);
+            }
+        }
+        return Math.max(0, pending);
     }
 
     /** Appends the next page of the grouped list. */
@@ -409,6 +436,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             return;
         }
         this.isLoadingMoreNeedsReview.set(true);
+        const requestedAt = ++this.requestSequence;
         const page = Math.floor(this.needsReviewQuestions().length / PAGE_SIZE);
         this.poolService
             .getQuestions(courseId, { flagged: true, page, size: PAGE_SIZE })
@@ -418,7 +446,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (result) => {
-                    if (this.isCurrent(courseId)) {
+                    if (this.isCurrent(courseId) && requestedAt > this.appliedQueueAt) {
                         const known = new Set(this.needsReviewQuestions().map((question) => question.id));
                         this.needsReviewQuestions.update((current) => [...current, ...result.items.filter((question) => !known.has(question.id))]);
                         this.needsReviewTotal.set(result.totalCount);
@@ -701,6 +729,12 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                 next: (updated) => {
                     if (this.isCurrent(courseId)) {
                         this.reviewSequences.set(updated.id, ++this.requestSequence);
+                        const previous = this.needsReviewQuestions().find((question) => question.id === updated.id);
+                        if (previous && previous.reviewState !== updated.reviewState) {
+                            this.pendingInQueue.update((pending) =>
+                                Math.max(0, pending + (updated.reviewState === 'PENDING' ? 1 : 0) - (previous.reviewState === 'PENDING' ? 1 : 0)),
+                            );
+                        }
                         this.questions.update((questions) => questions.map((question) => (question.id === updated.id ? updated : question)));
                         this.needsReviewQuestions.update((queue) => queue.map((question) => (question.id === updated.id ? updated : question)));
                         if (this.allFlaggedReviewed()) {
@@ -753,9 +787,14 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                         this.questions.update((questions) => questions.filter((question) => question.id !== questionId));
                         this.totalQuestionCount.update((total) => Math.max(0, total - 1));
                     }
-                    if (this.needsReviewQuestions().some((question) => question.id === questionId)) {
+                    const queued = this.needsReviewQuestions().find((question) => question.id === questionId);
+                    if (queued) {
                         this.needsReviewQuestions.update((queue) => queue.filter((question) => question.id !== questionId));
                         this.needsReviewTotal.update((total) => Math.max(0, total - 1));
+                        if (queued.reviewState === 'PENDING') {
+                            this.pendingInQueue.update((pending) => Math.max(0, pending - 1));
+                        }
+                        this.queueCollapsed.set(this.allFlaggedReviewed());
                     }
                     this.alertService.success('artemisApp.hyperion.quizQuestionPool.list.deleted');
                     this.loadProgress(courseId);
@@ -823,9 +862,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Polls progress and questions until a progress response reports no running build and the question list requested on it has
-     * arrived; a failed question request leaves polling on, so the next tick asks again. A request to poll made while that question
-     * list is pending, such as a new build, keeps polling on.
+     * Polls progress and questions until a progress response reports no running build and both the question list and the review queue
+     * requested on it have arrived; a failed request leaves polling on, so the next tick asks again. A request to poll made while those
+     * are pending, such as a new build, keeps polling on.
      */
     private startPolling(courseId: number): void {
         this.pollGeneration++;
@@ -850,24 +889,27 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                     }
                     this.applyProgress(progress);
                     const generation = this.pollGeneration;
-                    this.reloadNeedsReview(courseId, this.refreshSize(this.needsReviewQuestions().length))
-                        .pipe(
-                            catchError(() => EMPTY),
-                            takeUntilDestroyed(this.destroyRef),
-                        )
-                        .subscribe();
-                    this.reloadQuestions(courseId, this.refreshSize(this.questions().length))
-                        .pipe(
-                            catchError(() => EMPTY),
-                            takeUntilDestroyed(this.destroyRef),
-                        )
-                        .subscribe(() => {
-                            if (this.isCurrent(courseId) && !progress.running && generation === this.pollGeneration) {
+                    forkJoin([
+                        this.succeeded(this.reloadNeedsReview(courseId, this.refreshSize(this.needsReviewQuestions().length))),
+                        this.succeeded(this.reloadQuestions(courseId, this.refreshSize(this.questions().length))),
+                    ])
+                        .pipe(takeUntilDestroyed(this.destroyRef))
+                        .subscribe(([queueLoaded, listLoaded]) => {
+                            if (this.isCurrent(courseId) && !progress.running && queueLoaded && listLoaded && generation === this.pollGeneration) {
                                 this.stopPolling();
                             }
                         });
                 },
             });
+    }
+
+    /** Completes with whether the refresh succeeded; a refresh that has nothing to load counts as succeeded. */
+    private succeeded(refresh: Observable<unknown>): Observable<boolean> {
+        return refresh.pipe(
+            map(() => true),
+            defaultIfEmpty(true),
+            catchError(() => of(false)),
+        );
     }
 
     private stopPolling(): void {

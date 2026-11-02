@@ -56,6 +56,7 @@ export class QuizQuestionPoolService {
                 items: (page.items ?? []).map((item) => this.toPoolQuestion(item)),
                 totalCount: page.totalCount,
                 competencies: (page.competencies ?? []).map((competency) => ({ id: competency.id, title: competency.title ?? '' })),
+                pendingCount: page.pendingCount ?? undefined,
             })),
         );
     }
