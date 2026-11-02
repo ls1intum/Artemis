@@ -204,5 +204,44 @@ describe('SavedPostsComponent', () => {
             expect(component['isShowDeleteNotice']()).toBeTruthy();
             expect(optionsElement).toBeTruthy();
         });
+
+        it('should keep an overflowing saved-post list as the scroll container', () => {
+            const overflowingPosts = Array.from({ length: 20 }, (_, index) => ({ id: index + 1, content: `Saved post ${index + 1}` }) as Posting);
+            savedPostService.fetchSavedPosts.mockReturnValue(of(new HttpResponse({ body: overflowingPosts })));
+            fixture.componentRef.setInput('courseId', 1);
+            fixture.detectChanges();
+
+            const host = fixture.nativeElement as HTMLElement;
+            const wrapper = host.querySelector<HTMLElement>('.saved-posts')!;
+            const heading = wrapper.querySelector<HTMLElement>('h4')!;
+            const postContainer = host.querySelector<HTMLElement>('.saved-posts-post-container')!;
+            const renderedPosts = postContainer.querySelectorAll<HTMLElement>('jhi-posting-summary');
+            const lastPost = renderedPosts.item(renderedPosts.length - 1);
+            Object.defineProperties(postContainer, {
+                clientHeight: { configurable: true, value: 300 },
+                scrollHeight: { configurable: true, value: 800 },
+            });
+            Object.defineProperties(lastPost, {
+                offsetTop: { configurable: true, value: 760 },
+                offsetHeight: { configurable: true, value: 40 },
+            });
+
+            expect(renderedPosts).toHaveLength(overflowingPosts.length);
+            expect(postContainer.scrollHeight).toBeGreaterThan(postContainer.clientHeight);
+            expect(host.classList).toContain('min-h-0');
+            expect(host.classList).toContain('flex-1');
+            expect(wrapper.classList).toContain('min-h-0');
+            expect(wrapper.classList).toContain('flex-1');
+            expect(postContainer.classList).toContain('min-h-0');
+            expect(postContainer.classList).toContain('flex-1');
+            expect(postContainer.classList).toContain('overflow-y-auto');
+
+            postContainer.scrollTop = postContainer.scrollHeight - postContainer.clientHeight;
+
+            expect(lastPost.offsetTop + lastPost.offsetHeight).toBeLessThanOrEqual(postContainer.scrollTop + postContainer.clientHeight);
+            expect(postContainer.contains(heading)).toBe(false);
+            expect(wrapper.contains(heading)).toBe(true);
+            expect(wrapper.scrollTop).toBe(0);
+        });
     });
 });

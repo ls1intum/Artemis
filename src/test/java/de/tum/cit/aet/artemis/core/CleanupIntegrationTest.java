@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRMED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -126,6 +128,9 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
+
+    @Autowired
+    private ParticipantScoreScheduleService participantScoreScheduleService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -367,9 +372,9 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
         var oldStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
         var oldSubmission = participationUtilService.addSubmission(oldStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
-        var oldResult1 = participationUtilService.generateResult(oldSubmission, instructor);
+        var oldResult1 = participationUtilService.generateResultWithScore(oldSubmission, instructor, 50.0);
         oldResult1.setRated(false);
-        var oldResult2 = participationUtilService.generateResult(oldSubmission, instructor);
+        var oldResult2 = participationUtilService.generateResultWithScore(oldSubmission, instructor, 50.0);
         oldResult2.setRated(false);
 
         var oldFeedback1 = createFeedbackWithLinkedLongFeedback(oldResult1);
@@ -380,25 +385,20 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
         var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
 
-        StudentScore oldParticipantScore1 = new StudentScore();
-        oldParticipantScore1.setExercise(oldExercise);
-        oldParticipantScore1.setUser(student);
-        oldParticipantScore1.setLastRatedResult(oldResult1);
-        studentScoreRepository.save(oldParticipantScore1);
-
-        StudentScore oldParticipantScore2 = new StudentScore();
-        oldParticipantScore2.setUser(student);
-        oldParticipantScore2.setExercise(oldExercise);
-        oldParticipantScore2.setLastResult(oldResult2);
-        studentScoreRepository.save(oldParticipantScore2);
+        participantScoreScheduleService.scheduleTask(oldExercise.getId(), student.getId(), null);
+        await().until(participantScoreScheduleService::isIdle);
+        var oldParticipantScore = studentScoreRepository.findByExercise_IdAndUser_Id(oldExercise.getId(), student.getId()).orElseThrow();
+        oldParticipantScore.setLastRatedResult(oldResult1);
+        oldParticipantScore.setLastResult(oldResult2);
+        oldParticipantScore = studentScoreRepository.save(oldParticipantScore);
 
         // create non rated results for the new course
         var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
         var newStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
         var newSubmission = participationUtilService.addSubmission(newStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
-        var newResult1 = participationUtilService.generateResult(newSubmission, instructor);
+        var newResult1 = participationUtilService.generateResultWithScore(newSubmission, instructor, 50.0);
         newResult1.setRated(false);
-        var newResult2 = participationUtilService.generateResult(newSubmission, instructor);
+        var newResult2 = participationUtilService.generateResultWithScore(newSubmission, instructor, 50.0);
         newResult2.setRated(false);
 
         var newFeedback1 = createFeedbackWithLinkedLongFeedback(newResult1);
@@ -409,17 +409,12 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         participationUtilService.addFeedbackToResult(newFeedback2, newResult2);
         var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
 
-        StudentScore newParticipantScore1 = new StudentScore();
-        newParticipantScore1.setUser(student);
-        newParticipantScore1.setExercise(newExercise);
-        newParticipantScore1.setLastRatedResult(newResult1);
-        newParticipantScore1 = studentScoreRepository.save(newParticipantScore1);
-
-        StudentScore newParticipantScore2 = new StudentScore();
-        newParticipantScore2.setUser(student);
-        newParticipantScore2.setExercise(newExercise);
-        newParticipantScore2.setLastResult(newResult2);
-        newParticipantScore2 = studentScoreRepository.save(newParticipantScore2);
+        participantScoreScheduleService.scheduleTask(newExercise.getId(), student.getId(), null);
+        await().until(participantScoreScheduleService::isIdle);
+        var newParticipantScore = studentScoreRepository.findByExercise_IdAndUser_Id(newExercise.getId(), student.getId()).orElseThrow();
+        newParticipantScore.setLastRatedResult(newResult1);
+        newParticipantScore.setLastResult(newResult2);
+        newParticipantScore = studentScoreRepository.save(newParticipantScore);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("deleteFrom", DELETE_FROM.toString());
@@ -444,8 +439,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         assertThat(feedbackRepository.findByResult(oldResult2)).isNotEmpty();
         assertThat(textBlockRepository.findById(oldTextBlock2.getId())).isNotEmpty();
 
-        assertThat(participantScoreRepository.findById(newParticipantScore1.getId())).isNotEmpty();
-        assertThat(participantScoreRepository.findById(newParticipantScore2.getId())).isNotEmpty();
+        assertThat(participantScoreRepository.findById(newParticipantScore.getId())).isNotEmpty();
         assertThat(resultRepository.findById(newResult1.getId())).isPresent();
         assertThat(feedbackRepository.findByResult(newResult1)).isNotEmpty();
         assertThat(textBlockRepository.findById(newTextBlock1.getId())).isNotEmpty();
@@ -462,8 +456,8 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
         var oldStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
         var oldSubmission = participationUtilService.addSubmission(oldStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
-        var oldResult1 = participationUtilService.generateResult(oldSubmission, instructor); // should be deleted, with all associated entities
-        var oldResult2 = participationUtilService.generateResult(oldSubmission, instructor);
+        var oldResult1 = participationUtilService.generateResultWithScore(oldSubmission, instructor, 50.0); // should be deleted, with all associated entities
+        var oldResult2 = participationUtilService.generateResultWithScore(oldSubmission, instructor, 50.0);
 
         var oldFeedback1 = createFeedbackWithLinkedLongFeedback(oldResult1);
         participationUtilService.addFeedbackToResult(oldFeedback1, oldResult1);
@@ -473,24 +467,19 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
         var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
 
-        StudentScore oldParticipantScore1 = new StudentScore();
-        oldParticipantScore1.setUser(student);
-        oldParticipantScore1.setExercise(oldExercise);
-        oldParticipantScore1.setLastRatedResult(oldResult1);
-        studentScoreRepository.save(oldParticipantScore1);
-
-        StudentScore oldParticipantScore2 = new StudentScore();
-        oldParticipantScore2.setExercise(oldExercise);
-        oldParticipantScore2.setLastResult(oldResult2);
-        oldParticipantScore2.setUser(student);
-        oldParticipantScore2 = studentScoreRepository.save(oldParticipantScore2);
+        participantScoreScheduleService.scheduleTask(oldExercise.getId(), student.getId(), null);
+        await().until(participantScoreScheduleService::isIdle);
+        var oldParticipantScore = studentScoreRepository.findByExercise_IdAndUser_Id(oldExercise.getId(), student.getId()).orElseThrow();
+        oldParticipantScore.setLastRatedResult(oldResult1);
+        oldParticipantScore.setLastResult(oldResult2);
+        oldParticipantScore = studentScoreRepository.save(oldParticipantScore);
 
         // create rated results for the new course
         var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
         var newStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
         var newSubmission = participationUtilService.addSubmission(newStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
-        var newResult1 = participationUtilService.generateResult(newSubmission, instructor); // should not be deleted, with all associated entities
-        var newResult2 = participationUtilService.generateResult(newSubmission, instructor);
+        var newResult1 = participationUtilService.generateResultWithScore(newSubmission, instructor, 50.0); // should not be deleted, with all associated entities
+        var newResult2 = participationUtilService.generateResultWithScore(newSubmission, instructor, 50.0);
 
         var newFeedback1 = createFeedbackWithLinkedLongFeedback(newResult1);
         participationUtilService.addFeedbackToResult(newFeedback1, newResult1);
@@ -500,17 +489,12 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         participationUtilService.addFeedbackToResult(newFeedback2, newResult2);
         var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
 
-        StudentScore newParticipantScore1 = new StudentScore();
-        newParticipantScore1.setUser(student);
-        newParticipantScore1.setExercise(newExercise);
-        newParticipantScore1.setLastRatedResult(newResult1);
-        newParticipantScore1 = studentScoreRepository.save(newParticipantScore1);
-
-        StudentScore newParticipantScore2 = new StudentScore();
-        newParticipantScore2.setUser(student);
-        newParticipantScore2.setExercise(newExercise);
-        newParticipantScore2.setLastResult(newResult2);
-        newParticipantScore2 = studentScoreRepository.save(newParticipantScore2);
+        participantScoreScheduleService.scheduleTask(newExercise.getId(), student.getId(), null);
+        await().until(participantScoreScheduleService::isIdle);
+        var newParticipantScore = studentScoreRepository.findByExercise_IdAndUser_Id(newExercise.getId(), student.getId()).orElseThrow();
+        newParticipantScore.setLastRatedResult(newResult1);
+        newParticipantScore.setLastResult(newResult2);
+        newParticipantScore = studentScoreRepository.save(newParticipantScore);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("deleteFrom", DELETE_FROM.toString());
@@ -528,9 +512,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         assertThat(responseBody.jobType()).isEqualTo("deleteRatedResults");
         assertThat(responseBody.executionDate()).isNotNull();
 
-        // assertThat(participantScoreRepository.findById(oldParticipantScore1.getId())).isEmpty();
-        assertThat(participantScoreRepository.findById(oldParticipantScore2.getId())).isPresent();
-        // assertThat(resultRepository.findById(oldResult1.getId())).isEmpty();
+        assertThat(participantScoreRepository.findById(oldParticipantScore.getId())).isPresent();
         assertThat(feedbackRepository.findByResult(oldResult1)).isEmpty();
         assertThat(textBlockRepository.findById(oldTextBlock1.getId())).isEmpty();
 
@@ -538,8 +520,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         assertThat(feedbackRepository.findByResult(oldResult2)).isNotEmpty();
         assertThat(textBlockRepository.findById(oldTextBlock2.getId())).isNotEmpty();
 
-        assertThat(participantScoreRepository.findById(newParticipantScore1.getId())).isPresent();
-        assertThat(participantScoreRepository.findById(newParticipantScore2.getId())).isPresent();
+        assertThat(participantScoreRepository.findById(newParticipantScore.getId())).isPresent();
         assertThat(resultRepository.findById(newResult1.getId())).isPresent();
         assertThat(feedbackRepository.findByResult(newResult1)).isNotEmpty();
         assertThat(textBlockRepository.findById(newTextBlock1.getId())).isNotEmpty();

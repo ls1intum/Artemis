@@ -106,6 +106,85 @@ describe('TextAssessmentAreaComponent', () => {
         expect(component.autoTextBlockAssessment()).toBe(true);
     });
 
+    describe('Alt while editing feedback', () => {
+        function dispatchAlt(target: EventTarget, type: 'keydown' | 'keyup', modifiers: KeyboardEventInit = {}): KeyboardEvent {
+            const event = new KeyboardEvent(type, { key: 'Alt', bubbles: true, cancelable: true, ...modifiers });
+            target.dispatchEvent(event);
+            fixture.detectChanges();
+            return event;
+        }
+
+        it('keeps the feedback textarea, focus and selection when Alt is pressed for native text editing', async () => {
+            const ref = new TextBlockRef(newBlock(0, submission.text!.length));
+            ref.initFeedback();
+            ref.feedback!.detailText = 'Feedback to edit';
+            fixture.componentRef.setInput('textBlockRefs', [ref]);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const textarea = fixture.nativeElement.querySelector('textarea.unified-feedback-detail-input') as HTMLTextAreaElement;
+            textarea.focus();
+            textarea.setSelectionRange(3, 8);
+
+            const event = dispatchAlt(textarea, 'keydown');
+            await fixture.whenStable();
+
+            expect(component.autoTextBlockAssessment()).toBe(true);
+            expect(fixture.nativeElement.querySelector('textarea.unified-feedback-detail-input')).toBe(textarea);
+            expect(document.activeElement).toBe(textarea);
+            expect(textarea.selectionStart).toBe(3);
+            expect(textarea.selectionEnd).toBe(8);
+            expect(event.defaultPrevented).toBe(false);
+            dispatchAlt(textarea, 'keyup');
+        });
+
+        it.each(['input', 'select', 'contenteditable'])('ignores Alt originating from an editable %s', (kind) => {
+            const editable = document.createElement(kind === 'contenteditable' ? 'div' : kind);
+            if (kind === 'contenteditable') {
+                editable.setAttribute('contenteditable', 'true');
+                editable.appendChild(document.createElement('span'));
+            }
+            fixture.nativeElement.appendChild(editable);
+
+            const event = dispatchAlt(editable.firstElementChild ?? editable, 'keydown');
+
+            expect(component.autoTextBlockAssessment()).toBe(true);
+            expect(event.defaultPrevented).toBe(false);
+        });
+
+        it('keeps editing when the document receives Alt while an input is focused', () => {
+            const input = document.createElement('input');
+            fixture.nativeElement.appendChild(input);
+            input.focus();
+
+            dispatchAlt(document, 'keydown');
+
+            expect(component.autoTextBlockAssessment()).toBe(true);
+            expect(document.activeElement).toBe(input);
+        });
+
+        it('restores automatic selection when Alt is released in an input after selection started outside it', () => {
+            dispatchAlt(document, 'keydown');
+            expect(component.autoTextBlockAssessment()).toBe(false);
+            const input = document.createElement('input');
+            fixture.nativeElement.appendChild(input);
+            input.focus();
+
+            dispatchAlt(input, 'keyup', { shiftKey: true });
+
+            expect(component.autoTextBlockAssessment()).toBe(true);
+        });
+
+        it('restores automatic selection when the window loses focus with Alt held', () => {
+            dispatchAlt(document, 'keydown');
+            expect(component.autoTextBlockAssessment()).toBe(false);
+
+            window.dispatchEvent(new Event('blur'));
+            fixture.detectChanges();
+
+            expect(component.autoTextBlockAssessment()).toBe(true);
+        });
+    });
+
     it('should add TextBlockRef if text block is added manually', () => {
         const initialRefs = [TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new()];
         fixture.componentRef.setInput('textBlockRefs', initialRefs);

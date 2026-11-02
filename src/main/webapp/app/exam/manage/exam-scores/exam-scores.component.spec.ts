@@ -313,23 +313,23 @@ describe('ExamScoresComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should not log error on sentry when correct participant score calculation', () => {
+    it('should not report an error when correct participant score calculation', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
-        const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
+        const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
         fixture.detectChanges();
         expect(errorSpy).not.toHaveBeenCalled();
     });
 
-    it('should log error on sentry when missing participant score calculation', () => {
+    it('should report an error when missing participant score calculation', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [] })));
-        const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
+        const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });
 
-    it('should log error on sentry when wrong points calculation', () => {
+    it('should report an error when wrong points calculation', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         const cs1 = deepClone(examScoreStudent1);
         cs1.pointsAchieved = 99;
@@ -338,12 +338,12 @@ describe('ExamScoresComponent', () => {
         const cs3 = deepClone(examScoreStudent3);
         cs3.pointsAchieved = 99;
         findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
-        const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
+        const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
     });
 
-    it('should log error on sentry when wrong score calculation', () => {
+    it('should report an error when wrong score calculation', () => {
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         const cs1 = deepClone(examScoreStudent1);
         cs1.scoreAchieved = 99;
@@ -352,9 +352,33 @@ describe('ExamScoresComponent', () => {
         const cs3 = deepClone(examScoreStudent3);
         cs3.scoreAchieved = 99;
         findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [cs1, cs2, cs3] })));
-        const errorSpy = vi.spyOn(comp, 'logErrorOnSentry');
+        const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
         fixture.detectChanges();
         expect(errorSpy).toHaveBeenCalledTimes(3);
+    });
+
+    it('should locate a discrepancy by the id of the student and report neither the login nor the scores', () => {
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        const wrongStudent1 = deepClone(examScoreStudent1);
+        wrongStudent1.pointsAchieved = 99;
+        wrongStudent1.scoreAchieved = 99;
+        findExamScoresSpy.mockReturnValue(of(new HttpResponse({ body: [wrongStudent1, examScoreStudent2] })));
+        const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
+
+        fixture.detectChanges();
+
+        const messages = errorSpy.mock.calls.map(([message]) => message);
+        // the points and the score of student 1 differ, and student 3 is missing
+        expect(messages).toEqual([
+            'Different exam points of the student with the ID 1 in the new calculation',
+            'Different exam score of the student with the ID 1 in the new calculation',
+            'Exam scores of the student with the ID 3 are not included in the new calculation',
+        ]);
+        for (const message of messages) {
+            expect(message).not.toMatch(/user[123]/);
+            expect(message).not.toMatch(/Achieved|login/i);
+            expect(message).not.toMatch(/\b(20|50|99|100)\b/);
+        }
     });
 
     it('should make duplicated titles unique', () => {

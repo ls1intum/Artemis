@@ -9,7 +9,7 @@
     // Centered in the page, matching the checklist, so the hero and form share the page's middle.
     margin-inline: auto;
     padding: 1rem 1.25rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--tumaet-ui-border-color);
     border-radius: 0.5rem;
     background: var(--tumaet-ui-hover-background);
 }
@@ -39,7 +39,7 @@
 .config-hero-desc {
     margin: 0;
     font-size: 0.875rem;
-    color: var(--secondary);
+    color: var(--tumaet-ui-muted-color);
 }
 
 .config-form {
@@ -78,13 +78,13 @@
 .config-field-hint {
     margin: 0;
     font-size: 0.8125rem;
-    color: var(--secondary);
+    color: var(--tumaet-ui-muted-color);
 }
 
 .config-field-error {
     margin: 0;
     font-size: 0.8125rem;
-    color: var(--danger);
+    color: var(--tumaet-ui-state-danger);
 }
 
 .config-checkbox-row {

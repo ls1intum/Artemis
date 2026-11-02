@@ -18,7 +18,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 interface ProgrammingAssessmentRepoExportDialogData {
     programmingExercises: ProgrammingExercise[];
     // Either a participationId list or a participantIdentifier (student login or team short name) list can be provided that is used for exporting the repos.
-    // Priority: participationId >> participantIdentifier.
+    // Export-all takes priority; otherwise participation IDs take priority over participant identifiers.
     participationIdList?: number[];
     participantIdentifierList?: string; // TODO: Should be a list and not a comma separated string.
     singleParticipantMode?: boolean;
@@ -40,7 +40,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
 
     programmingExercises: ProgrammingExercise[] = this.data?.programmingExercises ?? [];
     // Either a participationId list or a participantIdentifier (student login or team short name) list can be provided that is used for exporting the repos.
-    // Priority: participationId >> participantIdentifier.
+    // Export-all takes priority; otherwise participation IDs take priority over participant identifiers.
     participationIdList: number[] = this.data?.participationIdList ?? [];
     participantIdentifierList: string = this.data?.participantIdentifierList ?? ''; // TODO: Should be a list and not a comma separated string.
     singleParticipantMode = this.data?.singleParticipantMode ?? false;
@@ -114,19 +114,14 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                 return;
             }
             this.exportInProgress.set(true);
-            // The participation ids take priority over the participant identifiers (student login or team names).
-            if (this.participationIdList?.length) {
-                this.repoExportService
-                    .exportReposByParticipations(exercise.id, this.participationIdList, this.repositoryExportOptions)
-                    .subscribe({
-                        next: this.handleExportRepoResponseSuccess,
-                        error: () => this.handleExportRepoResponseError(exercise.id!),
-                    })
-                    .add(() => this.dialogRef.close(true));
-                return;
-            }
-            this.repoExportService
-                .exportReposByParticipantIdentifiers(exercise.id, participantIdentifiers, this.repositoryExportOptions)
+            const exportRequest = this.repositoryExportOptions.exportAllParticipants
+                ? this.repoExportService.exportReposByParticipantIdentifiers(exercise.id, ['ALL'], this.repositoryExportOptions)
+                : this.participationIdList?.length
+                  ? this.repositoryExportOptions.anonymizeRepository
+                      ? this.repoExportService.exportReposByParticipations(exercise.id, this.participationIdList, this.repositoryExportOptions)
+                      : this.repoExportService.exportIdentifiedReposByParticipations(exercise.id, this.participationIdList, this.repositoryExportOptions)
+                  : this.repoExportService.exportReposByParticipantIdentifiers(exercise.id, participantIdentifiers, this.repositoryExportOptions);
+            exportRequest
                 .subscribe({
                     next: this.handleExportRepoResponseSuccess,
                     error: () => this.handleExportRepoResponseError(exercise.id!),

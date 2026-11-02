@@ -26,6 +26,8 @@ import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.ToolMetadata;
 
 import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
@@ -141,6 +143,31 @@ public final class AtlasToolCallBudget {
         }
         catch (JacksonException ex) {
             throw new IllegalStateException("Cannot encode tool budget notice", ex);
+        }
+    }
+
+    /**
+     * Checks that the result of the index read is a JSON object without a top-level {@code error} property. The result is read as a token stream because only the
+     * presence of that one property matters, and malformed JSON still fails the callback, as it does for any reader of the result.
+     *
+     * @param json the result of the index read
+     * @return whether the result is a JSON object that does not report an error
+     * @throws JacksonException if the result is not valid JSON
+     */
+    private static boolean isIndexWithoutError(String json) {
+        try (JsonParser parser = JSON.createParser(json)) {
+            if (parser.nextToken() != JsonToken.START_OBJECT) {
+                // Not an object: read it to its end so malformed JSON is still reported
+                parser.skipChildren();
+                return false;
+            }
+            boolean hasError = false;
+            while (parser.nextToken() == JsonToken.PROPERTY_NAME) {
+                hasError |= "error".equals(parser.currentName());
+                parser.nextToken();
+                parser.skipChildren();
+            }
+            return !hasError;
         }
     }
 
@@ -380,8 +407,7 @@ public final class AtlasToolCallBudget {
                 }
                 String result = delegate.call(arguments, context);
                 if (toolName.equals("listCompetencyIndex") && result != null) {
-                    var index = JSON.readTree(result);
-                    verifiedIndex = index.isObject() && !index.has("error");
+                    verifiedIndex = isIndexWithoutError(result);
                 }
                 if (budget.exhausted()) {
                     throw limitException(toolName);

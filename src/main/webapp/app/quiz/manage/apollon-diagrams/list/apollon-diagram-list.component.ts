@@ -67,7 +67,7 @@ export class ApollonDiagramListComponent {
         effect(() => {
             const id = this.internalCourseId();
             if (id) {
-                this.courseService.find(id).subscribe((courseResponse: HttpResponse<Course>) => {
+                this.courseService.findForManagement(id).subscribe((courseResponse: HttpResponse<Course>) => {
                     this.course.set(courseResponse.body);
                 });
                 this.loadDiagrams();

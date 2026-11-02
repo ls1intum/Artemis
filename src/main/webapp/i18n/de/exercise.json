@@ -69,6 +69,7 @@
                 "preview": {
                     "title": "Vorschau: {{ title }}",
                     "buttonLabel": "Vorschau von {{ title }}",
+                    "backToList": "Zurück zur Liste",
                     "loadFailed": "Die Vorschau konnte nicht geladen werden."
                 },
                 "table": {

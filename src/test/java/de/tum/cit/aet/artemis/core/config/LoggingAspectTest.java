@@ -11,7 +11,7 @@ import org.aspectj.lang.Signature;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -24,9 +24,10 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.read.ListAppender;
 import ch.qos.logback.core.spi.FilterReply;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 
-@ResourceLock("LoggingAspectLogger")
+@Isolated("Captures JVM-wide logger state; concurrent Spring bootstrap temporarily suppresses logging.")
 class LoggingAspectTest {
 
     private final Logger logger = (Logger) LoggerFactory.getLogger(LoggingAspect.class);
@@ -63,6 +64,16 @@ class LoggingAspectTest {
     void routineAuthenticationFailuresAreNotLogged(String message) {
         var joinPoint = mock(ProceedingJoinPoint.class);
         new LoggingAspect(new MockEnvironment()).logAfterThrowing(joinPoint, new LocalVCAuthException(message));
+        assertThat(appender.list).isEmpty();
+        verifyNoInteractions(joinPoint);
+    }
+
+    @Test
+    void aRejectedRequestOfARateLimitIsNotLoggedAsAnError() {
+        var joinPoint = mock(ProceedingJoinPoint.class);
+
+        new LoggingAspect(new MockEnvironment()).logAfterThrowing(joinPoint, new RateLimitExceededException(12));
+
         assertThat(appender.list).isEmpty();
         verifyNoInteractions(joinPoint);
     }

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -40,7 +40,7 @@ const TOOLTIP_VIEWPORT_PADDING_PX = 12;
 // (e.g. PrimeNG overlay still mounting, animation in progress); poll until it appears
 // or we've waited long enough to assume something is wrong and bail out silently.
 // 20 retries × 200 ms ≈ 4 s — generous enough for slow CI / animations, short enough
-// that a genuinely broken selector still surfaces in Sentry within one tour session.
+// that a genuinely broken selector still gets reported within one tour session.
 const POSITION_RESOLUTION_MAX_RETRIES = 20;
 const POSITION_RESOLUTION_RETRY_DELAY_MS = 200;
 
@@ -388,7 +388,7 @@ export class IrisOnboardingModalComponent {
         }
 
         // Target never appeared. Don't surface anything to the user — a missing tour highlight
-        // is recoverable — but report to Sentry so we notice quickly when the anchor selectors
+        // is recoverable — but report it so we notice quickly when the anchor selectors
         // drift out of sync with the chat UI (e.g. after a refactor of iris-base-chatbot).
         const config = this.getStepConfig(expectedStep);
         captureException(new Error(`Iris onboarding: target element never appeared for step ${expectedStep}`), {

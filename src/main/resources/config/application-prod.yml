@@ -146,8 +146,3 @@ info:
     contact: # The admins contact email address, shown in the about us page, and sent to the telemetry service only when sendAdminDetails is true
     localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
 
-# Overrides for sample rate and environment
-# To ensure consistency across all parts of the Sentry SDK, these settings need to be specified in the configuration files
-sentry:
-  environment: prod
-  traces-sample-rate: 0.2

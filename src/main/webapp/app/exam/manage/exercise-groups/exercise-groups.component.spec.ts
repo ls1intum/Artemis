@@ -205,7 +205,9 @@ describe('Exercise Groups Component', () => {
 
             expect(comp['exerciseImportVisible']()).toBe(false);
             expect(router.navigate).toHaveBeenCalledOnce();
-            expect(router.navigate).toHaveBeenCalledWith(['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import', 1]);
+            expect(router.navigate).toHaveBeenCalledWith(['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import', 1], {
+                queryParams: { sourceIsExamExercise: false },
+            });
         },
     );
 
@@ -511,5 +513,15 @@ describe('Exercise Groups Component', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#create-first-group')).toBeNull();
+    });
+    it('retains existing groups when saving a rename fails', () => {
+        comp.exerciseGroups.set(groups);
+        comp.openGroupEditModal(0);
+        const error = vi.spyOn(alertService, 'error');
+        vi.spyOn(exerciseGroupService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+        comp.onGroupEditSaved({ id: 0, title: 'Rejected title', isMandatory: true });
+        expect(exerciseGroupService.update).toHaveBeenCalledWith(456, 123, { id: 0, title: 'Rejected title', isMandatory: true });
+        expect(comp.exerciseGroups()).toEqual(groups);
+        expect(error).toHaveBeenCalledWith('error.http.403');
     });
 });

@@ -70,7 +70,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void autoIngestionWhenFaqIsCreatedAndAutoUpdateEnabled() throws Exception {
         enableIrisFor(faq1.getCourse());
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
@@ -81,7 +81,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void noAutoIngestionWhenIrisIsDisabled() throws Exception {
         disableIrisFor(course1);
 
@@ -94,7 +94,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void creatingAcceptedFaqSucceedsWhenIrisIsUnavailable() throws Exception {
         enableIrisFor(course1);
         irisRequestMockProvider.mockFaqIngestionWebhookFailure();
@@ -107,7 +107,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void editingAcceptedFaqSucceedsWhenIrisIsUnavailable() throws Exception {
         enableIrisFor(course1);
         irisRequestMockProvider.mockFaqIngestionWebhookFailure();
@@ -120,7 +120,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletingFaqSucceedsWhenIrisIsUnavailable() throws Exception {
         enableIrisFor(course1);
         irisRequestMockProvider.mockFaqDeletionWebhookFailure();
@@ -132,7 +132,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void advancedChatCourseAutomaticallyIngestsFaqWithDefaultVariant() throws Exception {
         enableIrisFor(course1);
         configureCourseSettings(course1, null, IrisPipelineVariant.ADVANCED);
@@ -144,7 +144,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteFaqFromPyrisDatabaseWithCourseSettingsEnabled() {
         enableIrisFor(faq1.getCourse());
         irisRequestMockProvider.mockFaqDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
@@ -154,7 +154,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAllStagesDoneIngestionStateDone() throws Exception {
         enableIrisFor(faq1.getCourse());
         irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
@@ -166,7 +166,7 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAllStagesDoneRemovesDeletionIngestionJob() throws Exception {
         enableIrisFor(faq1.getCourse());
         irisRequestMockProvider.mockFaqDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());

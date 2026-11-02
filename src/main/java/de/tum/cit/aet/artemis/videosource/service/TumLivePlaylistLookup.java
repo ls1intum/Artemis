@@ -26,6 +26,14 @@ public record TumLivePlaylistLookup(@Nullable String playlistUrl, Outcome outcom
         NOT_APPLICABLE
     }
 
+    /**
+     * The playlist is signed and works as a credential for seven hours, so it is left out of log output.
+     */
+    @Override
+    public String toString() {
+        return "TumLivePlaylistLookup[playlistUrl=" + (playlistUrl == null ? null : "[REDACTED]") + ", outcome=" + outcome + "]";
+    }
+
     static TumLivePlaylistLookup resolved(String playlistUrl) {
         return new TumLivePlaylistLookup(playlistUrl, Outcome.RESOLVED);
     }

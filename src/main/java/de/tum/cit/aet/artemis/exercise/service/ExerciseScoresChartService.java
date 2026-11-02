@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,20 +19,25 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
 import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
 import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
+import de.tum.cit.aet.artemis.assessment.dto.score.PeerExerciseAverageDTO;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreAverageDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseLatestDueDateDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExercisePeerComparisonDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExercisePeerMetadataDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExercisePeerScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresAggregatedInformation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 
-/**
- * Service to efficiently calculate the statistics for the exercise-scores-chart.component.ts in the client
- * <p>
- * This services uses the participant scores tables for performance reason
- */
+/** Computes legacy and similar-student exercise statistics from maintained participant scores. */
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
@@ -41,11 +49,17 @@ public class ExerciseScoresChartService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
-    public ExerciseScoresChartService(StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            ParticipantScoreRepository participantScoreRepository) {
+    private final ExerciseRepository exerciseRepository;
+
+    private final ParticipationRepository participationRepository;
+
+    public ExerciseScoresChartService(StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ParticipantScoreRepository participantScoreRepository,
+            ExerciseRepository exerciseRepository, ParticipationRepository participationRepository) {
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.participantScoreRepository = participantScoreRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -75,12 +89,97 @@ public class ExerciseScoresChartService {
                 .map(exercise -> createExerciseScoreDTO(exerciseIdToAggregatedInformation, individualExerciseIdToStudentScore, teamExerciseIdToTeamScore, exercise)).toList();
     }
 
+    /**
+     * Computes comparison groups on demand from bulk score aggregates, with no retained state or result-history loads.
+     * The number of repository calls is bounded independently of the number of students and exercises.
+     *
+     * @param course the authorized course
+     * @param user   the requesting student
+     * @return own scores and sufficiently populated, anonymous peer aggregates
+     */
+    public ExercisePeerComparisonDTO getPeerComparison(Course course, User user) {
+        long courseId = course.getId();
+        ZonedDateTime now = ZonedDateTime.now();
+        var candidates = exerciseRepository.findMetadataForPeerComparison(courseId, now, course.isOnlineCourse(), user.getLogin());
+        Set<Long> extensionIds = candidates.stream().filter(exercise -> exercise.assessmentDueDate() != null || exercise.dueDate() != null).map(ExercisePeerMetadataDTO::id)
+                .collect(Collectors.toSet());
+        Map<Long, ZonedDateTime> latestDueDates = extensionIds.isEmpty() ? Map.of()
+                : participationRepository.findLatestIndividualDueDates(extensionIds).stream()
+                        .collect(Collectors.toMap(ExerciseLatestDueDateDTO::exerciseId, ExerciseLatestDueDateDTO::dueDate));
+        // Submission extensions can outlast the assessment deadline, so every applicable cutoff must have passed.
+        var exercises = candidates.stream().filter(exercise -> extensionIds.contains(exercise.id()))
+                .filter(exercise -> exercise.dueDate() == null || now.isAfter(exercise.dueDate()))
+                .filter(exercise -> exercise.assessmentDueDate() == null || now.isAfter(exercise.assessmentDueDate()))
+                .filter(exercise -> !latestDueDates.containsKey(exercise.id()) || now.isAfter(latestDueDates.get(exercise.id()))).toList();
+        if (exercises.isEmpty()) {
+            return new ExercisePeerComparisonDTO(List.of(), 0, 0);
+        }
+        Set<Long> exerciseIds = exercises.stream().map(ExercisePeerMetadataDTO::id).collect(Collectors.toSet());
+        Set<ExercisePeerMetadataDTO> individualExercises = exercises.stream().filter(exercise -> exercise.mode() == ExerciseMode.INDIVIDUAL).collect(Collectors.toSet());
+        Set<ExercisePeerMetadataDTO> teamExercises = exercises.stream().filter(exercise -> exercise.mode() == ExerciseMode.TEAM).collect(Collectors.toSet());
+        Set<Long> groupingIds = exercises.stream().filter(exercise -> exercise.includedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY)
+                .map(ExercisePeerMetadataDTO::id).collect(Collectors.toSet());
+        Map<Long, double[]> totals = new HashMap<>();
+        if (!groupingIds.isEmpty()) {
+            List<StudentScoreAverageDTO> aggregates = new ArrayList<>();
+            if (individualExercises.stream().anyMatch(exercise -> groupingIds.contains(exercise.id()))) {
+                aggregates.addAll(studentScoreRepository.findStudentAveragesForComparison(courseId, groupingIds));
+            }
+            if (teamExercises.stream().anyMatch(exercise -> groupingIds.contains(exercise.id()))) {
+                aggregates.addAll(teamScoreRepository.findStudentAveragesForComparison(courseId, groupingIds));
+            }
+            for (var aggregate : aggregates) {
+                double[] total = totals.computeIfAbsent(aggregate.studentId(), key -> new double[2]);
+                total[0] += aggregate.scoreSum();
+                total[1] += aggregate.scoreCount();
+            }
+        }
+        Map<Long, Double> averages = new HashMap<>();
+        totals.forEach((id, total) -> {
+            if (total[1] > 0) {
+                averages.put(id, total[0] / total[1]);
+            }
+        });
+        var cohort = SimilarStudentCohort.select(averages, user.getId());
+        Map<Long, PeerExerciseAverageDTO> peerScores = new HashMap<>();
+        if (!cohort.studentIds().isEmpty()) {
+            if (!individualExercises.isEmpty()) {
+                studentScoreRepository.findPeerExerciseAverages(exerciseIds, cohort.studentIds()).forEach(score -> peerScores.put(score.exerciseId(), score));
+            }
+            if (!teamExercises.isEmpty()) {
+                teamScoreRepository.findPeerExerciseAverages(exerciseIds, cohort.studentIds(), user.getId()).forEach(score -> peerScores.put(score.exerciseId(), score));
+            }
+        }
+        Map<Long, Double> ownScores = new HashMap<>();
+        if (!individualExercises.isEmpty()) {
+            studentScoreRepository.findOwnRatedScores(exerciseIds, user.getId()).forEach(score -> ownScores.put(score.exerciseId(), score.score()));
+        }
+        if (!teamExercises.isEmpty()) {
+            teamScoreRepository.findOwnRatedScores(exerciseIds, user.getId()).forEach(score -> ownScores.put(score.exerciseId(), score.score()));
+        }
+        var rows = exercises.stream().map(exercise -> {
+            Double own = ownScores.get(exercise.id());
+            Double ownScore = own != null ? roundScoreSpecifiedByCourseSettings(own, course) : null;
+            PeerExerciseAverageDTO peer = peerScores.get(exercise.id());
+            boolean sufficient = peer != null && peer.participantCount() >= SimilarStudentCohort.MINIMUM_PEERS;
+            return new ExercisePeerScoreDTO(exercise.id(), exercise.title(), exercise.type(), exercise.releaseDate(), ownScore,
+                    sufficient ? roundScoreSpecifiedByCourseSettings(peer.average(), course) : null, sufficient ? peer.participantCount() : 0);
+        }).toList();
+        return new ExercisePeerComparisonDTO(rows, cohort.groupCount(), cohort.studentIds().size());
+    }
+
     private Map<Long, TeamScore> getScoreOfStudentForTeamExercises(User user, Set<Exercise> teamExercises) {
+        if (teamExercises.isEmpty()) {
+            return Map.of();
+        }
         return teamScoreRepository.findAllByExerciseAndUserWithEagerExercise(teamExercises, user).stream()
                 .collect(Collectors.toMap(teamScore -> teamScore.getExercise().getId(), teamScore -> teamScore));
     }
 
     private Map<Long, StudentScore> getScoreOfStudentForIndividualExercises(User user, Set<Exercise> individualExercises) {
+        if (individualExercises.isEmpty()) {
+            return Map.of();
+        }
         return studentScoreRepository.findAllByExerciseAndUserWithEagerExercise(individualExercises, user).stream()
                 .collect(Collectors.toMap(studentScore -> studentScore.getExercise().getId(), studentSore -> studentSore));
     }

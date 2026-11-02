@@ -19,12 +19,16 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 })
 export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends ProgrammingExerciseInstructorRepoDownloadComponent {
     readonly includeTests = input<boolean>();
+    readonly forStaff = input(false);
     readonly displayedOnExamSummary = input(false);
 
     override exportRepository() {
         const exerciseId = this.exerciseId();
         if (exerciseId) {
-            this.programmingExerciseService.exportStudentRequestedRepository(exerciseId, this.includeTests() ?? false).subscribe((response) => {
+            const download = this.forStaff()
+                ? this.programmingExerciseService.exportSolutionSnapshotForStaff(exerciseId, this.includeTests() ?? false)
+                : this.programmingExerciseService.exportStudentRequestedRepository(exerciseId, this.includeTests() ?? false);
+            download.subscribe((response) => {
                 downloadZipFileFromResponse(response);
                 this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
             });

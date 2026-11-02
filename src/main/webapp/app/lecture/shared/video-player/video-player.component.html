@@ -18,16 +18,18 @@
     <!-- Resizer divider sits between the video and transcript columns (not over the video), matching the previous
          interact.js layout. The directive resolves this sibling handle through resizableHandleOutsideHost. -->
     <button
+        tumAetUiButton
+        severity="secondary"
+        variant="text"
+        size="small"
         type="button"
-        class="resizer-handle"
+        class="resizer-handle panel-divider-x"
         #resizerHandle
         (dblclick)="resetSplitRatio()"
         (keydown.enter)="resetSplitRatio()"
         (keydown.space)="resetSplitRatio(); $event.preventDefault()"
         [attr.aria-label]="'artemisApp.attachmentVideoUnit.videoPlayer.resetSplitRatio' | artemisTranslate"
-    >
-        <fa-icon [icon]="faGripLinesVertical" [attr.aria-hidden]="true" />
-    </button>
+    ></button>
 
     <jhi-transcript-viewer #transcriptViewer [transcriptSegments]="transcriptSegments()" [currentSegmentIndex]="currentSegmentIndex()" (segmentClicked)="seekTo($event)" />
 </div>

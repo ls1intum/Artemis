@@ -129,14 +129,17 @@
                 }
                 <jhi-programming-exercise-editable-instructions
                     #editableInstructions
+                    [canonicalBaseIsolation]="canonicalBaseIsolation()"
                     [exercise]="programmingExercise()!"
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                     [showStatus]="!!programmingExercise()?.id"
                     [editMode]="!!programmingExercise()?.id"
-                    [isGeneratingOrRefining]="isGeneratingOrRefining()"
+                    [isGeneratingOrRefining]="isGeneratingOrRefining() || editingLocked()"
+                    [beforeSave]="beforeStatementSave()"
                     [mode]="showDiff() ? 'diff' : 'normal'"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
                     (instructionChange)="onInstructionChange($event)"
+                    (canonicalProblemStatementSaved)="problemStatementSaved.emit($event)"
                     (onInlineRefinement)="onInlineRefinement($event)"
                     [renderSideBySide]="allowSplitView()"
                     (diffLineChange)="onDiffLineChange($event)"

@@ -1,13 +1,17 @@
 <button
-    [class.w-100]="fullWidth()"
-    [ngClass]="['jhi-btn', 'btn', btnType(), btnSize()]"
+    tumAetUiButton
+    class="jhi-btn"
+    [class.w-full]="fullWidth()"
+    [severity]="buttonOptions().severity"
+    [size]="buttonOptions().size"
+    [variant]="buttonOptions().variant"
     [type]="shouldSubmit() ? 'submit' : 'button'"
-    [ngbTooltip]="tooltip() | artemisTranslate"
+    [tumAetUiTooltip]="tooltip() | artemisTranslate"
     (click)="onClick.emit($event)"
+    [attr.aria-label]="title() || tooltip() ? (title() || tooltip() | artemisTranslate) : null"
     [jhiFeatureToggle]="featureToggle()"
-    [overwriteDisabled]="disabled() || isLoading()"
-    [placement]="tooltipPlacement()"
-    [triggers]="'hover'"
+    [forceDisabled]="disabled() || isLoading()"
+    [tumAetUiTooltipPlacement]="tooltipPlacement()"
 >
     @if (isLoading()) {
         <fa-icon class="jhi-btn__loading sm" [icon]="faCircleNotch" animation="spin" />
@@ -18,11 +22,9 @@
     @if (title()) {
         <span
             class="jhi-btn__title"
-            [ngClass]="{
-                'd-none': shouldToggle(),
-                'd-md-inline': shouldToggle() && toggleBreakpoint() === 'md',
-                'd-xl-inline': shouldToggle() && toggleBreakpoint() === 'xl',
-            }"
+            [class.hidden]="shouldToggle()"
+            [class.md:inline]="shouldToggle() && toggleBreakpoint() === 'md'"
+            [class.xl:inline]="shouldToggle() && toggleBreakpoint() === 'xl'"
             [class.ms-1]="icon() || isLoading()"
             [jhiTranslate]="title()"
         ></span>

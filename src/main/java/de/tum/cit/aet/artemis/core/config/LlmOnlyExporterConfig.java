@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
@@ -27,6 +28,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter;
  */
 @Lazy
 @Configuration
+@Profile("!" + Constants.PROFILE_AIWORKER)
 @ConditionalOnProperty(prefix = "management.langfuse", name = "enabled", havingValue = "true")
 public class LlmOnlyExporterConfig {
 
