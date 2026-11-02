@@ -110,6 +110,12 @@ describe('ModelingAssessmentEditorComponent', () => {
                 provideHttpClientTesting(),
             ],
         });
+        // The editor imports the modeling assessment itself, so the mock above does not replace it there. Rendering the real
+        // Apollon editor in jsdom makes every change of the submission take minutes inside the nested workspace panels.
+        TestBed.overrideComponent(ModelingAssessmentEditorComponent, {
+            remove: { imports: [ModelingAssessmentComponent] },
+            add: { imports: [MockComponent(ModelingAssessmentComponent)] },
+        });
 
         fixture = TestBed.createComponent(ModelingAssessmentEditorComponent);
         component = fixture.componentInstance;
