@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -57,15 +58,27 @@ class ErrorAnalysisIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     /**
-     * The groups of this test. The analysis is shared with every other test, so the most recent groups come first, and there is room for
-     * all of them on the first page.
+     * The groups of this test. The analysis is shared with every other test, so all pages are read before the groups of this test are
+     * picked out of them by their marker.
      */
     private List<ErrorGroupDTO> analysis(MultiValueMap<String, String> params) throws Exception {
         params.putIfAbsent("sortBy", List.of("LAST_SEEN"));
         params.putIfAbsent("size", List.of("100"));
-        // the server leaves out a list of groups that is empty, as it does for every DTO
-        List<ErrorGroupDTO> groups = request.get(ANALYSIS_ENDPOINT, HttpStatus.OK, ErrorAnalysisPageDTO.class, params).groups();
-        return groups == null ? List.of() : groups.stream().filter(group -> group.message().startsWith(marker)).toList();
+        List<ErrorGroupDTO> all = new ArrayList<>();
+        long total;
+        int page = 0;
+        do {
+            params.set("page", String.valueOf(page++));
+            ErrorAnalysisPageDTO result = request.get(ANALYSIS_ENDPOINT, HttpStatus.OK, ErrorAnalysisPageDTO.class, params);
+            total = result.totalGroups();
+            // the server leaves out a list of groups that is empty, as it does for every DTO
+            if (result.groups() == null) {
+                break;
+            }
+            all.addAll(result.groups());
+        }
+        while (all.size() < total);
+        return all.stream().filter(group -> group.message().startsWith(marker)).toList();
     }
 
     private static MultiValueMap<String, String> params(String... keyValues) {
