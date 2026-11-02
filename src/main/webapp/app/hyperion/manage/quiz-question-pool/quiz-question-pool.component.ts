@@ -794,6 +794,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                     if (!this.isCurrent(courseId)) {
                         return;
                     }
+                    const deletedAt = ++this.requestSequence;
+                    this.appliedQuestionsAt = deletedAt;
+                    this.appliedQueueAt = deletedAt;
                     if (this.questions().some((question) => question.id === questionId)) {
                         this.questions.update((questions) => questions.filter((question) => question.id !== questionId));
                         this.totalQuestionCount.update((total) => Math.max(0, total - 1));

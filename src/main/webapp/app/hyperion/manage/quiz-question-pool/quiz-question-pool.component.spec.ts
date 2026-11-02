@@ -787,6 +787,25 @@ describe('QuizQuestionPoolComponent', () => {
         expect(successSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.list.deleted');
     });
 
+    it('should not let a list response requested before a deletion bring the deleted question back', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const pendingList = new Subject<PoolQuestionPage>();
+        const pendingQueue = new Subject<PoolQuestionPage>();
+        const flaggedTwo = { ...question(2, 9, 'Arrays'), flagged: true };
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => (query.flagged ? pendingQueue.asObservable() : pendingList.asObservable()));
+        component.refresh();
+        vi.spyOn(poolService, 'deleteQuestion').mockReturnValue(of(undefined));
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+        component.confirmDeleteQuestion(2);
+        confirmationService.request(undefined)!.accept();
+        pendingList.next(page(questions()));
+        pendingQueue.next({ ...page([flaggedTwo]), pendingCount: 1 });
+
+        expect(component.questions().map((item) => item.id)).not.toContain(2);
+        expect(component.needsReviewQuestions().map((item) => item.id)).not.toContain(2);
+    });
+
     it('should explain a refused deletion while a build runs', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
         vi.spyOn(poolService, 'deleteQuestion').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
