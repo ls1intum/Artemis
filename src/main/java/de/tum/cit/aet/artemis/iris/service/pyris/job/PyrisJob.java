@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.iris.service.pyris.job;
 import java.io.Serial;
 import java.io.Serializable;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -32,4 +34,15 @@ public interface PyrisJob extends Serializable {
     }
 
     String jobId();
+
+    /**
+     * Identifies one invocation of a run, for a run whose id the client chooses and can therefore use again: the callback token
+     * carries it, so a token of an earlier invocation never authenticates a later one with the same run id.
+     *
+     * @return the invocation id, or null for a run whose id Artemis generates and never reuses
+     */
+    @Nullable
+    default String invocationId() {
+        return null;
+    }
 }
