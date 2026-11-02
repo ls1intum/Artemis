@@ -269,6 +269,51 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldServeThePendingFlaggedQuestionsFirstAndStoreMissingFlags() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted());
+        awaitBuild();
+        List<QuizQuestionPoolItemDTO> flagged = request
+                .get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions?flagged=true", HttpStatus.OK, QuizQuestionPoolPageDTO.class).items();
+        assertThat(flagged).hasSize(EXPECTED_CELLS);
+        for (QuizQuestionPoolItemDTO item : flagged.subList(0, EXPECTED_CELLS - 2)) {
+            request.putWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + item.id() + "/review",
+                    new QuizQuestionPoolReviewDTO(QuizQuestionReviewState.APPROVED), QuizQuestionPoolItemDTO.class, HttpStatus.OK);
+        }
+        QuizQuestionPoolItem unflagged = itemRepository.findByIdElseThrow(flagged.getLast().id());
+        unflagged.setFlagged(null);
+        itemRepository.save(unflagged);
+
+        QuizQuestionPoolPageDTO firstPage = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions?flagged=true&size=2", HttpStatus.OK,
+                QuizQuestionPoolPageDTO.class);
+
+        assertThat(firstPage.totalCount()).as("the item without a stored flag is flagged again on access").isEqualTo(EXPECTED_CELLS);
+        assertThat(firstPage.pendingCount()).isEqualTo(2);
+        assertThat(firstPage.items()).extracting(QuizQuestionPoolItemDTO::reviewState).containsOnly(QuizQuestionReviewState.PENDING);
+        assertThat(itemRepository.findByIdElseThrow(unflagged.getId()).getFlagged()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void shouldRefillTheDeletedPlaceOfACellWithANewIndex() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted());
+        awaitBuild();
+        QuizQuestionPoolItem first = itemRepository.findAll().stream().filter(item -> item.getCourse().getId() == courseId && item.getItemIndex() == 0).findFirst().orElseThrow();
+
+        request.delete("/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions/" + first.getId(), HttpStatus.NO_CONTENT);
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.enqueued").value(1));
+        awaitBuild();
+
+        assertThat(poolService.getProgress(courseId).total()).isEqualTo(EXPECTED_ITEMS);
+        assertThat(itemRepository.findAll()).filteredOn(item -> item.getCourse().getId() == courseId && item.getCompetencyId().equals(first.getCompetencyId())
+                && item.getLectureUnitId().equals(first.getLectureUnitId()) && item.getQuestionType() == first.getQuestionType() && item.getDifficulty() == first.getDifficulty())
+                .extracting(QuizQuestionPoolItem::getItemIndex).doesNotHaveDuplicates().doesNotContain(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldReviveItemsAfterTransientGenerationFailures() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         generationFails.set(true);

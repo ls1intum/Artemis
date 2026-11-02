@@ -4,6 +4,8 @@ import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,10 +16,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param items        the items of the requested page, in pool order; absent when the page is empty
  * @param totalCount   how many items match the request across all pages
  * @param competencies every competency that has items in the pool, for filtering; absent when the pool is empty
+ * @param pendingCount for a request of the flagged items, how many of them across all pages await a decision; absent otherwise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "One page of a course's quiz question pool")
 public record QuizQuestionPoolPageDTO(@NotNull @Schema(description = "The items of the requested page, absent when the page is empty") List<QuizQuestionPoolItemDTO> items,
         @Schema(description = "How many items match the request across all pages", requiredMode = Schema.RequiredMode.REQUIRED) long totalCount,
-        @NotNull @Schema(description = "Every competency that has items in the pool, absent when the pool is empty") List<QuizQuestionPoolCompetencyDTO> competencies) {
+        @NotNull @Schema(description = "Every competency that has items in the pool, absent when the pool is empty") List<QuizQuestionPoolCompetencyDTO> competencies,
+        @Nullable @Schema(description = "For a request of the flagged items, how many of them across all pages await a decision") Long pendingCount) {
 }

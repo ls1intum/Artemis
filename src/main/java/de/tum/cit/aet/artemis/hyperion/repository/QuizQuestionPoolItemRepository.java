@@ -68,13 +68,57 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
             SELECT item
             FROM QuizQuestionPoolItem item
             WHERE item.course.id = :courseId AND item.flagged = TRUE
-            ORDER BY item.reviewState, item.competencyId, item.lectureUnitId, item.language, item.questionType, item.difficulty, item.itemIndex
+            ORDER BY CASE WHEN item.reviewState = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.PENDING THEN 0 ELSE 1 END, item.competencyId,
+                item.lectureUnitId, item.language, item.questionType, item.difficulty, item.itemIndex
             """, countQuery = """
             SELECT COUNT(item)
             FROM QuizQuestionPoolItem item
             WHERE item.course.id = :courseId AND item.flagged = TRUE
             """)
     Page<QuizQuestionPoolItem> findFlaggedPageForCourse(@Param("courseId") long courseId, Pageable pageable);
+
+    /**
+     * Counts the items of a course that are flagged for review and still await a decision.
+     *
+     * @param courseId the course
+     * @return the number of such items
+     */
+    @Query("""
+            SELECT COUNT(item)
+            FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId AND item.flagged = TRUE AND item.reviewState = de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState.PENDING
+            """)
+    long countFlaggedPendingForCourse(@Param("courseId") long courseId);
+
+    /**
+     * Finds the judged items of a course whose review flag has not been stored yet.
+     *
+     * @param courseId the course
+     * @param state    the judged state
+     * @return the items
+     */
+    @Query("""
+            SELECT item
+            FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId AND item.state = :state AND item.flagged IS NULL
+            """)
+    List<QuizQuestionPoolItem> findAllWithoutFlagForCourse(@Param("courseId") long courseId, @Param("state") QuizQuestionPoolItemState state);
+
+    /**
+     * Stores the review flag of one item without touching its version, so that a build working on the item is not disturbed.
+     *
+     * @param itemId  the item
+     * @param flagged whether the item is flagged for review
+     * @return the number of updated rows
+     */
+    @Modifying
+    @Transactional // ok because of the update
+    @Query("""
+            UPDATE QuizQuestionPoolItem item
+            SET item.flagged = :flagged
+            WHERE item.id = :itemId AND item.flagged IS NULL
+            """)
+    int storeFlag(@Param("itemId") long itemId, @Param("flagged") boolean flagged);
 
     /**
      * Deletes every item of a course, or every item of one of its competencies.

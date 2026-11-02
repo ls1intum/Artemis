@@ -196,6 +196,9 @@ class HyperionQuizQuestionPoolServiceTest {
 
         QuizQuestionPoolPageDTO page = service.getItems(5L, 9L, false, 0, 100);
 
+        assertThat(page.pendingCount()).isNull();
+        verify(itemRepository, never()).findAllWithoutFlagForCourse(anyLong(), any());
+
         assertThat(page.totalCount()).isEqualTo(1);
         assertThat(page.items()).hasSize(1);
         assertThat(page.items().getFirst().competencyTitle()).isEqualTo("Arrays");
@@ -223,12 +226,16 @@ class HyperionQuizQuestionPoolServiceTest {
         item.setDecision(new QuizQuestionFilterDecisionDTO(true, 0.6, List.of(new QuizQuestionFilterVerdictDTO(QuizQuestionFailureMode.ILL_FORMED_DISTRACTORS, 0.4, false, "weak")),
                 "checked"));
         item.setUpdatedAt(ZonedDateTime.now());
+        when(itemRepository.findAllWithoutFlagForCourse(5L, QuizQuestionPoolItemState.FILTERED)).thenReturn(List.of(item));
         when(itemRepository.findFlaggedPageForCourse(5L, PageRequest.of(1, 50))).thenReturn(new PageImpl<>(List.of(item), PageRequest.of(1, 50), 51));
+        when(itemRepository.countFlaggedPendingForCourse(5L)).thenReturn(7L);
         when(lectureUnitApi.findAllByIds(anyCollection())).thenReturn(List.of());
 
         QuizQuestionPoolPageDTO page = service.getItems(5L, null, true, 1, 50);
 
+        verify(itemRepository).storeFlag(2L, true);
         assertThat(page.totalCount()).isEqualTo(51);
+        assertThat(page.pendingCount()).isEqualTo(7L);
         assertThat(page.items().getFirst().flagged()).isTrue();
         assertThat(page.items().getFirst().decision().verdicts().getFirst().flagged()).isTrue();
     }

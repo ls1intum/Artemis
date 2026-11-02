@@ -21,4 +21,6 @@ export interface QuizQuestionPoolPage {
     totalCount: number;
     /** Every competency that has items in the pool, absent when the pool is empty */
     competencies: Array<QuizQuestionPoolCompetency>;
+    /** For a request of the flagged items, how many of them across all pages await a decision */
+    pendingCount?: number;
 }

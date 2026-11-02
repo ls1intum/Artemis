@@ -156,7 +156,8 @@ public class HyperionQuizQuestionPoolService {
      *
      * @param courseId     the course
      * @param competencyId the competency to restrict to, or {@code null} for the whole pool
-     * @param flagged      whether to return only questions flagged for review, those awaiting a decision first
+     * @param flagged      whether to return only questions flagged for review, those awaiting a decision first; judged questions whose flag
+     *                         was never stored get it stored first
      * @param page         the zero-based page
      * @param size         the page size, at most {@link #MAX_PAGE_SIZE}
      * @return the page
@@ -165,6 +166,9 @@ public class HyperionQuizQuestionPoolService {
     public QuizQuestionPoolPageDTO getItems(long courseId, @Nullable Long competencyId, boolean flagged, int page, int size) {
         if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
             throw new BadRequestAlertException("The page must be at least 0 and the size between 1 and " + MAX_PAGE_SIZE, "QuizQuestionPool", "pageOutOfRange");
+        }
+        if (flagged) {
+            storeMissingFlags(courseId);
         }
         Page<QuizQuestionPoolItem> items = flagged ? itemRepository.findFlaggedPageForCourse(courseId, PageRequest.of(page, size))
                 : itemRepository.findPageForCourse(courseId, competencyId, PageRequest.of(page, size));
@@ -175,7 +179,19 @@ public class HyperionQuizQuestionPoolService {
                 .toList();
         List<QuizQuestionPoolCompetencyDTO> competencies = itemRepository.findCompetencyIdsForCourse(courseId).stream()
                 .map(id -> new QuizQuestionPoolCompetencyDTO(id, titles.get(id))).toList();
-        return new QuizQuestionPoolPageDTO(dtos, items.getTotalElements(), competencies);
+        return new QuizQuestionPoolPageDTO(dtos, items.getTotalElements(), competencies, flagged ? itemRepository.countFlaggedPendingForCourse(courseId) : null);
+    }
+
+    /**
+     * Stores the review flag of the course's judged items that were judged before the flag was stored, so that the flagged queue finds them.
+     */
+    private void storeMissingFlags(long courseId) {
+        for (QuizQuestionPoolItem item : itemRepository.findAllWithoutFlagForCourse(courseId, QuizQuestionPoolItemState.FILTERED)) {
+            Boolean flag = flaggedOf(item);
+            if (flag != null) {
+                itemRepository.storeFlag(item.getId(), flag);
+            }
+        }
     }
 
     private Map<Long, String> unitNamesOf(List<QuizQuestionPoolItem> items) {
