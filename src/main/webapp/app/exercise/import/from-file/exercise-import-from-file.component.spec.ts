@@ -82,7 +82,8 @@ describe('ExerciseImportFromFileComponent', () => {
         fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
         fixture.componentRef.setInput('courseId', 42);
         const exercise = new TextExercise(undefined, undefined);
-        exercise.problemStatement = 'See ![diagram](/api/core/files/markdown/Markdown_old.png) and <img src="/api/core/files/markdown/Markdown_old.png">';
+        exercise.problemStatement =
+            'See ![diagram](/api/core/files/markdown/Markdown_old.png) and <img src="/api/core/files/markdown/Markdown_old.png"> and <img src=/api/core/files/markdown/Markdown_old.png>';
         const zip = new ZipBuilder();
         zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
         zip.file('files/Markdown_old.png', 'image');
@@ -94,7 +95,9 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(uploadSpy).toHaveBeenCalledOnce();
         expect(uploadSpy.mock.calls[0][0].name).toBe('Markdown_old.png');
         expect(uploadSpy.mock.calls[0][1]).toBe(42);
-        expect(component.exercise?.problemStatement).toBe('See ![diagram](/api/core/files/markdown/Markdown_new.png) and <img src="/api/core/files/markdown/Markdown_new.png">');
+        expect(component.exercise?.problemStatement).toBe(
+            'See ![diagram](/api/core/files/markdown/Markdown_new.png) and <img src="/api/core/files/markdown/Markdown_new.png"> and <img src=/api/core/files/markdown/Markdown_new.png>',
+        );
     });
 
     it('should upload and relink every image when several share one line', async () => {
