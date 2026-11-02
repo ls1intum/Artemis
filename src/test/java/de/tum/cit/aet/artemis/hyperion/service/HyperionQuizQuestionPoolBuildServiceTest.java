@@ -90,6 +90,8 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     private LocalMap<Long, HyperionCourseSettings> buildSettings;
 
+    private LocalMap<Long, String> cancellations;
+
     private AutoCloseable mocks;
 
     @BeforeEach
@@ -97,9 +99,10 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         mocks = MockitoAnnotations.openMocks(this);
         leases = new LocalMap<>();
         buildSettings = new LocalMap<>();
+        cancellations = new LocalMap<>();
         lenient().when(distributedDataProvider.<Long, String>getMap(HyperionQuizQuestionPoolBuildService.BUILD_LEASES)).thenReturn(leases);
         lenient().when(distributedDataProvider.<Long, HyperionCourseSettings>getMap(HyperionQuizQuestionPoolBuildService.BUILD_SETTINGS)).thenReturn(buildSettings);
-        lenient().when(distributedDataProvider.<Long, Boolean>getMap(HyperionQuizQuestionPoolBuildService.BUILD_CANCELLATIONS)).thenReturn(new LocalMap<>());
+        lenient().when(distributedDataProvider.<Long, String>getMap(HyperionQuizQuestionPoolBuildService.BUILD_CANCELLATIONS)).thenReturn(cancellations);
     }
 
     @AfterEach
@@ -275,6 +278,40 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         verify(itemRepository).deleteAllByCourseIdAndState(5L, QuizQuestionPoolItemState.PENDING);
         verify(itemRepository, never()).findAllByCourseIdAndState(anyLong(), any(), any());
         verify(chatModel, never()).call(any(Prompt.class));
+    }
+
+    @Test
+    void build_ignoresACancelRequestLeftForAnEarlierBuildOfTheCourse() {
+        HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
+        Course course = new Course();
+        course.setId(5L);
+        when(courseRepository.findByIdElseThrow(5L)).thenReturn(course);
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.of());
+        when(settingsService.getSettings(5L)).thenReturn(HyperionCourseSettings.defaultSettings());
+        String first = service.tryStart(5L);
+        service.release(5L, first);
+        cancellations.put(5L, first);
+
+        String second = service.tryStart(5L);
+        service.build(5L, 7L, second);
+
+        verify(itemRepository, never()).deleteAllByCourseIdAndState(anyLong(), any());
+        verify(itemRepository).findAllByCourseIdAndState(5L, QuizQuestionPoolItemState.PENDING, PageRequest.of(0, 1));
+    }
+
+    @Test
+    void release_leavesTheStateOfALaterBuildAlone() {
+        HyperionQuizQuestionPoolBuildService service = service();
+        String expired = service.tryStart(5L);
+        leases.remove(5L);
+        String later = service.tryStart(5L);
+        buildSettings.put(5L, HyperionCourseSettings.defaultSettings());
+        service.requestCancel(5L);
+
+        service.release(5L, expired);
+
+        assertThat(buildSettings.get(5L)).isEqualTo(HyperionCourseSettings.defaultSettings());
+        assertThat(cancellations.get(5L)).isEqualTo(later);
     }
 
     @Test
