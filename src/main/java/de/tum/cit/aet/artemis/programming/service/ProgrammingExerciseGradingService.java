@@ -532,9 +532,11 @@ public class ProgrammingExerciseGradingService {
             aggregatedResult.setScore(0D);
         }
         calculateScoreForResult(aggregatedResult, participation.getProgrammingExercise(), isStudentParticipation);
-        Integer testCaseCount = aggregatedResult.getTestCaseCount();
-        boolean everyRelevantTestCasePassed = testCaseCount != null && testCaseCount > 0 && testCaseCount.equals(aggregatedResult.getPassedTestCaseCount());
-        aggregatedResult.setSuccessful(everyRelevantTestCasePassed && allJobsSucceeded && !anyContainerFailedToBuild);
+        // The scoring derived the success flag from the score, including its penalties, as for a single-container result. A
+        // container that did not run through makes the build unsuccessful whatever the others scored.
+        if (!allJobsSucceeded || anyContainerFailedToBuild) {
+            aggregatedResult.setSuccessful(false);
+        }
         aggregatedResult.setCompletionDate(completionDate);
 
         Optional<Result> mergedIntoManualResult = Optional.empty();
