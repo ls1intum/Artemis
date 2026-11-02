@@ -42,13 +42,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FileService } from 'app/foundation/service/file.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-
-/** The message of the bound the server enforces on the points of a feedback, see {@link Feedback.haveCreditsInBounds}. */
-const FEEDBACK_CREDITS_OUT_OF_BOUNDS = 'error.feedbackCreditsOutOfBounds';
-
-function isCreditsOutOfBounds(error: HttpErrorResponse): boolean {
-    return error.error?.errorKey === 'feedbackCreditsOutOfBounds';
-}
+import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, isCreditsOutOfBounds } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 
 @Component({
     providers: [FileUploadAssessmentService],

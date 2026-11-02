@@ -52,13 +52,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
-
-/** The message of the bound the server enforces on the points of a feedback, see {@link Feedback.haveCreditsInBounds}. */
-const FEEDBACK_CREDITS_OUT_OF_BOUNDS = 'error.feedbackCreditsOutOfBounds';
-
-function isCreditsOutOfBounds(error: HttpErrorResponse): boolean {
-    return error.error?.errorKey === 'feedbackCreditsOutOfBounds';
-}
+import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, isCreditsOutOfBounds } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
