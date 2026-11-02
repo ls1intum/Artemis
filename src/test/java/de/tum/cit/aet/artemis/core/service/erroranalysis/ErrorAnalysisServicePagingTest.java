@@ -143,6 +143,26 @@ class ErrorAnalysisServicePagingTest {
     }
 
     @Test
+    void equalLastSeenTimesKeepTheirMessageOrderAcrossPages() {
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "first of three");
+        clock.advance(Duration.ofMillis(2));
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "second of three");
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "third of three");
+
+        List<String> expected = List.of("second of three", "third of three", "first of three");
+        for (int repetition = 0; repetition < 2; repetition++) {
+            for (int page = 0; page < expected.size(); page++) {
+                ErrorAnalysisPageDTO result = service.getGroups(ErrorAnalysisSpan.RELEASE, ErrorLocation.CLIENT, ErrorSeverity.ERROR, ErrorAnalysisSortField.LAST_SEEN, false, page,
+                        1);
+                assertThat(messages(result)).containsExactly(expected.get(page));
+                assertThat(result.totalGroups()).isEqualTo(3);
+                assertThat(result.totalErrors()).isEqualTo(3);
+            }
+            service.flush();
+        }
+    }
+
+    @Test
     void anAscendingSortKeepsTheMostRecentOfEqualGroupsFirstToo() {
         buffer.count(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "tie one");
         clock.advance(Duration.ofMinutes(1));

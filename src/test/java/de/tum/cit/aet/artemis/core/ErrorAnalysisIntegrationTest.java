@@ -168,8 +168,6 @@ class ErrorAnalysisIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(page.groups()).hasSize(1);
         assertThat(page.totalGroups()).isGreaterThanOrEqualTo(3);
         assertThat(page.totalErrors()).isGreaterThanOrEqualTo(3);
-        // the most recent group comes first when sorted by the last time, which is the third report
-        assertThat(page.groups().getFirst().message()).endsWith("third of three");
     }
 
     @Test
