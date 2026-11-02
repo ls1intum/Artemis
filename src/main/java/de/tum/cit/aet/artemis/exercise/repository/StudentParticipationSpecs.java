@@ -140,7 +140,7 @@ public class StudentParticipationSpecs {
             Subquery<Long> draftParticipations = query.subquery(Long.class);
             Root<Result> draft = draftParticipations.from(Result.class);
             draftParticipations.select(draft.get(Result_.SUBMISSION).get(Submission_.PARTICIPATION).get(DomainObject_.ID)).where(
-                    draft.get(Result_.ASSESSMENT_TYPE).in(AssessmentType.MANUAL, AssessmentType.SEMI_AUTOMATIC),
+                    cb.or(cb.isNull(draft.get(Result_.ASSESSMENT_TYPE)), draft.get(Result_.ASSESSMENT_TYPE).in(AssessmentType.MANUAL, AssessmentType.SEMI_AUTOMATIC)),
                     cb.equal(draft.get(Result_.ASSESSOR).get(DomainObject_.ID), userId), cb.isNull(draft.get(Result_.COMPLETION_DATE)));
 
             Predicate deadlinePassed = cb.or(cb.lessThanOrEqualTo(root.get(StudentParticipation_.INDIVIDUAL_DUE_DATE), now),

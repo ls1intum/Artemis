@@ -547,7 +547,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE result.submission.participation.id IN :participationIds
                 AND result.assessor.login = :currentUserLogin
                 AND result.completionDate IS NULL
-                AND result.assessmentType IN (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL, de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC)
+                AND (result.assessmentType IS NULL OR result.assessmentType IN
+                    (de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL, de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC))
             """)
     List<AssessmentDraftDTO> findUnfinishedAssessmentDrafts(@Param("participationIds") List<Long> participationIds, @Param("currentUserLogin") String currentUserLogin);
 

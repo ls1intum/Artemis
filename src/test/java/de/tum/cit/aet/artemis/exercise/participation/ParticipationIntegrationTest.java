@@ -2417,13 +2417,14 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     @ParameterizedTest
-    @CsvSource({ "false,true", "false,false", "true,true", "true,false" })
+    @CsvSource(value = { "false,true,MANUAL", "false,false,MANUAL", "true,true,MANUAL", "true,false,MANUAL", "false,true,NULL", "false,false,NULL", "true,true,NULL",
+            "true,false,NULL" }, nullValues = "NULL")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void assessmentQueueRetainsOnlyOwnUnfinishedOlderAssessments(boolean completed, boolean owned) throws Exception {
+    void assessmentQueueRetainsOnlyOwnUnfinishedOlderAssessments(boolean completed, boolean owned, AssessmentType assessmentType) throws Exception {
         var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1),
                 ZonedDateTime.now().plusDays(1));
         var olderSubmission = participationUtilService.addSubmission(exercise, new TextSubmission().submitted(true), TEST_PREFIX + "student1");
-        var result = new Result().submission(olderSubmission).assessmentType(AssessmentType.MANUAL);
+        var result = new Result().submission(olderSubmission).assessmentType(assessmentType);
         result.setExerciseId(exercise.getId());
         result.setCorrectionRound(0);
         result.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + (owned ? "tutor1" : "instructor1")));
