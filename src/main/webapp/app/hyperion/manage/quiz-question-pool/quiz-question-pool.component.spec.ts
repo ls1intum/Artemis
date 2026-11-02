@@ -158,6 +158,41 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.groups()).toHaveLength(2);
     });
 
+    it('should drop the old list at once when the competency changes and not append to it while the new one loads', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const all = Array.from({ length: 60 }, (_, index) => question(index + 1, 9, 'Arrays'));
+        const firstPage = new Subject<PoolQuestionPage>();
+        const listSpy = vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => {
+            if (query.flagged) {
+                return of(page([]));
+            }
+            if (query.competencyId === 10) {
+                return firstPage.asObservable();
+            }
+            return of(page(all.slice(query.page * query.size, (query.page + 1) * query.size), all.length));
+        });
+        component.refresh();
+        component.loadMoreQuestions();
+        expect(component.questions()).toHaveLength(40);
+
+        component.selectCompetency(10);
+        expect(component.questions()).toHaveLength(0);
+        const callsBefore = listCalls(listSpy).length;
+        component.loadMoreQuestions();
+        expect(listCalls(listSpy)).toHaveLength(callsBefore);
+
+        firstPage.next(
+            page(
+                all.slice(0, 20).map((item) => ({ ...item, competencyId: 10, competencyTitle: 'Loops' })),
+                60,
+            ),
+        );
+        firstPage.complete();
+        component.loadMoreQuestions();
+
+        expect(listCalls(listSpy).at(-1)).toEqual([1, { competencyId: 10, page: 1, size: 20 }]);
+    });
+
     it('should load the next page on request and append it', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
         const all = Array.from({ length: 250 }, (_, index) => question(index + 1, 9, 'Arrays'));
@@ -918,6 +953,29 @@ describe('QuizQuestionPoolComponent', () => {
 
         expect(component.questions().map((item) => item.id)).not.toContain(2);
         expect(component.needsReviewQuestions().map((item) => item.id)).not.toContain(2);
+    });
+
+    it('should refill the review queue when its last loaded question is deleted and more remain', () => {
+        const flagged = Array.from({ length: 40 }, (_, index) => ({ ...question(index + 1, 9, 'Arrays'), flagged: true }));
+        let remaining = flagged;
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) =>
+            of(query.flagged ? { ...page(remaining.slice(0, query.size), remaining.length), pendingCount: remaining.length } : page(questions())),
+        );
+        vi.spyOn(poolService, 'deleteQuestion').mockReturnValue(of(undefined));
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        component.refresh();
+        expect(component.needsReviewQuestions()).toHaveLength(20);
+
+        for (const item of flagged.slice(0, 20)) {
+            remaining = remaining.filter((candidate) => candidate.id !== item.id);
+            component.confirmDeleteQuestion(item.id);
+            confirmationService.request(undefined)!.accept();
+        }
+
+        expect(component.needsReviewQuestions().map((item) => item.id)).toEqual(flagged.slice(20).map((item) => item.id));
+        expect(component.showNeedsReviewQueue()).toBe(true);
+        expect(component.pendingInQueue()).toBe(20);
     });
 
     it('should explain a refused deletion while a build runs', () => {

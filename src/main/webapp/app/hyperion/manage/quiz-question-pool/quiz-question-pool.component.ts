@@ -413,7 +413,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     /** Appends the next page of the grouped list. */
     loadMoreQuestions(): void {
         const courseId = this.courseId();
-        if (!courseId || this.isLoadingMore() || this.remainingQuestions() === 0) {
+        if (!courseId || this.isLoading() || this.isLoadingMore() || this.remainingQuestions() === 0) {
             return;
         }
         this.isLoadingMore.set(true);
@@ -736,8 +736,12 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             });
     }
 
+    /** Shows the questions of one competency, or of all; the old list is dropped at once, so nothing is appended to it while the new one loads. */
     selectCompetency(competencyId: number | undefined): void {
         this.selectedCompetencyId.set(competencyId);
+        this.appliedQuestionsAt = ++this.requestSequence;
+        this.questions.set([]);
+        this.totalQuestionCount.set(0);
         const courseId = this.courseId();
         if (courseId) {
             this.loadPool(courseId);
@@ -837,6 +841,11 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                             this.changePending(-1, deletedAt);
                         }
                         this.queueCollapsed.set(this.allFlaggedReviewed());
+                        if (this.needsReviewQuestions().length === 0 && this.needsReviewTotal() > 0) {
+                            this.reloadNeedsReview(courseId, PAGE_SIZE)
+                                .pipe(takeUntilDestroyed(this.destroyRef))
+                                .subscribe({ error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.errors.loadFailed') });
+                        }
                     }
                     this.alertService.success('artemisApp.hyperion.quizQuestionPool.list.deleted');
                     this.loadProgress(courseId);
