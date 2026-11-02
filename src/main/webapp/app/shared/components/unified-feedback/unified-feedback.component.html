@@ -24,8 +24,8 @@
                             <span #gradingScaleSegment class="unified-feedback-criterion-scale" [tumAetUiTooltip]="linkedCriterionTooltip()">{{ linkedGradingScale() }}</span>
                         }
                         @if (editable() && !readOnly()) {
-                            <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- This wrapper only isolates the nested control from the feedback row. -->
-                            <span class="unified-feedback-criterion-remove" (click)="$event.stopPropagation()">
+                            <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -- This wrapper only isolates the nested control from the feedback row. -->
+                            <span class="unified-feedback-criterion-remove" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
                                 <jhi-confirm-icon
                                     [initialIcon]="faTimes"
                                     [confirmIcon]="faLinkSlash"
