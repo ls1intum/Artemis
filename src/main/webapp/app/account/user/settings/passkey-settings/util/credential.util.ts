@@ -4,7 +4,7 @@ import {
     getRegistrationCredentialFromMalformedBitwardenObject,
 } from 'app/account/user/settings/passkey-settings/util/bitwarden/bitwarden.util';
 import { InvalidCredentialError } from 'app/account/user/settings/passkey-settings/entities/errors/invalid-credential.error';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import {
     getLoginCredentialFromMalformed1Password8Object,
     getRegistrationCredentialFromMalformed1Password8Object,

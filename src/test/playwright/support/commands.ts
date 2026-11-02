@@ -494,6 +494,7 @@ export class Commands {
         quietMs: number = 8000,
         interval: number = POLLING_INTERVAL,
         timeout: number = BUILD_FINISH_TIMEOUT,
+        kind: 'course' | 'exam' = 'course',
     ) => {
         const countResults = (participation: StudentParticipationDTO | undefined): number =>
             participation?.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
@@ -505,7 +506,7 @@ export class Commands {
         while (Date.now() - startTime < timeout) {
             let count: number | undefined;
             try {
-                count = countResults(await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId));
+                count = countResults(await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId, kind));
             } catch {
                 // A read that failed says nothing about whether results are still arriving, so it must not count
                 // towards the quiet window. Restart the window instead: only an unchanged count that was actually
@@ -532,6 +533,7 @@ export class Commands {
         interval: number = POLLING_INTERVAL,
         timeout: number = BUILD_FINISH_TIMEOUT,
         minResults?: number,
+        kind: 'course' | 'exam' = 'course',
     ) => {
         let exerciseParticipation: StudentParticipationDTO | undefined;
         let participationId: number | undefined;
@@ -540,7 +542,7 @@ export class Commands {
         // Wait for a participation to become available and capture its ID once.
         while (Date.now() - startTime < timeout) {
             try {
-                exerciseParticipation = await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
+                exerciseParticipation = await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId, kind);
                 participationId = exerciseParticipation.id;
                 break;
             } catch {

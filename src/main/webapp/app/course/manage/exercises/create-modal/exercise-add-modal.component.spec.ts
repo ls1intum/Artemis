@@ -9,7 +9,7 @@ import { Subject } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
@@ -34,7 +34,7 @@ describe('ExerciseAddModalComponent', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
             ],
         }).compileComponents();
@@ -223,7 +223,7 @@ describe('ExerciseAddModalComponent', () => {
     describe('startImport', () => {
         let router: Router;
         let navigateSpy: ReturnType<typeof vi.spyOn>;
-        let dialogService: DialogService;
+        let dialogService: TumAetUiDialogService;
         let onClose: Subject<Exercise | string | undefined>;
 
         beforeEach(() => {
@@ -231,9 +231,9 @@ describe('ExerciseAddModalComponent', () => {
             createComponent();
             router = TestBed.inject(Router);
             navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-            dialogService = TestBed.inject(DialogService);
+            dialogService = TestBed.inject(TumAetUiDialogService);
             onClose = new Subject();
-            vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onClose.asObservable() } as unknown as DynamicDialogRef);
+            vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: onClose.asObservable() } as unknown as TumAetUiDialogRef);
             fixture.componentRef.setInput('courseId', 42);
         });
 
@@ -267,15 +267,24 @@ describe('ExerciseAddModalComponent', () => {
             component.startImport(ExerciseType.TEXT);
             onClose.next({ id: 7 } as Exercise);
 
-            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'text-exercises', 7, 'import']);
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'text-exercises', 7, 'import'], { queryParams: { sourceIsExamExercise: false } });
         });
 
         it('navigates to the programming import route for a selected programming exercise', () => {
             component.startImport(ExerciseType.PROGRAMMING);
             onClose.next({ id: 7 } as Exercise);
 
-            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'programming-exercises', 'import', 7]);
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'programming-exercises', 'import', 7], { queryParams: { sourceIsExamExercise: false } });
         });
+
+        it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ])(
+            'retains the selected exam source kind for %s imports into a course',
+            (type) => {
+                component.startImport(type);
+                onClose.next({ id: 7, exerciseGroup: {} } as Exercise);
+                expect(navigateSpy).toHaveBeenCalledWith(expect.any(Array), { queryParams: { sourceIsExamExercise: true } });
+            },
+        );
 
         it('routes a from-file programming import (no id) to the import-from-file page with state', () => {
             const fromFile = { title: 'from file' } as Exercise;

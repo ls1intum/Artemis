@@ -22,6 +22,11 @@ on:
         description: 'Whether TUM AET UI or its application integration changed.'
         required: true
         type: boolean
+      check_test_types:
+        description: 'Keep strict test TypeScript compilation on the public runner while draft test execution is deferred.'
+        required: false
+        type: boolean
+        default: false
 
 permissions: {}  # default-deny; each job grants only what it needs
 
@@ -147,6 +152,10 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Compile TypeScript Files With Typechecking
         run: pnpm run compile
+      - name: Compile TypeScript Test Files With Typechecking
+        if: inputs.check_test_types
+        # `compile` already ran prebuild; reuse those outputs without building the UI package twice.
+        run: pnpm exec tsc --project config/client/tsconfig.spec.json
       - name: Compile Artemis With TUM AET UI Source
         run: pnpm run tum-aet-ui:source:check:prepared
         if: ${{ !cancelled() && inputs.has_tum_aet_ui }}

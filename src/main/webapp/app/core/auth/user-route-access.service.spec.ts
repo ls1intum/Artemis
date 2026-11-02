@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Component } from '@angular/core';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { MockProvider } from 'ng-mocks';
+import { User } from 'app/account/user/user.model';
 import { TestBed } from '@angular/core/testing';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { ActivatedRouteSnapshot, Route, Router, RouterModule } from '@angular/router';
+import { ActivatedRouteSnapshot, Route, Router, RouterModule, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -124,5 +128,80 @@ describe('UserRouteAccessService', () => {
         expect(navigateMock).toHaveBeenCalledTimes(2);
         expect(navigateMock.mock.calls[0][0]).toEqual(['accessdenied']);
         expect(navigateMock.mock.calls[1][0]).toEqual(['/sign-in']);
+    });
+});
+
+@Component({ selector: 'jhi-authority-test-instructor', template: 'Instructor controls' })
+class InstructorTestComponent {}
+
+@Component({ selector: 'jhi-authority-test-denied', template: 'Access denied' })
+class DeniedTestComponent {}
+
+@Component({ selector: 'jhi-authority-test-courses', template: 'Course list' })
+class CoursesTestComponent {}
+
+@Component({ selector: 'jhi-authority-test-sign-in', template: 'Sign in' })
+class SignInTestComponent {}
+
+describe('UserRouteAccessService navigation results', () => {
+    function configureFor(account?: User) {
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({
+            providers: [
+                provideRouter([
+                    { path: 'exam-locks', component: InstructorTestComponent, data: { authorities: [Authority.INSTRUCTOR] }, canActivate: [UserRouteAccessService] },
+                    { path: 'accessdenied', component: DeniedTestComponent },
+                    { path: 'courses', component: CoursesTestComponent },
+                    { path: 'sign-in', component: SignInTestComponent },
+                ]),
+                MockProvider(AlertService),
+                MockProvider(SessionStorageService),
+                MockProvider(AccountService, {
+                    identity: () => Promise.resolve(account),
+                    isAuthenticated: () => !!account,
+                    hasAnyAuthority: (required: readonly Authority[]) => Promise.resolve(required.some((authority) => account?.authorities?.includes(authority) ?? false)),
+                }),
+            ],
+        });
+    }
+
+    afterEach(() => vi.restoreAllMocks());
+
+    it('renders access denied when the initial URL requires an authority the signed-in user lacks', async () => {
+        configureFor({ id: 4, authorities: [Authority.TUTOR] } as User);
+
+        const harness = await RouterTestingHarness.create('/exam-locks');
+
+        expect(TestBed.inject(Router).url).toBe('/accessdenied');
+        expect(harness.routeNativeElement?.textContent).toContain('Access denied');
+    });
+
+    it('retains the active page when a later navigation is denied', async () => {
+        configureFor({ id: 4, authorities: [Authority.TUTOR] } as User);
+        const harness = await RouterTestingHarness.create('/courses');
+        const router = TestBed.inject(Router);
+
+        expect(await router.navigateByUrl('/exam-locks')).toBe(false);
+
+        expect(router.url).toBe('/courses');
+        expect(harness.routeNativeElement?.textContent).toContain('Course list');
+    });
+
+    it('renders an authorized initial URL', async () => {
+        configureFor({ id: 16, authorities: [Authority.INSTRUCTOR] } as User);
+
+        const harness = await RouterTestingHarness.create('/exam-locks');
+
+        expect(TestBed.inject(Router).url).toBe('/exam-locks');
+        expect(harness.routeNativeElement?.textContent).toContain('Instructor controls');
+    });
+
+    it('keeps the existing signed-out redirect to sign in', async () => {
+        configureFor();
+        const harness = await RouterTestingHarness.create('/exam-locks');
+        await harness.fixture.whenStable();
+
+        expect(TestBed.inject(Router).url).toBe('/sign-in');
+        expect(harness.routeNativeElement?.textContent).toContain('Sign in');
     });
 });

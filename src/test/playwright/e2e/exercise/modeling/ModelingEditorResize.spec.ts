@@ -129,6 +129,9 @@ test.describe('Responsive modeling editor tile', { tag: '@fast' }, () => {
         await expect.poll(async () => (await explanationSurface.boundingBox())?.height ?? 0).toBeGreaterThan(automaticSurfaceBox!.height + 70);
 
         await page.setViewportSize({ width: 640, height: 900 });
+        const compactEditorTab = page.getByRole('tab', { name: 'Modeling Editor', exact: true });
+        await expect(compactEditorTab).toBeVisible();
+        await expect(compactEditorTab).toHaveAttribute('aria-selected', 'true');
         await expect(frame).toBeVisible();
         await expect(explanationSurface).toBeVisible();
         await expect(textarea).toBeVisible();
@@ -169,7 +172,7 @@ test.describe('Responsive modeling editor tile', { tag: '@fast' }, () => {
         await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
         await courseOverview.startExercise(modelingExercise.id!);
 
-        const problemResizeHandle = page.locator('p-splitter.resizable-panels-splitter > [role="separator"]');
+        const problemResizeHandle = page.locator('jhi-resizable-panels').getByTestId('splitter-gutter').first();
         await expect(problemResizeHandle).toBeVisible();
         const handleBox = await problemResizeHandle.boundingBox();
         expect(handleBox).not.toBeNull();

@@ -106,13 +106,13 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void evaluateQuiz_asStudent_PreAuth_forbidden() throws Exception {
         evaluateQuiz_authorization_forbidden();
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor6", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor6", roles = "USER")
     void evaluateQuiz_asInstructorNotInCourse_forbidden() throws Exception {
         evaluateQuiz_authorization_forbidden();
     }
@@ -129,7 +129,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void evaluateQuiz_testExam_forbidden() throws Exception {
         exam.setTestExam(true);
         exam.setEndDate(ZonedDateTime.now().minusMinutes(30));
@@ -142,7 +142,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void evaluateQuiz_notOver_badRequest() throws Exception {
         exam = examRepository.save(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
@@ -153,7 +153,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void evaluateQuiz() throws Exception {
         exam = examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, NUMBER_OF_STUDENTS);
 
@@ -198,7 +198,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void evaluateQuizWithNoSubmissions() throws Exception {
         exam = examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, NUMBER_OF_STUDENTS);
 
@@ -249,7 +249,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void evaluateQuizWithMultipleSubmissions() throws Exception {
         exam = examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, NUMBER_OF_STUDENTS);
 
@@ -301,7 +301,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void evaluateQuiz_twice() throws Exception {
         exam = examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, NUMBER_OF_STUDENTS);
 

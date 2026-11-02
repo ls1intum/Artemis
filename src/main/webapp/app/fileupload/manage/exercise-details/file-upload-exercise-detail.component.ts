@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
@@ -110,7 +111,7 @@ export class FileUploadExerciseDetailComponent {
 
             if (!id) return;
 
-            const exerciseSub = this.fileUploadExerciseService.find(id).subscribe({
+            const exerciseSub = (isExamExerciseRoute(this.route.snapshot) ? this.fileUploadExerciseService.findForExam(id) : this.fileUploadExerciseService.find(id)).subscribe({
                 next: (res) => {
                     if (res.body) {
                         this.fileUploadExercise.set(res.body);

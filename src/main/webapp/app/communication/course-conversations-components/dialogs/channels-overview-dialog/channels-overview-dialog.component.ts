@@ -11,6 +11,7 @@ import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indica
 import { ChannelItemComponent } from './channel-item/channel-item.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view' | 'create';
@@ -27,6 +28,7 @@ export type ChannelAction = {
 export class ChannelsOverviewDialogComponent extends AbstractDialogComponent implements OnInit, OnDestroy {
     private channelService = inject(ChannelService);
     private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
 
     private ngUnsubscribe = new Subject<void>();
 
@@ -108,8 +110,13 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     loadChannelsOfCourse() {
         this.isLoading.set(true);
-        this.channelService
-            .getChannelsOfCourse(this.course()!.id!)
+        const course = this.course()!;
+        const request = this.accountService.isAtLeastInstructorInCourse(course)
+            ? this.channelService.getChannelsOfCourseForInstructor(course.id!)
+            : this.accountService.isAtLeastTutorInCourse(course)
+              ? this.channelService.getChannelsOfCourseForStaff(course.id!)
+              : this.channelService.getChannelsOfCourse(course.id!);
+        request
             .pipe(
                 map((res: HttpResponse<ChannelDTO[]>) => res.body ?? []),
                 finalize(() => {

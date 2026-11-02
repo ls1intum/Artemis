@@ -60,10 +60,12 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         this.quizExercise = this.dialogConfig.data.quizExercise;
         this.files = this.dialogConfig.data.files;
         this.isSaving = false;
-        this.quizExerciseService.find(this.quizExercise.id!).subscribe((quizExercise) => {
-            this.backUpQuiz = quizExercise;
-            this.loadQuizSuccess();
-        });
+        (this.quizExercise.exerciseGroup ? this.quizExerciseService.findForExam(this.quizExercise.id!) : this.quizExerciseService.find(this.quizExercise.id!)).subscribe(
+            (quizExercise) => {
+                this.backUpQuiz = quizExercise;
+                this.loadQuizSuccess();
+            },
+        );
     }
 
     /**

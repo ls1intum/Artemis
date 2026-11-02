@@ -498,7 +498,7 @@ export class FileUploadAssessmentComponent implements OnInit {
             return;
         }
 
-        this.complaintService.findBySubmissionId(submissionId).subscribe({
+        this.complaintService.findBySubmissionIdForAssessment(submissionId).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;

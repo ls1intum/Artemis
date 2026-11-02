@@ -255,7 +255,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private subscribeToCourseUpdates(courseId: number) {
         this.courseSub?.unsubscribe();
-        this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
+        this.courseSub = this.courseManagementService.findForManagement(courseId).subscribe((courseResponse) => {
             if (courseResponse.body) {
                 this.storeCourseIfAbsent(courseResponse.body);
                 this.course.set(courseResponse.body);
@@ -267,7 +267,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     loadCourse(): Observable<void> {
         // The management shell only needs the course record. It used to take it from the course dashboard, which also
         // loads every exercise, participation, submission and result for the requesting instructor and discards them.
-        return this.courseManagementService.find(this.courseId()).pipe(
+        return this.courseManagementService.findForManagement(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.storeCourseIfAbsent(res.body);

@@ -1,4 +1,3 @@
-/* stylelint-disable selector-pseudo-element-no-unknown */
 :host {
     display: flex;
     flex: 1;
@@ -6,158 +5,50 @@
     overflow: hidden;
 }
 
-// ::ng-deep is required to style the PrimeNG Splitter internals (no public API for these overrides).
-:host ::ng-deep .resizable-panels-splitter {
-    border: 0;
-    background: transparent;
+.panel-surface {
+    background: var(--tumaet-ui-content-background);
 
-    // The current PrimeNG Splitter renders its panels as `p-splitterpanel`. This class name has
-    // changed across PrimeNG majors, so revisit these selectors when upgrading PrimeNG.
-    .p-splitterpanel {
-        display: flex;
-        min-width: 0;
-        min-height: 0;
-        overflow: hidden;
-    }
-
-    // Thin transparent gutter showing two vertical grip bars, like the previous split.js gutter.
-    .p-splitter-gutter {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: col-resize;
-        background: transparent;
-    }
-
-    .p-splitter-gutter-handle {
-        // Center the two grip bars within the handle. Without explicit centering and sizing, PrimeNG sizes the
-        // handle to fill the gutter and the bars sit at flex-start (visually left of the divider) instead of centered.
-        // The handle is as wide as the gutter, which is one divider: the two 2px bars and their 1px gap fit in it.
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        width: var(--spacing-divider);
-        height: 12px;
-        gap: 1px;
-        background: transparent;
-        pointer-events: none;
-
-        &::before,
-        &::after {
-            content: '';
-            display: block;
-            width: 2px;
-            height: 12px;
-            background: var(--bs-body-color);
-            border-radius: 1px;
-        }
-    }
-
-    // Collapsed state: the splitter stays mounted (so the left panel survives), but the right panel shrinks to the
-    // icon rail and the gutter is hidden. !important overrides PrimeNG's inline flex-basis from panelSizes.
-    &.right-collapsed {
-        > .p-splitterpanel:first-child {
-            flex: 1 1 auto !important;
-        }
-
-        > .p-splitterpanel:last-child {
-            flex: 0 0 auto !important;
-        }
-
-        > .p-splitter-gutter {
-            display: none !important;
-        }
+    &[hidden] {
+        display: none;
     }
 }
 
-.right-panel-collapse-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    align-self: stretch;
-    width: 2.5rem;
-    padding: 0;
-    color: var(--bs-body-color);
-    background: transparent;
-    border: 0;
-    border-left: var(--bs-border-width) solid var(--bs-border-color);
-    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
-
-    &:hover,
-    &:focus-visible {
-        color: var(--bs-primary);
-        background: var(--bs-tertiary-bg);
-    }
-}
-
-.right-panel-tabs {
-    min-width: 0;
-}
-
-.collapsed-right-panel {
-    width: 3rem;
-    min-width: 3rem;
-
-    /* Stands in for the gutter, which is hidden while collapsed, so the grey divider stays the same width. */
-    margin-left: var(--spacing-divider);
-    border: var(--bs-border-width) solid var(--bs-border-color);
-}
-
+.right-panel-collapse-button,
 .collapsed-right-panel-tab {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    min-height: 2.75rem;
     padding: 0.5rem;
-    color: var(--bs-body-color);
+    color: var(--tumaet-ui-text-color);
     background: transparent;
     border: 0;
-    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+    border-bottom: 1px solid var(--tumaet-ui-border-color);
 
     &:hover,
     &:focus-visible,
     &.active {
-        color: var(--bs-primary);
-        background: var(--bs-tertiary-bg);
+        color: var(--tumaet-ui-primary-color);
+        background: var(--tumaet-ui-hover-background);
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: -2px;
     }
 }
 
-:host ::ng-deep {
-    .p-tablist-tab-list {
-        border-width: 0 0 var(--bs-border-width) 0;
-        border-color: var(--bs-border-color);
-        gap: 0.5rem;
-    }
+.right-panel-collapse-button {
+    align-self: stretch;
+    width: 2.5rem;
+    border-left: 1px solid var(--tumaet-ui-border-color);
+}
 
-    .p-tablist-active-bar {
-        display: none;
-    }
+.collapsed-right-panel {
+    width: 3rem;
+    border: 1px solid var(--tumaet-ui-border-color);
+}
 
-    .p-tab {
-        border-width: 0 0 var(--bs-border-width) 0;
-        padding: 8px;
-
-        &.p-tab-active {
-            color: var(--bs-body-color);
-            border-color: var(--bs-primary);
-            background: transparent;
-        }
-
-        &:not(.p-disabled):focus-visible {
-            outline: 2px solid var(--bs-primary);
-            outline-offset: 2px;
-        }
-
-        &:not(.p-tab-active):not(.p-disabled):hover {
-            color: var(--bs-body-color);
-            background: transparent;
-            border-color: transparent;
-        }
-    }
-
-    .p-tablist {
-        background: transparent;
-    }
+.collapsed-right-panel-tab {
+    width: 100%;
+    min-height: 2.75rem;
 }

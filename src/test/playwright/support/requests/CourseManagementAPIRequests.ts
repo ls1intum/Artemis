@@ -186,7 +186,7 @@ export class CourseManagementAPIRequests {
      * Useful for tests that file complaints on shared seed courses.
      */
     async updateCourseMaxComplaints(courseId: number, maxComplaints: number) {
-        const courseResponse = await this.page.request.get(`api/course/courses/${courseId}`);
+        const courseResponse = await this.page.request.get(`api/course/courses/${courseId}/for-instructor`);
         const courseData: CourseManagementDTO = await courseResponse.json();
         courseData.maxComplaints = maxComplaints;
         const response = await this.page.request.put(`api/course/courses/${courseId}`, {
@@ -211,7 +211,7 @@ export class CourseManagementAPIRequests {
      * @param end      the new end date, by default one hour ago
      */
     async setCourseEndDate(courseId: number, end: dayjs.Dayjs = dayjs().subtract(1, 'hour')) {
-        const courseResponse = await this.page.request.get(`api/course/courses/${courseId}`);
+        const courseResponse = await this.page.request.get(`api/course/courses/${courseId}/for-instructor`);
         const courseData: CourseManagementDTO = await courseResponse.json();
         courseData.endDate = end.toISOString();
         const response = await this.page.request.put(`api/course/courses/${courseId}`, {

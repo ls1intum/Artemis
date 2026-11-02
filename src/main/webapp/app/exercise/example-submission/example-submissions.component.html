@@ -1,43 +1,33 @@
 <div>
     @if (exercise() && exercise().id && exercise().course && exercise().course!.id) {
-        <div class="row">
-            <div class="col-12 col-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="min-w-0">
                 <h4>
                     <span jhiTranslate="artemisApp.exampleSubmission.exampleSubmissions"></span>
                 </h4>
             </div>
-            <div class="col-12 col-sm-auto d-flex flex-btn-group-container me-1 mb-1">
+            <div class="flex flex-wrap items-center gap-1 me-1 mb-1">
                 @if (exercise().course!.isAtLeastEditor) {
-                    <a class="btn btn-primary me-1 mb-1" [routerLink]="getLinkToExampleSubmission('new')">
+                    <a severity="primary" tumAetUiButton class="me-1 mb-1" [routerLink]="getLinkToExampleSubmission('new')">
                         <fa-icon [icon]="faPlus" />
-                        <fa-icon class="d-xl-none" [icon]="faFont" />
-                        <span class="d-none d-xl-inline" jhiTranslate="artemisApp.modelingExercise.createExampleSubmission" id="create-example-submission"></span>
+                        <fa-icon class="xl:hidden" [icon]="faFont" />
+                        <span class="hidden xl:inline" jhiTranslate="artemisApp.modelingExercise.createExampleSubmission" id="create-example-submission"></span>
                     </a>
                 }
                 @if (exercise().course!.isAtLeastEditor) {
-                    <a
-                        data-testid="import-example-submission"
-                        class="btn btn-primary me-1 mb-1"
-                        (click)="openImportModal()"
-                        #keyboardAction18
-                        role="button"
-                        tabindex="0"
-                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction18.click() : undefined"
-                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction18.click() : undefined"
-                    >
+                    <button type="button" severity="primary" tumAetUiButton data-testid="import-example-submission" class="me-1 mb-1" (click)="openImportModal()">
                         <fa-icon [icon]="faPlus" />
-                        <fa-icon class="d-xl-none" [icon]="faFont" />
-                        <span class="d-none d-xl-inline" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmission"></span>
-                    </a>
+                        <fa-icon class="xl:hidden" [icon]="faFont" />
+                        <span class="hidden xl:inline" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmission"></span>
+                    </button>
                 }
             </div>
         </div>
     }
     <br />
-    <div class="table-responsive">
+    <div class="overflow-x-auto">
         @if (exercise() && exercise().id && exercise().course && exercise().course!.id) {
-            <table class="table table-striped align-middle">
+            <table striped tumAetUiTable class="align-middle">
                 <thead>
                     <tr>
                         <th><span jhiTranslate="global.field.id"></span></th>
@@ -48,15 +38,15 @@
                             @if (exercise().type === exerciseType.TEXT) {
                                 <fa-icon
                                     [icon]="faQuestionCircle"
-                                    class="text-secondary ps-1"
-                                    [ngbTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
+                                    class="text-text-secondary ps-1"
+                                    [tumAetUiTooltip]="'artemisApp.exampleSubmission.textSubmissionSizeHint' | artemisTranslate"
                                 />
                             }
                             @if (exercise().type === exerciseType.MODELING) {
                                 <fa-icon
                                     [icon]="faQuestionCircle"
-                                    class="text-secondary ps-1"
-                                    [ngbTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
+                                    class="text-text-secondary ps-1"
+                                    [tumAetUiTooltip]="'artemisApp.exampleSubmission.modelingSubmissionSizeHint' | artemisTranslate"
                                 />
                             }
                         </th>
@@ -71,12 +61,12 @@
                     @for (exampleSubmission of exercise().exampleSubmissions; track exampleSubmission.id; let i = $index) {
                         <tr>
                             <td>
-                                <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)" class="btn-link">
+                                <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)">
                                     {{ exampleSubmission.id }}
                                 </a>
                             </td>
                             <td>
-                                <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)" class="btn-link">
+                                <a [routerLink]="getLinkToExampleSubmission(exampleSubmission.id!)">
                                     {{ 'artemisApp.exampleSubmission.exampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                 </a>
                             </td>
@@ -96,13 +86,13 @@
                                     <span jhiTranslate="global.generic.yes"></span>
                                 }
                                 @if (!createdExampleAssessment()[i]) {
-                                    <span class="text-danger" jhiTranslate="global.generic.no"></span>
+                                    <span class="text-state-danger" jhiTranslate="global.generic.no"></span>
                                 }
                                 @if (!createdExampleAssessment()[i]) {
                                     <fa-icon
                                         [icon]="faExclamationTriangle"
-                                        class="text-warning"
-                                        [ngbTooltip]="'artemisApp.exampleSubmission.exampleAssessmentWarning' | artemisTranslate"
+                                        class="text-state-warning"
+                                        [tumAetUiTooltip]="'artemisApp.exampleSubmission.exampleAssessmentWarning' | artemisTranslate"
                                     />
                                 }
                             </td>

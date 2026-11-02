@@ -47,4 +47,10 @@ export class ProgrammingAssessmentRepoExportService {
             responseType: 'blob',
         });
     }
+    exportIdentifiedReposByParticipations(exerciseId: number, participationIds: number[], options: RepositoryExportOptions): Observable<HttpResponse<Blob>> {
+        return this.http.post(`${this.resourceUrl}/${exerciseId}/export-repos-by-participation-ids/${String(participationIds)}/for-instructor`, options, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
 }

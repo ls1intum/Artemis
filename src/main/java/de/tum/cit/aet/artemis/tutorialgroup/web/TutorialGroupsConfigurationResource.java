@@ -29,8 +29,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -97,7 +97,7 @@ public class TutorialGroupsConfigurationResource {
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group configuration
      */
     @PostMapping({ "courses/{courseId}/tutorial-groups-configurations", "courses/{courseId}/tutorial-groups-configuration" })
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<TutorialGroupConfigurationDTO> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupConfigurationDTO tutorialGroupConfigurationDto)
             throws URISyntaxException {
         log.debug("REST request to create TutorialGroupsConfiguration: {} for course: {}", tutorialGroupConfigurationDto, courseId);
@@ -105,7 +105,6 @@ public class TutorialGroupsConfigurationResource {
             throw new BadRequestAlertException("A new tutorial group configuration cannot already have an ID", ENTITY_NAME, "idExists");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(course.getId()).isPresent()) {
             throw new BadRequestAlertException("A tutorial group configuration already exists for this course", ENTITY_NAME, "alreadyExists");
         }
@@ -142,7 +141,7 @@ public class TutorialGroupsConfigurationResource {
      */
     @PutMapping({ "courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}",
             "courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}" })
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<TutorialGroupConfigurationDTO> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @RequestBody @Valid TutorialGroupConfigurationDTO updatedTutorialGroupConfigurationDto) {
         log.debug("REST request to update TutorialGroupsConfiguration: {} of course: {}", updatedTutorialGroupConfigurationDto, courseId);
@@ -159,7 +158,6 @@ public class TutorialGroupsConfigurationResource {
 
         checkCourseTimeZone(course);
         checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.of(tutorialGroupsConfigurationId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
         validateTutorialGroupConfiguration(updatedTutorialGroupConfigurationDto);
 
         boolean useTutorialGroupChannelSettingChanged = !Objects.equals(configurationFromDatabase.getUseTutorialGroupChannels(),

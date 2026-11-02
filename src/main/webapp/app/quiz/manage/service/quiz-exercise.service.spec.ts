@@ -134,9 +134,12 @@ describe('QuizExercise Service', () => {
         vi.restoreAllMocks();
     });
 
-    it('should convert a loaded quiz into the class graph the editor works on', async () => {
-        const result = firstValueFrom(service.find(123));
-        httpMock.expectOne({ method: 'GET' }).flush({
+    it.each([
+        ['COURSE', '/api/quiz/quiz-exercises/123'],
+        ['EXAM', 'api/quiz/quiz-exercises/123/for-exam'],
+    ])('should convert loaded %s details into the class graph the editor works on', async (scope, url) => {
+        const result = firstValueFrom(scope === 'EXAM' ? service.findForExam(123) : service.find(123));
+        httpMock.expectOne({ method: 'GET', url }).flush({
             id: 123,
             releaseDate: '2026-05-01T10:00:00Z',
             categories: ['{"category":"Week 1","color":"#6ae8ac"}'],
@@ -183,7 +186,7 @@ describe('QuizExercise Service', () => {
     });
 
     it('should load the quiz exercises of an exam from the quiz module', async () => {
-        const result = firstValueFrom(service.findForExam(7));
+        const result = firstValueFrom(service.findAllForExam(7));
         // The exam module has no mapping for this list; the request must go to the quiz module.
         httpMock
             .expectOne({ method: 'GET', url: '/api/quiz/exams/7/quiz-exercises' })

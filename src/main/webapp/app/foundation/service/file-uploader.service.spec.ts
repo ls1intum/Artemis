@@ -21,9 +21,9 @@ describe('FileUploaderService', () => {
     it('should upload a regular file for the markdown editor', async () => {
         const file = new File([''], 'test.pdf', { type: 'application/pdf' });
         const expectedResponse = { path: 'some-path' };
-        const promise = service.uploadMarkdownFile(file);
+        const promise = service.uploadMarkdownFile(file, 3);
 
-        const request = httpMock.expectOne({ method: 'POST', url: '/api/core/markdown-file-upload' });
+        const request = httpMock.expectOne({ method: 'POST', url: '/api/core/markdown-file-upload?courseId=3' });
         request.flush(expectedResponse);
 
         httpMock.verify();
@@ -50,6 +50,18 @@ describe('FileUploaderService', () => {
     it('should reject if the conversation for communication is not specified', async () => {
         const file = new File([''], 'test.pdf', { type: 'application/pdf' });
         await expect(service.uploadMarkdownFileInCurrentConversation(file, 1, undefined)).rejects.toThrow(Error);
+    });
+
+    it('should upload to the administration endpoint if the markdown file does not belong to a course', async () => {
+        const file = new File([''], 'test.pdf', { type: 'application/pdf' });
+        const expectedResponse = { path: 'some-path' };
+        const promise = service.uploadMarkdownFile(file);
+
+        const request = httpMock.expectOne({ method: 'POST', url: '/api/core/admin/markdown-file-upload' });
+        request.flush(expectedResponse);
+
+        httpMock.verify();
+        await expect(promise).resolves.toEqual(expectedResponse);
     });
 
     it('should reject files with unsupported extensions', async () => {

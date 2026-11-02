@@ -1,3 +1,5 @@
+import { map, of } from 'rxjs';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Component, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -19,7 +21,7 @@ import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'a
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
@@ -100,6 +102,7 @@ export class ExamResultSummaryComponent implements OnInit {
     private serverDateService = inject(ArtemisServerDateService);
     private themeService = inject(ThemeService);
     private examParticipationService = inject(ExamParticipationService);
+    private studentExamService = inject(StudentExamService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private alertService = inject(AlertService);
 
@@ -148,6 +151,7 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly isBonusGradingKeyCollapsed = signal(true);
 
     readonly instructorView = input(false);
+    readonly managementGradeInfo = input<StudentExamWithGradeDTO>();
     readonly isSidebarCollapsed = input(false);
     readonly toggleSidebar = output<void>();
 
@@ -203,19 +207,23 @@ export class ExamResultSummaryComponent implements OnInit {
             throw new Error('studentExam.user.id should be present to fetch grade info');
         }
 
-        if (isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService)) {
-            this.examParticipationService
-                .loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam.id, studentExam.id, studentExam.user.id)
-                .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
-                    studentExamWithGrade.studentExam = this.studentExam();
-                    this.studentExamGradeInfoDTO.set(studentExamWithGrade);
-                    this.exerciseInfos.set(this.getExerciseInfos(studentExamWithGrade));
-                });
+        this.exerciseInfos.set(this.getExerciseInfos());
+
+        if (this.instructorView() || isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService)) {
+            const suppliedGrades = this.managementGradeInfo();
+            const grades = this.instructorView()
+                ? suppliedGrades
+                    ? of(suppliedGrades)
+                    : this.studentExamService.find(this.courseId(), studentExam.exam.id, studentExam.id).pipe(map((response) => response.body!))
+                : this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam.id, studentExam.id);
+            grades.subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
+                studentExamWithGrade.studentExam = this.studentExam();
+                this.studentExamGradeInfoDTO.set(studentExamWithGrade);
+                this.exerciseInfos.set(this.getExerciseInfos(studentExamWithGrade));
+            });
         }
 
         this.exampleSolutionPublished.set(!!studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(studentExam.exam.exampleSolutionPublicationDate));
-
-        this.exerciseInfos.set(this.getExerciseInfos());
 
         this.setExamWithOnlyIdAndStudentReviewPeriod();
 

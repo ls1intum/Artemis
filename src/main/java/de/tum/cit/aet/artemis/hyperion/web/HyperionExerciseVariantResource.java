@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -22,9 +26,12 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -75,9 +82,11 @@ public class HyperionExerciseVariantResource {
 
     private final VariantQueuedJobHeartbeatService queuedJobHeartbeats;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public HyperionExerciseVariantResource(UserRepository userRepository, ExerciseRepository exerciseRepository, ExerciseVariantJobService jobService,
             ExerciseVariantTaskService taskService, VariantTypeRegistryService typeRegistry, ExerciseVariantGroupRepository exerciseVariantGroupRepository,
-            VariantQueuedJobHeartbeatService queuedJobHeartbeats) {
+            VariantQueuedJobHeartbeatService queuedJobHeartbeats, AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.jobService = jobService;
@@ -85,6 +94,7 @@ public class HyperionExerciseVariantResource {
         this.typeRegistry = typeRegistry;
         this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
         this.queuedJobHeartbeats = queuedJobHeartbeats;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -127,16 +137,20 @@ public class HyperionExerciseVariantResource {
 
     /**
      * GET variant-jobs : the current user's jobs (running + retained-finished) for the navbar tray.
-     * Per-user scoping is enforced in the service.
+     * Per-user scoping is enforced in the service; current editor access to each source is checked before returning it.
      *
      * @return 200 with the job list
      */
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("variant-jobs")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<VariantJobDTO>> getJobsOfCurrentUser() {
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
-        return ResponseEntity.ok(jobService.getJobsOfUser(user.getLogin()).stream().map(VariantJobDTO::of).toList());
+        List<VariantJob> jobs = jobService.getJobsOfUser(user.getLogin());
+        Set<Long> authorizedSources = authorizedSourceExerciseIds(jobs, user);
+        return ResponseEntity
+                .ok(jobs.stream().filter(job -> job.getSourceExerciseId() != null && authorizedSources.contains(job.getSourceExerciseId())).map(VariantJobDTO::of).toList());
     }
 
     /**
@@ -149,10 +163,11 @@ public class HyperionExerciseVariantResource {
      */
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("variant-jobs/{jobId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<VariantJobDetailDTO> getJobDetail(@PathVariable String jobId) {
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
-        return jobService.getJob(jobId, user.getLogin()).map(job -> ResponseEntity.ok(VariantJobDetailDTO.of(job))).orElseGet(() -> ResponseEntity.notFound().build());
+        return getAccessibleJob(jobId, user).map(job -> ResponseEntity.ok(VariantJobDetailDTO.of(job))).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
@@ -163,12 +178,30 @@ public class HyperionExerciseVariantResource {
      * @return 204; 409 when the job already reached FINALIZING or a terminal phase
      */
     @DeleteMapping("variant-jobs/{jobId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> cancelJob(@PathVariable String jobId) {
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        getAccessibleJob(jobId, user).orElseThrow(() -> new EntityNotFoundException("VariantJob", jobId));
         jobService.requestCancel(jobId, user.getLogin());
         log.info("Cancellation of a variant generation job requested by user {}", user.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    private Optional<VariantJob> getAccessibleJob(String jobId, User user) {
+        return jobService.getJob(jobId, user.getLogin())
+                .filter(job -> job.getSourceExerciseId() != null && authorizedSourceExerciseIds(List.of(job), user).contains(job.getSourceExerciseId()));
+    }
+
+    private Set<Long> authorizedSourceExerciseIds(List<VariantJob> jobs, User user) {
+        Set<Long> sourceIds = jobs.stream().map(VariantJob::getSourceExerciseId).filter(Objects::nonNull).collect(Collectors.toSet());
+        if (sourceIds.isEmpty()) {
+            return Set.of();
+        }
+        // Load both course and exam ownership once for the tray, rather than resolving the source separately for every job.
+        return exerciseRepository.findAllForSearchMigrationWithCourseAndExam(sourceIds).stream()
+                .filter(exercise -> exercise.getCourseViaExerciseGroupOrCourseMember() != null && authorizationCheckService.isAtLeastEditorForExercise(exercise, user))
+                .map(Exercise::getId).collect(Collectors.toSet());
     }
 
     private void validateRequest(Exercise exercise, VariantGenerationRequestDTO request) {

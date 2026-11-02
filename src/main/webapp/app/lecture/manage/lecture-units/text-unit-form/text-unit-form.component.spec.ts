@@ -10,9 +10,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MarkdownCache, TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -58,7 +57,6 @@ describe('TextUnitFormComponent', () => {
             imports: [
                 ReactiveFormsModule,
                 FormsModule,
-                MockModule(NgbTooltipModule),
                 FontAwesomeTestingModule,
                 TextUnitFormComponent,
                 MockComponent(MarkdownEditorMonacoComponent),

@@ -71,7 +71,7 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleSlideHiddenUpdate_withFutureHiddenDate() {
         // Setup a slide with future hidden date
         ZonedDateTime futureDate = ZonedDateTime.now().plusDays(2);
@@ -105,7 +105,7 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleSlideHiddenUpdate_withPastHiddenDate() {
         // Setup a slide with past hidden date
         ZonedDateTime pastDate = ZonedDateTime.now().minusDays(2);
@@ -130,7 +130,7 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testHandleSlideHiddenUpdate_withNullHidden() {
         // Setup a slide with hidden date
         Slide slideToUpdate = testSlides.getFirst();
@@ -159,7 +159,7 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testUnhideSlide() {
         // Setup a slide with a hidden date
         Slide slideToUnhide = testSlides.getFirst();
