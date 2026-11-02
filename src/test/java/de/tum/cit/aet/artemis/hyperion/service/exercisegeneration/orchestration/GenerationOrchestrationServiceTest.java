@@ -27,6 +27,8 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -101,7 +103,7 @@ class GenerationOrchestrationServiceTest {
         exercise.setShortName("stack");
         exercise.setPackageName("de.example.stack");
         user.setLogin("editor");
-        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(snapshot, Map.of(), new GradingContext(false, Set.of())));
+        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(snapshot, Map.of(), new GradingContext(false, Set.of(), Set.of())));
         when(workers.claim("job", 42, GenerationToolchain.JAVA_GRADLE)).thenReturn(claim);
         when(workers.renew(claim)).thenReturn(true);
         when(jobs.isOwnedActiveJob(42, "job")).thenReturn(true);
@@ -132,6 +134,59 @@ class GenerationOrchestrationServiceTest {
         assertThat(assignment.brief().sourceBrief()).isEqualTo("original brief");
         assertThat(assignment.parameters().effortProfile()).isEqualTo("draft");
         verify(usage).markUncertain();
+    }
+
+    @ParameterizedTest
+    @EnumSource(GenerationMode.class)
+    void verifiesAndReturnsTheSameModeFilteredBinarySeed(GenerationMode mode) {
+        var harness = new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1 }, false);
+        var oldSolution = new WorkspaceFile("solution/src/old.class", new byte[] { 0, 2 }, false);
+        var oldTest = new WorkspaceFile("tests/test/old.bin", new byte[] { 0, 3 }, false);
+        when(seeds.capture(exercise))
+                .thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(harness, oldSolution, oldTest)), Map.of(), new GradingContext(false, Set.of(), Set.of())));
+        var candidateFiles = new ArrayList<>(List.of(harness, new WorkspaceFile("solution/src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8), false)));
+        if (mode == GenerationMode.ADAPT) {
+            candidateFiles.addAll(List.of(oldSolution, oldTest));
+        }
+        var candidate = new WorkspaceSnapshot(candidateFiles);
+        var output = new GenerationOutput(candidate, new VerificationResult(true, true, true, 1, List.of()), candidate.sha256(), SpecFidelityReport.empty(), "CONVERGED", null,
+                GenerationOutput.AccountingState.INCOMPLETE, "draft");
+        deliveries.add(event(1, WorkerEvent.Type.FINISHED, output));
+
+        var outcome = service.generate(exercise, user, "brief", "job", mode, () -> false, progress, fileUpdates::add, usage, null, Instant.now().plusSeconds(300), settings);
+
+        assertThat(outcome.isMechanicallyVerified()).isTrue();
+        var commands = ArgumentCaptor.forClass(WorkerCommand.class);
+        verify(client, org.mockito.Mockito.atLeastOnce()).send(commands.capture());
+        var assigned = commands.getAllValues().stream().filter(command -> command.type() == WorkerCommand.Type.START).findFirst().orElseThrow().assignment();
+        assertThat(assigned.seed().files()).contains(harness);
+        assertThat(outcome.candidatePaths(de.tum.cit.aet.artemis.programming.domain.RepositoryType.TESTS)).contains("gradle/wrapper/gradle-wrapper.jar");
+        if (mode == GenerationMode.GENERATE) {
+            assertThat(assigned.seed().files()).doesNotContain(oldSolution, oldTest);
+            assertThat(outcome.candidatePaths(de.tum.cit.aet.artemis.programming.domain.RepositoryType.SOLUTION)).doesNotContain("src/old.class");
+            assertThat(outcome.candidatePaths(de.tum.cit.aet.artemis.programming.domain.RepositoryType.TESTS)).doesNotContain("test/old.bin");
+        }
+        else {
+            assertThat(assigned.seed().files()).contains(oldSolution, oldTest);
+            assertThat(outcome.candidatePaths(de.tum.cit.aet.artemis.programming.domain.RepositoryType.SOLUTION)).contains("src/old.class");
+            assertThat(outcome.candidatePaths(de.tum.cit.aet.artemis.programming.domain.RepositoryType.TESTS)).contains("test/old.bin");
+        }
+    }
+
+    @Test
+    void rejectsRegeneratedOutputThatReintroducesAnExcludedBinary() {
+        var binary = new WorkspaceFile("solution/src/old.class", new byte[] { 0, 2 }, false);
+        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of(), Set.of())));
+        var candidate = new WorkspaceSnapshot(List.of(binary));
+        var output = new GenerationOutput(candidate, new VerificationResult(true, true, true, 1, List.of()), candidate.sha256(), SpecFidelityReport.empty(), "CONVERGED", null,
+                GenerationOutput.AccountingState.INCOMPLETE, "draft");
+        deliveries.add(event(1, WorkerEvent.Type.FINISHED, output));
+
+        var outcome = run(() -> false);
+
+        assertThat(outcome.isMechanicallyVerified()).isFalse();
+        assertThat(outcome.hasCapturedArtifacts()).isFalse();
+        assertThat(outcome.errorMessage()).contains("rejected by core validation");
     }
 
     @Test
@@ -197,7 +252,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void failedStartStillReleasesClaimEvenWhenCleanupDeliveryFails() {
-        doThrow(new IllegalStateException("broker unavailable")).when(client).send(any());
+        doThrow(new IllegalStateException("provider unavailable")).when(client).send(any());
         assertThat(run(() -> false).isMechanicallyVerified()).isFalse();
         verify(workers).release(claim);
     }
@@ -260,7 +315,7 @@ class GenerationOrchestrationServiceTest {
     @Test
     void earlySpecificationFailurePreservesCompleteAccountingWithoutRepositoryCapture() {
         var binary = new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1, 2 }, false);
-        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of())));
+        when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of(), Set.of())));
         var reported = new GenerationUsage(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true);
         var status = mock(ExerciseGenerationStatusDTO.class);
         when(status.usage()).thenReturn(new ExerciseGenerationUsageDTO(1, 2, 1, 1, 30, 10, 5, true, 0, false, List.of("model"), List.of("request-1"), true));
@@ -297,6 +352,95 @@ class GenerationOrchestrationServiceTest {
         verify(usage, never()).markUncertain();
         verify(jobs, never()).retainUnsavedArtifacts(org.mockito.ArgumentMatchers.anyLong(), any(), any(), any());
         verify(workers).release(claim);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "modelCalls", "toolCalls", "turns", "attempts", "input", "output", "cache", "requests", "models" })
+    void everyAccountingMismatchKeepsProviderUsagePermanentlyUncertain(String field) {
+        var reported = new GenerationUsage(1, 2, 3, 4, 30, 10, 5, true, 0, false, List.of("model"), List.of("request"), true);
+        var recorded = new ExerciseGenerationUsageDTO(field.equals("modelCalls") ? 9 : 1, field.equals("toolCalls") ? 9 : 2, field.equals("turns") ? 9 : 3,
+                field.equals("attempts") ? 9 : 4, field.equals("input") ? 31 : 30, field.equals("output") ? 11 : 10, field.equals("cache") ? 6 : 5, true, 0, false,
+                List.of(field.equals("models") ? "other" : "model"), List.of(field.equals("requests") ? "other" : "request"), true);
+        var status = mock(ExerciseGenerationStatusDTO.class);
+        when(status.usage()).thenReturn(recorded);
+        when(jobs.getStatus(user, exercise)).thenReturn(Optional.of(status));
+        var complete = new GenerationOutput(snapshot, new VerificationResult(true, true, true, 1, List.of()), snapshot.sha256(), SpecFidelityReport.empty(), "CONVERGED", reported,
+                GenerationOutput.AccountingState.COMPLETE, "draft");
+        deliveries.add(event(1, WorkerEvent.Type.FINISHED, complete));
+        assertThat(run(() -> false).isMechanicallyVerified()).isTrue();
+        verify(usage).markUncertain();
+        verify(workers).release(claim);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "template/App.java", "tests/AppTest.java", "SPEC.md" })
+    void fileActivityRoutesPreviewToItsRepositoryBucket(String path) {
+        var activity = new GenerationProgress.FileChange(path, "edit", 3, Instant.parse("2026-01-01T00:00:00Z"), "updated");
+        deliveries.add(event(1, WorkerEvent.Type.PROGRESS, null).withProgress(new GenerationProgress(null, null, activity, null)));
+        deliveries.add(event(2, WorkerEvent.Type.FINISHED, output(true, "draft")));
+        assertThat(run(() -> false).isMechanicallyVerified()).isTrue();
+        assertThat(fileUpdates).singleElement().satisfies(update -> {
+            assertThat(update.change().path()).isEqualTo(path);
+            assertThat(update.change().repo()).isEqualTo(path.startsWith("template/") ? "template" : path.startsWith("tests/") ? "tests" : "other");
+            assertThat(update.change().turn()).isEqualTo(3);
+            assertThat(update.change().timestamp()).isEqualTo(activity.timestamp());
+            assertThat(update.content()).isEqualTo("updated");
+        });
+    }
+
+    @Test
+    void structuredActivityAndEmptyMessagesAreProjectedWithoutInventingProgressText() {
+        var activity = new de.tum.cit.aet.artemis.hyperion.protocol.GenerationActivity("Tests", 1, 2, true, 3, 4, 5);
+        deliveries.add(new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, "worker", claim.identity().workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.PROGRESS,
+                claim.identity(), false, claim.imageDigest(), "Authoring", activity, null));
+        deliveries.add(new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, "worker", claim.identity().workerIncarnation(), 2, Instant.now(), WorkerEvent.Type.PROGRESS,
+                claim.identity(), false, claim.imageDigest(), null, null, null));
+        deliveries.add(event(3, WorkerEvent.Type.FINISHED, output(true, "draft")));
+        run(() -> false);
+        verify(progress).activity("Authoring", activity);
+        verify(progress, never()).accept(org.mockito.ArgumentMatchers.isNull());
+        assertThat(fileUpdates).isEmpty();
+    }
+
+    @Test
+    void explicitProfileOptionsAreCarriedIntoAuthorizedWorkerAssignment() {
+        var options = org.springframework.ai.openai.OpenAiChatOptions.builder().model("assigned-model").reasoningEffort("low").temperature(0.2).topP(0.8).maxCompletionTokens(2048)
+                .verbosity("low").build();
+        var explicit = new HyperionGenerationSettings("draft", "Draft", 15, Duration.ofMinutes(4), 4000, false, "FRESH", 64000, options, false, true);
+        deliveries.add(event(1, WorkerEvent.Type.FINISHED, output(true, "draft")));
+        var result = service.generate(exercise, user, "Generate", "job", GenerationMode.ADAPT, () -> false, progress, fileUpdates::add, usage, null, Instant.now().plusSeconds(600),
+                explicit);
+        assertThat(result.isMechanicallyVerified()).isTrue();
+        var commands = ArgumentCaptor.forClass(WorkerCommand.class);
+        verify(client, times(3)).send(commands.capture());
+        var assignment = commands.getAllValues().getFirst().assignment();
+        assertThat(assignment.brief().mode()).isEqualTo(de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode.ADAPT);
+        assertThat(assignment.parameters()).satisfies(parameters -> {
+            assertThat(parameters.maxTurns()).isEqualTo(15);
+            assertThat(parameters.model()).isEqualTo("assigned-model");
+            assertThat(parameters.reasoningEffort()).isEqualTo("low");
+            assertThat(parameters.temperature()).isEqualTo(0.2);
+            assertThat(parameters.topP()).isEqualTo(0.8);
+            assertThat(parameters.maxCompletionTokens()).isEqualTo(2048);
+            assertThat(parameters.verbosity()).isEqualTo("low");
+            assertThat(parameters.stagedGeneration()).isFalse();
+            assertThat(parameters.stagedContext()).isEqualTo("FRESH");
+        });
+    }
+
+    @Test
+    void workerRenewFailureAndExpiredDrainWindowStopWithoutReturningCandidate() {
+        when(workers.renew(claim)).thenReturn(false);
+        var failed = run(() -> false);
+        assertThat(failed.isMechanicallyVerified()).isFalse();
+        assertThat(failed.errorMessage()).contains("unavailable");
+        verify(client, never()).receive(any(), any());
+        when(workers.renew(claim)).thenReturn(true);
+        var expired = service.generate(exercise, user, "Generate", "job", GenerationMode.GENERATE, () -> false, progress, fileUpdates::add, response -> {
+        }, null, Instant.now().minusSeconds(600), settings);
+        assertThat(expired.isMechanicallyVerified()).isFalse();
+        assertThat(expired.errorMessage()).contains("unavailable");
+        verify(client, never()).receive(any(), any());
     }
 
     private GenerationOutcome run(BooleanSupplier stop) {

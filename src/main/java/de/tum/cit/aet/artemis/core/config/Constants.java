@@ -416,6 +416,13 @@ public final class Constants {
     public static final String PROFILE_CORE = "core";
 
     /**
+     * The name of the Spring profile used for seeding a demo course on startup.
+     * NOTE: this profile is opt-in and intended for demo and manual testing instances only. It must never be activated on a production instance,
+     * because the seeding routine writes demo courses, users and content directly into the database.
+     */
+    public static final String PROFILE_DEMO = "demo";
+
+    /**
      * The name of the Spring profile used for activating the scheduling functionality.
      * NOTE: please only use this profile if the service is not used in non-scheduling services or resources, otherwise the multi node configuration does not work.
      * If you need to communicate scheduling changes (e.g. based on exercise / lecture / slides changes) to node1 with scheduling active,
@@ -431,6 +438,13 @@ public final class Constants {
      * NOTE: secondary nodes should only use PROFILE_CORE
      */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
+
+    /**
+     * Profile combination for seeding the demo course, which must happen exactly once per database.
+     * Multiple nodes run {@link #PROFILE_CORE} (see the node1/node2 deployment configurations), so gating the seeding on {@link #PROFILE_SCHEDULING} as well restricts it to the
+     * primary node. Without this, every core node would seed concurrently on startup and could create the demo data more than once.
+     */
+    public static final String PROFILE_DEMO_AND_SCHEDULING = PROFILE_DEMO + " & " + PROFILE_SCHEDULING;
 
     /**
      * The name of the module feature used for Theia as an external online IDE.
@@ -486,6 +500,9 @@ public final class Constants {
      * The name of the module feature used for whole-exercise generation.
      */
     public static final String MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = "hyperion-exercise-generation";
+
+    /** The independent AI Worker coordinator module feature. */
+    public static final String MODULE_FEATURE_AIWORKER = "aiworker";
 
     /**
      * The name of the module feature used for Deimos malicious participation analysis functionality.
@@ -569,6 +586,14 @@ public final class Constants {
     public static final String MODULE_FEATURE_GLOBAL_SEARCH = "globalsearch";
 
     /**
+     * The name of the module feature for agent access (personal access tokens). It is published to the client when
+     * {@link #AGENT_ACCESS_ENABLED_PROPERTY_NAME} is enabled, so the client can hide the token settings otherwise.
+     */
+    public static final String MODULE_FEATURE_AGENT_ACCESS = "agent-access";
+
+    public static final String AGENT_ACCESS_ENABLED_PROPERTY_NAME = "artemis.agent-access.enabled";
+
+    /**
      * The YAML property prefix consumed by {@code SAML2Properties} when SAML2 is enabled.
      */
     public static final String SAML2_PROPERTIES_PREFIX = "saml2";
@@ -599,6 +624,9 @@ public final class Constants {
      * The name of the property used to enable or disable whole-exercise generation.
      */
     public static final String HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME = "artemis.hyperion.exercise-generation.enabled";
+
+    /** The property that enables the AI Worker coordinator on a core node. */
+    public static final String AIWORKER_ENABLED_PROPERTY_NAME = "artemis.aiworker.enabled";
 
     /**
      * The name of the property used to enable or disable Iris / Pyris functionality.
@@ -772,6 +800,9 @@ public final class Constants {
     public static final String WEBAUTHN_CHALLENGE_COOKIE_NAME = "webauthn-challenge";
 
     public static final String BEARER_PREFIX = "Bearer ";
+
+    /** The start of every personal access token secret, which tells it apart from a JWT in an Authorization header. */
+    public static final String PERSONAL_ACCESS_TOKEN_PREFIX = "art_pat_";
 
     public static final String HAZELCAST = "Hazelcast";
 

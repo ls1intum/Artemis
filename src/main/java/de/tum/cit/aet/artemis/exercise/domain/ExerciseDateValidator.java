@@ -1,11 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
-import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
@@ -32,33 +26,9 @@ public final class ExerciseDateValidator {
             throw new BadRequestAlertException("An exam exercise may not have any dates set!", exercise.getTitle(), "invalidDatesForExamExercise");
         }
 
-        var releaseDate = exercise.getReleaseDate();
-        var startDate = exercise.getStartDate();
-        var dueDate = exercise.getDueDate();
-        var assessmentDueDate = exercise.getAssessmentDueDate();
-        var exampleSolutionPublicationDate = exercise.getExampleSolutionPublicationDate();
-
-        boolean releaseDateValid = validateStrictDateSequence(List.of(), releaseDate, Arrays.asList(startDate, dueDate, assessmentDueDate, exampleSolutionPublicationDate));
-        boolean startDateValid = validateStrictDateSequence(Collections.singletonList(releaseDate), startDate,
-                Arrays.asList(dueDate, assessmentDueDate, exampleSolutionPublicationDate));
-        boolean dueDateValid = validateStrictDateSequence(Arrays.asList(releaseDate, startDate), dueDate, Arrays.asList(assessmentDueDate, exampleSolutionPublicationDate));
-        boolean assessmentDueDateValid = validateAssessmentDueDate(exercise);
-        boolean exampleSolutionPublicationDateValid = validateStrictDateSequence(Arrays.asList(releaseDate, startDate, dueDate, assessmentDueDate), exampleSolutionPublicationDate,
-                List.of());
-
-        if (!(releaseDateValid && startDateValid && dueDateValid && assessmentDueDateValid && exampleSolutionPublicationDateValid)) {
+        if (!exercise.hasValidTimelineDates()) {
             throw new BadRequestAlertException("The exercise dates are not valid", exercise.getTitle(), "noValidDates");
         }
     }
 
-    private static boolean validateAssessmentDueDate(Exercise exercise) {
-        if (exercise.getAssessmentDueDate() == null) {
-            return true;
-        }
-        if (exercise.getDueDate() == null) {
-            return false;
-        }
-        return validateStrictDateSequence(Arrays.asList(exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate()), exercise.getAssessmentDueDate(),
-                Collections.singletonList(exercise.getExampleSolutionPublicationDate()));
-    }
 }

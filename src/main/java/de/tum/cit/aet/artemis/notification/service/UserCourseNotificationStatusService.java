@@ -35,17 +35,19 @@ public class UserCourseNotificationStatusService {
      * This method creates a {@link UserCourseNotificationStatus} entry with UNSEEN status for each user
      * in the provided set.
      *
-     * @param users                Set of users to create notification status entries for
+     * @param userIds              IDs of users to create notification status entries for
      * @param courseNotificationId The ID of the course notification
      * @param courseId             The ID of the course, needed for cache invalidation
      */
-    protected void batchCreateStatusForUsers(Set<User> users, long courseNotificationId, long courseId) {
+    protected void batchCreateStatusForUserIds(Set<Long> userIds, long courseNotificationId, long courseId) {
         var courseNotification = new CourseNotification();
         courseNotification.setId(courseNotificationId);
 
         var status = new ArrayList<UserCourseNotificationStatus>();
 
-        for (var user : users) {
+        for (var userId : userIds) {
+            var user = new User();
+            user.setId(userId);
             status.add(new UserCourseNotificationStatus(courseNotification, user, UserCourseNotificationStatusType.UNSEEN));
         }
 

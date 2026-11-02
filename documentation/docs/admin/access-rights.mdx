@@ -6,24 +6,35 @@ sidebar_label: Access Rights
 
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+import globalAndCourseRoles from "./assets/access-rights/global-and-course-roles.jpg";
 
-Artemis distinguishes between seven different roles: **SUPER_ADMIN**, **ADMIN**, **INSTRUCTOR**, **EDITOR**, **TA** (Teaching Assistant), **USER** (Student) and **ANONYMOUS**.
-The roles are sorted in descending order. An INSTRUCTOR has at least all the permissions that an EDITOR has.
-A SUPER_ADMIN has no restrictions, while an ANONYMOUS has hardly any rights.
+Artemis separates three global authorities — **USER**, **ADMIN**, and **SUPER_ADMIN** — from the roles assigned within each course: **Student**, **Teaching Assistant**, **Editor**, and **Instructor**. A course role grants access only in that course; it does not make the user an administrator.
+
+Minimum course-role checks follow the order Student, Teaching Assistant, Editor, Instructor. A higher role satisfies a lower-role check within the same course. **Anonymous** describes a visitor who has not signed in, rather than a global authority.
 
 ## Roles Overview
 
-- **SUPER_ADMIN:** has all permissions that an ADMIN has and additional privileges for critical security operations (see [Super Admin vs Admin](#super-admin-vs-admin) for details)
-- **ADMIN:** can access all features that Artemis provides (includes features regarding the server administration, e.g. server health checks, user management and creating new courses)
-- **INSTRUCTOR:** can access all features related to the content of a course (includes creating and deleting exercises/exams/lectures and monitoring scores and submissions)
-- **EDITOR:** can create and edit the content of a course but cannot delete content and monitoring other course participants is limited
-- **TEACHING ASSISTANT:** can assess student submissions and view course content before the release date
-- **USER:** participates as a Student in courses, can view course content after the release date
-- **ANONYMOUS:** role before login
+Global authorities apply across Artemis:
 
-<Callout variant={CalloutVariant.warning}>
-    When changing the access rights of a user, the respective user must logoff and then logon again for the changes to take effect.
+- **SUPER_ADMIN:** has all permissions that an ADMIN has and additional privileges for critical security operations (see [Super Admin vs Admin](#super-admin-vs-admin) for details)
+- **ADMIN:** can administer the server, manage non-admin accounts, and create courses; the additional security privileges of Super Admin remain separate
+- **USER:** identifies a regular signed-in account; access to a particular course depends on its course roles
+
+Course roles describe what a user can do in a particular course:
+
+- **Instructor:** can manage course content and participants, including creating and deleting exercises, exams, and lectures, and monitoring scores and submissions
+- **Editor:** can create and edit course content but cannot delete it; access to other participants' information is limited
+- **Teaching Assistant:** can assess student submissions and view course content before its release date
+- **Student:** can participate in the course and view its released content
+
+<Callout variant={CalloutVariant.info}>
+    Adding or removing a course role changes the user's access on subsequent requests without signing out and back in. Reload an already open page if its controls still show the previous access.
 </Callout>
+
+In the user editor, **Global Roles** offers **Student** (the **USER** authority), **Admin**, and **Super Admin** to a Super Admin. A regular Admin can assign only **Student**. The separate **Course Roles** panel lists memberships by course and saves changes immediately.
+
+<Image src={globalAndCourseRoles} alt="Global Roles offers Super Admin, Admin, and Student above a separate Course Roles panel listing Editor and Tutor memberships in Systems Programming" size={ImageSize.large} caption="Global authorities and course memberships are managed separately." />
 
 In the following, the respective permissions illustrated. If a subordinated role has all permissions or a role does not have any access rights, it is not explicitly displayed.
 
@@ -39,7 +50,7 @@ Only Super Admins can manage administrator accounts (both Admin and Super Admin 
 - **Activating/Deactivating** admin or super admin users
 - **Deleting** admin or super admin users
 
-Regular Admins can only manage users with roles below Admin (Instructor, Editor, Teaching Assistant, Student).
+Regular Admins can manage accounts without an Admin or Super Admin global authority. Holding an Instructor, Editor, or Teaching Assistant role in a course does not make an account an administrator.
 
 ### Passkey Approval
 
@@ -179,8 +190,8 @@ The following permissions apply to all exercise types. Exercise-type-specific se
     **Exam exercises** require Editor role for viewing details, while **course exercises** only require Teaching Assistant role.
 </Callout>
 
-For **course programming exercises**, tutors and editors can see student names and team identities in the
-participation and score lists to help students with questions. The **Code** button opens a read-only repository view
+For **course programming exercises**, tutors and editors can see student names and team identities on the
+participations page to help students with questions. The **Code** button opens a read-only repository view
 and provides clone URLs. Tutors can clone and pull student repositories, but cannot push or reset them.
 
 When **manual or semi-automatic assessment** is enabled, this support access ends at the **exercise due date**:
@@ -192,12 +203,17 @@ with individual extensions and practice participations, so that those cannot exp
 
 For automatically assessed course programming exercises, support access remains available after the due date.
 A manually assessed course programming exercise without a due date also keeps support access; anonymity starts if
-a due date is subsequently set and reached. The participation and score pages explain the current access and any
+a due date is subsequently set and reached. The participations page explains the current access and any
 upcoming restriction.
 
-Other exercise types and exam exercises retain anonymous participation views for non-instructors. Instructors retain
-named views, and participation owners retain access to their own details. Exports selected by student login or team
-name and identity exports continue to require instructor access.
+**Course quizzes** are always assessed automatically, so there is no tutor assessment to keep anonymous. Tutors and
+editors see student names next to the quiz scores on the participations page.
+
+Other exercise types and exam exercises, including exam quizzes, retain anonymous participation views for
+non-instructors. The participations list of an exam exercise is only available to instructors, and the direct
+participation lookups of other staff stay anonymous. Instructors retain named views, and participation owners retain
+access to their own details. Exports
+selected by student login or team name and identity exports continue to require instructor access.
 
 ### Shared Submission and Assessment Features
 
@@ -316,6 +332,7 @@ In addition to the [General Functionality](#general-functionality) above, Quiz E
 
 [//]: # (Refers to QuizExerciseResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizExerciseResource.java)
 [//]: # (Refers to QuizSubmissionResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/openapi/QuizSubmissionResource.java)
+[//]: # (Refers to QuizAssessmentResource.java: https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/quiz/web/QuizAssessmentResource.java)
 
 <Callout variant={CalloutVariant.info}>
   Quiz exercises use a different submission and assessment model from other exercise types.
@@ -333,6 +350,7 @@ In addition to the [General Functionality](#general-functionality) above, Quiz E
 | Recalculate Statistics      | ✔                   | ✔                   | ✔                   |                     |
 | Evaluate Quiz               | ✔                   |                     |                     |                     |
 | Re-evaluate Quiz            | ✔                   |                     |                     |                     |
+| Delete Result               | ✔                   |                     |                     |                     |
 | Submit (Live Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |
 | Submit (Practice Mode)      | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) | ✔ (after quiz ends) |
 | Submit (Exam Mode)          | ✔                   | ✔                   | ✔                   | ✔                   |

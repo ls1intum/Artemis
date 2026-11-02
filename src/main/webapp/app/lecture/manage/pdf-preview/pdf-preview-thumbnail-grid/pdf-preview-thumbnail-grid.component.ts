@@ -1,4 +1,6 @@
-import { Component, ElementRef, Renderer2, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, DestroyRef, ElementRef, Renderer2, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 
@@ -10,7 +12,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -19,10 +20,22 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
-    imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbPopover, TranslateDirective, DragDropModule, ArtemisTranslatePipe],
+    imports: [
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPopoverComponent,
+        NgTemplateOutlet,
+        PdfPreviewEnlargedCanvasComponent,
+        FaIconComponent,
+        PdfPreviewDateBoxComponent,
+        TranslateDirective,
+        DragDropModule,
+        ArtemisTranslatePipe,
+    ],
 })
 export class PdfPreviewThumbnailGridComponent {
     // Injected services
+    private readonly destroyRef = inject(DestroyRef);
     private readonly alertService = inject(AlertService);
     private readonly renderer = inject(Renderer2);
     private readonly pdfEngineService = inject(PdfEngineService);
@@ -61,6 +74,8 @@ export class PdfPreviewThumbnailGridComponent {
     protected readonly faEyeSlash = faEyeSlash;
     protected readonly faGripLines = faGripLines;
 
+    private renderGeneration = 0;
+
     constructor() {
         // Replaces the ngOnChanges 'orderedPages' branch: re-render the thumbnails whenever the ordered pages
         // change, unless the change originated from a local drag-and-drop reorder (the DOM is already in the new
@@ -92,8 +107,13 @@ export class PdfPreviewThumbnailGridComponent {
      */
     async renderPages(): Promise<void> {
         const pages = this.orderedPages();
+        const generation = ++this.renderGeneration;
+        const isCurrentRender = () => generation === this.renderGeneration && !this.destroyRef.destroyed;
         try {
             const engine = await this.pdfEngineService.getEngine();
+            if (!isCurrentRender()) {
+                return;
+            }
             const containerEl = this.pdfContainer().nativeElement;
             const canvases = containerEl.querySelectorAll<HTMLCanvasElement>('.pdf-canvas-container canvas');
             canvases.forEach((canvas: HTMLCanvasElement) => {
@@ -109,6 +129,10 @@ export class PdfPreviewThumbnailGridComponent {
                 const sourcePage = page.sourceDoc.pages[page.sourceIndex];
                 if (sourcePage) {
                     const imageData = await engine.renderPageRaw(page.sourceDoc, sourcePage, { scaleFactor: 1 }).toPromise();
+                    // A newer page list may already have cleared and redrawn these containers.
+                    if (!isCurrentRender()) {
+                        return;
+                    }
                     const canvas = this.createCanvas(imageData.width, imageData.height);
                     const context = canvas.getContext('2d')!;
                     context.putImageData(new ImageData(imageData.data, imageData.width, imageData.height), 0, 0);
@@ -129,7 +153,9 @@ export class PdfPreviewThumbnailGridComponent {
                 this.scrollToBottom();
             }
         } catch (error) {
-            onError(this.alertService, error);
+            if (isCurrentRender()) {
+                onError(this.alertService, error);
+            }
         }
     }
 
@@ -183,6 +209,17 @@ export class PdfPreviewThumbnailGridComponent {
      * @param slideId The ID of the slide whose selection state is being toggled.
      * @param event The change event triggered by the checkbox interaction.
      */
+    togglePagePopover(slideId: string, event: Event, popover: TumAetUiPopoverComponent): void {
+        this.toggleVisibility(slideId, event);
+        if (event.currentTarget instanceof HTMLElement) {
+            popover.toggle(event.currentTarget);
+        }
+    }
+
+    isPageSelected(slideId: string): boolean {
+        return Array.from(this.selectedPages()).some((page) => page.slideId === slideId);
+    }
+
     togglePageSelection(slideId: string, event: Event): void {
         const checkbox = event.target as HTMLInputElement;
         const page = this.findPageBySlideId(slideId);

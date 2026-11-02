@@ -1,16 +1,5 @@
 import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
 
-export enum TextEditorCompletionItemKind {
-    /**
-     * Shows a generic icon for the completion item.
-     */
-    Default,
-    /**
-     * Shows a user icon for the completion item.
-     */
-    User,
-}
-
 /**
  * Represents a completion item in a text editor.
  * Completion items are used to provide suggestions for the user to complete their input.
@@ -21,19 +10,13 @@ export class TextEditorCompletionItem {
      * @param label The label of the completion item, i.e., the text shown in the completion list.
      * @param detailText An optional detail text to display alongside the label.
      * @param insertText The text to insert into the editor when the completion item is selected.
-     * @param kind The kind of the completion item, which determines the icon shown in the completion list.
      * @param range The range in the editor where the completion item's text should be inserted.
-     * @param filterText An optional text the editor should use instead of the label when filtering suggestions against the user's input.
-     * @param sortText An optional text the editor should use instead of the label when ordering suggestions.
      */
     constructor(
         private readonly label: string,
         private readonly detailText: string | undefined,
         private readonly insertText: string,
-        private readonly kind: TextEditorCompletionItemKind,
         private readonly range: TextEditorRange,
-        private readonly filterText?: string,
-        private readonly sortText?: string,
     ) {}
 
     getLabel(): string {
@@ -48,19 +31,7 @@ export class TextEditorCompletionItem {
         return this.insertText;
     }
 
-    getKind(): TextEditorCompletionItemKind {
-        return this.kind;
-    }
-
     getRange(): TextEditorRange {
         return this.range;
-    }
-
-    getFilterText(): string | undefined {
-        return this.filterText;
-    }
-
-    getSortText(): string | undefined {
-        return this.sortText;
     }
 }

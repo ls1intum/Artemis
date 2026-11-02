@@ -2,8 +2,7 @@ import { Component, inject, input, output } from '@angular/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 @Component({
@@ -11,9 +10,7 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 })
 export abstract class ExerciseManageButtonComponent {
     protected router = inject(Router);
-    // NgbModal is kept for dismissAll functionality used by ExerciseCreateButtonComponent
-    protected modalService = inject(NgbModal);
-    protected dialogService = inject(DialogService);
+    protected dialogService = inject(TumAetUiDialogService);
 
     /** Emitted before navigation occurs, allowing parent components to perform cleanup (e.g., closing popovers) */
     beforeNavigate = output<void>();

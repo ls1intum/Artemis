@@ -2,9 +2,8 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.SESSION_COMMANDS;
 
-import java.util.LinkedHashMap;
+import java.math.BigInteger;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,11 +16,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.exc.JsonNodeException;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ObjectNode;
-
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -29,6 +23,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisCommandParametersDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCommandRequestWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
@@ -61,10 +56,6 @@ public class IrisCommandService {
      */
     private static final String POINT_OUT_TYPE = "pointOut";
 
-    private static final String MATERIAL_TYPE_PARAMETER = "materialType";
-
-    private static final String MATERIAL_VERSION_PARAMETER = "materialVersion";
-
     private static final String ATTACHMENT_MATERIAL_TYPE = "attachment";
 
     private static final String VIDEO_MATERIAL_TYPE = "video";
@@ -94,15 +85,13 @@ public class IrisCommandService {
 
     private final UserRepository userRepository;
 
-    private final JsonMapper objectMapper;
-
     private final IrisLectureMaterialVersionService materialVersionService;
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     public IrisCommandService(IrisCommandCoordinationService coordinationService, DistributedDataProvider distributedDataProvider, IrisWebsocketService irisWebsocketService,
             IrisChatWebsocketService irisChatWebsocketService, IrisMessageService irisMessageService, IrisSessionRepository irisSessionRepository, UserRepository userRepository,
-            JsonMapper objectMapper, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, IrisLectureMaterialVersionService materialVersionService) {
+            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, IrisLectureMaterialVersionService materialVersionService) {
         this.coordinationService = coordinationService;
         this.distributedDataProvider = distributedDataProvider;
         this.irisWebsocketService = irisWebsocketService;
@@ -110,7 +99,6 @@ public class IrisCommandService {
         this.irisMessageService = irisMessageService;
         this.irisSessionRepository = irisSessionRepository;
         this.userRepository = userRepository;
-        this.objectMapper = objectMapper;
         this.materialVersionService = materialVersionService;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
     }
@@ -148,8 +136,8 @@ public class IrisCommandService {
         if (!isValidPointOut(command.parameters())) {
             return PyrisCommandResultDTO.notApplied();
         }
-        // Safe to dereference: isValidPointOut guarantees lectureUnitId is present and numeric.
-        long lectureUnitId = command.parameters().get("lectureUnitId").asLong();
+        // Safe to dereference: isValidPointOut guarantees lectureUnitId is present and a positive integer.
+        long lectureUnitId = command.parameters().lectureUnitId().longValue();
         var lectureUnit = resolveLectureUnitInCourse(lectureUnitId, job.courseId());
         if (lectureUnit == null) {
             return PyrisCommandResultDTO.notApplied();
@@ -175,20 +163,20 @@ public class IrisCommandService {
      * Pins a point-out to the version of the material Iris generated it from.
      * <p>
      * A timestamp makes the point-out a video reference, even when Pyris also supplies the slide shown at that time; otherwise a page makes it a slide reference. This is the
-     * same distinction used for lecture citations. The run snapshot supplies the version, never the latest database state or the command's untrusted parameter bag.
+     * same distinction used for lecture citations. The run snapshot supplies the version, never the latest database state or the command's untrusted parameters.
      * Missing versions are explicitly unverified (0), so a new command cannot bypass verification through legacy behaviour.
      */
     private PyrisCommandDTO stampPointOutVersion(PyrisCommandDTO command, long lectureUnitId, String jobId) {
-        var parameters = new LinkedHashMap<>(command.parameters());
-        parameters.remove(MATERIAL_TYPE_PARAMETER);
-        parameters.remove(MATERIAL_VERSION_PARAMETER);
-
+        var parameters = command.parameters();
         var ingestedVersions = materialVersionService.getSnapshot(jobId).get(lectureUnitId);
-        boolean pointsToVideo = parameters.containsKey("timestamp");
+        boolean pointsToVideo = parameters.timestamp() != null;
         Integer version = ingestedVersions == null ? null : pointsToVideo ? ingestedVersions.videoVersion() : ingestedVersions.attachmentVersion();
-        parameters.put(MATERIAL_TYPE_PARAMETER, objectMapper.getNodeFactory().stringNode(pointsToVideo ? VIDEO_MATERIAL_TYPE : ATTACHMENT_MATERIAL_TYPE));
-        parameters.put(MATERIAL_VERSION_PARAMETER, objectMapper.getNodeFactory().numberNode(version == null || version <= 0 ? 0 : version));
-        return new PyrisCommandDTO(command.type(), parameters);
+        // Only the parameters Artemis validated or stamps itself are forwarded. The material type and version Pyris sent are not among them. The display page is a label only,
+        // so one that is not a number is dropped instead of rejecting the command.
+        var displayPage = parameters.displayPage() instanceof Double number && number.isNaN() ? null : parameters.displayPage();
+        var stampedParameters = new IrisCommandParametersDTO(parameters.lectureUnitId(), parameters.page(), displayPage, parameters.timestamp(),
+                pointsToVideo ? VIDEO_MATERIAL_TYPE : ATTACHMENT_MATERIAL_TYPE, version == null || version <= 0 ? 0 : version, null, null);
+        return new PyrisCommandDTO(command.type(), stampedParameters);
     }
 
     /**
@@ -237,28 +225,25 @@ public class IrisCommandService {
     /**
      * A point-out must name the lecture unit to navigate in and at least one position within it. {@link #buildPointOutMarkerContent} relies on this having passed.
      */
-    private boolean isValidPointOut(Map<String, JsonNode> parameters) {
-        var page = parameters.get("page");
-        var timestamp = parameters.get("timestamp");
-        return isPositiveIntegral(parameters.get("lectureUnitId")) && (page != null || timestamp != null) && (page == null || isPositiveIntegral(page))
+    private boolean isValidPointOut(IrisCommandParametersDTO parameters) {
+        var page = parameters.page();
+        var timestamp = parameters.timestamp();
+        return isPositiveIntegral(parameters.lectureUnitId()) && (page != null || timestamp != null) && (page == null || isPositiveIntegral(page))
                 && (timestamp == null || isNonNegativeNumber(timestamp));
     }
 
-    private boolean isPositiveIntegral(JsonNode value) {
-        return value != null && value.isIntegralNumber() && value.canConvertToLong() && value.asLong() > 0;
+    private boolean isPositiveIntegral(@Nullable Number value) {
+        return switch (value) {
+            case Byte _,Short _,Integer _,Long _ -> value.longValue() > 0;
+            case BigInteger bigInteger -> bigInteger.signum() > 0 && bigInteger.bitLength() < Long.SIZE;
+            case null, default -> false;
+        };
     }
 
-    private boolean isNonNegativeNumber(JsonNode value) {
-        if (value == null || !value.isNumber()) {
-            return false;
-        }
-        try {
-            var number = value.asDouble();
-            return Double.isFinite(number) && number >= 0;
-        }
-        catch (JsonNodeException _) {
-            return false;
-        }
+    private boolean isNonNegativeNumber(Number value) {
+        // NaN, which stands for a value that was not a number, and an infinite value are no finite number
+        var number = value.doubleValue();
+        return Double.isFinite(number) && number >= 0;
     }
 
     /**
@@ -270,9 +255,9 @@ public class IrisCommandService {
      * and the chip labels itself with it so it agrees with the page number Iris names in its answer text. A slide without a printed number gets no {@code displayPage}; Iris names
      * no page for those either, so the chip falls back to the deck index without contradicting anything.
      */
-    private void persistAndPushMarker(IrisSession session, ObjectNode markerContent) {
+    private void persistAndPushMarker(IrisSession session, PyrisCommandDTO markerContent) {
         var message = new IrisMessage();
-        message.addContent(new IrisJsonMessageContent(markerContent));
+        message.addContent(IrisJsonMessageContent.of(markerContent));
         var markerWriteLock = distributedDataProvider.getLock(MARKER_WRITE_LOCK_PREFIX + session.getId());
         IrisMessage savedMessage;
         markerWriteLock.lock();
@@ -296,21 +281,14 @@ public class IrisCommandService {
      * @param lectureUnit the unit the command points into, resolved by {@link #resolveLectureUnitInCourse}
      * @return the marker content to persist
      */
-    private ObjectNode buildPointOutMarkerContent(PyrisCommandDTO command, LectureUnit lectureUnit) {
-        ObjectNode node = objectMapper.createObjectNode();
-        node.put("type", command.type());
-        ObjectNode parameters = node.putObject("parameters");
-        command.parameters().forEach(parameters::set);
+    private PyrisCommandDTO buildPointOutMarkerContent(PyrisCommandDTO command, LectureUnit lectureUnit) {
+        var parameters = command.parameters();
         var lectureUnitName = lectureUnit.getName();
-        if (lectureUnitName != null && !lectureUnitName.isBlank()) {
-            parameters.put("lectureUnitName", lectureUnitName);
-        }
         // The join fetch guarantees the lecture; only a lecture that was never persisted could lack an id.
         var lectureId = lectureUnit.getLecture().getId();
-        if (lectureId != null) {
-            parameters.put("lectureId", lectureId);
-        }
-        return node;
+        var markerParameters = new IrisCommandParametersDTO(parameters.lectureUnitId(), parameters.page(), parameters.displayPage(), parameters.timestamp(),
+                parameters.materialType(), parameters.materialVersion(), lectureUnitName != null && !lectureUnitName.isBlank() ? lectureUnitName : null, lectureId);
+        return new PyrisCommandDTO(command.type(), markerParameters);
     }
 
     /**

@@ -1,8 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
 import java.time.ZonedDateTime;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
@@ -49,7 +48,7 @@ public record FileUploadExerciseContextDTO(Long id, String title, @Nullable Stri
         Double bonusPoints, @Nullable AssessmentType assessmentType, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests,
         ExerciseType type, @Nullable String filePattern, boolean teamMode, @Nullable Boolean isAtLeastTutor, @Nullable Boolean isAtLeastEditor,
         @Nullable Boolean isAtLeastInstructor, @Nullable FileUploadCourseContextDTO course, @Nullable FileUploadExerciseGroupContextDTO exerciseGroup,
-        @Nullable Set<GradingCriterionDTO> gradingCriteria) {
+        @Nullable List<GradingCriterionDTO> gradingCriteria) {
 
     /**
      * Factory method to create a {@link FileUploadExerciseContextDTO} from a {@link FileUploadExercise} entity.
@@ -90,9 +89,9 @@ public record FileUploadExerciseContextDTO(Long id, String title, @Nullable Stri
         FileUploadExerciseGroupContextDTO exerciseGroupDTO = exerciseGroup != null && Hibernate.isInitialized(exerciseGroup) ? FileUploadExerciseGroupContextDTO.of(exerciseGroup)
                 : null;
 
-        Set<GradingCriterionDTO> gradingCriteriaDTOs = null;
+        List<GradingCriterionDTO> gradingCriteriaDTOs = null;
         if (includeGradingCriteria && exercise.getGradingCriteria() != null && Hibernate.isInitialized(exercise.getGradingCriteria())) {
-            gradingCriteriaDTOs = exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriteriaDTOs = GradingCriterionDTO.ofAll(exercise.getGradingCriteria());
         }
 
         return new FileUploadExerciseContextDTO(exercise.getId(), exercise.getTitle(), exercise.getProblemStatement(), exercise.getGradingInstructions(),

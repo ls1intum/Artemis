@@ -84,6 +84,9 @@ class SharedQueueManagementServiceEstimationTest {
     private DistributedQueue<ResultQueueItem> buildResultQueue;
 
     @Mock
+    private DistributedQueue<ResultQueueItem> deferredBuildResultQueue;
+
+    @Mock
     private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
 
     private SharedQueueManagementService sharedQueueManagementService;
@@ -317,6 +320,7 @@ class SharedQueueManagementServiceEstimationTest {
         when(distributedDataAccessService.getDistributedProcessingJobs()).thenReturn(processingJobs);
         when(distributedDataAccessService.getDistributedDockerImageCleanupInfo()).thenReturn(dockerImageCleanupInfo);
         when(distributedDataAccessService.getDistributedBuildResultQueue()).thenReturn(buildResultQueue);
+        when(distributedDataAccessService.getDistributedDeferredBuildResultQueue()).thenReturn(deferredBuildResultQueue);
         when(distributedDataAccessService.getDistributedBuildAgentInformation()).thenReturn(buildAgentInformation);
 
         sharedQueueManagementService.clearDistributedData();
@@ -325,6 +329,7 @@ class SharedQueueManagementServiceEstimationTest {
         verify(processingJobs).clear();
         verify(dockerImageCleanupInfo).clear();
         verify(buildResultQueue).clear();
+        verify(deferredBuildResultQueue).clear();
         verify(buildAgentInformation).clear();
     }
 }

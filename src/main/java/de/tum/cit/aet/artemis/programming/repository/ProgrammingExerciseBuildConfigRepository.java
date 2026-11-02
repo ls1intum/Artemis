@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.programming.domain.OnlineIdeExperienceLevel;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseBuildPlanConfigurationDTO;
@@ -97,4 +99,18 @@ public interface ProgrammingExerciseBuildConfigRepository extends ArtemisJpaRepo
             WHERE pebc.programmingExercise.id = :programmingExerciseId
             """)
     String getTheiaImageByProgrammingExerciseId(@Param("programmingExerciseId") long programmingExerciseId);
+
+    /**
+     * Gets the experience level students start at in the online IDE by its programming exercise's id
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return the online IDE experience level, or {@code null} if none was selected
+     */
+    @Nullable
+    @Query("""
+            SELECT pebc.onlineIdeExperienceLevel
+            FROM ProgrammingExerciseBuildConfig pebc
+            WHERE pebc.programmingExercise.id = :programmingExerciseId
+            """)
+    OnlineIdeExperienceLevel getOnlineIdeExperienceLevelByProgrammingExerciseId(@Param("programmingExerciseId") long programmingExerciseId);
 }

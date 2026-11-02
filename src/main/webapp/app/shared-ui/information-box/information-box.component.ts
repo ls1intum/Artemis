@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
 import { DifficultyLevel, Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { DateType } from 'app/foundation/pipes/artemis-date.pipe';
@@ -6,7 +6,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 export interface InformationBox {
     title: string;
@@ -53,7 +53,7 @@ export type InformationBoxContent = StudentExamContent | DateContent | ExerciseC
 export type InformationBoxLayout = 'stacked' | 'inline';
 
 @Component({
-    imports: [ArtemisTranslatePipe, TranslateDirective, CommonModule, NgbTooltipModule],
+    imports: [ArtemisTranslatePipe, TranslateDirective, CommonModule, TumAetUiTooltipDirective],
     selector: 'jhi-information-box',
     templateUrl: './information-box.component.html',
     styleUrls: ['./information-box.component.scss'],
@@ -61,4 +61,22 @@ export type InformationBoxLayout = 'stacked' | 'inline';
 export class InformationBoxComponent {
     informationBoxData = input<InformationBox>();
     readonly layout = input<InformationBoxLayout>('stacked');
+    protected readonly contentClass = computed(() => {
+        switch (this.informationBoxData()?.contentColor) {
+            case 'danger':
+                return 'text-state-danger';
+            case 'warning':
+                return 'text-state-warning';
+            case 'success':
+                return 'text-state-success';
+            case 'info':
+                return 'text-state-info';
+            case 'primary':
+                return 'text-primary';
+            case 'secondary':
+                return 'text-muted-color';
+            default:
+                return 'text-(--tumaet-ui-text-color)';
+        }
+    });
 }

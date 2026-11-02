@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.config;
 
+import java.time.Duration;
 import java.util.List;
 
 import org.springframework.ai.chat.client.ChatClient;
@@ -85,9 +86,12 @@ public class AtlasResponsesApiConfiguration {
             ObjectProvider<OpenAiHttpClientBuilderCustomizer> customizerProvider) {
         ObservationRegistry registry = observationRegistry.getIfUnique(() -> ObservationRegistry.NOOP);
         List<OpenAiHttpClientBuilderCustomizer> customizers = customizerProvider.orderedStream().toList();
+        // Spring AI leaves the timeout null when it is not configured and resolves the default itself before it builds a client,
+        // while OpenAiSetup passes the value on to the OpenAI SDK, which rejects null.
+        Duration timeout = properties.getTimeout() != null ? properties.getTimeout() : OpenAiCommonProperties.DEFAULT_TIMEOUT;
         return OpenAiSetup.setupSyncClient(properties.getBaseUrl(), properties.getApiKey(), properties.getCredential(), properties.getMicrosoftDeploymentName(),
                 properties.getMicrosoftFoundryServiceVersion(), properties.getOrganizationId(), properties.isMicrosoftFoundry(), properties.isGitHubModels(), properties.getModel(),
-                properties.getTimeout(), properties.getMaxRetries(), properties.getProxy(), properties.getCustomHeaders(), registry, meterRegistry, customizers);
+                timeout, properties.getMaxRetries(), properties.getProxy(), properties.getCustomHeaders(), registry, meterRegistry, customizers);
     }
 
     /**

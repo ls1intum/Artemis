@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -12,6 +15,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,7 +122,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createAndUpdateExampleModelingSubmissionTutorial(boolean usedForTutorial) throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(emptyModel, modelingExercise, false, usedForTutorial);
         ExampleSubmissionDetailDTO returnedExampleSubmission = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions",
@@ -141,7 +145,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleModelingSubmission(boolean usedForTutorial) throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(emptyModel, modelingExercise, false, usedForTutorial);
         ExampleSubmissionDetailDTO returnedExampleSubmission = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions",
@@ -171,7 +175,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
      * polymorphic {@link Submission} needs its {@code submissionExerciseType} discriminator on the wire.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleModelingSubmission_acceptsEchoedExerciseDetailResponse() throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, true);
         ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
@@ -200,7 +204,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
      * rest of the echoed response must be ignored and the id must match the path.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleModelingSubmission_acceptsEchoedExerciseResponse() throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, true);
         ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
@@ -229,7 +233,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
      * shape without it merges {@code exercise_id = 0} and the save dies on the foreign-key constraint.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleModelingSubmission_acceptsEchoedDtoShapedExampleAssessment() throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, true);
         ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
@@ -290,7 +294,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createAndDeleteExampleModelingSubmission(boolean usedForTutorial) throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
         ExampleSubmissionDetailDTO returnedExampleSubmission = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions",
@@ -308,7 +312,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createAndDeleteExampleModelingSubmissionWithResult(boolean usedForTutorial) throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
         exampleSubmission.addTutorParticipations(new TutorParticipation());
@@ -326,7 +330,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createExampleModelingSubmission_asTutor_forbidden() throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission(emptyModel, modelingExercise, true);
         request.post("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission, HttpStatus.FORBIDDEN);
@@ -340,7 +344,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getExampleModelingSubmission() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, modelingExercise, true));
@@ -362,7 +366,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void createExampleModelingAssessment() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, modelingExercise, true));
@@ -376,7 +380,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getExampleModelingAssessment_whenTutorAndUsedForTutorial_shouldSendCleanedResult() throws Exception {
         ExampleSubmission exampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, modelingExercise, true, true));
@@ -394,7 +398,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void prepareExampleTextSubmissionForAssessmentShouldCreateBlocks() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
@@ -413,13 +417,13 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExampleTextAssessment() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
         participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         final TextExampleResultDTO exampleResult = request.get(
-                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK,
+                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result/for-instructor", HttpStatus.OK,
                 TextExampleResultDTO.class);
         final List<TextBlockDTO> blocks = exampleResult.submission().blocks();
         assertThat(blocks).hasSize(2);
@@ -446,7 +450,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
      * the foreign-key constraint.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleTextSubmission_acceptsEchoedDtoShapedExampleResult() throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true);
         ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", exampleSubmission,
@@ -457,8 +461,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         String exerciseDetailJson = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, String.class);
         String exampleSubmissionJson = request.get("/api/assessment/example-submissions/" + created.id(), HttpStatus.OK, String.class);
         // The result exactly as the page loads it: the migrated example-result endpoint's wire shape.
-        String exampleResultJson = request.get("/api/text/exercises/" + textExercise.getId() + "/submissions/" + created.submission().id() + "/example-result", HttpStatus.OK,
-                String.class);
+        String exampleResultJson = request.get("/api/text/exercises/" + textExercise.getId() + "/submissions/" + created.submission().id() + "/example-result/for-instructor",
+                HttpStatus.OK, String.class);
 
         JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
@@ -486,14 +490,15 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
      * future change to either side keeps the save working.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleTextSubmission_acceptsEchoedExampleAssessmentResponse() throws Exception {
         exampleSubmission = participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true);
         ExampleSubmissionDetailDTO created = request.postWithResponseBody("/api/assessment/exercises/" + textExercise.getId() + "/example-submissions", exampleSubmission,
                 ExampleSubmissionDetailDTO.class, HttpStatus.OK);
         participationUtilService.addResultToSubmission(submissionOf(created), AssessmentType.MANUAL, textExercise.getId());
-        final TextExampleResultDTO exampleResult = request.get("/api/text/exercises/" + textExercise.getId() + "/submissions/" + created.submission().id() + "/example-result",
-                HttpStatus.OK, TextExampleResultDTO.class);
+        final TextExampleResultDTO exampleResult = request.get(
+                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + created.submission().id() + "/example-result/for-instructor", HttpStatus.OK,
+                TextExampleResultDTO.class);
         List<Feedback> feedbacks = List
                 .of(new Feedback().credits(80.00).type(FeedbackType.MANUAL).detailText("nice submission 1").reference(exampleResult.submission().blocks().iterator().next().id()));
         var assessmentDto = new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), null, null);
@@ -520,13 +525,13 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExampleTextAssessmentNotExistentId() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
         participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         final TextExampleResultDTO exampleResult = request.get(
-                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK,
+                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result/for-instructor", HttpStatus.OK,
                 TextExampleResultDTO.class);
         final List<TextBlockDTO> blocks = exampleResult.submission().blocks();
         assertThat(blocks).hasSize(2);
@@ -539,13 +544,13 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExampleTextAssessment_wrongExerciseId() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
         participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         final TextExampleResultDTO exampleResult = request.get(
-                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK,
+                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result/for-instructor", HttpStatus.OK,
                 TextExampleResultDTO.class);
         final List<TextBlockDTO> blocks = exampleResult.submission().blocks();
         assertThat(blocks).hasSize(2);
@@ -562,7 +567,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
      * submission, the loaded exercise attached, no submission id. Nothing on the wire is an entity anymore.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExampleTextSubmission_clientShape() throws Exception {
         String exerciseDetailJson = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, String.class);
         JsonMapper mapper = request.getObjectMapper();
@@ -593,7 +598,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
      * training mode switched. The path exercise is the reference; the edit must be persisted.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleTextSubmission_loadedShapeWithoutExercise() throws Exception {
         ExampleSubmission stored = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true, true));
         String exampleSubmissionJson = request.get("/api/assessment/example-submissions/" + stored.getId(), HttpStatus.OK, String.class);
@@ -616,7 +621,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleSubmission_bodyExerciseDiffersFromPath_badRequest() throws Exception {
         ExampleSubmission stored = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
         JsonMapper mapper = request.getObjectMapper();
@@ -631,7 +636,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleSubmission_ofAnotherExercise_badRequest() throws Exception {
         ExampleSubmission stored = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
         JsonMapper mapper = request.getObjectMapper();
@@ -645,7 +650,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExampleSubmission_withoutSubmission_badRequest() throws Exception {
         JsonMapper mapper = request.getObjectMapper();
         ObjectNode body = mapper.createObjectNode();
@@ -657,7 +662,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleSubmission_withoutSubmission_badRequest() throws Exception {
         ExampleSubmission stored = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true, true));
         stored.setAssessmentExplanation("Explanation of the assessment");
@@ -676,7 +681,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExampleSubmission_unsupportedExerciseType_badRequest() throws Exception {
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addFileUploadExercise(course, null, null, null, null);
         JsonMapper mapper = request.getObjectMapper();
@@ -699,7 +704,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExampleSubmissionWithTextSubmission() throws Exception {
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
@@ -736,7 +741,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExampleSubmissionWithModelingSubmission() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(modelingExercise, submission, TEST_PREFIX + "student1");
@@ -751,13 +756,13 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExampleSubmissionForModelingExerciseCopiesGradingInstruction() throws Exception {
         testGradingCriteriaAreImported(modelingExercise);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExampleSubmissionForTextExerciseCopiesGradingInstruction() throws Exception {
         testGradingCriteriaAreImported(textExercise);
     }
@@ -776,16 +781,16 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExampleSubmissionWithStudentSubmission_wrongExerciseId() throws Exception {
         Submission submission = new TextSubmission();
         submission.setId(12345L);
         Long randomId = 1233L;
-        importExampleSubmission(randomId, submission.getId(), HttpStatus.NOT_FOUND);
+        importExampleSubmission(randomId, submission.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExampleSubmissionWithStudentSubmission_isNotAtLeastInstructorInExercise_forbidden() throws Exception {
         Submission submission = new TextSubmission();
         submission.setId(12345L);
@@ -795,7 +800,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExampleSubmissionWithTextSubmission_exerciseIdNotMatched() throws Exception {
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
@@ -808,7 +813,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExampleSubmissionWithModelingSubmission_exerciseIdNotMatched() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(modelingExercise, submission, TEST_PREFIX + "student1");
@@ -823,7 +828,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void saveExampleSubmission_inputValidationUsesStoredSubmission(boolean throughExistingExampleSubmission) throws Exception {
         TextExercise otherExercise = otherTextExercise();
         TextSubmission stored = textExerciseUtilService.saveTextSubmission(otherExercise, ParticipationFactory.generateTextSubmission("stored text", Language.ENGLISH, true),
@@ -853,7 +858,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleSubmission_inputValidationChecksExercise() throws Exception {
         TextExercise otherExercise = otherTextExercise();
         ExampleSubmission other = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("other text", otherExercise, true));
@@ -872,7 +877,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleSubmission_inputValidationUsesStoredExercise() throws Exception {
         TextExercise otherExercise = otherTextExercise();
         ExampleSubmission other = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("other text", otherExercise, true));
@@ -892,7 +897,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "result", "feedback", "assessmentNote" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateExampleSubmission_inputValidationPreservesAssessment(String otherEntity) throws Exception {
         TextExercise otherExercise = otherTextExercise();
         TextSubmission stored = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(otherExercise,
@@ -932,7 +937,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExampleSubmission_inputValidationUsesExampleParticipation() throws Exception {
         TextExercise otherExercise = otherTextExercise();
         TextSubmission stored = textExerciseUtilService.saveTextSubmission(otherExercise, ParticipationFactory.generateTextSubmission("stored text", Language.ENGLISH, true),
@@ -953,7 +958,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createExampleSubmission_inputValidationUsesExerciseType() throws Exception {
         long exampleSubmissionsBefore = exampleSubmissionRepository.countAllByExerciseId(textExercise.getId());
 
@@ -982,6 +987,88 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         TextExercise otherExercise = ExerciseUtilService.findTextExerciseWithTitle(otherCourse.getExercises(), "Other");
         request.get("/api/text/text-exercises/" + otherExercise.getId(), HttpStatus.FORBIDDEN, String.class);
         return otherExercise;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void getExampleModelingAssessmentRejectsAnotherExercise() throws Exception {
+        var foreignCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise("ForeignExample");
+        var foreignExercise = (ModelingExercise) foreignCourse.getExercises().iterator().next();
+        var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, foreignExercise, true, true));
+        request.performMvcRequest(get("/api/modeling/exercises/" + modelingExercise.getId() + "/modeling-submissions/" + example.getSubmission().getId() + "/example-assessment"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("idsNotMatching")).andExpect(jsonPath("$.entityName").value("exampleSubmission"))
+                .andExpect(jsonPath("$.feedbacks").doesNotExist());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void modelingOwnerResultRejectsExampleWithoutStudentParticipation() throws Exception {
+        var example = participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, modelingExercise, true, true));
+        assertThat(example.getSubmission().getParticipation()).isNull();
+        request.get("/api/modeling/modeling-submissions/" + example.getSubmission().getId() + "/result", HttpStatus.FORBIDDEN, ResultDTO.class);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "text, false", "text, true", "modeling, false", "modeling, true", "fileupload, false", "fileupload, true" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ordinaryCancelRejectsExampleSubmissionWithoutMutation(String route, boolean withResult) throws Exception {
+        ExampleSubmission example = exampleForOrdinaryAssessmentRoute(route);
+        Result result = withResult ? addExampleResult(example) : null;
+        long submissionId = example.getSubmission().getId();
+        if (route.equals("text")) {
+            request.postWithoutResponseBody("/api/text/participations/0/submissions/" + submissionId + "/cancel-assessment", null, HttpStatus.FORBIDDEN);
+        }
+        else {
+            String submissionType = route.equals("modeling") ? "modeling" : "file-upload";
+            request.put("/api/" + route + "/" + submissionType + "-submissions/" + submissionId + "/cancel-assessment", null, HttpStatus.FORBIDDEN);
+        }
+        assertExampleUnchanged(example, result);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "text", "modeling", "fileupload" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ordinaryDeleteRejectsExampleSubmissionWithoutMutation(String route) throws Exception {
+        ExampleSubmission example = exampleForOrdinaryAssessmentRoute(route);
+        Result result = addExampleResult(example);
+        String submissionType = route.equals("fileupload") ? "file-upload" : route;
+        request.delete("/api/" + route + "/participations/0/" + submissionType + "-submissions/" + example.getSubmission().getId() + "/results/" + result.getId(),
+                HttpStatus.FORBIDDEN);
+        assertExampleUnchanged(example, result);
+    }
+
+    private ExampleSubmission exampleForOrdinaryAssessmentRoute(String route) {
+        // File-upload's generic submission loader also accepts an existing modeling example ID.
+        boolean text = route.equals("text");
+        ExampleSubmission example = participationUtilService
+                .addExampleSubmission(participationUtilService.generateExampleSubmission(text ? "Example text" : validModel, text ? textExercise : modelingExercise, true, true));
+        assertThat(example.getSubmission().getParticipation()).isNull();
+        return example;
+    }
+
+    private Result addExampleResult(ExampleSubmission example) {
+        Result result = new Result().submission(example.getSubmission()).assessmentType(AssessmentType.MANUAL).score(50D).rated(true);
+        result.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        result.setExerciseId(example.getExercise().getId());
+        result.setExampleResult(true);
+        return resultRepository.save(result);
+    }
+
+    private void assertExampleUnchanged(ExampleSubmission example, Result result) {
+        Submission stored = submissionRepository.findByIdWithResultsElseThrow(example.getSubmission().getId());
+        assertThat(stored.getParticipation()).isNull();
+        assertThat(stored.isExampleSubmission()).isTrue();
+        assertThat(exampleSubmissionRepository.findBySubmissionId(stored.getId())).isPresent();
+        if (result == null) {
+            assertThat(stored.getResults()).isEmpty();
+        }
+        else {
+            assertThat(stored.getResults()).extracting(Result::getId).containsExactly(result.getId());
+            Result storedResult = resultRepository.findByIdElseThrow(result.getId());
+            assertThat(storedResult.getAssessor().getId()).isEqualTo(result.getAssessor().getId());
+            assertThat(storedResult.getScore()).isEqualTo(50D);
+            assertThat(storedResult.isExampleResult()).isTrue();
+        }
     }
 
 }

@@ -1,7 +1,7 @@
 import { Service, inject } from '@angular/core';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
-import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 
 /** Prefix for the per-url marker that records an attempted recovery, so a reload loop cannot form. */
 export const LAZY_ROUTE_RECOVERY_KEY_PREFIX = 'artemis.lazyRouteRecovery.';
@@ -36,7 +36,6 @@ const CHUNK_LOAD_FAILURE_PATTERNS = [
 export class LazyRouteRecoveryService {
     private readonly injectedWindow = inject<Window>(WINDOW_INJECTOR_TOKEN);
     private readonly alertService = inject(AlertService);
-    private readonly sentryErrorHandler = inject(SentryErrorHandler);
 
     /**
      * Recovers from, or reports, a failed navigation. Anything that is not a chunk load failure is left alone, so
@@ -52,7 +51,7 @@ export class LazyRouteRecoveryService {
 
         // Report before recovering. A full page load tears the document down, so anything after it never runs, and
         // without this a chunk failure leaves no trace at all for whoever operates the instance.
-        this.sentryErrorHandler.handleError(error);
+        captureException(error);
 
         // Reloading is only safe while the attempt can be recorded. Without a readable marker every fresh document
         // treats the same url as its first failure, so the reloads would never stop; tell the user instead.

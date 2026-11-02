@@ -15,6 +15,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +42,9 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -71,6 +75,8 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Conditional(LectureEnabled.class)
 @Lazy
@@ -163,6 +169,7 @@ public class AttachmentVideoUnitResource {
      * @param attachmentVideoUnitDTO the attachment video unit DTO with updated content
      * @param attachment             the attachment with updated content
      * @param file                   the optional file to upload
+     * @param studentVersion         the optional student PDF matching the updated file and visibility
      * @param hiddenPages            the pages to be hidden in the attachment video unit
      * @param pageOrder              the new order of the edited attachment video unit
      * @param keepFilename           specifies if the original filename should be kept or not
@@ -173,10 +180,10 @@ public class AttachmentVideoUnitResource {
     @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<AttachmentVideoUnitDTO> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
-            @RequestPart("attachmentVideoUnit") AttachmentVideoUnitDTO attachmentVideoUnitDTO, @RequestPart(required = false) AttachmentDTO attachment,
-            @RequestPart(required = false) MultipartFile file, @RequestPart(required = false) List<HiddenPageInfoDTO> hiddenPages,
-            @RequestPart(required = false) List<SlideOrderDTO> pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @Valid @RequestPart("attachmentVideoUnit") AttachmentVideoUnitDTO attachmentVideoUnitDTO, @RequestPart(required = false) AttachmentDTO attachment,
+            @RequestPart(required = false) MultipartFile file, @RequestPart(required = false) MultipartFile studentVersion,
+            @RequestPart(required = false) List<HiddenPageInfoDTO> hiddenPages, @RequestPart(required = false) List<SlideOrderDTO> pageOrder,
+            @RequestParam(defaultValue = "false") boolean keepFilename, @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment video unit : {}", attachmentVideoUnitDTO);
         AttachmentVideoUnit existingAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
@@ -188,6 +195,8 @@ public class AttachmentVideoUnitResource {
         validateVideoSource(attachmentVideoUnitDTO.videoSource());
         AttachmentUpdateIntent updateIntent = attachmentVideoUnitDTO.attachmentUpdateIntent();
         validateAttachmentUpdateIntent(updateIntent, file, existingAttachmentVideoUnit, attachment);
+        validateAtLeastOneVisibleSlide(updateIntent, hiddenPages, pageOrder, existingAttachmentVideoUnit, attachment);
+        validateStudentVersionForHiddenSlides(updateIntent, hiddenPages, pageOrder, studentVersion);
 
         // Capture original competency IDs BEFORE updating links (for progress tracking)
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
@@ -202,7 +211,7 @@ public class AttachmentVideoUnitResource {
         // Build a transient attachment carrying only the client-provided fields; the service copies them onto the managed attachment
         Attachment attachmentUpdate = toTransientAttachment(attachment);
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnitDTO, attachmentUpdate,
-                file, keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
+                file, studentVersion, keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
 
         if (!Objects.equals(previousDescription, savedAttachmentVideoUnit.getDescription())) {
             lectureUnitService.publishContentChangedEvent(savedAttachmentVideoUnit);
@@ -246,10 +255,48 @@ public class AttachmentVideoUnitResource {
         }
     }
 
+    private void validateStudentVersionForHiddenSlides(AttachmentUpdateIntent updateIntent, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder,
+            MultipartFile studentVersion) {
+        boolean isFileChange = updateIntent == AttachmentUpdateIntent.FILE_UPLOAD || updateIntent == AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED;
+        if (!isFileChange) {
+            return;
+        }
+        // A basic file replacement (without pageOrder) creates a fresh, fully visible slide generation. Hidden-page metadata only survives an editor update with a page order.
+        boolean hasHiddenSlidesAfterUpdate = pageOrder != null && hiddenPages != null && hiddenPages.stream().anyMatch(page -> page.date() != null);
+        if (hasHiddenSlidesAfterUpdate && (studentVersion == null || studentVersion.isEmpty())) {
+            throw new BadRequestAlertException("A matching student PDF is required when an updated PDF contains hidden slides", ENTITY_NAME,
+                    "studentVersionRequiredForHiddenSlides");
+        }
+    }
+
     private static boolean isStaleAttachmentPartWithoutFile(AttachmentUpdateIntent updateIntent, MultipartFile file, AttachmentVideoUnit existingAttachmentVideoUnit,
             AttachmentDTO attachment) {
         boolean hasFile = file != null && !file.isEmpty();
         return existingAttachmentVideoUnit.getAttachment() == null && attachment != null && updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && !hasFile;
+    }
+
+    private static void validateAtLeastOneVisibleSlide(AttachmentUpdateIntent updateIntent, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder,
+            AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentDTO attachment) {
+        if (hiddenPages == null || attachment == null || existingAttachmentVideoUnit.getAttachment() == null) {
+            return;
+        }
+
+        Set<String> hiddenSlideIds = hiddenPages.stream().filter(hiddenPage -> hiddenPage.date() != null).map(HiddenPageInfoDTO::slideId).collect(Collectors.toSet());
+        if (hiddenSlideIds.isEmpty()) {
+            return;
+        }
+        boolean hasVisibleSlide;
+        if (updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE || pageOrder == null) {
+            // Superseded slides belong to an earlier file of the unit and are not part of what students can see.
+            hasVisibleSlide = existingAttachmentVideoUnit.getSlides().stream().filter(slide -> !slide.isSuperseded()).map(slide -> String.valueOf(slide.getId()))
+                    .anyMatch(slideId -> !hiddenSlideIds.contains(slideId));
+        }
+        else {
+            hasVisibleSlide = pageOrder.stream().map(SlideOrderDTO::slideId).anyMatch(slideId -> !hiddenSlideIds.contains(slideId));
+        }
+        if (!hasVisibleSlide) {
+            throw new BadRequestAlertException("Cannot create a student version with no visible pages", ENTITY_NAME, "noVisiblePages");
+        }
     }
 
     /**
@@ -265,10 +312,25 @@ public class AttachmentVideoUnitResource {
      */
     @PostMapping(value = "lectures/{lectureId}/attachment-video-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLecture
+    @AllowedScopes(AgentScope.LECTURES_WRITE)
+    @Operation(summary = "Add a unit with slides or a video to a lecture", description = """
+            Adds an attachment video unit to a lecture. Send multipart/form-data with the part attachmentVideoUnit (JSON: name, \
+            releaseDate, description, videoSource), and for slides the part attachment (JSON: name, attachmentType FILE, \
+            releaseDate) together with the part file (the PDF). A request with a personal access token must set releaseDate to a \
+            time in the future, on the unit and on the attachment. The material becomes visible automatically when its release dates \
+            have passed, so the instructor must review it before those dates and can move them in the Artemis web interface. The unit is \
+            returned at once; splitting the PDF into slides and indexing it for Iris continue in the background, and their progress \
+            is reported by the lecture unit status endpoint.""")
+    @ApiResponse(responseCode = "201", description = "The unit was created as a draft.")
     public ResponseEntity<AttachmentVideoUnitDTO> createAttachmentVideoUnit(@PathVariable Long lectureId,
-            @RequestPart("attachmentVideoUnit") AttachmentVideoUnitDTO attachmentVideoUnitDTO, @RequestPart(required = false) AttachmentDTO attachment,
+            @Valid @RequestPart("attachmentVideoUnit") AttachmentVideoUnitDTO attachmentVideoUnitDTO, @RequestPart(required = false) AttachmentDTO attachment,
             @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename) throws URISyntaxException {
         log.debug("REST request to create AttachmentVideoUnit {} with Attachment {}", attachmentVideoUnitDTO, attachment);
+        AgentDraftRules.requireDraftDatesForCreate(attachmentVideoUnitDTO.releaseDate(), null);
+        if (attachment != null) {
+            // The attachment has a release date of its own, so a hidden unit must not hold a file that is already visible.
+            AgentDraftRules.requireDraftDatesForCreate(attachment.releaseDate(), null);
+        }
         if (attachmentVideoUnitDTO.id() != null) {
             throw new BadRequestAlertException("A new attachment video unit cannot already have an ID", ENTITY_NAME, "idexists");
         }
@@ -311,7 +373,7 @@ public class AttachmentVideoUnitResource {
         AttachmentVideoUnit persistedUnit = attachmentVideoUnitService.saveAttachmentVideoUnit((AttachmentVideoUnit) updatedLecture.getLectureUnits().getLast(), attachmentToCreate,
                 file, keepFilename);
         // Split PDF into slides asynchronously (non-blocking for user request)
-        if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
+        if (attachment != null && file != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()))) {
             slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(persistedUnit, null, null));
         }
         attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(persistedUnit);
@@ -343,13 +405,12 @@ public class AttachmentVideoUnitResource {
      */
     @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @PostMapping("lectures/{lectureId}/attachment-video-units/upload")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
         // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-video-units.component.ts
         int minutesUntilDeletion = 30;
         String originalFilename = FileUtil.sanitizeFilename(file.getOriginalFilename());
         log.debug("REST request to upload file: {}", originalFilename);
-        checkLectureElseThrow(lectureId);
         if (!Objects.equals(FilenameUtils.getExtension(originalFilename), "pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
@@ -415,11 +476,10 @@ public class AttachmentVideoUnitResource {
      */
     @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @GetMapping("lectures/{lectureId}/attachment-video-units/data/{filename}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<LectureUnitSplitInformationDTO> getAttachmentVideoUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to split lecture file : {}", filename);
 
-        checkLectureElseThrow(lectureId);
         Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
         checkFile(filePath);
 
@@ -444,10 +504,9 @@ public class AttachmentVideoUnitResource {
      */
     @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @GetMapping("lectures/{lectureId}/attachment-video-units/slides-to-remove/{filename}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<List<Integer>> getSlidesToRemove(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam String commaSeparatedKeyPhrases) {
         log.debug("REST request to get slides to remove for lecture file : {} and keywords : {}", filename, commaSeparatedKeyPhrases);
-        checkLectureElseThrow(lectureId);
         Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
         checkFile(filePath);
 
@@ -464,6 +523,8 @@ public class AttachmentVideoUnitResource {
 
     /**
      * PUT lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId/student-version : Updates the student version file for an existing attachment video unit
+     * This compatibility endpoint is retained for API clients that upload an independently generated student PDF. The current web PDF editor sends the student PDF together
+     * with the main update request.
      *
      * @param lectureId             the id of the lecture to which the attachment video unit belongs
      * @param attachmentVideoUnitId the id of the attachment video unit to update

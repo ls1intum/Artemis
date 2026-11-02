@@ -41,6 +41,7 @@ export const toBuildConfig = (snapshot?: ProgrammingExerciseBuildConfigSnapshotD
     buildConfig.timeoutSeconds = snapshot.timeoutSeconds;
     buildConfig.dockerFlags = snapshot.dockerFlags;
     buildConfig.theiaImage = snapshot.theiaImage;
+    buildConfig.onlineIdeExperienceLevel = snapshot.onlineIdeExperienceLevel;
     buildConfig.allowBranching = snapshot.allowBranching ?? false;
     buildConfig.branchRegex = snapshot.branchRegex ?? buildConfig.branchRegex;
     return buildConfig;

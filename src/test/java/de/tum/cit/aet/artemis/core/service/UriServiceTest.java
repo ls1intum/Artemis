@@ -78,7 +78,8 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testGetFolderNameForRepositoryUri() {
-        assertThat(repositoryUri1.folderNameForRepositoryUri()).isEqualTo("EIST2016RME/RMEXERCISE-ab12cde");
+        // Only what comes before the git path segment is left out.
+        assertThat(repositoryUri1.folderNameForRepositoryUri()).isEqualTo("scm/EIST2016RME/RMEXERCISE-ab12cde");
         assertThat(repositoryUri2.folderNameForRepositoryUri()).isEqualTo("TESTADAPTER/testadapter-exercise");
         assertThat(repositoryUri3.folderNameForRepositoryUri()).isEqualTo("FTCSCAGRADING1/ftcscagrading1-username");
         assertThat(fileRepositoryUri1.folderNameForRepositoryUri()).isEqualTo("studentOriginRepo1644180397872264950");

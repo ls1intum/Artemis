@@ -4,7 +4,6 @@ import { expect, Page } from '@playwright/test';
 import { admin, studentTwo } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingLanguage } from '../../support/constants';
 import { SEED_COURSES } from '../../support/seedData';
 
@@ -57,7 +56,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
     let groupTitleB: string;
     let groupTitleC: string;
 
-    test.beforeEach('Create exam with 3 programming exercises', async ({ login, examAPIRequests, exerciseAPIRequests }) => {
+    test.beforeEach('Create exam with 3 programming exercises', async ({ login, adminExamAPIRequests: examAPIRequests, exerciseAPIRequests }) => {
         await login(admin);
 
         exam = await examAPIRequests.createRunningExam({ course, title: 'PlantUML Isolation ' + generateUUID(), examMaxPoints: 30, numberOfExercisesInExam: 3 });
@@ -91,11 +90,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
             programmingLanguage: ProgrammingLanguage.C,
         });
 
-        // Wait for CI pipelines to complete by checking test case availability
-        await exerciseAPIRequests.changeProgrammingExerciseTestVisibility(exerciseA, Visibility.Always, 0);
-        await exerciseAPIRequests.changeProgrammingExerciseTestVisibility(exerciseB, Visibility.Always, 0);
-        await exerciseAPIRequests.changeProgrammingExerciseTestVisibility(exerciseC, Visibility.Always, 0);
-
+        // These diagrams use no test-result colouring, so template builds are irrelevant to rendering.
         await examAPIRequests.registerStudentForExam(exam, studentTwo);
         await examAPIRequests.generateMissingIndividualExams(exam);
         await examAPIRequests.prepareExerciseStartForExam(exam);
@@ -246,9 +241,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         await expect(plantUmlDiagram(page, exerciseC.id!, 1).locator('svg')).toBeAttached({ timeout: 30000 });
     });
 
-    test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
-        // The test ends as a student, who is not allowed to delete the exam; without the login the exam leaked.
-        await login(admin);
-        await examAPIRequests.deleteExam(exam);
+    test.afterEach('Delete exam', async ({ adminExamAPIRequests }) => {
+        await adminExamAPIRequests.deleteExam(exam);
     });
 });

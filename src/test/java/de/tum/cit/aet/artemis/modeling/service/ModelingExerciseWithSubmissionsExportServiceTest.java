@@ -42,7 +42,7 @@ class ModelingExerciseWithSubmissionsExportServiceTest extends AbstractSpringInt
     private Path exportDir;
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportModelingExerciseWithSubmissions_writesTheExerciseDetailsWithoutTheEntityGraph() throws Exception {
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise(TEST_PREFIX);
         ModelingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ModelingExercise.class);

@@ -23,8 +23,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GlobalSearchAskRequestDTO(@NotBlank String query, @Min(1) @Max(5) int limit, @NotNull UUID runId,
-        @Nullable @Size(max = GlobalSearchLectureRequestDTO.MAX_COURSE_ID_FILTERS) List<Long> courseIds,
-        @Nullable @Size(max = GlobalSearchLectureRequestDTO.MAX_COURSE_ID_FILTERS) List<Long> excludeCourseIds) {
+        @Nullable @Size(max = GlobalSearchLectureRequestDTO.MAX_COURSE_ID_FILTERS) List<@NotNull Long> courseIds,
+        @Nullable @Size(max = GlobalSearchLectureRequestDTO.MAX_COURSE_ID_FILTERS) List<@NotNull Long> excludeCourseIds) {
 
     public GlobalSearchAskRequestDTO(String query, int limit, UUID runId) {
         this(query, limit, runId, null, null);

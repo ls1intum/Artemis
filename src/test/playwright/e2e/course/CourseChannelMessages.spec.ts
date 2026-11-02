@@ -8,6 +8,9 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { SEED_COURSES } from '../../support/seedData';
 import { RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
 import { Commands } from '../../support/commands';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
+import { CommunicationAPIRequests } from '../../support/requests/CommunicationAPIRequests';
 
 // Use pre-seeded courses — no course creation needed
 const readOnlyCourse = { id: SEED_COURSES.channel1.id };
@@ -261,6 +264,125 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             await courseMessages.checkMessage(message.id!, messageText);
             await courseMessages.deleteMessage(message.id!);
             await expect(courseMessages.getSinglePost(message.id!)).not.toBeVisible();
+        });
+
+        test('Student should be able to delete a message by clicking next to the icon of the delete button in the toolbar', async ({
+            login,
+            page,
+            courseMessages,
+            communicationAPIRequests,
+        }) => {
+            await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=${channel.id}`);
+            const messageText = 'Student Toolbar Click Message';
+            const message = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, channel.id!, 'channel', messageText);
+            await courseMessages.checkMessage(message.id!, messageText);
+            const post = courseMessages.getSinglePost(message.id!);
+            await post.hover();
+
+            const deleteButton = post.getByTestId('posting-reaction-delete');
+            const button = deleteButton.getByRole('button');
+            await expect(button).toBeVisible();
+            const initialLabel = await button.getAttribute('aria-label');
+            const pill = (await deleteButton.boundingBox())!;
+            const icon = (await deleteButton.locator('fa-icon').boundingBox())!;
+            // The button is larger than its icon, and all of it is clickable like the other buttons of the toolbar
+            expect(icon.x - pill.x).toBeGreaterThanOrEqual(4);
+            expect(pill.x + pill.width - (icon.x + icon.width)).toBeGreaterThanOrEqual(4);
+
+            // The first click on the edge of the button asks for the confirmation, which changes what the button announces
+            await page.mouse.click(pill.x + 2, pill.y + pill.height / 2);
+            await expect(button).not.toHaveAttribute('aria-label', initialLabel!);
+            await expect(post).toBeVisible();
+            // and the second click on the opposite edge confirms it
+            await page.mouse.click(pill.x + pill.width - 2, pill.y + pill.height / 2);
+            await expect(post).not.toBeVisible();
+        });
+    });
+
+    test.describe('Unread conversation navigation', () => {
+        let course: Course | undefined;
+
+        test.afterEach(async ({ courseManagementAPIRequests }) => {
+            await courseManagementAPIRequests.deleteCourse(course, admin);
+            course = undefined;
+        });
+
+        test('keeps the New separator when a live reply arrives while initial messages are pending', async ({ browser, page, login, communicationAPIRequests, courseMessages }) => {
+            const authorContext = await browser.newContext({ baseURL: test.info().project.use.baseURL });
+            try {
+                const authorPage = await authorContext.newPage();
+                await Commands.login(authorPage, admin);
+                const courses = new CourseManagementAPIRequests(authorPage);
+                const messages = new CommunicationAPIRequests(authorPage);
+                course = await courses.createCourse({ courseName: 'Software Construction' });
+                await courses.addStudentToCourse(course, studentOne);
+                const target = await messages.createCourseMessageChannel(course, 'unread-navigation', 'Questions about specifications and representation invariants', false, true);
+                const other = await messages.createCourseMessageChannel(course, 'other-navigation', 'Tutorial planning', false, true);
+                await messages.joinUserIntoChannel(course, target.id!, studentOne);
+                await messages.joinUserIntoChannel(course, other.id!, studentOne);
+                const oldPost = await messages.createCourseMessage(course, target.id!, 'channel', 'Previously read lecture announcement');
+
+                await login(studentOne, `/courses/${course.id}/exercises`);
+                await communicationAPIRequests.acceptCodeOfConduct(course);
+                await communicationAPIRequests.createCourseMessageReply(course, oldPost, 'Does this apply to both the lecture examples and the tutorial exercises?');
+                await communicationAPIRequests.markConversationAsRead(course.id!, target.id!);
+                const readConversation = await communicationAPIRequests.getConversationById(course.id!, target.id!);
+                expect(readConversation?.lastReadDate).toBeTruthy();
+                const unreadPost = await messages.createCourseMessage(course, target.id!, 'channel', 'New lecture question');
+                expect(new Date(unreadPost.creationDate!.toString()).getTime()).toBeGreaterThan(new Date(readConversation!.lastReadDate!.toString()).getTime());
+                await page.goto(`/courses/${course.id}/communication?conversationId=${other.id}`);
+                await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
+                const generalChannels = page.getByRole('button', { name: /^General \(/ });
+                if ((await generalChannels.getAttribute('aria-expanded')) !== 'true') {
+                    await generalChannels.click();
+                }
+
+                let releaseMessages!: () => void;
+                let notifyRequest!: () => void;
+                const messageGate = new Promise<void>((resolve) => (releaseMessages = resolve));
+                const requestStarted = new Promise<void>((resolve) => (notifyRequest = resolve));
+                await page.route(`**/api/communication/courses/${course.id}/messages?**`, async (route) => {
+                    if (new URL(route.request().url()).searchParams.get('conversationIds') !== String(target.id)) {
+                        await route.continue();
+                        return;
+                    }
+                    notifyRequest();
+                    await messageGate;
+                    await route.continue();
+                });
+                try {
+                    await page
+                        .getByRole('link')
+                        .filter({ has: page.getByTestId('sidebar-card-title').filter({ hasText: target.name! }) })
+                        .click();
+                    await requestStarted;
+                    await expect(page).toHaveURL(new RegExp(`conversationId=${target.id}$`));
+                    await expect(page.getByTestId('conversation-name')).toHaveText(target.name!);
+                    await expect(courseMessages.getSinglePost(unreadPost.id!)).toHaveCount(0);
+                    // A real reply notification marks the selected conversation read while its initial GET is held.
+                    const markedRead = page.waitForResponse(
+                        (response) => response.request().method() === 'PATCH' && response.url().endsWith(`/conversations/${target.id}/mark-as-read`),
+                    );
+                    await messages.createCourseMessageReply(course, oldPost, 'Yes. State the preconditions and postconditions for each example.');
+                    expect((await markedRead).ok()).toBe(true);
+                } finally {
+                    releaseMessages();
+                }
+
+                await courseMessages.checkMessage(oldPost.id!, 'Previously read lecture announcement');
+                await courseMessages.checkMessage(unreadPost.id!, 'New lecture question');
+                const unreadLine = page.locator('#unread-post-line');
+                await expect(unreadLine).toBeVisible();
+                // The line belongs immediately before the unread post, not the older read post.
+                const followingPost = unreadLine.locator('..').locator('xpath=following-sibling::*[1]');
+                await expect(followingPost.locator(`#item-${unreadPost.id}`)).toHaveCount(1);
+                await expect(followingPost.locator(`#item-${oldPost.id}`)).toHaveCount(0);
+                if (process.env.ARTEMIS_PR_SCREENSHOTS && test.info().project.name === 'chromium') {
+                    await page.screenshot({ path: `${process.env.ARTEMIS_PR_SCREENSHOTS}/00-first-unread-marker.png`, fullPage: true });
+                }
+            } finally {
+                await authorContext.close();
+            }
         });
     });
 

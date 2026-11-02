@@ -13,6 +13,13 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 
+/**
+ * Native queries behind the Iris admin dashboard.
+ * <p>
+ * The dashboard queries take an {@code aiSelection} parameter (see {@link de.tum.cit.aet.artemis.iris.config.IrisDashboardAiSelection#queryValue()}). With
+ * {@code 'ALL'} they apply no filter. Otherwise they keep only rows whose user (the session's user, or the token usage
+ * trace's user) currently has that AI selection in {@code user_ai_preference}.
+ */
 @Repository
 @Lazy
 @Conditional(IrisEnabled.class)
@@ -22,8 +29,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             SELECT COUNT(*) FROM iris_session s
             WHERE s.creation_date >= :from AND s.creation_date < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    long countTotalSessions(@Param("from") Instant from, @Param("to") Instant to);
+    long countTotalSessions(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT COUNT(DISTINCT m.session_id)
@@ -33,8 +41,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
               AND s.creation_date >= :from AND s.creation_date < :to
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    long countActiveSessions(@Param("from") Instant from, @Param("to") Instant to);
+    long countActiveSessions(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     /**
      * Counts distinct sessions that have at least one user message within the window, regardless of when the session was created.
@@ -63,8 +72,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             JOIN iris_session s ON s.id = m.session_id
             WHERE m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    long countTotalMessages(@Param("from") Instant from, @Param("to") Instant to);
+    long countTotalMessages(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT COUNT(DISTINCT s.user_id)
@@ -73,8 +83,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             WHERE m.sender = 'USER'
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    long countUniqueUsers(@Param("from") Instant from, @Param("to") Instant to);
+    long countUniqueUsers(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT COUNT(*)
@@ -85,8 +96,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
               AND m.helpful = TRUE
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    long countThumbsUp(@Param("from") Instant from, @Param("to") Instant to);
+    long countThumbsUp(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT COUNT(*)
@@ -97,8 +109,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
               AND m.helpful = FALSE
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    long countThumbsDown(@Param("from") Instant from, @Param("to") Instant to);
+    long countThumbsDown(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT COUNT(*)
@@ -108,8 +121,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
               AND NOT (m.sender = 'LLM' AND COALESCE(m.intermediate, FALSE) = TRUE)
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    long countTotalLlmMessages(@Param("from") Instant from, @Param("to") Instant to);
+    long countTotalLlmMessages(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT COUNT(DISTINCT m.session_id)
@@ -121,8 +135,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
               AND s.creation_date >= :from AND s.creation_date < :to
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    long countSessionsWithThumbsUp(@Param("from") Instant from, @Param("to") Instant to);
+    long countSessionsWithThumbsUp(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT COUNT(DISTINCT m.session_id)
@@ -134,8 +149,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
               AND s.creation_date >= :from AND s.creation_date < :to
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    long countSessionsWithThumbsDown(@Param("from") Instant from, @Param("to") Instant to);
+    long countSessionsWithThumbsDown(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     // hasAssistantResponse treats a later non-user message as a response, but excludes the system-generated marker
     // senders CTXSWAP (context switch), COMMAND (a client action Iris performed, e.g. a point-out) and SUMMARY (a
@@ -172,8 +188,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             WHERE u.sender = 'USER'
               AND u.sent_at >= :from AND u.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    List<Object[]> findUserMessagesWithNextMessageFullRange(@Param("from") Instant from, @Param("to") Instant to);
+    List<Object[]> findUserMessagesWithNextMessageFullRange(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT CASE WHEN t.iris_message_id IS NOT NULL THEN 1 ELSE 0 END AS chatAttributed,
@@ -185,9 +202,10 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             JOIN llm_token_usage_request r ON r.trace_id = t.id
             WHERE t.service = 'IRIS'
               AND t.time >= :from AND t.time < :to
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = t.user_id AND p.selection_decision = :aiSelection))
             GROUP BY CASE WHEN t.iris_message_id IS NOT NULL THEN 1 ELSE 0 END
             """)
-    List<Object[]> computeTokenCost(@Param("from") Instant from, @Param("to") Instant to);
+    List<Object[]> computeTokenCost(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT s.id AS sessionId, s.creation_date AS creationDate,
@@ -199,8 +217,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             FROM iris_session s
             WHERE s.creation_date >= :from AND s.creation_date < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    List<Object[]> findSessionsWithMode(@Param("from") Instant from, @Param("to") Instant to);
+    List<Object[]> findSessionsWithMode(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT m.id AS msgId, m.sent_at AS sentAt, m.sender, m.session_id AS sessionId
@@ -208,8 +227,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             JOIN iris_session s ON s.id = m.session_id
             WHERE m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    List<Object[]> findMessagesInRange(@Param("from") Instant from, @Param("to") Instant to);
+    List<Object[]> findMessagesInRange(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT COUNT(*)
@@ -229,8 +249,9 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
               AND NOT (m.sender = 'LLM' AND COALESCE(m.intermediate, FALSE) = TRUE)
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             """)
-    List<Object[]> findLlmMessagesWithRatings(@Param("from") Instant from, @Param("to") Instant to);
+    List<Object[]> findLlmMessagesWithRatings(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT t.time AS traceTime,
@@ -243,9 +264,10 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             JOIN llm_token_usage_request r ON r.trace_id = t.id
             WHERE t.service = 'IRIS'
               AND t.time >= :from AND t.time < :to
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = t.user_id AND p.selection_decision = :aiSelection))
             GROUP BY t.id, t.time, CASE WHEN t.iris_message_id IS NOT NULL THEN 1 ELSE 0 END
             """)
-    List<Object[]> findTokenCostWithTimestamps(@Param("from") Instant from, @Param("to") Instant to);
+    List<Object[]> findTokenCostWithTimestamps(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 
     @Query(nativeQuery = true, value = """
             SELECT s.course_id AS courseId, COUNT(*) AS sessionCount
@@ -253,11 +275,12 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             WHERE s.creation_date >= :from AND s.creation_date < :to
               AND s.discriminator = 'CHAT'
               AND s.course_id IS NOT NULL
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = s.user_id AND p.selection_decision = :aiSelection))
             GROUP BY s.course_id
             ORDER BY sessionCount DESC
             LIMIT :limit
             """)
-    List<Object[]> findTopCoursesBySessionCount(@Param("from") Instant from, @Param("to") Instant to, @Param("limit") int limit);
+    List<Object[]> findTopCoursesBySessionCount(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection, @Param("limit") int limit);
 
     @Query(nativeQuery = true, value = """
             SELECT r.model,
@@ -270,7 +293,8 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             JOIN llm_token_usage_request r ON r.trace_id = t.id
             WHERE t.service = 'IRIS'
               AND t.time >= :from AND t.time < :to
+              AND (:aiSelection = 'ALL' OR EXISTS (SELECT 1 FROM user_ai_preference p WHERE p.user_id = t.user_id AND p.selection_decision = :aiSelection))
             GROUP BY r.model
             """)
-    List<Object[]> computeTokenCostByModel(@Param("from") Instant from, @Param("to") Instant to);
+    List<Object[]> computeTokenCostByModel(@Param("from") Instant from, @Param("to") Instant to, @Param("aiSelection") String aiSelection);
 }

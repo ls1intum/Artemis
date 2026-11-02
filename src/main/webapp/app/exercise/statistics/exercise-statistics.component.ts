@@ -1,3 +1,4 @@
+import { StatisticsSpanSelectorComponent } from 'app/exercise/statistics/statistics-span-selector/statistics-span-selector.component';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -8,22 +9,23 @@ import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercis
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { HttpResponse } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseDetailStatisticsComponent } from './exercise-detail-statistic/exercise-detail-statistics.component';
 import { StatisticsScoreDistributionGraphComponent } from 'app/exercise/statistics-graph/score-distribution-graph/statistics-score-distribution-graph.component';
 import { StatisticsGraphComponent } from 'app/exercise/statistics-graph/statistics-graph.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-statistics',
     templateUrl: './exercise-statistics.component.html',
     styleUrls: ['../../course/manage/statistics/course-management-statistics.component.scss'],
-    imports: [TranslateDirective, ExerciseDetailStatisticsComponent, StatisticsScoreDistributionGraphComponent, StatisticsGraphComponent, ArtemisTranslatePipe],
+    imports: [StatisticsSpanSelectorComponent, TranslateDirective, ExerciseDetailStatisticsComponent, StatisticsScoreDistributionGraphComponent, StatisticsGraphComponent],
 })
 export class ExerciseStatisticsComponent implements OnInit {
     private service = inject(StatisticsService);
     private route = inject(ActivatedRoute);
     private exerciseService = inject(ExerciseService);
+    private accountService = inject(AccountService);
 
     // html properties
     SpanType = SpanType;
@@ -37,11 +39,20 @@ export class ExerciseStatisticsComponent implements OnInit {
     readonly exerciseStatistics = signal<ExerciseManagementStatisticsDto>(undefined!);
 
     ngOnInit() {
+        let exam = false;
         let exerciseId = 0;
+        let courseId = 0;
         this.paramSub = this.route.params.subscribe((params) => {
-            exerciseId = params['exerciseId'];
+            exerciseId = Number(params['exerciseId']);
+            courseId = Number(params['courseId']);
+            exam = !!params['examId'];
         });
-        this.exerciseService.find(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+        const exerciseSource = exam
+            ? this.accountService.isAtLeastEditorInCourseWithId(courseId)
+                ? this.exerciseService.findForExamManagement(exerciseId)
+                : this.exerciseService.findForExamAssessment(exerciseId)
+            : this.exerciseService.findForStaff(exerciseId);
+        exerciseSource.subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             const exercise = exerciseResponse.body!;
             this.exercise.set(exercise);
             this.course.set(getCourseFromExercise(exercise));

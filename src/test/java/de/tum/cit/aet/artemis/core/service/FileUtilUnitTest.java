@@ -394,9 +394,16 @@ class FileUtilUnitTest {
     }
 
     @Test
-    void testMergePdf_nonexistentFiles_shouldReturnPresentEmptyFile() {
+    void testMergePdf_nonexistentFiles_shouldReturnEmptyOptional() {
         Optional<byte[]> result = FileUtil.mergePdfFiles(List.of(exportTestRootPath.resolve("missing.pdf")), "missing");
-        assertThat(result).contains(new byte[0]);
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void testMergePdf_missingSourceDoesNotReturnPartialPdf() throws IOException {
+        Path existingPdf = createPdf("existing.pdf", List.of(new PDRectangle(100, 100)));
+
+        assertThat(FileUtil.mergePdfFiles(List.of(existingPdf, exportTestRootPath.resolve("missing.pdf")), "incomplete")).isEmpty();
     }
 
     @Test

@@ -1,3 +1,4 @@
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
@@ -93,6 +94,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 MockRouterLinkDirective,
             ],
             providers: [
+                MockProvider(FeatureToggleService, { getFeatureTogglesActive: () => of(true) }),
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(HttpClient),
@@ -564,7 +566,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
             const startExerciseButton = debugElement.query(By.css('button.start-exercise'));
             expect(startExerciseButton).not.toBeNull();
-            expect(startExerciseButton.componentInstance.overwriteDisabled()).toBe(true);
+            expect(startExerciseButton.componentInstance.forceDisabled()).toBe(true);
         },
     );
 

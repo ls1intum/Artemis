@@ -138,24 +138,26 @@
                     >
                         <!-- list of all top level posts -->
                         <!-- answers are opened in the thread sidebar -->
-                        @for (post of posts(); track postsTrackByFn($index, post)) {
-                            <div class="pt-2" style="cursor: pointer">
-                                <jhi-posting-thread
-                                    #postingThread
-                                    [lastReadDate]="post.conversation?.lastMessageDate"
-                                    [hasChannelModerationRights]="!!getAsChannel(post.conversation)?.hasChannelModerationRights"
-                                    [id]="'item-' + post.id"
-                                    [post]="post"
-                                    [showAnswers]="false"
-                                    [searchConfig]="courseWideSearchConfig()"
-                                    [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
-                                    [isCommunicationPage]="true"
-                                    [showChannelReference]="true"
-                                    (openThread)="setPostForThread($event)"
-                                    (click)="onTriggerNavigateToPost(post)"
-                                />
-                            </div>
-                        }
+                        <div #resultContent data-testid="course-wide-search-results">
+                            @for (post of posts(); track postsTrackByFn($index, post)) {
+                                <div class="pt-2" style="cursor: pointer">
+                                    <jhi-posting-thread
+                                        #postingThread
+                                        [lastReadDate]="post.conversation?.lastMessageDate"
+                                        [hasChannelModerationRights]="!!getAsChannel(post.conversation)?.hasChannelModerationRights"
+                                        [id]="'item-' + post.id"
+                                        [post]="post"
+                                        [showAnswers]="false"
+                                        [searchConfig]="courseWideSearchConfig()"
+                                        [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
+                                        [isCommunicationPage]="true"
+                                        [showChannelReference]="true"
+                                        (openThread)="setPostForThread($event)"
+                                        (click)="onTriggerNavigateToPost(post)"
+                                    />
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>

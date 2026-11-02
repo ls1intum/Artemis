@@ -9,9 +9,14 @@ $box-shadow: ();
 $box-shadow2: ();
 
 @for $i from 0 through $particles {
+    // Disperse particles deterministically so rebuilding the same source preserves chunk hashes.
+    $x: ($i * 173 + 37) % $width + 1;
+    $y: ($i * $i * 97 + $i * 71 + 53) % $height + 1;
+    $hue: ($i * 137 + 19) % 360 + 1;
+
     $box-shadow:
         $box-shadow,
-        random($width) - calc($width / 2) + px random($height) - calc($height / 1.2) + px hsl(random(360), 100%, 50%);
+        $x - calc($width / 2) + px $y - calc($height / 1.2) + px hsl($hue, 100%, 50%);
     $box-shadow2:
         $box-shadow2,
         0 0 #fff;

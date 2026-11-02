@@ -1,13 +1,13 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, take } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { LtiLoginContinuationService } from './lti-login-continuation.service';
 
 type LtiLaunchResponse = {
     targetLinkUri: string;
@@ -35,6 +35,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     private sessionStorageService = inject(SessionStorageService);
     private ltiService = inject(LtiService);
     private themeService = inject(ThemeService);
+    private loginContinuation = inject(LtiLoginContinuationService);
 
     readonly isLaunching = signal(true);
 
@@ -54,6 +55,8 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             this.isLaunching.set(false);
             return;
         }
+
+        this.loginContinuation.clearPendingLaunch();
 
         const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
 
@@ -101,16 +104,13 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     }
 
     redirectUserToLoginThenTargetLink(error: HttpErrorResponse): void {
-        // Redirect the user to the login page
-        void this.router.navigate(['/sign-in']).then(() => {
-            // After navigating to the login page, set up a listener for when the user logs in
-            this.accountService
-                .getAuthenticationState()
-                .pipe(filter(Boolean), take(1))
-                .subscribe(() => {
-                    this.redirectUserToTargetLink(error);
-                });
-        });
+        const body = error.error as LtiLaunchErrorBody;
+        if (!this.loginContinuation.prepare(body.targetLinkUri, body.ltiIdToken, body.clientRegistrationId)) {
+            this.handleLtiLaunchError();
+            return;
+        }
+        // Home owns the continuation after authentication, including a full-page identity-provider round trip.
+        void this.router.navigate(['/sign-in']);
     }
 
     handleLtiLaunchSuccess(data: LtiLaunchResponse): void {

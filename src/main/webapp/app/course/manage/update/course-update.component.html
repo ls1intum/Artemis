@@ -326,16 +326,14 @@
                             <span jhiTranslate="artemisApp.course.maxPoints.title"></span>
                             <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.maxPoints.info' | artemisTranslate" />
                         </span>
-                        <input
-                            type="number"
-                            tumAetUiInput
-                            class="w-full"
+                        <jhi-points-input
+                            fluid
                             name="maxPoints"
-                            id="field_maxPoints"
-                            [attr.aria-label]="'artemisApp.course.maxPoints.title' | artemisTranslate"
-                            min="1"
-                            step="1"
-                            [attr.max]="MAX_GRADING_POINTS"
+                            inputId="field_maxPoints"
+                            [ariaLabel]="'artemisApp.course.maxPoints.title' | artemisTranslate"
+                            [min]="1"
+                            [max]="MAX_GRADING_POINTS"
+                            [invalid]="showError('maxPoints')"
                             formControlName="maxPoints"
                         />
                         <ng-container tumAetUiFormFieldError>

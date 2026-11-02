@@ -1,3 +1,11 @@
+import {
+    TumAetUiButtonComponent,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiInputDirective,
+    TumAetUiSelectButtonComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { Component, DestroyRef, DoCheck, OnInit, computed, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
@@ -19,22 +27,16 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { AssessmentCriteriaGenerationService } from 'app/exercise/structured-grading-criterion/assessment-criteria-generation.service';
+import { AssessmentCriteriaGenerationService } from 'app/hyperion/assessment/assessment-criteria-generation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { defer, finalize } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiInputDirective,
-    TumAetUiSelectButtonComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+
 import { AccountService } from 'app/core/auth/account.service';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const GRADING_INSTRUCTION_PLACEHOLDER = 'Add Assessment Instruction text here';
@@ -59,6 +61,7 @@ type ReconciliationPlan = {
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
     imports: [
+        TumAetUiInputDirective,
         TranslateDirective,
         FormsModule,
         FaIconComponent,
@@ -67,9 +70,9 @@ type ReconciliationPlan = {
         ArtemisTranslatePipe,
         TumAetUiButtonComponent,
         TumAetUiConfirmDialogComponent,
-        TumAetUiInputDirective,
         TumAetUiSelectButtonComponent,
         TumAetUiTooltipDirective,
+        PointsInputComponent,
     ],
     providers: [TumAetUiConfirmationService],
 })

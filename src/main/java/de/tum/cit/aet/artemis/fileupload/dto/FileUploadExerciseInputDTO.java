@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.fileupload.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
@@ -116,7 +115,7 @@ public record FileUploadExerciseInputDTO(@Nullable Long id, @Nullable String tit
         exercise.setExampleSolution(exampleSolution);
         exercise.setFilePattern(filePattern);
         if (gradingCriteria != null) {
-            exercise.setGradingCriteria(gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toSet()));
+            exercise.setGradingCriteria(GradingCriterionDTO.toEntities(gradingCriteria));
         }
         if (plagiarismDetectionConfig != null) {
             exercise.setPlagiarismDetectionConfig(plagiarismDetectionConfig.toEntity());

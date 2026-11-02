@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.domain;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,6 +27,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
@@ -144,8 +146,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private ExerciseVariantGroup exerciseVariantGroup;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("sortOrder ASC, id ASC")
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
-    private Set<GradingCriterion> gradingCriteria = new HashSet<>();
+    private Set<GradingCriterion> gradingCriteria = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
@@ -848,11 +851,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @return A clone of the grading criteria list
      */
     public Set<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        Set<GradingCriterion> newGradingCriteria = new HashSet<>();
+        Set<GradingCriterion> newGradingCriteria = new LinkedHashSet<>();
         for (GradingCriterion originalGradingCriterion : getGradingCriteria()) {
             GradingCriterion newGradingCriterion = new GradingCriterion();
             newGradingCriterion.setExercise(this);
             newGradingCriterion.setTitle(originalGradingCriterion.getTitle());
+            newGradingCriterion.setSortOrder(originalGradingCriterion.getSortOrder());
             newGradingCriterion.setStructuredGradingInstructions(copyGradingInstruction(originalGradingCriterion, newGradingCriterion, gradingInstructionCopyTracker));
             newGradingCriteria.add(newGradingCriterion);
         }
@@ -870,7 +874,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      */
     private Set<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
             Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
-        Set<GradingInstruction> newGradingInstructions = new HashSet<>();
+        Set<GradingInstruction> newGradingInstructions = new LinkedHashSet<>();
         for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
             final var newGradingInstruction = copyGradingInstruction(newGradingCriterion, originalGradingInstruction);
             newGradingInstructions.add(newGradingInstruction);
@@ -886,6 +890,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
         newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
         newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
+        newGradingInstruction.setSortOrder(originalGradingInstruction.getSortOrder());
         newGradingInstruction.setGradingCriterion(newGradingCriterion);
         return newGradingInstruction;
     }
@@ -913,7 +918,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /**
      * Validates score settings
-     * 1. The maxScore needs to be greater than 0, except for not included programming exercises
+     * 1. The maxScore needs to be greater than 0 for every exercise, also for exercises that are not included in the score, because the score of a student is the share of the
+     * maximum points that was reached
      * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
      */
     public void validateScoreSettings() {
@@ -922,16 +928,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("The IncludedInOverallScore-property must be set", "Exercise", "includedInOverallScoreNotSet");
         }
 
-        if (this instanceof ProgrammingExercise && getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) {
-            if (getMaxPoints() == null) {
-                setMaxPoints(0.0);
-            }
-            else if (getMaxPoints() < 0) {
-                throw new BadRequestAlertException("The max points must not be negative", "Exercise", "maxScoreInvalid");
-            }
-        }
-        // Check if max score is set for exercises that contribute to the score calculation.
-        else if (getMaxPoints() == null || getMaxPoints() <= 0) {
+        if (getMaxPoints() == null || getMaxPoints() <= 0) {
             throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
@@ -972,14 +969,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /**
      * Ensures that the exercise has a mutable set for grading criteria.
-     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
+     * Creates and assigns a new {@link LinkedHashSet} if the current set is {@code null}.
      *
      * @return the non-null mutable set of grading criteria
      */
     public Set<GradingCriterion> ensureGradingCriteriaSet() {
         Set<GradingCriterion> managedCriteria = getGradingCriteria();
         if (managedCriteria == null) {
-            managedCriteria = new HashSet<>();
+            managedCriteria = new LinkedHashSet<>();
             setGradingCriteria(managedCriteria);
         }
         return managedCriteria;

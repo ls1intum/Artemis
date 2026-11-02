@@ -1,11 +1,10 @@
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
-import { Disposable, EditorPosition, MonacoEditorTextModel, makeEditorRange } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable, EditorPosition, MonacoEditorTextModel } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import * as monaco from 'monaco-editor';
 import { TextEditorCompleter } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-completer.model';
 import { TextEditorRange, makeTextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { TextEditorPosition } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-position.model';
-import { TextEditorCompletionItemKind } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 import { TextEditorKeyCode, TextEditorKeyModifier, TextEditorKeybinding } from './text-editor-keybinding.model';
 
 export class MonacoTextEditorAdapter implements TextEditor {
@@ -44,112 +43,32 @@ export class MonacoTextEditorAdapter implements TextEditor {
         if (!model) {
             throw new Error(`A model must be attached to the editor to register a completer.`);
         }
-        const triggerCharacter = completer.triggerCharacter;
-        if (triggerCharacter !== undefined && triggerCharacter.length !== 1) {
-            throw new Error(`The trigger character must be a single character.`);
-        }
         const languageId = model.getLanguageId();
         const modelId = model.id;
 
-        // We have to subtract an offset of 1 from the start column to include the trigger character in the range that will be replaced.
-        const triggerCharacterOffset = triggerCharacter ? 1 : 0;
         return monaco.languages.registerCompletionItemProvider(languageId, {
-            // We only want to trigger the completion provider if the trigger character is typed. However, we also allow numbers to trigger the completion, as they would not normally trigger it.
-            triggerCharacters: triggerCharacter ? [triggerCharacter, ...'0123456789'] : undefined,
             provideCompletionItems: async (model: MonacoEditorTextModel, position: EditorPosition): Promise<monaco.languages.CompletionList | undefined> => {
                 if (model.id !== modelId) {
                     return undefined;
                 }
-                const sequenceUntilPosition = this.findTypedSequenceUntilPosition(model, position, triggerCharacter, completer.scanLengthLimit);
-                if (!sequenceUntilPosition) {
-                    return undefined;
-                }
-                const range = {
-                    startLineNumber: position.lineNumber,
-                    startColumn: sequenceUntilPosition.startColumn - triggerCharacterOffset,
-                    endLineNumber: position.lineNumber,
-                    endColumn: sequenceUntilPosition.endColumn,
-                };
-                const beforeWord = model.getValueInRange({
-                    startLineNumber: position.lineNumber,
-                    startColumn: sequenceUntilPosition.startColumn - triggerCharacterOffset,
-                    endLineNumber: position.lineNumber,
-                    endColumn: sequenceUntilPosition.startColumn,
-                });
-
-                // We only want suggestions if the trigger character is at the beginning of the word.
-                if (triggerCharacter && sequenceUntilPosition.word !== triggerCharacter && beforeWord !== triggerCharacter) {
-                    return undefined;
-                }
-
-                // Optionally require the trigger character to be at the start of a line or after whitespace,
-                // so completions do not appear inside words, numbers (e.g. 10:30), or URLs.
-                if (triggerCharacter && completer.requireWordBoundaryBeforeTrigger) {
-                    const triggerColumn = sequenceUntilPosition.startColumn - triggerCharacterOffset;
-                    if (triggerColumn > 1) {
-                        const characterBeforeTrigger = model.getValueInRange({
-                            startLineNumber: position.lineNumber,
-                            startColumn: triggerColumn - 1,
-                            endLineNumber: position.lineNumber,
-                            endColumn: triggerColumn,
-                        });
-                        if (!/\s/.test(characterBeforeTrigger)) {
-                            return undefined;
-                        }
-                    }
-                }
-                const items = (await completer.searchItems(sequenceUntilPosition.word)).map((item, index) =>
-                    completer.mapCompletionItem(item, this.fromMonacoRange(range), sequenceUntilPosition.word, index),
-                );
+                const wordUntilPosition = model.getWordUntilPosition(position);
+                const range = makeTextEditorRange(position.lineNumber, wordUntilPosition.startColumn, position.lineNumber, wordUntilPosition.endColumn);
+                const items = (await completer.searchItems(wordUntilPosition.word)).map((item) => completer.mapCompletionItem(item, range));
 
                 return {
                     suggestions: items.map((item) => {
                         return {
                             label: item.getLabel(),
-                            kind: this.toMonacoCompletionKind(item.getKind()),
+                            kind: monaco.languages.CompletionItemKind.Constant,
                             insertText: item.getInsertText(),
                             range: this.toMonacoRange(item.getRange()),
                             detail: item.getDetailText(),
-                            filterText: item.getFilterText(),
-                            sortText: item.getSortText(),
                         };
                     }),
-                    incomplete: completer.incomplete,
+                    incomplete: false,
                 };
             },
         });
-    }
-
-    /**
-     * Finds the sequence of characters that was typed between the trigger character and the current position. If no trigger character is provided, we assume the sequence starts at the beginning of the word (default Monaco behavior).
-     * @param model The model to find the typed sequence in.
-     * @param position The position until which to find the typed sequence.
-     * @param triggerCharacter The character that triggers the sequence. If not provided, the sequence is assumed to start at the beginning of the word.
-     * @param lengthLimit The maximum length of the sequence to find. Defaults to 25.
-     */
-    private findTypedSequenceUntilPosition(
-        model: monaco.editor.ITextModel,
-        position: monaco.IPosition,
-        triggerCharacter?: string,
-        lengthLimit = 25,
-    ): monaco.editor.IWordAtPosition | undefined {
-        // Find the sequence of characters that was typed between the trigger character and the current position. If no trigger character is provided, we assume the sequence starts at the beginning of the word.
-        if (!triggerCharacter) {
-            return model.getWordUntilPosition(position);
-        }
-        const scanColumn = Math.max(1, position.column - lengthLimit);
-        const scanRange = makeEditorRange(position.lineNumber, scanColumn, position.lineNumber, position.column);
-        const text = model.getValueInRange(scanRange);
-        const triggerIndex = text.lastIndexOf(triggerCharacter);
-        if (triggerIndex === -1) {
-            return undefined;
-        }
-        // The word not including the trigger character.
-        return {
-            word: text.slice(triggerIndex + 1),
-            startColumn: scanRange.startColumn + triggerIndex + 1,
-            endColumn: position.column,
-        };
     }
 
     layout(): void {
@@ -237,15 +156,6 @@ export class MonacoTextEditorAdapter implements TextEditor {
 
     private fromMonacoRange(range: monaco.IRange): TextEditorRange {
         return makeTextEditorRange(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);
-    }
-
-    private toMonacoCompletionKind(kind: TextEditorCompletionItemKind) {
-        switch (kind) {
-            case TextEditorCompletionItemKind.User:
-                return monaco.languages.CompletionItemKind.User;
-            default:
-                return monaco.languages.CompletionItemKind.Constant;
-        }
     }
 
     private toMonacoKeybinding(keybinding: TextEditorKeybinding): number {

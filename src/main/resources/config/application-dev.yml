@@ -199,11 +199,6 @@ artemis:
         #     background-max-rows-per-minute: 600    # Background index writes per minute
         #     background-max-requests-per-minute: 30 # Background embedding requests per minute
 
-# Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
-sentry:
-  traces-sample-rate: 0.0
-  environment: local
-
 helios:
   status:
     enabled: false

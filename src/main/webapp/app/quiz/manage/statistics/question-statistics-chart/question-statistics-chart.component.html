@@ -1,0 +1,50 @@
+<div class="-mx-2! flex flex-wrap">
+    <div class="w-full! flex-none px-2! text-start md:w-7/12!">
+        <p id="text" class="chart-title-text">
+            @if (rated()) {
+                <span jhiTranslate="artemisApp.showStatistic.questionStatistic.titleRated"></span>
+            }
+            @if (!rated()) {
+                <span jhiTranslate="artemisApp.showStatistic.questionStatistic.titleUnrated"></span>
+            }
+        </p>
+    </div>
+    <div class="w-full! flex-none px-2! text-end md:w-5/12!">
+        <p class="chart-title-text">
+            <span>{{ participants() }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
+        </p>
+    </div>
+</div>
+<div class="quiz-statistic-chart" style="height: 525px">
+    <tumaet-ui-bar-chart
+        [labels]="chartData().labels"
+        [series]="chartData().series"
+        [config]="chartConfig()"
+        [ariaLabel]="(rated() ? 'artemisApp.showStatistic.questionStatistic.titleRated' : 'artemisApp.showStatistic.questionStatistic.titleUnrated') | artemisTranslate"
+    />
+</div>
+<div class="button-row w-full text-center">
+    <button (click)="toggleSolution.emit()" type="button" tumAetUiButton class="show-solution py-1.5!">
+        @if (showSolution()) {
+            <fa-icon [icon]="faCheckCircle" />
+        }
+        @if (!showSolution()) {
+            <fa-icon [icon]="faTimesCircle" />
+        }
+        @if (showSolution()) {
+            <span jhiTranslate="artemisApp.showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
+        }
+        @if (!showSolution()) {
+            <span jhiTranslate="artemisApp.showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
+        }
+    </button>
+    <button (click)="toggleRated.emit()" type="button" tumAetUiButton class="py-1.5!">
+        <fa-icon [icon]="faSync" />
+        @if (rated()) {
+            <span jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
+        }
+        @if (!rated()) {
+            <span jhiTranslate="artemisApp.showStatistic.switchToRated"></span>
+        }
+    </button>
+</div>

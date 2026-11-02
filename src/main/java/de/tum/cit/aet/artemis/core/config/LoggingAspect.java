@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.service.vcs.AbstractVersionControlService;
 
@@ -64,10 +65,39 @@ public class LoggingAspect {
      * <li>{@code BuildJobGitService} takes the token as the argument of {@code setCloneTokenForCurrentThread}, which
      * runs once per build job on any node carrying both the core and buildagent profiles - the standard single node
      * development setup, which is exactly where this aspect is active.</li>
+     * <li>The {@code Gocast*} integration beans exchange service credentials and short-lived approval credentials.
+     * Excluding the complete integration boundary also covers outer service and REST methods whose results contain an
+     * approval URL, plus repository methods whose arguments contain approval identifiers.</li>
+     * <li>{@code AttachmentVideoUnitPlaylistResource} returns a signed TUM Live playlist as a plain string. The value objects that carry such a playlist
+     * through other beans ({@code ResolvedVideo}, {@code TumLivePlaylistLookup} and the Iris lecture DTOs) redact it in {@code toString()} instead.</li>
+     * <li>{@code PersonalAccessTokenService} receives the secret of a personal access token to authenticate it and returns it when a token is created, and
+     * {@code PersonalAccessTokenResource} returns it in the response.</li>
+     * <li>{@code PyrisCallbackTokenService} issues the token Pyris authenticates its callbacks with and receives the
+     * presented one to verify, so it appears as both a return value and an argument.</li>
      * </ul>
      */
-    @Pointcut("!within(de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService) && !within(de.tum.cit.aet.artemis.buildagent.service.BuildJobGitService)")
+    @Pointcut("!within(de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService)" + " && !within(de.tum.cit.aet.artemis.buildagent.service.BuildJobGitService)"
+            + " && !within(de.tum.cit.aet.artemis.videosource.service.Gocast*)" + " && !within(de.tum.cit.aet.artemis.videosource.repository.Gocast*)"
+            + " && !within(de.tum.cit.aet.artemis.videosource.web.Gocast*)" + " && !within(de.tum.cit.aet.artemis.videosource.web.open.Gocast*)"
+            + " && !within(de.tum.cit.aet.artemis.lecture.web.AttachmentVideoUnitPlaylistResource)"
+            + " && !within(de.tum.cit.aet.artemis.account.service.PersonalAccessTokenService)" + " && !within(de.tum.cit.aet.artemis.account.web.PersonalAccessTokenResource)"
+            + " && !within(de.tum.cit.aet.artemis.iris.service.pyris.PyrisCallbackTokenService)")
     public void notACredentialHandlingBean() {
+        // Method is empty as this is just a Pointcut, the implementations are in the advices.
+    }
+
+    /**
+     * Mail arguments include recipients, rendered content and recovery keys, including the content passed through Markdown renderers.
+     * Mail services log delivery metadata themselves; their exceptions can also contain addresses echoed by SMTP servers or templates.
+     */
+    @Pointcut("!within(de.tum.cit.aet.artemis.notification.service.notifications.MailService)"
+            + " && !within(de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService)"
+            + " && !within(de.tum.cit.aet.artemis.notification.service.notifications.MailRetryQueueService)"
+            + " && !within(de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService)"
+            + " && !within(de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService)"
+            + " && !within(de.tum.cit.aet.artemis.notification.service.CourseNotificationEmailService)"
+            + " && !within(de.tum.cit.aet.artemis.notification.service.TestAccountEmailService)")
+    public void notAMailHandlingBean() {
         // Method is empty as this is just a Pointcut, the implementations are in the advices.
     }
 
@@ -77,10 +107,16 @@ public class LoggingAspect {
      * @param joinPoint join point for advice.
      * @param e         exception.
      */
-    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut()", throwing = "e")
+    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut() && notAMailHandlingBean()", throwing = "e")
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
         if (AbstractVersionControlService.isReadFullyShortReadOfBlockException(e)) {
             // ignore
+            return;
+        }
+
+        if (e instanceof RateLimitExceededException) {
+            // the answer is a 429 and the limit logs what is worth knowing: logging it again at error level in every layer that it passes
+            // would let a sender fill the log, and the error analysis would count the rejections as errors of the server
             return;
         }
 
@@ -106,13 +142,24 @@ public class LoggingAspect {
     }
 
     /**
+     * Keeps the failing mail operation and exception type visible without recording the exception's recipient data.
+     *
+     * @param joinPoint the failing mail operation
+     * @param e         the exception, whose message and cause must not be logged
+     */
+    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut() && !notAMailHandlingBean()", throwing = "e")
+    public void logMailFailure(JoinPoint joinPoint, Throwable e) {
+        log.error("Exception in {}.{}() (exception {})", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(), e.getClass().getSimpleName());
+    }
+
+    /**
      * Advice that logs when a method is entered and exited.
      *
      * @param joinPoint join point for advice.
      * @return result.
      * @throws Throwable throws {@link IllegalArgumentException}.
      */
-    @Around("applicationPackagePointcut() && springBeanPointcut() && notACredentialHandlingBean()")
+    @Around("applicationPackagePointcut() && springBeanPointcut() && notACredentialHandlingBean() && notAMailHandlingBean()")
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
         if (log.isDebugEnabled()) {
             log.debug("Enter: {}.{}() with argument[s] = {}", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(),

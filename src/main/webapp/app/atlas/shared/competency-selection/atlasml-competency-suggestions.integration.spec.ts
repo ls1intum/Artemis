@@ -19,8 +19,8 @@ import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 
 /**
  * Integration test suite for AtlasML Competency Suggestion Feature
@@ -101,9 +101,9 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
 
     describe('UI Component Visibility', () => {
         it('should display lightbulb suggestion button when AtlasML is enabled', () => {
-            const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+            const btnDe = fixture.debugElement.query(By.directive(TumAetUiButtonComponent));
             expect(btnDe).toBeTruthy();
-            const btn = btnDe.componentInstance as ButtonComponent;
+            const btn = btnDe.componentInstance as TumAetUiButtonComponent;
             expect(btn.disabled()).toBeFalsy();
         });
 
@@ -112,32 +112,31 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             mockFeatureToggleService.setFeatureToggleState(FeatureToggle.AtlasML, false).subscribe();
             fixture.detectChanges();
 
-            const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+            const btnDe = fixture.debugElement.query(By.directive(TumAetUiButtonComponent));
             expect(btnDe.nativeElement.classList.contains('d-none')).toBeTruthy();
         });
 
         it('should show proper tooltip for lightbulb button', () => {
-            const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
-            const btn = btnDe.componentInstance as ButtonComponent;
-            expect(btn.tooltip()).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
+            const btnDe = fixture.debugElement.query(By.directive(TumAetUiButtonComponent));
+            expect(btnDe.injector.get(TumAetUiTooltipDirective).content()).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
         });
 
         it('should disable lightbulb button when exercise description is empty', () => {
             fixture.componentRef.setInput('exerciseDescription', '');
             fixture.detectChanges();
 
-            const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
-            const btn = btnDe.componentInstance as ButtonComponent;
-            expect(btn.disabled).toBeTruthy();
+            const btnDe = fixture.debugElement.query(By.directive(TumAetUiButtonComponent));
+            const btn = btnDe.componentInstance as TumAetUiButtonComponent;
+            expect(btn.disabled()).toBeTruthy();
         });
 
         it('should disable lightbulb button when exercise description contains only whitespace', () => {
             fixture.componentRef.setInput('exerciseDescription', '   \n\t  ');
             fixture.detectChanges();
 
-            const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
-            const btn = btnDe.componentInstance as ButtonComponent;
-            expect(btn.disabled).toBeTruthy();
+            const btnDe = fixture.debugElement.query(By.directive(TumAetUiButtonComponent));
+            const btn = btnDe.componentInstance as TumAetUiButtonComponent;
+            expect(btn.disabled()).toBeTruthy();
         });
     });
 
@@ -217,14 +216,14 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         });
 
         it('should display lightbulb icons next to suggested competencies', () => {
-            const suggestedIcons = fixture.debugElement.queryAll(By.css('fa-icon.text-warning.ms-2'));
+            const suggestedIcons = fixture.debugElement.queryAll(By.css('[data-testid="suggested-competency"]'));
             expect(suggestedIcons).toHaveLength(2); // Two suggested competencies
 
             // Verify tooltips
             suggestedIcons.forEach((icon) => {
-                const tooltip = icon.injector.get(NgbTooltip, null);
+                const tooltip = icon.injector.get(TumAetUiTooltipDirective, null);
                 // Expect translation key to be present (translated by pipe in template)
-                expect(tooltip?.ngbTooltip).toBe('artemisApp.competency.suggestion.tooltip');
+                expect(tooltip?.content()).toBe('artemisApp.competency.suggestion.tooltip');
             });
         });
 
@@ -276,23 +275,23 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
                 fixture.detectChanges();
 
                 // Should show spinner
-                // Loading is now handled by jhi-button isLoading; spinner element is not directly in DOM here
-                const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
-                const btn = btnDe.componentInstance as ButtonComponent;
-                expect(btn.isLoading).toBeTruthy();
+                // Loading is now handled by TUM button loading; spinner element is not directly in DOM here
+                const btnDe = fixture.debugElement.query(By.directive(TumAetUiButtonComponent));
+                const btn = btnDe.componentInstance as TumAetUiButtonComponent;
+                expect(btn.loading()).toBeTruthy();
 
                 // Should not show lightbulb icon (hidden when loading)
-                const lightbulbIcon = btnDe.query(By.css('.jhi-btn__icon'));
+                const lightbulbIcon = btnDe.query(By.css('[data-icon="lightbulb"]'));
                 expect(lightbulbIcon).toBeFalsy();
                 // Spinner should be visible on the button while loading
-                const spinnerIcon = btnDe.query(By.css('.jhi-btn__loading'));
+                const spinnerIcon = btnDe.query(By.css('[data-icon="spinner"]'));
                 expect(spinnerIcon).toBeTruthy();
 
                 vi.advanceTimersByTime(200);
                 fixture.detectChanges();
 
                 // After completion, spinner should be gone
-                const spinnerAfter = fixture.debugElement.query(By.css('.spinner-border-sm'));
+                const spinnerAfter = fixture.debugElement.query(By.css('[data-icon="spinner"]'));
                 expect(spinnerAfter).toBeFalsy();
             } finally {
                 vi.useRealTimers();
@@ -304,22 +303,22 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             try {
                 vi.spyOn(httpClient, 'post').mockReturnValue(of({ competencies: [] }).pipe(delay(100)));
 
-                let btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
-                let btn = btnDe.componentInstance as ButtonComponent;
+                let btnDe = fixture.debugElement.query(By.directive(TumAetUiButtonComponent));
+                let btn = btnDe.componentInstance as TumAetUiButtonComponent;
                 expect(btn.disabled()).toBeFalsy();
 
                 component.suggestCompetencies();
                 fixture.detectChanges();
 
-                btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
-                btn = btnDe.componentInstance as ButtonComponent;
+                btnDe = fixture.debugElement.query(By.directive(TumAetUiButtonComponent));
+                btn = btnDe.componentInstance as TumAetUiButtonComponent;
                 expect(btn.disabled()).toBeTruthy();
 
                 vi.advanceTimersByTime(100);
                 fixture.detectChanges();
 
-                btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
-                btn = btnDe.componentInstance as ButtonComponent;
+                btnDe = fixture.debugElement.query(By.directive(TumAetUiButtonComponent));
+                btn = btnDe.componentInstance as TumAetUiButtonComponent;
                 expect(btn.disabled()).toBeFalsy();
             } finally {
                 vi.useRealTimers();

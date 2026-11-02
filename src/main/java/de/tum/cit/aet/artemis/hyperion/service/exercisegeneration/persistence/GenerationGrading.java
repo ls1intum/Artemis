@@ -13,7 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GeneratedTestPlan;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.CanonicalMaps;
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
@@ -40,7 +41,8 @@ public final class GenerationGrading {
         public static final Snapshot EMPTY = new Snapshot(Map.of());
 
         public Snapshot {
-            tests = Map.copyOf(tests);
+            // Keep detached grading snapshots deterministic across encoding round trips.
+            tests = CanonicalMaps.copyOf(tests);
         }
     }
 
@@ -129,9 +131,11 @@ public final class GenerationGrading {
             ProgrammingExerciseTestCase testCase = byName.get(entry.name());
             Double weight = effectiveWeights.get(entry.name());
             Visibility visibility = "AFTER_DUE_DATE".equals(entry.visibility()) ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS;
-            if (!Objects.equals(testCase.getWeight(), weight) || testCase.getVisibility() != visibility) {
+            Double bonusPoints = entry.purpose() == GeneratedTestPlan.Purpose.PRESERVATION ? 0.0 : testCase.getBonusPoints();
+            if (!Objects.equals(testCase.getWeight(), weight) || testCase.getVisibility() != visibility || !Objects.equals(testCase.getBonusPoints(), bonusPoints)) {
                 testCase.setWeight(weight);
                 testCase.setVisibility(visibility);
+                testCase.setBonusPoints(bonusPoints);
                 changed.add(testCase);
             }
         }

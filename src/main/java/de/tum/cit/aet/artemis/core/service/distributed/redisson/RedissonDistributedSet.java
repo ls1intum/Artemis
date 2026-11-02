@@ -5,48 +5,24 @@ import java.util.Set;
 
 import org.redisson.api.RSet;
 
-import de.tum.cit.aet.artemis.core.service.distributed.api.set.DistributedSet;
+import de.tum.cit.aet.artemis.core.service.distributed.api.set.AbstractDistributedSet;
 
-public class RedissonDistributedSet<T> implements DistributedSet<T> {
+public class RedissonDistributedSet<T> extends AbstractDistributedSet<T> {
 
-    private final RSet<T> set;
+    private final RSet<T> redisSet;
 
     public RedissonDistributedSet(RSet<T> set) {
-        this.set = set;
-    }
-
-    @Override
-    public boolean add(T item) {
-        return set.add(item);
-    }
-
-    @Override
-    public boolean remove(T item) {
-        return set.remove(item);
-    }
-
-    @Override
-    public boolean contains(T item) {
-        return set.contains(item);
+        super(set);
+        this.redisSet = set;
     }
 
     @Override
     public Set<T> getAll() {
-        return new HashSet<>(set.readAll());
-    }
-
-    @Override
-    public int size() {
-        return set.size();
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return set.isEmpty();
+        return new HashSet<>(redisSet.readAll());
     }
 
     @Override
     public void clear() {
-        set.delete();
+        redisSet.delete();
     }
 }

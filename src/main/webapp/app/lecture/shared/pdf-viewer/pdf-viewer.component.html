@@ -25,7 +25,7 @@
                 <div class="artemis-pdf-toolbar__search-field">
                     <fa-icon class="artemis-pdf-toolbar__search-icon" [icon]="faMagnifyingGlass" />
                     <input
-                        pInputText
+                        tumAetUiInput
                         type="text"
                         class="artemis-pdf-toolbar__search-input"
                         [placeholder]="searchPlaceholder()"
@@ -42,6 +42,10 @@
                             <span class="artemis-pdf-toolbar__search-count"> {{ matchesCount.current }}/{{ matchesCount.total }} </span>
                         }
                         <button
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="text"
+                            size="small"
                             class="artemis-pdf-toolbar__button"
                             type="button"
                             [title]="'artemisApp.attachmentVideoUnit.pdfViewer.previousMatch' | artemisTranslate"
@@ -52,6 +56,10 @@
                             <fa-icon [icon]="faChevronUp" />
                         </button>
                         <button
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="text"
+                            size="small"
                             class="artemis-pdf-toolbar__button"
                             type="button"
                             [title]="'artemisApp.attachmentVideoUnit.pdfViewer.nextMatch' | artemisTranslate"
@@ -62,6 +70,10 @@
                             <fa-icon [icon]="faChevronDown" />
                         </button>
                         <button
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="text"
+                            size="small"
                             class="artemis-pdf-toolbar__button"
                             type="button"
                             [title]="'artemisApp.attachmentVideoUnit.pdfViewer.clearSearch' | artemisTranslate"
@@ -76,18 +88,20 @@
             <div class="artemis-pdf-toolbar__divider"></div>
             @if (totalPages() > 0) {
                 <div class="artemis-pdf-toolbar__page-navigation">
-                    <p-inputnumber
+                    <input
+                        tumAetUiInput
+                        type="number"
+                        step="1"
                         #pageInput
                         [ngModel]="pageInputValue()"
                         (ngModelChange)="pageInputValue.set($event ?? undefined)"
                         (keydown.enter)="onPageInputEnter($event)"
-                        (onFocus)="onPageInputFocus()"
-                        (click)="onPageInputFocus()"
-                        (onBlur)="confirmPageNavigation()"
-                        [showButtons]="false"
+                        (focus)="onPageInputFocus($event)"
+                        (click)="onPageInputFocus($event)"
+                        (blur)="confirmPageNavigation()"
                         [placeholder]="'artemisApp.attachmentVideoUnit.pdfViewer.pageInputPlaceholder' | artemisTranslate"
                         [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.goToPage' | artemisTranslate"
-                        inputStyleClass="artemis-pdf-toolbar__page-input"
+                        class="artemis-pdf-toolbar__page-input"
                     />
                     <span class="artemis-pdf-toolbar__page-total">/{{ totalPages() }}</span>
                 </div>
@@ -95,6 +109,10 @@
             }
             <div class="artemis-pdf-toolbar__zoom-controls">
                 <button
+                    tumAetUiButton
+                    severity="secondary"
+                    variant="text"
+                    size="small"
                     class="artemis-pdf-toolbar__button"
                     type="button"
                     [title]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
@@ -104,6 +122,10 @@
                     <fa-icon [icon]="faMagnifyingGlassMinus" />
                 </button>
                 <button
+                    tumAetUiButton
+                    severity="secondary"
+                    variant="text"
+                    size="small"
                     class="artemis-pdf-toolbar__button"
                     type="button"
                     [title]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
@@ -115,6 +137,10 @@
             </div>
             <div class="artemis-pdf-toolbar__divider"></div>
             <button
+                tumAetUiButton
+                severity="secondary"
+                variant="text"
+                size="small"
                 class="artemis-pdf-toolbar__button artemis-pdf-toolbar__download-button"
                 type="button"
                 [title]="'artemisApp.attachmentVideoUnit.pdfViewer.downloadPdf' | artemisTranslate"
@@ -126,6 +152,10 @@
             @if (!isFullscreen()) {
                 <div class="artemis-pdf-toolbar__divider"></div>
                 <button
+                    tumAetUiButton
+                    severity="secondary"
+                    variant="text"
+                    size="small"
                     class="artemis-pdf-toolbar__button artemis-pdf-toolbar__fullscreen-button"
                     type="button"
                     [title]="'artemisApp.attachmentVideoUnit.pdfViewer.openFullscreen' | artemisTranslate"
@@ -139,6 +169,10 @@
         @if (isFullscreen()) {
             <div class="artemis-pdf-toolbar__right">
                 <button
+                    tumAetUiButton
+                    severity="secondary"
+                    variant="text"
+                    size="small"
                     class="artemis-pdf-toolbar__button artemis-pdf-toolbar__close-fullscreen-button"
                     type="button"
                     [title]="'artemisApp.attachmentVideoUnit.pdfViewer.closeFullscreen' | artemisTranslate"
@@ -152,10 +186,8 @@
     </div>
 
     @if (isLoading()) {
-        <div class="d-flex justify-content-center align-items-center position-absolute w-100 h-100">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf"></span>
-            </div>
+        <div class="flex justify-center items-center absolute w-full h-full">
+            <tumaet-ui-progress-spinner [ariaLabel]="'artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf' | artemisTranslate" />
         </div>
     }
 
@@ -188,6 +220,10 @@
                         ></a>
                     } @else if (link.targetPage) {
                         <button
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="text"
+                            size="small"
                             type="button"
                             class="pdf-page__link"
                             [attr.aria-label]="('artemisApp.attachmentVideoUnit.pdfViewer.goToPage' | artemisTranslate) + ' ' + link.targetPage"

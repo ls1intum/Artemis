@@ -106,12 +106,12 @@ value must have the declared type of its input, so `undefined` needs an input th
 Inputs are named by class member, and an aliased input is set under its alias. When the component is chosen
 from data, `switch` on the discriminant and pass component and data to one generic method
 (`ExerciseDetailDirective.render`), because `InputSignal` is invariant and a lookup table cannot
-tie a component to its data. `packages/tum-aet-ui` keeps an internal copy of the helper in
-`packages/tum-aet-ui/src/lib/internal/set-inputs.ts`, because it must not import from the application.
+tie a component to its data. `@tumaet/ui-angular` owns and exports the helper; the application utility re-exports the same implementation.
+Package code imports it locally from `packages/tum-aet-ui/src/lib/internal/set-inputs.ts`.
 
 `localRules/no-component-ref-set-input` bans any use of the `setInput` member, also aliased or
 destructured, at error level in production code of the application and the UI kit; specs are
-exempt. The helpers are the only places that disable it. Pass `setInputs` a plain object and a ref to
+exempt. The package helper is the only place that disables it. Pass `setInputs` a plain object and a ref to
 one component type; a union of components is rejected.
 `inputBinding`, `ngComponentOutlet` inputs and the PrimeNG `DialogService` `inputValues` use
 string names too and are no substitute; the rule does not cover them.
@@ -162,6 +162,16 @@ give groups of controls an accessible group name. The
 `@angular-eslint/template/label-has-associated-control` rule checks the label association, not
 the element choice or group names, in TUM AET UI and the client template areas listed in
 `eslint.config.mjs`.
+
+## Points inputs
+
+Enter points, bonus points and credits only with `jhi-points-input` (`PointsInputComponent`,
+`app/shared-ui/tum-aet-ui-integration/points-input`), not with `<input type="number">` or PrimeNG. It fixes
+the setup (three fraction digits, `.` and `,` accepted, no grouping) on `tumaet-ui-input-number` and works with
+`ngModel`, `formControlName` and `formControl`. Bind `[min]`/`[max]` on it (a native attribute does not validate
+a custom control) and pass `inputId` for labels and E2E locators. In specs, type with `typeIntoInputNumber` from
+`src/test/javascript/spec/helpers/input-number-test-helpers.ts`; the adapter writes a model value to its inner input
+one microtask late, so await `fixture.whenStable()` before reading it. Percentages, durations and counts are not points.
 
 ## Copying objects
 

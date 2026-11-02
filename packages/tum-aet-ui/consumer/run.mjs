@@ -34,13 +34,18 @@ const devDependencies = {
     '@angular/compiler-cli': dependencies['@angular/core'],
 };
 if (mode === 'minimum') devDependencies.typescript = catalog.typescript;
-// Keep workspace links and overrides out of consumer dependency resolution.
+// @angular/build 22.2.5 added the optional @oxc-parser/binding-wasm32-wasi 0.150.0. It depends on @emnapi/core and @emnapi/runtime 2.0.0-alpha.3,
+// which none of the versions of its own @napi-rs/wasm-runtime accept as a peer (1.2.4 and 1.2.5 allow ^1.7.1 || ^2.0.0-alpha.4, 1.2.6 allows
+// ^1.7.1 || 2.0.0-beta.2), so `--strict-peer-deps` fails with ERESOLVE. Resolve the emnapi packages of that binding to the 1.x line the runtime
+// accepts; remove once oxc-parser fixes its manifest.
+const overrides = { '@oxc-parser/binding-wasm32-wasi': { '@emnapi/core': '^1.7.1', '@emnapi/runtime': '^1.7.1' } };
+// Install in a temporary directory, so that workspace links and the workspace overrides stay out of consumer dependency resolution.
 const consumer = await mkdtemp(resolve(tmpdir(), 'tum-aet-ui-consumer-'));
 const results = resolve(root, 'build/test-results/tum-aet-ui-consumer', mode);
 await rm(results, { recursive: true, force: true });
 try {
     await cp(resolve(directory, 'app'), consumer, { recursive: true });
-    await writeFile(resolve(consumer, 'package.json'), JSON.stringify({ name: 'tum-aet-ui-consumer', private: true, type: 'module', dependencies, devDependencies }, null, 2));
+    await writeFile(resolve(consumer, 'package.json'), JSON.stringify({ name: 'tum-aet-ui-consumer', private: true, type: 'module', dependencies, devDependencies, overrides }, null, 2));
     const options = { cwd: consumer, stdio: 'inherit' };
     execFileSync('npm', ['install', '--ignore-scripts', '--strict-peer-deps', '--no-audit', '--no-fund'], options);
     execFileSync('npm', ['ls', '--depth=0'], options);

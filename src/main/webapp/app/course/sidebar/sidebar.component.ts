@@ -1,10 +1,12 @@
-import { Component, OnDestroy, effect, inject, input, output, signal } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiCheckboxComponent, TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { Component, OnDestroy, effect, inject, input, model, output, signal } from '@angular/core';
 import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
 import type { TumAetUiInputSize } from '@tumaet/ui-angular';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Subscription, distinctUntilChanged, filter } from 'rxjs';
 import { SidebarEventService } from './service/sidebar-event.service';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/foundation/types/exercise-filter';
 import {
     getAchievablePointsAndAchievedScoreFilterOptions,
@@ -48,13 +50,15 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         SearchFilterPipe,
         CourseTitleBarTitleComponent,
         CourseSidebarToggleButtonComponent,
+        TumAetUiCheckboxComponent,
     ],
 })
 export class SidebarComponent implements OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private sidebarEventService = inject(SidebarEventService);
-    private modalService = inject(NgbModal);
+    private modalService = inject(TumAetUiDialogService);
+    private readonly translateService = inject(TranslateService);
     private sessionStorageService = inject(SessionStorageService);
 
     readonly onSelectConversation = output<number | string>();
@@ -75,6 +79,9 @@ export class SidebarComponent implements OnDestroy {
     readonly collapseState = input.required<CollapseState>();
     sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
     readonly showFilter = input<boolean>(false);
+    /** Translation key for an optional toggle shown below the search; the host owns what it filters. */
+    readonly inlineFilterLabel = input<string>();
+    readonly inlineFilterActive = model<boolean>(false);
     inCommunication = input<boolean>(false);
     readonly searchValue = signal<string>('');
     readonly reEmitNonDistinctSidebarEvents = input<boolean>(false);
@@ -94,7 +101,7 @@ export class SidebarComponent implements OnDestroy {
     sidebarEventSubscription?: Subscription;
 
     readonly routeParams = signal<Params>({});
-    private modalRef?: NgbModalRef;
+    private modalRef?: TumAetUiDialogRef<unknown, ExerciseFilterModalComponent>;
 
     readonly faFilter = faFilter;
     readonly faFilterCurrentlyApplied = faFilterCircleXmark;
@@ -207,9 +214,6 @@ export class SidebarComponent implements OnDestroy {
         return sidebarType ? size[sidebarType] : 'M';
     }
 
-    // NOTE: This dialog still uses NgbModal because it opens ExerciseFilterModalComponent, which lives in the
-    // exercise/** carve-out (NgbActiveModal + componentInstance contract). Migrating it to PrimeNG DialogService
-    // would require changing that carve-out component, so it is deferred until the carve-out is migrated.
     openFilterExercisesDialog() {
         this.initializeFilterOptions();
 
@@ -218,9 +222,10 @@ export class SidebarComponent implements OnDestroy {
         }
 
         this.modalRef = this.modalService.open(ExerciseFilterModalComponent, {
-            size: 'lg',
-            backdrop: 'static',
-            animation: true,
+            size: 'large',
+            showHeader: false,
+            ariaLabel: this.translateService.instant('artemisApp.courseOverview.exerciseFilter.modalTitle'),
+            dismissableMask: false,
         });
 
         this.modalRef.componentInstance.sidebarData = deepClone(this.sidebarDataBeforeFiltering());

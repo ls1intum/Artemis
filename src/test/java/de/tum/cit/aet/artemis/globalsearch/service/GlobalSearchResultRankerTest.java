@@ -186,6 +186,70 @@ class GlobalSearchResultRankerTest {
         assertThat(GlobalSearchResultRanker.rank(List.of(unknown, ended), true, courses, NOW)).containsExactly(unknown, ended);
     }
 
+    @Test
+    void dropsAChannelWhoseNameDoesNotContainTheQuery() {
+        var lecture = row("lecture", 1L, "Graph Algorithms");
+        var channel = row("channel", 1L, "lecture-graph-algorithms");
+
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(lecture, channel), "shortest paths")).containsExactly(lecture);
+    }
+
+    @Test
+    void keepsAChannelWhoseNameContainsEveryPartOfTheQuery() {
+        var channel = row("channel", 1L, "lecture-graph-algorithms");
+
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(channel), "Graph Algo")).containsExactly(channel);
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(channel), "graph-algorithms")).containsExactly(channel);
+    }
+
+    @Test
+    void dropsAChannelWhoseNameLacksOnePartOfTheQuery() {
+        var channel = row("channel", 1L, "lecture-graph-algorithms");
+
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(channel), "graph trees")).isEmpty();
+    }
+
+    @Test
+    void matchesNamesWithUpperCaseLettersOrOtherSeparators() {
+        var legacyChannel = row("channel", 1L, "Lecture-Graphs");
+        var customChannel = row("channel", 1L, "team:alpha");
+
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(legacyChannel, customChannel), "graphs")).containsExactly(legacyChannel);
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(legacyChannel, customChannel), "team alpha")).containsExactly(customChannel);
+    }
+
+    @Test
+    void splitsAQueryWithAccentsAsArtemisNamesTheChannel() {
+        var channel = row("channel", 1L, "lecture-einf-hrung-in-java");
+
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(channel), "Einführung")).containsExactly(channel);
+    }
+
+    @Test
+    void matchesOnlyWhatTheNameHoldsEvenWhenArtemisCutIt() {
+        var channel = row("channel", 1L, "exercise-observer-pattern-impl");
+
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(channel), "observer pattern impl")).containsExactly(channel);
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(channel), "Observer Pattern Implementation")).isEmpty();
+    }
+
+    @Test
+    void dropsEveryChannelWhenTheQueryHoldsNoCharacterOfAChannelName() {
+        var faq = row("faq", 1L, "C++ setup");
+        var channel = row("channel", 1L, "c-setup");
+
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(faq, channel), "++")).containsExactly(faq);
+    }
+
+    @Test
+    void keepsEveryRowOfABrowseWithoutAQuery() {
+        var lecture = row("lecture", 1L, "Graph Algorithms");
+        var channel = row("channel", 1L, "random");
+
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(lecture, channel), " ")).containsExactly(lecture, channel);
+        assertThat(GlobalSearchResultRanker.withoutChannelsNotNamedBy(List.of(lecture, channel), null)).containsExactly(lecture, channel);
+    }
+
     private static Course course(long id, String title, ZonedDateTime endDate) {
         var course = new Course();
         course.setId(id);

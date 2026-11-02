@@ -42,6 +42,7 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.resetAllMocks();
     });
 
@@ -106,17 +107,17 @@ describe('ExamGeneralInformationComponent', () => {
         expect(component.isExamOverMultipleDays()).toBe(false);
     });
 
-    it('should detect an TestExam and set the currentDate correctly', () => {
+    // These distinct instants share 02:30 in Europe/Berlin when the clocks move back.
+    it.each(['2026-10-25T00:30:00Z', '2026-10-25T01:30:00Z'])('should detect a TestExam and set the currentDate at %s', (instant) => {
+        const currentInstant = new Date(instant);
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(currentInstant);
         const testExam = { ...exam, testExam: true } as Exam;
-        const minimumNowRange = dayjs();
         fixture.componentRef.setInput('exam', testExam);
         fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
-        const maximumNowRange = dayjs();
         expect(component.isTestExam()).toBe(true);
-        expect(component.currentDate()).toBeDefined();
-        // test execution could slow down the check
-        expect(component.currentDate()!.isBetween(minimumNowRange, maximumNowRange, 's', '[]')).toBe(true);
+        expect(component.currentDate()?.valueOf()).toBe(currentInstant.getTime());
     });
 
     it('should detect an RealExam and not set the currentDate', () => {

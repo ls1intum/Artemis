@@ -2,7 +2,8 @@ import { test } from '../../support/fixtures';
 import { Commands } from '../../support/commands';
 import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, users } from '../../support/users';
-import { addE2EInitScript, asAdmin, generateUUID } from '../../support/utils';
+import { addE2EInitScript, generateUUID, getExercise } from '../../support/utils';
+import { startSaveOutage } from '../../support/saveOutage';
 import cAllSuccessfulSubmission from '../../fixtures/exercise/programming/c/all_successful/submission.json';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -48,7 +49,7 @@ test.describe('Exam participation', () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
-        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+        test.beforeEach('Create exam', async ({ login, adminExamAPIRequests: examAPIRequests, examExerciseGroupCreation }) => {
             await login(admin);
             exam = await examAPIRequests.createRunningExam({ course, title: examTitle, examMaxPoints: 40, numberOfExercisesInExam: 4 });
             const textExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
@@ -145,9 +146,8 @@ test.describe('Exam participation', () => {
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
 
-        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
-            await login(admin);
-            await examAPIRequests.deleteExam(exam);
+        test.afterEach('Delete exam', async ({ adminExamAPIRequests }) => {
+            await adminExamAPIRequests.deleteExam(exam);
         });
     });
 
@@ -155,7 +155,7 @@ test.describe('Exam participation', () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
-        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+        test.beforeEach('Create exam', async ({ login, adminExamAPIRequests: examAPIRequests, examExerciseGroupCreation }) => {
             exerciseArray = [];
 
             await login(admin);
@@ -205,7 +205,16 @@ test.describe('Exam participation', () => {
             await examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
         });
 
-        test('Reloads exam page during participation and ensures that everything is as expected', async ({
+        /*
+         * A reload during an exam has two legitimate outcomes, and which one the student gets depends on whether the last save reached the server.
+         * That used to be decided by a race between the reload and the autosave request, so a test that reloaded right after typing passed or
+         * failed by chance. Both outcomes are therefore set up explicitly, one test each:
+         *  - the save completed: the client shows the start cover again, the student types the name and confirms the rules, which starts a
+         *    new exam session, and the saved answer is shown (this is the intended behavior after a reload, it must not resume by itself);
+         *  - the save failed: the unsaved answer exists only in local storage, so the client resumes the exam without the cover and restores it
+         *    (the one automatic resume, see handleStudentExam).
+         */
+        test('Reloads exam page after the answer was saved: shows the start cover, and a new start shows the saved answer', async ({
             page,
             login,
             examParticipation,
@@ -215,16 +224,28 @@ test.describe('Exam participation', () => {
             examManagement,
         }) => {
             await examParticipation.startParticipation(studentThree, course, exam);
-            const textExerciseIndex = 0;
-            const textExercise = exerciseArray[textExerciseIndex];
+            const textExercise = exerciseArray[0];
             await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textExercise.additionalData!.textFixture!);
-            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
+
+            // Save explicitly and wait until the server has answered and the client has processed the answer (the save button is disabled again once
+            // the answer counts as synced). Only then is the reload not racing the save.
+            const saveButton = getExercise(page, textExercise.id!).getByTestId('exam-save-button');
+            const savedResponse = page.waitForResponse(
+                (response) => response.request().method() === 'PUT' && response.url().includes(`/api/text/exercises/${textExercise.id}/text-submissions`),
+            );
+            await saveButton.click();
+            expect((await savedResponse).status()).toBe(200);
+            await expect(saveButton).toBeDisabled();
 
             await page.reload();
-            // A reload must not send a student who already started back to the welcome screen: the exam resumes, with its timer running.
-            await expect(page.getByTestId('hand-in-early')).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
-            await expect(page.locator('#confirmBox')).toHaveCount(0);
+            // The start cover is shown again and the exam is not resumed.
+            await expect(page.locator('#confirmBox')).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
+            await expect(page.getByTestId('hand-in-early')).toHaveCount(0);
+
+            // Typing the name and confirming the rules starts the exam again, with the answer that was saved before the reload.
+            await examStartEnd.startExam(true);
+            await expect(page.getByTestId('hand-in-early')).toBeVisible();
             await expect(page.getByTestId('exam-bar-title')).toContainText(examTitle);
             await expect(page.getByTestId('displayTime')).toHaveText(/\S/);
             await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
@@ -237,6 +258,55 @@ test.describe('Exam participation', () => {
 
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentThreeName);
+        });
+
+        test('Reloads exam page after a failed save: resumes the exam with the unsaved answer restored', async ({
+            page,
+            login,
+            examParticipation,
+            examNavigation,
+            textExerciseEditor,
+            examStartEnd,
+            examManagement,
+        }) => {
+            await examParticipation.startParticipation(studentTwo, course, exam);
+            const textExercise = exerciseArray[0];
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
+
+            // Break the save endpoint before the answer is typed, so the save that follows cannot reach the server.
+            const outage = await startSaveOutage(page, `*://*/api/text/exercises/${textExercise.id}/text-submissions`);
+            await examParticipation.makeTextExerciseSubmission(textExercise.id!, textExercise.additionalData!.textFixture!);
+            await getExercise(page, textExercise.id!).getByTestId('exam-save-button').click();
+            await outage.waitForFirstFailedSave();
+
+            // The 503 appearing on the wire is not enough: the client records the failed save only afterwards, and a reload in between would
+            // find a page that believes everything was saved. Wait until the client has written the flag the resume decision is based on.
+            const saveFailedKey = `artemis_student_exam_${course.id}_${exam.id}-save-failed`;
+            await expect
+                .poll(() => page.evaluate((key) => window.localStorage.getItem(key), saveFailedKey), {
+                    message: 'the client never recorded the failed save, so a reload would not attempt any recovery',
+                    timeout: RELOAD_RENDER_TIMEOUT,
+                })
+                .toBe('true');
+
+            await page.reload();
+            // The exam resumes without the start cover, with its timer running and the answer that was only in local storage.
+            await expect(page.getByTestId('hand-in-early')).toBeVisible({ timeout: RELOAD_RENDER_TIMEOUT });
+            await expect(page.locator('#confirmBox')).toHaveCount(0);
+            await expect(page.getByTestId('exam-bar-title')).toContainText(examTitle);
+            await expect(page.getByTestId('displayTime')).toHaveText(/\S/);
+            await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
+            await textExerciseEditor.checkCurrentContent(textExercise.additionalData!.textFixture!);
+
+            // The server is reachable again; the hand-in sends the restored answer, which the summary then shows.
+            await outage.end();
+            await examParticipation.handInEarly();
+            await examStartEnd.pressShowSummary();
+            await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
+            await examParticipation.checkExamTitle(examTitle);
+
+            await login(instructor);
+            await examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
         });
 
         test('Reloads exam result page and ensures that everything is as expected', async ({ page, login, examParticipation, examNavigation, examStartEnd, examManagement }) => {
@@ -275,9 +345,8 @@ test.describe('Exam participation', () => {
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
 
-        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
-            await login(admin);
-            await examAPIRequests.deleteExam(exam);
+        test.afterEach('Delete exam', async ({ adminExamAPIRequests }) => {
+            await adminExamAPIRequests.deleteExam(exam);
         });
     });
 
@@ -285,7 +354,7 @@ test.describe('Exam participation', () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
-        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+        test.beforeEach('Create exam', async ({ login, adminExamAPIRequests: examAPIRequests, examExerciseGroupCreation }) => {
             exerciseArray = [];
 
             await login(admin);
@@ -299,10 +368,10 @@ test.describe('Exam participation', () => {
         });
 
         test('Participates as a student in a registered exam', async ({
-            browser,
             page,
             login,
             examAPIRequests,
+            adminExamAPIRequests,
             examParticipation,
             examNavigation,
             examStartEnd,
@@ -316,7 +385,7 @@ test.describe('Exam participation', () => {
             await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
 
             // The student works until the exam runs out: its deadline is set now that the student is working, so a slow setup cannot cut it short.
-            await asAdmin(browser, (adminExamRequests) => adminExamRequests.endExamIn(exam, 20));
+            await adminExamAPIRequests.endExamIn(exam, 20);
             const workingTimeDialog = new ModalDialogBox(page);
             await workingTimeDialog.checkDialogMessage('The working time of the exam has been changed.');
             await workingTimeDialog.closeDialog();
@@ -337,9 +406,8 @@ test.describe('Exam participation', () => {
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
 
-        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
-            await login(admin);
-            await examAPIRequests.deleteExam(exam);
+        test.afterEach('Delete exam', async ({ adminExamAPIRequests }) => {
+            await adminExamAPIRequests.deleteExam(exam);
         });
     });
 
@@ -348,7 +416,7 @@ test.describe('Exam participation', () => {
             let exam: Exam;
             let programmingExercise: ProgrammingExercise;
 
-            test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+            test.beforeEach('Create exam', async ({ login, adminExamAPIRequests: examAPIRequests, examExerciseGroupCreation }) => {
                 await login(admin);
                 exam = await examAPIRequests.createRunningExam({ course, title: 'exam' + generateUUID(), endDate: dayjs().add(5, 'minutes') });
                 const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
@@ -407,9 +475,8 @@ test.describe('Exam participation', () => {
                 });
             }
 
-            test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
-                await login(admin);
-                await examAPIRequests.deleteExam(exam);
+            test.afterEach('Delete exam', async ({ adminExamAPIRequests }) => {
+                await adminExamAPIRequests.deleteExam(exam);
             });
         });
     }
@@ -419,7 +486,7 @@ test.describe('Exam participation', () => {
         const students = [studentOne, studentTwo];
         let exercise: Exercise;
 
-        test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+        test.beforeEach('Create exam', async ({ login, adminExamAPIRequests: examAPIRequests, examExerciseGroupCreation }) => {
             await login(admin);
             exam = await examAPIRequests.createRunningExam({ course });
             exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
@@ -562,9 +629,8 @@ test.describe('Exam participation', () => {
             },
         );
 
-        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
-            await login(admin);
-            await examAPIRequests.deleteExam(exam);
+        test.afterEach('Delete exam', async ({ adminExamAPIRequests }) => {
+            await adminExamAPIRequests.deleteExam(exam);
         });
     });
 });

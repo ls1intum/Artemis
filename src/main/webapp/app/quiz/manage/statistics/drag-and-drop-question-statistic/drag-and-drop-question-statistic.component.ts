@@ -1,3 +1,4 @@
+import { QuestionStatisticsChartComponent } from '../question-statistics-chart/question-statistics-chart.component';
 import { Component, ViewEncapsulation, inject } from '@angular/core';
 import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item/drag-item.component';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
@@ -8,14 +9,10 @@ import { DragAndDropQuestionStatistic } from 'app/quiz/shared/entities/drag-and-
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/quiz/manage/statistics/question-statistic.component';
-import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiBarChartComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -23,7 +20,7 @@ import { TumAetUiBarChartComponent } from '@tumaet/ui-angular';
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil],
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './drag-and-drop-question-statistic.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, TumAetUiBarChartComponent, FaIconComponent, ImageComponent, DragItemComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
+    imports: [QuestionStatisticsChartComponent, TranslateDirective, ImageComponent, DragItemComponent, QuizStatisticsFooterComponent],
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
@@ -32,11 +29,6 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     declare question: DragAndDropQuestion;
-
-    // Icons
-    faSync = faSync;
-    faCheckCircle = faCheckCircle;
-    faTimesCircle = faTimesCircle;
 
     loadQuiz(quiz: QuizQuestionStatisticResponse, refresh: boolean) {
         const updatedQuestion = super.loadQuizCommon(quiz);

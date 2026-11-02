@@ -10,6 +10,7 @@ import { MockCommunicationService } from 'test/helpers/mocks/service/mock-commun
 import { communicationPostToCreateUser1, directMessageUser1 } from 'test/helpers/sample/communication-sample-data';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
+import { MAX_CONTENT_LENGTH } from 'app/communication/directive/posting-create-edit.directive';
 import { throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -73,6 +74,41 @@ describe('MessageReplyInlineInputComponent', () => {
         accountService = TestBed.inject(AccountService);
         communicationServiceCreateStub = vi.spyOn(communicationService, 'createAnswerPost');
         communicationServiceUpdateStub = vi.spyOn(communicationService, 'updateAnswerPost');
+    });
+
+    for (const modifier of ['ctrlKey', 'metaKey'] as const) {
+        it(`submits once through the actual Angular parent binding for ${modifier}+Enter`, () => {
+            component.posting.set(communicationPostToCreateUser1);
+            fixture.detectChanges();
+            const confirm = vi.spyOn(component, 'confirm').mockImplementation(() => undefined);
+            const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).nativeElement as HTMLElement;
+            editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, [modifier]: true }));
+            expect(confirm).toHaveBeenCalledOnce();
+        });
+    }
+
+    it('passes a distinct draft identity when equal-content replies change parent threads', () => {
+        component.posting.set({ post: { id: 11 }, content: '' });
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.draftIdentity()).toBe('reply:11:new');
+
+        component.posting.set({ post: { id: 12 }, content: '' });
+        fixture.detectChanges();
+        expect(editor.draftIdentity()).toBe('reply:12:new');
+    });
+
+    it('loads a different edited reply in the same thread instead of preserving the previous reply content', () => {
+        component.posting.set({ id: 21, post: { id: 11 }, content: 'First reply' });
+        fixture.detectChanges();
+        component.formGroup.get('content')!.setValue('Unsaved first reply');
+
+        component.posting.set({ id: 22, post: { id: 11 }, content: 'Second reply' });
+        fixture.detectChanges();
+
+        expect(component.formGroup.get('content')!.value).toBe('Second reply');
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.draftIdentity()).toBe('reply:11:22');
     });
 
     it('should invoke communication service with created message reply', () => {
@@ -244,6 +280,23 @@ describe('MessageReplyInlineInputComponent', () => {
             vi.advanceTimersByTime(0);
 
             expect(saveDraftSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('content length validation', () => {
+        beforeEach(() => {
+            component.posting.set({ ...communicationPostToCreateUser1 });
+            fixture.detectChanges();
+        });
+
+        it('should flag a maxlength error when the reply content exceeds MAX_CONTENT_LENGTH', () => {
+            component.formGroup.get('content')?.setValue('a'.repeat(MAX_CONTENT_LENGTH + 1));
+            expect(component.formGroup.get('content')?.hasError('maxlength')).toBe(true);
+        });
+
+        it('should not flag a maxlength error when the reply content is exactly MAX_CONTENT_LENGTH', () => {
+            component.formGroup.get('content')?.setValue('a'.repeat(MAX_CONTENT_LENGTH));
+            expect(component.formGroup.get('content')?.hasError('maxlength')).toBe(false);
         });
     });
 });

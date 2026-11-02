@@ -47,10 +47,8 @@ public class ProgrammingSubmissionMessagingService {
             studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSIONS.at(), submissionDTO));
         }
 
-        // send an update to tutors, editors and instructors about submissions for template and solution participations
-        if (!(submission.getParticipation() instanceof StudentParticipation)) {
-            websocketMessagingService.sendMessage(EXERCISE_SUBMISSIONS.at(exerciseId), submissionDTO);
-        }
+        // Staff track builds of student, template and solution participations on the exercise topic.
+        websocketMessagingService.sendMessage(EXERCISE_SUBMISSIONS.at(exerciseId), submissionDTO);
     }
 
     /**

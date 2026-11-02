@@ -173,6 +173,52 @@ class RetainedArtifactsTest {
     }
 
     @Test
+    void of_specLongerThanCap_isTruncatedAndDowngradesToPartial() {
+        String oversized = "s".repeat(RetainedArtifacts.MAX_PROBLEM_STATEMENT_CHARS + 50);
+
+        ExerciseGenerationRetainedArtifactsDTO result = RetainedArtifacts.of("job-spec", Map.of(), null, oversized);
+
+        assertThat(result.specDocument()).isEqualTo(oversized.substring(0, RetainedArtifacts.MAX_PROBLEM_STATEMENT_CHARS));
+        assertThat(result.completeness()).isEqualTo(ExerciseGenerationArtifactCompleteness.PARTIAL);
+        assertThat(result.isEmpty()).isFalse();
+    }
+
+    @Test
+    void withFileUpdate_boundsLiveSpecAndReportsPartialContent() {
+        String oversized = "s".repeat(RetainedArtifacts.MAX_PROBLEM_STATEMENT_CHARS + 1);
+        var original = RetainedArtifacts.of("job-spec", Map.of(), "Original statement", "Original spec");
+
+        var updated = RetainedArtifacts.withFileUpdate("job-spec", original, ExerciseGenerationFileChangeDTO.of("SPEC.md", ExerciseGenerationFileChangeDTO.ACTION_WRITE, 1),
+                oversized);
+
+        assertThat(updated.specDocument()).isEqualTo(oversized.substring(0, RetainedArtifacts.MAX_PROBLEM_STATEMENT_CHARS));
+        assertThat(updated.problemStatement()).isEqualTo("Original statement");
+        assertThat(updated.completeness()).isEqualTo(ExerciseGenerationArtifactCompleteness.PARTIAL);
+        assertThat(original.specDocument()).isEqualTo("Original spec");
+    }
+
+    @Test
+    void of_specAtExactlyTheCap_staysComplete() {
+        String exact = "s".repeat(RetainedArtifacts.MAX_PROBLEM_STATEMENT_CHARS);
+
+        ExerciseGenerationRetainedArtifactsDTO result = RetainedArtifacts.of("job-spec-exact", Map.of(), null, exact);
+
+        assertThat(result.specDocument()).isEqualTo(exact);
+        assertThat(result.completeness()).isEqualTo(ExerciseGenerationArtifactCompleteness.COMPLETE);
+    }
+
+    @Test
+    void of_specOnlyCandidateKeepsItsNormalContentWithoutInventingOtherArtifacts() {
+        ExerciseGenerationRetainedArtifactsDTO result = RetainedArtifacts.of("job-spec-only", Map.of(), null, "# Exercise design");
+
+        assertThat(result.specDocument()).isEqualTo("# Exercise design");
+        assertThat(result.problemStatement()).isNull();
+        assertThat(result.files()).isEmpty();
+        assertThat(result.isEmpty()).isFalse();
+        assertThat(result.completeness()).isEqualTo(ExerciseGenerationArtifactCompleteness.COMPLETE);
+    }
+
+    @Test
     void of_fileTrippingTheSecretMaterialPolicy_isWithheldWhileOtherFilesSurvive() {
         // The filename alone trips HyperionSecretMaterialPolicy's private-key-container classification, independent of content.
         Map<String, String> templateFiles = new LinkedHashMap<>();

@@ -126,7 +126,7 @@ public class FeatureUsageDigestScheduleService {
                 boolean sent = mailService.sendFeatureUsageDigestEmail(
                         new MailRecipientDTO(recipient, RECIPIENT_LANGUAGE, "feature-usage-digest-recipient", "Administrator", null, null, null), digest);
                 if (!sent) {
-                    log.warn("The feature usage digest could not be sent to {}", recipient);
+                    log.warn("The feature usage digest could not be sent to one of its recipients");
                     everyRecipientReached = false;
                 }
             }

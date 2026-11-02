@@ -2,11 +2,16 @@ package de.tum.cit.aet.artemis.aiworker.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.env.YamlPropertySourceLoader;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.ClassPathResource;
 
 class WorkerSettingsBindingTest {
 
@@ -39,6 +44,23 @@ class WorkerSettingsBindingTest {
         runner.withPropertyValues("artemis.aiworker.max-concurrent-executions=4").run(context -> {
             assertThat(context).hasNotFailed();
             assertThat(context.getBean(WorkerSettings.class).maxConcurrentExecutions()).isEqualTo(4);
+        });
+    }
+
+    @Test
+    void shippedWorkerProfileSelectsHyperionGenerationWithoutWorkloadSettings() {
+        new ApplicationContextRunner().withUserConfiguration(SettingsConfiguration.class).withInitializer(context -> {
+            try {
+                new YamlPropertySourceLoader().load("aiworker", new ClassPathResource("config/application-aiworker.yml"))
+                        .forEach(context.getEnvironment().getPropertySources()::addLast);
+            }
+            catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }).withPropertyValues("AI_WORKER_ID=worker-1", "AI_WORKER_SANDBOX_IMAGE=sha256:" + "a".repeat(64)).run(context -> {
+            assertThat(context).hasNotFailed();
+            assertThat(context.getBean(WorkerSettings.class).workload()).isEqualTo("hyperion-generation");
+            assertThat(context.getBean(WorkerSettings.class).profile()).isEqualTo("java-gradle");
         });
     }
 

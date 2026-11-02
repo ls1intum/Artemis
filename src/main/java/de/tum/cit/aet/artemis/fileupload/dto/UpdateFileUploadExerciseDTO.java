@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseMetadataDTO;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 
@@ -80,7 +81,7 @@ public record UpdateFileUploadExerciseDTO(long id, String title, @Nullable Strin
         @Nullable Boolean secondCorrectionEnabled, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolution,
         @Nullable String filePattern, @Nullable Long courseId, @Nullable Long exerciseGroupId, @Nullable List<GradingCriterionDTO> gradingCriteria,
-        @Nullable Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+        @Nullable Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO, ExerciseMetadataDTO {
 
     /**
      * Creates a DTO from a {@link FileUploadExercise} entity.
@@ -107,7 +108,7 @@ public record UpdateFileUploadExerciseDTO(long id, String title, @Nullable Strin
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
 
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.stream().map(GradingCriterionDTO::of).toList();
+            gradingCriterionDTOs = GradingCriterionDTO.ofAll(criteria);
         }
         else {
             gradingCriterionDTOs = null;

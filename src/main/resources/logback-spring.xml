@@ -26,6 +26,9 @@
     <!-- Add the custom filter -->
     <turboFilter class="de.tum.cit.aet.artemis.core.config.StompErrorLogFilter" />
 
+    <!-- Mail services report template failures safely; Thymeleaf's duplicate includes the original recipient-bearing cause. -->
+    <turboFilter class="de.tum.cit.aet.artemis.core.config.MailTemplateErrorLogFilter" />
+
     <!-- The FILE and ASYNC appenders are here as examples for a production configuration -->
     <!--
     <include resource="org/springframework/boot/logging/logback/file-appender.xml" />
@@ -39,6 +42,12 @@
         <appender-ref ref="ASYNC"/>
     </root>
     -->
+
+    <!-- Hands the warnings and errors of the server to the error analysis of the administration. It only counts them in memory. -->
+    <appender name="ERROR_ANALYSIS" class="de.tum.cit.aet.artemis.core.config.ErrorAnalysisAppender"/>
+    <root>
+        <appender-ref ref="ERROR_ANALYSIS"/>
+    </root>
 
     <logger name="de.tum.cit.aet.artemis" level="INFO"/>
     <logger name="tech.jhipster" level="WARN"/>
@@ -73,6 +82,10 @@
     <logger name="org.springframework.security" level="WARN"/>
     <logger name="org.springframework.boot.autoconfigure.logging" level="INFO"/>
     <logger name="org.springframework.cache" level="WARN"/>
+    <!-- Logs every request with an unsupported method at WARN. Scanners and bots probe with POST and PUT around the clock, and the proxy already records the request. -->
+    <logger name="org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver" level="ERROR"/>
+    <!-- Text drawn with a standard font that is not embedded (Helvetica) is valid in a PDF. PDFBox still warns about it on each use. -->
+    <logger name="org.apache.pdfbox.pdmodel.PDAbstractContentStream" level="ERROR"/>
     <!-- Avoid non helpful warnings during startup -->
     <logger name="org.springframework.cloud.loadbalancer.config" level="ERROR"/>
     <logger name="org.springframework.context.support" level="ERROR"/>

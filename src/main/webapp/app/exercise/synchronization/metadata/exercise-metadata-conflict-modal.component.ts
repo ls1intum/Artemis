@@ -1,9 +1,9 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import dayjs from 'dayjs/esm';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -45,7 +45,7 @@ export interface ExerciseMetadataConflictModalResult {
 }
 
 /**
- * Data passed to the dynamic dialog via DynamicDialogConfig.
+ * Data passed to the dynamic dialog via TumAetUiDialogConfig.
  */
 export interface ExerciseMetadataConflictModalData {
     conflicts: ExerciseMetadataConflictItem[];
@@ -59,11 +59,11 @@ export interface ExerciseMetadataConflictModalData {
     selector: 'jhi-exercise-metadata-conflict-modal',
     templateUrl: './exercise-metadata-conflict-modal.component.html',
     styleUrls: ['./exercise-metadata-conflict-modal.component.scss'],
-    imports: [NgClass, TranslateDirective, CustomExerciseCategoryBadgeComponent, ButtonModule, TableModule],
+    imports: [NgTemplateOutlet, NgClass, TranslateDirective, CustomExerciseCategoryBadgeComponent, TumAetUiButtonComponent, TumAetUiTableDirective],
 })
 export class ExerciseMetadataConflictModalComponent implements OnInit {
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+    private readonly dialogRef = inject<TumAetUiDialogRef<ExerciseMetadataConflictModalResult, ExerciseMetadataConflictModalComponent>>(TumAetUiDialogRef);
+    private readonly dialogConfig = inject<TumAetUiDialogConfig<ExerciseMetadataConflictModalData>>(TumAetUiDialogConfig);
     private readonly translateService = inject(TranslateService);
 
     readonly conflicts = signal<ExerciseMetadataConflictItem[]>([]);
@@ -101,7 +101,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
     });
 
     ngOnInit(): void {
-        const data = this.dialogConfig.data as ExerciseMetadataConflictModalData | undefined;
+        const data = this.dialogConfig.data;
         if (data) {
             this.setConflicts(data.conflicts);
             this.author.set(data.author);
@@ -254,6 +254,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.timeoutSeconds', key: 'timeoutSeconds' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.dockerFlags', key: 'dockerFlags' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.theiaImage', key: 'theiaImage' },
+            { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.onlineIdeExperienceLevel', key: 'onlineIdeExperienceLevel' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.allowBranching', key: 'allowBranching' },
             { labelKey: 'artemisApp.exercise.metadataSync.fields.buildConfig.branchRegex', key: 'branchRegex' },
         ] as const;

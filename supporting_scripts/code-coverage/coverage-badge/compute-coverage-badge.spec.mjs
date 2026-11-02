@@ -115,7 +115,7 @@ describe('parseVitestLines', () => {
 });
 
 describe('colorFor', () => {
-    it('maps percentages onto Shields colours at the band boundaries', () => {
+    it('maps percentages onto badge colours at the band boundaries', () => {
         expect(colorFor(90)).toBe('brightgreen');
         expect(colorFor(89.9)).toBe('green');
         expect(colorFor(80)).toBe('green');

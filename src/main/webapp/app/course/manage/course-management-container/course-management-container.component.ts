@@ -115,6 +115,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     operationProgress = signal<CourseOperationProgressDTO | undefined>(undefined);
 
     private learningPathsActive = signal(false);
+    gocastEnabled = false;
     private presentationAssessmentsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
@@ -153,6 +154,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private async initializeCourseManagementContainerComponent(): Promise<void> {
+        this.gocastEnabled = this.profileService.isGocastEnabled();
         this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: Params) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
@@ -253,7 +255,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private subscribeToCourseUpdates(courseId: number) {
         this.courseSub?.unsubscribe();
-        this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
+        this.courseSub = this.courseManagementService.findForManagement(courseId).subscribe((courseResponse) => {
             if (courseResponse.body) {
                 this.storeCourseIfAbsent(courseResponse.body);
                 this.course.set(courseResponse.body);
@@ -265,7 +267,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     loadCourse(): Observable<void> {
         // The management shell only needs the course record. It used to take it from the course dashboard, which also
         // loads every exercise, participation, submission and result for the requesting instructor and discards them.
-        return this.courseManagementService.find(this.courseId()).pipe(
+        return this.courseManagementService.findForManagement(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.storeCourseIfAbsent(res.body);
@@ -369,6 +371,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (isInstructor) {
             if (this.localCIActive) {
                 sidebarItems.push(this.sidebarItemService.getBuildQueueItem(courseId));
+            }
+            if (this.gocastEnabled) {
+                sidebarItems.push(this.sidebarItemService.getGocastBindingItem(courseId));
             }
             if (this.ltiEnabled && currentCourse.onlineCourse) {
                 sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(courseId));

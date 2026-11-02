@@ -1,0 +1,21 @@
+<button
+    type="button"
+    class="inline-flex items-center gap-3 rounded-sm border-0 bg-transparent p-0 text-left text-inherit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
+    [attr.aria-expanded]="expanded()"
+    [attr.aria-controls]="detailsId()"
+    [attr.aria-label]="(expanded() ? 'artemisApp.presentationAssessment.hideDetails' : 'artemisApp.presentationAssessment.showDetails') | artemisTranslate"
+    (click)="toggled.emit()"
+    data-testid="toggle-row-details"
+>
+    <jhi-profile-picture
+        imageSizeInRem="2"
+        fontSizeInRem="0.75"
+        [imageId]="'presentation-student-profile-picture-' + row().rowKey"
+        [defaultPictureId]="'presentation-student-default-picture-' + row().rowKey"
+        [authorName]="row().displayName"
+    />
+    <div class="flex min-w-0 flex-col">
+        <strong class="truncate">{{ row().displayName }}</strong>
+        <small class="truncate text-muted-color">{{ row().student.email || row().studentLogin }}</small>
+    </div>
+</button>

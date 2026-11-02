@@ -16,6 +16,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
+import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
@@ -234,9 +236,29 @@ describe('Participation Service', () => {
             searchTerm: '',
         };
 
+        it('should use the exam page route with the same filters and conversion', () => {
+            let result: PageableResult<ParticipationManagementDTO> | undefined;
+            service.searchParticipations(42, baseSearch, 'exam').subscribe((page) => (result = page));
+            const request = httpMock.expectOne((r) => r.method === 'GET');
+            expect(request.request.params.get('pageSize')).toBe('50');
+            request.flush([{ participationId: 1, completionDate: '2026-01-01T10:00:00Z' }], { headers: { 'X-Total-Count': '7' } });
+            expect(request.request.url).toBe('api/exercise/exercises/42/participations/page/for-exam');
+            expect(result?.totalElements).toBe(7);
+            expect(dayjs.isDayjs(result?.content[0].completionDate)).toBe(true);
+        });
+
         it('should GET paginated participations and convert date fields', () => {
             const isoDate = '2024-06-01T10:00:00Z';
-            const serverDto = { participationId: 1, initializationDate: isoDate, individualDueDate: isoDate };
+            const serverDto = {
+                participationId: 1,
+                initializationDate: isoDate,
+                individualDueDate: isoDate,
+                completionDate: isoDate,
+                correctionRoundResults: [
+                    { resultId: 2, correctionRound: 0, completionDate: isoDate },
+                    { resultId: 3, correctionRound: 1 },
+                ],
+            };
 
             let result: any;
             service.searchParticipations(42, baseSearch).subscribe((r) => (result = r));
@@ -248,6 +270,10 @@ describe('Participation Service', () => {
             expect(result.totalElements).toBe(1);
             expect(dayjs.isDayjs(result.content[0].initializationDate)).toBe(true);
             expect(dayjs.isDayjs(result.content[0].individualDueDate)).toBe(true);
+            expect(dayjs.isDayjs(result.content[0].completionDate)).toBe(true);
+            expect(dayjs.isDayjs(result.content[0].correctionRoundResults[0].completionDate)).toBe(true);
+            expect(result.content[0].correctionRoundResults[0].completionDate.toISOString()).toBe(isoDate.replace('Z', '.000Z'));
+            expect(result.content[0].correctionRoundResults[1].completionDate).toBeUndefined();
         });
 
         it('should include filterProp in params when provided', () => {
@@ -258,54 +284,23 @@ describe('Participation Service', () => {
             req.flush([], { headers: { 'X-Total-Count': '0' } });
         });
 
-        it('should not include filterProp in params when absent', () => {
+        it('should not include filterProp or scoreRange params when absent', () => {
             service.searchParticipations(1, baseSearch).subscribe();
 
             const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/page');
             expect(req.request.params.has('filterProp')).toBe(false);
+            expect(req.request.params.has('scoreRangeLower')).toBe(false);
+            expect(req.request.params.has('scoreRangeUpper')).toBe(false);
             req.flush([], { headers: { 'X-Total-Count': '0' } });
         });
-    });
 
-    describe('searchParticipationScores', () => {
-        const baseSearch = {
-            page: 0,
-            pageSize: 50,
-            sortingOrder: SortingOrder.ASCENDING,
-            sortedColumn: 'score',
-            searchTerm: '',
-        };
+        it('should include scoreRange params when provided', () => {
+            service.searchParticipations(1, { ...baseSearch, filterProp: 'Successful', scoreRangeLower: 60, scoreRangeUpper: 80 }).subscribe();
 
-        it('should GET paginated scores and read X-Total-Count header', () => {
-            const serverDto = { participationId: 1, score: 80, participantName: 'Alice', participantIdentifier: 'alice', successful: false, testRun: false };
-
-            let result: any;
-            service.searchParticipationScores(7, baseSearch).subscribe((r) => (result = r));
-
-            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/7/participations/scores');
-            expect(req.request.method).toBe('GET');
-            req.flush([serverDto], { headers: { 'X-Total-Count': '5' } });
-
-            expect(result.totalElements).toBe(5);
-            expect(result.content[0].score).toBe(80);
-        });
-
-        it('should include filterProp and scoreRange params when provided', () => {
-            service.searchParticipationScores(1, { ...baseSearch, filterProp: 'Successful', scoreRangeLower: 60, scoreRangeUpper: 80 }).subscribe();
-
-            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/scores');
+            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/page');
             expect(req.request.params.get('filterProp')).toBe('Successful');
             expect(req.request.params.get('scoreRangeLower')).toBe('60');
             expect(req.request.params.get('scoreRangeUpper')).toBe('80');
-            req.flush([], { headers: { 'X-Total-Count': '0' } });
-        });
-
-        it('should not include scoreRange params when undefined', () => {
-            service.searchParticipationScores(1, baseSearch).subscribe();
-
-            const req = httpMock.expectOne((r) => r.url === 'api/exercise/exercises/1/participations/scores');
-            expect(req.request.params.has('scoreRangeLower')).toBe(false);
-            expect(req.request.params.has('scoreRangeUpper')).toBe(false);
             req.flush([], { headers: { 'X-Total-Count': '0' } });
         });
     });
@@ -348,5 +343,22 @@ describe('Participation Service', () => {
 
     afterEach(() => {
         httpMock.verify();
+    });
+    it('keeps ordinary and test-run student work separate with participant display identifiers', () => {
+        const original: StudentParticipation = { id: 7, type: ParticipationType.STUDENT, participantName: 'Alice', participantIdentifier: 'alice', submissions: [{ id: 8 }] };
+        const practice: StudentParticipation = {
+            id: 9,
+            type: ParticipationType.STUDENT,
+            testRun: true,
+            participantName: 'Practice',
+            participantIdentifier: 'practice',
+            submissions: [{ id: 10 }],
+        };
+        const merged = service.mergeStudentParticipations([original, practice]);
+        expect(merged).toHaveLength(2);
+        expect(merged[0]).toMatchObject({ id: 7, participantName: 'Alice', participantIdentifier: 'alice', submissions: [{ id: 8 }] });
+        expect(merged[1]).toMatchObject({ id: 9, testRun: true, participantName: 'Practice', participantIdentifier: 'practice', submissions: [{ id: 10 }] });
+        expect(merged[0].submissions?.[0].participation).toBe(merged[0]);
+        expect(merged[1].submissions?.[0].participation).toBe(merged[1]);
     });
 });

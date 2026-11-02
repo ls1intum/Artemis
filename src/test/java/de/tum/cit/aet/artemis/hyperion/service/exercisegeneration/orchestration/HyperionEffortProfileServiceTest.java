@@ -284,4 +284,77 @@ class HyperionEffortProfileServiceTest {
         assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("negative", negative)), MODEL_DEFAULTS))
                 .withMessageContaining("max-job-duration");
     }
+
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "staged", "context", "window", "duration" })
+    void changingAnEngineSettingPreventsReusingDeploymentSingletons(String field) {
+        var custom = profile("Custom");
+        switch (field) {
+            case "staged" -> custom.setStagedGeneration(false);
+            case "context" -> custom.setStagedContext("FRESH");
+            case "window" -> custom.setContextWindowTokens(64000);
+            case "duration" -> custom.setMaxJobDuration(Duration.ofMinutes(20));
+            default -> throw new AssertionError(field);
+        }
+        var settings = new HyperionEffortProfileService(propertiesWith(Map.of("custom", custom)), MODEL_DEFAULTS).resolve("custom");
+        assertThat(settings.engineDefaults()).isFalse();
+        assertThat(settings.providerOptionsOverride()).isFalse();
+        assertThat(settings.chatOptions()).isNull();
+        switch (field) {
+            case "staged" -> assertThat(settings.stagedGeneration()).isFalse();
+            case "context" -> assertThat(settings.stagedContext()).isEqualTo("FRESH");
+            case "window" -> assertThat(settings.contextWindowTokens()).isEqualTo(64000);
+            case "duration" -> assertThat(settings.maxJobDuration()).isEqualTo(Duration.ofMinutes(20));
+            default -> throw new AssertionError(field);
+        }
+    }
+
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(doubles = { -0.01, 2.01, Double.POSITIVE_INFINITY })
+    void rejectsTemperatureOutsideProviderRange(double temperature) {
+        var custom = profile("Custom");
+        custom.setTemperature(temperature);
+        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("custom", custom)), MODEL_DEFAULTS))
+                .withMessageContaining("temperature must be finite and between 0 and 2");
+    }
+
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(doubles = { -0.01, Double.NaN, Double.POSITIVE_INFINITY })
+    void rejectsTopPOutsideProviderRange(double topP) {
+        var custom = profile("Custom");
+        custom.setTopP(topP);
+        assertThatIllegalArgumentException().isThrownBy(() -> new HyperionEffortProfileService(propertiesWith(Map.of("custom", custom)), MODEL_DEFAULTS))
+                .withMessageContaining("top-p must be finite and between 0 and 1");
+    }
+
+    @Test
+    void providerOptionsIncludeExplicitBoundaryValuesAndVerbosity() {
+        var custom = profile("  Detailed  ");
+        custom.setTemperature(0.0);
+        custom.setTopP(0.0);
+        custom.setVerbosity("low");
+        var service = new HyperionEffortProfileService(propertiesWith(Map.of("custom", custom)), MODEL_DEFAULTS);
+        var settings = service.resolve("custom");
+        assertThat(settings.chatOptions().getTemperature()).isZero();
+        assertThat(settings.chatOptions().getTopP()).isZero();
+        assertThat(settings.chatOptions().getVerbosity()).isEqualTo("low");
+        assertThat(settings.label()).isEqualTo("Detailed");
+        assertThat(settings.providerOptionsOverride()).isTrue();
+    }
+
+    @Test
+    void publicConstructorHandlesAbsentModelAndDefaultNameAndReportsShortestProfileDeadline() {
+        var shortProfile = profile(null);
+        shortProfile.setMaxJobDuration(Duration.ofMinutes(5));
+        var properties = propertiesWith(Map.of("quick", shortProfile));
+        properties.setDefaultProfile(null);
+        var service = new HyperionEffortProfileService(properties, List.<org.springframework.ai.chat.model.ChatModel>of());
+        assertThat(service.resolve(" ").name()).isEmpty();
+        assertThat(service.shortestMaxJobDuration()).isEqualTo(Duration.ofMinutes(5));
+        assertThat(service.selectableProfiles()).containsExactly(new ExerciseGenerationEffortProfileDTO("quick", "quick"));
+        shortProfile.setMaxJobDuration(Duration.ofHours(2));
+        assertThat(new HyperionEffortProfileService(properties, MODEL_DEFAULTS).shortestMaxJobDuration()).isEqualTo(properties.getMaxJobDuration());
+        assertThat(new HyperionEffortProfileService(new HyperionAgentProperties(), MODEL_DEFAULTS).shortestMaxJobDuration()).isEqualTo(Duration.ofMinutes(45));
+    }
+
 }

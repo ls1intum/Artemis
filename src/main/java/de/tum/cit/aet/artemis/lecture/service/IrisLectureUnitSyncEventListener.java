@@ -89,7 +89,7 @@ public class IrisLectureUnitSyncEventListener {
     /**
      * Retries Iris/Pyris metadata and visibility updates that failed during event handling.
      */
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 300000, initialDelayString = "${artemis.iris.lecture-unit-sync.initial-delay:0}")
     public void retryDirtyStates() {
         syncStateRepository
                 .findTop50ByStatusInAndNextRetryAtLessThanEqualOrderByNextRetryAtAsc(
@@ -104,7 +104,7 @@ public class IrisLectureUnitSyncEventListener {
      * Creates visibility synchronization state for active legacy units in bounded batches.
      * The resulting dirty event is handled by the same durable retry path as ordinary updates.
      */
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 300000, initialDelayString = "${artemis.iris.lecture-unit-sync.initial-delay:0}")
     public void backfillMissingSyncStates() {
         attachmentVideoUnitRepository.findUnitsMissingIrisSyncStateFromActiveCourses(ZonedDateTime.now(), PageRequest.of(0, 50)).forEach(unit -> {
             try {

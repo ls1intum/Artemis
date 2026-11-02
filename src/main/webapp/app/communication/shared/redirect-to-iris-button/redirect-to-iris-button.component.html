@@ -1,6 +1,19 @@
 @if (irisEnabled()) {
-    <button [disabled]="disabled()" [ngClass]="extraClass()" class="btn btn-sm btn-outline-secondary" id="redirect-iris" type="button" (click)="redirectToIris()">
-        <jhi-iris-logo [hidden]="buttonLoading()" [size]="TEXT" id="redirect-to-iris-img" />
-        <fa-icon [hidden]="!buttonLoading()" animation="spin" [icon]="faCircleNotch" class="posting-btn-loading-icon" />
+    <button
+        tumAetUiButton
+        size="small"
+        variant="outlined"
+        severity="secondary"
+        [disabled]="disabled()"
+        [ngClass]="extraClass()"
+        id="redirect-iris"
+        data-testid="redirect-to-iris"
+        type="button"
+        (click)="redirectToIris()"
+    >
+        <span class="inline-flex items-center" style="height: 1lh">
+            <jhi-iris-logo [hidden]="buttonLoading()" [size]="TEXT" id="redirect-to-iris-img" />
+            <fa-icon [hidden]="!buttonLoading()" animation="spin" [icon]="faCircleNotch" class="posting-btn-loading-icon" />
+        </span>
     </button>
 }

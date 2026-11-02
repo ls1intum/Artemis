@@ -230,8 +230,8 @@ public class DataExportCreationService {
             mailService.sendDataExportCreatedEmail(MailRecipientDTO.from(dataExport.getUser()), DataExportEmailDTO.from(dataExport));
         }
         catch (Exception e) {
-            log.error("Failed to send data export created email to user {}", dataExport.getUser().getLogin(), e);
-            throw new EmailFailedException("Failed to send data export created email to user " + dataExport.getUser().getLogin(), e);
+            log.error("Failed to send data export created email (exception {})", e.getClass().getSimpleName());
+            throw new EmailFailedException("Failed to send data export created email", e);
         }
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExportRepository.save(dataExport);

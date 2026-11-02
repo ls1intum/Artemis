@@ -2,7 +2,6 @@ import { Component, OnInit, input, signal } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { PostingCreateEditModalDirective } from 'app/communication/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -16,6 +15,7 @@ import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -28,8 +28,17 @@ type PostCreator = (post: Post) => Observable<Post>;
 @Component({
     selector: 'jhi-post-create-edit-modal',
     templateUrl: './post-create-edit-modal.component.html',
-    styleUrls: ['../../communication.component.scss'],
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, HelpIconComponent, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        HelpIconComponent,
+        PostingMarkdownEditorComponent,
+        ArtemisTranslatePipe,
+        TumAetUiDialogComponent,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+    ],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit {
     isCommunicationPage = input<boolean>(false);

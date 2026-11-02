@@ -1,4 +1,5 @@
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import dayjs from 'dayjs';
 
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
@@ -33,6 +34,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createProgrammingExercise();
             await page.waitForURL('**/programming-exercises/new**');
+            await expect(page.getByRole('button', { name: /generate with ai/i })).toHaveCount(0);
             const exerciseTitle = 'Programming exercise ' + generateUUID();
             await programmingExerciseCreation.changeEditMode();
             await programmingExerciseCreation.setProgrammingLanguage(ProgrammingLanguage.C);
@@ -40,6 +42,10 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await programmingExerciseCreation.setShortName('programming' + generateUUID());
             await programmingExerciseCreation.setPoints(100);
             await programmingExerciseCreation.checkAllowOnlineEditor();
+            // Avoid the immediate-release confirmation, which is skipped when the course is marked as a test course.
+            const releaseDate = page.getByLabel('Release Date', { exact: true });
+            await releaseDate.fill(dayjs().add(1, 'day').format('DD.MM.YYYY HH:mm'));
+            await releaseDate.press('Tab');
             const response = await programmingExerciseCreation.generate();
             const exercise: Exercise = await readResponseJson(response);
             createdExerciseId = exercise.id;

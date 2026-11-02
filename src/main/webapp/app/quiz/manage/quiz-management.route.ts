@@ -1,21 +1,13 @@
+import { quizExerciseUpdateRoute } from 'app/quiz/manage/quiz-exercise-update.route';
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
 
-import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 
 export const quizManagementRoute: Routes = [
-    {
-        path: 'quiz-exercises/new',
-        loadComponent: () => import('./update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
-    },
+    quizExerciseUpdateRoute('quiz-exercises/new', undefined, [PendingChangesGuard]),
     {
         path: 'quiz-exercises/:exerciseId',
         loadChildren: () => import('./quiz-management-detail.route').then((m) => m.quizManagementDetailRoute),
@@ -29,26 +21,8 @@ export const quizManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    {
-        path: 'quiz-exercises/:exerciseId/edit',
-        loadComponent: () => import('./update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
-    },
-    {
-        path: 'quiz-exercises/:exerciseId/import',
-        loadComponent: () => import('./update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            pageTitle: 'artemisApp.quizExercise.home.importLabel',
-        },
-        canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
-    },
+    quizExerciseUpdateRoute('quiz-exercises/:exerciseId/edit', undefined, [PendingChangesGuard]),
+    quizExerciseUpdateRoute('quiz-exercises/:exerciseId/import', 'artemisApp.quizExercise.home.importLabel', [PendingChangesGuard]),
     {
         path: 'quiz-exercises/:exerciseId/preview',
         loadComponent: () => import('app/quiz/overview/participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
