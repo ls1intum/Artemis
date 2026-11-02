@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionFilterDecisionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -391,6 +392,7 @@ public class HyperionQuizQuestionPoolBuildService {
 
     /**
      * Tops every cell of the course's pool up to its target, creating the missing items in state {@link QuizQuestionPoolItemState#PENDING}.
+     * New items take the indices above the highest index of their cell, so a cell whose items were partly deleted gets no duplicate index.
      * Cells exist for every competency and each lecture unit linked to it that carries readable material. The settings the cells were
      * planned with are kept while the build runs.
      *
@@ -401,12 +403,14 @@ public class HyperionQuizQuestionPoolBuildService {
         HyperionCourseSettings settings = settingsService.getSettings(course.getId());
         buildSettings.put(course.getId(), settings);
         Map<Cell, Integer> targets = targetsOf(course, settings);
-        Map<Cell, Integer> existingByCell = existingByCell(course.getId());
+        Map<Cell, QuizQuestionPoolCellCountDTO> existingByCell = countsByCell(course.getId());
         List<QuizQuestionPoolItem> created = new ArrayList<>();
         for (Map.Entry<Cell, Integer> target : targets.entrySet()) {
             Cell cell = target.getKey();
-            int existing = existingByCell.getOrDefault(cell, 0);
-            for (int index = existing; index < target.getValue(); index++) {
+            QuizQuestionPoolCellCountDTO counts = existingByCell.get(cell);
+            int existing = counts == null ? 0 : (int) counts.count();
+            int nextIndex = counts == null ? 0 : Math.max(existing, counts.highestIndex() + 1);
+            for (int index = nextIndex; index < nextIndex + target.getValue() - existing; index++) {
                 QuizQuestionPoolItem item = new QuizQuestionPoolItem();
                 item.setCourse(course);
                 item.setCompetencyId(cell.competencyId());
@@ -431,12 +435,13 @@ public class HyperionQuizQuestionPoolBuildService {
      */
     public QuizQuestionPoolPlanDTO plan(Course course) {
         Map<Cell, Integer> targets = targetsOf(course, settingsService.getSettings(course.getId()));
-        Map<Cell, Integer> existingByCell = existingByCell(course.getId());
+        Map<Cell, QuizQuestionPoolCellCountDTO> existingByCell = countsByCell(course.getId());
         int planned = 0;
         int missing = 0;
         for (Map.Entry<Cell, Integer> target : targets.entrySet()) {
+            QuizQuestionPoolCellCountDTO counts = existingByCell.get(target.getKey());
             planned += target.getValue();
-            missing += Math.max(0, target.getValue() - existingByCell.getOrDefault(target.getKey(), 0));
+            missing += Math.max(0, target.getValue() - (counts == null ? 0 : (int) counts.count()));
         }
         return new QuizQuestionPoolPlanDTO(planned, missing);
     }
@@ -450,9 +455,10 @@ public class HyperionQuizQuestionPoolBuildService {
         return planCells(unitIdsByCompetency, languageOf(course), settings);
     }
 
-    private Map<Cell, Integer> existingByCell(long courseId) {
-        return itemRepository.countByCellForCourse(courseId).stream().collect(Collectors
-                .toMap(count -> new Cell(count.competencyId(), count.lectureUnitId(), count.language(), count.questionType(), count.difficulty()), count -> (int) count.count()));
+    /** The item count and the highest item index of every cell that holds items. */
+    private Map<Cell, QuizQuestionPoolCellCountDTO> countsByCell(long courseId) {
+        return itemRepository.countByCellForCourse(courseId).stream().collect(
+                Collectors.toMap(count -> new Cell(count.competencyId(), count.lectureUnitId(), count.language(), count.questionType(), count.difficulty()), Function.identity()));
     }
 
     /**

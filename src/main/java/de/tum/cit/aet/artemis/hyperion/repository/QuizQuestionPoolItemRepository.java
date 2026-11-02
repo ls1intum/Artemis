@@ -128,7 +128,7 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO(item.competencyId, item.lectureUnitId, item.language, item.questionType, item.difficulty,
-                COUNT(item))
+                COUNT(item), MAX(item.itemIndex))
             FROM QuizQuestionPoolItem item
             WHERE item.course.id = :courseId
             GROUP BY item.competencyId, item.lectureUnitId, item.language, item.questionType, item.difficulty

@@ -158,8 +158,8 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.<CourseCompetency>of(competency));
         when(materialService.findGroundableUnits(List.of(9L))).thenReturn(Map.of(9L, List.<LectureUnit>of(unit)));
         when(settingsService.getSettings(5L)).thenReturn(new HyperionCourseSettings(false, 12, false, 12, 1, 4, 0, 100, 0));
-        when(itemRepository.countByCellForCourse(5L)).thenReturn(
-                List.of(new QuizQuestionPoolCellCountDTO(9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.MEDIUM, 10)));
+        when(itemRepository.countByCellForCourse(5L)).thenReturn(List
+                .of(new QuizQuestionPoolCellCountDTO(9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.MEDIUM, 10, 9)));
 
         int created = service.enqueue(course);
 
@@ -167,6 +167,29 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         verify(itemRepository).saveAll(saved.capture());
         assertThat(created).isEqualTo(2);
         assertThat(saved.getValue()).extracting(QuizQuestionPoolItem::getItemIndex).containsExactly(10, 11);
+    }
+
+    @Test
+    void enqueue_numbersNewItemsAboveTheHighestIndexOfACellWithGaps() {
+        HyperionQuizQuestionPoolBuildService service = service();
+        Course course = new Course();
+        course.setId(5L);
+        Competency competency = new Competency();
+        competency.setId(9L);
+        TextUnit unit = new TextUnit();
+        unit.setId(4L);
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.<CourseCompetency>of(competency));
+        when(materialService.findGroundableUnits(List.of(9L))).thenReturn(Map.of(9L, List.<LectureUnit>of(unit)));
+        when(settingsService.getSettings(5L)).thenReturn(new HyperionCourseSettings(false, 2, false, 12, 1, 4, 0, 100, 0));
+        when(itemRepository.countByCellForCourse(5L)).thenReturn(List
+                .of(new QuizQuestionPoolCellCountDTO(9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.MEDIUM, 1, 1)));
+
+        int created = service.enqueue(course);
+
+        ArgumentCaptor<List<QuizQuestionPoolItem>> saved = ArgumentCaptor.captor();
+        verify(itemRepository).saveAll(saved.capture());
+        assertThat(created).isEqualTo(1);
+        assertThat(saved.getValue()).extracting(QuizQuestionPoolItem::getItemIndex).containsExactly(2);
     }
 
     @Test
@@ -181,9 +204,9 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.<CourseCompetency>of(competency));
         when(materialService.findGroundableUnits(List.of(9L))).thenReturn(Map.of(9L, List.<LectureUnit>of(unit)));
         when(settingsService.getSettings(5L)).thenReturn(new HyperionCourseSettings(false, 12, true, 4, 1, 4, 0, 100, 0));
-        when(itemRepository.countByCellForCourse(5L)).thenReturn(
-                List.of(new QuizQuestionPoolCellCountDTO(9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.MEDIUM, 15),
-                        new QuizQuestionPoolCellCountDTO(9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.MULTIPLE_CHOICE, QuizQuestionDifficulty.MEDIUM, 1)));
+        when(itemRepository.countByCellForCourse(5L)).thenReturn(List.of(
+                new QuizQuestionPoolCellCountDTO(9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.MEDIUM, 15, 14),
+                new QuizQuestionPoolCellCountDTO(9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.MULTIPLE_CHOICE, QuizQuestionDifficulty.MEDIUM, 1, 0)));
 
         QuizQuestionPoolPlanDTO plan = service.plan(course);
 
