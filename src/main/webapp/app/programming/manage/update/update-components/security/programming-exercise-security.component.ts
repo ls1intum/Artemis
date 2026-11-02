@@ -203,13 +203,19 @@ export class ProgrammingExerciseSecurityComponent {
     readonly showToggle = computed(() => !this.usesImportActionChoice() && !this.isUnsupported() && !this.isMisconfigured());
     readonly showVersionSelect = computed(() => !this.usesImportActionChoice() && !this.isUnsupported());
     /**
+     * Whether a version picked now is saved, so the form never shows a version the tests repository does not get. Creating an exercise writes the picked
+     * version even when the framework is off. An existing exercise can only change its version while active, and deactivating an import keeps the source's
+     * version, so the select is locked while either is inactive. A MISCONFIGURED exercise keeps it, because repairing activates with the selected version.
+     */
+    private readonly isVersionSaved = computed(() => this.isCreateMode() || this.status() !== SecurityActivationStatus.INACTIVE);
+    /**
      * The version selector is locked while a sync is in flight and while the card is in ERROR. A version picked in
      * ERROR would only change local state (no request is made unless the exercise is active), while Retry still
      * re-runs the previously failed operation for the old version - so the shown selection could silently diverge
      * from what Retry actually does.
      */
     readonly isVersionSelectDisabled = computed(
-        () => this.isBusy() || this.isSaving() || this.status() === SecurityActivationStatus.ERROR || this.frameworkVersions().length === 0,
+        () => this.isBusy() || this.isSaving() || this.status() === SecurityActivationStatus.ERROR || this.frameworkVersions().length === 0 || !this.isVersionSaved(),
     );
     /** The toggle sits "on" whenever the sandbox is on or being turned on (or errored while on). */
     readonly isToggleOn = computed(() => {
@@ -494,7 +500,7 @@ export class ProgrammingExerciseSecurityComponent {
     onFrameworkVersionChanged(version: unknown): void {
         const newVersion = String(version);
         // Only selectable versions can be pinned; the version an exercise already pins is listed even if it no longer is, but cannot be chosen again.
-        if (!this.selectableVersions().includes(newVersion)) {
+        if (!this.selectableVersions().includes(newVersion) || !this.isVersionSaved()) {
             return;
         }
         const exerciseId = this.editExerciseId();
@@ -523,6 +529,9 @@ export class ProgrammingExerciseSecurityComponent {
     private stageToggle(checked: boolean): void {
         if (checked) {
             this.patchConfig({ status: SecurityActivationStatus.ACTIVE, frameworkVersion: this.versionToActivate() });
+        } else if (this.isImportMode()) {
+            // Deactivating an import keeps the version of the source, so show that one instead of a version picked while it was active.
+            this.patchConfig({ status: SecurityActivationStatus.INACTIVE, frameworkVersion: this.sourceConfig()?.frameworkVersion });
         } else {
             this.patchConfig({ status: SecurityActivationStatus.INACTIVE });
         }

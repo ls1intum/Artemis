@@ -375,10 +375,10 @@ describe('ProgrammingExerciseSecurityComponent', () => {
     });
 
     it('disables the version selector in ERROR so the shown version cannot diverge from the retried operation', () => {
-        initEdit(inactiveConfig());
+        initEdit(activeConfig());
         expect(comp.isVersionSelectDisabled()).toBe(false);
-        service.activate.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
-        comp.onToggleChanged(true);
+        service.updateFrameworkVersion.mockReturnValueOnce(throwError(() => new Error('SYNC_FAILED')));
+        comp.onFrameworkVersionChanged('3.3.0');
         expect(comp.status()).toBe(SecurityActivationStatus.ERROR);
         expect(comp.isVersionSelectDisabled()).toBe(true);
     });
@@ -408,12 +408,26 @@ describe('ProgrammingExerciseSecurityComponent', () => {
         expect(comp.config().frameworkVersion).toBe('3.3.0');
     });
 
-    it('only stages the version (no re-sync) when not yet active', () => {
+    it('locks the version selector of an inactive exercise, whose version can only change while active, and shows the version the repository pins', () => {
         initEdit(inactiveConfig());
+        expect(comp.isVersionSelectDisabled()).toBe(true);
+
         comp.onFrameworkVersionChanged('3.3.0');
-        expect(comp.config().frameworkVersion).toBe('3.3.0');
+
+        expect(comp.config().frameworkVersion).toBe('3.4.1');
         expect(comp.status()).toBe(SecurityActivationStatus.INACTIVE);
         expect(service.updateFrameworkVersion).not.toHaveBeenCalled();
+    });
+
+    it('keeps the version selector of a new exercise enabled while deactivated, because creating writes the picked version', () => {
+        initCreate();
+        comp.onToggleChanged(false);
+        expect(comp.isVersionSelectDisabled()).toBe(false);
+
+        comp.onFrameworkVersionChanged('3.3.0');
+        fixture.detectChanges();
+
+        expect(comp.choiceToSend()).toEqual({ action: SecurityFrameworkAction.DEACTIVATE, frameworkVersion: '3.3.0' });
     });
 
     it('on ERROR keeps the toggle off after a failed activation', () => {
@@ -568,6 +582,20 @@ describe('ProgrammingExerciseSecurityComponent', () => {
             comp.onRepair();
             comp.onDeactivate();
             expectNoWriteRequest();
+        });
+
+        it('locks the version selector while the import is deactivated and shows the version of the source it keeps', () => {
+            initImportFromExercise(activeConfig('3.4.1'));
+            comp.onFrameworkVersionChanged('3.3.0');
+            expect(comp.config().frameworkVersion).toBe('3.3.0');
+
+            comp.onToggleChanged(false);
+            comp.onFrameworkVersionChanged('3.2.2');
+            fixture.detectChanges();
+
+            expect(comp.isVersionSelectDisabled()).toBe(true);
+            expect(comp.config().frameworkVersion).toBe('3.4.1');
+            expect(emitted.at(-1)).toEqual({ action: SecurityFrameworkAction.DEACTIVATE });
         });
 
         it('sends nothing while the choice matches the source', () => {
