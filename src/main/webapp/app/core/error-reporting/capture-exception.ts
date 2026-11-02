@@ -150,12 +150,15 @@ function pathOf(url: unknown): string {
     }
 }
 
-/** The stack of an error followed by the stacks of its causes, as far as they fit. */
+/**
+ * The stack of an error followed by the stacks of its causes, as far as they fit. A cause that is no error is described like a reported value, so
+ * that a failed request, which is often the cause of a failure, is named by its status and its path and not by its whole url and the response.
+ */
 function stackOf(error: Error): string | undefined {
     const parts = [error.stack];
     let cause = error.cause;
     for (let depth = 0; cause !== undefined && cause !== null && depth < MAX_CAUSES; depth++) {
-        parts.push(`Caused by: ${cause instanceof Error ? (cause.stack ?? `${cause.name}: ${cause.message}`) : stringify(cause)}`);
+        parts.push(`Caused by: ${cause instanceof Error ? (cause.stack ?? `${cause.name}: ${cause.message}`) : describe(cause)}`);
         cause = cause instanceof Error ? cause.cause : undefined;
     }
     const stack = parts.filter((part) => !!part).join('\n');

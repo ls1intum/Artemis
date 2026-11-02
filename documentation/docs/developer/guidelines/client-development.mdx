@@ -816,7 +816,9 @@ A bare `console` call is invisible in production, and ESLint rejects it in appli
 application recovers from, with `captureException` from `app/core/error-reporting/capture-exception`. It sends the report to the server, which
 writes it to its log, see [Client Error Reports](/admin/client-error-reports).
 
-Pass an `Error` where you can, and wrap the cause of a failure with `new Error('What failed', { cause: error })`, so that the stack of both reaches the log.
+Pass an `Error` where you can, and wrap the cause of a failure with `new Error('What failed', { cause: error })`, so that the stack of both reaches the log. A failed
+request can be the cause, too: a cause that is no `Error` is described like a reported value, so an `HttpErrorResponse` appears by its status and its path in the stack, and
+its query and the body of its response do not.
 Use the context for what helps to find the problem: `extra` for the identifiers of the affected entities and `tags` for a short label of the feature. Do not put
 whole entities or personal data into it, as every value is shortened to 500 characters and the log is read by operators. Set `severity` to `WARN` or `INFO` for a
 problem that needs no action right away; the default is `ERROR`.

@@ -112,6 +112,20 @@ describe('ClientErrorReporter', () => {
             expect(stack).toContain('Caused by: Error: connection reset');
         });
 
+        it('should name a failed request that is the cause of an error by its status and its path and not by its url and its response', () => {
+            const response = new HttpErrorResponse({
+                status: 500,
+                statusText: 'Internal Server Error',
+                url: 'http://localhost:9000/api/core/build-logs/17?token=secret',
+                error: { stack: 'private details of the server' },
+            });
+
+            reporter.report(new Error('Failed to download build logs', { cause: response }));
+
+            expect(reportOf(0).stack).toContain('Caused by: Http failure response for /api/core/build-logs/17: 500 Internal Server Error');
+            expect(JSON.stringify(reportOf(0))).not.toMatch(/secret|private details/);
+        });
+
         it('should append a cause that is not an error', () => {
             reporter.report(new Error('wrapped', { cause: { status: 503 } }));
 
