@@ -43,7 +43,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { faCheck, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { User } from 'app/account/user/user.model';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
@@ -80,8 +80,8 @@ class StubModelingEditorComponent {
     importPatch = vi.fn();
 }
 
-vi.mock('@sentry/angular', async (importOriginal) => ({
-    ...(await importOriginal<typeof import('@sentry/angular')>()),
+vi.mock('app/core/error-reporting/capture-exception', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('app/core/error-reporting/capture-exception')>()),
     captureException: vi.fn(),
 }));
 

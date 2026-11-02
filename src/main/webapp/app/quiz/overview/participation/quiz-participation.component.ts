@@ -41,7 +41,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getIsMobileSignal, onError } from 'app/foundation/util/global.utils';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { getCourseFromExercise, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';

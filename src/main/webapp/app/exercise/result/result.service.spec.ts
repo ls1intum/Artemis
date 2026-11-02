@@ -28,10 +28,10 @@ import {
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import * as Sentry from '@sentry/angular';
+import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
 // Preliminary mock before import to prevent errors
-vi.mock('@sentry/angular', async () => {
-    const originalModule = await vi.importActual('@sentry/angular');
+vi.mock('app/core/error-reporting/capture-exception', async () => {
+    const originalModule = await vi.importActual('app/core/error-reporting/capture-exception');
     return {
         ...originalModule,
         captureException: vi.fn(),
@@ -362,8 +362,8 @@ describe('ResultService', () => {
             expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         });
 
-        it('builds the string for a result without a participation and does not report it to Sentry', () => {
-            const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
+        it('builds the string for a result without a participation and does not report it as an error', () => {
+            const captureExceptionSpy = vi.spyOn(ErrorReporting, 'captureException');
             captureExceptionSpy.mockClear();
 
             expect(resultService.getResultString(modelingResult, modelingExercise, undefined, true)).toBe('artemisApp.result.resultString.short');
@@ -371,9 +371,9 @@ describe('ResultService', () => {
             expect(captureExceptionSpy).not.toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
         });
 
-        it('reports to Sentry if result or exercise is undefined', () => {
+        it('reports an error if result or exercise is undefined', () => {
             // Re-mock to get reference because direct import doesn't work here
-            const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
+            const captureExceptionSpy = vi.spyOn(ErrorReporting, 'captureException');
             captureExceptionSpy.mockClear();
             expect(resultService.getResultString(undefined, undefined, undefined)).toBe('');
             expect(captureExceptionSpy).toHaveBeenCalledExactlyOnceWith('Tried to generate a result string, but either the result or exercise was undefined');

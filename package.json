@@ -34,7 +34,6 @@
         "@ng-bootstrap/ng-bootstrap": "21.0.0",
         "@ngx-translate/core": "18.1.0",
         "@primeuix/themes": "2.0.3",
-        "@sentry/angular": "11.10.0",
         "@stomp/rx-stomp": "2.4.0",
         "@stomp/stompjs": "7.5.0",
         "@tumaet/apollon": "5.4.0",

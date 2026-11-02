@@ -335,16 +335,8 @@ management:
         env:
             enabled: true
 
-sentry:
-    dsn: https://not-activated@sentry.io/0000000
-    send-default-pii: true
-    logging:
-        enabled: false
-
 # Properties to be exposed on the /info management endpoint
 info:
-    sentry:
-        dsn: https://not-activated@sentry.io/0000000
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for tests
     textAssessmentAnalyticsEnabled: true

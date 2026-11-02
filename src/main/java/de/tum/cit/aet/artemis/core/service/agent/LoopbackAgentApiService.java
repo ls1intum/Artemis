@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.annotation.PreDestroy;
 
@@ -65,7 +66,7 @@ public class LoopbackAgentApiService implements AgentApi {
 
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
 
-    private volatile Transport transport;
+    private final AtomicReference<Transport> transport = new AtomicReference<>();
 
     private boolean transportStopped;
 
@@ -80,7 +81,7 @@ public class LoopbackAgentApiService implements AgentApi {
         boolean tls = Ssl.isEnabled(ssl);
         String host = serverProperties.getAddress() instanceof Inet6Address ? "[::1]" : "127.0.0.1";
         this.origin = URI.create((tls ? "https" : "http") + "://" + host + ":" + port);
-        this.transport = createTransport(tls ? WebServerSslBundle.get(ssl, sslBundles) : null);
+        this.transport.set(createTransport(tls ? WebServerSslBundle.get(ssl, sslBundles) : null));
         if (tls && sslBundles != null && StringUtils.hasText(ssl.getBundle())) {
             String name = ssl.getBundle();
             sslBundles.addBundleUpdateHandler(name, updated -> reloadSslBundle(sslBundles, name));
@@ -108,8 +109,7 @@ public class LoopbackAgentApiService implements AgentApi {
         }
         // Read the latest bundle under the lock so overlapping reload callbacks cannot restore an older certificate.
         Transport replacement = createTransport(bundles.getBundle(name));
-        Transport previous = transport;
-        transport = replacement;
+        Transport previous = transport.getAndSet(replacement);
         // Do not block a reload on long programming-exercise requests already in flight.
         previous.client().shutdown();
     }
@@ -117,7 +117,7 @@ public class LoopbackAgentApiService implements AgentApi {
     @PreDestroy
     private synchronized void shutdownTransport() {
         transportStopped = true;
-        transport.client().shutdown();
+        transport.get().client().shutdown();
     }
 
     private record Transport(HttpClient client, RestClient restClient) {
@@ -125,7 +125,7 @@ public class LoopbackAgentApiService implements AgentApi {
 
     @Override
     public AgentApiResponse send(HttpMethod method, String path, @Nullable Object body) {
-        var request = transport.restClient().method(method).uri(loopbackUri(path)).header(HttpHeaders.AUTHORIZATION, authorization()).accept(MediaType.APPLICATION_JSON,
+        var request = transport.get().restClient().method(method).uri(loopbackUri(path)).header(HttpHeaders.AUTHORIZATION, authorization()).accept(MediaType.APPLICATION_JSON,
                 MediaType.TEXT_PLAIN);
         if (body != null) {
             request.contentType(MediaType.APPLICATION_JSON).body(jsonMapper.writeValueAsString(body));
@@ -135,7 +135,7 @@ public class LoopbackAgentApiService implements AgentApi {
 
     @Override
     public AgentApiResponse sendText(HttpMethod method, String path, String text) {
-        var request = transport.restClient().method(method).uri(loopbackUri(path)).header(HttpHeaders.AUTHORIZATION, authorization())
+        var request = transport.get().restClient().method(method).uri(loopbackUri(path)).header(HttpHeaders.AUTHORIZATION, authorization())
                 .accept(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN).contentType(new MediaType(MediaType.TEXT_PLAIN, StandardCharsets.UTF_8)).body(text);
         return execute(request);
     }
