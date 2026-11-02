@@ -91,7 +91,8 @@ fi
 # (uploaded by develop runs as the next baseline).
 # ------------------------------------------------------------------
 if ! python3 supporting_scripts/format_slow_query_report.py \
-    "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" "${STATIC_FINDINGS}" ${BASELINE_ARGS[@]+"${BASELINE_ARGS[@]}"} --keys-out "${KEYS_FILE}" > "${REPORT_MD}"; then
+    "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" "${STATIC_FINDINGS}" ${BASELINE_ARGS[@]+"${BASELINE_ARGS[@]}"} --keys-out "${KEYS_FILE}" \
+    --phase "${PLAYWRIGHT_REPORT_PHASE:-}" > "${REPORT_MD}"; then
     # never upload partial keys as a baseline or post a partial summary
     echo "⚠️  Formatting the slow-query report failed."
     rm -f "${KEYS_FILE}"

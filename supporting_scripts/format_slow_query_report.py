@@ -9,12 +9,12 @@ static findings of find_slow_queries.py) into
 
 Every finding is a yes/no rule with a stable key, so a run can be compared against a baseline
 run (the latest develop run): with --baseline, findings whose key the baseline does not contain
-are marked new, and the PR comment lists only those. --keys-out writes this run's keys, which is
-what a develop run uploads as the next baseline.
+are marked new, and the PR comment lists only those (a single line when there are none).
+--keys-out writes this run's keys, which is what a develop run uploads as the next baseline.
 
 Usage:
     python3 format_slow_query_report.py slow-query-report.json [run_url] [html_output_path] [static_findings.json]
-        [--baseline baseline-keys.json] [--keys-out keys.json]
+        [--baseline baseline-keys.json] [--keys-out keys.json] [--phase phase1|phase2|all]
 """
 
 import argparse
@@ -316,7 +316,8 @@ def summarize_problem(problem: dict, indexes: dict = None) -> dict:
         q.update(executions=worst["executions"], distinct=worst["distinct"], avoidable=worst["avoidable"], summary=summarize_sql(q["sql"]),
                  index=index_lookup(q["sql"], indexes) if indexes else None)
         queries.append(q)
-    queries.sort(key=lambda q: -q["avoidable"])
+    # the query that decides the rank also decides the label; among equal ones, the N+1
+    queries.sort(key=lambda q: (-q["avoidable"], q["shape"] != "N_PLUS_ONE"))
 
     endpoint_avoidable = {}
     for q in queries:
@@ -328,7 +329,7 @@ def summarize_problem(problem: dict, indexes: dict = None) -> dict:
     elif problem["kind"] == "endpoint":
         category = "duplicate_several_places"
     else:
-        category = "n_plus_one" if any(q["shape"] == "N_PLUS_ONE" for q in queries) else "duplicate_one_place"
+        category = "n_plus_one" if queries[0]["shape"] == "N_PLUS_ONE" else "duplicate_one_place"
     problem.update(
         queries=queries,
         category=category,
@@ -443,42 +444,38 @@ def capped(items: list, lines_for, run_url: str, what: str) -> list:
     return lines
 
 
-def build_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "") -> str:
-    generated_at = iso_to_human(report.get("generatedAt", ""))
-    slow_groups = compute_slow_query_groups(report.get("slowQueries", []))
-    indexes = report.get("indexes") or {}
-    problems = loops_before_inserts(build_problems(groups, indexes))
+PHASE_LABELS = {"phase1": "Phase 1", "phase2": "Phase 2", "all": "all tests"}
 
-    lines = ["", "---"]
-    if baseline is not None:
-        new_problems = loops_before_inserts(build_problems([g for g in groups if g.get("is_new")], indexes))
-        new_static = [f for f in static_findings if f.get("is_new")]
-        emoji = "✅" if not new_problems and not new_static else "⚠️"
-        status = ("No new query anti-patterns compared to develop" if emoji == "✅" else
-                  f"{len(new_problems)} new repeated-query problem{'' if len(new_problems) == 1 else 's'} · {len(new_static)} new static finding{'' if len(new_static) == 1 else 's'} compared to develop")
-        lines += [f"## {emoji} Query Report", "", f"**{status}**", "",
-                  f"> Generated at {generated_at}, compared against the latest develop run ({iso_to_human(baseline.get('generatedAt', '?'))})."]
-        if new_problems:
-            lines += ["", f"### 🆕 New repeated queries ({len(new_problems)})", ""] + capped(new_problems, problem_rows_md, run_url, "new problems")
-        if new_static:
-            lines += ["", f"### 🆕 New static findings ({len(new_static)})", ""] + capped(new_static, static_rows_md, run_url, "new static findings")
-    else:
-        lines += ["## ℹ️ Query Report", "", "**No develop baseline available, so nothing is classified as new; the most relevant findings overall are listed instead.**", "",
-                  f"> Generated at {generated_at}."]
-        if problems:
-            lines += ["", "### 🔁 Repeated queries", ""] + capped(problems, problem_rows_md, run_url, "problems")
 
-    static_counts = {}
-    for f in static_findings:
-        static_counts[f["type"]] = static_counts.get(f["type"], 0) + 1
-    lines += ["", "<details>", "<summary>All findings in this run</summary>", "", "| Finding | Count |", "|---|---|",
-              f"| N+1 (a method queries once per item) | {sum(1 for p in problems if p['category'] == 'n_plus_one')} |",
-              f"| Duplicate, one place (the same data loaded again by the same code) | {sum(1 for p in problems if p['category'] == 'duplicate_one_place')} |",
-              f"| Duplicate, several places (the same data loaded again within a request) | {sum(1 for p in problems if p['category'] == 'duplicate_several_places')} |",
-              f"| Row-by-row insert (one statement per inserted row) | {sum(1 for p in problems if p['category'] == 'insert')} |"]
-    lines += [f"| Static: {STATIC_RULE_LABELS.get(t, t)} | {c} |" for t, c in sorted(static_counts.items())]
-    lines += [f"| Slow queries over {report.get('thresholdMs', '?')} ms (context only, timing in CI is not compared) | {len(slow_groups)} |", "", "</details>", "",
-              "<details>", "<summary>How to read this</summary>", "",
+def report_title(phase: str = "") -> str:
+    """Each E2E job reports only the tests it ran, so the title names the job's phase."""
+    label = PHASE_LABELS.get(phase, phase)
+    return f"Query Report ({label})" if label else "Query Report"
+
+
+def build_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "", phase: str = "") -> str:
+    """The PR comment section. It only lists what the PR adds; without anything new, or without a
+    baseline to tell new from existing, it is one line pointing at the full report."""
+    title = report_title(phase)
+    link = f"Full report: {artifact_link(run_url)}."
+    if baseline is None:
+        return "\n".join(["", "---", f"**ℹ️ {title}:** no develop baseline is available yet, so findings are not classified as new. {link}", "",
+                          "<!-- Slow Query Report -->"])
+    new_problems = loops_before_inserts(build_problems([g for g in groups if g.get("is_new")], report.get("indexes") or {}))
+    new_static = [f for f in static_findings if f.get("is_new")]
+    if not new_problems and not new_static:
+        return "\n".join(["", "---", f"**✅ {title}:** no new query anti-patterns compared to develop. {link}", "", "<!-- Slow Query Report -->"])
+
+    status = (f"{len(new_problems)} new repeated-query problem{'' if len(new_problems) == 1 else 's'} · "
+              f"{len(new_static)} new static finding{'' if len(new_static) == 1 else 's'} compared to develop")
+    lines = ["", "---", f"## ⚠️ {title}", "", f"**{status}**", "",
+             f"> Generated at {iso_to_human(report.get('generatedAt', ''))}, compared against the latest develop run "
+             f"({iso_to_human(baseline.get('generatedAt', '?'))}). {link}"]
+    if new_problems:
+        lines += ["", f"### 🆕 New repeated queries ({len(new_problems)})", ""] + capped(new_problems, problem_rows_md, run_url, "new problems")
+    if new_static:
+        lines += ["", f"### 🆕 New static findings ({len(new_static)})", ""] + capped(new_static, static_rows_md, run_url, "new static findings")
+    lines += ["", "<details>", "<summary>How to read this</summary>", "",
               "Every finding is a yes/no rule, without a count threshold. **N+1**: one query per item where one query for all items would do. "
               "**Duplicate**: the same data loaded again within the same request. **Row-by-row insert**: rows written one statement at a time. "
               "Findings are grouped by where the fix goes: the method that loops, or the endpoint for data loaded again by several places. "
@@ -1049,15 +1046,18 @@ def build_slow_queries_table_html(slow_queries: list, threshold_ms) -> str:
     )
 
 
+def static_location(f: dict) -> str:
+    location = (f.get("file") or "").replace("\\", "/").split("/src/main/java/")[-1]
+    return f"{location}:{f['line']}" if f.get("line") else location
+
+
 def build_static_findings_table_html(static_findings: list, has_baseline: bool) -> str:
     if not static_findings:
         return '<p class="ok">No static findings.</p>'
     rows = []
     for i, f in enumerate(static_findings):
         # the id is what a "static rule agrees" link points at (see link_static_confirmations)
-        location = (f.get("file") or "").replace("\\", "/").split("/src/main/java/")[-1]
-        if f.get("line"):
-            location += f":{f['line']}"
+        location = static_location(f)
         rows.append(
             f'<tr id="static-finding-{i}">'
             f"{html_status(f, has_baseline)}"
@@ -1077,8 +1077,31 @@ def build_static_findings_table_html(static_findings: list, has_baseline: bool) 
     )
 
 
-def build_html_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "") -> str:
+def build_new_findings_html(problems: list, static_findings: list) -> str:
+    """What this run adds to the baseline, on one page: the new problems as cards and the new static findings."""
+    new_problems = [p for p in loops_before_inserts(problems) if p["is_new"]]
+    new_static = [(i, f) for i, f in enumerate(static_findings) if f.get("is_new")]
+    if not new_problems and not new_static:
+        return '<p class="ok">✅ Nothing new compared to develop.</p>'
+    parts = []
+    if new_problems:
+        parts.append(f'<h2>New repeated queries <span class="muted">({len(new_problems)})</span></h2>'
+                     f'<div class="problem-cards">{"".join(problem_card_html(p, i + 1, static_findings, True) for i, p in enumerate(new_problems))}</div>')
+    if new_static:
+        # no row ids here: those belong to the Static Findings tab, where a "static rule agrees" link points
+        rows = "".join(f"<tr><td>{html.escape(STATIC_RULE_LABELS.get(f['type'], f['type']))}</td>"
+                       f'<td class="code">{html.escape(f.get("member") or f.get("entityClass") or "—")}</td>'
+                       f"<td>{html.escape(f.get('detail') or '')}</td>"
+                       f'<td class="code">{html.escape(static_location(f))}</td></tr>' for _, f in new_static)
+        parts.append(f'<h2>New static findings <span class="muted">({len(new_static)})</span></h2>'
+                     '<div class="table-scroll"><table><thead><tr><th>Rule</th><th>Where</th><th>Detail</th><th>File</th></tr></thead>'
+                     f"<tbody>{rows}</tbody></table></div>")
+    return "\n".join(parts)
+
+
+def build_html_report(report: dict, groups: list, static_findings: list, baseline: dict, run_url: str = "", phase: str = "") -> str:
     has_baseline = baseline is not None
+    title = report_title(phase)
     threshold_ms = report.get("thresholdMs", "?")
     slow_queries = report.get("slowQueries", [])
     slow_count = len(compute_slow_query_groups(slow_queries))
@@ -1093,22 +1116,28 @@ def build_html_report(report: dict, groups: list, static_findings: list, baselin
     if has_baseline:
         new_count = sum(1 for p in problems if p["is_new"]) + sum(1 for f in static_findings if f.get("is_new"))
         comparison = (f"Compared against the latest develop run ({html.escape(iso_to_human(baseline.get('generatedAt', '?')))}): "
-                      f"<strong>{new_count} finding{'' if new_count == 1 else 's'} are new</strong>. Use <em>only new</em> above the repeated queries, "
-                      "or type <code>new</code> into a filter box, to show only those.")
+                      f"<strong>{new_count} finding{'' if new_count == 1 else 's'} {'is' if new_count == 1 else 'are'} new</strong>, listed under <em>New in this PR</em>. "
+                      "The other tabs show every finding, the new ones marked.")
     else:
         comparison = "No develop baseline was available, so findings are not classified as new or existing."
+    # with a baseline, the report opens on what this run adds
+    new_tab, new_panel = "", ""
+    if has_baseline:
+        new_tab = ('<button class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="panel-new">🆕 New in this PR '
+                   f'<span class="tab-count">{new_count}</span></button>\n')
+        new_panel = f'<section class="tab-panel" id="panel-new" role="tabpanel">\n{build_new_findings_html(problems, static_findings)}\n</section>\n'
 
     return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Query Report</title>
+<title>{html.escape(title)}</title>
 <style>{HTML_REPORT_CSS}</style>
 </head>
 <body>
 <div class="wrapper">
-<h1>Query Report</h1>
+<h1>{html.escape(title)}</h1>
 <p class="muted">Generated at {html.escape(iso_to_human(report.get("generatedAt", "")))}</p>
 {run_link}
 <p class="lead">Every finding is a yes/no rule without a count threshold. <strong>Repeated queries</strong> were observed while the E2E tests ran: a query that ran
@@ -1127,12 +1156,12 @@ table is large every repetition reads all of it; this comes from the database's 
 </div>
 
 <div class="tabs" role="tablist">
-<button class="tab-btn active" type="button" role="tab" aria-selected="true" aria-controls="panel-repeated-queries">🔁 Repeated Queries <span class="tab-count">{len(problems)}</span></button>
+{new_tab}<button class="tab-btn{"" if has_baseline else " active"}" type="button" role="tab" aria-selected="{"false" if has_baseline else "true"}" aria-controls="panel-repeated-queries">🔁 Repeated Queries <span class="tab-count">{len(problems)}</span></button>
 <button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-static-findings">🔍 Static Findings <span class="tab-count">{len(static_findings)}</span></button>
 <button class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panel-slow-queries">🐢 Slow Queries <span class="tab-count">{slow_count}</span></button>
 </div>
 
-<section class="tab-panel" id="panel-repeated-queries" role="tabpanel">
+{new_panel}<section class="tab-panel" id="panel-repeated-queries" role="tabpanel"{" hidden" if has_baseline else ""}>
 {build_problems_html(problems, static_findings, has_baseline, has_indexes)}
 </section>
 <section class="tab-panel" id="panel-static-findings" role="tabpanel" hidden>
@@ -1161,6 +1190,7 @@ def main():
     parser.add_argument("static_findings", nargs="?", default="")
     parser.add_argument("--baseline", help="keys of a baseline run (written by --keys-out of that run)")
     parser.add_argument("--keys-out", help="write this run's finding keys here, for use as a later baseline")
+    parser.add_argument("--phase", default="", help="the E2E job's phase (phase1, phase2 or all), named in the report's title")
     args = parser.parse_args()
 
     try:
@@ -1187,10 +1217,10 @@ def main():
     link_static_confirmations(groups, static_findings)
     mark_new(groups, static_findings, baseline)
 
-    print(build_report(report, groups, static_findings, baseline, args.run_url))
+    print(build_report(report, groups, static_findings, baseline, args.run_url, args.phase))
     if args.html_output_path:
         with open(args.html_output_path, "w", encoding="utf-8") as f:
-            f.write(build_html_report(report, groups, static_findings, baseline, args.run_url))
+            f.write(build_html_report(report, groups, static_findings, baseline, args.run_url, args.phase))
     if args.keys_out:
         keys = collect_keys(groups, static_findings)
         keys["generatedAt"] = report.get("generatedAt")

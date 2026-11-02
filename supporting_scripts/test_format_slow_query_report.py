@@ -65,13 +65,25 @@ class BaselineTest(unittest.TestCase):
         self.assertEqual({g["type"]: g["is_new"] for g in groups}, {"N_PLUS_ONE": False, "DUPLICATE": True})
         self.assertEqual([f["is_new"] for f in static_findings], [False, True])
 
-    def test_without_baseline_nothing_is_new_and_the_comment_says_so(self):
+    def test_without_baseline_nothing_is_new_and_the_comment_is_one_line(self):
         groups = report.group_repeated_queries([repeated()])
         report.link_static_confirmations(groups, [])
         report.mark_new(groups, [], None)
         self.assertFalse(any(g.get("is_new") for g in groups))
-        markdown = report.build_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [], None)
-        self.assertIn("No develop baseline", markdown)
+        markdown = report.build_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [], None, "https://ci/run/1")
+        self.assertIn("no develop baseline", markdown)
+        self.assertIn("[HTML report artifact](https://ci/run/1)", markdown)
+        self.assertNotIn("/api/assessment", markdown)
+
+    def test_without_anything_new_the_comment_is_one_line(self):
+        groups = report.group_repeated_queries([repeated()])
+        baseline = report.collect_keys(groups, [])
+        report.link_static_confirmations(groups, [])
+        report.mark_new(groups, [], baseline)
+        markdown = report.build_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [], baseline, "https://ci/run/1", "phase1")
+        self.assertIn("**✅ Query Report (Phase 1):** no new query anti-patterns", markdown)
+        self.assertIn("[HTML report artifact](https://ci/run/1)", markdown)
+        self.assertNotIn("<details>", markdown)
 
     def test_comment_lists_only_new_findings(self):
         old, new = repeated(), repeated(type="DUPLICATE", httpEndpoint="/api/new")
@@ -79,7 +91,8 @@ class BaselineTest(unittest.TestCase):
         groups = report.group_repeated_queries([old, new])
         report.link_static_confirmations(groups, [])
         report.mark_new(groups, [], baseline)
-        markdown = report.build_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [], baseline)
+        markdown = report.build_report({"generatedAt": "2026-10-08T00:00:00Z"}, groups, [], baseline, phase="all")
+        self.assertIn("## ⚠️ Query Report (all tests)", markdown)
         self.assertIn("/api/new", markdown)
         self.assertNotIn("/api/assessment/exercises/{exerciseId}/results` |", markdown)
 
@@ -128,6 +141,13 @@ class ProblemTest(unittest.TestCase):
     def test_a_duplicate_can_save_all_but_one_execution_per_distinct_parameter_set(self):
         self.assertEqual(report.avoidable_executions("DUPLICATE", 100, 2), 98)
         self.assertEqual(report.avoidable_executions("N_PLUS_ONE", 100, 2), 99)
+
+    def test_the_query_that_ranks_a_problem_also_labels_it(self):
+        # an N+1 with few repeats and a duplicate with many, in one method: the duplicate decides the rank, so also the label
+        problems = problems_of(repeated(executions=3),
+                               repeated(type="DUPLICATE", normalizedSql="select * from result where 1=0", executions=20, distinctParameterSets=1))
+        self.assertEqual((problems[0]["category"], problems[0]["avoidable"]), ("duplicate_one_place", 19))
+        self.assertEqual([q["shape"] for q in problems[0]["queries"]], ["DUPLICATE", "N_PLUS_ONE"])
 
     def test_a_problem_is_new_when_any_of_its_queries_is(self):
         old, new = repeated(), repeated(repositoryMethod="SubmissionRepository.findAll")
@@ -201,6 +221,29 @@ class HtmlTest(unittest.TestCase):
         page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, [LOOP_FINDING], None)
         for fragment in ('class="problem problem-card cat-n_plus_one"', "Row-by-row inserts", 'id="static-findings-table"', 'data-finding-indices="0"', "static rule agrees"):
             self.assertIn(fragment, page)
+
+    def test_with_a_baseline_the_report_opens_on_the_new_findings(self):
+        old, new = repeated(), repeated(callerMethod="NewService.loop")
+        baseline = report.collect_keys(report.group_repeated_queries([old]), [OTHER_FINDING])
+        groups = report.group_repeated_queries([old, new])
+        static_findings = [dict(OTHER_FINDING), dict(LOOP_FINDING)]
+        report.link_static_confirmations(groups, static_findings)
+        report.mark_new(groups, static_findings, baseline)
+        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, static_findings, baseline, phase="phase1")
+        self.assertIn("<title>Query Report (Phase 1)</title>", page)
+        self.assertIn('aria-selected="true" aria-controls="panel-new">🆕 New in this PR <span class="tab-count">2</span>', page)
+        new_panel = page[page.index('id="panel-new"'):page.index('id="panel-repeated-queries"')]
+        self.assertIn("NewService.loop", new_panel)
+        self.assertNotIn("<code>ResultService.loadAll</code>", new_panel)
+        self.assertIn("Repository call in a loop", new_panel)
+        self.assertEqual(page.count('id="static-finding-1"'), 1)
+
+    def test_without_a_baseline_there_is_no_new_tab(self):
+        groups = report.group_repeated_queries([repeated()])
+        report.link_static_confirmations(groups, [])
+        page = report.build_html_report({"generatedAt": "2026-10-08T00:00:00Z", "thresholdMs": 100, "slowQueries": []}, groups, [], None)
+        self.assertNotIn("panel-new", page)
+        self.assertIn('aria-selected="true" aria-controls="panel-repeated-queries"', page)
 
     def test_only_problems_beyond_the_top_ones_are_rows(self):
         findings = [repeated(callerMethod=f"Service{i}.run", executions=50 - i) for i in range(report.TOP_PROBLEMS + 3)]
