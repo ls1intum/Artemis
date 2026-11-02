@@ -24,7 +24,7 @@ The worker runs the normal Artemis image with the `prod,aiworker` profiles. Its
 workload defaults to `hyperion-generation`; the Hyperion adapter stays inactive
 for other workloads. Keep the worker process in an isolated VM.
 
-## Offline Java Gradle build image
+## Offline Java build image (Gradle and Maven)
 
 Build the sandbox image from the repository root:
 
@@ -38,17 +38,21 @@ For another host, publish the image through the deployment's image registry,
 preload it, and configure its registry digest. Do not use a mutable tag for worker
 admission.
 
-The image builds Artemis's canonical Gradle test harness with the trusted
-readiness fixture online at image-build time, then repeats it offline. It retains
+The image builds Artemis's canonical Gradle test harness and both canonical Maven
+test harnesses (`PLAIN_MAVEN`, `MAVEN_MAVEN`) with the trusted readiness fixture
+online at image-build time, then repeats each build offline. Maven is a pinned
+Apache distribution verified by checksum. It retains
 the canonical Teamscale plugin, wrapper, Java 25 toolchain, Ares 2 policy and test dependency
 versions. The supported fixture has no static code analysis, sequential tests or
 private Maven Central mirror. A deployment with a private mirror needs its own
 qualified cache; never copy repository credentials into a sandbox image.
 
-Runtime builds execute as UID 1000 without network access. Each pristine build
-copies the public image cache to bounded private tmpfs; no writable dependency
+Runtime builds execute as UID 1000 without network access. Each pristine Gradle build
+copies the public image cache to bounded private tmpfs; each Maven build runs offline
+with a fresh private local repository on tmpfs and the image repository chained behind
+it as a read-only tail (`maven.repo.local.tail`); no writable dependency
 cache is shared with another execution. Authoring uses JUnit's `Simple`
-display-name generator so Gradle report names match the method names used in task
+display-name generator so Gradle and Surefire report names match the method names used in task
 bindings. The shared LocalCI report parser is not modified to rename tests.
 
 Qualify the image against actual isolated builds:

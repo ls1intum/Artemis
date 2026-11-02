@@ -1,0 +1,34 @@
+{
+    "artemisApp": {
+        "usageDashboard": {
+            "title": "Artemis in Zahlen",
+            "subtitle": "Anonyme, aggregierte Nutzung dieser Artemis-Instanz in den letzten vier Semestern.",
+            "loading": "Nutzungszahlen werden geladen...",
+            "error": "Die Nutzungszahlen konnten nicht geladen werden. Bitte versuche es später erneut.",
+            "empty": "Es gibt noch nicht genug Kurse, um Nutzungszahlen anzuzeigen.",
+            "semesterSelection": "Semester auswählen",
+            "courses": "Kurse",
+            "students": "Studierende",
+            "activeStudents": "Aktive Studierende",
+            "submissions": "Abgaben",
+            "exercises": "Aufgaben",
+            "lectures": "Vorlesungen",
+            "exercisesByType": "Aufgaben nach Typ",
+            "activeStudentsTrend": "Aktive Studierende pro Semester",
+            "exerciseTypes": {
+                "programming": "Programmieren",
+                "quiz": "Quiz",
+                "text": "Text",
+                "modeling": "Modellieren",
+                "file-upload": "Datei-Upload"
+            },
+            "definitions": {
+                "title": "So werden die Zahlen gezählt",
+                "course": "Ein Kurs zählt, wenn er kein Testkurs ist, mindestens 5 Studierende hat und im Semester beginnt. Semester mit weniger als 3 solchen Kursen werden nicht angezeigt.",
+                "students": "Studierende sind eindeutige Personen, die in mindestens einem gezählten Kurs als Studierende eingeschrieben sind.",
+                "activeStudents": "Aktive Studierende sind gezählte Studierende, die mindestens eine Abgabe in einer Aufgabe oder Klausur dieser Kurse gemacht haben.",
+                "privacy": "Es werden nur Summen angezeigt, nie einzelne Kurse oder Personen, und Ergebnisse mit zu wenigen Kursen werden ausgeblendet. Die Zahlen werden etwa stündlich aktualisiert."
+            }
+        }
+    }
+}

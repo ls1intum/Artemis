@@ -18,6 +18,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ClassPathResource;
 
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
+
 /**
  * Deterministic unit tests for the sandbox-free correctness gates: harness immutability, the Java/Ares conventions, the approved specification and test plan, the solution-leak
  * check, and the orphan-residue strip. Fixtures are taken from real repository exports.
@@ -154,36 +156,41 @@ class ExerciseIntegrityGateTest {
     void javaAresConvention_rejectsLegacyHarnessEvenWhenAdaptationLeavesItUnchanged(boolean adaptation) {
         var legacy = map("build.gradle", "dependencies { testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0' }");
 
-        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(legacy)).anyMatch(reason -> reason.contains("legacy Ares 1 harnesses are not supported"));
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(GenerationBuildTool.GRADLE, legacy))
+                .anyMatch(reason -> reason.contains("legacy Ares 1 harnesses are not supported"));
         assertThat(ExerciseIntegrityGate.javaAresConventionReasons(legacy, legacy, adaptation)).anyMatch(reason -> reason.contains("legacy Ares 1 harnesses are not supported"));
     }
 
     @Test
     void javaAresHarness_rejectsOldDependencyEvenAlongsideCurrentAres() {
         var tests = aresTests("build.gradle", aresBuildGradle());
-        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(tests)).isEmpty();
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(GenerationBuildTool.GRADLE, tests)).isEmpty();
 
         tests.put("build.gradle", aresBuildGradle() + "\ndependencies { testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0' }");
 
-        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(tests)).singleElement().asString().contains("legacy Ares 1 harnesses are not supported");
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(GenerationBuildTool.GRADLE, tests)).singleElement().asString()
+                .contains("legacy Ares 1 harnesses are not supported");
     }
 
     @Test
     void javaAresHarness_requiresCurrentInfrastructureWithoutInspectingExistingTests() {
         var tests = aresTests("build.gradle", aresBuildGradle(), "test/de/test/ExistingTest.java", "class ExistingTest { @org.junit.jupiter.api.Test void existing() {} }");
 
-        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(tests)).isEmpty();
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(GenerationBuildTool.GRADLE, tests)).isEmpty();
         tests.remove("SecurityPolicy.yaml");
-        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(tests)).singleElement().asString().contains("explicit SecurityPolicy.yaml");
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(GenerationBuildTool.GRADLE, tests)).singleElement().asString().contains("explicit SecurityPolicy.yaml");
         tests.put("SecurityPolicy.yaml", " ");
-        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(tests)).singleElement().asString().contains("explicit SecurityPolicy.yaml");
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(GenerationBuildTool.GRADLE, tests)).singleElement().asString().contains("explicit SecurityPolicy.yaml");
     }
 
     @Test
-    void javaAresConvention_rejectsAMavenHarnessInsteadOfTheRequiredGradleHarness() {
-        var files = Map.of("pom.xml", classpathResource("templates/java/maven_maven/test/projectTemplate/pom.xml"));
+    void javaAresConvention_acceptsTheCanonicalMavenHarnessAndRejectsItForAGradleExercise() {
+        var files = Map.of("pom.xml", classpathResource("templates/java/maven_maven/test/projectTemplate/pom.xml"), "SecurityPolicy.yaml",
+                classpathResource("templates/java/test/maven/projectTemplate/SecurityPolicy.yaml"));
 
-        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(files)).singleElement().asString().contains("seeded Gradle harness");
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(files)).isEmpty();
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(GenerationBuildTool.MAVEN, files)).isEmpty();
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(GenerationBuildTool.GRADLE, files)).singleElement().asString().contains("seeded Gradle harness");
     }
 
     @Test

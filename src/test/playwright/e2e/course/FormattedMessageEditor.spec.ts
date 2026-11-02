@@ -178,6 +178,55 @@ function postContent(page: Page, id: number) {
     return page.locator(`#item-${id}`).locator('jhi-posting-content');
 }
 
+/**
+ * Reads the lines a user sees by where each character and mention is drawn, so the editor can be compared with the sent message.
+ * innerText is not used: it reports a line break around a mention in a flex layout that is not visible. A mention's @ sign is an icon in the posting.
+ */
+async function visibleLines(content: Locator): Promise<string[]> {
+    return content.evaluate((root) => {
+        const pieces: { text: string; middle: number }[] = [];
+        const walk = (node: Node): void => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent ?? '';
+                for (let index = 0; index < text.length; index++) {
+                    const range = document.createRange();
+                    range.setStart(node, index);
+                    range.setEnd(node, index + 1);
+                    const box = range.getClientRects()[0];
+                    if (box?.height) pieces.push({ text: text[index], middle: box.top + box.height / 2 });
+                }
+            } else if (node instanceof Element) {
+                if (node.matches('[data-message-reference], [data-posting-reference]')) {
+                    const box = node.getBoundingClientRect();
+                    pieces.push({ text: ` ${(node.textContent ?? '').replace(/^@/, '').trim()} `, middle: box.top + box.height / 2 });
+                } else {
+                    node.childNodes.forEach(walk);
+                }
+            }
+        };
+        walk(root);
+        const lines: string[] = [];
+        let previousMiddle = Number.NEGATIVE_INFINITY;
+        for (const piece of pieces) {
+            // Text and a mention on the same line differ by a few pixels at most, the next line is a full line height further down.
+            if (piece.middle - previousMiddle > 10) lines.push('');
+            lines[lines.length - 1] += piece.text;
+            previousMiddle = piece.middle;
+        }
+        return lines.map((line) => line.replace(/[\u200b\s]+/g, ' ').trim()).filter((line) => line.length > 0);
+    });
+}
+
+/** Types a mention of Student One and accepts the completion, as a user does. */
+async function insertMention(page: Page) {
+    await page.keyboard.type(`@${studentOne.username}`);
+    const suggestions = page.getByTestId('message-completion-list');
+    await expect(suggestions).toBeVisible();
+    await expect(suggestions.getByRole('option', { selected: true })).toContainText(studentOne.displayName!);
+    await page.keyboard.press('Enter');
+    await expect(suggestions).toBeHidden();
+}
+
 async function reopen(page: Page, post: Post) {
     const posting = page.locator(`#item-${post.id}`);
     await posting.hover();
@@ -1726,6 +1775,57 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             }
         });
     }
+
+    test('the sent message keeps the line breaks next to mentions exactly as shown in the editor', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.click();
+        await insertMention(page);
+        await page.keyboard.press('Shift+Enter');
+        await page.keyboard.type('More text ');
+        await insertMention(page);
+        await page.keyboard.press('Shift+Enter');
+        await page.keyboard.press('Shift+Enter');
+        await insertMention(page);
+        await page.keyboard.type('some text');
+        await page.keyboard.press('Shift+Enter');
+        await insertMention(page);
+        const lines = ['Student One', 'More text Student One', 'Student One some text', 'Student One'];
+        await expect.poll(() => visibleLines(editor)).toEqual(lines);
+
+        const saved = await send(page, composer);
+
+        const mention = `[user]${studentOne.displayName}(${studentOne.username})[/user]`;
+        expect(saved.content).toBe(`${mention}\nMore text ${mention}\n\n${mention} some text\n${mention}`);
+        await expect.poll(() => visibleLines(postContent(page, saved.id!))).toEqual(lines);
+        const reopened = await reopen(page, saved);
+        await expect.poll(() => visibleLines(reopened.editor)).toEqual(lines);
+    });
+
+    test('the sent message renders a bullet list with mentions without extra or empty bullets', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.click();
+        await page.keyboard.type('- ');
+        await expect(editor.locator('ul')).toHaveCount(1);
+        await insertMention(page);
+        await page.keyboard.press('Shift+Enter');
+        await page.keyboard.type('More text ');
+        await insertMention(page);
+        await page.keyboard.press('Shift+Enter');
+        await insertMention(page);
+        await page.keyboard.type('some text');
+        await page.keyboard.press('Shift+Enter');
+        await insertMention(page);
+        const items = ['@Student One', 'More text @Student One', '@Student One some text', '@Student One'];
+        await expect(editor.locator('li')).toHaveText(items);
+
+        const saved = await send(page, composer);
+
+        const posted = postContent(page, saved.id!);
+        await expect(posted.locator('li')).toHaveText(items.map((item) => item.replace('@Student', 'Student')));
+        await expect(posted.locator('ul')).toHaveCount(1);
+        const reopened = await reopen(page, saved);
+        await expect(reopened.editor.locator('li')).toHaveText(items);
+    });
 
     test('typing keeps a neutral message field while toolbar keyboard focus stays visible', async ({ page, composer, browserName }) => {
         const { editor } = composer;

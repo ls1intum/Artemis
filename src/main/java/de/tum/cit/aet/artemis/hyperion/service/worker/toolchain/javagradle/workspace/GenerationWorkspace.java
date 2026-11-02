@@ -5,6 +5,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Locale;
@@ -21,6 +22,7 @@ import org.springframework.core.io.Resource;
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources;
@@ -168,6 +170,21 @@ public class GenerationWorkspace {
         public byte[] content() {
             return content.clone();
         }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof BinarySeedFile file && Arrays.equals(content, file.content);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(content);
+        }
+
+        @Override
+        public String toString() {
+            return "BinarySeedFile[" + content.length + " bytes]";
+        }
     }
 
     /** Returns the reference files keyed by archive-relative path under {@code reference/}, or empty if the set is incomplete. */
@@ -219,6 +236,10 @@ public class GenerationWorkspace {
         try {
             String policy = new String(resourceLoaderService.getResource(Path.of("templates", READINESS_SOURCE_DIR, "tests", "SecurityPolicy.yaml")).getContentAsByteArray(),
                     StandardCharsets.UTF_8);
+            // Ares selects its build-tool-specific class layout from the policy's language configuration.
+            if (exercise.buildTool() == GenerationBuildTool.MAVEN) {
+                policy = policy.replace("JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ", "JAVA_USING_MAVEN_ARCHUNIT_AND_ASPECTJ");
+            }
             fixture.put("tests/SecurityPolicy.yaml", policy);
         }
         catch (IOException e) {

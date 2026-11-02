@@ -71,6 +71,7 @@ const sidebars: SidebarsConfig = {
         'ai-pipelines',
         'deimos',
         'openapi',
+        'agent-access',
         'docker-compose',
         'mailpit-setup',
         'keycloak-saml2-setup',

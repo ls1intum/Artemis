@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureLearningStatisticsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -113,6 +114,31 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
     private final String lectureTitle = "Lecture 7349";
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void learningStatisticsCountsOnlyReleasedNonExerciseUnitsAndOwnCompletions() throws Exception {
+        attachmentVideoUnit.setReleaseDate(null);
+        attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        attachmentOfAttachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        attachmentRepository.save(attachmentOfAttachmentVideoUnit);
+        var text = lecture1.getLectureUnits().stream().filter(unit -> unit instanceof TextUnit).findFirst().orElseThrow();
+        text.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        lectureUnitRepository.save(text);
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + text.getId() + "/completion?completed=true", null, HttpStatus.OK, null);
+
+        var statistics = request.getList("/api/lecture/courses/" + course1.getId() + "/learning-statistics", HttpStatus.OK, LectureLearningStatisticsDTO.class);
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + text.getId() + "/completion?completed=false", null, HttpStatus.OK, null);
+        assertThat(statistics).noneMatch(row -> row.type().equals("exercise") || row.type().equals("attachment"));
+        assertThat(statistics.stream().filter(row -> row.type().equals("text")).mapToLong(row -> row.completed()).sum()).isEqualTo(1);
+        assertThat(statistics.stream().mapToLong(row -> row.total()).sum()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
+    void learningStatisticsRejectsStudentsOutsideTheCourse() throws Exception {
+        request.getList("/api/lecture/courses/" + course1.getId() + "/learning-statistics", HttpStatus.FORBIDDEN, LectureLearningStatisticsDTO.class);
+    }
+
     @BeforeEach
     void initTestCase() throws Exception {
         // Remove all existing lectures with the same title to avoid unique constraint violations
@@ -151,8 +177,13 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.postWithResponseBody("/api/lecture/lectures", new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
-        request.putWithResponseBody("/api/lecture/lectures", new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
+        // creating and updating a lecture carry the course in the request body, so the role is checked against that course
+        var courseDto = LectureResource.SimpleLectureDTO.CourseDTO.from(course1);
+        var newLecture = new LectureResource.SimpleLectureDTO(null, "Forbidden", null, ZonedDateTime.now(), ZonedDateTime.now().plusWeeks(1), false, null, courseDto);
+        var existingLecture = new LectureResource.SimpleLectureDTO(lecture1.getId(), "Forbidden", null, ZonedDateTime.now(), ZonedDateTime.now().plusWeeks(1), false, null,
+                courseDto);
+        request.postWithResponseBody("/api/lecture/lectures", newLecture, Lecture.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/lecture/lectures", existingLecture, Lecture.class, HttpStatus.FORBIDDEN);
         request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
         request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course1.getId(), null, Lecture.class,
@@ -186,7 +217,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
@@ -200,7 +231,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @ParameterizedTest
     @NullSource
     @ValueSource(strings = { "lecture-loremipsum", "" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createLecture_correctRequestBody_shouldCreateLecture(String channelName) throws Exception {
         Course course = courseRepository.findByIdElseThrow(this.course1.getId());
         courseUtilService.enableMessagingForCourse(course);
@@ -226,7 +257,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
     @ParameterizedTest
     @ValueSource(ints = { 0, -1 })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createLecture_nonStrictDateSequence_shouldReturnBadRequest(int endDateOffsetHours) throws Exception {
         Course course = courseRepository.findByIdElseThrow(this.course1.getId());
         ZonedDateTime startDate = ZonedDateTime.now();
@@ -237,7 +268,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createLecture_alreadyId_shouldReturnBadRequest() throws Exception {
         Lecture lecture = new Lecture();
         lecture.setId(1L);
@@ -245,7 +276,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateLecture_correctRequestBody_shouldUpdateLecture() throws Exception {
         Lecture originalLecture = lectureRepository.findById(lecture1.getId()).orElseThrow();
         String editedChannelName = "edited-lecture-channel";
@@ -272,7 +303,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
     @ParameterizedTest
     @ValueSource(ints = { 0, -1 })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateLecture_nonStrictDateSequence_shouldReturnBadRequest(int endDateOffsetHours) throws Exception {
         Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
         ZonedDateTime startDate = ZonedDateTime.now().plusMonths(3);
@@ -283,7 +314,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateLecture_lectureFromUnauthorizedCourseWithAuthorizedCourseInBody_shouldReturnForbidden() throws Exception {
         Course otherCourse = courseUtilService.addEmptyCourse();
         Lecture otherLecture = lectureUtilService.createLecture(otherCourse);
@@ -300,7 +331,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateLecture_mismatchedCourseInBody_shouldReturnBadRequest() throws Exception {
         Course otherAuthorizedCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
@@ -317,7 +348,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateLecture_nullCourseInBody_shouldReturnBadRequest() throws Exception {
         Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
 
@@ -332,7 +363,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
         Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).orElseThrow();
         originalLecture.setId(null);
@@ -341,7 +372,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getLectureForCourse_withOutLectureUnits_shouldGetLecturesWithOutLectureUnits() throws Exception {
         List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.OK, Lecture.class);
         assertThat(returnedLectures).hasSize(2);
@@ -350,7 +381,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getLectureForCourse_WithLectureUnitsWithSlides_shouldGetLecturesWithLectureUnitsWithSlides() throws Exception {
         int numberOfSlides = 2;
         Lecture lectureWithSlides = LectureFactory.generateLecture(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), course1);
@@ -545,7 +576,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteLecture_lectureExists_shouldDeleteLecture() throws Exception {
         attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
         lectureUnitRepository.save(attachmentVideoUnit);
@@ -559,7 +590,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteLectureWithChannel() throws Exception {
         Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
@@ -571,26 +602,27 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void deleteLecture_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteLecture_lectureDoesNot_shouldReturnNotFound() throws Exception {
-        request.delete("/api/lecture/lectures/" + 0, HttpStatus.NOT_FOUND);
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deleteLecture_lectureDoesNot_shouldReturnForbidden() throws Exception {
+        // the role is checked against the course of the lecture, which a non-existing lecture does not have
+        request.delete("/api/lecture/lectures/" + 0, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLectureTitleAsInstuctor() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetLectureTitle();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetLectureTitleAsTeachingAssistant() throws Exception {
         // Only user and role matter, so we can re-use the logic
         testGetLectureTitle();
@@ -628,7 +660,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "USER")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
         final var result = request.getSearchResult("/api/lecture/lectures", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
@@ -636,7 +668,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = pageableSearchUtilService.configureSearch(lecture1.getTitle());
         final var result = request.getSearchResult("/api/lecture/lectures", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
@@ -652,7 +684,14 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testImport_asTutor_forbiddenBeforeTheLectureIsLoaded() throws Exception {
+        // a missing source lecture would answer 404, so the 403 shows that the role in the target course is checked before anything is loaded
+        request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=-1&courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImport() throws Exception {
         Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
@@ -678,7 +717,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportPutsEveryAttachmentUnderTheDirectoryOfItsUnit() throws Exception {
         // An attachment video unit created for an attachment that used to hang off a lecture directly still has its file
         // under the lecture attachment directory. Nothing on the row says so any more, so Attachment.fileLocation finds
@@ -736,7 +775,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateLectureSeriesShouldReturnForbiddenIfCourseDoesNotExist() throws Exception {
         ZoneId timezone = ZoneId.of("Europe/Berlin");
         ZonedDateTime startLecture1 = ZonedDateTime.of(1989, 11, 9, 18, 53, 0, 0, timezone);
@@ -749,7 +788,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
     @ParameterizedTest
     @ValueSource(ints = { 0, -1 })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createLectureSeries_nonStrictDateSequence_shouldReturnBadRequest(int endDateOffsetHours) throws Exception {
         ZonedDateTime startDate = ZonedDateTime.now();
         LectureSeriesCreateLectureDTO lecture = new LectureSeriesCreateLectureDTO("Invalid dates", startDate, startDate.plusHours(endDateOffsetHours));
@@ -758,8 +797,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testCreateLectureSeriesShouldReturnForbiddenIfUserNotAtLeastInstructor() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateLectureSeriesShouldReturnForbiddenIfUserNotAtLeastEditor() throws Exception {
         ZoneId timezone = ZoneId.of("Europe/Berlin");
         ZonedDateTime startLecture1 = ZonedDateTime.of(1989, 11, 9, 18, 53, 0, 0, timezone);
         ZonedDateTime endLecture1 = startLecture1.plusHours(1);
@@ -770,7 +809,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateLectureSeriesAndCorrectLectureAndChannelNames() throws Exception {
         ZonedDateTime startNewLecture1 = lecture1.getStartDate().minusDays(3);
         ZonedDateTime endNewLecture1 = startNewLecture1.plusHours(1);
@@ -826,4 +865,19 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(lecture.id()).isEqualTo(lecture2.getId());
         assertThat(lecture.isTutorialLecture()).isTrue();
     }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createLectureRequiresCourseId(boolean includeCourse) throws Exception {
+        long lecturesBefore = lectureRepository.count();
+        long channelsBefore = channelRepository.count();
+        var start = ZonedDateTime.now();
+        var course = includeCourse ? new LectureResource.SimpleLectureDTO.CourseDTO(null, null, null, null) : null;
+        var lecture = new LectureResource.SimpleLectureDTO(null, "Missing course", null, start, start.plusHours(1), false, "missing-course", course);
+        request.postAndExpectError("/api/lecture/lectures", lecture, HttpStatus.BAD_REQUEST, "courseMissing");
+        assertThat(lectureRepository.count()).isEqualTo(lecturesBefore);
+        assertThat(channelRepository.count()).isEqualTo(channelsBefore);
+    }
+
 }

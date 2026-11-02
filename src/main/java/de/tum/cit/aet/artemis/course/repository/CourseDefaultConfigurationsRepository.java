@@ -119,7 +119,7 @@ public interface CourseDefaultConfigurationsRepository {
 
     /**
      * Inserts the default settings a stored course is missing, which is what a creation that failed half-way leaves behind.
-     * For a course that has all its settings this is five unlocked reads and nothing else.
+     * For a course that has all its settings this is six unlocked reads and nothing else.
      * <p>
      * It takes no lock and needs no transaction: a missing row is found by a plain read and added by a plain insert. If two
      * saves repair the same course at the same moment, the unique key lets one insert win and the other finds the row
@@ -144,6 +144,9 @@ public interface CourseDefaultConfigurationsRepository {
         }
         if (!hasIrisCourseSettings(courseId)) {
             added += insertUnlessAlreadyThere(() -> initializeIrisCourseSettings(courseId), () -> hasIrisCourseSettings(courseId));
+        }
+        if (!hasHyperionCourseSettings(courseId)) {
+            added += insertUnlessAlreadyThere(() -> initializeHyperionCourseSettings(courseId), () -> hasHyperionCourseSettings(courseId));
         }
         return added;
     }
@@ -197,6 +200,13 @@ public interface CourseDefaultConfigurationsRepository {
             """)
     boolean hasIrisCourseSettings(@Param("courseId") long courseId);
 
+    @Query("""
+            SELECT COUNT(settings) > 0
+            FROM HyperionCourseSettingsEntity settings
+            WHERE settings.courseId = :courseId
+            """)
+    boolean hasHyperionCourseSettings(@Param("courseId") long courseId);
+
     /**
      * Creates the default LTI settings for a newly stored course, independently of whether online mode is enabled.
      *
@@ -235,4 +245,17 @@ public interface CourseDefaultConfigurationsRepository {
             VALUES (:courseId, '{"enabled":true,"variant":"default","supportLevel":"moderate"}')
             """, nativeQuery = true)
     void initializeIrisCourseSettings(@Param("courseId") long courseId);
+
+    /**
+     * Creates the Hyperion settings of a new course with the defaults of the quiz question pool.
+     *
+     * @param courseId the new course id
+     */
+    @Modifying
+    @Transactional // ok because of the insert
+    @Query(value = """
+            INSERT INTO hyperion_course_settings (course_id, settings)
+            VALUES (:courseId, '{"poolGenerationEnabled":false,"questionsPerLectureUnit":12}')
+            """, nativeQuery = true)
+    void initializeHyperionCourseSettings(@Param("courseId") long courseId);
 }

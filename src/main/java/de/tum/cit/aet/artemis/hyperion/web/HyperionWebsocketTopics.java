@@ -25,6 +25,9 @@ public class HyperionWebsocketTopics implements WebsocketTopicProvider {
     public static final WebsocketTopic EXERCISE_GENERATION_STATE = WebsocketTopic.of("/topic/hyperion/exercise-generation/exercises/{exerciseId}/state",
             WebsocketTopicAccess.atLeastEditorInExercise("exerciseId"));
 
+    /** Active generation snapshots for elevated administrators. */
+    public static final WebsocketTopic ACTIVE_GENERATIONS = WebsocketTopic.of("/topic/admin/hyperion-generations", WebsocketTopicAccess.administrator());
+
     /**
      * Events of a code generation job.
      */

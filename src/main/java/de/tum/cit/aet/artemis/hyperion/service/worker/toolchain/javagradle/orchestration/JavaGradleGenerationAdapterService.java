@@ -165,7 +165,8 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
                 transcripts, approvedSpecs);
         var brief = assignment.brief();
         var input = new GenerationInput(assignment.identity().exerciseId(), brief.namespace(), brief.problemStatement(), assignment.gradingContext().hasDueDate(),
-                assignment.gradingContext().baselineGradedTestNames(), brief.mode() == ExerciseBrief.Mode.ADAPT ? assignment.gradingContext().baselineHiddenTestNames() : Set.of());
+                assignment.gradingContext().baselineGradedTestNames(), brief.mode() == ExerciseBrief.Mode.ADAPT ? assignment.gradingContext().baselineHiddenTestNames() : Set.of(),
+                brief.resolvedBuildTool());
         Consumer<GenerationProgress.FileChange> files = change -> observer.progress("Updated " + change.path(), new GenerationProgress(null, null, change, null));
         active.put(assignment.identity(), orchestrator);
         try {

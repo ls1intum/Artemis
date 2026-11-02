@@ -23,6 +23,7 @@ import javax.tools.ToolProvider;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -36,6 +37,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
@@ -77,7 +79,7 @@ class StructuralOracleSeederTest {
     private Path tempDir;
 
     private static GenerationInput javaExercise() {
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         return exercise;
     }
 
@@ -241,7 +243,7 @@ class StructuralOracleSeederTest {
                 """);
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), registry).seedIfStructuralDiff(sandbox, "s",
-                new GenerationInput(0, "exercise", null, false, Set.of(), Set.of()));
+                new GenerationInput(0, "exercise", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE));
         String testSource = seeded.repositoryFiles().get("test/exercise/GenericTypeTest.java");
         String oracle = seeded.repositoryFiles().get("test/exercise/test.json");
         for (String exceptionType : List.of("Failure", "exercise.Failure")) {
@@ -343,8 +345,7 @@ class StructuralOracleSeederTest {
             constructor.setAccessible(true);
             var factory = provider.getDeclaredMethod("genericApi");
             factory.setAccessible(true);
-            @SuppressWarnings("unchecked")
-            List<DynamicTest> tests = (List<DynamicTest>) factory.invoke(constructor.newInstance());
+            List<DynamicTest> tests = ((DynamicContainer) factory.invoke(constructor.newInstance())).getChildren().map(DynamicTest.class::cast).toList();
             assertThat(tests).singleElement().extracting(DynamicTest::getDisplayName).isEqualTo("testClass[GenericApi:Box]");
             assertThat(loader.loadClass(classPrefix + "Box").getTypeParameters()).isEmpty();
             tests.getFirst().getExecutable().execute();
@@ -365,7 +366,7 @@ class StructuralOracleSeederTest {
                     public int[] sort(int[] a);
                 }
                 """);
-        GenerationInput exercise = new GenerationInput(0, "sorting", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "sorting", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         SeededStructuralTests seededTests = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
@@ -399,7 +400,7 @@ class StructuralOracleSeederTest {
                     public double apply(double x);
                 }
                 """);
-        GenerationInput exercise = new GenerationInput(0, "navigation", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "navigation", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         SeededStructuralTests seededTests = seederWith(sandbox, solution, template, harnessOnly, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
@@ -459,7 +460,7 @@ class StructuralOracleSeederTest {
         when(workspace.extractRepositoryFiles(sandbox, "s", RepositoryRole.TESTS)).thenReturn(Map.of());
         StructuralOracleSeeder seeder = new StructuralOracleSeeder(workspace, approvedSpecs);
 
-        GenerationInput exercise = new GenerationInput(0, "lift", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "lift", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         SeededStructuralTests firstTests = seeder.seedIfStructuralDiff(sandbox, "s", exercise);
         SeededStructuralTests laterTests = seeder.seedIfStructuralDiff(sandbox, "s", exercise);
 
@@ -487,7 +488,7 @@ class StructuralOracleSeederTest {
                     public int[] sort(int[] a);
                 }
                 """);
-        GenerationInput exercise = new GenerationInput(0, "sorting", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "sorting", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         ArgumentCaptor<InputStream> tarCaptor = ArgumentCaptor.forClass(InputStream.class);
@@ -602,7 +603,7 @@ class StructuralOracleSeederTest {
                 GENERATED_MARKER + "\nclass ClassTest {}", "test/sorting/MethodTest.java", GENERATED_MARKER + "\nclass MethodTest {}");
 
         ApprovedSpecRegistry approvedSpecs = approvedSpec("MergeSort", "public class MergeSort { public void sort(); }");
-        GenerationInput exercise = new GenerationInput(0, "sorting", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "sorting", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         SeededStructuralTests seededTests = seederWith(sandbox, solution, template, tests, approvedSpecs).seedIfStructuralDiff(sandbox, "s", exercise);
 
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), any());
@@ -746,7 +747,7 @@ class StructuralOracleSeederTest {
                 ```
                 """, Set.of("Sorter", "Order", "MergeSort"));
         assertThat(parsed.errors()).isEmpty();
-        String oracle = parsed.contract().toOracle("sorting", JsonMapper.builder().build());
+        String oracle = parsed.contract().toOracle("sorting");
         assertThat(oracle).contains("\"isInterface\"", "\"isEnum\"", "\"isAbstract\"");
 
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
@@ -773,38 +774,6 @@ class StructuralOracleSeederTest {
     }
 
     @Test
-    void filterOracle_keepsOnlyCreatedPublicClasses_andStripsPrivateMembers() throws Exception {
-        // MergeSort is a public class missing from the template (keep, but drop its private member); BubbleSort exists in the template (drop the whole entry).
-        String oracle = """
-                [ { "class": { "name": "MergeSort", "package": "sorting" },
-                    "methods": [ { "name": "sort", "modifiers": ["public"] }, { "name": "merge", "modifiers": ["private"] } ] },
-                  { "class": { "name": "BubbleSort", "package": "sorting" },
-                    "methods": [ { "name": "helper", "modifiers": ["private"] } ] } ]
-                """;
-        Map<String, String> templateFiles = Map.of("src/sorting/BubbleSort.java", "package sorting;\npublic class BubbleSort {}");
-        Map<String, String> solutionFiles = Map.of("src/sorting/BubbleSort.java", "package sorting;\npublic class BubbleSort {}", "src/sorting/MergeSort.java",
-                "package sorting;\npublic class MergeSort {}");
-
-        String filtered = StructuralOracleSeeder.filterOracleToCreatedPublicApi(oracle, templateFiles, solutionFiles);
-
-        assertThat(filtered).contains("MergeSort").contains("sort").doesNotContain("BubbleSort").doesNotContain("merge").doesNotContain("helper");
-    }
-
-    @Test
-    void approvedOwnershipPreventsASolutionOnlyHelperFromBecomingGradedStructure() throws Exception {
-        String oracle = """
-                [ { "class": { "name": "StudentStrategy", "package": "sorting" }, "methods": [] },
-                  { "class": { "name": "SolutionHelper", "package": "sorting" }, "methods": [] } ]
-                """;
-        Map<String, String> solutionFiles = Map.of("src/sorting/StudentStrategy.java", "package sorting; public class StudentStrategy {}", "src/sorting/SolutionHelper.java",
-                "package sorting; public class SolutionHelper {}");
-
-        String filtered = StructuralOracleSeeder.filterOracleToCreatedPublicApi(oracle, Map.of(), solutionFiles, Set.of("StudentStrategy"));
-
-        assertThat(filtered).contains("StudentStrategy").doesNotContain("SolutionHelper");
-    }
-
-    @Test
     void approvedSpecificationWithNoStudentCreatedTypesDoesNotGradeSolutionOnlyHelpers() {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         Map<String, String> solution = Map.of("src/sorting/SolutionHelper.java", "package sorting;\npublic class SolutionHelper { public void help() {} }");
@@ -825,16 +794,6 @@ class StructuralOracleSeederTest {
 
         assertThat(seededTests.testNames()).isEmpty();
         verify(sandbox, never()).copyIn(any(), any(), any());
-    }
-
-    @Test
-    void filterOracle_dropsAMissingButNonPublicClass() throws Exception {
-        // A package-private helper class missing from the template is an implementation detail, not a contract the student must fulfil — do not enforce it.
-        String oracle = "[ { \"class\": { \"name\": \"Helper\", \"package\": \"x\" }, \"methods\": [ { \"name\": \"h\", \"modifiers\": [\"public\"] } ] } ]";
-        Map<String, String> templateFiles = Map.of("src/x/Main.java", "package x;\npublic class Main {}");
-        Map<String, String> solutionFiles = Map.of("src/x/Helper.java", "package x;\nclass Helper { public void h(){} }");
-
-        assertThat(StructuralOracleSeeder.filterOracleToCreatedPublicApi(oracle, templateFiles, solutionFiles)).isEqualTo("[]");
     }
 
     @Test

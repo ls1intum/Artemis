@@ -57,21 +57,13 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
     @Nested
     class PreAuthorize {
 
-        private void testAllPreAuthorizeEditor() throws Exception {
-            request.get("/api/atlas/standardized-competencies/1", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
-            request.get("/api/atlas/standardized-competencies/for-tree-view", HttpStatus.FORBIDDEN, KnowledgeAreaResultDTO.class);
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-        void shouldFailAsTutor() throws Exception {
-            this.testAllPreAuthorizeEditor();
-        }
-
+        // The catalogue of standardized competencies is static data that every authenticated user may read.
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void shouldFailAsStudent() throws Exception {
-            this.testAllPreAuthorizeEditor();
+        void shouldBeReadableAsStudent() throws Exception {
+            request.get("/api/atlas/standardized-competencies/" + standardizedCompetency.getId(), HttpStatus.OK, StandardizedCompetency.class);
+            request.getList("/api/atlas/standardized-competencies/for-tree-view", HttpStatus.OK, KnowledgeAreaResultDTO.class);
+            request.getList("/api/atlas/standardized-competencies/sources", HttpStatus.OK, SourceDTO.class);
         }
     }
 
@@ -440,7 +432,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
         class GetStandardizedCompetency {
 
             @Test
-            @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+            @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
             void shouldReturnStandardizedCompetency() throws Exception {
                 var expectedCompetency = standardizedCompetencyUtilService.saveStandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "1.0.0",
                         knowledgeArea, source);
@@ -450,7 +442,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             }
 
             @Test
-            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
             void shouldReturn404() throws Exception {
                 request.get("/api/atlas/standardized-competencies/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, StandardizedCompetency.class);
             }
@@ -460,7 +452,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
         class GetAllForTreeView {
 
             @Test
-            @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+            @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
             void shouldGetAllKnowledgeAreasAndCompetencies() throws Exception {
                 var knowledgeAreaA = standardizedCompetencyUtilService.saveKnowledgeArea("!!!A_Title", "A", "Description", null);
                 var knowledgeAreaB = standardizedCompetencyUtilService.saveKnowledgeArea("B_Title", "B", "Description", knowledgeAreaA);
@@ -485,7 +477,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
         class GetSources {
 
             @Test
-            @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+            @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
             void shouldReturnSources() throws Exception {
                 var source1 = new Source("title", "author", "http://localhost:1");
                 var source2 = new Source("title2", "author2", "http://localhost:2");

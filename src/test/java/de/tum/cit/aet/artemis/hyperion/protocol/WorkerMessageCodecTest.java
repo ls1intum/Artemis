@@ -201,6 +201,22 @@ class WorkerMessageCodecTest {
     }
 
     @Test
+    void buildToolDefaultsToGradleAndOnlyMavenReachesTheWire() {
+        var mapper = new JsonMapper();
+        var gradle = new ExerciseBrief("Title", "short", "de.example", null, "prompt", ExerciseBrief.Mode.GENERATE, null, GenerationToolchain.JAVA_GRADLE,
+                GenerationBuildTool.GRADLE);
+        // A Gradle brief serializes exactly as before Maven support, so a peer without the field still accepts it.
+        assertThat(mapper.writeValueAsString(gradle)).doesNotContain("buildTool")
+                .isEqualTo(mapper.writeValueAsString(new ExerciseBrief("Title", "short", "de.example", null, "prompt", ExerciseBrief.Mode.GENERATE)));
+        assertThat(mapper.readValue(mapper.writeValueAsString(gradle), ExerciseBrief.class).resolvedBuildTool()).isEqualTo(GenerationBuildTool.GRADLE);
+
+        var maven = new ExerciseBrief("Title", "short", "de.example", null, "prompt", ExerciseBrief.Mode.GENERATE, null, GenerationToolchain.JAVA_GRADLE,
+                GenerationBuildTool.MAVEN);
+        assertThat(mapper.writeValueAsString(maven)).contains("\"buildTool\":\"MAVEN\"");
+        assertThat(mapper.readValue(mapper.writeValueAsString(maven), ExerciseBrief.class).resolvedBuildTool()).isEqualTo(GenerationBuildTool.MAVEN);
+    }
+
+    @Test
     void wireBriefMustIdentifyItsToolchain() {
         var mapper = new JsonMapper();
         var brief = new ExerciseBrief("Title", "short", "de.example", null, "prompt", ExerciseBrief.Mode.GENERATE);

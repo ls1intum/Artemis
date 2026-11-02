@@ -1,6 +1,7 @@
 <div>
     @if (exercise()?.studentParticipations?.length && exercise()?.studentParticipations?.[0]?.id) {
         <jhi-text-editor
+            [viewingPurpose]="viewingPurpose()"
             [participationId]="exercise().studentParticipations![0].id"
             [expandProblemStatement]="expandProblemStatement()"
             [inputExercise]="isAfterResultsArePublished() ? undefined : exercise()"

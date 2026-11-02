@@ -1,3 +1,4 @@
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReviewCommentThreadWidgetComponent } from 'app/exercise/review/review-comment-thread-widget/review-comment-thread-widget.component';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
@@ -6,14 +7,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { Confirmation, ConfirmationService } from 'primeng/api';
+import { TumAetUiConfirmationRequest, TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { signal } from '@angular/core';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
     let fixture: ComponentFixture<ReviewCommentThreadWidgetComponent>;
     let comp: ReviewCommentThreadWidgetComponent;
     let reviewCommentService: any;
-    let confirmationService: ConfirmationService;
+    let confirmationService: TumAetUiConfirmationService;
 
     beforeEach(async () => {
         reviewCommentService = {
@@ -24,8 +25,12 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             toggleThreadFeedbackSelection: vi.fn(),
             isThreadSelectedAsFeedback: vi.fn().mockReturnValue(false),
             toggleGroupResolvedInContext: vi.fn(),
+            adaptationOffered: signal(false),
+            adaptationBlockedReason: signal<string | undefined>(undefined),
             threads: signal([]),
         };
+
+        reviewCommentService.feedbackSelectionOffered = reviewCommentService.adaptationOffered;
 
         await TestBed.configureTestingModule({
             imports: [ReviewCommentThreadWidgetComponent],
@@ -37,12 +42,76 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         fixture = TestBed.createComponent(ReviewCommentThreadWidgetComponent);
         comp = fixture.componentInstance;
-        confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+        confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
         fixture.componentRef.setInput('thread', { id: 1, resolved: false, comments: [] } as any);
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it.each(['menu', 'menuitem'])('keeps comment actions usable when focus scrolls the %s', async (role) => {
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: false,
+            comments: [{ id: 3, type: CommentType.USER, content: { contentType: CommentContentType.USER, text: 'Review this instruction.' } }],
+        });
+        fixture.detectChanges();
+        const trigger = fixture.nativeElement.querySelector('.monaco-review-comment-menu-trigger') as HTMLButtonElement;
+        trigger.click();
+        await fixture.whenStable();
+
+        const menu = document.querySelector('[role="menu"]') as HTMLElement;
+        expect(menu).not.toBeNull();
+        const scrollTarget = role === 'menu' ? menu : (menu.querySelector('[role="menuitem"]') as HTMLElement);
+        scrollTarget.dispatchEvent(new Event('scroll'));
+        await fixture.whenStable();
+
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+        const editAction = document.querySelector('[role="menuitem"]') as HTMLButtonElement;
+        editAction.click();
+        await fixture.whenStable();
+        expect(comp.editingCommentId()).toBe(3);
+        expect(comp.editText()).toBe('Review this instruction.');
+    });
+
+    it('still closes comment actions when the surrounding page scrolls', async () => {
+        fixture.componentRef.setInput('thread', {
+            id: 1,
+            resolved: false,
+            comments: [{ id: 3, type: CommentType.USER, content: { contentType: CommentContentType.USER, text: 'Review this instruction.' } }],
+        });
+        fixture.detectChanges();
+        const trigger = fixture.nativeElement.querySelector('.monaco-review-comment-menu-trigger') as HTMLButtonElement;
+        trigger.click();
+        await fixture.whenStable();
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+
+        document.dispatchEvent(new Event('scroll'));
+        await fixture.whenStable();
+
+        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        expect(document.querySelector('[role="menu"]')).toBeNull();
+    });
+
+    it('offers one outlined AI selection action instead of a second adaptation shortcut', () => {
+        reviewCommentService.adaptationOffered.set(true);
+        fixture.detectChanges();
+        const button = fixture.nativeElement.querySelector('[data-testid="review-feedback-selection"]') as HTMLButtonElement;
+        expect(button).not.toBeNull();
+        expect(button.getAttribute('variant')).toBe('outlined');
+        expect(button.getAttribute('aria-pressed')).toBe('false');
+        expect(button.querySelector('fa-icon')).not.toBeNull();
+        button.click();
+        expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledWith(1);
+        expect(fixture.nativeElement.querySelector('.monaco-review-comment-adapt-button')).toBeNull();
+    });
+
+    it('does not offer AI selection for auxiliary repositories', () => {
+        reviewCommentService.adaptationOffered.set(true);
+        fixture.componentRef.setInput('thread', { id: 1, targetType: CommentThreadLocationType.AUXILIARY_REPO, resolved: false, comments: [] });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="review-feedback-selection"]')).toBeNull();
     });
 
     it('should initialize collapsed state', () => {
@@ -60,7 +129,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should delete comment when deletion is confirmed', () => {
         let acceptCallback: (() => void) | undefined;
-        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
+        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: TumAetUiConfirmationRequest) => {
             acceptCallback = confirmation.accept as (() => void) | undefined;
             return confirmationService;
         });
@@ -75,7 +144,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should not delete comment when deletion is dismissed', () => {
         let rejectCallback: (() => void) | undefined;
-        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
+        vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: TumAetUiConfirmationRequest) => {
             rejectCallback = confirmation.reject as (() => void) | undefined;
             return confirmationService;
         });
@@ -178,16 +247,29 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(collapseSpy).toHaveBeenCalledWith(true);
     });
 
-    it('should toggle feedback selection when enabled', () => {
-        fixture.componentRef.setInput('showFeedbackAction', true);
+    it('should toggle feedback selection when adaptation is offered', () => {
+        reviewCommentService.adaptationOffered.set(true);
 
         comp.toggleFeedbackSelection();
 
         expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledWith(1);
     });
 
+    it('should select legacy feedback without offering whole-exercise adaptation', () => {
+        reviewCommentService.feedbackSelectionOffered = signal(true);
+        fixture.detectChanges();
+        (fixture.nativeElement.querySelector('[data-testid="review-feedback-selection"]') as HTMLButtonElement).click();
+        expect(reviewCommentService.toggleThreadFeedbackSelection).toHaveBeenCalledWith(1);
+    });
+
+    it('should not toggle feedback selection when adaptation is not offered', () => {
+        comp.toggleFeedbackSelection();
+
+        expect(reviewCommentService.toggleThreadFeedbackSelection).not.toHaveBeenCalled();
+    });
+
     it('should show feedback action before resolve and reply actions', () => {
-        fixture.componentRef.setInput('showFeedbackAction', true);
+        reviewCommentService.adaptationOffered.set(true);
 
         fixture.detectChanges();
 
@@ -198,7 +280,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
     it('should show selected feedback badge and deselection action when selected for feedback', () => {
         reviewCommentService.isThreadSelectedAsFeedback.mockReturnValue(true);
-        fixture.componentRef.setInput('showFeedbackAction', true);
+        reviewCommentService.adaptationOffered.set(true);
 
         fixture.detectChanges();
 
@@ -206,8 +288,20 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('artemisApp.review.removeThreadFromFeedback');
     });
 
+    it('shows the blocked reason next to the disabled feedback action without requiring focus', () => {
+        reviewCommentService.adaptationOffered.set(true);
+        reviewCommentService.adaptationBlockedReason.set('artemisApp.review.adaptExercise.runInProgress');
+        fixture.detectChanges();
+
+        const adaptButton: HTMLButtonElement = fixture.nativeElement.querySelector('.monaco-review-comment-feedback-selection-button');
+        expect(adaptButton.disabled).toBe(true);
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.review.adaptExercise.runInProgress');
+        adaptButton.click();
+        expect(fixture.componentInstance.isSelectedAsFeedback()).toBe(false);
+    });
+
     it('should hide the feedback action for outdated threads', () => {
-        fixture.componentRef.setInput('showFeedbackAction', true);
+        reviewCommentService.adaptationOffered.set(true);
         fixture.componentRef.setInput('thread', { id: 1, resolved: false, outdated: true, comments: [] } as any);
 
         fixture.detectChanges();

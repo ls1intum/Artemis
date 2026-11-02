@@ -32,8 +32,8 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -115,7 +115,8 @@ public class ExerciseGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/exams/{examId}/exercise-groups")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExerciseGroupDTO> createExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroupCreateDTO exerciseGroupCreateDTO)
             throws URISyntaxException {
         log.debug("REST request to create an exercise group : {}", exerciseGroupCreateDTO);
@@ -156,7 +157,8 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with the body of the updated exercise group
      */
     @PutMapping("courses/{courseId}/exams/{examId}/exercise-groups")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExerciseGroupDTO> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestBody ExerciseGroupUpdateDTO exerciseGroupUpdateDTO) {
         log.debug("REST request to update an exercise group : {}", exerciseGroupUpdateDTO);
@@ -192,7 +194,8 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("courses/{courseId}/exams/{examId}/exercises/{exerciseId}/exercise-group")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> moveExerciseToGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseId,
             @Valid @RequestBody ExamExerciseGroupAssignmentDTO assignmentDTO) {
         log.debug("REST request to move exercise {} in exam {} to exercise group {}", exerciseId, examId, assignmentDTO.exerciseGroupId());
@@ -218,7 +221,8 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exercise groups, or with status 400 (Bad Request)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/import-exercise-group")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExerciseGroupImportResultDTO> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId,
             @Valid @RequestBody List<@NotNull @Valid ExerciseGroupImportDTO> exerciseGroupsToImport, @RequestParam(required = false) String importId) throws IOException {
         log.debug("REST request to import {} exercise group(s) to exam {}", exerciseGroupsToImport.size(), examId);
@@ -228,6 +232,9 @@ public class ExerciseGroupResource {
         // The DTOs become skeleton entities (title, mandatory flag, source exercise ids + overrides); the import service
         // loads the source exercises by id and copies their content, exactly like the full exam import.
         List<ExerciseGroup> updatedExerciseGroup = exerciseGroupsToImport.stream().map(ExerciseGroupImportDTO::toEntity).toList();
+
+        // The user also needs the editor role in the course of every source exercise
+        examImportService.checkEditorAccessToSourceExercisesElseThrow(updatedExerciseGroup);
 
         // When the client supplies an importId, live progress is reported to the importing user over a websocket so the UI
         // can show a progress dialog while this (synchronous) request runs.
@@ -249,7 +256,8 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with the found exercise group as body
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ExerciseGroupDTO> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
 
@@ -267,7 +275,8 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exercise groups. The list can be empty
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exercise-groups")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<ExerciseGroupDTO>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
 
@@ -289,7 +298,8 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
             @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);

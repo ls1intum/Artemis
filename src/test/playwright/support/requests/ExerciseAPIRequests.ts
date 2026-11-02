@@ -44,7 +44,7 @@ import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-ass
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
-import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
+import { toQuizExerciseCreate } from 'app/quiz/shared/util/quiz-exercise-creation-request.util';
 
 type PatchProgrammingExerciseTestVisibilityDto = {
     id: number;
@@ -365,7 +365,10 @@ export class ExerciseAPIRequests {
      * @param exerciseId - The ID of the text exercise to be deleted.
      */
     async deleteTextExercise(exerciseId: number) {
-        await this.page.request.delete(`${TEXT_EXERCISE_BASE}/${exerciseId}`);
+        const response = await this.page.request.delete(`${TEXT_EXERCISE_BASE}/${exerciseId}`);
+        if (!response.ok()) {
+            throw new Error(`Failed to delete text exercise ${exerciseId}: ${response.status()}`);
+        }
     }
 
     /**
@@ -718,7 +721,7 @@ export class ExerciseAPIRequests {
         if (competencyLinks) {
             newQuizExercise.competencyLinks = competencyLinks;
         }
-        const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
+        const quizExerciseDTO = toQuizExerciseCreate(newQuizExercise);
         const multipartData: Record<string, { name: string; mimeType: string; buffer: Buffer }> = {
             exercise: {
                 name: 'exercise',
@@ -778,7 +781,10 @@ export class ExerciseAPIRequests {
      * @param exerciseId - The ID of the quiz exercise to be deleted.
      */
     async deleteQuizExercise(exerciseId: number) {
-        await this.page.request.delete(`${QUIZ_EXERCISE_BASE}/${exerciseId}`);
+        const response = await this.page.request.delete(`${QUIZ_EXERCISE_BASE}/${exerciseId}`);
+        if (!response.ok()) {
+            throw new Error(`Failed to delete quiz exercise ${exerciseId}: ${response.status()}`);
+        }
     }
 
     /**
@@ -892,9 +898,12 @@ export class ExerciseAPIRequests {
      * Gets the participations of an exercise as the participation management lists them (at most one hundred), with the login of the student and
      * the number of submissions of each.
      */
-    async getExerciseParticipations(exerciseId: number): Promise<{ participationId: number; studentLogin?: string; submissionCount: number }[]> {
+    async getExerciseParticipations(
+        exerciseId: number,
+        kind: 'course' | 'exam' = 'course',
+    ): Promise<{ participationId: number; studentLogin?: string; submissionCount: number }[]> {
         const response = await this.page.request.get(
-            `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=100&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
+            `api/exercise/exercises/${exerciseId}/participations/page${kind === 'exam' ? '/for-exam' : ''}?page=0&pageSize=100&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
         );
         if (!response.ok()) {
             throw new Error(`Failed to get the participations of exercise ${exerciseId}: ${response.status()}`);
@@ -911,9 +920,9 @@ export class ExerciseAPIRequests {
      * @returns A Promise<StudentParticipationDTO> representing the student participation with latest result.
      * @throws Error if no participations are found for the exercise.
      */
-    async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipationDTO> {
+    async getProgrammingExerciseParticipation(exerciseId: number, kind: 'course' | 'exam' = 'course'): Promise<StudentParticipationDTO> {
         const pageResponse = await this.page.request.get(
-            `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
+            `api/exercise/exercises/${exerciseId}/participations/page${kind === 'exam' ? '/for-exam' : ''}?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
         );
         if (!pageResponse.ok()) {
             throw new Error(`Failed to get participations page for exercise ${exerciseId}: ${pageResponse.status()}`);

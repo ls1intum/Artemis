@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agen
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.SandboxBuildCommands;
@@ -18,7 +20,7 @@ class AgentSystemPromptTest {
     private final AgentSystemPrompt prompts = new AgentSystemPrompt(new SandboxBuildCommands(new GenerationResources()));
 
     private static GenerationInput input(boolean hasDueDate) {
-        return new GenerationInput(1, "de.example", null, hasDueDate, Set.of(), Set.of());
+        return new GenerationInput(1, "de.example", null, hasDueDate, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
     }
 
     @Test
@@ -87,6 +89,17 @@ class AgentSystemPromptTest {
         else {
             assertThat(prompt).doesNotContain("DisplayNameGenerator.Simple.class");
         }
+    }
+
+    @Test
+    void mavenExercisesNameTheirOwnToolHarnessAndPhases() {
+        var maven = new GenerationInput(1, "de.example", null, false, Set.of(), Set.of(), GenerationBuildTool.MAVEN);
+        for (String prompt : List.of(prompts.build(maven, Mode.GENERATE), prompts.build(maven, Mode.ADAPT), prompts.buildStage(maven, GenerationStage.TESTS))) {
+            assertThat(prompt).doesNotContain("Gradle", "gradlew", "build.gradle").contains("Maven");
+        }
+        assertThat(prompts.build(maven, Mode.GENERATE)).contains("Build tool: Maven (Java)", "mvn -B test", "tests/pom.xml", "**/target/surefire-reports/*.xml",
+                "Read the existing Maven harness to learn its source layout");
+        assertThat(prompts.build(maven, Mode.ADAPT)).contains("Do not read the Maven harness (pom.xml), or the Ares structural providers");
     }
 
     @Test

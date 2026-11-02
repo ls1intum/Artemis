@@ -1,0 +1,63 @@
+import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } from '@angular/core';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HyperionEmptyComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-empty.component';
+import { HyperionMarkdownComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-markdown.component';
+import { artifactFiles } from 'app/hyperion/exercise-generation/artifacts/hyperion-artifact-file';
+import { HyperionFileChangeListComponent } from './hyperion-file-change-list.component';
+import { ExerciseGenerationFileChange } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+
+/** The approved design and file inventory; source review belongs in the code editor. */
+@Component({
+    selector: 'jhi-hyperion-artifacts',
+    templateUrl: './hyperion-artifacts.component.html',
+    styleUrl: './hyperion-artifacts.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        HyperionEmptyComponent,
+        HyperionMarkdownComponent,
+        HyperionFileChangeListComponent,
+        TumAetUiTabComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabPanelComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabsComponent,
+    ],
+})
+export class HyperionArtifactsComponent {
+    readonly jobId = input<string>();
+    readonly specDocument = input<string>();
+    readonly files = input<readonly ExerciseGenerationFileChange[]>([]);
+    readonly running = input(false);
+    readonly terminal = input(false);
+    readonly savedToExercise = input(false);
+    readonly adapting = input(false);
+    readonly variant = input(false);
+
+    protected readonly activeTab = linkedSignal({ source: this.jobId, computation: (): string => 'spec' });
+    protected readonly artifacts = computed(() => artifactFiles(this.files()));
+    protected readonly fileCount = computed(() => this.artifacts().length);
+    protected readonly hasSpec = computed(() => !!this.specDocument()?.trim());
+    protected readonly showDesign = computed(() => !this.adapting() && (!this.variant() || this.running() || this.hasSpec()));
+    protected readonly selectedTab = computed(() => (this.showDesign() ? this.activeTab() : 'files'));
+    protected readonly specTitleKey = computed(() => `artemisApp.hyperion.generation.artifacts.${this.variant() ? 'variantSpecTitle' : 'specTitle'}`);
+    protected readonly specHintKey = computed(() => `artemisApp.hyperion.generation.artifacts.${this.variant() ? 'variantSpecHint' : 'specHint'}`);
+    protected readonly hintKey = computed(() => `artemisApp.hyperion.generation.artifacts.${this.savedToExercise() ? 'savedHint' : 'notSavedHint'}`);
+    protected readonly specEmptyTitleKey = computed(
+        () => `artemisApp.hyperion.generation.artifacts.${this.terminal() ? 'specNone' : this.variant() ? 'variantSpecPending' : 'specPending'}`,
+    );
+    protected readonly specEmptyHintKey = computed(
+        () => `artemisApp.hyperion.generation.artifacts.${this.terminal() ? 'notKeptHint' : this.variant() ? 'variantSpecPendingHint' : 'specPendingHint'}`,
+    );
+    protected readonly filesEmptyTitleKey = computed(() => `artemisApp.hyperion.generation.artifacts.${this.terminal() ? 'filesNone' : 'filesPending'}`);
+    protected readonly filesEmptyHintKey = computed(() => `artemisApp.hyperion.generation.artifacts.${this.terminal() ? 'notKeptHint' : 'filesPendingHint'}`);
+
+    protected onTabChange(value: string | number | undefined): void {
+        if (this.showDesign() && (value === 'files' || value === 'spec')) {
+            this.activeTab.set(value);
+        }
+    }
+}

@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +18,7 @@ import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
@@ -31,7 +33,8 @@ class GenericTypeTest {
 
     @TestFactory
     @StrictTimeout(10)
-    List<DynamicTest> genericApi() throws Exception {
+    // A container with a URI source, exactly like Ares' structural providers: otherwise Maven surefire reports genericApi()[n] instead of the display name.
+    DynamicContainer genericApi() throws Exception {
         JSONArray oracle;
         try (InputStream input = getClass().getResourceAsStream("test.json")) {
             if (input == null) {
@@ -47,7 +50,7 @@ class GenericTypeTest {
                 tests.add(DynamicTest.dynamicTest("testClass[GenericApi:" + name + "]", () -> check(entry)));
             }
         }
-        return tests;
+        return DynamicContainer.dynamicContainer(getClass().getName(), new URI(getClass().getName()), tests.stream());
     }
 
     private static void check(JSONObject entry) throws Exception {

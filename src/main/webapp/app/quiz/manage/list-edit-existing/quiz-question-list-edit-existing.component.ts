@@ -118,11 +118,7 @@ export class QuizQuestionListEditExistingComponent {
         }
         const selectedCourse = this.courses().find((course) => course.id === Number(this.selectedCourseId))!;
         this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe({
-            next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
-                if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body);
-                }
-            },
+            next: (quizExercises) => this.applyQuestionsAndFilter(quizExercises, 'COURSE'),
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
@@ -142,12 +138,8 @@ export class QuizQuestionListEditExistingComponent {
         const selectedExam = this.exams().find((exam) => exam.id === Number(this.selectedExamId))!;
 
         // For the given exam, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise
-        this.quizExerciseService.findForExam(selectedExam.id!).subscribe({
-            next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
-                if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body);
-                }
-            },
+        this.quizExerciseService.findAllForExam(selectedExam.id!).subscribe({
+            next: (quizExercises) => this.applyQuestionsAndFilter(quizExercises, 'EXAM'),
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
@@ -350,11 +342,11 @@ export class QuizQuestionListEditExistingComponent {
      * Find all QuizQuestions that belong to the given list of QuizExercise and add them to allExistingQuestions. Then, call applyFilter
      *
      * @param quizExercises the list of QuizExercise of which the QuizQuestions are to be retrieved and added
+     * @param source the audience of the list request that produced these rows, which carry no course or exam group context
      */
-    private applyQuestionsAndFilter(quizExercises: QuizExercise[]) {
+    private applyQuestionsAndFilter(quizExercises: QuizExercise[], source: 'COURSE' | 'EXAM') {
         for (const quizExercise of quizExercises) {
-            this.quizExerciseService.find(quizExercise.id!).subscribe((response: HttpResponse<QuizExercise>) => {
-                const quizExerciseResponse = response.body!;
+            (source === 'EXAM' ? this.quizExerciseService.findForExam(quizExercise.id!) : this.quizExerciseService.find(quizExercise.id!)).subscribe((quizExerciseResponse) => {
                 if (quizExerciseResponse.quizQuestions && quizExerciseResponse.quizQuestions.length > 0) {
                     for (const question of quizExerciseResponse.quizQuestions) {
                         question.exercise = quizExercise;

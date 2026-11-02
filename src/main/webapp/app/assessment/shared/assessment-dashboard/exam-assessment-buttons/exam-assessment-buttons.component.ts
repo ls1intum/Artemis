@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -17,7 +18,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { faClipboardCheck, faSpinner, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-assessment-buttons',
@@ -65,7 +65,7 @@ export class ExamAssessmentButtonsComponent implements OnInit {
         this.isLoading.set(true);
         this.paramSub = this.route.params.subscribe(() => {
             this.isAdmin.set(this.accountService.isAdmin());
-            this.courseService.find(this.courseId()).subscribe((courseResponse) => {
+            this.courseService.findForManagement(this.courseId()).subscribe((courseResponse) => {
                 this.course.set(courseResponse.body!);
             });
 

@@ -70,7 +70,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView {
      * Subscribes to 'examListModification' event.
      */
     ngOnInit(): void {
-        this.courseService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
+        this.courseService.findForManagement(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
             next: (res: HttpResponse<Course>) => {
                 this.course.set(res.body!);
                 this.loadAllExamsForCourse();

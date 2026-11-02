@@ -36,7 +36,9 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -219,7 +221,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      */
     @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("file-upload-submissions/{submissionId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<FileUploadSubmissionDTO> getFileUploadSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
@@ -264,26 +267,40 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * GET exercises/:exerciseId/file-upload-submissions : get all the fileUploadSubmissions for an exercise. It is possible to filter, to receive only the one that have been
-     * already submitted, or only the one assessed by the tutor who is doing the call.
-     * In case of exam exercise, it filters out all test run submissions.
+     * Lists submissions with participant identities for instructors, optionally restricted to their own assessments.
      *
-     * @param exerciseId      the id of the exercise
-     * @param correctionRound get submission with results for the given correction round
-     * @param submittedOnly   if only submitted submissions should be returned
-     * @param assessedByTutor if the submission was assessed by calling tutor
-     * @return the ResponseEntity with status 200 (OK) and the list of {@link FileUploadSubmissionDTO} in body
+     * @param exerciseId      the exercise to list submissions for
+     * @param submittedOnly   whether to return only submitted submissions (ignored for the self selection)
+     * @param assessedByMe    whether to return only the current instructor's assessments
+     * @param correctionRound the correction round for the self selection
+     * @return the identified submissions
      */
     @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/file-upload-submissions")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<FileUploadSubmissionDTO>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
-            @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
-        log.debug("REST request to get all file upload submissions");
-        var response = super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
-        List<FileUploadSubmissionDTO> body = response.getBody() == null ? null
-                : response.getBody().stream().map(FileUploadSubmission.class::cast).map(FileUploadSubmissionDTO::ofForList).toList();
-        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(body);
+            @RequestParam(defaultValue = "false") boolean assessedByMe, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        return ResponseEntity.ok(getSubmissionList(exerciseId, submittedOnly, assessedByMe, correctionRound, true));
+    }
+
+    /**
+     * Lists only the authenticated user's assessments with anonymous participants, including for instructor callers.
+     *
+     * @param exerciseId      the exercise to list assessments for
+     * @param correctionRound the correction round to select
+     * @return the anonymous assessed submissions
+     */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @GetMapping("exercises/{exerciseId}/file-upload-submissions/assessed-by-me")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<List<FileUploadSubmissionDTO>> getMyAssessedFileUploadSubmissions(@PathVariable Long exerciseId,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        return ResponseEntity.ok(getSubmissionList(exerciseId, false, true, correctionRound, false));
+    }
+
+    private List<FileUploadSubmissionDTO> getSubmissionList(Long exerciseId, boolean submittedOnly, boolean assessedByMe, int correctionRound, boolean includeParticipant) {
+        return getSubmissionsForList(exerciseId, submittedOnly, assessedByMe, correctionRound).stream()
+                .map(submission -> FileUploadSubmissionDTO.ofForList((FileUploadSubmission) submission, includeParticipant)).toList();
     }
 
     /**
@@ -296,7 +313,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      */
     @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/file-upload-submission-without-assessment")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<FileUploadSubmissionDTO> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a file upload submission without assessment");
@@ -304,10 +321,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         if (!(fileUploadExercise instanceof FileUploadExercise)) {
             throw new BadRequestAlertException("The requested exercise was not found.", "exerciseId", "400");
         }
-        // Load the course roles with the user so the authorization check below resolves in memory instead of issuing its own EXISTS query
-        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, fileUploadExercise, user);
-
         // Check if tutors can start assessing the students submission
         fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
         fileUploadSubmissionService.checkCorrectionRoundIsValidElseThrow(fileUploadExercise, correctionRound);
@@ -329,13 +342,17 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             submission = optionalFileUploadSubmission.orElse(null);
         }
 
-        if (submission != null) {
-            // Make sure the exercise is connected to the participation in the json response
-            final StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
-            studentParticipation.setExercise(fileUploadExercise);
-            submission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
-            fileUploadSubmissionService.hideDetails(submission, user);
+        if (submission == null) {
+            return ResponseEntity.ok(null);
         }
+
+        // Load the course roles only when a submission needs filtering and access-right flags in its response.
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        // Make sure the exercise is connected to the participation in the json response
+        final StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+        studentParticipation.setExercise(fileUploadExercise);
+        submission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
+        fileUploadSubmissionService.hideDetails(submission, user);
 
         var accessRights = getAccessRights((FileUploadExercise) fileUploadExercise, user);
         return ResponseEntity
@@ -352,7 +369,28 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("participations/{participationId}/file-upload-editor")
     @EnforceAtLeastStudent
     public ResponseEntity<FileUploadSubmissionDTO> getDataForFileUpload(@PathVariable Long participationId) {
+        return getDataForFileUpload(participationId, false);
+    }
+
+    /**
+     * Returns the file upload editor data for staff in the owning exercise.
+     *
+     * @param participationId the participation to view
+     * @return the staff editor data and capabilities
+     */
+    @GetMapping("participations/{participationId}/file-upload-editor/for-staff")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<FileUploadSubmissionDTO> getDataForFileUploadForStaff(@PathVariable Long participationId) {
+        return getDataForFileUpload(participationId, true);
+    }
+
+    private ResponseEntity<FileUploadSubmissionDTO> getDataForFileUpload(Long participationId, boolean staffView) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
+        User user = userRepository.getUserWithAuthorities();
+        if (staffView) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, participation.getExercise(), user);
+        }
         FileUploadExercise fileUploadExercise;
         if (participation.getExercise() instanceof FileUploadExercise) {
             fileUploadExercise = (FileUploadExercise) participation.getExercise();
@@ -364,12 +402,10 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
                     "The exercise of the participation is not a file upload exercise.")).body(null);
         }
 
-        User user = userRepository.getUserWithAuthorities();
         boolean isOwner = authCheckService.isOwnerOfParticipation(participation, user);
         var accessRights = getAccessRights(fileUploadExercise, user);
 
-        // Students can only see their own file uploads (to prevent cheating). TAs, instructors and admins can see all file uploads.
-        if (!(isOwner || accessRights.isAtLeastTutor())) {
+        if (!staffView && !isOwner) {
             throw new AccessForbiddenException("participation", participationId);
         }
 
@@ -396,8 +432,14 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // do not send the assessor information to students
-        if (fileUploadSubmission.getLatestResult() != null && !accessRights.isAtLeastTutor()) {
-            fileUploadSubmission.getLatestResult().filterSensitiveInformation();
+        if (fileUploadSubmission.getLatestResult() != null) {
+            Result result = fileUploadSubmission.getLatestResult();
+            if (!staffView) {
+                result.filterSensitiveInformation();
+            }
+            else if (result.getAssessor() != null) {
+                result.setAssessor(userRepository.findByIdElseThrow(result.getAssessor().getId()));
+            }
         }
 
         return ResponseEntity.ok(FileUploadSubmissionDTO.ofForEditor(fileUploadSubmission, isOwner, accessRights.isAtLeastTutor(), accessRights.isAtLeastEditor(),

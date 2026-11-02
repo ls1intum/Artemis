@@ -175,11 +175,11 @@ public class GenerationOrchestrator {
                 return stopOrPreserve(sandbox, sessionId, capture, new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "")).withTermination(TerminationReason.CANCELLED);
             }
 
-            List<String> harnessReasons = ExerciseIntegrityGate.javaAresHarnessReasons(testsSeedSnapshot);
+            List<String> harnessReasons = ExerciseIntegrityGate.javaAresHarnessReasons(exercise.buildTool(), testsSeedSnapshot);
             if (!harnessReasons.isEmpty()) {
                 return GenerationOutcome
                         .error(new AgentLoopResult(AgentLoopResult.Status.ERROR, 0, ""),
-                                "Exercise generation requires an Ares 2 Gradle test harness. Migrate the exercise harness manually before starting generation; "
+                                "Exercise generation requires an Ares 2 Gradle or Maven test harness. Migrate the exercise harness manually before starting generation; "
                                         + "Hyperion does not change build dependencies or security settings automatically. " + String.join(" ", harnessReasons))
                         .withTermination(TerminationReason.ENVIRONMENT_UNAVAILABLE);
             }

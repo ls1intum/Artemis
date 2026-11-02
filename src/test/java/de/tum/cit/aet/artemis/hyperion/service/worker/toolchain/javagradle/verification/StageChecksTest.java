@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
@@ -217,7 +218,7 @@ class StageChecksTest {
         service = new StageChecks(verifier, approvedSpecs, true);
         sandbox = new FakeSandbox();
         sandbox.builtAgainstSpec = () -> approvedSpecs.approved("s").orElseGet(() -> sandbox.spec);
-        exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
     }
 
     private StageCheckResult check(GenerationStage stage) {
@@ -364,7 +365,8 @@ class StageChecksTest {
         @Test
         void fails_whenTheSpecDeclaresHiddenVariantsButThePlanHidesNothing() {
             // The spec's own Testing Strategy is the plan's contract: shipping every test visible throws away the overfit resistance it promised.
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
                     "| S1 | Calculator | typical; zero | 3 | yes |");
             when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, true));
@@ -378,7 +380,8 @@ class StageChecksTest {
 
         @Test
         void fails_whenOnlySomeSeamsWithHiddenVariantsHaveHiddenPlanEntries() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |", """
                     | S1 | Calculator | ordinary values | 3 | yes |
                     | S2 | Calculator | boundary values | 2 | yes |
@@ -412,7 +415,8 @@ class StageChecksTest {
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":2,\"visibility\":\"ALWAYS\"}]}";
             assertThat(check(GenerationStage.TESTS).observation()).contains("weights do not match", "S1 requires 3");
 
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, true));
             sandbox.testPlanJson = "{\"tests\":[{\"name\":\"testFoo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
             assertThat(check(GenerationStage.TESTS).observation()).contains("says no hidden variant", "S1");
@@ -420,7 +424,8 @@ class StageChecksTest {
 
         @Test
         void rejectsAHiddenOnlySeamBecauseStudentsNeedVisibleEvidence() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("| S1 | Calculator | typical; zero | 3 | no |",
                     "| S1 | Calculator | typical; zero | 3 | yes |");
             when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, true));
@@ -911,7 +916,8 @@ class StageChecksTest {
         @Test
         void namesTheReflectionConsequenceOfStudentCreatedOwnershipWhenTheContractIsFrozen() {
             // Learning this only from downstream "cannot find symbol" errors cycles the repair budget between re-adding the type and the ownership gate rejecting it.
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = specWithDesign("| Stack | student work | student-creates |\n| OverflowPolicy | supplied policy | given |\n");
 
             StageCheckResult result = check(GenerationStage.SPEC);
@@ -1055,7 +1061,8 @@ class StageChecksTest {
 
         @Test
         void omitsTheReflectionConsequenceWhenNoTypeIsStudentCreated() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n");
 
             StageCheckResult result = check(GenerationStage.SPEC);
@@ -1066,7 +1073,8 @@ class StageChecksTest {
 
         @Test
         void acceptsEveryDesignRowAsStudentCreated_whenTheBriefRequiresDesigningEveryClass() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = specWithDesign("| BaseShape | abstract base | student-creates |\n| Rectangle | concrete shape | student-creates |\n");
 
             StageCheckResult result = check(GenerationStage.SPEC);
@@ -1076,7 +1084,8 @@ class StageChecksTest {
 
         @Test
         void passes_withRulesAndABranchingWorkedExamplesTable_andEchoesTheParsedTemplatePlan() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = VALID_SPEC;
 
             StageCheckResult result = check(GenerationStage.SPEC);
@@ -1087,7 +1096,8 @@ class StageChecksTest {
 
         @Test
         void readsTheWeightFromItsNamedColumnWhenTheTableCarriesAdditionalTraceability() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = VALID_SPEC
                     .replace("| Seam | Owner type | Observable responsibility | Weight | Hidden variant |",
                             "| Seam | Owner type | Observable responsibility | Rules | Weight | Hidden variant |")
@@ -1100,7 +1110,8 @@ class StageChecksTest {
 
         @Test
         void acceptsMarkdownEmphasisAroundAnOtherwiseExactTemplateStatusToken() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = specWithDesign("| Calculator | computes the result | **student‑creates** |\n| Support | supplied helper | given |\n");
 
             StageCheckResult result = check(GenerationStage.SPEC);
@@ -1122,7 +1133,8 @@ class StageChecksTest {
 
         @Test
         void rejectsAGivenJavaTypeWhosePublicApiDependsOnATypeAbsentFromTheTemplate() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", """
                     | Calculator | given context | given |
                     | Policy | interchangeable policy | student-creates |\
@@ -1151,7 +1163,8 @@ class StageChecksTest {
 
         @Test
         void rejectsAStubbedJavaTypeWhosePublicApiDependsOnATypeAbsentFromTheTemplate() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", """
                     | Calculator | stubbed context | stubbed |
                     | Policy | interchangeable policy | student-creates |\
@@ -1224,7 +1237,8 @@ class StageChecksTest {
 
         @Test
         void preservesJavaIdentifierUnderscoresAndAcceptsAnOptionalTrailingTablePipe() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = VALID_SPEC.replace("Calculator", "Damage_Strategy").replace("| S1 | Damage_Strategy | typical and zero | 3 | yes |",
                     "| S1 | Damage_Strategy | typical and zero | 3 | yes");
 
@@ -1294,7 +1308,8 @@ class StageChecksTest {
 
         @Test
         void rejectsAnIncompleteOrUnauthorizedContractRiskInventory() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = VALID_SPEC.replace("| S1 | R1 | S1.P1: typical, zero, negative, and int extrema | none |", "| S2 | R1 | S2.P1: typical | none |");
             assertThat(check(GenerationStage.SPEC).observation()).contains("cover every Testing Strategy seam exactly once").contains("Missing seams: [S1]")
                     .contains("unknown seams: [S2]");
@@ -1308,7 +1323,8 @@ class StageChecksTest {
 
         @Test
         void rejectsUnstableCrossSeamOrDuplicateRiskPartitionIds() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = VALID_SPEC.replace("S1.P1: typical, zero, negative, and int extrema", "typical; zero");
             assertThat(check(GenerationStage.SPEC).observation()).contains("stable admitted-partition IDs", "S1.P1");
 
@@ -1351,7 +1367,8 @@ class StageChecksTest {
 
         @Test
         void doesNotInferExampleQualityFromTheLastTableCellAlone() {
-            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of());
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
             sandbox.spec = VALID_SPEC.replace("""
                     | Rules | Input | Expected |
                     |-------|-------|----------|

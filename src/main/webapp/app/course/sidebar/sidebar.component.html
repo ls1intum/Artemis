@@ -76,6 +76,18 @@
                         </div>
                     }
 
+                    @if (inlineFilterLabel(); as filterLabel) {
+                        <div class="mt-2 flex items-center gap-2 px-1">
+                            <tumaet-ui-checkbox
+                                inputId="sidebar-inline-filter"
+                                data-testid="sidebar-inline-filter"
+                                [checked]="inlineFilterActive()"
+                                (checkedChange)="inlineFilterActive.set($event)"
+                            />
+                            <label class="mb-0 text-sm" for="sidebar-inline-filter" [jhiTranslate]="filterLabel"></label>
+                        </div>
+                    }
+
                     @if (sidebarDataInternal().pinnedData?.length) {
                         <div class="mt-2 border-y py-2">
                             @for (sidebarItem of sidebarDataInternal().pinnedData; track sidebarItem.trackId ?? sidebarItem.id) {

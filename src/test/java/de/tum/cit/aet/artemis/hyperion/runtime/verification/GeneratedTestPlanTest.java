@@ -13,6 +13,16 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 class GeneratedTestPlanTest {
 
+    @ParameterizedTest
+    @ValueSource(strings = { "purpose", "riskPartitions", "seamWeightTier" })
+    void rejectsExplicitNullInsteadOfTreatingItAsAnOmittedField(String field) {
+        String json = """
+                {"tests":[{"name":"testFoo","seam":"S1","weight":2,"visibility":"ALWAYS","%s":null}]}
+                """.formatted(field);
+
+        assertThatIllegalArgumentException().isThrownBy(() -> GeneratedTestPlan.parse(json)).withMessageContaining("testFoo").withMessageContaining(field);
+    }
+
     @Test
     void preservationChecksRemainVisibleButDoNotEarnCreditOrBecomeStudentTasks() {
         GeneratedTestPlan plan = GeneratedTestPlan.parse("""

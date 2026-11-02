@@ -138,6 +138,30 @@ class ArtemisConfigHelperTest {
         assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isFalse();
     }
 
+    @Test
+    void testAiWorkerRunsOnCoreForGenerationOrExplicitOptIn() {
+        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, false);
+        when(mockEnv.getProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(false);
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+        when(mockEnv.getProperty(Constants.AIWORKER_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true);
+        assertThat(artemisConfigHelper.isAiWorkerEnabled(mockEnv)).isTrue();
+
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(false);
+        assertThat(artemisConfigHelper.isAiWorkerEnabled(mockEnv)).isFalse();
+
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+        when(mockEnv.getProperty(Constants.AIWORKER_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(false);
+        assertThat(artemisConfigHelper.isAiWorkerEnabled(mockEnv)).isFalse();
+
+        mockProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, true);
+        when(mockEnv.getProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true);
+        when(mockEnv.getProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true);
+        assertThat(artemisConfigHelper.isAiWorkerEnabled(mockEnv)).isTrue();
+
+        when(mockEnv.getProperty(Constants.HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(false);
+        assertThat(artemisConfigHelper.isAiWorkerEnabled(mockEnv)).isFalse();
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "aiworker", "prod,aiworker" })
     void workerDoesNotLoadServerModulesEvenWithInheritedFeatureFlags(String profiles) {
@@ -150,7 +174,8 @@ class ArtemisConfigHelperTest {
                 Constants.MODELING_ENABLED_PROPERTY_NAME, Constants.FILEUPLOAD_ENABLED_PROPERTY_NAME, Constants.LECTURE_ENABLED_PROPERTY_NAME,
                 Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME, Constants.PASSKEY_ENABLED_PROPERTY_NAME, Constants.SHARING_ENABLED_PROPERTY_NAME,
                 Constants.LTI_ENABLED_PROPERTY_NAME, Constants.ATHENA_ENABLED_PROPERTY_NAME, Constants.APOLLON_ENABLED_PROPERTY_NAME, Constants.LDAP_ENABLED_PROPERTY_NAME,
-                Constants.SAML2_ENABLED_PROPERTY_NAME, Constants.OIDC_ENABLED_PROPERTY_NAME, Constants.THEIA_ENABLED_PROPERTY_NAME, Constants.WEAVIATE_ENABLED_PROPERTY_NAME)) {
+                Constants.SAML2_ENABLED_PROPERTY_NAME, Constants.OIDC_ENABLED_PROPERTY_NAME, Constants.THEIA_ENABLED_PROPERTY_NAME, Constants.WEAVIATE_ENABLED_PROPERTY_NAME,
+                Constants.AGENT_ACCESS_ENABLED_PROPERTY_NAME)) {
             environment.setProperty(property, "true");
         }
         assertThat(artemisConfigHelper.getEnabledFeatures(environment)).isEmpty();
@@ -167,6 +192,22 @@ class ArtemisConfigHelperTest {
         assertThat(artemisConfigHelper.isAtlasEnabled(environment)).isTrue();
         environment.setProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, "false");
         assertThat(artemisConfigHelper.isAtlasEnabled(environment)).isFalse();
+    }
+
+    /**
+     * Unlike the other modules, agent access needs no explicit configuration to be off: an instance that never heard of it
+     * must not start accepting personal access tokens, and must not fail to start either.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { "core", "prod,core", "aiworker,core" })
+    void agentAccessIsOffUnlessExplicitlyEnabled(String profiles) {
+        MockEnvironment environment = new MockEnvironment();
+        environment.setActiveProfiles(profiles.split(","));
+        assertThat(artemisConfigHelper.isAgentAccessEnabled(environment)).isFalse();
+        environment.setProperty(Constants.AGENT_ACCESS_ENABLED_PROPERTY_NAME, "true");
+        assertThat(artemisConfigHelper.isAgentAccessEnabled(environment)).isTrue();
+        environment.setProperty(Constants.AGENT_ACCESS_ENABLED_PROPERTY_NAME, "false");
+        assertThat(artemisConfigHelper.isAgentAccessEnabled(environment)).isFalse();
     }
 
     private void testProperty(Function<Environment, Boolean> propertyTest, String propertyName) {

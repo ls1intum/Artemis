@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxUnavailableException;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
@@ -163,7 +164,7 @@ class SandboxAgentToolsTest {
     void search_returnsMatchingLinesWithoutDirtyingTheWorkspace() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0,
                 "/workspace/problem-statement.md:2:Elevator list is empty\n/workspace/problem-statement.md:3:last Elevator list is empty\n", "", false));
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         StageChecks stageCheckService = mock(StageChecks.class);
         when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.passed("clean"));
@@ -483,7 +484,7 @@ class SandboxAgentToolsTest {
         StageChecks stageChecks = mock(StageChecks.class);
         when(stageChecks.validateArtifactWrite("s", "template/src/FuelStrategy.java", "public interface FuelStrategy {}"))
                 .thenReturn(Optional.of("The approved specification assigns FuelStrategy to the student."));
-        GenerationInput exercise = new GenerationInput(0, "seededexercise", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "seededexercise", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", null, exercise, Map.of(), false, stageChecks);
         tools.enterStage(GenerationStage.TESTS);
 
@@ -510,7 +511,7 @@ class SandboxAgentToolsTest {
     @Test
     void writeFile_rejectsJavaPackageMismatchesAtTheWriteThatIntroducesThem() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "seededexercise", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "seededexercise", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", null, exercise, Map.of(), false, null);
         tools.enterStage(GenerationStage.TESTS);
 
@@ -829,7 +830,7 @@ class SandboxAgentToolsTest {
     @Test
     void verify_blocksSupportedSecretMaterialWithoutReturningTheMatch() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         DifferentialVerifier verifier = mock(DifferentialVerifier.class);
         AgentVerifyReport report = new AgentVerifyReport(0, false, List.of(), 0, false, false, List.of(), List.of(), List.of(), List.of(), false,
                 List.of("failure " + GITHUB_SENTINEL));
@@ -853,7 +854,7 @@ class SandboxAgentToolsTest {
     @Test
     void unstagedRepairVerifyRefreshesAndThreadsTheStructuralOracle() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         DifferentialVerifier verifier = mock(DifferentialVerifier.class);
         Set<String> names = Set.of("testClass[StudentStrategy]");
         SeededStructuralTests structuralTests = new SeededStructuralTests(names, Map.of("test/de/tum/cit/aet/artemis/TrustedStructuralTest.java", "// server-owned test fixture"));
@@ -873,7 +874,7 @@ class SandboxAgentToolsTest {
     @Test
     void verify_inStagedSession_delegatesToTheStageChecksForTheCurrentStageAndNeverTouchesTheVerifier() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         DifferentialVerifier verifier = mock(DifferentialVerifier.class);
         StageChecks stageCheckService = mock(StageChecks.class);
 
@@ -893,7 +894,7 @@ class SandboxAgentToolsTest {
     @Test
     void verify_inStagedSession_reportsAFailingStageCheckAsAMechanicalPrecheckFailure() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         StageChecks stageCheckService = mock(StageChecks.class);
         when(stageCheckService.check(eq(GenerationStage.SPEC), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.failed("SPEC.md is missing required section(s)"));
@@ -909,7 +910,7 @@ class SandboxAgentToolsTest {
     void verify_inTestsStage_returnsTheDifferentialObservationVerbatimWithoutDoublingTheVerdictLine() {
         // The TESTS stage's observation already carries its own MECHANICAL PRECHECK line (AgentVerifyReport#toObservation()); verify() must not prepend a second one.
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a"), List.of(), List.of(), true, List.of());
         StageChecks stageCheckService = mock(StageChecks.class);
         when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
@@ -926,7 +927,7 @@ class SandboxAgentToolsTest {
     void verify_inStatementStage_resolvesBindingsAgainstTheTestsStagesExactTestNames() {
         // The TESTS stage's report must be threaded into the STATEMENT stage's binding check, even though verify() never re-runs a build for STATEMENT.
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         AgentVerifyReport testsReport = new AgentVerifyReport(2, true, List.of(), 2, true, true, List.of(), List.of("t_a"), List.of(), List.of(), true, List.of());
         StageChecks stageCheckService = mock(StageChecks.class);
         when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), isNull(), any(SeededStructuralTests.class)))
@@ -946,7 +947,7 @@ class SandboxAgentToolsTest {
     @Test
     void verify_inStagedSession_whenTheStageChecksIsUnwired_returnsAnActionableFallbackInsteadOfTheLegacyDifferential() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         DifferentialVerifier verifier = mock(DifferentialVerifier.class);
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s", verifier, exercise); // 4-arg ctor: stageCheckService is null
         tools.enterStage(GenerationStage.TESTS);
@@ -962,7 +963,7 @@ class SandboxAgentToolsTest {
     @Test
     void submit_inStagedSession_rejectsAFailingStageCheckAndSetsTheVeto() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         StageChecks stageCheckService = mock(StageChecks.class);
         when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"));
@@ -979,7 +980,7 @@ class SandboxAgentToolsTest {
     @Test
     void submit_inStagedSession_afterAFixThatPasses_succeedsWithNoVeto() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         StageChecks stageCheckService = mock(StageChecks.class);
         when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.failed("the reference solution does not compile"), StageCheckResult.passed(""));
@@ -1008,7 +1009,7 @@ class SandboxAgentToolsTest {
     @Test
     void reuseCachedPassingCheck_isEmptyUntilAPassingCheckHasRunForThatStage() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         StageChecks stageCheckService = mock(StageChecks.class);
         SandboxAgentTools tools = stagedTools(sandbox, exercise, stageCheckService);
         tools.enterStage(GenerationStage.TESTS);
@@ -1019,7 +1020,7 @@ class SandboxAgentToolsTest {
     @Test
     void reuseCachedPassingCheck_afterAPassingVerify_isPresentUntilAWriteFileMarksItDirtyAgain() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         StageChecks stageCheckService = mock(StageChecks.class);
         when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.passed("clean"));
@@ -1036,7 +1037,7 @@ class SandboxAgentToolsTest {
     @Test
     void reuseCachedPassingCheck_afterAPassingVerify_isInvalidatedByDeleteFile() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0, "DELETED", "", false));
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         StageChecks stageCheckService = mock(StageChecks.class);
         when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.passed("clean"));
@@ -1053,7 +1054,7 @@ class SandboxAgentToolsTest {
     @Test
     void reuseCachedPassingCheck_afterAPassingVerify_isInvalidatedByBashEvenThoughItSkipsTheWriteGuardrails() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "__HYP_META__ rc=0 bytes=1 lines=1\nx"));
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         StageChecks stageCheckService = mock(StageChecks.class);
         when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), anyString(), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.passed("clean"));
@@ -1070,7 +1071,7 @@ class SandboxAgentToolsTest {
     @Test
     void reuseCachedPassingCheck_isClearedByEnterStageEvenForTheSameStage() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         StageChecks stageCheckService = mock(StageChecks.class);
         when(stageCheckService.check(eq(GenerationStage.TESTS), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.passed("clean"));
@@ -1087,7 +1088,7 @@ class SandboxAgentToolsTest {
     @Test
     void reuseCachedPassingCheck_isClearedByExitStagedGeneration() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
-        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of());
+        GenerationInput exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
         StageChecks stageCheckService = mock(StageChecks.class);
         when(stageCheckService.check(eq(GenerationStage.STATEMENT), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class)))
                 .thenReturn(StageCheckResult.passed(""));

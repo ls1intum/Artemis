@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
+import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationSeedService;
@@ -357,9 +358,8 @@ class GenerationPersistenceServiceTest {
     void persistRejectsSupportedSecretFileBeforeAnyDurableWrite() throws Exception {
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("src/Fixture.java", GITHUB_SENTINEL), Map.of("Test.java", "x"), "safe statement");
 
-        assertThatThrownBy(() -> service.persist(exercise, user, outcome))
-                .isInstanceOf(de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy.SecretMaterialException.class).hasMessageContaining("GITHUB_TOKEN")
-                .hasMessageNotContaining(GITHUB_SENTINEL);
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(HyperionSecretMaterialPolicy.SecretMaterialException.class)
+                .hasMessageContaining("GITHUB_TOKEN").hasMessageNotContaining(GITHUB_SENTINEL);
         verify(repositoryService, never()).createFile(any(), any(), any());
         verify(repositoryService, never()).deleteFile(any(), any());
         verify(gitService, never()).getOrCheckoutRepositoryOnBranch(any(), any(), any());
@@ -371,9 +371,8 @@ class GenerationPersistenceServiceTest {
     void persistRejectsSupportedSecretProblemStatementBeforeAnyDurableWrite() throws Exception {
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), GITHUB_SENTINEL);
 
-        assertThatThrownBy(() -> service.persist(exercise, user, outcome))
-                .isInstanceOf(de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy.SecretMaterialException.class).hasMessageContaining("GITHUB_TOKEN")
-                .hasMessageNotContaining(GITHUB_SENTINEL);
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(HyperionSecretMaterialPolicy.SecretMaterialException.class)
+                .hasMessageContaining("GITHUB_TOKEN").hasMessageNotContaining(GITHUB_SENTINEL);
         verify(repositoryService, never()).createFile(any(), any(), any());
         verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
@@ -1745,19 +1744,6 @@ class GenerationPersistenceServiceTest {
         verify(repositoryService, atLeastOnce()).createFile(any(), eq("X.java"), captor.capture());
         String written = new String(captor.getValue().readAllBytes(), StandardCharsets.UTF_8);
         assertThat(written).isEqualTo(dirty);
-    }
-
-    @Test
-    void extractTitleFromH1_returnsFirstLevelOneHeading_ignoringDeeperHeadingsAndLeadingBlankLines() {
-        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("# Roman Numerals\n\nConvert integers 1..3999."))
-                .isEqualTo("Roman Numerals");
-        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("\n\n#   Balanced BST   \n## Tasks"))
-                .isEqualTo("Balanced BST");
-        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("## Subsection only\nbody")).isNull();
-        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("No heading at all")).isNull();
-        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("#NotAHeading")).isNull();
-        String longHeading = "# " + "x".repeat(400);
-        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading(longHeading)).hasSize(255);
     }
 
     @ParameterizedTest

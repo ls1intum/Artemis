@@ -259,4 +259,56 @@ class RepositoryServiceFileOperationsTest {
     void getFileContentFromBareRepository_forACommitThatCannotBeResolved_returnsEmpty() throws Exception {
         assertThat(repositoryService.getFileContentFromBareRepository(repository, "no-such-commit", "src/Main.java")).isEmpty();
     }
+
+    @Test
+    void rawBlobLookupDistinguishesPresentAbsentAndBlankPaths() throws Exception {
+        FileUtils.writeStringToFile((workingTree.resolve("message.txt")).toFile(), "exact committed contents", StandardCharsets.UTF_8);
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern("message.txt").call();
+        var commit = GitService.commit(git).setMessage("Commit raw text").setAuthor("Fixture", "fixture@example.com").call();
+        assertThat(repositoryService.getFileContentFromBareRepository(repository, commit.getName(), "message.txt")).contains("exact committed contents");
+        assertThat(repositoryService.getFileContentFromBareRepository(repository, commit.getName(), "absent.txt")).isEmpty();
+        assertThat(repositoryService.getFileContentFromBareRepository(repository, commit.getName(), " ")).isEmpty();
+    }
+
+    @Test
+    void emptyRepositoryHasNoSnapshotBeforeDeadlineOrAtHead() throws Exception {
+        assertThat(repositoryService.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(repository, java.time.ZonedDateTime.now())).isEmpty();
+        assertThat(repositoryService.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(repository, null)).isEmpty();
+        assertThat(Files.isDirectory(workingTree.resolve(".git"))).isTrue();
+    }
+
+    @Test
+    void clearingRepositoryPreservesGitHistoryAndRemovesNestedContent() throws Exception {
+        Files.createDirectories(workingTree.resolve("nested"));
+        FileUtils.writeStringToFile((workingTree.resolve("nested/source.txt")).toFile(), "tracked source", StandardCharsets.UTF_8);
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern(".").call();
+        var commit = GitService.commit(git).setMessage("Commit source").setAuthor("Fixture", "fixture@example.com").call();
+        repositoryService.deleteAllContentInRepository(repository);
+        assertThat(workingTree.resolve("nested")).doesNotExist();
+        assertThat(workingTree.resolve(".git")).isDirectory();
+        assertThat(repository.resolve("HEAD")).isEqualTo(commit.getId());
+    }
+
+    @Test
+    void unavailableBareRepositoryFallsBackToCheckoutAndReportsCheckoutFailure() throws Exception {
+        FileUtils.writeStringToFile((workingTree.resolve("cached.txt")).toFile(), "cached committed contents", StandardCharsets.UTF_8);
+        var git = org.eclipse.jgit.api.Git.wrap(repository);
+        git.add().addFilepattern(".").call();
+        GitService.commit(git).setMessage("Commit cached source").setAuthor("Fixture", "fixture@example.com").call();
+        var uri = new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise");
+        var bare = org.mockito.Mockito.mock(BareGitRepositoryService.class);
+        var checkout = org.mockito.Mockito.mock(GitService.class);
+        org.mockito.Mockito.when(bare.getBareRepository(uri, false)).thenThrow(new de.tum.cit.aet.artemis.programming.exception.GitException("Bare storage unavailable"));
+        org.mockito.Mockito.when(checkout.getOrCheckoutRepository(uri, true, false)).thenAnswer(invocation -> new Repository(workingTree.resolve(".git").toString(), uri));
+        var fallback = new RepositoryService(checkout, bare, Optional.empty());
+        assertThat(fallback.getFilesContentFromBareRepositoryForLastCommit(uri)).containsEntry("cached.txt", "cached committed contents");
+        assertThat(fallback.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(uri, java.time.ZonedDateTime.now().plusHours(1))).containsEntry("cached.txt",
+                "cached committed contents");
+        org.mockito.Mockito.doThrow(new org.eclipse.jgit.api.errors.TransportException("Checkout unavailable")).when(checkout).getOrCheckoutRepository(uri, true, false);
+        org.assertj.core.api.Assertions.assertThatIOException().isThrownBy(() -> fallback.getFilesContentFromBareRepositoryForLastCommit(uri))
+                .withMessageContaining("Failed to retrieve repository content");
+    }
+
 }

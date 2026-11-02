@@ -15,7 +15,6 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
-import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { of, throwError } from 'rxjs';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { User } from 'app/account/user/user.model';
@@ -23,7 +22,7 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorial-group-detail-data';
 import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorial-group-session';
 import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/create-or-update-tutorial-group-session-request';
-import { Confirmation, ConfirmationService } from 'primeng/api';
+import { TumAetUiConfirmationRequest, TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import {
     TutorialSessionCreateOrEditModalComponent,
     UpdateTutorialGroupSessionData,
@@ -456,7 +455,7 @@ describe('TutorialGroupDetailComponent', () => {
         expect(noUpcomingEventDisclaimer).not.toBeNull();
     });
 
-    it('should compute correct averageAttendancePercentage', () => {
+    it('should compute the correct average attendance percentage', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession = createRawTutorialGroupSessionDTO({
@@ -482,10 +481,10 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
-        expect(component.averageAttendancePercentage()).toBe('Ø 70%');
+        expect(component.attendanceChartLabel()).toBe('Ø 70%');
     });
 
-    it('should expose no averageAttendancePercentage if no attendances were recorded', () => {
+    it('should expose no attendance chart label if no attendances were recorded', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession = createRawTutorialGroupSessionDTO({
@@ -510,10 +509,10 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
-        expect(component.averageAttendancePercentage()).toBeUndefined();
+        expect(component.attendanceChartLabel()).toBeUndefined();
     });
 
-    it('should expose no averageAttendancePercentage if no capacity available for course', () => {
+    it('should show the average attendance count if no capacity is available', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession = createRawTutorialGroupSessionDTO({
@@ -538,7 +537,8 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
-        expect(component.averageAttendancePercentage()).toBeUndefined();
+        // Only the first session has attendance (7); without a capacity the chart shows the average headcount, not a percentage.
+        expect(component.attendanceChartLabel()).toBe('Ø 7');
     });
 
     it('should compute correct pieChartData', () => {
@@ -660,7 +660,7 @@ describe('TutorialGroupDetailComponent', () => {
 
         const pieChartColors = component.pieChartColors();
         expect(pieChartColors).toBeDefined();
-        expect(pieChartColors).toEqual(['var(--green)', GraphColors.LIGHT_GREY]);
+        expect(pieChartColors).toEqual(['var(--tumaet-ui-state-success)', 'var(--tumaet-ui-disabled-background)']);
     });
 
     it('should compute green and gray color for 70% <= average attendance < 80%', () => {
@@ -681,7 +681,7 @@ describe('TutorialGroupDetailComponent', () => {
 
         const pieChartColors = component.pieChartColors();
         expect(pieChartColors).toBeDefined();
-        expect(pieChartColors).toEqual(['var(--yellow)', GraphColors.LIGHT_GREY]);
+        expect(pieChartColors).toEqual(['var(--tumaet-ui-state-warning)', 'var(--tumaet-ui-disabled-background)']);
     });
 
     it('should compute green and gray color for 80% <= average attendance < 90%', () => {
@@ -702,7 +702,7 @@ describe('TutorialGroupDetailComponent', () => {
 
         const pieChartColors = component.pieChartColors();
         expect(pieChartColors).toBeDefined();
-        expect(pieChartColors).toEqual(['var(--orange)', GraphColors.LIGHT_GREY]);
+        expect(pieChartColors).toEqual(['color-mix(in srgb, var(--tumaet-ui-state-warning) 50%, var(--tumaet-ui-state-danger))', 'var(--tumaet-ui-disabled-background)']);
     });
 
     it('should compute green and gray color for 90% <= average attendance', () => {
@@ -723,7 +723,7 @@ describe('TutorialGroupDetailComponent', () => {
 
         const pieChartColors = component.pieChartColors();
         expect(pieChartColors).toBeDefined();
-        expect(pieChartColors).toEqual(['var(--red)', GraphColors.LIGHT_GREY]);
+        expect(pieChartColors).toEqual(['var(--tumaet-ui-state-danger)', 'var(--tumaet-ui-disabled-background)']);
     });
 
     it('should compute gray color if no capacity set for group', () => {
@@ -741,7 +741,7 @@ describe('TutorialGroupDetailComponent', () => {
 
         const pieChartColors = component.pieChartColors();
         expect(pieChartColors).toBeDefined();
-        expect(pieChartColors).toEqual([GraphColors.LIGHT_GREY]);
+        expect(pieChartColors).toEqual(['var(--tumaet-ui-disabled-background)']);
     });
 
     it('should compute gray color if no attendances recorded', () => {
@@ -761,7 +761,7 @@ describe('TutorialGroupDetailComponent', () => {
 
         const pieChartColors = component.pieChartColors();
         expect(pieChartColors).toBeDefined();
-        expect(pieChartColors).toEqual([GraphColors.LIGHT_GREY]);
+        expect(pieChartColors).toEqual(['var(--tumaet-ui-disabled-background)']);
     });
 
     it('should display no data available disclaimer if no average attendance available', () => {
@@ -819,10 +819,9 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
-        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: TumAetUiConfirmationRequest) => {
             confirmation.accept?.();
-            return confirmationService;
         });
         const deleteGroupEmitSpy = vi.spyOn(component.onDeleteGroup, 'emit');
 
@@ -839,10 +838,9 @@ describe('TutorialGroupDetailComponent', () => {
         fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
 
-        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: Confirmation) => {
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: TumAetUiConfirmationRequest) => {
             confirmation.accept?.();
-            return confirmationService;
         });
         const deleteSessionEmitSpy = vi.spyOn(component.onDeleteSession, 'emit');
 

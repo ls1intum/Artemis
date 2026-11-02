@@ -44,14 +44,14 @@ class GenerationPayloadBoundaryTest {
                 field.equals("shortNameNull") ? null : field.equals("shortName") ? "x".repeat(256) : "short",
                 field.equals("namespaceNull") ? null : field.equals("namespace") ? "x".repeat(256) : "de.example", field.equals("statement") ? "x".repeat(65537) : null,
                 field.equals("promptNull") ? null : field.equals("prompt") ? "x".repeat(65537) : "Generate", field.equals("mode") ? null : ExerciseBrief.Mode.GENERATE,
-                field.equals("source") ? "x".repeat(65537) : null, field.equals("toolchain") ? null : GenerationToolchain.JAVA_GRADLE)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Invalid exercise authoring brief");
+                field.equals("source") ? "x".repeat(65537) : null, field.equals("toolchain") ? null : GenerationToolchain.JAVA_GRADLE, null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessage("Invalid exercise authoring brief");
     }
 
     @Test
     void authoringBriefAcceptsExactTextLimitsAndPreservesEmptyParameterProfile() {
         var brief = new ExerciseBrief("t".repeat(255), "s".repeat(255), "n".repeat(255), "p".repeat(65536), "i".repeat(65536), ExerciseBrief.Mode.ADAPT, "s".repeat(65536),
-                GenerationToolchain.JAVA_GRADLE);
+                GenerationToolchain.JAVA_GRADLE, null);
         assertThat(brief.problemStatement()).hasSize(65536);
         assertThat(brief.sourceBrief()).hasSize(65536);
         var parameters = new GenerationParameters(null, 1, 1, Duration.ofSeconds(1), 1, null, null, null, null, null, false, "FRESH", null, 1);

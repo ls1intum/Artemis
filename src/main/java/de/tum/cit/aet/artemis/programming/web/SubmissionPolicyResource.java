@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -123,14 +123,13 @@ public class SubmissionPolicyResource {
      *         is invalid. More information on submission policy validation can be found at {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
     @PostMapping("programming-exercises/{exerciseId}/submission-policy")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<SubmissionPolicyDTO> addSubmissionPolicyToProgrammingExercise(@PathVariable Long exerciseId, @RequestBody SubmissionPolicyDTO submissionPolicyDTO)
             throws URISyntaxException {
         log.debug("REST request to add submission policy to programming exercise {}", exerciseId);
 
         SubmissionPolicy addedSubmissionPolicy;
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         if (programmingExercise.getSubmissionPolicy() != null) {
             throw new BadRequestAlertException("The submission policy could not be added to the programming exercise, because it already has a submission policy.", ENTITY_NAME,
@@ -180,12 +179,11 @@ public class SubmissionPolicyResource {
      *         in the course the programming exercise belongs to and 400 when the programming exercise does not have a submission policy.
      */
     @DeleteMapping("programming-exercises/{exerciseId}/submission-policy")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> removeSubmissionPolicyFromProgrammingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to remove submission policy from programming exercise {}", exerciseId);
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         SubmissionPolicy submissionPolicy = programmingExercise.getSubmissionPolicy();
         if (submissionPolicy == null) {
@@ -232,13 +230,12 @@ public class SubmissionPolicyResource {
      *         the submission policy or the programming exercise has no submission policy.
      */
     @PutMapping("programming-exercises/{exerciseId}/submission-policy")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> toggleSubmissionPolicy(@PathVariable Long exerciseId, @RequestParam boolean activate) {
         log.debug("REST request to toggle the submission policy for programming exercise {}", exerciseId);
         HttpHeaders responseHeaders;
 
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         getSubmissionPolicy(activate, exercise);
         var user = userRepository.getUser();
@@ -298,13 +295,12 @@ public class SubmissionPolicyResource {
      *         {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
     @PatchMapping("programming-exercises/{exerciseId}/submission-policy")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<SubmissionPolicyDTO> updateSubmissionPolicy(@PathVariable Long exerciseId, @RequestBody SubmissionPolicyDTO updatedSubmissionPolicyDTO) {
         log.debug("REST request to update the submission policy of programming exercise {}", exerciseId);
         HttpHeaders responseHeaders;
 
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         if (exercise.getSubmissionPolicy() == null) {
             throw new BadRequestAlertException("The submission policy could not be updated, because the programming exercise does not have a submission policy.", ENTITY_NAME,

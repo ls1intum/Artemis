@@ -55,7 +55,7 @@ public class DifferentialVerifier {
 
     private static final Pattern URI_CREDENTIALS = Pattern.compile("(?i)(https?://)[^\\s/@]+@");
 
-    private static final Pattern AUTHORIZATION_CREDENTIALS = Pattern.compile("(?i)(authorization\\s*[:=]\\s*)(?:basic|bearer)?\\s*[^\\s,;]+");
+    private static final Pattern AUTHORIZATION_CREDENTIALS = Pattern.compile("(?i)(authorization\\s*+[:=]\\s*+)(?:(?:basic|bearer)\\s++)?[^\\s,;]++");
 
     private static final Pattern BEARER_CREDENTIALS = Pattern.compile("(?i)\\bbearer\\s+[^\\s,;]+");
 
@@ -576,7 +576,7 @@ public class DifferentialVerifier {
 
     /**
      * Runs one pristine build, then copies out its reports from the verifier-owned reports directory — a constant path, never derived from agent output — and parses them with
-     * the production parsers. The tar is validated by {@link CollectedReports} before any byte is parsed.
+     * Hyperion's JUnit and SCA parsers. The tar is validated by {@link CollectedReports} before any byte is parsed.
      *
      * @param assignmentName the assignment directory name ({@code solution}/{@code template}); also the reports subdirectory name and the copyOut prefix
      */

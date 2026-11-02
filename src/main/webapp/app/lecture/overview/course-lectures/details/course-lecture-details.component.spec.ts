@@ -42,7 +42,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
@@ -54,7 +53,6 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { User } from 'app/account/user/user.model';
 import { ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
-import { DialogService } from 'primeng/dynamicdialog';
 import { FileService } from 'app/foundation/service/file.service';
 import { InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
@@ -118,9 +116,6 @@ describe('CourseLectureDetailsComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [
-                MockDirective(NgbTooltip),
-                MockDirective(NgbCollapse),
-                MockDirective(NgbPopover),
                 FaIconComponent,
                 CourseLectureDetailsComponent,
                 MockComponent(AttachmentVideoUnitComponent),
@@ -159,10 +154,6 @@ describe('CourseLectureDetailsComponent', () => {
                     completeLectureUnit: vi.fn(),
                 }),
                 MockProvider(AlertService),
-                // The component opens the lecture's Iris session for the chat panel; the real service reads the
-                // router URL in its constructor, which this test bed does not have. The chat panel itself pulls in
-                // PrimeNG's DialogService for the "About Iris" dialog.
-                MockProvider(DialogService),
                 { provide: AccountService, useClass: MockAccountService },
                 /*
                  * `DiscussionSectionComponent` declares `providers: [CommunicationService]`, and ng-mocks carries a mocked
@@ -248,6 +239,14 @@ describe('CourseLectureDetailsComponent', () => {
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).not.toBeNull();
         expect(courseLecturesDetailsComponent.hasPdfLectureUnit()).toBe(true);
+    });
+
+    it('should space the download PDF button from the lecture units heading', async () => {
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        const downloadButton = debugElement.query(By.css('#downloadButton')).nativeElement as HTMLElement;
+        expect(downloadButton.parentElement!.classList).toContain('gap-3');
     });
 
     it('should not display download PDF button', async () => {

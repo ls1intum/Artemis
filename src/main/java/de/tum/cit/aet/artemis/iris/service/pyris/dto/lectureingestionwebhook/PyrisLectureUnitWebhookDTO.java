@@ -39,4 +39,16 @@ public record PyrisLectureUnitWebhookDTO(String pdfFile, int attachmentVersion, 
         this(pdfFile, attachmentVersion, transcription, lectureUnitId, lectureUnitName, lectureId, lectureName, courseId, courseName, courseDescription, lectureUnitLink, videoLink,
                 videoSourceType, contentFingerprint, false, null);
     }
+
+    /**
+     * A TUM Live video link is a signed playlist that works as a credential for seven hours, and the PDF can be large, so neither is written to log output.
+     */
+    @Override
+    public String toString() {
+        return "PyrisLectureUnitWebhookDTO[pdfFile=" + (pdfFile == null ? null : "[" + pdfFile.length() + " chars]") + ", attachmentVersion=" + attachmentVersion
+                + ", transcription=" + transcription + ", lectureUnitId=" + lectureUnitId + ", lectureUnitName=" + lectureUnitName + ", lectureId=" + lectureId + ", lectureName="
+                + lectureName + ", courseId=" + courseId + ", courseName=" + courseName + ", courseDescription=" + courseDescription + ", lectureUnitLink=" + lectureUnitLink
+                + ", videoLink=" + (videoLink == null ? null : "[REDACTED]") + ", videoSourceType=" + videoSourceType + ", contentFingerprint=" + contentFingerprint
+                + ", forceReingest=" + forceReingest + ", courseLanguage=" + courseLanguage + "]";
+    }
 }

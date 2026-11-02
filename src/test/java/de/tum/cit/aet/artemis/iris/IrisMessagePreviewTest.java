@@ -7,8 +7,6 @@ import java.lang.reflect.Method;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import tools.jackson.databind.node.JsonNodeFactory;
-
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
@@ -76,7 +74,7 @@ class IrisMessagePreviewTest {
     @Test
     void returnsFallbackWhenNoTextContent() {
         IrisMessage message = new IrisMessage();
-        message.addContent(new IrisJsonMessageContent(JsonNodeFactory.instance.objectNode().put("type", "mcq")));
+        message.addContent(IrisJsonMessageContent.ofJson("{\"type\":\"mcq\"}"));
 
         assertThat(buildPreview(message)).isEqualTo(FALLBACK);
     }
@@ -89,7 +87,7 @@ class IrisMessagePreviewTest {
     @Test
     void skipsJsonContentButKeepsText() {
         IrisMessage message = new IrisMessage();
-        message.addContent(new IrisJsonMessageContent(JsonNodeFactory.instance.objectNode().put("type", "mcq")));
+        message.addContent(IrisJsonMessageContent.ofJson("{\"type\":\"mcq\"}"));
         message.addContent(new IrisTextMessageContent("Here is your answer"));
 
         assertThat(buildPreview(message)).isEqualTo("Here is your answer");
