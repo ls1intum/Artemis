@@ -60,12 +60,12 @@ describe('ClientErrorHandler', () => {
             expect(captureException).toHaveBeenCalledExactlyOnceWith('wrapper message');
         });
 
-        it('should report the text of a failed request, not its response body', () => {
-            const error = new HttpErrorResponse({ status: 503, url: '/api/core/courses', error: { stack: 'trace of the server that must not be reported' } });
+        it('should hand a failed request to the reporter as it is, which leaves out the query of its url and the body of its response', () => {
+            const error = new HttpErrorResponse({ status: 503, url: '/api/core/courses?token=secret', error: { stack: 'trace of the server that must not be reported' } });
 
             handler.handleError(error);
 
-            expect(captureException).toHaveBeenCalledExactlyOnceWith(error.message);
+            expect(captureException).toHaveBeenCalledExactlyOnceWith(error);
         });
 
         it('should report the error itself if it has nothing to unwrap', () => {
@@ -110,6 +110,30 @@ describe('ClientErrorHandler', () => {
 
             expect(captureException).not.toHaveBeenCalled();
             expect(store).not.toHaveBeenCalled();
+        });
+
+        it('should not stop the application from starting if the browser blocks its storage', () => {
+            stubPasskeySupport(false);
+            retrieveDate.mockImplementation(() => {
+                throw new DOMException('blocked', 'SecurityError');
+            });
+
+            expect(() => handler.reportIfPasskeyIsNotSupported()).not.toThrow();
+
+            // without the marker the report would be sent on every start, so it is not sent
+            expect(captureException).not.toHaveBeenCalled();
+        });
+
+        it('should not stop the application from starting if the storage is full, and not report', () => {
+            stubPasskeySupport(false);
+            retrieveDate.mockReturnValue(undefined);
+            store.mockImplementation(() => {
+                throw new DOMException('full', 'QuotaExceededError');
+            });
+
+            expect(() => handler.reportIfPasskeyIsNotSupported()).not.toThrow();
+
+            expect(captureException).not.toHaveBeenCalled();
         });
 
         it('should report a browser without passkey support once and remember it', () => {

@@ -55,8 +55,8 @@ public enum RateLimitType {
      * them it reads the whole distributed processing job map to find the presented token. A caller inside the build
      * agent networks who knows a registered agent name - it is an identifier, shown in the admin UI - could otherwise
      * force that read in a loop with arbitrary passwords, unbounded. This limit bounds it <em>where rate limiting is
-     * switched on at all</em>: {@code artemis.rate-limiting.enabled} defaults to false, and on an installation that
-     * leaves it there the cheap gates above are the only bound on reaching the scan.
+     * switched on</em>, which it is unless an operator sets {@code artemis.rate-limiting.enabled} to false. On an installation
+     * that switches it off, the cheap gates above are the only bound on reaching the scan.
      * <p>
      * It is a bound on guessing, and sized like one, because two things keep it away from real agents. An address that
      * some build agent is registered at is exempt, which tracks the agents automatically rather than through a
@@ -65,8 +65,8 @@ public enum RateLimitType {
      * registration to be exempt by, such as one sharing a JVM with a core node.
      * <p>
      * Default: 30 requests per minute per client, the same order as the other credential-checking limits. Rate limiting
-     * is off unless {@code artemis.rate-limiting.enabled} is set; where it is on,
-     * {@code artemis.rate-limiting.build-agent-clone-token-requests-per-minute} overrides this.
+     * is on unless {@code artemis.rate-limiting.enabled} is set to false;
+     * {@code artemis.rate-limiting.build-agent-clone-token-requests-per-minute} overrides the default.
      */
     BUILD_AGENT_CLONE_TOKEN(30),
 
@@ -131,22 +131,39 @@ public enum RateLimitType {
      * that disables rate limiting for its logins must not leave its log open to flooding. Only an address in
      * {@code artemis.rate-limiting.exempt-addresses} is not limited.
      * <p>
+     * The limit counts the TCP peer as Tomcat resolved it, and never reads a forwarding header itself, so that a sender cannot choose its own
+     * budget. A request that exceeds it is answered with 429 and is not logged above debug level, because a limit that bounds the log must
+     * not write a line for every rejection.
+     * <p>
      * Default: 60 requests per minute per client, overridable with
      * {@code artemis.rate-limiting.client-error-report-requests-per-minute}.
      */
-    CLIENT_ERROR_REPORT(60, true);
+    CLIENT_ERROR_REPORT(60, true, false);
 
     private final int defaultRpm;
 
     private final boolean alwaysEnforced;
 
+    private final boolean rejectionLogged;
+
     RateLimitType(int defaultRpm) {
-        this(defaultRpm, false);
+        this(defaultRpm, false, true);
     }
 
-    RateLimitType(int defaultRpm, boolean alwaysEnforced) {
+    RateLimitType(int defaultRpm, boolean alwaysEnforced, boolean rejectionLogged) {
         this.defaultRpm = defaultRpm;
         this.alwaysEnforced = alwaysEnforced;
+        this.rejectionLogged = rejectionLogged;
+    }
+
+    /**
+     * Whether a request that exceeds the limit is logged as a warning. It is for the limits that guard logins and accounts, where a
+     * rejection can be the sign of an attack. A limit that bounds the size of the log itself is not, as that would let the sender fill it.
+     *
+     * @return {@code true} if every rejection is logged as a warning
+     */
+    public boolean isRejectionLogged() {
+        return rejectionLogged;
     }
 
     /**

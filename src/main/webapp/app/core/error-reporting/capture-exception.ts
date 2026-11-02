@@ -131,15 +131,37 @@ function describe(exception: unknown): string {
     if (typeof exception === 'string') {
         return exception;
     }
+    // An HttpErrorResponse is no Error. Converted to json it would put its whole url, with the query, and the body of the response into the
+    // message, and neither belongs into a report: the status and the path tell what failed. The name is checked instead of the type, because
+    // errors that reach the error handler can be reconstructed.
+    const response = exception as { name?: unknown; status?: unknown; statusText?: unknown; url?: unknown } | null | undefined;
+    if (response?.name === 'HttpErrorResponse') {
+        return `Http failure response for ${pathOf(response.url)}: ${String(response.status)} ${typeof response.statusText === 'string' ? response.statusText : ''}`.trim();
+    }
     return stringify(exception);
 }
 
-/** The stack of an error followed by the stacks of its causes, as far as they fit. */
+/** The path of a url without its query and its fragment, which can carry tokens and identifiers. */
+function pathOf(url: unknown): string {
+    if (typeof url !== 'string' || !url) {
+        return '(unknown url)';
+    }
+    try {
+        return new URL(url, window.location.origin).pathname;
+    } catch {
+        return url.split(/[?#]/)[0];
+    }
+}
+
+/**
+ * The stack of an error followed by the stacks of its causes, as far as they fit. A cause that is no error is described like a reported value, so
+ * that a failed request, which is often the cause of a failure, is named by its status and its path and not by its whole url and the response.
+ */
 function stackOf(error: Error): string | undefined {
     const parts = [error.stack];
     let cause = error.cause;
     for (let depth = 0; cause !== undefined && cause !== null && depth < MAX_CAUSES; depth++) {
-        parts.push(`Caused by: ${cause instanceof Error ? (cause.stack ?? `${cause.name}: ${cause.message}`) : stringify(cause)}`);
+        parts.push(`Caused by: ${cause instanceof Error ? (cause.stack ?? `${cause.name}: ${cause.message}`) : describe(cause)}`);
         cause = cause instanceof Error ? cause.cause : undefined;
     }
     const stack = parts.filter((part) => !!part).join('\n');
