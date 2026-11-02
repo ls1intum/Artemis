@@ -708,6 +708,43 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "USER")
+        void updateSchedule_whenExtendingThePeriod_shouldNotDuplicateAnIndividuallyEditedSession() throws Exception {
+            // Create a group with a weekly schedule over four Mondays.
+            TutorialGroupScheduleDTO initialSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_12_00, 1, FOURTH_AUGUST_MONDAY, "Room A");
+            CreateOrUpdateTutorialGroupRequestDTO createRequest = new CreateOrUpdateTutorialGroupRequestDTO("TG NoDuplicate", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 10, "info", initialSchedule);
+            Long tutorialGroupId = request.postWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", createRequest, Long.class, HttpStatus.OK);
+
+            List<TutorialGroupSession> initialSessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId).stream()
+                    .sorted(Comparator.comparing(TutorialGroupSession::getStart)).toList();
+            assertThat(initialSessions).hasSize(4);
+
+            // Editing a single session detaches it from the schedule (schedule set to null) while keeping its start, as the session edit
+            // endpoint does when recording attendance. The regenerated slot must recognise this detached session instead of duplicating it.
+            TutorialGroupSession firstSession = initialSessions.getFirst();
+            firstSession.setAttendanceCount(7);
+            firstSession.setTutorialGroupSchedule(null);
+            tutorialGroupSessionRepository.saveAndFlush(firstSession);
+            ZonedDateTime firstSessionStart = firstSession.getStart();
+
+            // Extend the period by one week; day, time and location are unchanged, so the first slot still coincides with the edited session.
+            TutorialGroupScheduleDTO extendedSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_12_00, 1, FIFTH_AUGUST_MONDAY, "Room A");
+            CreateOrUpdateTutorialGroupRequestDTO updateRequest = new CreateOrUpdateTutorialGroupRequestDTO("TG NoDuplicate", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 10, "info", extendedSchedule);
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, updateRequest, HttpStatus.NO_CONTENT);
+
+            List<TutorialGroupSession> updatedSessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId).stream()
+                    .sorted(Comparator.comparing(TutorialGroupSession::getStart)).toList();
+            // Five slots after extending, not six: the detached session must not be duplicated by a regenerated one.
+            assertThat(updatedSessions).hasSize(5);
+            List<TutorialGroupSession> sessionsAtFirstSlot = updatedSessions.stream().filter(session -> session.getStart().isEqual(firstSessionStart)).toList();
+            assertThat(sessionsAtFirstSlot).hasSize(1);
+            assertThat(sessionsAtFirstSlot.getFirst().getId()).isEqualTo(firstSession.getId());
+            assertThat(sessionsAtFirstSlot.getFirst().getAttendanceCount()).isEqualTo(7);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "USER")
         void updateSchedule_whenASessionNowOverlapsAFreePeriod_shouldCancelThatSession() throws Exception {
             // Schedule: Mondays 10:00-11:00. A free period sits at 12:00-13:00 on the first Monday, not overlapping the initial slot.
             TutorialGroupScheduleDTO initialSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_11_00, 1, FOURTH_AUGUST_MONDAY, "Room A");

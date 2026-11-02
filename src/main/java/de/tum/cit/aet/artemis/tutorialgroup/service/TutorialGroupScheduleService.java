@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -73,12 +74,18 @@ public class TutorialGroupScheduleService {
             tutorialGroupSessionRepository.saveAll(generatedSessions);
             return;
         }
+        // Individually edited sessions are detached from the schedule (schedule set to null) but keep their slot, so they are not in
+        // existingSessionsByStart. Collect their starts to leave such a slot to the edited session instead of duplicating it.
+        Set<Instant> detachedSessionStarts = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId()).stream()
+                .filter(session -> session.getTutorialGroupSchedule() == null).map(session -> session.getStart().toInstant()).collect(Collectors.toSet());
+
         // The schedule changed: a regenerated session that starts at the same time as an existing one is the same session, so keep its
         // id and recorded attendance and let its end and location follow the new schedule. Existing sessions whose start no longer
         // occurs are removed.
         List<TutorialGroupSession> sessionsToPersist = new ArrayList<>();
         for (TutorialGroupSession generatedSession : generatedSessions) {
-            TutorialGroupSession existingSession = existingSessionsByStart.remove(generatedSession.getStart().toInstant());
+            Instant generatedStart = generatedSession.getStart().toInstant();
+            TutorialGroupSession existingSession = existingSessionsByStart.remove(generatedStart);
             if (existingSession != null) {
                 existingSession.setEnd(generatedSession.getEnd());
                 existingSession.setLocation(generatedSession.getLocation());
@@ -87,7 +94,7 @@ public class TutorialGroupScheduleService {
                 updateStatusAndFreePeriod(existingSession, Optional.ofNullable(generatedSession.getTutorialGroupFreePeriod()));
                 sessionsToPersist.add(existingSession);
             }
-            else {
+            else if (!detachedSessionStarts.contains(generatedStart)) {
                 sessionsToPersist.add(generatedSession);
             }
         }
