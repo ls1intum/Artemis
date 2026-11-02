@@ -28,7 +28,7 @@ import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { downloadCsv } from 'app/foundation/util/csv-download.util';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
@@ -122,7 +122,7 @@ describe('GradingComponent', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ExamManagementService),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
@@ -176,7 +176,7 @@ describe('GradingComponent', () => {
                     {
                         provide: CourseManagementService,
                         useValue: {
-                            find: vi.fn().mockReturnValue(of(new HttpResponse({ body: { id: courseId } as Course }))),
+                            findForInstructor: vi.fn().mockReturnValue(of(new HttpResponse({ body: { id: courseId } as Course }))),
                         },
                     },
                     {
@@ -209,7 +209,7 @@ describe('GradingComponent', () => {
                             MockComponent(GradingInfoModalComponent),
                             MockComponent(FaIconComponent),
                             MockDirective(TranslateDirective),
-                            MockPipe(ArtemisTranslatePipe),
+                            MockPipe(ArtemisTranslatePipe, (key: string) => key),
                             MockComponent(HelpIconComponent),
                             MockComponent(GradingPresentationsComponent),
                             MockComponent(ModePickerComponent),
@@ -333,7 +333,9 @@ describe('GradingComponent', () => {
 
             it('recomputes the points of all grade steps when the typed max points change', async () => {
                 await renderWithMaxPoints(GradingViewMode.DETAILED);
-                const maxPointsInput = fixture.nativeElement.querySelector('.dropdown-container jhi-points-input input') as HTMLInputElement;
+                const maxPointsInput = fixture.nativeElement.querySelector(
+                    'jhi-points-input input[aria-label="artemisApp.gradingSystem.info.maxPoints.title"]',
+                ) as HTMLInputElement;
                 expect(maxPointsInput.value).toBe('100');
                 expect(stepRowPointsInputs()[1].map((input) => input.value)).toEqual(['40', '80']);
 
@@ -409,19 +411,24 @@ describe('GradingComponent', () => {
             });
         });
 
-        it('announces the selected grading view after keyboard activation', () => {
+        it('announces the selected grading view through native buttons', async () => {
             fixture.detectChanges();
-            const interval = fixture.nativeElement.querySelector('.tab-item.interval') as HTMLElement;
-            const detailed = fixture.nativeElement.querySelector('.tab-item.detailed') as HTMLElement;
+            await fixture.whenStable();
+            fixture.detectChanges();
+            const [interval, detailed] = fixture.nativeElement.querySelectorAll('[data-testid="grading-view-mode"] button') as NodeListOf<HTMLButtonElement>;
+            expect(interval.type).toBe('button');
+            expect(detailed.type).toBe('button');
             expect(interval.getAttribute('aria-pressed')).toBe('true');
             expect(detailed.getAttribute('aria-pressed')).toBe('false');
-            detailed.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+            detailed.click();
             fixture.detectChanges();
+            await fixture.whenStable();
             expect(comp.viewMode()).toBe(GradingViewMode.DETAILED);
             expect(interval.getAttribute('aria-pressed')).toBe('false');
             expect(detailed.getAttribute('aria-pressed')).toBe('true');
-            interval.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            interval.click();
             fixture.detectChanges();
+            await fixture.whenStable();
             expect(comp.viewMode()).toBe(GradingViewMode.INTERVAL);
             expect(interval.getAttribute('aria-pressed')).toBe('true');
             expect(detailed.getAttribute('aria-pressed')).toBe('false');
@@ -463,7 +470,7 @@ describe('GradingComponent', () => {
                     {
                         provide: CourseManagementService,
                         useValue: {
-                            find: vi.fn(),
+                            findForInstructor: vi.fn(),
                         },
                     },
                     {
@@ -496,7 +503,7 @@ describe('GradingComponent', () => {
                             MockComponent(GradingInfoModalComponent),
                             MockComponent(FaIconComponent),
                             MockDirective(TranslateDirective),
-                            MockPipe(ArtemisTranslatePipe),
+                            MockPipe(ArtemisTranslatePipe, (key: string) => key),
                             MockComponent(HelpIconComponent),
                             MockComponent(GradingPresentationsComponent),
                             MockComponent(ModePickerComponent),

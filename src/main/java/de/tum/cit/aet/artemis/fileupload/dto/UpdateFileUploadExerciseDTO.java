@@ -108,7 +108,7 @@ public record UpdateFileUploadExerciseDTO(long id, String title, @Nullable Strin
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
 
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.stream().map(GradingCriterionDTO::of).toList();
+            gradingCriterionDTOs = GradingCriterionDTO.ofAll(criteria);
         }
         else {
             gradingCriterionDTOs = null;

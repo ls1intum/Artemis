@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, Type, computed, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Type, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
@@ -15,6 +15,9 @@ import { IMPORT_DIALOG_BACK, ImportDialogFooterComponent } from 'app/course/mana
 import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
+import { HyperionBriefDialogComponent } from 'app/hyperion/exercise-generation/create/hyperion-brief-dialog.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 export type AddModalMode = 'create' | 'import' | 'export' | 'unified';
 
@@ -68,14 +71,14 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
     selector: 'jhi-exercise-add-modal',
     templateUrl: './exercise-add-modal.component.html',
     styleUrl: './exercise-add-modal.component.scss',
-    imports: [TumAetUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [TumAetUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective, HyperionBriefDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseAddModalComponent {
     private readonly profileService = inject(ProfileService);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly router = inject(Router);
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
 
     readonly visible = input<boolean>(false);
     readonly mode = input<AddModalMode>('create');
@@ -84,6 +87,8 @@ export class ExerciseAddModalComponent {
     readonly visibleChange = output<boolean>();
     readonly groupCreate = output<void>();
     readonly exportRequested = output<void>();
+    readonly exerciseCreated = output<ProgrammingExercise>();
+    readonly exerciseDeleted = output<number>();
 
     /** Whether programming exercises are enabled server-side; defaults to active until the toggle resolves. */
     private readonly programmingEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
@@ -109,11 +114,16 @@ export class ExerciseAddModalComponent {
         }),
     );
 
-    readonly activeTab = signal<'create' | 'import' | 'export'>('create');
+    readonly activeTab = signal<'create' | 'generate' | 'import' | 'export'>('create');
+    readonly briefDialogVisible = signal(false);
+    private readonly briefDialog = viewChild(HyperionBriefDialogComponent);
+    protected readonly generationEnabled = computed(() => this.programmingEnabled() && this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     protected readonly faArrowRight = faArrowRight;
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faLayerGroup = faLayerGroup;
+    protected readonly faKeyboard = faKeyboard;
 
     constructor() {
         effect(() => {
@@ -138,8 +148,24 @@ export class ExerciseAddModalComponent {
         this.close();
     }
 
-    setActiveTab(tab: 'create' | 'import' | 'export'): void {
+    setActiveTab(tab: 'create' | 'generate' | 'import' | 'export'): void {
         this.activeTab.set(tab);
+    }
+
+    /** Hands over to the brief dialog. Deliberately no navigation: the exercise does not exist until the brief is sent. */
+    protected openProgrammingGeneration(): void {
+        if (!this.generationEnabled() || this.courseId() === undefined) {
+            return;
+        }
+        this.briefDialog()?.reset();
+        this.close();
+        this.briefDialogVisible.set(true);
+    }
+
+    protected backToGenerationTypes(): void {
+        this.briefDialogVisible.set(false);
+        this.activeTab.set('generate');
+        this.visibleChange.emit(true);
     }
 
     /**
@@ -153,13 +179,11 @@ export class ExerciseAddModalComponent {
         const dialogData: ExerciseImportDialogData & { headerKey: string } = { exerciseType: type, headerKey };
         const componentToOpen: Type<unknown> = type === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
 
-        const dialogRef = this.dialogService.open(componentToOpen, {
-            width: '50rem',
-            modal: true,
+        const dialogRef = this.dialogService.open<unknown, Exercise | string, ExerciseImportDialogData & { headerKey: string }>(componentToOpen, {
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
             data: dialogData,
             // Reactive title (re-translates on a language switch) and a "Back" button in the footer that returns to this
             // modal's exercise-type selection (see onClose). PrimeNG's static `header` string would not re-translate.
@@ -179,7 +203,9 @@ export class ExerciseAddModalComponent {
                 if (type === ExerciseType.PROGRAMMING) {
                     this.handleProgrammingImport(exercise, courseId);
                 } else {
-                    void this.router.navigate(['/course-management', courseId, type + '-exercises', exercise.id, 'import']);
+                    void this.router.navigate(['/course-management', courseId, type + '-exercises', exercise.id, 'import'], {
+                        queryParams: { sourceIsExamExercise: !!exercise.exerciseGroup },
+                    });
                 }
             }
         });
@@ -198,7 +224,9 @@ export class ExerciseAddModalComponent {
                 state: { programmingExerciseForImportFromFile: result },
             });
         } else {
-            void this.router.navigate(['/course-management', courseId, 'programming-exercises', 'import', result.id]);
+            void this.router.navigate(['/course-management', courseId, 'programming-exercises', 'import', result.id], {
+                queryParams: { sourceIsExamExercise: !!result.exerciseGroup },
+            });
         }
     }
 

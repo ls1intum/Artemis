@@ -71,7 +71,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 
 import 'app/foundation/util/array.extension';
@@ -108,7 +108,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -212,16 +212,16 @@ describe('FileUploadExerciseUpdateComponent', () => {
                     },
                 },
                 {
-                    provide: NgbModal,
+                    provide: TumAetUiDialogService,
                     useValue: {
                         open: vi.fn(),
-                        hasOpenModals: vi.fn().mockReturnValue(false),
+                        hasOpenDialogs: vi.fn().mockReturnValue(false),
                     },
                 },
                 {
                     provide: CourseManagementService,
                     useValue: {
-                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
+                        findForManagement: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
                         findAllCategoriesOfCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: [] }))),
                     },
                 },
@@ -278,7 +278,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                         MockComponent(DocumentationButtonComponent),
                         MockComponent(FormStatusBarComponent),
                         MockComponent(FormFooterComponent),
-                        MockComponent(CategorySelectorPrimengComponent),
+                        MockComponent(CategorySelectorComponent),
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
@@ -781,7 +781,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
             component = fixture.componentInstance;
             fixture.detectChanges();
             await fixture.whenStable();
-            expect(courseService.find).toHaveBeenCalledOnce();
+            expect(courseService.findForManagement).toHaveBeenCalledOnce();
 
             const dueDate = dayjs().add(1, 'day');
             fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance.dueDate.set(dueDate);
@@ -791,7 +791,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
             // Running the import handling again would have reset the dates and loaded the course once more.
             expect(component.fileUploadExercise().dueDate).toBe(dueDate);
-            expect(courseService.find).toHaveBeenCalledOnce();
+            expect(courseService.findForManagement).toHaveBeenCalledOnce();
         });
 
         it('should load exercise group when importing to exam', async () => {

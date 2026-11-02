@@ -14,7 +14,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "short-answer" }, defaultValue = "short-answer"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ShortAnswerQuestionReEvaluateDTO(@NotNull Long id, @NotBlank String title, @NotNull String text, @NotNull ScoringType scoringType, @NotNull Boolean randomizeOrder,
         @NotNull Boolean invalid, @NotNull Integer similarityValue, @NotNull Boolean matchLetterCase, @NotEmpty List<@Valid ShortAnswerSpotReEvaluateDTO> spots,

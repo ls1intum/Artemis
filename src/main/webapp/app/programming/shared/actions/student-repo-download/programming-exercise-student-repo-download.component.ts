@@ -24,6 +24,7 @@ export class ProgrammingExerciseStudentRepoDownloadComponent {
     readonly exerciseId = input<number>();
 
     readonly participationId = input<number>();
+    readonly audience = input<'owner' | 'tutor' | 'instructor'>('owner');
 
     readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 
@@ -36,13 +37,14 @@ export class ProgrammingExerciseStudentRepoDownloadComponent {
         const exerciseId = this.exerciseId();
         const participationId = this.participationId();
         if (exerciseId && participationId) {
-            this.programmingExerciseService
-                .exportStudentRepository(exerciseId, participationId)
-                .pipe(take(1))
-                .subscribe((response) => {
-                    downloadZipFileFromResponse(response);
-                    this.alertService.success('artemisApp.programmingExercise.export.successMessageRepo');
-                });
+            const download =
+                this.audience() === 'owner'
+                    ? this.programmingExerciseService.exportStudentRepository(exerciseId, participationId)
+                    : this.programmingExerciseService.exportStudentRepositoryForStaff(exerciseId, participationId, this.audience() === 'instructor');
+            download.pipe(take(1)).subscribe((response) => {
+                downloadZipFileFromResponse(response);
+                this.alertService.success('artemisApp.programmingExercise.export.successMessageRepo');
+            });
         }
     }
 }

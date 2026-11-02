@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.communication.dto.CommunicationCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.GroupChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
@@ -63,8 +65,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void startGroupChat_asStudent1WithStudent2AndStudent3_shouldCreateGroupChat() throws Exception {
         // when
-        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
-                GroupChatDTO.class, HttpStatus.CREATED);
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats",
+                new GroupChatCreationDTO(List.of(testPrefix + "student2", testPrefix + "student3")), GroupChatDTO.class, HttpStatus.CREATED);
         // then
         assertThat(chat).isNotNull();
         assertParticipants(chat.getId(), 3, "student1", "student2", "student3");
@@ -86,10 +88,33 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         for (int i = 2; i <= NUMBER_OF_STUDENTS; i++) {
             loginList.add(testPrefix + "student" + i);
         }
-        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", loginList, GroupChatDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", new GroupChatCreationDTO(loginList), GroupChatDTO.class,
+                HttpStatus.BAD_REQUEST);
         // chat with too few users
         // then
-        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(), GroupChatDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", new GroupChatCreationDTO(List.of()), GroupChatDTO.class,
+                HttpStatus.BAD_REQUEST);
+        verifyNoParticipantTopicWebsocketSent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void startGroupChat_legacyLoginArray_shouldCreateGroupChat() throws Exception {
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
+                GroupChatDTO.class, HttpStatus.CREATED);
+
+        assertThat(chat).isNotNull();
+        assertParticipants(chat.getId(), 3, "student1", "student2", "student3");
+        verifyMultipleParticipantTopicWebsocketSent(CommunicationCrudAction.CREATE, chat.getId(), "student2", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(CommunicationCrudAction.CREATE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void startGroupChat_bodyWithoutMemberLogins_shouldReturnBadRequest() throws Exception {
+        String url = "/api/communication/courses/" + exampleCourseId + "/group-chats";
+        request.postWithResponseBody(url, Map.of(), GroupChatDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(url, Map.of("memberLogins", testPrefix + "student2"), GroupChatDTO.class, HttpStatus.BAD_REQUEST);
         verifyNoParticipantTopicWebsocketSent();
     }
 
@@ -97,8 +122,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void startGroupChat_notAllowedAsNotStudentInCourse_shouldReturnBadRequest() throws Exception {
         // then
-        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
-                GroupChatDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats",
+                new GroupChatCreationDTO(List.of(testPrefix + "student2", testPrefix + "student3")), GroupChatDTO.class, HttpStatus.FORBIDDEN);
         verifyNoParticipantTopicWebsocketSent();
     }
 
@@ -113,8 +138,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     void startGroupChat_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
-        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
-                GroupChatDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats",
+                new GroupChatCreationDTO(List.of(testPrefix + "student2", testPrefix + "student3")), GroupChatDTO.class, HttpStatus.FORBIDDEN);
 
         // active messaging again
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -168,8 +193,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     }
 
     void updateGroupChat_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
-                GroupChatDTO.class, HttpStatus.CREATED);
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats",
+                new GroupChatCreationDTO(List.of(testPrefix + "student2", testPrefix + "student3")), GroupChatDTO.class, HttpStatus.CREATED);
         chat.setName("updated");
 
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
@@ -233,8 +258,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     }
 
     void registerDeregisterUsersToGroupChat_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
-                GroupChatDTO.class, HttpStatus.CREATED);
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats",
+                new GroupChatCreationDTO(List.of(testPrefix + "student2", testPrefix + "student3")), GroupChatDTO.class, HttpStatus.CREATED);
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
         request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/register", List.of(testPrefix + "student2"),
@@ -347,11 +372,11 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnExistingGroupChatWhenChatAlreadyExists() throws Exception {
-        var chat1 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
-                GroupChatDTO.class, HttpStatus.CREATED);
+        var chat1 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats",
+                new GroupChatCreationDTO(List.of(testPrefix + "student2", testPrefix + "student3")), GroupChatDTO.class, HttpStatus.CREATED);
 
-        var chat2 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats", List.of(testPrefix + "student2", testPrefix + "student3"),
-                GroupChatDTO.class, HttpStatus.CREATED);
+        var chat2 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats",
+                new GroupChatCreationDTO(List.of(testPrefix + "student2", testPrefix + "student3")), GroupChatDTO.class, HttpStatus.CREATED);
 
         assertThat(chat1).isNotNull();
         assertThat(chat2).isNotNull();

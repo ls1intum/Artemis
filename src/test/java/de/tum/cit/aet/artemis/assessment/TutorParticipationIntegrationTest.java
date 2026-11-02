@@ -108,7 +108,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorParticipateInModelingExerciseWithExampleSubmission(boolean usedForTutorial) throws Exception {
         var tutorId = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1").getId();
 
@@ -121,7 +121,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testModelingAssessmentMatchesSameElementAcrossReferenceTypeVersions() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
         var result = exampleSubmission.getSubmission().getLatestResult();
@@ -134,7 +134,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testModelingAssessmentRejectsFeedbackOnDifferentElement() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
         var result = exampleSubmission.getSubmission().getLatestResult();
@@ -155,7 +155,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
      * In case tutor has provided a feedback which was not provided by the instructor, response is BAD_REQUEST.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
 
@@ -176,7 +176,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
      * Tests when tutor provides unnecessary unreferenced feedback in text example assessment, bad request exception is thrown
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
 
@@ -198,7 +198,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
      * In case tutor has provided a feedback which was not provided by the instructor, response is BAD_REQUEST.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
 
@@ -218,7 +218,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
      * Tests when tutor provides unnecessry unreferenced feedback in modeling example assessment, bad request exception is thrown
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
 
@@ -288,4 +288,78 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         request.post("/api/assessment/exercises/" + modelingExercise.getId() + "/tutor-participations", null, HttpStatus.CREATED);
         return exampleSubmission;
     }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = { "INCORRECT_SCORE", "MISSING_GRADING_INSTRUCTION", "INCORRECT_GRADING_INSTRUCTION", "EMPTY_NEGATIVE_FEEDBACK" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void tutorialFeedbackRejectsIncorrectAssessmentWithoutTrainingTutor(String error) throws Exception {
+        var example = prepareTextExampleSubmission(true);
+        var submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(example.getSubmission().getId());
+        example.setSubmission(submission);
+        var result = submission.getLatestResult();
+        var feedback = result.getFeedbacks().iterator().next();
+        if (error.equals("EMPTY_NEGATIVE_FEEDBACK")) {
+            feedback.setCredits(-1.0);
+            feedback.setText("Instructor explanation");
+            resultRepository.saveAndFlush(result);
+        }
+        switch (error) {
+            case "INCORRECT_SCORE" -> feedback.setCredits(2.0);
+            case "MISSING_GRADING_INSTRUCTION" -> feedback.setGradingInstruction(null);
+            case "INCORRECT_GRADING_INSTRUCTION" -> {
+                var criterion = ExerciseFactory.generateGradingCriterion("Different criterion");
+                criterion.setExercise(textExercise);
+                criterion = gradingCriterionRepository.save(criterion);
+                var instruction = ExerciseFactory.generateGradingInstructions(criterion, 1, 1).iterator().next();
+                feedback.setGradingInstruction(gradingInstructionRepository.save(instruction));
+            }
+            case "EMPTY_NEGATIVE_FEEDBACK" -> {
+                feedback.setText("");
+            }
+            default -> throw new IllegalArgumentException(error);
+        }
+        var response = request.performMvcRequest(post("/api/assessment/exercises/{id}/assess-example-submission", textExercise.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsBytes(example))).andExpect(status().isBadRequest()).andReturn().getResponse();
+        Map<String, Object> problem = request.getObjectMapper().readValue(response.getContentAsString(), Map.class);
+        assertThat(problem).containsEntry("errorKey", "invalid_assessment");
+        assertThat(problem.get("errors")).isEqualTo(List.of(Map.of("reference", feedback.getReference(), "type", error)));
+        var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        var persisted = tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(textExercise, tutor);
+        assertThat(persisted.getStatus()).isEqualTo(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        assertThat(persisted.getTrainedExampleSubmissions()).isEmpty();
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void unreferencedTutorialFeedbackMatchesOnceAndReportsWrongScore(boolean correct) throws Exception {
+        var example = prepareTextExampleSubmission(true);
+        var submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(example.getSubmission().getId());
+        example.setSubmission(submission);
+        var result = submission.getLatestResult();
+        var feedback = result.getFeedbacks().iterator().next();
+        feedback.setType(FeedbackType.MANUAL_UNREFERENCED);
+        feedback.setReference(null);
+        resultRepository.saveAndFlush(result);
+        if (!correct) {
+            feedback.setCredits(2.0);
+        }
+        var url = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
+        if (correct) {
+            var response = request.postWithResponseBody(url, example, TutorParticipationDTO.class, HttpStatus.OK);
+            assertThat(response.status()).isEqualTo(TutorParticipationStatus.TRAINED);
+            var again = request.postWithResponseBody(url, example, TutorParticipationDTO.class, HttpStatus.OK);
+            assertThat(again.id()).isEqualTo(response.id());
+            var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+            var persisted = tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(textExercise, tutor);
+            assertThat(persisted.getTrainedExampleSubmissions()).extracting(ExampleSubmission::getId).containsExactly(example.getId());
+        }
+        else {
+            request.performMvcRequest(post(url).contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsBytes(example)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errorKey").value("invalid_assessment"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.errors[0].type").value("INCORRECT_SCORE"));
+        }
+    }
+
 }

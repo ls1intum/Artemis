@@ -45,9 +45,15 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -87,6 +93,8 @@ import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificati
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing ModelingExercise.
@@ -207,7 +215,16 @@ public class ModelingExerciseResource {
      */
     // TODO: we should add courses/{courseId} here
     @PostMapping("modeling-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Create a modeling exercise", description = """
+            Creates a modeling exercise in a course (set courseId; exercise groups of exams are not available to tokens). A request with a \
+            personal access token must set releaseDate to a time in the future. The exercise becomes visible automatically at releaseDate, \
+            so the instructor must review it before that date and can move the date in the Artemis web interface. \
+            title, diagramType, maxPoints, includedInOverallScore and courseId are required, and the \
+            diagram type cannot be changed later.""")
+    @ApiResponse(responseCode = "201", description = "The exercise was created as a draft.")
     public ResponseEntity<ModelingExerciseResponseDTO> createModelingExercise(@RequestBody UpdateModelingExerciseDTO createModelingExerciseDTO) throws URISyntaxException {
         log.debug("REST request to save ModelingExercise : {}", createModelingExerciseDTO.id());
         if (createModelingExerciseDTO.id() != null) {
@@ -228,6 +245,8 @@ public class ModelingExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(modelingExercise);
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        // After the role check, so that a caller who may not create exercises is not told what the dates should be.
+        AgentDraftRules.requireDraftDatesForCreate(createModelingExerciseDTO.releaseDate(), createModelingExerciseDTO.startDate());
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
@@ -277,7 +296,8 @@ public class ModelingExerciseResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("modeling-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<SearchResultPageDTO<ModelingExerciseListItemDTO>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithAuthorities();
@@ -296,7 +316,13 @@ public class ModelingExerciseResource {
      */
     // NOTE: IMPORTANT we should NEVER call save on an entity retrieved from the client because it is unsafe and can lead to data loss
     @PutMapping("modeling-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Update a modeling exercise", description = """
+            Replaces the editable fields of an existing modeling exercise, so send the whole exercise. A request with a personal access \
+            token can change only an exercise that students cannot see yet (its releaseDate is in the future), and the change must \
+            keep releaseDate in the future. Published exercises can be changed only in the Artemis web interface.""")
     public ResponseEntity<ModelingExerciseResponseDTO> updateModelingExercise(@RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ModelingExercise : {}", updateModelingExerciseDTO.id());
@@ -324,6 +350,11 @@ public class ModelingExerciseResource {
                 && !Objects.equals(originalExercise.getExerciseGroup().getId(), updateModelingExerciseDTO.exerciseGroupId())) {
             throw new ConflictException("The exercise group cannot be changed here.", ENTITY_NAME, "exerciseGroupCannotChange");
         }
+
+        // A personal access token may only change an exercise that is still a draft, and must not publish it. Checked before
+        // update() applies the DTO to the managed entity.
+        AgentDraftRules.requireStillDraft(originalExercise.getReleaseDate(), originalExercise.getStartDate(), updateModelingExerciseDTO.releaseDate(),
+                updateModelingExerciseDTO.startDate());
 
         ZonedDateTime oldDueDate = originalExercise.getDueDate();
         ZonedDateTime oldAssessmentDueDate = originalExercise.getAssessmentDueDate();
@@ -382,11 +413,11 @@ public class ModelingExerciseResource {
      *         modelingExercises in body
      */
     @GetMapping("courses/{courseId}/modeling-exercises")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "List the modeling exercises of a course", description = "Returns a summary of every modeling exercise of the course, with its id, title, dates and points. Get one exercise for all its fields.")
     public ResponseEntity<List<ModelingExerciseListItemDTO>> getModelingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ModelingExercises for the course with id : {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseIdWithCategories(courseId);
         List<ModelingExerciseListItemDTO> result = exercises.stream().map(ModelingExerciseListItemDTO::of).toList();
         return ResponseEntity.ok().body(result);
@@ -400,11 +431,13 @@ public class ModelingExerciseResource {
      *         modelingExercise, or with status 404 (Not Found)
      */
     @GetMapping("modeling-exercises/{exerciseId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
+    @AllowedScopes(AgentScope.EXERCISES_DRAFT)
+    @Operation(summary = "Get a modeling exercise", description = "Returns all fields of a modeling exercise. Exercises of exams cannot be read with a personal access token.")
     public ResponseEntity<ModelingExerciseResponseDTO> getModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
+        AgentDraftRules.rejectExamExercise(modelingExercise.isExamExercise());
         // The response reports the team assignment and the plagiarism detection configuration, which an exercise does not
         // carry by itself.
         teamAssignmentConfigRepository.attachTo(modelingExercise);
@@ -426,8 +459,7 @@ public class ModelingExerciseResource {
         // would cross the query-quality over-fetch threshold.
         exerciseVariantGroupService.findOwningGroup(exerciseId).ifPresent(modelingExercise::setExerciseVariantGroup);
 
-        // Guarantee exam.course is initialized before mapping, deterministically rather than relying on the access
-        // check above happening to touch it.
+        // Guarantee exam.course is initialized before mapping, deterministically.
         ensureExamCourseInitialized(modelingExercise);
         return ResponseEntity.ok().body(ModelingExerciseResponseDTO.of(modelingExercise));
     }
@@ -439,7 +471,7 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("modeling-exercises/{exerciseId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -454,7 +486,6 @@ public class ModelingExerciseResource {
                 log.warn("Failed to notify AtlasML about modeling exercise deletion: {}", e.getMessage());
             }
         });
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, user);
         // note: we use the exercise service here, because this one makes sure to clean
         // up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
@@ -481,7 +512,8 @@ public class ModelingExerciseResource {
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("modeling-exercises/import")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<ModelingExerciseResponseDTO> importExercise(@RequestParam long sourceExerciseId, @RequestBody ImportModelingExerciseDTO importExerciseDTO)
             throws URISyntaxException {
         // Build a transient entity from the dumb DTO, attaching managed Course/ExerciseGroup loaded by id.
@@ -521,13 +553,9 @@ public class ModelingExerciseResource {
      * @return ResponseEntity with status
      */
     @PostMapping("modeling-exercises/{exerciseId}/export-submissions")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
-
         Path zipFilePath = modelingSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
         return ResponseUtil.ok(zipFilePath);
     }
@@ -545,7 +573,7 @@ public class ModelingExerciseResource {
      *         Server Error) if the modelingExercise couldn't be updated
      */
     @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<ModelingExerciseResponseDTO> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId,
             @RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
@@ -568,8 +596,6 @@ public class ModelingExerciseResource {
         var user = userRepository.getUserWithAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         ModelingExercise exerciseForReevaluation = update(updateModelingExerciseDTO, existingExercise);
-        var course = courseRepository.findByIdElseThrow(exerciseForReevaluation.getCourseViaExerciseGroupOrCourseMember().getId());
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(exerciseForReevaluation, ENTITY_NAME);
 
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);

@@ -8,16 +8,23 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 
 class PyrisConnectorFailureTest {
@@ -46,5 +53,18 @@ class PyrisConnectorFailureTest {
         when(rest.postForEntity(anyString(), any(), eq(PyrisLectureSearchResultDTO[].class))).thenThrow(new ResourceAccessException("timeout"));
         assertThatThrownBy(() -> service.searchLectures("Java", 5, null, null, null)).isInstanceOf(PyrisConnectorException.class)
                 .hasMessage("Could not fetch lecture search results from Pyris");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 400, 500 })
+    void jsonNullErrorBodyKeepsTheIrisErrorFallback(int status) {
+        var code = HttpStatus.valueOf(status);
+        byte[] body = "null".getBytes(StandardCharsets.UTF_8);
+        var failure = status == 400 ? HttpClientErrorException.create(code, "Pyris error", HttpHeaders.EMPTY, body, StandardCharsets.UTF_8)
+                : HttpServerErrorException.create(code, "Pyris error", HttpHeaders.EMPTY, body, StandardCharsets.UTF_8);
+        when(rest.postForEntity(anyString(), any(), eq(PyrisLectureSearchResultDTO[].class))).thenThrow(failure);
+
+        assertThatThrownBy(() -> service.searchLectures("Java", 5, null, null, null)).isExactlyInstanceOf(IrisInternalPyrisErrorException.class)
+                .satisfies(error -> assertThat(((IrisInternalPyrisErrorException) error).getTranslationParams()).containsEntry("pyrisErrorMessage", ""));
     }
 }

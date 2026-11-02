@@ -1,5 +1,5 @@
 @if (feedbackItem()) {
-    <p-message class="feedback-item mb-2 block" [severity]="messageSeverity(feedbackItem()!.color)" [pt]="{ content: { class: 'w-full' }, text: { class: 'w-full' } }">
+    <tumaet-ui-message class="feedback-item mb-2 block" [severity]="messageSeverity(feedbackItem()!.color)">
         <div class="w-full">
             <div class="flex justify-between gap-8">
                 <h4 class="feedback-item__category m-0! text-base! font-semibold!">{{ feedbackItem()!.name }} {{ feedbackItem()!.title && '· ' + feedbackItem()!.title }}</h4>
@@ -7,7 +7,7 @@
                     <span class="feedback-item__credits font-bold">
                         {{ roundValueSpecifiedByCourseSettings(feedbackItem()!.credits, course()) }}P
                         @if (feedbackItem()!.type === 'Subsequent') {
-                            <fa-icon [icon]="faExclamationTriangle" [pTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
+                            <fa-icon [icon]="faExclamationTriangle" [tumAetUiTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
                         }
                     </span>
                 }
@@ -35,7 +35,7 @@
                 <p class="mb-0!" jhiTranslate="artemisApp.result.noFeedback"></p>
             }
         </div>
-    </p-message>
+    </tumaet-ui-message>
 }
 @if (feedbackItemGroup()) {
     <div class="feedback-item-group">

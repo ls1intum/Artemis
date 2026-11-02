@@ -145,7 +145,7 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
     class UpsertTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpsertAnswerPost_indexesInWeaviate() throws Exception {
             Channel channel = createPublicChannel("ap-upsert-test");
             Post post = createAndSavePost(channel);
@@ -157,7 +157,7 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpsertAnswerPost_storesCorrectProperties() throws Exception {
             Channel channel = createPublicChannel("ap-props-test");
             Post post = createAndSavePost(channel);
@@ -176,7 +176,7 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpsertAnswerPost_updatesContentInWeaviate() throws Exception {
             Channel channel = createPublicChannel("ap-update-test");
             Post post = createAndSavePost(channel);
@@ -202,7 +202,7 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
     class DeleteTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteAnswerPost_removesFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("ap-delete-test");
             Post post = createAndSavePost(channel);
@@ -218,7 +218,7 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteParentPost_removesAnswerPostsFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("ap-parent-del-test");
             Post post = createAndSavePost(channel);
@@ -243,7 +243,7 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteChannel_removesAnswerPostsFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("ap-ch-del-test");
             Post post = createAndSavePost(channel);
@@ -279,7 +279,7 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
     class PrivacyFilterTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreateAnswerPostInPrivateChannel_notIndexedInWeaviate() throws Exception {
             // Sentinel: create answer post in public channel to confirm Weaviate pipeline works
             Channel publicChannel = createPublicChannel("ap-sentinel-priv");
@@ -299,7 +299,7 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreateAnswerPostInOneToOneChat_notIndexedInWeaviate() throws Exception {
             // Sentinel: create answer post in public channel to confirm Weaviate pipeline works
             Channel publicChannel = createPublicChannel("ap-sentinel-dm");
@@ -320,7 +320,7 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreateAnswerPostInGroupChat_notIndexedInWeaviate() throws Exception {
             // Sentinel: create answer post in public channel to confirm Weaviate pipeline works
             Channel publicChannel = createPublicChannel("ap-sentinel-gc");

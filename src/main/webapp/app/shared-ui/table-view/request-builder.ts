@@ -1,4 +1,4 @@
-import { TableLazyLoadEvent } from 'primeng/table';
+import { TableViewLazyLoadEvent } from './table-view-query';
 import { SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 
 function getSortingOrder(order: number | undefined | null): SortingOrder {
@@ -16,10 +16,10 @@ function getSearchTerm(globalFilter: string | string[] | undefined | null): stri
 }
 
 /**
- * Converts a PrimeNG {@link TableLazyLoadEvent} into a {@link SearchTermPageableSearch}.
+ * Converts an application table query into a {@link SearchTermPageableSearch}.
  * Page numbers are 0-based; falls back to sensible defaults when event fields are absent.
  */
-export function buildDbQueryFromLazyEvent(event: TableLazyLoadEvent, defaults: { page?: number; pageSize?: number } = {}): SearchTermPageableSearch {
+export function buildDbQueryFromLazyEvent(event: TableViewLazyLoadEvent, defaults: { page?: number; pageSize?: number } = {}): SearchTermPageableSearch {
     const pageSize = event.rows ?? defaults.pageSize ?? 50;
     const first = event.first ?? 0;
     const page = pageSize > 0 ? Math.floor(first / pageSize) : (defaults.page ?? 0);

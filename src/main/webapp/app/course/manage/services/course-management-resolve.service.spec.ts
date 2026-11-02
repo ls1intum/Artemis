@@ -14,7 +14,7 @@ describe('CourseManagementResolve', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [CourseManagementResolve, { provide: CourseManagementService, useValue: { find: vi.fn() } }],
+            providers: [CourseManagementResolve, { provide: CourseManagementService, useValue: { findForManagement: vi.fn() } }],
         });
         resolver = TestBed.inject(CourseManagementResolve);
         service = TestBed.inject(CourseManagementService);
@@ -29,14 +29,14 @@ describe('CourseManagementResolve', () => {
         const mockCourse = new Course();
         mockCourse.id = 42;
         mockCourse.title = 'Test Course';
-        vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: mockCourse, status: 200, statusText: 'OK' })));
+        vi.spyOn(service, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: mockCourse, status: 200, statusText: 'OK' })));
 
         route.params = { courseId: 42 };
         let result: Course | undefined;
 
         resolver.resolve(route).subscribe((res) => (result = res));
 
-        expect(service.find).toHaveBeenCalledWith(42);
+        expect(service.findForManagement).toHaveBeenCalledWith(42);
         expect(result).toBe(mockCourse);
     });
 
@@ -47,7 +47,7 @@ describe('CourseManagementResolve', () => {
         resolver.resolve(route).subscribe((res) => (result = res));
 
         expect(result).toBeInstanceOf(Course);
-        expect(service.find).not.toHaveBeenCalled();
+        expect(service.findForManagement).not.toHaveBeenCalled();
     });
 
     it('should filter out non-ok responses', () => {
@@ -55,7 +55,7 @@ describe('CourseManagementResolve', () => {
         mockCourse.id = 42;
         // Create a response with ok: false (status not in 200-299 range)
         const nonOkResponse = new HttpResponse({ body: mockCourse, status: 404, statusText: 'Not Found' });
-        vi.spyOn(service, 'find').mockReturnValue(of(nonOkResponse));
+        vi.spyOn(service, 'findForManagement').mockReturnValue(of(nonOkResponse));
 
         route.params = { courseId: 42 };
         let result: Course | undefined;
@@ -64,7 +64,7 @@ describe('CourseManagementResolve', () => {
             next: (res) => (result = res),
         });
 
-        expect(service.find).toHaveBeenCalledWith(42);
+        expect(service.findForManagement).toHaveBeenCalledWith(42);
         // Since filter filters out non-ok responses, the observable should complete without emitting
         expect(result).toBeUndefined();
     });
@@ -75,14 +75,14 @@ describe('CourseManagementResolve', () => {
         mockCourse.title = 'Full Course';
         mockCourse.shortName = 'FC';
 
-        vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: mockCourse, status: 200, statusText: 'OK' })));
+        vi.spyOn(service, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: mockCourse, status: 200, statusText: 'OK' })));
 
         route.params = { courseId: 123 };
         let result: Course | undefined;
 
         resolver.resolve(route).subscribe((res) => (result = res));
 
-        expect(service.find).toHaveBeenCalledWith(123);
+        expect(service.findForManagement).toHaveBeenCalledWith(123);
         expect(result).toBe(mockCourse);
         expect(result?.id).toBe(123);
         expect(result?.title).toBe('Full Course');
@@ -92,7 +92,7 @@ describe('CourseManagementResolve', () => {
     it('should handle numeric string courseId', () => {
         const mockCourse = new Course();
         mockCourse.id = 99;
-        vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: mockCourse, status: 200, statusText: 'OK' })));
+        vi.spyOn(service, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: mockCourse, status: 200, statusText: 'OK' })));
 
         // Route params are typically strings in Angular
         route.params = { courseId: '99' };
@@ -100,7 +100,7 @@ describe('CourseManagementResolve', () => {
 
         resolver.resolve(route).subscribe((res) => (result = res));
 
-        expect(service.find).toHaveBeenCalledWith('99');
+        expect(service.findForManagement).toHaveBeenCalledWith('99');
         expect(result).toBe(mockCourse);
     });
 

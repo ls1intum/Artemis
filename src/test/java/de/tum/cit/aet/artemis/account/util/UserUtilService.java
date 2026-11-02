@@ -53,27 +53,16 @@ public class UserUtilService {
 
     private static final Authority userAuthority = new Authority(Role.STUDENT.getAuthority());
 
-    private static final Authority tutorAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
-
-    private static final Authority editorAuthority = new Authority(Role.EDITOR.getAuthority());
-
-    private static final Authority instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
-
     private static final Authority adminAuthority = new Authority(Role.ADMIN.getAuthority());
 
     private static final Authority superAdminAuthority = new Authority(Role.SUPER_ADMIN.getAuthority());
 
+    // Teaching roles are course roles: tutors, editors and instructors only carry the user authority, the course roles come from user_course_role.
     private static final Set<Authority> studentAuthorities = Set.of(userAuthority);
 
-    private static final Set<Authority> tutorAuthorities = Set.of(userAuthority, tutorAuthority);
+    private static final Set<Authority> adminAuthorities = Set.of(userAuthority, adminAuthority);
 
-    private static final Set<Authority> editorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority);
-
-    private static final Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority);
-
-    private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority);
-
-    private static final Set<Authority> superAdminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority, superAdminAuthority);
+    private static final Set<Authority> superAdminAuthorities = Set.of(userAuthority, adminAuthority, superAdminAuthority);
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -392,11 +381,11 @@ public class UserUtilService {
         log.debug("Generate {} students...", numberOfStudents);
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, numberOfStudents);
         log.debug("{} students generated. Generate {} tutors...", numberOfStudents, numberOfTutors);
-        var tutors = generateActivatedUsers(prefix + "tutor", passwordService.hashPassword(UserFactory.USER_PASSWORD), tutorAuthorities, numberOfTutors);
+        var tutors = generateActivatedUsers(prefix + "tutor", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, numberOfTutors);
         log.debug("{} tutors generated. Generate {} editors...", numberOfTutors, numberOfEditors);
-        var editors = generateActivatedUsers(prefix + "editor", passwordService.hashPassword(UserFactory.USER_PASSWORD), editorAuthorities, numberOfEditors);
+        var editors = generateActivatedUsers(prefix + "editor", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, numberOfEditors);
         log.debug("{} editors generated. Generate {} instructors...", numberOfEditors, numberOfInstructors);
-        var instructors = generateActivatedUsers(prefix + "instructor", passwordService.hashPassword(UserFactory.USER_PASSWORD), instructorAuthorities, numberOfInstructors);
+        var instructors = generateActivatedUsers(prefix + "instructor", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, numberOfInstructors);
         log.debug("{} instructors generated", numberOfInstructors);
 
         List<User> usersToAdd = new ArrayList<>();
@@ -499,7 +488,7 @@ public class UserUtilService {
      */
     public void addInstructor(final String instructorName) {
         User instructor = createOrReuseExistingUser(instructorName, UserFactory.USER_PASSWORD);
-        instructor.setAuthorities(instructorAuthorities);
+        instructor.setAuthorities(studentAuthorities);
         instructor = saveWithDefaultAiPreference(instructor);
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
@@ -514,7 +503,7 @@ public class UserUtilService {
      */
     public void addEditor(final String editorName) {
         User editor = createOrReuseExistingUser(editorName, UserFactory.USER_PASSWORD);
-        editor.setAuthorities(editorAuthorities);
+        editor.setAuthorities(studentAuthorities);
         editor = saveWithDefaultAiPreference(editor);
         assertThat(editor.getId()).as("Editor has been created").isNotNull();
     }
@@ -529,7 +518,7 @@ public class UserUtilService {
      */
     public void addTeachingAssistant(final String taName) {
         User ta = createOrReuseExistingUser(taName, UserFactory.USER_PASSWORD);
-        ta.setAuthorities(tutorAuthorities);
+        ta.setAuthorities(studentAuthorities);
         ta = saveWithDefaultAiPreference(ta);
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
     }

@@ -49,7 +49,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private static final String TEST_RETURN_URL = "http://unused.return.url/";
 
-    private static final String TEST_PREFIX = "exerciseSharingServiceTest";
+    private static final String TEST_PREFIX = "exercisesharingservicetest";
 
     public static final String INSTRUCTOR1 = TEST_PREFIX + "instructor";
 
@@ -241,7 +241,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR1, roles = "INSTRUCTOR")
+    @WithMockUser(username = INSTRUCTOR1, roles = "USER")
     void testImportProgrammingExerciseFromSharing() throws URISyntaxException, IOException, GitAPIException, SharingException {
         userUtilService.addInstructor(INSTRUCTOR1);
         mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN);

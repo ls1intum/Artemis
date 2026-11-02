@@ -20,6 +20,8 @@ import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -37,7 +39,8 @@ class ExerciseMissingCourseTest {
 
     @Test
     void exerciseScoresChartThrowsWhenCourseCannotBeResolved() {
-        var service = new ExerciseScoresChartService(mock(StudentScoreRepository.class), mock(TeamScoreRepository.class), mock(ParticipantScoreRepository.class));
+        var service = new ExerciseScoresChartService(mock(StudentScoreRepository.class), mock(TeamScoreRepository.class), mock(ParticipantScoreRepository.class),
+                mock(ExerciseRepository.class), mock(ParticipationRepository.class));
         var exercise = exerciseWithoutCourse();
 
         assertThatThrownBy(() -> service.getExerciseScores(Set.of(exercise), new User())).isInstanceOf(IllegalStateException.class).hasMessageContaining("5");

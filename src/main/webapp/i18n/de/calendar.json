@@ -31,6 +31,9 @@
             "nextButtonLabel": "Weiter",
             "weekButtonLabel": "Woche",
             "monthButtonLabel": "Monat",
+            "moreEvents": "+{{ count }} weitere",
+            "showDayEvents": "Alle {{ count }} Termine am {{ date }} anzeigen",
+            "dayEvents": "Termine am {{ date }} ({{ count }})",
             "eventsLoadingError": "Die Kalenderevents konnten nicht geladen werden. Bitte versuche es erneut indem du die Seite aktualisierst.",
             "tokenLoadingError": "Daten, die für das Konfigurieren von Kalender Abonnements gebraucht werden, konnten nicht geladen werden. Bitte aktualisiere die Seite, um es erneut zu versuchen und die Option ein Abonnement zu konfigurieren anzuzeigen.",
             "subscriptionPopover": {

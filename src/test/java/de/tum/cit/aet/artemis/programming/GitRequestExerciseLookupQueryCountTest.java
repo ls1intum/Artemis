@@ -47,7 +47,7 @@ class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIn
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExamExerciseIsResolvedInOneQuery() {
         assertThatDb(() -> programmingExerciseTestRepository.findOneByProjectKeyOrThrow(examProgrammingExercise.getProjectKey(), true))
                 .hasBeenCalledAtMostTimes(EXERCISE_LOOKUP_QUERY_COUNT);
@@ -58,7 +58,7 @@ class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIn
      * them, so it stays one query and, unlike the entity, hydrates nothing.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExamExerciseAccessProjectionIsResolvedInOneQuery() {
         assertThatDb(() -> programmingExerciseTestRepository.findAccessProjectionByProjectKey(examProgrammingExercise.getProjectKey()))
                 .hasBeenCalledAtMostTimes(EXERCISE_LOOKUP_QUERY_COUNT);
@@ -71,7 +71,7 @@ class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIn
      * side of the join is where a follow-up load would be easiest to introduce unnoticed.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCourseExerciseAccessProjectionResolvesWithoutAnExam() {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise courseExercise = (ProgrammingExercise) course.getExercises().iterator().next();

@@ -15,6 +15,12 @@ artemis:
   data-export-path: ./data-exports                # a folder in which data exports are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), because the node that serves a download is rarely the one that created the export
   build-logs-path: ./build-logs                   # a folder in which the complete log of every build job is stored, keyed by build job id, for download
   failed-build-logs-path: ./failed-build-logs     # a folder in which the build logs of failed builds are stored, keyed by submission id, to serve the build output panel, Iris and Hyperion. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS)
+  # Lets users create personal access tokens with which coding agents call a limited set of REST endpoints on their behalf.
+  # Disabled by default: while false, the token endpoints do not exist and a request with a token is rejected with 401.
+  # Administrators can never use tokens, whatever this is set to.
+  agent-access:
+    enabled: false
+    max-lifetime-in-days: 90 # the longest a token may live; users can pick a shorter lifetime when they create one
   bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
@@ -144,7 +150,7 @@ artemis:
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
     exercise-generation:
-      enabled: false # Requires core + localci + localvc and a separately provisioned generation worker.
+      enabled: false # Set consistently on all core/localvc writers. Authoring also requires LocalCI and a separate worker.
     agent:
       max-job-duration: PT45M
       stale-job-timeout: PT50M
@@ -153,11 +159,26 @@ artemis:
       max-concurrent-jobs-per-core-node: 2
       shutdown-drain-timeout: PT11M
       test-case-sync-timeout: PT10M
+    quiz-pool:
+      # Model (for Azure: deployment name) that generates pool questions; blank uses the default chat model configured below.
+      generator-model:
+      # Model (for Azure: deployment name) that judges generated questions; blank uses the default chat model configured below.
+      judge-model:
+      question-types: single-choice,multiple-choice
+      difficulties: easy,medium,hard
+      # Questions requested per generation call; a cell larger than this is filled in several calls.
+      generation-batch-size: 8
+      # A generation or filter claim older than this is treated as abandoned by a dead node and released at the next build.
+      stale-claim-minutes: 30
+      # Characters of a lecture unit's text (slide PDF, transcript or text unit) that a generation prompt receives at most.
+      max-material-characters: 60000
+      # How long a running build holds its course's lease without a heartbeat before another node may build the course.
+      build-lease-minutes: 10
   aiworker:
-    enabled: false # Enable independently of Hyperion after provisioning an isolated worker with provider access.
+    enabled: false # Optional standalone coordination; Hyperion generation enables this automatically on eligible core nodes.
     # ids: [worker-1]
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
-    # Operator-supplied EUR estimates per million tokens. Missing rates remain unknown.
+    # Shared services retain their default prices. Generation uses only explicitly supplied EUR rates; missing rates remain unknown.
     # Use dated provider rates and bracket-quote dotted model keys. Configure each model in
     # one source only: environment variables normalize model keys differently from YAML.
     # model-costs:

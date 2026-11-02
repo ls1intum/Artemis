@@ -65,36 +65,12 @@
     min-width: 8rem;
 }
 
-.monaco-review-comment-menu-overlay .p-menu-list {
-    padding: 0.15rem;
-    margin: 0;
-}
-
-.monaco-review-comment-menu-overlay .p-menu-item {
-    margin: 0;
-}
-
 .monaco-review-comment-menu-overlay .monaco-review-comment-menu-item {
     display: flex;
     width: 100%;
     justify-content: flex-start;
     align-items: center;
     gap: 0.4rem;
-}
-
-.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete,
-.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete .p-button-label,
-.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete .p-button-icon,
-.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:hover,
-.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:hover .p-button-label,
-.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:hover .p-button-icon,
-.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:focus,
-.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:focus .p-button-label,
-.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:focus .p-button-icon,
-.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:active,
-.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:active .p-button-label,
-.monaco-review-comment-menu-overlay .monaco-review-comment-menu-item-delete:enabled:active .p-button-icon {
-    color: var(--danger) !important;
 }
 
 .monaco-review-comment-textarea {
@@ -315,21 +291,6 @@
     margin-top: 0.5rem;
 }
 
-.monaco-review-comment-feedback-selection-button.p-button {
-    background-color: var(--artemis-alert-warning-background);
-    border-color: var(--artemis-alert-warning-color);
-    color: var(--artemis-alert-warning-color);
-}
-
-.monaco-review-comment-feedback-selection-button.p-button:enabled:hover,
-.monaco-review-comment-feedback-selection-button.p-button:enabled:focus,
-.monaco-review-comment-feedback-selection-button.p-button:enabled:active,
-.monaco-review-comment-feedback-selection-button--selected.p-button {
-    background-color: color-mix(in srgb, var(--artemis-alert-warning-background) 72%, var(--body-bg));
-    border-color: var(--artemis-alert-warning-color);
-    color: var(--artemis-alert-warning-color);
-}
-
 .monaco-review-comment-resolve-controls {
     display: inline-flex;
     align-items: stretch;
@@ -391,7 +352,7 @@
     justify-content: center;
 }
 
-.monaco-review-comment-related-location-go-to.p-button {
+.monaco-review-comment-related-location-go-to {
     padding: 0 !important;
 }
 
