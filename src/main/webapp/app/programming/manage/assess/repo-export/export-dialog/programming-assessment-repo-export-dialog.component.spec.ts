@@ -122,6 +122,31 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         expect(exportReposStub).toHaveBeenCalledOnce();
     });
 
+    it('routes ALL to the instructor identifiers operation even with preselected IDs', async () => {
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = true;
+        comp.participationIdList = [1, 2];
+        const byIds = vi.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(createBlobHttpResponse()));
+        const byIdentifiers = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(createBlobHttpResponse()));
+        comp.exportRepos();
+        await fixture.whenStable();
+        expect(byIdentifiers).toHaveBeenCalledWith(exerciseId, ['ALL'], comp.repositoryExportOptions);
+        expect(byIds).not.toHaveBeenCalled();
+    });
+
+    it('routes identified selected IDs to the instructor operation with every option unchanged', async () => {
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = false;
+        comp.repositoryExportOptions.anonymizeRepository = false;
+        comp.participationIdList = [1, 2];
+        const byIds = vi.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(createBlobHttpResponse()));
+        const identified = vi.spyOn(repoExportService, 'exportIdentifiedReposByParticipations').mockReturnValue(of(createBlobHttpResponse()));
+        comp.exportRepos();
+        await fixture.whenStable();
+        expect(identified).toHaveBeenCalledWith(exerciseId, [1, 2], comp.repositoryExportOptions);
+        expect(byIds).not.toHaveBeenCalled();
+    });
+
     // Reached from the participation page, where the dialog opens with no preselected participations: exporting
     // then sent an empty participant list and the server answered 404. Nothing is selected, so there is nothing to
     // request in the first place.
@@ -296,13 +321,15 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         programmingExercise2.isAtLeastInstructor = true;
         comp.programmingExercises = [programmingExercise, programmingExercise2];
         const httpResponse = createBlobHttpResponse();
-        const exportReposStub = vi.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
+        const exportReposStub = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
         comp.exportRepos();
         await fixture.whenStable();
         expect(comp.exportInProgress()).toBe(false);
         expect(exportReposStub).toHaveBeenCalledTimes(2);
+        expect(exportReposStub).toHaveBeenCalledWith(42, ['ALL'], comp.repositoryExportOptions);
+        expect(exportReposStub).toHaveBeenCalledWith(43, ['ALL'], comp.repositoryExportOptions);
     });
 
     it('should close the dialog when cleared', () => {

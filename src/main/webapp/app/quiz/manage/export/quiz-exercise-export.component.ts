@@ -58,7 +58,7 @@ export class QuizExerciseExportComponent {
      */
     private loadForCourse(courseId: number) {
         this.isLoading.set(true);
-        this.courseService.find(courseId).subscribe({
+        this.courseService.findForManagement(courseId).subscribe({
             error: (error: HttpErrorResponse) => {
                 this.isLoading.set(false);
                 onError(this.alertService, error);

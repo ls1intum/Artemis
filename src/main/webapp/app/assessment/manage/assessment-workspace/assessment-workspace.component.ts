@@ -1,11 +1,10 @@
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
 import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, input, signal } from '@angular/core';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { SplitterModule } from 'primeng/splitter';
-import type { SplitterPassThrough } from 'primeng/types/splitter';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 const STACK_PRIMARY_AT = 840;
@@ -15,7 +14,7 @@ const SPLIT_SUPPORT_AT = 560;
     selector: 'jhi-assessment-workspace',
     templateUrl: './assessment-workspace.component.html',
     styleUrls: ['./assessment-workspace.component.scss'],
-    imports: [CdkScrollable, FaIconComponent, NgTemplateOutlet, SplitterModule, TranslateDirective],
+    imports: [CdkScrollable, FaIconComponent, NgTemplateOutlet, TumAetUiSplitterComponent, TranslateDirective],
 })
 export class AssessmentWorkspaceComponent implements AfterViewInit, OnDestroy {
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -32,8 +31,6 @@ export class AssessmentWorkspaceComponent implements AfterViewInit, OnDestroy {
     protected readonly primaryLayout = computed(() => (this.primaryVertical() ? 'vertical' : 'horizontal'));
     protected readonly supportLayout = computed(() => (this.supportHorizontal() ? 'horizontal' : 'vertical'));
     protected readonly primarySizes = computed(() => (this.primaryVertical() ? [60, 40] : [65, 35]));
-    protected readonly primaryPassThrough = computed(() => this.splitterPassThrough(this.primaryLayout()));
-    protected readonly supportPassThrough = computed(() => this.splitterPassThrough(this.supportLayout()));
     protected readonly faInstructions = faListAlt;
     protected readonly faDetails = faCommentDots;
 
@@ -44,33 +41,5 @@ export class AssessmentWorkspaceComponent implements AfterViewInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
-    }
-
-    private splitterPassThrough(layout: 'horizontal' | 'vertical'): SplitterPassThrough {
-        const dividerColor = 'color-mix(in srgb, var(--tumaet-ui-text-color) 62%, transparent)';
-        // Two 2px bars with a 1px gap, centred in the 6px gutter.
-        const direction = layout === 'horizontal' ? 'to right' : 'to bottom';
-        const handleBackground = `linear-gradient(${direction}, transparent 0 0.5px, ${dividerColor} 0.5px 2.5px, transparent 2.5px 3.5px, ${dividerColor} 3.5px 5.5px, transparent 5.5px)`;
-        return {
-            root: { style: { border: '0', background: 'transparent' } },
-            panel: { style: { minWidth: '0', minHeight: '0', overflow: 'hidden' } },
-            gutter: {
-                style: {
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'transparent',
-                    cursor: layout === 'horizontal' ? 'col-resize' : 'row-resize',
-                },
-            },
-            gutterHandle: {
-                style: {
-                    width: layout === 'horizontal' ? '6px' : '12px',
-                    height: layout === 'horizontal' ? '12px' : '6px',
-                    background: handleBackground,
-                    pointerEvents: 'none',
-                },
-            },
-        };
     }
 }

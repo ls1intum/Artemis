@@ -1,6 +1,6 @@
 # Build from the repository root. The base and the canonical harnesses pin the JDK, wrapper, Maven and dependencies.
 # One image serves both Java build tools: Gradle (PLAIN_GRADLE, GRADLE_GRADLE) and Maven (PLAIN_MAVEN, MAVEN_MAVEN).
-ARG JAVA_IMAGE=eclipse-temurin:25.0.3_9-jdk@sha256:32861ec22e54af9597a3875c69001f57c0954648f5e3fcb6be601b4e35290ab5
+ARG JAVA_IMAGE=eclipse-temurin:25.0.4.1_1-jdk@sha256:3ab7fc8d0b4ade8fef96903fb36767c1dbb4fd1535dcfad85b59c17afbbb5857
 FROM ${JAVA_IMAGE}
 
 ARG MAVEN_SHA512=831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6

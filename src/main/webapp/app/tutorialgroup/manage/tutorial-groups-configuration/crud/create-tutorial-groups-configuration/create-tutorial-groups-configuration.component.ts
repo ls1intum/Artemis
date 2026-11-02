@@ -41,7 +41,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
                 take(1),
                 switchMap((params) => {
                     const courseId = Number(params.get('courseId'));
-                    return this.courseManagementService.find(courseId);
+                    return this.courseManagementService.findForInstructor(courseId);
                 }),
                 finalize(() => this.isLoading.set(false)),
                 takeUntil(this.ngUnsubscribe),

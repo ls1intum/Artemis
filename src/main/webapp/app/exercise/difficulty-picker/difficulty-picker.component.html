@@ -1,38 +1,38 @@
-<div class="btn-group">
+<div class="inline-flex flex-wrap items-center">
     <button
+        tumAetUiButton
         type="button"
         data-testid="picker-option"
-        class="btn"
-        [ngClass]="{ 'btn-primary selected': !exercise().difficulty, 'btn-default': exercise().difficulty }"
-        (click)="setDifficulty(undefined)"
+        [severity]="!exercise().difficulty ? 'primary' : 'secondary'"
         [attr.aria-pressed]="!exercise().difficulty"
+        (click)="setDifficulty(undefined)"
         jhiTranslate="artemisApp.exercise.noLevel"
     ></button>
     <button
+        tumAetUiButton
         type="button"
         data-testid="picker-option"
-        class="btn"
-        [ngClass]="{ 'btn-success selected': exercise().difficulty === DifficultyLevel.EASY, 'btn-default': exercise().difficulty !== DifficultyLevel.EASY }"
-        (click)="setDifficulty(DifficultyLevel.EASY)"
+        [severity]="exercise().difficulty === DifficultyLevel.EASY ? 'primary' : 'secondary'"
         [attr.aria-pressed]="exercise().difficulty === DifficultyLevel.EASY"
+        (click)="setDifficulty(DifficultyLevel.EASY)"
         jhiTranslate="artemisApp.exercise.easy"
     ></button>
     <button
+        tumAetUiButton
         type="button"
         data-testid="picker-option"
-        class="btn btn-default"
-        [ngClass]="{ 'btn-warning selected': exercise().difficulty === DifficultyLevel.MEDIUM, 'btn-default': exercise().difficulty !== DifficultyLevel.MEDIUM }"
-        (click)="setDifficulty(DifficultyLevel.MEDIUM)"
+        [severity]="exercise().difficulty === DifficultyLevel.MEDIUM ? 'primary' : 'secondary'"
         [attr.aria-pressed]="exercise().difficulty === DifficultyLevel.MEDIUM"
+        (click)="setDifficulty(DifficultyLevel.MEDIUM)"
         jhiTranslate="artemisApp.exercise.medium"
     ></button>
     <button
+        tumAetUiButton
         type="button"
         data-testid="picker-option"
-        class="btn btn-default"
-        [ngClass]="{ 'btn-danger selected': exercise().difficulty === DifficultyLevel.HARD, 'btn-default': exercise().difficulty !== DifficultyLevel.HARD }"
-        (click)="setDifficulty(DifficultyLevel.HARD)"
+        [severity]="exercise().difficulty === DifficultyLevel.HARD ? 'primary' : 'secondary'"
         [attr.aria-pressed]="exercise().difficulty === DifficultyLevel.HARD"
+        (click)="setDifficulty(DifficultyLevel.HARD)"
         jhiTranslate="artemisApp.exercise.hard"
     ></button>
 </div>

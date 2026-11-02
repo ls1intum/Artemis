@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
@@ -29,7 +29,7 @@ describe('TeamsImportButtonComponent', () => {
             imports: [MockDirective(FeatureToggleDirective), TeamsImportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(TeamService),
-                { provide: DialogService, useValue: { open: dialogServiceOpenSpy } },
+                { provide: TumAetUiDialogService, useValue: { open: dialogServiceOpenSpy } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -60,8 +60,7 @@ describe('TeamsImportButtonComponent', () => {
             const [openedComponent, openedConfig] = dialogServiceOpenSpy.mock.calls[0];
             expect(openedComponent).toBe(TeamsImportDialogComponent);
             expect(openedConfig.data).toEqual({ exercise: mockExercise, teams: mockTeams });
-            expect(openedConfig.width).toBe('50rem');
-            expect(openedConfig.modal).toBe(true);
+            expect(openedConfig.size).toBe('large');
             expect(openedConfig.closable).toBe(true);
             expect(openedConfig.closeOnEscape).toBe(true);
             expect(openedConfig.dismissableMask).toBe(false);

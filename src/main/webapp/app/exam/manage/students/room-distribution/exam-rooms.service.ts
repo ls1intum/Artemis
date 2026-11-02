@@ -1,5 +1,5 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExamRoomDeletionSummaryDTO, ExamRoomOverviewDTO, ExamRoomUploadInformationDTO } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
 
@@ -10,10 +10,18 @@ export class ExamRoomsService {
     readonly baseUrl = 'api/exam/rooms';
 
     /**
-     * Send a GET request to retrieve an overview over the stored exam rooms
+     * Send a GET request to retrieve an overview over the stored exam rooms.
+     * Instructors reach the overview in the context of an exam of their course; without an exam only administrators may load it.
+     *
+     * @param courseId the id of the course of the exam, if the overview is opened for an exam
+     * @param examId the id of the exam, if the overview is opened for an exam
      */
-    getRoomOverview(): Observable<HttpResponse<ExamRoomOverviewDTO>> {
-        return this.http.get<ExamRoomOverviewDTO>(`${this.baseUrl}/overview`, { observe: 'response' });
+    getRoomOverview(courseId?: number, examId?: number): Observable<HttpResponse<ExamRoomOverviewDTO>> {
+        if (courseId !== undefined && examId !== undefined) {
+            const params = new HttpParams().set('courseId', courseId).set('examId', examId);
+            return this.http.get<ExamRoomOverviewDTO>(`${this.baseUrl}/overview`, { params, observe: 'response' });
+        }
+        return this.http.get<ExamRoomOverviewDTO>(`${this.baseUrl}/admin/overview`, { observe: 'response' });
     }
 
     /**
@@ -25,7 +33,7 @@ export class ExamRoomsService {
         const formData = new FormData();
         formData.append('file', file);
 
-        return this.http.post<ExamRoomUploadInformationDTO>(`${this.baseUrl}/upload`, formData, { observe: 'response' });
+        return this.http.post<ExamRoomUploadInformationDTO>(`${this.baseUrl}/admin/upload`, formData, { observe: 'response' });
     }
 
     /**

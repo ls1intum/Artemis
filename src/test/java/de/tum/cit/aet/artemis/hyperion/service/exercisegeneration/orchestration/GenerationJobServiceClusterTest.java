@@ -58,15 +58,15 @@ class GenerationJobServiceClusterTest {
     /**
      * Joins over TCP/IP on the loopback interface: multicast is unavailable or noisy on CI, and auto-detection could join a stray member from another build.
      * <p>
-     * {@code seedMembers} must name the founding member's <em>actual</em> port. A bare host scans only the three ports from 5701, which the Spring contexts running in this JVM
-     * have usually taken by the time this test starts; both members then bind above that range and each forms its own single-member cluster. The founding member is started
-     * with no seeds and its bound port is read back for the second.
+     * Each member requests an ephemeral port so other local test processes cannot capture its loopback connections.
+     * {@code seedMembers} must name the founding member's actual bound port: a bare host scans only the three ports from 5701.
+     * The founding member starts with no seeds and its bound port is read back for the second.
      */
     private static Config clusterConfig(String clusterName, List<String> seedMembers) {
         Config config = new Config();
         config.setClusterName(clusterName);
         NetworkConfig network = config.getNetworkConfig();
-        network.setPortAutoIncrement(true);
+        network.setPort(0).setPortAutoIncrement(false);
         network.getInterfaces().setEnabled(true).setInterfaces(List.of("127.0.0.1"));
         JoinConfig join = network.getJoin();
         join.getAutoDetectionConfig().setEnabled(false);

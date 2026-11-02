@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChildren } from '@angular/core';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { Subscription } from 'rxjs';
@@ -70,12 +71,14 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
 
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
-            this.quizExerciseService.find(params['exerciseId']).subscribe((quizExercise) => {
-                this.quizExercise.set(quizExercise);
-                this.prepareEntity(this.quizExercise());
-                this.savedEntity = deepClone(this.quizExercise());
-                this.updateDuration();
-            });
+            (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(params['exerciseId']) : this.quizExerciseService.find(params['exerciseId'])).subscribe(
+                (quizExercise) => {
+                    this.quizExercise.set(quizExercise);
+                    this.prepareEntity(this.quizExercise());
+                    this.savedEntity = deepClone(this.quizExercise());
+                    this.updateDuration();
+                },
+            );
         });
         this.quizIsValid.set(true);
         this.popupService = this.quizExercisePopupService;

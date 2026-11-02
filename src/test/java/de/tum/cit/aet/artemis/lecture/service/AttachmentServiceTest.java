@@ -61,7 +61,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testRegenerateStudentVersion_withNoHiddenSlides() {
         Path actualFilePath = new FileSystemLocation.StudentVersionSlides(testAttachment1.getAttachmentVideoUnit().getId(), testAttachment1.getStudentVersion()).path();
 
@@ -71,7 +71,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testRegenerateStudentVersion_withHiddenSlides() {
         Integer originalAttachmentVersion = testAttachment2.getVersion();
 
@@ -89,7 +89,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testRegenerateStudentVersion_withNullAttachmentVideoUnit() {
         // Create attachment with null attachment video unit
         Attachment attachmentWithoutUnit = new Attachment();
@@ -104,7 +104,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "USER")
     void testGenerateStudentVersionPdf() throws Exception {
         // Get hidden slides
         List<Slide> hiddenSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachment2.getAttachmentVideoUnit().getId());

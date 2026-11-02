@@ -9,9 +9,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaAnnotatedElement;
 import com.thoughtworks.qdox.model.JavaClass;
@@ -22,8 +24,12 @@ import com.thoughtworks.qdox.model.JavaParameter;
 import com.thoughtworks.qdox.model.JavaType;
 
 import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
+
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleEntry.GenericApi;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleEntry.OracleAttribute;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleEntry.OracleClass;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleEntry.OracleConstructor;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleEntry.OracleMethod;
 
 /**
  * Typed structural contract parsed and validated at the SPEC gate.
@@ -40,6 +46,10 @@ final class ApprovedStructuralContract {
     private static final Pattern JAVA_BLOCK = Pattern.compile("```java([^`]*+(?:`(?!``)[^`]*+)*+)```", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern STUDENT_CREATES_MARKER = Pattern.compile("@studentCreates\\b");
+
+    /** Ares reads an absent key differently from an empty array, so the oracle omits only the keys that are {@code null} and keeps every empty array and empty text. */
+    private static final JsonMapper ORACLE_MAPPER = JsonMapper.builder().changeDefaultPropertyInclusion(inclusion -> inclusion.withValueInclusion(JsonInclude.Include.NON_NULL))
+            .build();
 
     private final Map<String, JavaClass> types;
 
@@ -136,20 +146,32 @@ final class ApprovedStructuralContract {
         return new ParseResult(new ApprovedStructuralContract(parsed), List.copyOf(errors));
     }
 
-    String toOracle(String packageName, JsonMapper mapper, Set<String> includedTypes) {
-        ArrayNode oracle = mapper.createArrayNode();
-        types.values().stream().filter(type -> includedTypes.contains(type.getSimpleName())).sorted((left, right) -> left.getSimpleName().compareTo(right.getSimpleName()))
-                .forEach(type -> oracle.add(toJson(type, packageName, mapper, types.keySet())));
+    /**
+     * Writes the structure oracle that Ares' structural tests read for the given types.
+     *
+     * @param packageName   the package of the exercise, written into every class entry
+     * @param includedTypes the simple names of the types to include
+     * @return the pretty printed JSON array of the included types ordered by name, {@code [ ]} when there are none
+     */
+    String toOracle(String packageName, Set<String> includedTypes) {
+        List<StructuralOracleEntry> oracle = types.values().stream().filter(type -> includedTypes.contains(type.getSimpleName()))
+                .sorted((left, right) -> left.getSimpleName().compareTo(right.getSimpleName())).map(type -> toEntry(type, packageName, types.keySet())).toList();
         try {
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(oracle);
+            return ORACLE_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(oracle);
         }
         catch (Exception exception) {
             throw new IllegalStateException("The approved structural contract could not be serialized", exception);
         }
     }
 
-    String toOracle(String packageName, JsonMapper mapper) {
-        return toOracle(packageName, mapper, types.keySet());
+    /**
+     * Writes the structure oracle for every type of the contract.
+     *
+     * @param packageName the package of the exercise, written into every class entry
+     * @return the pretty printed JSON array of all types ordered by name
+     */
+    String toOracle(String packageName) {
+        return toOracle(packageName, types.keySet());
     }
 
     Set<String> typeNames() {
@@ -157,10 +179,8 @@ final class ApprovedStructuralContract {
     }
 
     Set<String> studentCreatedMemberOwners() {
-        return types.values().stream()
-                .filter(type -> type.getMethods().stream().anyMatch(ApprovedStructuralContract::studentCreates)
-                        || type.getConstructors().stream().anyMatch(ApprovedStructuralContract::studentCreates))
-                .map(JavaClass::getSimpleName).collect(java.util.stream.Collectors.toSet());
+        return types.values().stream().filter(type -> type.getMethods().stream().anyMatch(ApprovedStructuralContract::studentCreates)
+                || type.getConstructors().stream().anyMatch(ApprovedStructuralContract::studentCreates)).map(JavaClass::getSimpleName).collect(Collectors.toSet());
     }
 
     List<String> templateDependencies(Set<String> templateTypes, Set<String> absentTypes) {
@@ -237,57 +257,30 @@ final class ApprovedStructuralContract {
         return List.copyOf(reasons);
     }
 
-    private static ObjectNode toJson(JavaClass type, String packageName, JsonMapper mapper, Set<String> exerciseTypes) {
-        ObjectNode entry = mapper.createObjectNode();
-        ObjectNode classNode = mapper.createObjectNode();
-        classNode.put("name", type.getSimpleName());
-        classNode.put("package", packageName);
-        if (type.isPublic()) {
-            // Ares matches modifiers exactly; allow implicit type flags while requiring the approved visibility.
-            classNode.set("modifiers", mapper.valueToTree(List.of("public", "optional: abstract", "optional: interface", "optional: final", "optional: strictfp")));
-        }
-        classNode.put("isInterface", type.isInterface());
-        classNode.put("isEnum", type.isEnum());
-        classNode.put("isAbstract", type.isAbstract() && !type.isInterface());
+    private static StructuralOracleEntry toEntry(JavaClass type, String packageName, Set<String> exerciseTypes) {
+        // Ares matches modifiers exactly; allow implicit type flags while requiring the approved visibility.
+        List<String> classModifiers = type.isPublic() ? List.of("public", "optional: abstract", "optional: interface", "optional: final", "optional: strictfp") : null;
         JavaClass superclass = type.getSuperJavaClass();
-        if (superclass != null && !"java.lang.Object".equals(superclass.getCanonicalName())) {
-            classNode.put("superclass", superclass.getSimpleName());
-        }
-        if (!type.getInterfaces().isEmpty()) {
-            classNode.set("interfaces", mapper.valueToTree(type.getInterfaces().stream().map(JavaClass::getSimpleName).sorted().toList()));
-        }
-        entry.set("class", classNode);
-        ObjectNode genericContract = genericApi(type, exerciseTypes, mapper);
-        if (genericContract != null) {
-            entry.set("genericApi", genericContract);
-        }
+        String superclassName = superclass != null && !"java.lang.Object".equals(superclass.getCanonicalName()) ? superclass.getSimpleName() : null;
+        List<String> interfaces = type.getInterfaces().isEmpty() ? null : type.getInterfaces().stream().map(JavaClass::getSimpleName).sorted().toList();
+        OracleClass classProperties = new OracleClass(type.getSimpleName(), packageName, classModifiers, type.isInterface(), type.isEnum(),
+                type.isAbstract() && !type.isInterface(), superclassName, interfaces);
 
-        ArrayNode methods = mapper.createArrayNode();
-        type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible).forEach(method -> methods.add(methodJson(method, mapper)));
-        putNonEmpty(entry, "methods", methods);
-        ArrayNode attributes = mapper.createArrayNode();
-        type.getFields().stream().filter(field -> !field.isEnumConstant()).filter(ApprovedStructuralContract::isContractVisible)
-                .forEach(field -> attributes.add(fieldJson(field, mapper)));
-        putNonEmpty(entry, "attributes", attributes);
-        ArrayNode constructors = mapper.createArrayNode();
-        type.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible).forEach(constructor -> constructors.add(constructorJson(constructor, mapper)));
+        List<OracleMethod> methods = type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible).map(ApprovedStructuralContract::toOracleMethod).toList();
+        List<OracleAttribute> attributes = type.getFields().stream().filter(field -> !field.isEnumConstant()).filter(ApprovedStructuralContract::isContractVisible)
+                .map(ApprovedStructuralContract::toOracleAttribute).toList();
+        List<OracleConstructor> constructors = new ArrayList<>(
+                type.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible).map(ApprovedStructuralContract::toOracleConstructor).toList());
         if (constructors.isEmpty() && !type.isInterface() && !type.isEnum()) {
-            ObjectNode implicitConstructor = mapper.createObjectNode();
-            implicitConstructor.set("modifiers", mapper.valueToTree(List.of("public")));
-            constructors.add(implicitConstructor);
+            constructors.add(new OracleConstructor(List.of("public"), null));
         }
-        putNonEmpty(entry, "constructors", constructors);
-        ArrayNode enumValues = mapper.createArrayNode();
-        type.getFields().stream().filter(JavaField::isEnumConstant).map(JavaField::getName).forEach(enumValues::add);
-        putNonEmpty(entry, "enumValues", enumValues);
-        return entry;
+        List<String> enumValues = type.getFields().stream().filter(JavaField::isEnumConstant).map(JavaField::getName).toList();
+        return new StructuralOracleEntry(classProperties, genericApi(type, exerciseTypes), nullIfEmpty(methods), nullIfEmpty(attributes), nullIfEmpty(constructors),
+                nullIfEmpty(enumValues));
     }
 
     @Nullable
-    private static ObjectNode genericApi(JavaClass type, Set<String> exerciseTypes, JsonMapper mapper) {
-        ObjectNode contract = mapper.createObjectNode();
-        contract.put("parameterCount", type.getTypeParameters().size());
-        contract.set("exerciseTypes", mapper.valueToTree(exerciseTypes.stream().sorted().toList()));
+    private static GenericApi genericApi(JavaClass type, Set<String> exerciseTypes) {
         List<String> signatures = new ArrayList<>();
         JavaType superclass = type.getSuperClass();
         if (type.isEnum()) {
@@ -314,8 +307,7 @@ final class ApprovedStructuralContract {
         if (type.getTypeParameters().isEmpty() && signatures.stream().noneMatch(signature -> signature.contains("<") || signature.contains(":throws="))) {
             return null;
         }
-        contract.set("signatures", mapper.valueToTree(signatures));
-        return contract;
+        return new GenericApi(type.getTypeParameters().size(), exerciseTypes.stream().sorted().toList(), signatures);
     }
 
     private static List<String> genericParameters(List<JavaParameter> parameters, JavaClass owner, Set<String> exerciseTypes) {
@@ -437,34 +429,23 @@ final class ApprovedStructuralContract {
         return canonical;
     }
 
-    private static ObjectNode methodJson(JavaMethod method, JsonMapper mapper) {
-        ObjectNode node = mapper.createObjectNode();
-        node.put("name", method.getName());
-        node.set("modifiers", mapper.valueToTree(effectiveModifiers(method.getModifiers(), method.getDeclaringClass().isInterface(), method.isDefault(), method.isStatic())));
-        putParameters(node, method.getParameters(), method.getDeclaringClass(), mapper);
-        node.put("returnType", simpleErasedType(method.getReturnType(), method.getDeclaringClass()));
-        return node;
+    private static OracleMethod toOracleMethod(JavaMethod method) {
+        return new OracleMethod(method.getName(), effectiveModifiers(method.getModifiers(), method.getDeclaringClass().isInterface(), method.isDefault(), method.isStatic()),
+                oracleParameters(method.getParameters(), method.getDeclaringClass()), simpleErasedType(method.getReturnType(), method.getDeclaringClass()));
     }
 
-    private static ObjectNode fieldJson(JavaField field, JsonMapper mapper) {
-        ObjectNode node = mapper.createObjectNode();
-        node.put("name", field.getName());
-        node.set("modifiers", mapper.valueToTree(effectiveFieldModifiers(field)));
-        node.put("type", simpleErasedType(field.getType(), field.getDeclaringClass()));
-        return node;
+    private static OracleAttribute toOracleAttribute(JavaField field) {
+        return new OracleAttribute(field.getName(), effectiveFieldModifiers(field), simpleErasedType(field.getType(), field.getDeclaringClass()));
     }
 
-    private static ObjectNode constructorJson(JavaConstructor constructor, JsonMapper mapper) {
-        ObjectNode node = mapper.createObjectNode();
-        node.set("modifiers", mapper.valueToTree(new ArrayList<>(constructor.getModifiers())));
-        putParameters(node, constructor.getParameters(), constructor.getDeclaringClass(), mapper);
-        return node;
+    private static OracleConstructor toOracleConstructor(JavaConstructor constructor) {
+        return new OracleConstructor(new ArrayList<>(constructor.getModifiers()), oracleParameters(constructor.getParameters(), constructor.getDeclaringClass()));
     }
 
-    private static void putParameters(ObjectNode node, List<JavaParameter> parameters, JavaClass owner, JsonMapper mapper) {
-        if (!parameters.isEmpty()) {
-            node.set("parameters", mapper.valueToTree(parameters.stream().map(parameter -> simpleErasedType(parameter.getType(), owner)).toList()));
-        }
+    /** The erased simple type names of the parameters, or {@code null} when there are none because the oracle leaves the key out. */
+    @Nullable
+    private static List<String> oracleParameters(List<JavaParameter> parameters, JavaClass owner) {
+        return parameters.isEmpty() ? null : parameters.stream().map(parameter -> simpleErasedType(parameter.getType(), owner)).toList();
     }
 
     /**
@@ -518,10 +499,10 @@ final class ApprovedStructuralContract {
         return !field.isPrivate() && (field.isPublic() || field.isProtected() || field.getDeclaringClass().isInterface());
     }
 
-    private static void putNonEmpty(ObjectNode parent, String field, ArrayNode value) {
-        if (!value.isEmpty()) {
-            parent.set(field, value);
-        }
+    /** The list, or {@code null} when it is empty because the oracle leaves the key out. */
+    @Nullable
+    private static <T> List<T> nullIfEmpty(List<T> values) {
+        return values.isEmpty() ? null : values;
     }
 
     private static String normalizeSkeleton(String source) {

@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
@@ -122,6 +123,10 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     @MockitoSpyBean
     protected SbomService sbomService;
 
+    // Shared by the HTTP template tests without creating a separate Spring context for a leaf test override.
+    @MockitoSpyBean
+    protected ResourceLoaderService resourceLoaderService;
+
     @BeforeEach
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
@@ -142,7 +147,7 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     protected void resetSpyBeans() {
         Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
         Mockito.reset(artemisVersionService, vulnerabilityService, profileService, sbomService, examLiveEventsService, groupNotificationScheduleService,
-                passkeyAuthenticationService);
+                passkeyAuthenticationService, resourceLoaderService);
         if (chatModel != null) {
             Mockito.reset(chatModel);
         }

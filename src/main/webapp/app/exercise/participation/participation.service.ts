@@ -87,7 +87,7 @@ export class ParticipationService {
             .pipe(map((res) => this.processParticipationDTOResponseType(res)));
     }
 
-    searchParticipations(exerciseId: number, search: ParticipationSearch): Observable<PageableResult<ParticipationManagementDTO>> {
+    searchParticipations(exerciseId: number, search: ParticipationSearch, kind: 'course' | 'exam' = 'course'): Observable<PageableResult<ParticipationManagementDTO>> {
         const params: Record<string, string | number> = {
             page: search.page,
             pageSize: search.pageSize,
@@ -105,7 +105,7 @@ export class ParticipationService {
             params['scoreRangeUpper'] = search.scoreRangeUpper;
         }
         return this.http
-            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/participations/page`, {
+            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/participations/page${kind === 'exam' ? '/for-exam' : ''}`, {
                 params,
                 observe: 'response',
             })

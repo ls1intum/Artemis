@@ -15,7 +15,6 @@ import { ScienceService } from 'app/foundation/science/science.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { Subject, of } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/foundation/service/alert.service';
 import {
     IconDefinition,
@@ -96,7 +95,6 @@ describe('AttachmentVideoUnitComponent', () => {
                 MockProvider(ScienceService),
                 { provide: LectureTranscriptionService, useValue: mockLectureTranscriptionService },
                 AttachmentVideoUnitService,
-                MockProvider(NgbModal),
                 MockProvider(AlertService),
                 MockProvider(ProfileService),
                 MockProvider(IrisChatService, { pointOut$: of() }),
@@ -105,8 +103,8 @@ describe('AttachmentVideoUnitComponent', () => {
             // Replace the real engine-backed PDF viewer with a lightweight stub: the unit tests here drive the
             // viewer purely through its public input/output contract (and override `pdfViewer` where needed).
             // The Iris sidebar's chatbot goes the same way — it renders as soon as a test enables Iris and opens
-            // the combined view, and it drives the whole Iris chat stack (down to PrimeNG's DialogService), none
-            // of which this TestBed provides for. The Iris specs cover the chat itself.
+            // the combined view, and it drives the whole Iris chat stack, which this TestBed does not provide.
+            // The Iris specs cover the chat itself.
             .overrideComponent(AttachmentVideoUnitComponent, {
                 remove: { imports: [PdfViewerComponent, LectureChatbotComponent] },
                 add: { imports: [MockComponent(PdfViewerComponent), MockComponent(LectureChatbotComponent)] },

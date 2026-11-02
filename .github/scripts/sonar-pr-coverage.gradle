@@ -1,0 +1,40 @@
+import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.testing.jacoco.tasks.JacocoReport
+
+// The trusted workflow supplies this script even when the analyzed checkout predates this task.
+gradle.beforeProject { project ->
+    if (project != project.rootProject) {
+        return
+    }
+    project.plugins.withId('java') {
+        project.plugins.withId('jacoco') {
+            project.afterEvaluate {
+                def main = project.extensions.getByType(JavaPluginExtension).sourceSets.getByName('main')
+                def ignored = project.findProperty('ignoredDirectories') ?: []
+
+                project.tasks.register('sonarPrCoverage', JacocoReport) { report ->
+                    report.group = 'verification'
+                    report.description = 'Generates partial XML coverage from the selected PR server test execution data.'
+                    report.dependsOn(project.tasks.named('compileJava'))
+                    report.executionData.setFrom(project.fileTree(project.layout.buildDirectory.dir('jacoco')) {
+                        include '*.exec'
+                    })
+                    report.sourceDirectories.setFrom(main.allJava.srcDirs)
+                    // Keep every main class, including classes the selected tests never executed. A partial run
+                    // must count those classes as uncovered instead of presenting selected coverage as full coverage.
+                    report.classDirectories.setFrom(project.files(main.output.classesDirs.files.collect { directory ->
+                        project.fileTree(directory) {
+                            exclude ignored
+                        }
+                    }))
+                    report.reports {
+                        xml.required = true
+                        xml.outputLocation = project.layout.buildDirectory.file('reports/jacoco/sonar-pr/jacocoTestReport.xml')
+                        html.required = false
+                        csv.required = false
+                    }
+                }
+            }
+        }
+    }
+}

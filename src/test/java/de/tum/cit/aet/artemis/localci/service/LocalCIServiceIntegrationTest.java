@@ -69,7 +69,7 @@ class LocalCIServiceIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testReturnCorrectBuildStatus() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);

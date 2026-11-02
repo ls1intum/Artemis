@@ -117,7 +117,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
@@ -135,7 +135,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCreateExerciseGroup_asEditor() throws Exception {
         int groupsBefore = examRepository.findWithExerciseGroupsById(exam2.getId()).orElseThrow().getExerciseGroups().size();
 
@@ -173,7 +173,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCreateExerciseGroup_acceptsEntityShapedBody_asEditor() throws Exception {
         // The Angular client posts a full entity-shaped body (no id, but a fully nested exam and possibly exercises).
         // The create DTO uses @JsonIgnoreProperties(ignoreUnknown = true), so all properties beyond the declared ones
@@ -188,7 +188,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCreateExerciseGroup_defaultsMandatoryToTrue_asEditor() throws Exception {
         // A body omitting isMandatory must fall back to the entity default (true), preserving the previous
         // deserialization behavior where the absent field left the entity's initialized value untouched.
@@ -201,7 +201,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetExerciseGroupsForExam_withoutGroups_returnsEmptyList() throws Exception {
         // The repository query inner-joins the groups off the exam, so an exam without groups yields no rows at all and
         // the endpoint returns the documented empty list.
@@ -212,7 +212,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testUpdateExerciseGroup_asEditor() throws Exception {
         // Exercise group with non-existent ID -> not found
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
@@ -225,7 +225,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetExerciseGroup_asEditor() throws Exception {
         ExerciseGroupDTO result = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.OK,
                 ExerciseGroupDTO.class);
@@ -243,7 +243,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetExerciseGroup_carriesExamExampleSolutionPublicationDate_asEditor() throws Exception {
         // Non-default fixture: the exam's exampleSolutionPublicationDate is explicitly SET. The programming-exercise
         // editor reads exerciseGroup.exam.exampleSolutionPublicationDate to gate the "release tests with example
@@ -264,7 +264,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testGetExerciseGroupsForExam_asEditor() throws Exception {
         List<ExerciseGroupDTO> result = assertThatDb(
                 () -> request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", HttpStatus.OK, ExerciseGroupDTO.class))
@@ -284,7 +284,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteExerciseGroup_asInstructor() throws Exception {
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(textExercise1));
@@ -300,13 +300,13 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testDeleteExerciseGroup_asEditor() throws Exception {
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testCreateExerciseGroup_setsExamBackReferenceOnChild_asEditor() throws Exception {
         // C3: after a create, reload the CHILD directly (not via the parent) and assert its exam FK back-reference is set.
         // A parent-side-only assertion passes while the child.exam_id column is null.
@@ -321,7 +321,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteNonLastExerciseGroup_preservesOrderColumn_asInstructor() throws Exception {
         // C4: deleting a NON-LAST element of the @OrderColumn exercise-group list must not leave a null slot in the
         // reloaded list, and the remaining ids must stay stable and in order.
@@ -343,7 +343,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @CsvSource({ "A,A,B,C", "A,B,C,C", "A,A,B,B" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExerciseGroup_programmingExerciseSameShortNameOrTitle(String shortName1, String shortName2, String title1, String title2) throws Exception {
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
@@ -361,7 +361,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportExerciseGroup_duplicatedTitle_errorBodyKeepsTheShortNames() throws Exception {
         // Counterpart of importExerciseGroup_preCheckFailed, where the server blanks both fields: here only the duplicated
         // title is blanked, so this is the case that proves the title and the short name reach the import dialog at all.
@@ -398,7 +398,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExerciseGroup_missingExerciseTypeIsBadRequest() throws Exception {
         // The DTO body has no polymorphic binding, so a missing type must still be a client error (400), not a 500 from the skeleton conversion.
         var mapper = request.getObjectMapper();
@@ -409,7 +409,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExerciseGroup_successfulWithExercisesIntoSameExam() throws Exception {
         Exam targetExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
@@ -434,7 +434,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExerciseGroup_skipsFailedExerciseAndReportsPartialSuccess() throws Exception {
         // Import groups from a source exam into a separate (empty) target exam, but remove the source quiz first so its
         // import yields Optional.empty (a real "source exercise no longer available" failure). The import must skip the
@@ -471,7 +471,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void importExerciseGroup_successfulIntoDifferentExam() throws Exception {
         Exam targetExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
@@ -497,7 +497,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExerciseGroup_successfulWithImportToOtherCourse() throws Exception {
         Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Exam targetExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
@@ -532,7 +532,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importExerciseGroup_preCheckFailed() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
         ExerciseGroup programmingGroup = ExamFactory.generateExerciseGroup(false, exam);
@@ -568,7 +568,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateOrderOfExerciseGroups() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
         ExerciseGroup exerciseGroup1 = ExamFactory.generateExerciseGroupWithTitle(true, exam, "first");
@@ -631,7 +631,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateOrderOfExerciseGroups_wirePinsRequestAndResponseDTO() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
         ExerciseGroup exerciseGroupA = ExamFactory.generateExerciseGroupWithTitle(true, exam, "alpha");
@@ -662,7 +662,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testMoveExerciseToGroup_asEditor() throws Exception {
         // The factory adds the group to exam1, which the save below cascades; the returned instance is not needed.
         ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
@@ -678,7 +678,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testMoveExerciseToGroup_targetGroupFromOtherExam() throws Exception {
         ExerciseGroup otherExamGroup = exam2.getExerciseGroups().getFirst();
 
@@ -688,7 +688,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testMoveExerciseToGroup_exerciseFromOtherExam() throws Exception {
         // The target group is a legitimate exam1 group, so the access check passes and the exercise-side guard decides.
         ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
@@ -707,7 +707,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testMoveExerciseToGroup_blockedOnceStudentExamsGenerated() throws Exception {
         ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
         examRepository.save(exam1);

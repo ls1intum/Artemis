@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.crit
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class ContractWitnessAuthorTest {
 
@@ -47,5 +49,27 @@ class ContractWitnessAuthorTest {
     void anElseIfLineIsNotADeclarationButADollarIdentifierStartingWithIfIs() {
         assertThat(ContractWitnessAuthor.usesSuiteLocalHelper("if (true) { assertEquals(1, 1); }", "witness", SUITE)).isFalse();
         assertThat(ContractWitnessAuthor.usesSuiteLocalHelper("assertEquals(1, if$helper());", "witness", SUITE)).isTrue();
+    }
+
+    @Test
+    void aLongDeclarationPrefixDoesNotOverflowTheStack() {
+        String suite = "class ExampleTest {\n" + "static ".repeat(20_000) + "int helper() { return 1; }\n}";
+
+        assertThat(ContractWitnessAuthor.usesSuiteLocalHelper("assertEquals(1, helper());", "witness", suite)).isTrue();
+    }
+
+    @Test
+    void helperDeclarationsCanHaveNestedAnnotationsAndAThrowsClause() {
+        String suite = "class ExampleTest {\nprivate static int helper(@Limit(value = (1)) int size) throws Exception { return size; }\n}";
+
+        assertThat(ContractWitnessAuthor.usesSuiteLocalHelper("assertEquals(1, helper(1));", "witness", suite)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { " ", "\t", "    " })
+    void helperNamesCanBeSeparatedFromTheirParametersByWhitespace(String whitespace) {
+        String suite = "class ExampleTest {\nprivate static int helper" + whitespace + "() { return 1; }\n}";
+
+        assertThat(ContractWitnessAuthor.usesSuiteLocalHelper("assertEquals(1, helper());", "witness", suite)).isTrue();
     }
 }

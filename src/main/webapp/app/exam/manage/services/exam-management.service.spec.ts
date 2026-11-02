@@ -67,6 +67,13 @@ describe('Exam Management Service Tests', () => {
         httpMock.verify();
     });
 
+    it('should choose instructor statistics explicitly before requesting', () => {
+        service.getExamStatistics(1, 2, 'instructor').subscribe();
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush({ numberOfGeneratedStudentExams: 3 });
+        expect(req.request.url).toBe('api/exam/courses/1/exams/2/statistics/for-instructor');
+    });
+
     it('should create an exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
@@ -945,5 +952,19 @@ describe('Exam Management Service Tests', () => {
 
             expect(capturedContent).toEqual([]);
         });
+    });
+    it('loads tutor statistics by default with the returned checklist data', () => {
+        service.getExamStatistics(1, 2).subscribe((response) => expect(response.body?.numberOfGeneratedStudentExams).toBe(3));
+        httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/2/statistics' }).flush({ numberOfGeneratedStudentExams: 3 });
+    });
+
+    it('creates an announcement and converts its publication date', () => {
+        service.createAnnouncement(1, 2, 'Exam starts soon').subscribe((event) => {
+            expect(dayjs.isDayjs(event.createdDate)).toBe(true);
+            expect(event.createdDate.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+        });
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/exam/courses/1/exams/2/announcements' });
+        expect(req.request.body).toBe('Exam starts soon');
+        req.flush({ id: 3, createdDate: '2026-10-25T08:00:00Z' });
     });
 });

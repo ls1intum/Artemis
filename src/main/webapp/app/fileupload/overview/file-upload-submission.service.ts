@@ -1,3 +1,7 @@
+import { convertFeedbackFromServer } from 'app/assessment/shared/entities/feedback.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -74,13 +78,25 @@ export class FileUploadSubmissionService {
     }
 
     /**
-     * Returns File Upload submissions for exercise from the server
+     * Lists file upload submissions with participant identities; requires instructor access.
      * @param exerciseId the id of the exercise
      * @param req request parameters
      * @param correctionRound for which to get the Submissions
      */
-    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<FileUploadSubmission[]>> {
-        const url = `api/fileupload/exercises/${exerciseId}/file-upload-submissions`;
+    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByMe?: boolean }, correctionRound = 0): Observable<HttpResponse<FileUploadSubmission[]>> {
+        return this.getSubmissionList(`api/fileupload/exercises/${exerciseId}/file-upload-submissions`, req, correctionRound);
+    }
+
+    /** Lists the authenticated assessor's submissions with anonymous participants, including for instructors. */
+    getMyAssessedSubmissions(exerciseId: number, correctionRound = 0): Observable<HttpResponse<FileUploadSubmission[]>> {
+        return this.getSubmissionList(`api/fileupload/exercises/${exerciseId}/file-upload-submissions/assessed-by-me`, undefined, correctionRound);
+    }
+
+    private getSubmissionList(
+        url: string,
+        req: { submittedOnly?: boolean; assessedByMe?: boolean } | undefined,
+        correctionRound: number,
+    ): Observable<HttpResponse<FileUploadSubmission[]>> {
         let params = createRequestOption(req);
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
@@ -125,9 +141,11 @@ export class FileUploadSubmissionService {
      * Returns data for File Upload editor from the server
      * @param participationId the id of the participation
      */
-    getDataForFileUploadEditor(participationId: number): Observable<FileUploadSubmission> {
+    getDataForFileUploadEditor(participationId: number, purpose: EditorViewingPurpose = 'owner'): Observable<FileUploadSubmission> {
         return this.http
-            .get<FileUploadSubmissionDTO>(`api/fileupload/participations/${participationId}/file-upload-editor`, { responseType: 'json' })
+            .get<FileUploadSubmissionDTO>(`api/fileupload/participations/${participationId}/file-upload-editor${purpose === 'staff-preview' ? '/for-staff' : ''}`, {
+                responseType: 'json',
+            })
             .pipe(map((res: FileUploadSubmissionDTO) => this.convertFileSubmissionFromServer(res)));
     }
 
@@ -159,6 +177,13 @@ export class FileUploadSubmissionService {
 
     private mapSubmissionDtoToModel(dto: FileUploadSubmissionDTO): FileUploadSubmission {
         const submission = hydrate(new FileUploadSubmission(), dto);
+        submission.submissionDate = convertDateFromServer(dto.submissionDate);
+        submission.results = dto.results?.map((result) => {
+            const converted: Result = hydrate(new Result(), result);
+            converted.completionDate = convertDateFromServer(result.completionDate);
+            converted.feedbacks = result.feedbacks?.map(convertFeedbackFromServer);
+            return converted;
+        });
         submission.participation = this.mapParticipationDtoToModel(dto.participation);
         return submission;
     }

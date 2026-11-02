@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
 import {
     Component,
     DestroyRef,
@@ -53,7 +54,6 @@ import { ScienceEventType } from 'app/foundation/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { MessageModule } from 'primeng/message';
 import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisCombinedViewContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
@@ -64,7 +64,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture-unit-fullscreen-layout/lecture-unit-fullscreen-layout.component';
 import { FormsModule } from '@angular/forms';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { isPdfAttachment } from 'app/lecture/overview/course-lectures/attachment-pdf.util';
 
@@ -80,6 +79,10 @@ const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
 @Component({
     selector: 'jhi-attachment-video-unit',
     imports: [
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiToggleSwitchComponent,
         NgTemplateOutlet,
         LectureUnitComponent,
         ArtemisDatePipe,
@@ -89,12 +92,10 @@ const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
         VideoPlayerComponent,
         YouTubePlayerComponent,
         PdfViewerComponent,
-        MessageModule,
         LectureChatbotComponent,
         FaIconComponent,
         LectureUnitFullscreenLayoutComponent,
         FormsModule,
-        ToggleSwitchModule,
     ],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',

@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-loading-indicator-overlay',
-    imports: [ProgressSpinnerModule, ArtemisTranslatePipe],
+    imports: [TumAetUiProgressSpinnerComponent, ArtemisTranslatePipe],
     templateUrl: './loading-indicator-overlay.component.html',
     styleUrl: './loading-indicator-overlay.component.scss',
 })

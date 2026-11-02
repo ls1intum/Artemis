@@ -381,7 +381,7 @@ export class ExamExerciseRowButtonsComponent {
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
     exportQuizById(exportAll: boolean) {
-        this.quizExerciseService.find(this.exercise().id!).subscribe((exercise) => {
+        this.quizExerciseService.findForExam(this.exercise().id!).subscribe((exercise) => {
             this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });
     }

@@ -1,3 +1,4 @@
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { Component, input } from '@angular/core';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -9,7 +10,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     selector: 'jhi-assessment-complaint-alert',
     templateUrl: './assessment-complaint-alert.component.html',
     styleUrls: [],
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, TumAetUiMessageComponent],
 })
 export class AssessmentComplaintAlertComponent {
     ComplaintType = ComplaintType;

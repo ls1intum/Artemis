@@ -483,8 +483,9 @@ class HyperionCodeGenerationServiceTest {
     @Test
     void selectedFeedbackDropsWholeTrailingThreadsAndKeepsValidJson() throws Exception {
         setupMockTemplateAndChatResponses("{\"files\":[]}");
-        String firstThread = "{\"id\":1,\"text\":\"keep\"}";
-        String payload = "{\"threads\":[" + firstThread + ",{\"id\":2,\"text\":\"" + "x".repeat(30000) + "\"}]}";
+        String firstThread = "{\"id\":1,\"targetType\":\"SOLUTION_REPO\",\"comments\":[{\"type\":\"USER\",\"text\":\"keep\"}]}";
+        String payload = "{\"threads\":[" + firstThread + ",{\"id\":2,\"targetType\":\"SOLUTION_REPO\",\"comments\":[{\"type\":\"USER\",\"text\":\"" + "x".repeat(30000)
+                + "\"}]}]}";
         strategy.generateCode(user, exercise, 1L, null, "tree", "", "", payload);
         assertThat(strategy.lastSelectedFeedbackThreads).isEqualTo("{\"threads\":[" + firstThread + "]}");
         strategy.generateCode(user, exercise, 1L, null, "tree", "", "", "{\"threads\":[],\"extra\":\"" + "x".repeat(30000) + "\"}");

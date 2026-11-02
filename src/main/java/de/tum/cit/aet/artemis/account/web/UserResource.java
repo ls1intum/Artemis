@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.account.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
@@ -14,19 +13,11 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -35,14 +26,11 @@ import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
-import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
 /**
@@ -92,36 +80,6 @@ public class UserResource {
         this.ltiApi = ltiApi;
         this.userCreationService = userCreationService;
         this.auditEventRepository = auditEventRepository;
-    }
-
-    /**
-     * GET users/search : search all users by login or name (result size is limited though on purpose, see below)
-     *
-     * @param loginOrName the login or name by which to search users
-     * @return the ResponseEntity with status 200 (OK) and with body all users
-     */
-    @FeatureUsage(UserFeature.COURSE_MEMBERS)
-    @GetMapping("users/search")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<List<UserDTO>> searchAllUsers(@RequestParam("loginOrName") String loginOrName) {
-        log.debug("REST request to search all Users for {}", loginOrName);
-        // restrict result size by only allowing reasonable searches
-        if (loginOrName.length() < 3) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
-        }
-        // limit search results to 25 users (larger result sizes would impact performance and are not useful for specific user searches)
-        final Page<UserDTO> page = userRepository.searchAllUsersByLoginOrName(PageRequest.of(0, 25), loginOrName);
-        page.forEach(user -> {
-            // remove some values which are not needed in the client
-            user.setLangKey(null);
-            user.setLastModifiedBy(null);
-            user.setLastModifiedDate(null);
-            user.setCreatedBy(null);
-            user.setCreatedDate(null);
-            // The decision is not part of a user search result; it lives in user_ai_preference and is not loaded here.
-        });
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**

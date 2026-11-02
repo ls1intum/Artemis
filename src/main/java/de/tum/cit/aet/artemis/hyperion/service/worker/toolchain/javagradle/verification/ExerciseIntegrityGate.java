@@ -59,10 +59,10 @@ public final class ExerciseIntegrityGate {
      * Exact basenames of build/harness/manifest files in the tests repository, graded verbatim in production so the agent must not change them. Matched case-insensitively.
      */
     private static final Set<String> HARNESS_FILE_NAMES = Set.of("securitypolicy.yaml", "pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts",
-            "gradle.properties", "package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "tsconfig.json", "jest.config.js", "jest.config.ts", "cargo.toml",
-            "cargo.lock", "cabal.project", "stack.yaml", "stack.yaml.lock", "dune", "dune-project", "rakefile", "gemfile", "gemfile.lock", "pubspec.yaml", "pubspec.lock", "go.mod",
-            "go.sum", "package.swift", "cmakelists.txt", "tests.py", "run.sh", "build.sh", "makefile", "description", "namespace", "assignment_path.rb", "test_helper.rb",
-            ".clang-format");
+            "gradle.properties", "package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "tsconfig.json", "jest.config.js", "jest.config.ts", "vitest.config.mjs",
+            "vitest.config.js", "vitest.config.ts", "artemis-junit-reporter.mjs", "cargo.toml", "cargo.lock", "cabal.project", "stack.yaml", "stack.yaml.lock", "dune",
+            "dune-project", "rakefile", "gemfile", "gemfile.lock", "pubspec.yaml", "pubspec.lock", "go.mod", "go.sum", "package.swift", "cmakelists.txt", "tests.py", "run.sh",
+            "build.sh", "makefile", "description", "namespace", "assignment_path.rb", "test_helper.rb", ".clang-format");
 
     /** Filename suffixes that always denote a build/harness/manifest file regardless of basename. Matched case-insensitively. */
     private static final List<String> HARNESS_FILE_SUFFIXES = List.of(".cabal", ".csproj", ".fsproj", ".vbproj", ".sln");

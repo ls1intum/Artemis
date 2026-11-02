@@ -1,18 +1,18 @@
 @if (criteria()) {
     <div class="mb-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="expandAll()">
+        <button type="button" (click)="expandAll()" tumAetUiButton severity="secondary" variant="outlined" size="small">
             <fa-icon [icon]="faExpand" /> <span jhiTranslate="artemisApp.assessmentInstructions.expandAll"></span>
         </button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="collapseAll()">
+        <button type="button" (click)="collapseAll()" tumAetUiButton severity="secondary" variant="outlined" size="small">
             <fa-icon [icon]="faCompress" /> <span jhiTranslate="artemisApp.assessmentInstructions.collapseAll"></span>
         </button>
     </div>
 }
 @if (allowDrop()) {
-    <div class="alert alert-info">
+    <tumaet-ui-message severity="info">
         <fa-icon [icon]="faInfoCircle" />
         <span [jhiTranslate]="selectable() ? 'artemisApp.exercise.applyInstructionHint' : 'artemisApp.exercise.dragDropInstruction'"></span>
-    </div>
+    </tumaet-ui-message>
 }
 @for (criterion of sortedCriteria(); track criterionIndex; let criterionIndex = $index) {
     <div>
@@ -21,7 +21,7 @@
                 @if (selectable()) {
                     <tumaet-ui-tag
                         severity="secondary"
-                        styleClass="font-normal!"
+                        class="font-normal!"
                         [value]="
                             'artemisApp.assessmentInstructions.appliedCount'
                                 | artemisTranslate: { applied: appliedCountPerCriterion()[criterionIndex], total: criterion.instructions.length }
@@ -39,16 +39,16 @@
                     id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
                     [style.background-color]="setInstrColour(instruction)"
                 >
-                    <table role="presentation" class="table layout-table">
+                    <table role="presentation" class="w-full text-left layout-table" tumAetUiTable>
                         <tbody>
                             <tr>
                                 <td [innerHTML]="setScore(instruction.credits)" class="td-score"></td>
                                 <td [jhiMarkdown]="instruction!.gradingScale!"></td>
-                                <td [jhiMarkdown]="instruction!.instructionDescription!" [ngbTooltip]="setTooltip(instruction)"></td>
+                                <td [jhiMarkdown]="instruction!.instructionDescription!" [tumAetUiTooltip]="setTooltip(instruction)"></td>
                                 <td class="td-usage-count">
                                     @if (selectable()) {
                                         <span
-                                            [ngbTooltip]="
+                                            [tumAetUiTooltip]="
                                                 isLockedByReferencedFeedback(instruction) ? ('artemisApp.exercise.instructionAppliedToReferencedElement' | artemisTranslate) : ''
                                             "
                                         >

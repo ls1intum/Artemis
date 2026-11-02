@@ -151,7 +151,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         private SearchableEntitySyncStateRepository syncStateRepository;
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpsertPost_indexesInWeaviate() throws Exception {
             Channel channel = createPublicChannel("upsert-test");
             Post post = createAndSavePost(channel);
@@ -168,7 +168,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
          * Postgres, even though the entity is correctly indexed in Weaviate.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpsertPostAndAnswerPost_neverWriteALedgerRow() throws Exception {
             Channel channel = createPublicChannel("no-ledger-test");
             Post post = createAndSavePost(channel);
@@ -185,7 +185,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpsertPost_storesCorrectProperties() throws Exception {
             Channel channel = createPublicChannel("props-test");
             Post post = createAndSavePost(channel);
@@ -202,7 +202,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testUpsertPost_updatesContentInWeaviate() throws Exception {
             Channel channel = createPublicChannel("update-test");
             Post post = createAndSavePost(channel);
@@ -223,14 +223,14 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testIsIndexable_returnsFalseForPrivateChannel() {
             Channel channel = createPrivateChannel("private-test");
             assertThat(PostSearchableEntityDTO.isIndexable(channel)).isFalse();
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testIsIndexable_returnsTrueForPublicChannel() {
             Channel channel = createPublicChannel("public-test");
             assertThat(PostSearchableEntityDTO.isIndexable(channel)).isTrue();
@@ -241,7 +241,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     class DeleteTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeletePost_removesFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("delete-post-test");
             Post post = createAndSavePost(channel);
@@ -256,7 +256,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteChannel_removesPostsFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("delete-channel-test");
             Post post1 = createAndSavePost(channel);
@@ -276,7 +276,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testArchiveChannel_removesPostsFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("archive-post-test");
             Post post = createAndSavePost(channel);
@@ -306,7 +306,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteAllAnswerPostsForPost_removesAnswerPostsFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("delete-answers-test");
             Post post = createAndSavePost(channel);
@@ -331,7 +331,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testDeleteMessage_removesAnswerPostsFromWeaviate() throws Exception {
             Channel channel = createPublicChannel("delete-msg-answers-test");
             Post post = createAndSavePost(channel);
@@ -360,7 +360,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     class PrivacyFilterTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreatePostInPrivateChannel_notIndexedInWeaviate() throws Exception {
             // Sentinel: create post in public channel to confirm Weaviate pipeline works
             Channel publicChannel = createPublicChannel("sentinel-priv");
@@ -378,7 +378,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreatePostInOneToOneChat_notIndexedInWeaviate() throws Exception {
             // Sentinel: create post in public channel to confirm Weaviate pipeline works
             Channel publicChannel = createPublicChannel("sentinel-dm");
@@ -397,7 +397,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testCreatePostInGroupChat_notIndexedInWeaviate() throws Exception {
             // Sentinel: create post in public channel to confirm Weaviate pipeline works
             Channel publicChannel = createPublicChannel("sentinel-gc");
@@ -430,7 +430,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testSearchNeverReturnsIndexedPostsOrReplies() throws Exception {
             Channel channel = createPublicChannel(SEARCH_TOKEN + "-channel");
             Post post = ConversationFactory.createBasicPost(0, instructor);
@@ -498,7 +498,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
          * that needs none of it. Resolving a post must go through the scalar projection alone.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testResolvingAPostNeverLoadsItsEagerReactionsAndAnswersGraph() {
             Channel channel = createPublicChannel("resolver-post-test");
             Post post = createAndSavePost(channel);
@@ -523,7 +523,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
          * its default-eager {@code Post} association.
          */
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testResolvingAnAnswerPostNeverLoadsItsEagerReactionsOrParentPost() {
             Channel channel = createPublicChannel("resolver-answer-test");
             Post post = createAndSavePost(channel);
@@ -543,7 +543,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void testResolvingAPostInAPrivateChannelResolvesToEmpty() {
             Channel channel = createPrivateChannel("resolver-priv-test");
             Post post = createAndSavePost(channel);

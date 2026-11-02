@@ -4,7 +4,7 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -24,7 +24,7 @@ const question = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as QuizQuesti
 const course = { id: 2 } as Course;
 let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
 let examQuizExercise = { id: 43, quizStarted: true, course, quizQuestions: [question], exerciseGroup: { id: 11, exam: { id: 10 } } } as QuizExercise;
-const route = { params: of({ questionId: 1, exerciseId: 42 }) };
+const route = { params: of({ questionId: 1, exerciseId: 42 }), snapshot: { pathFromRoot: [{ params: {} as Params }] } };
 
 describe('QuizStatisticsFooterComponent', () => {
     let comp: QuizStatisticsFooterComponent;
@@ -76,6 +76,15 @@ describe('QuizStatisticsFooterComponent', () => {
         comp.ngOnDestroy();
         quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
         examQuizExercise = { id: 43, quizStarted: true, course, quizQuestions: [question], exerciseGroup: { id: 11, exam: { id: 10 } } } as QuizExercise;
+    });
+
+    it('loads exam statistics footer details from ancestor context', () => {
+        route.snapshot = { pathFromRoot: [{ params: { examId: 7 } }] };
+        const examFind = vi.spyOn(quizService, 'findForExam').mockReturnValue(of(examQuizExercise));
+        comp.ngOnInit();
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(42);
+        expect(quizServiceFindSpy).not.toHaveBeenCalled();
+        route.snapshot = { pathFromRoot: [{ params: {} }] };
     });
 
     it('should load Quiz on Init', async () => {

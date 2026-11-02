@@ -1,3 +1,4 @@
+import { TumAetUiDatePickerComponent, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { signal } from '@angular/core';
 import { ParticipationPrivacyService } from './participation-privacy.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,7 +12,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
@@ -27,11 +28,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { By } from '@angular/platform-browser';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -102,7 +103,7 @@ describe('ParticipationComponent', () => {
                 MockProvider(EventManager),
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -130,9 +131,16 @@ describe('ParticipationComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('should choose the exam page from the loaded exercise kind before requesting participations', () => {
+        component.exercise.set({ ...exercise, course: undefined, exerciseGroup: { id: 8, exam: { id: 9, course } } });
+        const search = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+        component.onLazyLoad({ first: 0, rows: 50, sortField: 'id' });
+        expect(search).toHaveBeenCalledWith(1, expect.anything(), 'exam');
+    });
+
     describe('Initialization', () => {
         it('should initialize with exerciseId from route', () => {
-            const exerciseFindStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            const exerciseFindStub = vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
             component.ngOnInit();
 
@@ -143,7 +151,7 @@ describe('ParticipationComponent', () => {
 
         it('should open the score range named in the query parameters', () => {
             queryParams = { scoreRangeFilter: '3' };
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
             component.ngOnInit();
 
@@ -153,7 +161,7 @@ describe('ParticipationComponent', () => {
 
     describe('Columns', () => {
         const render = async (ex: Exercise, dto: ParticipationManagementDTO) => {
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: ex })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: ex })));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [dto], totalElements: 1 }));
             componentFixture.detectChanges();
             await componentFixture.whenStable();
@@ -193,6 +201,17 @@ describe('ParticipationComponent', () => {
             expect(row.querySelector('[data-testid="participation-practice-tag"]')).not.toBeNull();
         });
 
+        it.each([undefined, 1])('names presentation actions when the current score is %s', async (presentationScore) => {
+            const row = await render(
+                { ...exercise, isAtLeastInstructor: true, isAtLeastTutor: true, presentationScoreEnabled: true, course: { ...course, presentationScore: 1 } },
+                { ...sampleDto, presentationScore },
+            );
+            const action = presentationScore === 1 ? 'removePresentation' : 'addPresentation';
+            const button = Array.from(row.querySelectorAll('button')).find((control) => control.textContent?.includes(`artemisApp.participation.${action}.label`));
+            expect(button).toBeDefined();
+            expect(button?.getAttribute('aria-label')).toBe(`artemisApp.participation.${action}.label`);
+        });
+
         it('should name the assessment type next to the result only where manual results exist', async () => {
             const dto: ParticipationManagementDTO = { ...sampleDto, submissionId: 2, resultId: 5, score: 80, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() };
             // MockResultService leaves out what jhi-result needs to render the score
@@ -220,7 +239,7 @@ describe('ParticipationComponent', () => {
             ['editor', true, false],
             ['instructor', true, true],
         ])('shows the online editor only to editors and instructors (%s)', async (_role, isAtLeastEditor, isAtLeastInstructor) => {
-            vi.spyOn(exerciseService, 'find').mockReturnValue(
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: { ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastTutor: true, isAtLeastEditor, isAtLeastInstructor, dueDate: dayjs().add(1, 'day') },
@@ -265,7 +284,7 @@ describe('ParticipationComponent', () => {
                 isAtLeastInstructor: false,
                 dueDate: dayjs().add(1, 'day'),
             };
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(
                 of({ content: [{ ...sampleDto, repositoryUri: 'https://localhost/git/EX/alice.git' }], totalElements: 1 }),
             );
@@ -295,7 +314,7 @@ describe('ParticipationComponent', () => {
                 isAtLeastInstructor: false,
                 dueDate,
             };
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
             const search = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
             componentFixture.detectChanges();
             component.onLazyLoad({ globalFilter: 'alice', sortField: 'participantName' });
@@ -308,7 +327,7 @@ describe('ParticipationComponent', () => {
             expect(component.hideParticipantInformation()).toBe(true);
             expect(component.tableOptions().showSearch).toBe(false);
             expect(component.participations()[0].participantName).toBeUndefined();
-            expect(search).toHaveBeenLastCalledWith(1, expect.objectContaining({ searchTerm: '', sortedColumn: 'id' }));
+            expect(search).toHaveBeenLastCalledWith(1, expect.objectContaining({ searchTerm: '', sortedColumn: 'id' }), 'course');
             expect(componentFixture.nativeElement.querySelector('jhi-code-button')).toBeNull();
             expect(componentFixture.nativeElement.querySelector('a[href*="code-editor"]')).toBeNull();
             expect(componentFixture.nativeElement.querySelector('[data-testid="tutor-participation-access-notice"]').textContent).toContain('tutorAccess.anonymousAssessment');
@@ -328,7 +347,7 @@ describe('ParticipationComponent', () => {
                 assessmentType: AssessmentType.SEMI_AUTOMATIC,
                 dueDate: dayjs().subtract(1, 'day'),
             };
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: tutorExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: tutorExercise })));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
 
             componentFixture.detectChanges();
@@ -369,6 +388,7 @@ describe('ParticipationComponent', () => {
                 expect(searchSpy).toHaveBeenCalledWith(
                     exercise.id,
                     expect.objectContaining({ page: 2, pageSize: 25, searchTerm: '', sortedColumn: 'id', filterProp: FilterProp.NO_SUBMISSIONS }),
+                    'course',
                 );
             },
         );
@@ -379,7 +399,7 @@ describe('ParticipationComponent', () => {
 
             component.onLazyLoad({ globalFilter: 'alice', sortField: 'participantName' });
 
-            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'alice', sortedColumn: 'participantName' }));
+            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'alice', sortedColumn: 'participantName' }), 'course');
         });
 
         it('should identify an anonymous participation in the due-date success message', () => {
@@ -420,7 +440,7 @@ describe('ParticipationComponent', () => {
 
         async function renderRows(teamMode: boolean, rows: ParticipationManagementDTO[]): Promise<HTMLElement> {
             const instructorExercise = { ...exercise, teamMode, isAtLeastTutor: true, isAtLeastInstructor: true };
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: instructorExercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: instructorExercise })));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: rows, totalElements: rows.length }));
 
             componentFixture.detectChanges();
@@ -579,7 +599,7 @@ describe('ParticipationComponent', () => {
 
             component.onLazyLoad({ first: 0, rows: 50 });
 
-            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ scoreRangeLower: 60, scoreRangeUpper: 70 }));
+            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ scoreRangeLower: 60, scoreRangeUpper: 70 }), 'course');
         });
 
         it('should reset filter options, drop the range from the URL and reload', () => {
@@ -671,7 +691,7 @@ describe('ParticipationComponent', () => {
         beforeEach(async () => {
             dto = { ...sampleDto, individualDueDate };
             const exerciseWithDueDate = { ...exercise, course: undefined, dueDate };
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseWithDueDate })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: exerciseWithDueDate })));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [dto], totalElements: 1 }));
             component.startEditDueDate(dto);
             componentFixture.detectChanges();
@@ -1044,7 +1064,7 @@ describe('ParticipationComponent', () => {
 
     describe('Exports', () => {
         it.each([false, true])('should offer exports only to instructors (instructor: %s)', async (isAtLeastInstructor) => {
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...exercise, isAtLeastInstructor } })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: { ...exercise, isAtLeastInstructor } })));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
             componentFixture.detectChanges();
             await componentFixture.whenStable();
@@ -1159,5 +1179,21 @@ describe('ParticipationComponent', () => {
         it('should build a participation without submissions when there is none', () => {
             expect(component.toParticipation(sampleDto).submissions).toHaveLength(0);
         });
+    });
+    it('reports the current page failure while ignoring failure of an older request', () => {
+        const first = new Subject<PageableResult<ParticipationManagementDTO>>();
+        const current = new Subject<PageableResult<ParticipationManagementDTO>>();
+        vi.spyOn(participationService, 'searchParticipations').mockReturnValueOnce(first).mockReturnValueOnce(current);
+        const alert = vi.spyOn(alertService, 'error');
+        component.onLazyLoad({ first: 0, rows: 50, sortField: 'id' });
+        component.onLazyLoad({ first: 50, rows: 50, sortField: 'id' });
+        current.next({ content: [sampleDto], totalElements: 51 });
+        first.error(new HttpErrorResponse({ status: 403 }));
+        expect(component.participations()).toEqual([sampleDto]);
+        expect(alert).not.toHaveBeenCalled();
+        current.error(new HttpErrorResponse({ status: 403 }));
+        expect(alert).toHaveBeenCalledExactlyOnceWith('artemisApp.participation.loadError');
+        expect(component.isLoading()).toBe(false);
+        expect(component.participations()).toEqual([sampleDto]);
     });
 });
