@@ -93,6 +93,10 @@ public abstract class ExerciseWithSubmissionsExportService {
      */
     public Path exportExerciseForDownload(Exercise exercise) throws IOException {
         Path exportDir = fileService.createTemporaryDirectory(FilePathConverter.getTempFilePath(), "exercise-export-", 5);
+        // never true, but static analysis cannot see through the deletion scheduling that the created directory exists
+        if (exportDir == null) {
+            throw new IOException("Could not create the export directory");
+        }
         List<Path> pathsToBeZipped = new ArrayList<>();
         List<String> exportErrors = new ArrayList<>();
         exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);

@@ -86,6 +86,10 @@ public class QuizExerciseWithSubmissionsExportService {
         String zipFileName = quizExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName() + "-" + quizExercise.getTitle() + "-" + quizExercise.getId() + "-"
                 + timestamp + ".zip";
         Path exportDir = fileService.createTemporaryDirectory(FilePathConverter.getTempFilePath(), "exercise-export-", 5);
+        // never true, but static analysis cannot see through the deletion scheduling that the created directory exists
+        if (exportDir == null) {
+            throw new IOException("Could not create the export directory");
+        }
         List<String> exportErrors = new ArrayList<>();
         List<Path> pathsToBeZipped = exportExerciseDefinition(quizExercise, exportDir, exportErrors);
         // A missing image or details file would make the import fail, so the instructor gets an error instead of the file.
