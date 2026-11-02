@@ -57,9 +57,10 @@ public class TutorialGroupScheduleService {
      * Saves the given schedule and brings its generated sessions in sync with it.
      * <p>
      * For a new schedule, all sessions are generated. For an existing one, generated sessions are matched to the current ones by start
-     * instant: a match keeps its id and recorded attendance while its end, location and free-period status follow the new schedule,
-     * starts that no longer occur are removed, and new starts are added. Sessions edited individually (detached from the schedule) are
-     * left untouched - neither duplicated nor removed.
+     * instant: a match keeps its id and recorded attendance while its end and location follow the new schedule, and its free-period status
+     * is recomputed from the new interval - except a manual cancellation, which is kept with no free-period association. Starts that no
+     * longer occur are removed, and new starts are added. Sessions edited individually (detached from the schedule) are left untouched -
+     * neither duplicated nor removed.
      *
      * @param course                the course of the tutorial group
      * @param tutorialGroup         the tutorial group the schedule belongs to
