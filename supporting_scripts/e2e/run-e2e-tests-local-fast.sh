@@ -458,6 +458,8 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_VERSIONCONTROL_SSHHOSTKEYPATH="$(pwd)/src/test/playwright/ssh-keys"
     export ARTEMIS_VERSIONCONTROL_SSHPORT="7921"
     export ARTEMIS_TELEMETRY_ENABLED="false"
+    # Host-side E2E workers share localhost; only the local test client bypasses server rate limits.
+    export ARTEMIS_RATELIMITING_EXEMPTADDRESSES="127.0.0.1/32,::1/128"
     # Feature usage flushes every five minutes in production, and FeatureUsage.spec.ts asserts that a counter reaches
     # the database. Matches deployment/docker/artemis/config/playwright.env, which the containerised stacks read instead.
     export ARTEMIS_FEATURE_USAGE_FLUSH_INTERVAL="10s"
