@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
 import { DOCUMENT } from '@angular/common';
@@ -33,6 +33,7 @@ class ResizeObserverMock {
             [storageKey]="storageKey"
             [flushLeftPanel]="flushLeftPanel"
             [leftMinSizePercent]="leftMinSizePercent"
+            [collapseSnapPercent]="collapseSnapPercent"
         >
             <ng-template jhiPanel [label]="'left'" [icon]="faAlignLeft"><div id="left-marker">Left Content</div></ng-template>
             <ng-template jhiPanel [label]="'right'">Right Content<input aria-label="Draft" value="Right Content" /></ng-template>
@@ -48,6 +49,7 @@ class ResizablePanelsTestComponent {
     useViewportWidthForCollapse = false;
     flushLeftPanel = false;
     leftMinSizePercent = 0;
+    collapseSnapPercent = 12;
     storageKey: string | undefined = undefined;
 }
 
@@ -273,6 +275,32 @@ describe('ResizablePanelsComponent', () => {
 
         // With the default threshold of 12%, a minimum of 90% would leave every drag at a right panel of 10% or less, which snaps it shut
         expect(fixture.debugElement.query(By.css('tumaet-ui-splitter')).componentInstance.minSizes()).toEqual([76, 0]);
+    });
+
+    it('leaves the left minimum uncapped when dragging the right panel narrow does not collapse it', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.collapseSnapPercent = 0;
+        fixture.componentInstance.leftMinSizePercent = 90;
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('tumaet-ui-splitter')).componentInstance.minSizes()).toEqual([90, 0]);
+    });
+
+    it('widens the current split only once a raised minimum exceeds its left panel', () => {
+        const component = createFixture();
+        component.onResizeEnd([50, 50]);
+        fixture.detectChanges();
+        const split = component.savedSizes();
+
+        fixture.componentInstance.leftMinSizePercent = 36;
+        fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+        fixture.detectChanges();
+        expect(component.savedSizes()).toBe(split);
+
+        fixture.componentInstance.leftMinSizePercent = 60;
+        fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
+        fixture.detectChanges();
+        expect(component.savedSizes()).toEqual([60, 40]);
     });
 
     it('widens a remembered split whose left panel is below the minimum, so the slider is not frozen', () => {
