@@ -91,7 +91,7 @@ class ExamTestRunResultConsistencyTest extends AbstractSpringIntegrationIndepend
 
     @ParameterizedTest
     @CsvSource({ "false,", "true,", "false,/grade-summary", "true,/grade-summary" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void quizPointsPercentageAndTotalUseTheSameScore(boolean completed, String suffix) throws Exception {
         StudentExam run = createRun();
         var participation = participationRepository.findByExerciseIdAndStudentId(quiz.getId(), run.getUser().getId()).getFirst();
@@ -113,7 +113,7 @@ class ExamTestRunResultConsistencyTest extends AbstractSpringIntegrationIndepend
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void cohortScoresExcludeInstructorTestRunsWithoutChangingTheirSummary(boolean completed) throws Exception {
         StudentExam run = createRun();
         var testParticipation = participationRepository.findByExerciseIdAndStudentId(quiz.getId(), run.getUser().getId()).getFirst();
@@ -151,7 +151,7 @@ class ExamTestRunResultConsistencyTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void instructorTestRunsDoNotCreateCohortRowsOrAverages() throws Exception {
         StudentExam run = createRun();
         var participation = participationRepository.findByExerciseIdAndStudentId(quiz.getId(), run.getUser().getId()).getFirst();
@@ -168,7 +168,7 @@ class ExamTestRunResultConsistencyTest extends AbstractSpringIntegrationIndepend
 
     @ParameterizedTest
     @ValueSource(strings = { "", "/grade-summary" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void completedTestRunAssessmentIsNotCountedAgainOrReplacedByADraft(String suffix) throws Exception {
         var text = TextExerciseFactory.generateTextExerciseForExam(quiz.getExerciseGroup());
         text.setMaxPoints(10.0);
@@ -192,7 +192,7 @@ class ExamTestRunResultConsistencyTest extends AbstractSpringIntegrationIndepend
 
     @ParameterizedTest
     @ValueSource(strings = { "", "/grade-summary" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void onlyTheNewestUndatedQuizResultCounts(String suffix) throws Exception {
         StudentExam run = createRun();
         var participation = participationRepository.findByExerciseIdAndStudentId(quiz.getId(), run.getUser().getId()).getFirst();
@@ -206,7 +206,7 @@ class ExamTestRunResultConsistencyTest extends AbstractSpringIntegrationIndepend
 
     @ParameterizedTest
     @ValueSource(strings = { "", "/grade-summary" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void equalCompletionDatesSelectOnlyTheNewestResult(String suffix) throws Exception {
         StudentExam run = createRun();
         var participation = participationRepository.findByExerciseIdAndStudentId(quiz.getId(), run.getUser().getId()).getFirst();
@@ -221,7 +221,7 @@ class ExamTestRunResultConsistencyTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void repeatedInstructorRunsKeepExistingParticipationBehavior() {
         StudentExam first = createRun();
         StudentExam second = createRun();

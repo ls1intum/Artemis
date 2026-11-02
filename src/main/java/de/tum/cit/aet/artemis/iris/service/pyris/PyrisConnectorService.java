@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisErrorResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
@@ -45,6 +46,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidate
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusDTO;
 
@@ -71,6 +73,8 @@ public class PyrisConnectorService {
 
     private final JsonMapper objectMapper;
 
+    private final PyrisCallbackTokenService callbackTokenService;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
@@ -78,10 +82,11 @@ public class PyrisConnectorService {
     private String pyrisUrl;
 
     public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, @Qualifier("censusPyrisRestTemplate") RestTemplate censusRestTemplate,
-            JsonMapper objectMapper) {
+            JsonMapper objectMapper, PyrisCallbackTokenService callbackTokenService) {
         this.restTemplate = restTemplate;
         this.censusRestTemplate = censusRestTemplate;
         this.objectMapper = objectMapper;
+        this.callbackTokenService = callbackTokenService;
     }
 
     /**
@@ -163,7 +168,7 @@ public class PyrisConnectorService {
      *
      * @param query            the user's question
      * @param limit            the maximum number of source segments to retrieve
-     * @param jobToken         the Hazelcast job token used for callback authentication and WebSocket routing
+     * @param job              the global search answer job registered for this request
      * @param aiSelection      the user's LLM selection (LOCAL_AI or CLOUD_AI)
      * @param accessContext    the requesting user's role-grouped course access, applied by Pyris as an opaque filter (may be null)
      * @param entityCandidates pre-fetched, access-filtered entity candidates for the answer pipeline (may be null or empty)
@@ -175,13 +180,17 @@ public class PyrisConnectorService {
      *                             was excluded); distinct from an unscoped {@code courseIds}, and passed as its own
      *                             field since an empty {@code courseIds} list does not survive the wire
      */
-    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, @Nullable PyrisAccessContextDTO accessContext,
+    public void executeGlobalSearchIrisAnswer(String query, int limit, GlobalSearchAnswerJob job, AiSelectionDecision aiSelection, @Nullable PyrisAccessContextDTO accessContext,
             @Nullable List<PyrisEntityCandidateDTO> entityCandidates, @Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds, boolean searchesNothing) {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
             // streamResponse: Pyris posts throttled partial-answer snapshots while the LLM generates,
             // which this service forwards to the client as partial WebSocket updates.
-            var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue(), Boolean.TRUE);
+            // Issued for exactly the job registered for this request, not for whatever holds the run id by now: the token names this request's
+            // invocation, so it is never accepted for another request with the same client-chosen run id.
+            var callbackToken = callbackTokenService.issue(job);
+            var settings = new PyrisPipelineExecutionSettingsDTO(job.jobId(), callbackToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue(),
+                    Boolean.TRUE);
             var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, entityCandidates, courseIds, excludeCourseIds, searchesNothing);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
@@ -272,7 +281,8 @@ public class PyrisConnectorService {
             restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to send lectures to Pyris", e);
+            // Status only: the exception message quotes the response body, which may echo the request and its callback token.
+            log.error("Failed to send lectures to Pyris: status {}", e.getStatusCode().value());
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
@@ -298,20 +308,26 @@ public class PyrisConnectorService {
         return switch (e.getStatusCode().value()) {
             case 401, 403 -> new IrisForbiddenException();
             case 400, 500 -> new IrisInternalPyrisErrorException(tryExtractErrorMessage(e));
-            default -> new IrisInternalPyrisErrorException(e.getMessage());
+            // Not the exception message: it quotes the response body, which may echo the request, and this message is shown to the user.
+            default -> new IrisInternalPyrisErrorException(e.getStatusCode().value() + " " + e.getStatusText());
         };
     }
 
     private String tryExtractErrorMessage(HttpStatusCodeException ex) {
+        // Pyris or a proxy in front of it can answer 400 or 500 with a body that is not the error JSON, e.g. a plain-text "Internal Server Error".
+        // The caller turns the status into an IrisException, so a warning is enough.
         try {
-            return objectMapper.readTree(ex.getResponseBodyAsString()).required("detail").required("errorMessage").asString();
+            var error = objectMapper.readValue(ex.getResponseBodyAsString(), PyrisErrorResponseDTO.class);
+            if (error != null && error.detail() != null && error.detail().errorMessage() != null) {
+                return error.detail().errorMessage();
+            }
+            log.warn("Pyris answered with status {} and a body that is not the expected error JSON: detail.errorMessage is missing", ex.getStatusCode());
         }
-        catch (JacksonException | IllegalArgumentException e) {
-            // Pyris or a proxy in front of it can answer 400 or 500 with a body that is not the error JSON, e.g. a plain-text "Internal Server Error".
-            // The caller turns the status into an IrisException, so a warning is enough.
-            log.warn("Pyris answered with status {} and a body that is not the expected error JSON: {}", ex.getStatusCode(), e.getMessage());
-            return "";
+        catch (JacksonException e) {
+            // Not the parser message: it can quote the body, which may echo the request and its callback token.
+            log.warn("Pyris answered with status {} and a body that is not the expected error JSON ({})", ex.getStatusCode().value(), e.getClass().getSimpleName());
         }
+        return "";
     }
 
     /**
@@ -359,7 +375,8 @@ public class PyrisConnectorService {
             restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to send faq {} to Pyris: {}", toUpdateFaq.faqId(), e.getMessage());
+            // Status only: the exception message quotes the response body, which may echo the request and its callback token.
+            log.error("Failed to send faq {} to Pyris: status {}", toUpdateFaq.faqId(), e.getStatusCode().value());
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
@@ -379,7 +396,8 @@ public class PyrisConnectorService {
             restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to send faqs to Pyris", e);
+            // Status only: the exception message quotes the response body, which may echo the request and its callback token.
+            log.error("Failed to send faqs to Pyris: status {}", e.getStatusCode().value());
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {

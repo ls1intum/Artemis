@@ -3,7 +3,7 @@ import { CourseLearnerProfileComponent } from 'app/account/user/settings/learner
 import { FeedbackLearnerProfileComponent } from 'app/account/user/settings/learner-profile/feedback-learner-profile/feedback-learner-profile.component';
 import { LearnerProfileApiService } from 'app/account/user/settings/learner-profile/learner-profile-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { isAtlasModuleActive } from 'app/account/user/settings/learner-profile/learner-profile-availability';
 

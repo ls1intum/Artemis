@@ -85,7 +85,7 @@ class WorkerRegistryClusterTest {
         var config = new Config().setClusterName(name);
         config.setProperty("hazelcast.operation.thread.count", "2").setProperty("hazelcast.operation.generic.thread.count", "2");
         var network = config.getNetworkConfig();
-        network.setPortAutoIncrement(true);
+        network.setPort(0).setPortAutoIncrement(false);
         network.getInterfaces().setEnabled(true).setInterfaces(List.of("127.0.0.1"));
         network.getJoin().getAutoDetectionConfig().setEnabled(false);
         network.getJoin().getMulticastConfig().setEnabled(false);

@@ -47,7 +47,7 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
     private TextExercise textExercise;
 
     @BeforeEach
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
@@ -56,7 +56,7 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateTextExercise_createsExerciseVersion() throws Exception {
         textExercise.setId(null);
         textExercise.setTitle("New Text Exercise");
@@ -77,7 +77,7 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateTextExercise_createsExerciseVersion(boolean reEvaluate) throws Exception {
         // Arrange: Get existing exercise
         Long exerciseId = textExercise.getId();
@@ -110,7 +110,7 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportTextExercise_createsExerciseVersion() throws Exception {
         Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         textExercise.setCourse(course2);

@@ -111,7 +111,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterUserInExam_addedToCourseStudentsGroup() throws Exception {
         int studentCountBefore = userCourseRoleTestRepository.findByCourse_IdAndRole(course1.getId(), CourseRole.STUDENT).size();
         var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
@@ -121,7 +121,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterUsersInExam_duplicateRowsForSameUserCreateSingleExamUser() throws Exception {
         // exam_user has no unique constraint on (exam_id, student_id), so a request (or an imported CSV) listing the same
         // user twice must be deduplicated in the service: two rows would both be persisted and then break
@@ -147,7 +147,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterUserInExam_studentExamGenerated() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
@@ -165,20 +165,20 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAddStudentToExam_testExam() throws Exception {
         var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", List.of(student), HttpStatus.FORBIDDEN, null);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRemoveStudentToExam_testExam() throws Exception {
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/" + OTHER_PREFIX + "student1", HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterUsersInExam() throws Exception {
         var savedExam = examUtilService.addExam(course1);
 
@@ -270,7 +270,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterLDAPUsersInExam() throws Exception {
         var savedExam = examUtilService.addExam(course1);
         String student100 = TEST_PREFIX + "student100";
@@ -303,7 +303,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAddStudentsToExam_testExam() throws Exception {
         userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
 
@@ -313,20 +313,20 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRemoveAllStudentsFromExam_testExam() throws Exception {
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteStudentThatDoesNotExist() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/nonExistingStudent", HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAddAllRegisteredUsersToExam() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         Channel channel = examUtilService.addExamChannel(exam, "testchannel");
@@ -365,13 +365,13 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterCourseStudents_testExam() throws Exception {
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/register-course-students", null, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testIsUserRegisteredForExam() {
         var examUser = new ExamUser();
         examUser.setExam(exam1);
@@ -386,7 +386,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterPlainStudentToExam_successful() throws Exception {
         var examUserDtoStudent1 = new StudentDTO(TEST_PREFIX + "student1", "", "", "", "");
         request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", List.of(examUserDtoStudent1),
@@ -432,7 +432,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterStaffInExam_rejectedButRealStudentRegistered() throws Exception {
         var savedExam = examUtilService.addExam(course1);
 
@@ -460,7 +460,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegisterCourseStudents_doesNotRegisterStaff() throws Exception {
         Exam exam = examUtilService.addExam(course1);
         examUtilService.addExamChannel(exam, "staff-filter-channel");

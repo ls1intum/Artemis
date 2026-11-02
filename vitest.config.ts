@@ -24,6 +24,8 @@ export default defineConfig({
             app: path.resolve(__dirname, 'src/main/webapp/app'),
             test: path.resolve(__dirname, 'src/test/javascript/spec'),
             src: path.resolve(__dirname, 'src'),
+            // The Angular test compiler emits root-relative imports for shared component stylesheets.
+            '/src': path.resolve(__dirname, 'src'),
             // Mirrors the tsconfig `paths` entry: the package's own `exports` map only exposes
             // `./styles.css`, so the bare specifier resolves through the built library instead.
             '@tumaet/ui-angular': path.resolve(__dirname, 'packages/tum-aet-ui/dist'),

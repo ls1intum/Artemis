@@ -39,4 +39,28 @@ test.describe('Tutorial group detail layout', { tag: '@fast' }, () => {
         // The card has to grow with its content, or the chart ends below it
         await expectInside(chart, card, ['top', 'bottom'], { name: 'Chart of the average attendance' });
     });
+
+    test('cancels and reactivates a session, and requires confirmation before deleting it', async ({ login, page }) => {
+        // The course overview deliberately uses the student view; session actions belong to management.
+        await login(tutor, `/course-management/${course!.id}/tutorial-groups/${tutorialGroupId}`);
+        await page.getByTestId('cancel-session-button').click();
+        await expect(page.getByTestId('activate-session-button')).toBeVisible();
+        await page.getByTestId('activate-session-button').click();
+        await expect(page.getByTestId('cancel-session-button')).toBeVisible();
+
+        const deleteSession = page.getByTestId('delete-session-button');
+        await deleteSession.click();
+        let confirmation = page.getByRole('alertdialog');
+        await confirmation.getByRole('button', { name: 'Cancel', exact: true }).click();
+        await expect(confirmation).toHaveCount(0);
+        await expect(deleteSession).toBeFocused();
+        await expect(page.getByTestId('cancel-session-button')).toBeVisible();
+
+        await deleteSession.click();
+        confirmation = page.getByRole('alertdialog');
+        const deleted = page.waitForResponse((response) => response.url().includes(`/tutorial-groups/${tutorialGroupId}/sessions/`) && response.request().method() === 'DELETE');
+        await confirmation.getByRole('button', { name: 'Delete', exact: true }).click();
+        expect((await deleted).ok()).toBeTruthy();
+        await expect(page.getByTestId('delete-session-button')).toHaveCount(0);
+    });
 });

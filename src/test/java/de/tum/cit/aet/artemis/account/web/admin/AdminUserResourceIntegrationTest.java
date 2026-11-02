@@ -1320,4 +1320,16 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             assertThat(userTestRepository.findById(user.getId()).orElseThrow().getEmail()).isNull();
         }
     }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void irisBotLoginIsReservedForInternalCreation() throws Exception {
+        String login = User.IRIS_BOT_LOGIN;
+        var original = userTestRepository.findOneByLogin(login).map(User::getId);
+        var dto = userUtilService.createManagedUserVM(login);
+        mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(dto))).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("loginReserved"));
+        assertThat(userTestRepository.findOneByLogin(login).map(User::getId)).isEqualTo(original);
+    }
+
 }

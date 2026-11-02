@@ -1,3 +1,4 @@
+import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
@@ -9,6 +10,7 @@ import { filter, map } from 'rxjs/operators';
 @Service()
 export class ExamChecklistService {
     private examService = inject(ExamManagementService);
+    private accountService = inject(AccountService);
 
     /**
      * indicates whether all student exams are generated
@@ -25,7 +27,9 @@ export class ExamChecklistService {
      * @returns examChecklist as Observable
      */
     getExamStatistics(exam: Exam): Observable<ExamChecklist> {
-        return this.examService.getExamStatistics(exam.course!.id!, exam.id!).pipe(
+        const courseId = Number(exam.course!.id!);
+        const audience = this.accountService.isAtLeastInstructorInCourseWithId(courseId) ? 'instructor' : 'tutor';
+        return this.examService.getExamStatistics(courseId, exam.id!, audience).pipe(
             filter((res) => !!res.body),
             map((examStatistics: HttpResponse<ExamChecklist>) => examStatistics.body!),
         );

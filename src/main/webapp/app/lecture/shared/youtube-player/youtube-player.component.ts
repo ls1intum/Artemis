@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { resizeVideoColumn, syncVideoTranscriptHeight } from '../video-transcript-layout.util';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewEncapsulation, computed, effect, input, output, signal, viewChild } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
@@ -31,7 +32,7 @@ const MIN_TRANSCRIPT_WIDTH = 250;
 @Component({
     selector: 'jhi-youtube-player',
     standalone: true,
-    imports: [YouTubePlayer, TranscriptViewerComponent, ArtemisTranslatePipe, ResizableDirective],
+    imports: [TumAetUiButtonDirective, YouTubePlayer, TranscriptViewerComponent, ArtemisTranslatePipe, ResizableDirective],
     templateUrl: './youtube-player.component.html',
     styleUrls: ['./youtube-player.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,7 +60,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     // view refs for the resizer (mirror VideoPlayerComponent)
     videoWrapper = viewChild<ElementRef<HTMLDivElement>>('videoWrapper');
     videoColumn = viewChild<ElementRef<HTMLDivElement>>('videoColumn');
-    resizerHandle = viewChild<ElementRef<HTMLButtonElement>>('resizerHandle');
+    resizerHandle = viewChild('resizerHandle', { read: ElementRef<HTMLButtonElement> });
 
     private youtubePlayer: YoutubePlayerApi | null = null;
     /**

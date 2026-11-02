@@ -64,7 +64,7 @@ export class StudentsReseatingDialogComponent implements OnInit {
             }
 
             const roomId = this.selectedRoomId()!;
-            this.studentsRoomDistributionService.loadSeatsOfExamRoom(roomId).subscribe({
+            this.studentsRoomDistributionService.loadSeatsOfExamRoom(this.courseId(), this.exam().id!, roomId).subscribe({
                 next: (data) => {
                     if (this.selectedRoomId() === roomId) {
                         // ignore late responses

@@ -718,6 +718,44 @@ describe('CourseOverviewService', () => {
             expect(result.subtitleRight).toBe('14:00–16:00');
         });
 
+        it('should use the server-computed average attendance when the list payload carries no sessions', () => {
+            // The tutorial group list endpoint sends averageAttendance (also to students) but never the sessions.
+            const tutorialGroup = new TutorialGroup();
+            tutorialGroup.id = 4;
+            tutorialGroup.title = 'T04';
+            tutorialGroup.capacity = 30;
+            tutorialGroup.averageAttendance = 20;
+            const result = courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
+
+            expect(result.attendanceText).toBe('Ø 67%');
+            expect(result.attendanceChipColor).toBe('var(--green)');
+        });
+
+        it('should prefer the average attendance over the registrations when staff receive both', () => {
+            const tutorialGroup = new TutorialGroup();
+            tutorialGroup.id = 5;
+            tutorialGroup.title = 'T05';
+            tutorialGroup.capacity = 20;
+            tutorialGroup.averageAttendance = 10;
+            tutorialGroup.numberOfRegisteredUsers = 18;
+            const result = courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
+
+            expect(result.attendanceText).toBe('Ø 50%');
+            expect(result.attendanceChipColor).toBe('var(--green)');
+        });
+
+        it('should not divide by a capacity of zero when an average attendance is present', () => {
+            const tutorialGroup = new TutorialGroup();
+            tutorialGroup.id = 6;
+            tutorialGroup.title = 'T06';
+            tutorialGroup.capacity = 0;
+            tutorialGroup.averageAttendance = 5;
+            const result = courseOverviewService.mapTutorialGroupToSidebarCardElement(tutorialGroup);
+
+            expect(result.attendanceText).toBeUndefined();
+            expect(result.attendanceChipColor).toBeUndefined();
+        });
+
         it('should compute attendance from registered users and capacity when no attendance data', () => {
             const tutorialGroup = new TutorialGroup();
             tutorialGroup.id = 2;

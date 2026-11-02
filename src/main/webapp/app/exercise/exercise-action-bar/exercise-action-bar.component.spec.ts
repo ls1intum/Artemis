@@ -90,8 +90,7 @@ describe('ExerciseActionBarComponent', () => {
     });
 
     describe('disabled tooltip', () => {
-        const tooltipTextOf = (): string | readonly string[] =>
-            fixture.debugElement.query(By.css('a[data-testid="exercise-action-a"]')).injector.get(TumAetUiTooltipDirective).content();
+        const tooltipTextOf = () => fixture.debugElement.query(By.css('a[data-testid="exercise-action-a"]')).injector.get(TumAetUiTooltipDirective).content();
 
         it('shows the disabled tooltip only while the action is disabled', () => {
             const action: ActionItem = { ...buildActions(['a'])[0], disabledTooltip: 'tooltip.key' };

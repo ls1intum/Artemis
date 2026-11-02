@@ -82,7 +82,20 @@ export class ExerciseService {
      * @param courseId the course to fetch the exercise titles for
      */
     getTitlesForCourse(courseId: number): Observable<ExerciseTitle[]> {
-        return this.http.get<ExerciseTitle[]>(`api/exercise/courses/${courseId}/exercise-titles`);
+        return this.loadTitlesForCourse(courseId, false);
+    }
+
+    getTitlesForCourseForStaff(courseId: number): Observable<ExerciseTitle[]> {
+        return this.loadTitlesForCourse(courseId, true);
+    }
+
+    /** The catalogue is shared by course reference pickers; choose from the known course membership before loading. */
+    getTitlesForAccessibleCourse(courseId: number): Observable<ExerciseTitle[]> {
+        return this.accountService.isAtLeastTutorInCourseWithId(courseId) ? this.getTitlesForCourseForStaff(courseId) : this.getTitlesForCourse(courseId);
+    }
+
+    private loadTitlesForCourse(courseId: number, staff: boolean): Observable<ExerciseTitle[]> {
+        return this.http.get<ExerciseTitle[]>(`api/exercise/courses/${courseId}/exercise-titles${staff ? '/for-staff' : ''}`);
     }
     public adminResourceUrl = 'api/exercise/admin/exercises';
     public courseResourceUrl = 'api/course/courses';
@@ -120,8 +133,24 @@ export class ExerciseService {
      * @param exerciseId - Exercise that should be loaded
      */
     find(exerciseId: number): Observable<EntityResponseType> {
+        return this.loadExercise(exerciseId, '');
+    }
+
+    findForStaff(exerciseId: number): Observable<EntityResponseType> {
+        return this.loadExercise(exerciseId, '/for-staff');
+    }
+
+    findForExamAssessment(exerciseId: number): Observable<EntityResponseType> {
+        return this.loadExercise(exerciseId, '/for-exam-assessment');
+    }
+
+    findForExamManagement(exerciseId: number): Observable<EntityResponseType> {
+        return this.loadExercise(exerciseId, '/for-exam-management');
+    }
+
+    private loadExercise(exerciseId: number, suffix: string): Observable<EntityResponseType> {
         return this.http
-            .get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}${suffix}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
     }
 

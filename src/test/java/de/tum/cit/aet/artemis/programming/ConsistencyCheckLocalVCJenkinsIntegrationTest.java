@@ -24,47 +24,47 @@ class ConsistencyCheckLocalVCJenkinsIntegrationTest extends AbstractProgrammingI
      * @throws Exception if an error occurs
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void checkConsistencyOfProgrammingExercise_noErrors() throws Exception {
         mockConnectorRequestsForSetup(consistencyCheckTestService.getNotPersistedExercise(), false, false, false);
         consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_noErrors();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void checkConsistencyOfProgrammingExercise_missingVCSProject() throws Exception {
         consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_missingVCSProject();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void checkConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
         mockConnectorRequestsForSetup(consistencyCheckTestService.getNotPersistedExercise(), false, false, false);
         consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_missingVCSRepos();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void checkConsistencyOfProgrammingExercise_templateRepositoryMissingOnDisk() throws Exception {
         mockConnectorRequestsForSetup(consistencyCheckTestService.getNotPersistedExercise(), false, false, false);
         consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_templateRepositoryMissingOnDisk();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void checkConsistencyOfProgrammingExercise_templateRepositoryCorruptOnDisk() throws Exception {
         mockConnectorRequestsForSetup(consistencyCheckTestService.getNotPersistedExercise(), false, false, false);
         consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_templateRepositoryCorruptOnDisk();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void checkConsistencyOfProgrammingExercise_buildPlansMissing() throws Exception {
         consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_buildPlansMissing();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void checkConsistencyOfProgrammingExercise_forbidden() throws Exception {
         consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_forbidden();
     }

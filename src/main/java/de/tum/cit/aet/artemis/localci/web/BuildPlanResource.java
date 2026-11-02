@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.localci.dto.BuildPlanDTO;
@@ -41,15 +38,12 @@ public class BuildPlanResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final ProgrammingTriggerService programmingTriggerService;
 
     public BuildPlanResource(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authorizationCheckService, ProgrammingTriggerService programmingTriggerService) {
+            ProgrammingTriggerService programmingTriggerService) {
         this.buildPlanRepository = buildPlanRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.programmingTriggerService = programmingTriggerService;
     }
 
@@ -60,16 +54,11 @@ public class BuildPlanResource {
      * @return the build plan stored in the database
      */
     @GetMapping("programming-exercises/{exerciseId}/build-plan/for-editor")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<BuildPlanDTO> getBuildPlanForEditor(@PathVariable Long exerciseId) {
         log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
 
         final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
-        // orElseThrow is safe here since the query above ensures that we find a build plan that is attached to that exercise
-        final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
-
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         return ResponseEntity.ok().body(BuildPlanDTO.of(buildPlan));
     }
@@ -84,12 +73,11 @@ public class BuildPlanResource {
      * @return The updated build plan.
      */
     @PutMapping("programming-exercises/{exerciseId}/build-plan")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<BuildPlanDTO> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlanRequestDTO buildPlan) {
         log.debug("REST request to set build plan for programming exercise with id {}", exerciseId);
 
         final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         final BuildPlan createdBuildPlan = buildPlanRepository.setBuildPlanForExercise(buildPlan.buildPlan(), programmingExercise);
         programmingExerciseRepository.save(programmingExercise);

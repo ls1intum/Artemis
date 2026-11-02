@@ -53,7 +53,7 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
     private ModelingExercise modelingExercise;
 
     @BeforeEach
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         course = modelingExerciseUtilService.addEnrolledCourseWithOneModelingExercise("ClassDiagram", TEST_PREFIX);
@@ -62,7 +62,7 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateModelingExercise_createsExerciseVersion() throws Exception {
         // Arrange
         var now = ZonedDateTime.now();
@@ -84,7 +84,7 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateModelingExercise_createsExerciseVersion(boolean reEvaluate) throws Exception {
         // Arrange: Get existing exercise
         Long exerciseId = modelingExercise.getId();
@@ -118,7 +118,7 @@ class ModelingExerciseVersionIntegrationTest extends AbstractSpringIntegrationLo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportModelingExercise_createsExerciseVersion() throws Exception {
         // Arrange: Create target course
         Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);

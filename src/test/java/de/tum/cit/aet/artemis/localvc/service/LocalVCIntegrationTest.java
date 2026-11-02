@@ -401,7 +401,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     // TODO add test for force push over ssh, which should work
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testInstructorTriesToForcePushOverHttp() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 

@@ -1,6 +1,6 @@
-<ul class="list-group list-group-horizontal student-group">
+<ul class="flex list-none p-0 flex-row student-group">
     @for (student of students(); track student) {
-        <li class="list-group-item student-group-item" [class.has-error]="hasError(student)">
+        <li class="team-list-item border border-border px-3! py-2 student-group-item" [class.has-error]="hasError(student)">
             @if (renderLinks()) {
                 <a [routerLink]="['/admin', 'user-management', student.login]">{{ student.name }} </a>
             }

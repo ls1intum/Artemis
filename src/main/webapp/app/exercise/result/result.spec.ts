@@ -1,3 +1,4 @@
+import { TumAetUiDialogService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResultComponent } from 'app/exercise/result/result.component';
@@ -10,7 +11,7 @@ import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
@@ -22,7 +23,7 @@ import { ParticipationType } from 'app/exercise/shared/entities/participation/pa
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MissingResultInformation, ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { ResultProgressBarComponent } from 'app/exercise/result/result-progress-bar/result-progress-bar.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+
 import dayjs from 'dayjs/esm';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -72,13 +73,13 @@ describe('ResultComponent', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         })
             .overrideComponent(ResultComponent, {
-                remove: { imports: [ResultProgressBarComponent, ArtemisTranslatePipe, ArtemisTimeAgoPipe, ArtemisDatePipe, TranslateDirective, NgbTooltip] },
+                remove: { imports: [ResultProgressBarComponent, ArtemisTranslatePipe, ArtemisTimeAgoPipe, ArtemisDatePipe, TranslateDirective, TumAetUiTooltipDirective] },
                 add: {
                     imports: [
                         MockComponent(ResultProgressBarComponent),
@@ -86,7 +87,7 @@ describe('ResultComponent', () => {
                         MockPipe(ArtemisTimeAgoPipe),
                         MockPipe(ArtemisDatePipe),
                         MockDirective(TranslateDirective),
-                        MockDirective(NgbTooltip),
+                        MockDirective(TumAetUiTooltipDirective),
                     ],
                 },
             })

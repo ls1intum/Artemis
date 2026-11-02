@@ -838,7 +838,7 @@ describe('TextEditorComponent', () => {
 
             fixture.detectChanges();
 
-            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined);
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined, 'owner');
             expect(comp.participation()).toBe(loaded);
             expect(comp.submission().id).toBe(7);
             expect(comp.answer()).toBe('saved text');
@@ -871,7 +871,7 @@ describe('TextEditorComponent', () => {
             fixture.detectChanges();
 
             routeParams.next({ participationId: '42' });
-            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined);
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined, 'owner');
             expect(comp.participation().id).toBe(42);
             expect(comp.isReadOnlyWithShowResult()).toBe(false);
 
@@ -881,7 +881,7 @@ describe('TextEditorComponent', () => {
 
             // another participation
             routeParams.next({ participationId: '43' });
-            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(43, undefined);
+            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(43, undefined, 'owner');
             expect(comp.participation().id).toBe(43);
 
             // a selected submission
@@ -893,7 +893,7 @@ describe('TextEditorComponent', () => {
             // a selected result
             setRouteParams({ participationId: '43', submissionId: '7', resultId: '5' });
             routeParams.next({ participationId: '43' });
-            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(43, 5);
+            expect(getTextForParticipationStub).toHaveBeenLastCalledWith(43, 5, 'owner');
         });
 
         it('should reload the loaded participation when the route changes the submission without a participation id', () => {
@@ -906,7 +906,7 @@ describe('TextEditorComponent', () => {
             setRouteParams({ submissionId: '7' });
             routeParams.next({});
 
-            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined);
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, undefined, 'owner');
         });
 
         it('should load nothing when the route changes the submission but no participation is known', () => {
@@ -1024,7 +1024,7 @@ describe('TextEditorComponent', () => {
 
             participationSubject.next(withResults([athenaResult(true)]));
 
-            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, 5);
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, 5, 'owner');
             expect(comp.participation()).toBe(reloaded);
         });
 
@@ -1131,5 +1131,12 @@ describe('TextEditorComponent', () => {
             expect(emitted[0].language).toBe(Language.ENGLISH);
             subscription.unsubscribe();
         });
+    });
+    it.each(['owner', 'staff-preview'] as const)('dispatches the explicit %s editor purpose', (purpose) => {
+        fixture.componentRef.setInput('participationId', 42);
+        fixture.componentRef.setInput('viewingPurpose', purpose);
+        getTextForParticipationStub.mockReturnValue(of({ id: 42, exercise: textExercise, submissions: [{ id: 1, results: [{ id: 1 }] }] }));
+        fixture.detectChanges();
+        expect(getTextForParticipationStub).toHaveBeenCalledWith(42, undefined, purpose);
     });
 });
