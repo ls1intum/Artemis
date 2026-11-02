@@ -1,6 +1,6 @@
 import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, ElementRef, Renderer2, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Renderer2, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 
@@ -35,6 +35,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 })
 export class PdfPreviewThumbnailGridComponent {
     // Injected services
+    private readonly destroyRef = inject(DestroyRef);
     private readonly alertService = inject(AlertService);
     private readonly renderer = inject(Renderer2);
     private readonly pdfEngineService = inject(PdfEngineService);
@@ -73,6 +74,8 @@ export class PdfPreviewThumbnailGridComponent {
     protected readonly faEyeSlash = faEyeSlash;
     protected readonly faGripLines = faGripLines;
 
+    private renderGeneration = 0;
+
     constructor() {
         // Replaces the ngOnChanges 'orderedPages' branch: re-render the thumbnails whenever the ordered pages
         // change, unless the change originated from a local drag-and-drop reorder (the DOM is already in the new
@@ -104,8 +107,13 @@ export class PdfPreviewThumbnailGridComponent {
      */
     async renderPages(): Promise<void> {
         const pages = this.orderedPages();
+        const generation = ++this.renderGeneration;
+        const isCurrentRender = () => generation === this.renderGeneration && !this.destroyRef.destroyed;
         try {
             const engine = await this.pdfEngineService.getEngine();
+            if (!isCurrentRender()) {
+                return;
+            }
             const containerEl = this.pdfContainer().nativeElement;
             const canvases = containerEl.querySelectorAll<HTMLCanvasElement>('.pdf-canvas-container canvas');
             canvases.forEach((canvas: HTMLCanvasElement) => {
@@ -121,6 +129,10 @@ export class PdfPreviewThumbnailGridComponent {
                 const sourcePage = page.sourceDoc.pages[page.sourceIndex];
                 if (sourcePage) {
                     const imageData = await engine.renderPageRaw(page.sourceDoc, sourcePage, { scaleFactor: 1 }).toPromise();
+                    // A newer page list may already have cleared and redrawn these containers.
+                    if (!isCurrentRender()) {
+                        return;
+                    }
                     const canvas = this.createCanvas(imageData.width, imageData.height);
                     const context = canvas.getContext('2d')!;
                     context.putImageData(new ImageData(imageData.data, imageData.width, imageData.height), 0, 0);
@@ -141,7 +153,9 @@ export class PdfPreviewThumbnailGridComponent {
                 this.scrollToBottom();
             }
         } catch (error) {
-            onError(this.alertService, error);
+            if (isCurrentRender()) {
+                onError(this.alertService, error);
+            }
         }
     }
 
