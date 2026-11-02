@@ -570,7 +570,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 let errorMessage = 'artemisApp.modelingAssessmentEditor.messages.submitFailed';
                 if (isCreditsOutOfBounds(error)) {
                     errorMessage = FEEDBACK_CREDITS_OUT_OF_BOUNDS;
-                } else if (error.error && error.error.entityName && error.error.message) {
+                } else if (error.error?.entityName && error.error.message) {
                     errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
                 }
                 this.alertService.closeAll();
