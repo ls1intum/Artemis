@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,7 +19,12 @@ describe('PdfPreviewComponent', () => {
     let component: PdfPreviewComponent;
     let fixture: ComponentFixture<PdfPreviewComponent>;
     let engineService: MockPdfEngineService;
-    let attachmentVideoUnitService: { update: ReturnType<typeof vi.fn>; updateStudentVersion: ReturnType<typeof vi.fn>; getAttachmentFile: ReturnType<typeof vi.fn> };
+    let attachmentVideoUnitService: {
+        update: ReturnType<typeof vi.fn>;
+        updateStudentVersion: ReturnType<typeof vi.fn>;
+        getAttachmentFile: ReturnType<typeof vi.fn>;
+        findById: ReturnType<typeof vi.fn>;
+    };
     let lectureUnitService: { delete: ReturnType<typeof vi.fn> };
     let alertService: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
     let navigationUtilService: { navigateBack: ReturnType<typeof vi.fn> };
@@ -37,7 +42,7 @@ describe('PdfPreviewComponent', () => {
 
     beforeEach(async () => {
         engineService = new MockPdfEngineService();
-        attachmentVideoUnitService = { update: vi.fn(() => of({})), updateStudentVersion: vi.fn(() => of({})), getAttachmentFile: vi.fn(() => of(new Blob())) };
+        attachmentVideoUnitService = { update: vi.fn(() => of({})), updateStudentVersion: vi.fn(() => of({})), getAttachmentFile: vi.fn(() => of(new Blob())), findById: vi.fn() };
         lectureUnitService = { delete: vi.fn(() => of({})) };
         alertService = { error: vi.fn(), success: vi.fn(), addAlert: vi.fn() };
         navigationUtilService = { navigateBack: vi.fn() };
@@ -69,7 +74,10 @@ describe('PdfPreviewComponent', () => {
         component = fixture.componentInstance;
     });
 
-    afterEach(() => vi.restoreAllMocks());
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.useRealTimers();
+    });
 
     /** Loads the original 3-page document into the component via the engine. */
     async function loadOriginal(pageCount = 3): Promise<void> {
@@ -236,7 +244,6 @@ describe('PdfPreviewComponent', () => {
         const hidden = component.pageOrder()[0];
         expect(hidden.slideId).toMatch(/^temp_/);
         component.hidePages({ slideId: hidden.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
-        component.isFileChanged.set(true);
 
         await component.updateAttachmentWithFile();
 
@@ -246,6 +253,7 @@ describe('PdfPreviewComponent', () => {
         });
         expect(updateFormData.has('file')).toBe(true);
         expect(updateFormData.has('pageOrder')).toBe(true);
+        expect(updateFormData.has('hiddenPages')).toBe(true);
     });
 
     it('should replace the instructor PDF when its page content changes', async () => {
@@ -421,15 +429,17 @@ describe('PdfPreviewComponent', () => {
             expect(component.pageOrder()[1].sourceIndex).toBe(1);
         });
 
-        it('should open a video unit that carries no slides at all', async () => {
+        it.each([3, 34])('should show all %i PDF pages while slide metadata is unavailable', async (pageCount) => {
             // The response omits empty collections, so a unit whose slides were never extracted arrives without a
             // `slides` key. An attachment video unit created for an attachment that used to hang off a lecture
             // directly is permanently in that state, and the preview is where its file gets saved and its slides get
             // produced, so it has to open rather than throw.
             routeData = { attachmentVideoUnit: { id: 9, lecture: { id: 4 } } };
-            mockNextOpen('original', 3);
+            mockNextOpen('original', pageCount);
 
-            component.ngOnInit();
+            fixture.detectChanges();
+            // Blob conversion completes outside Angular's stability tracking.
+            await vi.waitFor(() => expect(component.pageOrder()).toHaveLength(pageCount));
             await fixture.whenStable();
 
             expect(component.attachmentVideoUnit()!.id).toBe(9);
@@ -437,8 +447,90 @@ describe('PdfPreviewComponent', () => {
             expect(component.isPdfLoading()).toBe(false);
             expect(component.initialHiddenPages()).toEqual({});
             // Without persisted slides the order is built from the document itself, so every page is a fresh one.
-            expect(component.pageOrder()).toHaveLength(3);
+            expect(component.pageOrder()).toHaveLength(pageCount);
             expect(component.pageOrder().every((page) => page.slideId.startsWith('temp_'))).toBe(true);
+        });
+
+        it('waits for current metadata before enabling edits and preserves hidden exercise links', async () => {
+            vi.useFakeTimers();
+            routeData = { attachmentVideoUnit: { id: 9, lecture: { id: 4 }, slideMetadataPending: true } };
+            attachmentVideoUnitService.findById.mockReturnValue(of(new HttpResponse({ body: routeData.attachmentVideoUnit })));
+            mockNextOpen('original', 3);
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(component.isPdfLoading()).toBe(true);
+            expect(attachmentVideoUnitService.getAttachmentFile).not.toHaveBeenCalled();
+            expect(component.pageOrder()).toEqual([]);
+
+            const hiddenDate = new Date('2099-01-01');
+            attachmentVideoUnitService.findById.mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            id: 9,
+                            lecture: { id: 4 },
+                            slideMetadataPending: false,
+                            slides: [
+                                { id: 11, slideNumber: 1 },
+                                { id: 12, slideNumber: 2, hidden: hiddenDate, exercise: { id: 77 } },
+                                { id: 13, slideNumber: 3 },
+                            ],
+                        },
+                    }),
+                ),
+            );
+            await vi.advanceTimersByTimeAsync(1000);
+
+            expect(component.isPdfLoading()).toBe(false);
+            expect(component.pageOrder().map((page) => page.slideId)).toEqual(['11', '12', '13']);
+            expect(component.hiddenPages()['12'].date.toISOString()).toBe(hiddenDate.toISOString());
+            expect(component.hiddenPages()['12'].exerciseId).toBe(77);
+            expect(attachmentVideoUnitService.getAttachmentFile).toHaveBeenCalledOnce();
+        });
+
+        it('stops refreshing pending metadata when the preview is destroyed', async () => {
+            vi.useFakeTimers();
+            routeData = { attachmentVideoUnit: { id: 9, lecture: { id: 4 }, slideMetadataPending: true } };
+            attachmentVideoUnitService.findById.mockReturnValue(of(new HttpResponse({ body: routeData.attachmentVideoUnit })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+            expect(attachmentVideoUnitService.findById).toHaveBeenCalledOnce();
+
+            fixture.destroy();
+            await vi.advanceTimersByTimeAsync(5000);
+
+            expect(attachmentVideoUnitService.findById).toHaveBeenCalledOnce();
+            expect(attachmentVideoUnitService.getAttachmentFile).not.toHaveBeenCalled();
+        });
+
+        it('reports metadata refresh errors without opening an editable stale deck', async () => {
+            vi.useFakeTimers();
+            routeData = { attachmentVideoUnit: { id: 9, lecture: { id: 4 }, slideMetadataPending: true } };
+            attachmentVideoUnitService.findById.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(component.isPdfLoading()).toBe(false);
+            expect(component.pageOrder()).toEqual([]);
+            expect(attachmentVideoUnitService.getAttachmentFile).not.toHaveBeenCalled();
+            expect(alertService.error).toHaveBeenCalledWith('error.http.403');
+        });
+
+        it('bounds metadata polling if processing never completes', async () => {
+            vi.useFakeTimers();
+            routeData = { attachmentVideoUnit: { id: 9, lecture: { id: 4 }, slideMetadataPending: true } };
+            attachmentVideoUnitService.findById.mockReturnValue(of(new HttpResponse({ body: routeData.attachmentVideoUnit })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(60_000);
+
+            expect(component.isPdfLoading()).toBe(false);
+            expect(component.pageOrder()).toEqual([]);
+            expect(attachmentVideoUnitService.getAttachmentFile).not.toHaveBeenCalled();
+            expect(alertService.addAlert).toHaveBeenCalledWith(expect.objectContaining({ message: 'Timeout has occurred' }));
+            const calls = attachmentVideoUnitService.findById.mock.calls.length;
+            await vi.advanceTimersByTimeAsync(5000);
+            expect(attachmentVideoUnitService.findById).toHaveBeenCalledTimes(calls);
         });
 
         it('should stop loading when the route resolves no video unit', async () => {

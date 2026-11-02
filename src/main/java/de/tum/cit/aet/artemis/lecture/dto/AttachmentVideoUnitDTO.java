@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime releaseDate, @Size(max = 1000) String description, String videoSource,
-        Set<CompetencyLinkDTO> competencyLinks, AttachmentDTO attachment, List<SlideDTO> slides, boolean completed, boolean visibleToStudents, LectureReferenceDTO lecture,
-        AttachmentUpdateIntent attachmentUpdateIntent, @JsonProperty("type") String type) implements LectureUnitDTO {
+        Set<CompetencyLinkDTO> competencyLinks, AttachmentDTO attachment, List<SlideDTO> slides, boolean slideMetadataPending, boolean completed, boolean visibleToStudents,
+        LectureReferenceDTO lecture, AttachmentUpdateIntent attachmentUpdateIntent, @JsonProperty("type") String type) implements LectureUnitDTO {
 
     public AttachmentVideoUnitDTO {
         type = "attachment";
@@ -68,14 +68,20 @@ public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime release
         Set<CompetencyLinkDTO> competencyLinks = unit.getCompetencyLinks() != null && Hibernate.isInitialized(unit.getCompetencyLinks())
                 ? unit.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())
                 : Set.of();
-        // The deck the unit shows, which is every slide it has that a later upload or page order has not superseded.
-        List<SlideDTO> slides = unit.getSlides() != null && Hibernate.isInitialized(unit.getSlides())
-                ? unit.getSlides().stream().filter(slide -> !slide.isSuperseded()).map(SlideDTO::from).toList()
+        var attachmentEntity = unit.getAttachment();
+        // Editor uploads keep the previous deck until asynchronous splitting reconciles its IDs and visibility.
+        // Tell the preview to wait, rather than editing the new PDF with old metadata or temporary IDs.
+        // Basic file replacements intentionally retire that deck and reset visibility; with no active slides, the preview can use its fully visible PDF fallback.
+        boolean slidesInitialized = unit.getSlides() != null && Hibernate.isInitialized(unit.getSlides());
+        boolean slideMetadataPending = attachmentEntity != null && slidesInitialized && unit.getSlides().stream().filter(slide -> !slide.isSuperseded())
+                .anyMatch(slide -> !slide.belongsToRevision(attachmentEntity.getVersion(), attachmentEntity.getSha256Hash()));
+        List<SlideDTO> slides = slidesInitialized ? unit.getSlides().stream().filter(slide -> !slide.isSuperseded())
+                .filter(slide -> attachmentEntity == null || slide.belongsToRevision(attachmentEntity.getVersion(), attachmentEntity.getSha256Hash())).map(SlideDTO::from).toList()
                 : List.of();
-        AttachmentDTO attachment = unit.getAttachment() != null ? AttachmentDTO.of(unit.getAttachment()) : null;
+        AttachmentDTO attachment = attachmentEntity != null ? AttachmentDTO.of(attachmentEntity) : null;
         // The PDF preview reads attachmentVideoUnit.lecture.id when saving/updating, so keep the lightweight lecture reference.
         LectureReferenceDTO lecture = LectureReferenceDTO.of(unit.getLecture());
         return new AttachmentVideoUnitDTO(unit.getId(), unit.getName(), unit.getReleaseDate(), unit.getDescription(), unit.getVideoSource(), competencyLinks, attachment, slides,
-                unit.isCompleted(), unit.isVisibleToStudents(), lecture, intent, unit.getType());
+                slideMetadataPending, unit.isCompleted(), unit.isVisibleToStudents(), lecture, intent, unit.getType());
     }
 }

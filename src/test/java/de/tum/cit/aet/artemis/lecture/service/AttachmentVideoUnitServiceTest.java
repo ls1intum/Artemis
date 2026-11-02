@@ -658,7 +658,7 @@ class AttachmentVideoUnitServiceTest {
     private static AttachmentVideoUnitDTO attachmentVideoUnitDTO(AttachmentVideoUnit unit, String name, ZonedDateTime releaseDate, String videoSource) {
         var current = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.NO_FILE_CHANGE);
         return new AttachmentVideoUnitDTO(current.id(), name, releaseDate, current.description(), videoSource, current.competencyLinks(), current.attachment(), current.slides(),
-                current.completed(), current.visibleToStudents(), current.lecture(), current.attachmentUpdateIntent(), current.type());
+                current.slideMetadataPending(), current.completed(), current.visibleToStudents(), current.lecture(), current.attachmentUpdateIntent(), current.type());
     }
 
     private static Attachment attachment() {

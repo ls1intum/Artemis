@@ -12,6 +12,8 @@ export class AttachmentVideoUnit extends LectureUnit {
     public description?: string;
     public attachment?: Attachment;
     public slides?: Slide[];
+    /** The previous PDF revision still owns the slide metadata while the replacement is being processed. */
+    public slideMetadataPending?: boolean;
     public videoSource?: string;
     public videoSourceType?: 'TUM_LIVE' | 'YOUTUBE' | null;
     public youtubeVideoId?: string | null;
