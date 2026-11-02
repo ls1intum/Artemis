@@ -323,7 +323,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testRejectsBlankContainerImage() throws Exception {
         var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
@@ -337,7 +337,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testAcceptsContainerWithoutImageAsInheriting() throws Exception {
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
 
