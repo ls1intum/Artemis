@@ -431,8 +431,9 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
 
     /**
      * Loads 20 more questions of the review queue. Decisions move questions behind the undecided ones in the server's order, so the
-     * queue reloads its whole range including the next 20 instead of asking for the page after the loaded ones; past the largest
-     * range one request may load, it appends the next page.
+     * queue reloads its whole range including the next 20 instead of asking for the page after the loaded ones. Past the largest range
+     * one request may load, it reloads that range while loaded questions are decided, which brings unseen undecided questions forward,
+     * and appends the next page once every loaded question is undecided, since the server's order then matches the loaded one.
      */
     loadMoreNeedsReview(): void {
         const courseId = this.courseId();
@@ -441,8 +442,14 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         }
         this.isLoadingMoreNeedsReview.set(true);
         const loaded = this.needsReviewQuestions().length;
-        const more =
-            loaded + PAGE_SIZE <= MAX_REFRESH_SIZE ? this.reloadNeedsReview(courseId, loaded + PAGE_SIZE) : this.appendNeedsReviewPage(courseId, Math.floor(loaded / PAGE_SIZE));
+        let more: Observable<unknown>;
+        if (loaded + PAGE_SIZE <= MAX_REFRESH_SIZE) {
+            more = this.reloadNeedsReview(courseId, loaded + PAGE_SIZE);
+        } else if (this.needsReviewQuestions().some((question) => question.reviewState !== 'PENDING')) {
+            more = this.reloadNeedsReview(courseId, MAX_REFRESH_SIZE);
+        } else {
+            more = this.appendNeedsReviewPage(courseId, Math.floor(loaded / PAGE_SIZE));
+        }
         more.pipe(
             finalize(() => this.isLoadingMoreNeedsReview.set(false)),
             takeUntilDestroyed(this.destroyRef),

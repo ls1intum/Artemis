@@ -255,6 +255,49 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.pendingInQueue()).toBe(20);
     });
 
+    it('should reach unseen undecided questions past the largest reloadable range', () => {
+        const all = Array.from({ length: 520 }, (_, index) => ({ ...question(index + 1, 9, 'Arrays'), flagged: true }));
+        const decided = new Set<number>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const questionsSpy = vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => {
+            if (!query.flagged) {
+                return of(page(questions()));
+            }
+            const ordered = [...all.filter((item) => !decided.has(item.id)), ...all.filter((item) => decided.has(item.id))].map((item) =>
+                decided.has(item.id) ? { ...item, reviewState: 'APPROVED' as const } : item,
+            );
+            return of({ ...page(ordered.slice(query.page * query.size, (query.page + 1) * query.size), 520), pendingCount: 520 - decided.size });
+        });
+        component.refresh();
+        while (component.needsReviewQuestions().length < 500) {
+            component.loadMoreNeedsReview();
+        }
+        for (const item of component.needsReviewQuestions().slice(0, 20)) {
+            decided.add(item.id);
+            vi.spyOn(poolService, 'review').mockReturnValue(of({ ...item, reviewState: 'APPROVED' }));
+            component.review({ questionId: item.id, reviewState: 'APPROVED' });
+        }
+
+        component.loadMoreNeedsReview();
+
+        expect(questionsSpy).toHaveBeenLastCalledWith(1, { flagged: true, page: 0, size: 500 });
+        expect(component.needsReviewQuestions().every((item) => item.reviewState === 'PENDING')).toBe(true);
+        expect(component.needsReviewQuestions().map((item) => item.id)).toContain(501);
+
+        component.loadMoreNeedsReview();
+
+        expect(questionsSpy).toHaveBeenLastCalledWith(1, { flagged: true, page: 25, size: 20 });
+        expect(component.needsReviewQuestions()).toHaveLength(520);
+        expect(
+            component
+                .needsReviewQuestions()
+                .slice(500)
+                .every((item) => item.reviewState === 'APPROVED'),
+        ).toBe(true);
+        expect(component.remainingNeedsReview()).toBe(0);
+        expect(component.pendingInQueue()).toBe(500);
+    });
+
     it('should recount the queue when a flagged question outside the loaded queue is reviewed', () => {
         const queued = { ...question(1, 9, 'Arrays'), flagged: true, reviewState: 'APPROVED' as const };
         const unloaded = { ...question(21, 9, 'Arrays'), flagged: true, reviewState: 'APPROVED' as const };
