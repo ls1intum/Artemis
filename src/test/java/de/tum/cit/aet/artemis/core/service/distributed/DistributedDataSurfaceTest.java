@@ -119,10 +119,14 @@ class DistributedDataSurfaceTest {
             MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class);
 
     /**
-     * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map} stores them polymorphically, so the
+     * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map-v2} stores them polymorphically, so the
      * walk cannot reach them from a declared type: the map is typed by the interface, and the shape that is encoded is
      * the concrete record's. They are discovered rather than listed so that a job added later is covered without
      * anyone remembering to come back here.
+     * <p>
+     * {@code GlobalSearchAnswerJob} gained {@code invocationId} together with the move from {@code pyris-job-map} to
+     * {@code pyris-job-map-v2}, so no build reads a job another build wrote with the other shape. Older entries in
+     * {@code pyris-job-map} are never read again. The upgrade stops all nodes first (see the PR's rollout notes).
      */
     private static final String PYRIS_JOB_PACKAGE = "de.tum.cit.aet.artemis.iris.service.pyris.job";
 
