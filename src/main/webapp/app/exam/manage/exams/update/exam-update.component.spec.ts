@@ -2,6 +2,7 @@ import { EmbeddedViewRef } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { of, throwError } from 'rxjs';
 import { Component } from '@angular/core';
 import { NgForm } from '@angular/forms';
@@ -78,6 +79,7 @@ describe('ExamUpdateComponent', () => {
     }
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.restoreAllMocks();
         projectedViews.splice(0).forEach((view) => view.destroy());
     });
@@ -315,6 +317,33 @@ describe('ExamUpdateComponent', () => {
                 }
                 renderWith({ examMaxPoints: 1 });
                 expect(shownMessage('max-points-low-error')).toBeUndefined();
+            });
+
+            it('should write the typed maximum points into the exam and explain a fractional or too high value', async () => {
+                fixture.detectChanges();
+                // the form registers its controls one microtask after the first change detection
+                await fixture.whenStable();
+                const input: HTMLInputElement = fixture.nativeElement.querySelector('input#examMaxPoints');
+                const shownError = (translationKey: string) => fixture.nativeElement.querySelector(`[jhiTranslate="${translationKey}"]`) !== null;
+
+                typeIntoInputNumber(input, '120');
+                fixture.detectChanges();
+                expect(component.exam.examMaxPoints).toBe(120);
+                expect(shownError('error.examMaxPointsWholeNumber')).toBe(false);
+                expect(shownError('error.examMaxPointsTooHigh')).toBe(false);
+
+                typeIntoInputNumber(input, '12.5');
+                fixture.detectChanges();
+                expect(component.exam.examMaxPoints).toBe(12.5);
+                expect(shownError('error.examMaxPointsWholeNumber')).toBe(true);
+
+                // the message is shown while the typed value exceeds the limit, before the field is left and clamps it
+                input.focus();
+                input.value = '10000';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                fixture.detectChanges();
+                expect(component.exam.examMaxPoints).toBe(10000);
+                expect(shownError('error.examMaxPointsTooHigh')).toBe(true);
             });
 
             it('should explain a number of exercises below 1 but accept an empty one', () => {
@@ -916,11 +945,14 @@ describe('ExamUpdateComponent', () => {
             expect(button?.disabled).toBe(false);
         });
 
-        it('should toggle save button disabled state based on form validity and configuration validity', () => {
+        it.each(['2026-10-25T00:30:45Z', '2026-10-25T01:30:45Z'])('should toggle save button disabled state based on form validity and configuration validity at %s', (instant) => {
+            vi.useFakeTimers({ toFake: ['Date'] });
+            vi.setSystemTime(new Date(instant));
+            // Keep initial and restored dates relative to the same anchor across clock changes.
             const now = dayjs().startOf('minute');
-            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
-            examWithoutExercises.startDate = dayjs().add(2, 'hours');
-            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.visibleDate = now.add(1, 'hours');
+            examWithoutExercises.startDate = now.add(2, 'hours');
+            examWithoutExercises.endDate = now.add(3, 'hours');
             examWithoutExercises.workingTime = 3600;
 
             fixture.changeDetectorRef.detectChanges();
@@ -1185,6 +1217,7 @@ describe('ExamUpdateComponent', () => {
         examForImport.publishResultsDate = timeNow.add(1, 'days');
         examForImport.examStudentReviewStart = timeNow.add(2, 'days');
         examForImport.examStudentReviewEnd = timeNow.add(3, 'days');
+        examForImport.exampleSolutionPublicationDate = timeNow.add(4, 'days');
         examForImport.numberOfCorrectionRoundsInExam = 2;
         examForImport.startText = 'Hello World';
         examForImport.endText = 'Goodbye World';

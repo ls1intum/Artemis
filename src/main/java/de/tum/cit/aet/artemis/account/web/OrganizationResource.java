@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
@@ -48,7 +48,7 @@ public class OrganizationResource {
      * @return ResponseEntity containing a set of organizations containing the given course
      */
     @GetMapping("organizations/courses/{courseId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<Set<OrganizationDTO>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all organizations of course : {}", courseId);
         Set<Organization> organizations = organizationRepository.findAllOrganizationsByCourseId(courseId);

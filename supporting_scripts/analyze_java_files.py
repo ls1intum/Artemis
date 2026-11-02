@@ -294,7 +294,7 @@ Examples:
         '--event-type',
         type=str,
         default='push',
-        choices=['push', 'pull_request'],
+        choices=['push', 'pull_request', 'workflow_dispatch', 'merge_group', 'release'],
         help='GitHub event type (default: push)'
     )
     parser.add_argument(

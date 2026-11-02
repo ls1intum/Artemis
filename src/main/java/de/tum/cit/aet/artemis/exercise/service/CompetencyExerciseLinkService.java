@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -37,6 +38,29 @@ public class CompetencyExerciseLinkService {
     public CompetencyExerciseLinkService(Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<CompetencyRelationApi> competencyRelationApi) {
         this.competencyRepositoryApi = competencyRepositoryApi;
         this.competencyRelationApi = competencyRelationApi;
+    }
+
+    /**
+     * Builds unmanaged references for creation and import; later service validation checks course ownership.
+     *
+     * @param dto        submitted competency links
+     * @param exercise   owner of the new links
+     * @param entityName entity name used in request validation errors
+     * @return new links referencing the submitted competency identifiers
+     */
+    public static Set<CompetencyExerciseLink> toTransientLinks(CompetencyLinksHolderDTO dto, Exercise exercise, String entityName) {
+        Set<CompetencyExerciseLink> links = new HashSet<>();
+        if (dto.competencyLinks() != null) {
+            for (var link : dto.competencyLinks()) {
+                if (link == null || link.competency() == null) {
+                    throw new BadRequestAlertException("Each competency link must include a competency.", entityName, "competencyIdMissing");
+                }
+                Competency reference = new Competency();
+                reference.setId(link.competency().id());
+                links.add(new CompetencyExerciseLink(reference, exercise, link.weight()));
+            }
+        }
+        return links;
     }
 
     /**

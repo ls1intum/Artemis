@@ -1,8 +1,7 @@
 import { NgOptimizedImage } from '@angular/common';
 import { Component, OnInit, Signal, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import { MODULE_FEATURE_PASSKEY, addPublicFilePrefix } from 'app/app.constants';
+import { MODULE_FEATURE_AGENT_ACCESS, MODULE_FEATURE_PASSKEY, addPublicFilePrefix } from 'app/app.constants';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -10,8 +9,7 @@ import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DataGuard } from 'app/account/user/settings/data-guard.service';
-import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { insightsSectionAvailable, isAtlasModuleActive, isIrisModuleActive } from 'app/account/user/settings/learner-profile/learner-profile-availability';
+import { isAtlasModuleActive } from 'app/account/user/settings/learner-profile/learner-profile-availability';
 import { TumAetUiListComponent, TumAetUiListItemActionDirective, TumAetUiListItemDirective } from '@tumaet/ui-angular';
 
 /**
@@ -27,7 +25,6 @@ export class UserSettingsContainerComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
     private readonly dataGuard = inject(DataGuard);
-    private readonly featureToggleService = inject(FeatureToggleService);
 
     protected readonly faUser = faUser;
 
@@ -39,6 +36,9 @@ export class UserSettingsContainerComponent implements OnInit {
     readonly currentUser: Signal<User | undefined> = this.accountService.userIdentity;
 
     readonly isPasskeyEnabled = signal(false);
+    readonly isAgentAccessEnabled = signal(false);
+    // Tokens can be created only by editors and instructors, so the tab is hidden for everybody else, as the server rejects them.
+    readonly showAgentAccess = computed(() => this.isAgentAccessEnabled() && this.accountService.mayCreateAgentTokens());
     // Derived for the same reason: isAtLeastTutor reads userIdentity, so the computed re-evaluates
     // whenever the identity changes.
     readonly isAtLeastTutor = computed(() => this.accountService.isAtLeastTutor());
@@ -47,17 +47,14 @@ export class UserSettingsContainerComponent implements OnInit {
     // When atlas is disabled the science-settings endpoint does not exist, so the tab must be hidden instead of opening
     // an empty page (issue #13173).
     readonly isAtlasEnabled = signal(false);
-    // The learner profile composes sections from the atlas and the iris module, so its tab needs at least one of them.
-    // The module state is read into signals in ngOnInit rather than from inside the computed, which may only read
-    // signals; insightsSectionAvailable is shared with the page and its route guard.
-    private readonly isIrisEnabled = signal(false);
-    private readonly isMemirisEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.Memiris), { requireSync: true });
-    readonly isLearnerProfileEnabled = computed(() => this.isAtlasEnabled() || insightsSectionAvailable(this.isIrisEnabled(), this.isMemirisEnabled()));
+    // The learner profile is served by the atlas module, so its tab needs it. The module state is read into a signal in
+    // ngOnInit rather than from inside the computed, which may only read signals.
+    readonly isLearnerProfileEnabled = computed(() => this.isAtlasEnabled());
 
     ngOnInit() {
         this.isPasskeyEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY));
+        this.isAgentAccessEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_AGENT_ACCESS));
         this.isAtlasEnabled.set(isAtlasModuleActive(this.profileService));
-        this.isIrisEnabled.set(isIrisModuleActive(this.profileService));
 
         this.isAiEnabled.set(this.dataGuard.isUsingLLM());
     }

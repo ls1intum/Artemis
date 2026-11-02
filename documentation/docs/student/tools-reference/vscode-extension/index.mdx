@@ -1,0 +1,66 @@
+---
+id: index
+title: Artemis in VS Code
+sidebar_label: VS Code Extension
+---
+
+import Callout from "../../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
+import TumLiveVideo from "../../../../src/components/TumLiveVideo/TumLiveVideo";
+
+The Artemis extension for Visual Studio Code shows your courses, programming exercises and Iris inside the editor.
+You can open an exercise, clone it, submit it and read the test results without switching to the browser, and ask
+Iris about the code you are working on.
+
+Only programming exercises are worked on in the editor. Text, modeling, quiz and file upload exercises appear in the
+course lists too, but you complete them in Artemis in the browser.
+
+The following video walks through the whole guide: installing, signing in, working on an exercise and Iris.
+
+<TumLiveVideo src="81346" title="Artemis Extension for VS Code" />
+
+## Where the Extension Runs
+
+| Environment | How you get it | What differs |
+|---|---|---|
+| VS Code on your computer | Install **Artemis - TUM** from the VS Code Marketplace | Everything on these pages applies |
+| VSCodium and other editors that use Open VSX | Install **Artemis - TUM** from Open VSX | No proactive help from Iris, no getting-started walkthrough |
+| EduIDE in the browser | Already installed | You are signed in and your exercise is open when the workspace starts; no proactive help |
+
+The extension needs VS Code 1.93 or newer and an Artemis server running version 9.9.0 or newer. On an older server it
+still signs you in, but course contents do not load, and it says so in a warning after sign-in.
+
+## Installing the Extension
+
+1. Open the **Extensions** view in VS Code.
+2. Search for **Artemis - TUM** and select **Install**.
+3. Select the Artemis icon that appears in the activity bar on the left.
+
+On a fresh installation VS Code also opens the walkthrough **Get Started with Artemis**. It covers choosing the
+server, signing in, picking a folder for your exercises and opening Iris. These pages describe the same steps, so you
+can close it if you prefer.
+
+<Callout variant={CalloutVariant.info}>
+
+  The extension adds two icons to the activity bar: **Artemis** for your courses and exercises, and **Iris Chat**
+  for the tutor. The Iris Chat icon appears once you are signed in.
+
+</Callout>
+
+## In This Section
+
+| Page | Description |
+|------|-------------|
+| [Signing In](/student/tools-reference/vscode-extension/sign-in) | Choosing the Artemis server, signing in with a password or single sign-on, signing out |
+| [Courses and Exercises](/student/tools-reference/vscode-extension/courses-and-exercises) | The dashboard, the course list, a course and an exercise, and starting an exercise |
+| [Working on an Exercise](/student/tools-reference/vscode-extension/work-on-an-exercise) | Cloning, submitting, test results, build errors and the Submission Setup checklist |
+| [Iris in VS Code](/student/tools-reference/vscode-extension/iris) | The chat, topics and conversations, and proactive help |
+| [Settings and Commands](/student/tools-reference/vscode-extension/settings-and-commands) | Every setting and command, the connection status and what to do when something does not work |
+
+## Related
+
+- [Programming Exercises](/student/exercises/programming-exercise) describes the exercise itself, independent of the
+  editor you use.
+- [Integrated Code Lifecycle](/student/tools-reference/integrated-code-lifecycle) covers your repository, cloning it by
+  hand and the access tokens the extension uses for you.
+- [Iris](/student/learning-content/iris) describes the tutor and the AI choice you make in Artemis.

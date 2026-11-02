@@ -105,6 +105,15 @@ class RateLimitConfigurationServiceTest {
     }
 
     @Test
+    void testGetEffectiveRpm_OnlineResourceFetch_UsesTheCustomValueOrTheDefault() {
+        when(properties.getOnlineResourceFetchRequestsPerMinute()).thenReturn(12);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.ONLINE_RESOURCE_FETCH)).isEqualTo(12);
+
+        when(properties.getOnlineResourceFetchRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.ONLINE_RESOURCE_FETCH)).isEqualTo(RateLimitType.ONLINE_RESOURCE_FETCH.getDefaultRpm());
+    }
+
+    @Test
     void testGetEffectiveRpm_ContentSearch_UsesTheCustomValueOrTheDefault() {
         when(properties.getContentSearchRequestsPerMinute()).thenReturn(40);
         assertThat(configurationService.getEffectiveRpm(RateLimitType.CONTENT_SEARCH)).isEqualTo(40);

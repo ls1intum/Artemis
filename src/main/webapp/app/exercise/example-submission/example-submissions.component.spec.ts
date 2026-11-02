@@ -1,9 +1,10 @@
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+
 import { Subject, of, throwError } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -23,11 +24,11 @@ describe('Example Submission Component', () => {
     let component: ExampleSubmissionsComponent;
     let fixture: ComponentFixture<ExampleSubmissionsComponent>;
     let exampleSubmissionService: ExampleSubmissionService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let alertService: AlertService;
     let exercise: Exercise;
     let dialogCloseSubject: Subject<Submission | undefined>;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
 
     const createExercise = (): Exercise => ({
         id: 1,
@@ -45,14 +46,14 @@ describe('Example Submission Component', () => {
         dialogRef = {
             close: vi.fn(),
             onClose: dialogCloseSubject.asObservable(),
-        } as unknown as DynamicDialogRef;
+        } as unknown as TumAetUiDialogRef;
 
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: DialogService, useValue: { open: vi.fn().mockReturnValue(dialogRef) } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn().mockReturnValue(dialogRef) } },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -64,7 +65,7 @@ describe('Example Submission Component', () => {
         fixture = TestBed.createComponent(ExampleSubmissionsComponent);
         component = fixture.componentInstance;
         exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         alertService = TestBed.inject(AlertService);
     });
 

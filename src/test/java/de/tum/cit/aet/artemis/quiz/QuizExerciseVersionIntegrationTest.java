@@ -54,7 +54,7 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateQuizExercise_createsExerciseVersion() throws Exception {
         QuizExercise createdExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
 
@@ -64,7 +64,7 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateQuizExerciseForExam_createsExerciseVersion() throws Exception {
         QuizExercise createdExercise = createQuizOnServerForExam();
 
@@ -74,7 +74,7 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testImportQuizExercise_createsExerciseVersion() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
@@ -93,7 +93,7 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpdateQuizExercise_createsExerciseVersion() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().filter(question -> !(question instanceof DragAndDropQuestion)).toList());
@@ -127,7 +127,7 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
 
     @ParameterizedTest
     @EnumSource(value = QuizAction.class, names = { "START_NOW", "END_NOW", "SET_VISIBLE" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPerformActionForQuizExercise_createsExerciseVersion(QuizAction action) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         switch (action) {

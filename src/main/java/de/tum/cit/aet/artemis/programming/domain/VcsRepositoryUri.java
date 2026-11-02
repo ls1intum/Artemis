@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -17,9 +18,6 @@ public class VcsRepositoryUri {
 
     /** A trailing slash of a repository path. */
     private static final Pattern TRAILING_SLASH = Pattern.compile("/$");
-
-    /** The scm prefix of a repository path. */
-    private static final Pattern SCM_PREFIX = Pattern.compile("^/.*scm");
 
     /** Everything before the git path segment of a repository path. */
     private static final Pattern PREFIX_BEFORE_GIT = Pattern.compile("^.*?/git/");
@@ -128,12 +126,40 @@ public class VcsRepositoryUri {
             // remove .git (which might be used at the end)
             path = GIT_SUFFIX.matcher(path).replaceAll("");
             path = TRAILING_SLASH.matcher(path).replaceAll("");
-            path = SCM_PREFIX.matcher(path).replaceAll("");
             path = PREFIX_BEFORE_GIT.matcher(path).replaceAll("/");
             path = LEADING_SLASH.matcher(path).replaceFirst("");
 
             return path;
         }
+    }
+
+    /**
+     * Resolves the folder of this repository below the given directory.
+     *
+     * @param directory the directory that holds the folders of all repositories
+     * @return the normalized path of the folder of this repository
+     * @throws IllegalArgumentException if the folder is the directory itself or does not lie below it
+     * @see #resolveBelow(Path, String)
+     */
+    public Path resolveFolderBelow(Path directory) {
+        return resolveBelow(directory, folderNameForRepositoryUri());
+    }
+
+    /**
+     * Resolves a folder name below the given directory. The folder has to lie strictly below the directory: neither the directory itself nor a path outside of it is accepted.
+     *
+     * @param directory  the directory that holds the folders of all repositories
+     * @param folderName the name of the folder, relative to the directory
+     * @return the normalized path of the folder
+     * @throws IllegalArgumentException if the folder is the directory itself or does not lie below it
+     */
+    public static Path resolveBelow(Path directory, String folderName) {
+        Path normalizedDirectory = directory.normalize();
+        Path folder = normalizedDirectory.resolve(folderName).normalize();
+        if (folder.equals(normalizedDirectory) || !folder.startsWith(normalizedDirectory)) {
+            throw new IllegalArgumentException("Invalid path: " + folder);
+        }
+        return folder;
     }
 
     /**

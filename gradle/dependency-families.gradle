@@ -280,10 +280,12 @@ tasks.register('verifyDependencyFamilies') {
  * in the root `buildscript { configurations.classpath { resolutionStrategy { force ... } } }` block of build.gradle,
  * where nothing else notices if the force is dropped or lowered. Keep each entry equal to the matching `force`.
  *
+ *   * com.google.guava:guava - plugin dependencies resolve 33.7.1-jre, affected by CVE-2026-102554.
  *   * org.jsoup:jsoup - org.owasp.dependencycheck (dependency-check-core 13.0.0) resolves 1.23.1, which is affected
  *     by CVE-2026-75140. The shipped WAR declares 1.23.2 directly.
  */
 def buildscriptClasspathMinimums = [
+    'com.google.guava:guava': '33.7.2-jre',
     'org.jsoup:jsoup': '1.23.2',
 ]
 

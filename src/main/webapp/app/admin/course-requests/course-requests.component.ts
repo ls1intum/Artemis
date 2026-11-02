@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -42,6 +43,7 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
     templateUrl: './course-requests.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        NgTemplateOutlet,
         TranslateDirective,
         ArtemisTranslatePipe,
         ArtemisDatePipe,

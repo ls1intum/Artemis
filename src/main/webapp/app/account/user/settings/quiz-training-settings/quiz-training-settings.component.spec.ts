@@ -5,13 +5,11 @@ import { By } from '@angular/platform-browser';
 import { firstValueFrom, of, throwError } from 'rxjs';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { QuizTrainingSettingsComponent } from './quiz-training-settings.component';
-import { QuizTrainingSettingsService } from 'app/account/user/settings/quiz-training-settings/quiz-training-settings.service';
+import { QuizTrainingApi } from 'app/openapi/api/quiz-training-api';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import * as globalUtils from 'app/foundation/util/global.utils';
-import { HttpResponse } from '@angular/common/http';
-import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -21,15 +19,15 @@ describe('QuizTrainingSettingsComponent', () => {
     let fixture: ComponentFixture<QuizTrainingSettingsComponent>;
     let alertService: AlertService;
 
-    const mockService = {
-        getSettings: vi.fn(),
-        updateSettings: vi.fn(),
+    const mockApi = {
+        getLeaderboardSettings: vi.fn(),
+        updateLeaderboardSettings: vi.fn(),
     };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FormsModule, QuizTrainingSettingsComponent, MockDirective(TranslateDirective), MockComponent(HelpIconComponent)],
-            providers: [{ provide: QuizTrainingSettingsService, useValue: mockService }, MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [{ provide: QuizTrainingApi, useValue: mockApi }, MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
             schemas: [CUSTOM_ELEMENTS_SCHEMA],
         }).compileComponents();
 
@@ -47,33 +45,30 @@ describe('QuizTrainingSettingsComponent', () => {
     };
 
     it('should load leaderboard settings on init', async () => {
-        mockService.getSettings.mockReturnValue(of(new HttpResponse({ body: mockSettingsResponse })));
+        mockApi.getLeaderboardSettings.mockReturnValue(of(mockSettingsResponse));
 
         component.ngOnInit();
-        await firstValueFrom(mockService.getSettings());
+        await firstValueFrom(mockApi.getLeaderboardSettings());
 
-        expect(mockService.getSettings).toHaveBeenCalled();
+        expect(mockApi.getLeaderboardSettings).toHaveBeenCalled();
         expect(component.isVisibleInLeaderboard()).toBe(true);
     });
 
     it('should update leaderboard settings when toggled', async () => {
-        mockService.updateSettings.mockReturnValue(of({}));
+        mockApi.updateLeaderboardSettings.mockReturnValue(of({}));
         vi.spyOn(alertService, 'success');
 
         component.onLeaderboardVisibilityChange(true);
-        await firstValueFrom(mockService.updateSettings());
+        await firstValueFrom(mockApi.updateLeaderboardSettings());
 
-        const expectedDto = new LeaderboardSettingsDTO();
-        expectedDto.showInLeaderboard = true;
-
-        expect(mockService.updateSettings).toHaveBeenCalledWith(expectedDto);
+        expect(mockApi.updateLeaderboardSettings).toHaveBeenCalledWith({ showInLeaderboard: true });
         expect(alertService.success).toHaveBeenCalledWith('artemisApp.userSettings.quizTrainingSettings.updateSuccess');
     });
 
     it('should handle error when updating settings', async () => {
         const error = new Error('Update failed');
         vi.spyOn(globalUtils, 'onError');
-        mockService.updateSettings.mockReturnValue(throwError(() => error));
+        mockApi.updateLeaderboardSettings.mockReturnValue(throwError(() => error));
 
         component.onLeaderboardVisibilityChange(true);
         await vi.waitFor(() => {
@@ -82,10 +77,10 @@ describe('QuizTrainingSettingsComponent', () => {
     });
 
     it('should display toggle when settings are loaded', async () => {
-        mockService.getSettings.mockReturnValue(of(new HttpResponse({ body: mockSettingsResponse })));
+        mockApi.getLeaderboardSettings.mockReturnValue(of(mockSettingsResponse));
 
         component.ngOnInit();
-        await firstValueFrom(mockService.getSettings());
+        await firstValueFrom(mockApi.getLeaderboardSettings());
         fixture.detectChanges();
 
         const toggleElement = fixture.debugElement.query(By.css('#leaderboardVisibilityToggle'));
@@ -94,10 +89,10 @@ describe('QuizTrainingSettingsComponent', () => {
     });
 
     it('should display info message when no settings are available', async () => {
-        mockService.getSettings.mockReturnValue(of(new HttpResponse({ body: null })));
+        mockApi.getLeaderboardSettings.mockReturnValue(of({}));
 
         component.ngOnInit();
-        await firstValueFrom(mockService.getSettings());
+        await firstValueFrom(mockApi.getLeaderboardSettings());
         fixture.detectChanges();
 
         const infoMessage = fixture.debugElement.query(By.css('tumaet-ui-message'));
@@ -106,11 +101,11 @@ describe('QuizTrainingSettingsComponent', () => {
     });
 
     it('should save the new visibility when the toggle is changed', async () => {
-        mockService.getSettings.mockReturnValue(of(new HttpResponse({ body: mockSettingsResponse })));
-        mockService.updateSettings.mockReturnValue(of({}));
+        mockApi.getLeaderboardSettings.mockReturnValue(of(mockSettingsResponse));
+        mockApi.updateLeaderboardSettings.mockReturnValue(of({}));
 
         component.ngOnInit();
-        await firstValueFrom(mockService.getSettings());
+        await firstValueFrom(mockApi.getLeaderboardSettings());
         fixture.detectChanges();
 
         // ngModel writes the initial value in a microtask, so let it settle before toggling it off again.
@@ -121,18 +116,18 @@ describe('QuizTrainingSettingsComponent', () => {
         const toggleElement = fixture.debugElement.query(By.css('#leaderboardVisibilityToggle'));
 
         toggleElement.nativeElement.click();
-        await firstValueFrom(mockService.updateSettings());
+        await firstValueFrom(mockApi.updateLeaderboardSettings());
 
         expect(spy).toHaveBeenCalledWith(false);
-        expect(mockService.updateSettings).toHaveBeenCalled();
+        expect(mockApi.updateLeaderboardSettings).toHaveBeenCalled();
     });
 
     it('should correctly reflect changes in isVisibleInLeaderboard', async () => {
-        mockService.getSettings.mockReturnValue(of(new HttpResponse({ body: mockSettingsResponse })));
-        mockService.updateSettings.mockReturnValue(of({}));
+        mockApi.getLeaderboardSettings.mockReturnValue(of(mockSettingsResponse));
+        mockApi.updateLeaderboardSettings.mockReturnValue(of({}));
 
         component.ngOnInit();
-        await firstValueFrom(mockService.getSettings());
+        await firstValueFrom(mockApi.getLeaderboardSettings());
         fixture.detectChanges();
 
         const toggleElement = fixture.debugElement.query(By.css('#leaderboardVisibilityToggle'));

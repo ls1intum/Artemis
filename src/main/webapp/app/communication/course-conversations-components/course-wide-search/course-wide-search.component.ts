@@ -1,3 +1,4 @@
+import { PostPageRequestState } from 'app/communication/course-conversations-components/post-page-request-state';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewEncapsulation, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -39,6 +40,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     readonly messages = viewChildren<ElementRef>('postingThread');
     readonly messages$ = toObservable(this.messages);
     readonly content = viewChild<ElementRef>('container');
+    private readonly resultContent = viewChild<ElementRef<HTMLElement>>('resultContent');
 
     readonly openThread = output<Post>();
 
@@ -57,18 +59,57 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     readonly SortDirection = SortDirection;
     readonly onNavigateToPost = output<Posting>();
-    readonly sortingOrder = signal(SortDirection.ASCENDING);
+    // The list shows the oldest message of a page at the top and starts at its end, so the newest page is requested first.
+    readonly sortingOrder = signal(SortDirection.DESCENDING);
 
     private ngUnsubscribe = new Subject<void>();
     readonly isFetchingPosts = signal(true);
     readonly totalNumberOfPosts = signal(0);
     readonly posts = signal<Post[]>([]);
     private allConversationIds: number[] = [];
-    private pendingPageScrollDistance: number | undefined;
-    private preserveScrollOnNextPage = false;
-    private postRequestId = 0;
+    private readonly postPageRequest = new PostPageRequestState();
     private initialScrollPositioned = false;
     private scrollFrame: number | undefined;
+    private resizeObserver?: ResizeObserver;
+    // The list starts at its end, but images load after that and push the newest messages out of view, so the end is held
+    // until the user scrolls themselves.
+    private holdsEnd = false;
+    private readonly scrollInputEvents = ['wheel', 'touchmove', 'pointerdown', 'keydown'] as const;
+    /** Release the end for scrolling input, leaving ordinary message interaction and editing alone. */
+    private readonly releaseEnd = (event: Event) => {
+        if (event.defaultPrevented) return;
+        if (event.type === 'keydown') {
+            const key = (event as KeyboardEvent).key;
+            const target = event.target instanceof HTMLElement ? event.target : undefined;
+            if (
+                !['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(key) ||
+                target?.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])') ||
+                (key === ' ' && target?.closest('button, [role="button"]'))
+            ) {
+                return;
+            }
+        } else if (event.type === 'pointerdown') {
+            const container = this.content()?.nativeElement;
+            if (!container || event.target !== container) return;
+            const pointer = event as PointerEvent;
+            const bounds = container.getBoundingClientRect();
+            const contentLeft = bounds.left + container.clientLeft;
+            const contentRight = contentLeft + container.clientWidth;
+            const inScrollbar = pointer.clientX >= bounds.left && pointer.clientX < bounds.right && (pointer.clientX < contentLeft || pointer.clientX >= contentRight);
+            if (pointer.button !== 0 || pointer.clientY < bounds.top || pointer.clientY >= bounds.bottom || !inScrollbar) return;
+        } else if (event.type === 'wheel' && (event as WheelEvent).ctrlKey) {
+            return;
+        }
+        this.holdsEnd = false;
+        // Reader input establishes their own position even if the initial positioning frame has not run yet.
+        this.initialScrollPositioned = true;
+    };
+    /** Keep the newest result visible through delayed layout changes until the reader takes over. */
+    private readonly onContentLoaded = () => {
+        if (this.holdsEnd && !this.isFetchingPosts() && this.postPageRequest.pendingScrollDistance === undefined) {
+            this.scrollToBottomOfMessages();
+        }
+    };
     page = 1;
 
     formGroup!: FormGroup; // set in resetFormGroup() from ngOnInit()
@@ -82,13 +123,31 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.fetchPosts(true);
     }
 
+    /** Observe content growth and reader input separately so layout changes preserve the initial end anchor. */
     ngAfterViewInit() {
         this.messages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
+        const container = this.content()?.nativeElement;
+        // load events do not bubble, so they are caught on their way down to the image
+        container?.addEventListener('load', this.onContentLoaded, true);
+        this.scrollInputEvents.forEach((eventName) => container?.addEventListener(eventName, this.releaseEnd, { passive: true }));
+        const resultContent = this.resultContent()?.nativeElement;
+        if (container && resultContent) {
+            // Rows can grow after their first render, without an image load event. Keep the newest result visible
+            // through those changes and viewport resizing until the reader deliberately scrolls away.
+            this.resizeObserver = new ResizeObserver(this.onContentLoaded);
+            this.resizeObserver.observe(container);
+            this.resizeObserver.observe(resultContent);
+        }
     }
 
+    /** Invalidate pending results and remove layout observers, frames and input listeners owned by this view. */
     ngOnDestroy() {
-        this.postRequestId++;
+        this.postPageRequest.invalidate();
+        this.resizeObserver?.disconnect();
         if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
+        const container = this.content()?.nativeElement;
+        container?.removeEventListener('load', this.onContentLoaded, true);
+        this.scrollInputEvents.forEach((eventName) => container?.removeEventListener(eventName, this.releaseEnd));
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
@@ -99,6 +158,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     private subscribeToPosts() {
         this.communicationService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
+            if (this.currentPostContextFilter?.filterToUnresolved) {
+                // Filters the posts if the unresolved filter is active so that the post is removed from the list when it is resolved, but the post itself doesn't get closed.
+                posts = posts.filter((post) => post.resolved === false);
+            }
             this.setPosts(posts);
         });
         this.communicationService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
@@ -113,6 +176,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.posts.set(posts.slice().reverse());
     }
 
+    /** Position the initial newest page; after reader input preserve its distance when older results are prepended. */
     handleScrollOnNewMessage = () => {
         if (this.isFetchingPosts() || this.posts().length === 0 || !this.content()) return;
         if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
@@ -120,11 +184,14 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             this.scrollFrame = undefined;
             const element = this.content()?.nativeElement;
             if (!element) return;
-            if (this.pendingPageScrollDistance !== undefined) {
-                element.scrollTop = element.scrollHeight - this.pendingPageScrollDistance;
-                this.pendingPageScrollDistance = undefined;
-            } else if (!this.initialScrollPositioned) {
+            // Initial positioning and an end the reader has not released take precedence over automatic prefetch.
+            if (!this.initialScrollPositioned || this.holdsEnd) {
+                this.postPageRequest.pendingScrollDistance = undefined;
                 this.scrollToBottomOfMessages();
+                this.holdsEnd = true;
+            } else if (this.postPageRequest.pendingScrollDistance !== undefined) {
+                element.scrollTop = element.scrollHeight - this.postPageRequest.pendingScrollDistance;
+                this.postPageRequest.pendingScrollDistance = undefined;
             }
             this.initialScrollPositioned = true;
         });
@@ -137,7 +204,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     fetchNextPage() {
         if (this.isFetchingPosts() || this.posts().length >= this.totalNumberOfPosts()) return;
-        this.preserveScrollOnNextPage = true;
+        this.postPageRequest.preserveScrollOnNextPage = true;
         const previousPage = this.page;
         this.page += 1;
         this.fetchPosts(false, previousPage);
@@ -147,28 +214,23 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.refreshConversationPostContextFilter();
         if (this.currentPostContextFilter) {
             this.isFetchingPosts.set(true);
-            const requestId = ++this.postRequestId;
-            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, undefined, {
-                beforeApply: () => {
-                    if (requestId !== this.postRequestId || !this.preserveScrollOnNextPage) return;
-                    // Capture only for the requested response, after any reader movement and intervening live updates.
-                    const element = this.content()?.nativeElement;
-                    this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
-                    this.preserveScrollOnNextPage = false;
-                },
-                complete: (applied) => {
-                    if (requestId !== this.postRequestId) return;
-                    this.isFetchingPosts.set(false);
-                    this.preserveScrollOnNextPage = false;
-                    if (!applied) {
-                        this.page = previousPage;
-                        this.pendingPageScrollDistance = undefined;
-                    }
-                    if (applied) {
-                        this.handleScrollOnNewMessage();
-                    }
-                },
-            });
+            this.communicationService.getFilteredPosts(
+                this.currentPostContextFilter,
+                forceUpdate,
+                undefined,
+                this.postPageRequest.callbacks(
+                    () => this.content()?.nativeElement,
+                    (applied) => {
+                        this.isFetchingPosts.set(false);
+                        if (!applied) {
+                            this.page = previousPage;
+                        }
+                        if (applied) {
+                            this.handleScrollOnNewMessage();
+                        }
+                    },
+                ),
+            );
         }
     }
 
@@ -210,8 +272,8 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.scrollFrame = undefined;
         this.page = 1;
         this.initialScrollPositioned = false;
-        this.pendingPageScrollDistance = undefined;
-        this.preserveScrollOnNextPage = false;
+        this.postPageRequest.pendingScrollDistance = undefined;
+        this.postPageRequest.preserveScrollOnNextPage = false;
         this.fetchPosts(true);
     }
 
@@ -276,5 +338,5 @@ export class CourseWideSearchConfig {
     filterToUnresolved = false;
     filterToAnsweredOrReacted = false;
     filterToUnverifiedIris = false;
-    sortingOrder = SortDirection.ASCENDING;
+    sortingOrder = SortDirection.DESCENDING;
 }

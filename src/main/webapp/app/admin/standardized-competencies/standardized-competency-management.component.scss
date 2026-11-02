@@ -15,16 +15,6 @@
     overflow-y: auto;
 }
 
-.draggable-left {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 15px;
-    cursor: col-resize;
-    z-index: 10;
-    flex-shrink: 0;
-}
-
 .detail-content {
     flex: 1;
     min-width: 0;

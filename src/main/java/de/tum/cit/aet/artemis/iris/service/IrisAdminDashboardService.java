@@ -356,6 +356,24 @@ public class IrisAdminDashboardService {
 
     // -- Sessions time-series ---------------------------------------------------
 
+    private record SessionCounts(long total, long active) {
+    }
+
+    private SessionCounts countSessions(List<Object[]> rows, Instant bucketStart, Instant bucketEnd) {
+        long total = 0;
+        long active = 0;
+        for (Object[] row : rows) {
+            Instant creationDate = toInstant(row[1]);
+            if (!creationDate.isBefore(bucketStart) && creationDate.isBefore(bucketEnd)) {
+                total++;
+                if (((Number) row[3]).intValue() == 1) {
+                    active++;
+                }
+            }
+        }
+        return new SessionCounts(total, active);
+    }
+
     private List<IrisDashboardTimeSeriesEntryDTO> computeSessionsTimeSeries(Instant from, Instant to, List<Instant> buckets, String aiSelection) {
         List<Object[]> rows = dashboardRepository.findSessionsWithMode(from, to, aiSelection);
         List<IrisDashboardTimeSeriesEntryDTO> entries = new ArrayList<>();
@@ -363,21 +381,10 @@ public class IrisAdminDashboardService {
         for (int i = 0; i < buckets.size(); i++) {
             Instant bucketStart = buckets.get(i);
             Instant bucketEnd = nextBucketStart(bucketStart, buckets, i, to);
-            long total = 0;
-            long active = 0;
-            for (Object[] row : rows) {
-                Instant creationDate = toInstant(row[1]);
-                if (!creationDate.isBefore(bucketStart) && creationDate.isBefore(bucketEnd)) {
-                    total++;
-                    int hasUserMessage = ((Number) row[3]).intValue();
-                    if (hasUserMessage == 1) {
-                        active++;
-                    }
-                }
-            }
+            SessionCounts counts = countSessions(rows, bucketStart, bucketEnd);
             Map<String, Double> series = new LinkedHashMap<>();
-            series.put("total", (double) total);
-            series.put("active", (double) active);
+            series.put("total", (double) counts.total());
+            series.put("active", (double) counts.active());
             entries.add(new IrisDashboardTimeSeriesEntryDTO(bucketStart, series));
         }
         return entries;
@@ -549,23 +556,12 @@ public class IrisAdminDashboardService {
         for (int i = 0; i < buckets.size(); i++) {
             Instant bucketStart = buckets.get(i);
             Instant bucketEnd = nextBucketStart(bucketStart, buckets, i, to);
-            long total = 0;
-            long active = 0;
-            for (Object[] row : rows) {
-                Instant creationDate = toInstant(row[1]);
-                if (!creationDate.isBefore(bucketStart) && creationDate.isBefore(bucketEnd)) {
-                    total++;
-                    int hasUserMessage = ((Number) row[3]).intValue();
-                    if (hasUserMessage == 1) {
-                        active++;
-                    }
-                }
-            }
-            double rate = total > 0 ? (double) active / total * 100.0 : 0.0;
+            SessionCounts counts = countSessions(rows, bucketStart, bucketEnd);
+            double rate = counts.total() > 0 ? (double) counts.active() / counts.total() * 100.0 : 0.0;
             Map<String, Double> series = new LinkedHashMap<>();
             series.put("rate", rate);
-            series.put("activeSessions", (double) active);
-            series.put("totalSessions", (double) total);
+            series.put("activeSessions", (double) counts.active());
+            series.put("totalSessions", (double) counts.total());
             entries.add(new IrisDashboardTimeSeriesEntryDTO(bucketStart, series));
         }
         return entries;

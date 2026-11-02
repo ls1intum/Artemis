@@ -255,6 +255,11 @@ Only the following abstract base test classes are permitted to define context-af
    the reset above: a bean counts as reset when the class declaring it reads it in an `@AfterEach` method, or in one
    named `resetSpyBeans`. A spy declared with `reset = MockReset.NONE` is exempt.
 
+Scheduled tasks that replace shared fixture state need the same isolation. The LocalCI test contexts
+defer the Docker image cleanup-info refresh using its interval and initial-delay properties. Tests
+call `pushDockerImageCleanupInfo()` directly when verifying it, so a background refresh cannot erase
+a cleanup-map fixture between setup and its assertions.
+
 ### Why This Matters
 
 Each additional Spring context causes:

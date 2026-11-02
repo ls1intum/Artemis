@@ -260,7 +260,6 @@ public class PublicAccountResource {
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
         userDTO.setSelectedLLMUsage(userAiPreferenceService.findDecision(user.getId()));
         userDTO.setSelectedLLMUsageTimestamp(userAiPreferenceService.findDecisionDate(user.getId()));
-        userDTO.setMemirisEnabled(userAiPreferenceService.isMemirisEnabled(user.getId()));
         userDTO.setVcsAccessToken(userVcsAccessTokenService.findToken(user.getId()));
         userDTO.setVcsAccessTokenExpiryDate(userVcsAccessTokenService.findExpiryDate(user.getId()));
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);

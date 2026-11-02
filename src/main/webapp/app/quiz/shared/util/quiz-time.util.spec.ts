@@ -1,5 +1,6 @@
+import dayjs from 'dayjs/esm';
 import { describe, expect, it } from 'vitest';
-import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
+import { formatQuizRelativeTime, quizCountdown } from 'app/quiz/shared/util/quiz-time.util';
 
 describe('formatQuizRelativeTime', () => {
     it('should format long durations in days', () => {
@@ -22,9 +23,26 @@ describe('formatQuizRelativeTime', () => {
         expect(formatQuizRelativeTime(210)).toBe('3 min 30 s');
         expect(formatQuizRelativeTime(209)).toBe('3 min 29 s');
         expect(formatQuizRelativeTime(250)).toBe('5 min');
+        expect(formatQuizRelativeTime(220)).toBe('4 min');
+        expect(formatQuizRelativeTime(130)).toBe('2 min 10 s');
+        expect(formatQuizRelativeTime(50)).toBe('50 s');
         expect(formatQuizRelativeTime(60)).toBe('1 min 0 s');
         expect(formatQuizRelativeTime(59)).toBe('59 s');
         expect(formatQuizRelativeTime(125)).toBe('2 min 5 s');
         expect(formatQuizRelativeTime(45)).toBe('45 s');
+    });
+});
+
+describe('quiz countdown', () => {
+    const now = dayjs('2026-10-19T10:00:00Z');
+    it('keeps submission enabled while the deadline is unknown', () => {
+        expect(quizCountdown(undefined, now, 'Ended')).toEqual({ seconds: 0, text: '?' });
+    });
+    it('marks a deadline at the current instant as ended', () => {
+        expect(quizCountdown(now, now, 'Ended')).toEqual({ seconds: -1, text: 'Ended' });
+        expect(quizCountdown(now.subtract(1, 'second'), now, 'Ended')).toEqual({ seconds: -1, text: 'Ended' });
+    });
+    it('formats the remaining seconds before the deadline', () => {
+        expect(quizCountdown(now.add(125, 'second'), now, 'Ended')).toEqual({ seconds: 125, text: '2 min 5 s' });
     });
 });

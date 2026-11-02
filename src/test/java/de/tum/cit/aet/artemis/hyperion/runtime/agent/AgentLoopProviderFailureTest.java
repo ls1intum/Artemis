@@ -19,6 +19,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.DefaultUsage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -29,6 +32,10 @@ import com.openai.errors.BadRequestException;
 import com.openai.errors.InternalServerException;
 import com.openai.errors.OpenAIIoException;
 import com.openai.errors.RateLimitException;
+
+import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
+import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.WorkerUsageRecorder;
 
 class AgentLoopProviderFailureTest {
 
@@ -57,6 +64,38 @@ class AgentLoopProviderFailureTest {
         verify(model).call(any(Prompt.class));
         verify(usage).markUncertain();
         verify(usage, never()).accept(any(ChatResponse.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "server", "missing", "accounting" })
+    void failedAccountingStopsAreErrorsRatherThanUserCancellations(String failure) {
+        ChatModel model = mock(ChatModel.class);
+        List<ProviderUsageUpdate> updates = new ArrayList<>();
+        var usage = new WorkerUsageRecorder(1000, 1, true, update -> {
+            updates.add(update);
+            if (failure.equals("accounting") && update.kind() == ProviderUsageUpdate.Kind.RESPONSE) {
+                throw new IllegalStateException("accounting delivery failed");
+            }
+        });
+        if (failure.equals("server")) {
+            when(model.call(any(Prompt.class))).thenThrow(serverError(500));
+        }
+        else if (failure.equals("accounting")) {
+            var metadata = ChatResponseMetadata.builder().model("model").usage(new DefaultUsage(10, 2)).build();
+            when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("completed"))), metadata));
+        }
+
+        var session = runner(model).runTextSession("system", List.of(new UserMessage("earlier")), "brief", 4, usage::shouldStopAuthoring, usage, null);
+
+        assertThat(usage.shouldStopAuthoring()).isTrue();
+        assertThat(usage.accountingState()).isEqualTo(GenerationOutput.AccountingState.INCOMPLETE);
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(session.result().turns()).isOne();
+        assertThat(session.conversation()).extracting(message -> message.getText()).containsExactly("earlier", "brief");
+        verify(model).call(any(Prompt.class));
+        if (!failure.equals("accounting")) {
+            assertThat(updates).filteredOn(update -> update.kind() == ProviderUsageUpdate.Kind.UNCERTAIN).hasSize(1);
+        }
     }
 
     @Test

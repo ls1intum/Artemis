@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, ElementRef, OnDestroy, booleanAttribute, computed, effect, inject, input, numberAttribute } from '@angular/core';
+import { ComponentRef, Directive, ElementRef, OnDestroy, TemplateRef, booleanAttribute, computed, effect, inject, input, numberAttribute } from '@angular/core';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { FlexibleConnectedPositionStrategy, OverlayRef } from '@angular/cdk/overlay';
 import { Subscription, fromEvent } from 'rxjs';
@@ -31,7 +31,7 @@ export class TumAetUiTooltipDirective implements OnDestroy {
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
     /** A plain hint, or several items to render as a bulleted list. */
-    readonly content = input.required<string | readonly string[]>({ alias: 'tumAetUiTooltip' });
+    readonly content = input.required<string | readonly string[] | TemplateRef<unknown> | undefined>({ alias: 'tumAetUiTooltip' });
     readonly placement = input<TumAetUiOverlayPlacement>('top', { alias: 'tumAetUiTooltipPlacement' });
     /**
      * Whether the tooltip adds itself to the host's `aria-describedby` while open. Turn this off on a host that is
@@ -41,10 +41,14 @@ export class TumAetUiTooltipDirective implements OnDestroy {
     readonly showDelayMs = input(150, { transform: numberAttribute });
     readonly hideDelayMs = input(100, { transform: numberAttribute });
 
-    private readonly text = computed(() => (Array.isArray(this.content()) ? '' : (this.content() as string)));
+    private readonly text = computed(() => (typeof this.content() === 'string' ? (this.content() as string) : ''));
+    private readonly template = computed(() => {
+        const content = this.content();
+        return content instanceof TemplateRef ? content : undefined;
+    });
     private readonly items = computed(() => (Array.isArray(this.content()) ? (this.content() as readonly string[]) : []));
     // An empty array is truthy, so emptiness has to be asked of the normalised forms rather than of the input.
-    private readonly isEmpty = computed(() => !this.text() && this.items().length === 0);
+    private readonly isEmpty = computed(() => !this.text() && this.items().length === 0 && !this.template());
 
     private overlayRef?: OverlayRef;
     private contentRef?: ComponentRef<TumAetUiTooltipContentComponent>;
@@ -63,11 +67,11 @@ export class TumAetUiTooltipDirective implements OnDestroy {
     constructor() {
         effect(() => {
             // Read content unconditionally so changes remain tracked while the tooltip is hidden.
-            const [text, items, isEmpty] = [this.text(), this.items(), this.isEmpty()];
+            const [text, items, template, isEmpty] = [this.text(), this.items(), this.template(), this.isEmpty()];
             if (isEmpty) {
                 this.hideNow();
             } else if (this.contentRef) {
-                setInputs(this.contentRef, { text, items });
+                setInputs(this.contentRef, { text, items, template });
             }
         });
     }
@@ -154,22 +158,37 @@ export class TumAetUiTooltipDirective implements OnDestroy {
             this.updateArrowOffset();
         });
         this.contentRef = this.overlayRef.attach(new ComponentPortal(TumAetUiTooltipContentComponent));
-        setInputs(this.contentRef, { text: this.text(), items: this.items(), id: this.tooltipId, placement: this.appliedPlacement });
+        setInputs(this.contentRef, { text: this.text(), items: this.items(), template: this.template(), id: this.tooltipId, placement: this.appliedPlacement });
         this.updateArrowOffset();
         const contentElement = this.contentRef.location.nativeElement as HTMLElement;
+        // Hints contain no interactive controls. Let clicks reach covered controls even when a wrapped toolbar
+        // places the bubble above another button; track geometric hover below to keep the hint hoverable.
+        this.overlayRef.overlayElement.style.pointerEvents = 'none';
+        contentElement.style.pointerEvents = 'none';
         this.interactionSub = new Subscription();
         this.interactionSub.add(
-            fromEvent(contentElement, 'mouseenter').subscribe(() => {
-                this.tooltipHovered = true;
-                clearTimeout(this.hideTimer);
+            fromEvent<PointerEvent>(this.elementRef.nativeElement.ownerDocument, 'pointermove').subscribe((event) => {
+                const rect = contentElement.getBoundingClientRect();
+                const hovered = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+                if (hovered === this.tooltipHovered) return;
+                this.tooltipHovered = hovered;
+                if (hovered) {
+                    clearTimeout(this.hideTimer);
+                } else {
+                    this.scheduleHideIfInactive();
+                }
             }),
         );
         this.interactionSub.add(
-            fromEvent(contentElement, 'mouseleave').subscribe(() => {
+            fromEvent(this.elementRef.nativeElement.ownerDocument, 'pointerleave').subscribe(() => {
+                this.triggerHovered = false;
                 this.tooltipHovered = false;
                 this.scheduleHideIfInactive();
             }),
         );
+        const view = this.elementRef.nativeElement.ownerDocument.defaultView;
+        if (view) this.interactionSub.add(fromEvent(view, 'blur').subscribe(() => this.hideNow()));
+        this.interactionSub.add(fromEvent(this.elementRef.nativeElement.ownerDocument, 'pointerdown').subscribe(() => this.hideNow()));
         this.interactionSub.add(
             this.overlayRef.keydownEvents().subscribe((event) => {
                 if (event.key === 'Escape') {

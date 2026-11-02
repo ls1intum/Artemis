@@ -86,7 +86,7 @@ class PyrisStatusUpdateServiceTest {
     @EnumSource(PyrisRunState.class)
     void chatJobLifecycleUsesRunState(PyrisRunState runState) {
         var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
-        var statusUpdate = new PyrisChatStatusUpdateDTO(null, runState, null, null, null, null, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, runState, null, null, null, null);
         when(irisChatSessionService.handleStatusUpdate(job, statusUpdate)).thenReturn(job);
 
         service.handleStatusUpdate(job, statusUpdate);
@@ -314,8 +314,8 @@ class PyrisStatusUpdateServiceTest {
     @Test
     void nullRunStateIsTreatedAsFailedTerminalForEveryStatusUpdateType() {
         var chatJob = new ChatJob("chat-null", 1L, 2L, 3L, null, null, null);
-        var chatUpdate = new PyrisChatStatusUpdateDTO("answer", null, null, null, null, null, null, null);
-        var normalizedChatUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.FAILED, null, null, null, null, null, null, null, null, null, null);
+        var chatUpdate = new PyrisChatStatusUpdateDTO("answer", null, null, null, null, null);
+        var normalizedChatUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.FAILED, null, null, null, null, null, null, null, null);
         when(irisChatSessionService.handleStatusUpdate(chatJob, normalizedChatUpdate)).thenReturn(chatJob);
 
         service.handleStatusUpdate(chatJob, chatUpdate);

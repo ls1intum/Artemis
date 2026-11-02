@@ -22,6 +22,11 @@ on:
         description: 'Whether TUM AET UI or its application integration changed.'
         required: true
         type: boolean
+      check_test_types:
+        description: 'Keep strict test TypeScript compilation on the public runner while draft test execution is deferred.'
+        required: false
+        type: boolean
+        default: false
 
 permissions: {}  # default-deny; each job grants only what it needs
 
@@ -44,13 +49,13 @@ jobs:
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup Java
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
           # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - name: Java Code Style
         run: ./gradlew spotlessCheck
       - name: Java Documentation
@@ -147,6 +152,10 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Compile TypeScript Files With Typechecking
         run: pnpm run compile
+      - name: Compile TypeScript Test Files With Typechecking
+        if: inputs.check_test_types
+        # `compile` already ran prebuild; reuse those outputs without building the UI package twice.
+        run: pnpm exec tsc --project config/client/tsconfig.spec.json
       - name: Compile Artemis With TUM AET UI Source
         run: pnpm run tum-aet-ui:source:check:prepared
         if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
@@ -205,7 +214,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.14'
       - name: Check LOC and number of class dependencies
@@ -248,7 +257,7 @@ jobs:
           # match the style jobs and exercise exactly the tree Build/Test do.
           ref: ${{ inputs.commit_sha }}
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.14'
       - name: Query quality check

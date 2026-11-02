@@ -58,7 +58,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     private int sshPort;
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPushCommandWithoutSession() {
 
         // this command arrives at the ssh server if you would manually push from the command line
@@ -70,7 +70,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDirectlyAuthenticateOverSsh() throws IOException, GeneralSecurityException {
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -111,7 +111,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAuthenticationFailureBecauseKeyHasExpired() throws IOException, GeneralSecurityException {
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -137,7 +137,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
      * account state rather than from the key.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAuthenticationFailureBecauseTheAccountIsDeactivated() throws IOException, GeneralSecurityException {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
@@ -163,7 +163,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
      * account is the state an administrator leaves behind when removing a user, and it must close the SSH path too.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAuthenticationFailureBecauseTheAccountIsSoftDeleted() throws IOException, GeneralSecurityException {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
@@ -197,7 +197,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAuthenticationFailure() {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = generateKeyPair();
@@ -214,7 +214,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testConnectOverSshAndReceivePack() throws IOException, GeneralSecurityException {
         try (var client = clientConnectToArtemisSshServer()) {
             assertThat(client).isNotNull();
@@ -249,7 +249,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSshGitCommand_testsRepo_handlesEmptyParticipationGracefully() throws IOException, GeneralSecurityException {
         try (var client = clientConnectToArtemisSshServer()) {
             assertThat(client).isNotNull();

@@ -30,7 +30,7 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
                     map((exerciseGroup: HttpResponse<ExerciseGroup>) => new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup.body || undefined)),
                 );
             } else {
-                return this.courseService.find(route.params['courseId']).pipe(
+                return this.courseService.findForManagement(route.params['courseId']).pipe(
                     filter((res) => !!res.body),
                     map((course: HttpResponse<Course>) => new ModelingExercise(UMLDiagramType.ClassDiagram, course.body || undefined, undefined)),
                 );

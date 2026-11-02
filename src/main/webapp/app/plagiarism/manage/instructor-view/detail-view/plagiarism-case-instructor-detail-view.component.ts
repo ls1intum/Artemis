@@ -1,20 +1,20 @@
+import { PlagiarismCaseHeaderComponent } from 'app/plagiarism/shared/case-header/plagiarism-case-header.component';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
-import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase, PlagiarismCaseVerdictResponse } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { PageType } from 'app/communication/communication.util';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faInfo, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { abbreviateString } from 'app/foundation/util/text.utils';
 import { AccountService } from 'app/core/auth/account.service';
@@ -53,8 +53,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     styleUrls: ['./plagiarism-case-instructor-detail-view.component.scss'],
     providers: [CommunicationService, CourseConversationsService, LinkPreviewService, LinkifyService],
     imports: [
+        PlagiarismCaseHeaderComponent,
         TranslateDirective,
-        PlagiarismCaseVerdictComponent,
         FaIconComponent,
         RouterLink,
         NgbDropdown,
@@ -98,8 +98,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     activeTab = 1;
 
     getExerciseUrlSegment = getExerciseUrlSegment;
-    getIcon = getIcon;
-    faUser = faUser;
     faPrint = faPrint;
     faInfo = faInfo;
     faCheck = faCheck;

@@ -42,6 +42,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -154,6 +155,9 @@ class LocalCIResultProcessingServiceTest {
     private ResultProcessingPermit resultProcessingPermit;
 
     @Mock
+    private ResultProcessingPermit followUpProcessingPermit;
+
+    @Mock
     private BuildResult buildResult;
 
     private LocalCIResultProcessingService resultProcessingService;
@@ -180,7 +184,7 @@ class LocalCIResultProcessingServiceTest {
         participation.setProgrammingExercise(exercise);
         lenient().when(distributedDataAccessService.getDistributedBuildResultQueue()).thenReturn(resultQueue);
         lenient().when(programmingExerciseDeletionService.tryAdmitResultProcessing(EXERCISE_ID)).thenReturn(Optional.of(resultProcessingPermit));
-        lenient().when(programmingExerciseDeletionService.awaitResultProcessing(EXERCISE_ID)).thenReturn(resultProcessingPermit);
+        lenient().when(programmingExerciseDeletionService.awaitResultProcessing(EXERCISE_ID)).thenReturn(followUpProcessingPermit);
         lenient().when(programmingExerciseRepository.existsById(EXERCISE_ID)).thenReturn(true);
         lenient().when(distributedDataAccessService.getDistributedDeferredBuildResultQueue()).thenReturn(deferredResultQueue);
     }
@@ -499,7 +503,14 @@ class LocalCIResultProcessingServiceTest {
     }
 
     @Test
-    void deferredResultIsGradedWhenTheExerciseRemainsAfterDeletionFails() {
+    void deferredResultIsGradedWhenTheExerciseRemainsAfterDeletionFails() throws InterruptedException {
+        var permitClosures = new CountDownLatch(2);
+        Answer<Void> recordPermitClosure = invocation -> {
+            permitClosures.countDown();
+            return null;
+        };
+        doAnswer(recordPermitClosure).when(resultProcessingPermit).close();
+        doAnswer(recordPermitClosure).when(followUpProcessingPermit).close();
         ResultQueueItem item = new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null);
         when(deferredResultQueue.poll()).thenReturn(item);
         withParticipation();
@@ -508,8 +519,10 @@ class LocalCIResultProcessingServiceTest {
 
         resultProcessingService.processDeferredResultAsync();
 
+        assertThat(permitClosures.await(5, TimeUnit.SECONDS)).as("result processing and its asynchronous build-statistics follow-up both release their permits").isTrue();
         verify(programmingExerciseGradingService).processNewProgrammingExerciseResult(participation, buildResult, false);
         verify(resultProcessingPermit).close();
+        verify(followUpProcessingPermit).close();
         verify(deferredResultQueue, never()).add(any());
     }
 

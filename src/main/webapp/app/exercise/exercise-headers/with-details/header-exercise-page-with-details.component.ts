@@ -1,3 +1,5 @@
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
@@ -16,8 +18,8 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NgClass } from '@angular/common';
+
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { IncludedInScoreBadgeComponent } from '../included-in-score-badge/included-in-score-badge.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -30,8 +32,9 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
     templateUrl: './header-exercise-page-with-details.component.html',
     styleUrls: ['./header-exercise-page-with-details.component.scss'],
     imports: [
+        TumAetUiTooltipDirective,
+        NgTemplateOutlet,
         FaIconComponent,
-        NgbTooltip,
         ExerciseCategoriesComponent,
         NgClass,
         IncludedInScoreBadgeComponent,
@@ -142,7 +145,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
 
         const dueDate = this.dueDate();
         if (dueDate) {
-            this.dueDateStatusBadge.set(dayjs().isBefore(dueDate) ? 'bg-success' : 'bg-danger');
+            this.dueDateStatusBadge.set(dayjs().isBefore(dueDate) ? 'bg-state-success' : 'bg-state-danger');
         }
     }
 
@@ -185,7 +188,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
             if (dates[i] && now.isBefore(dates[i])) {
                 this.nextRelevantDate.set(dates[i]);
                 this.nextRelevantDateLabel.set(dateLabels[i]);
-                this.nextRelevantDateStatusBadge.set('bg-success');
+                this.nextRelevantDateStatusBadge.set('bg-state-success');
                 return;
             }
         }
@@ -201,7 +204,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
 
                 this.nextRelevantDate.set(dates[i]);
                 this.nextRelevantDateLabel.set(dateLabels[i]);
-                this.nextRelevantDateStatusBadge.set('bg-danger');
+                this.nextRelevantDateStatusBadge.set('bg-state-danger');
                 return;
             }
         }

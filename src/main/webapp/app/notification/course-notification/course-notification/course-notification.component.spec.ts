@@ -340,6 +340,30 @@ describe('CourseNotificationComponent rendering translated content', () => {
         expect((await renderContent('exerciseUpdatedNotification', { exerciseTitle: 'Essay on sorting' })).textContent).toBe('Essay on sorting was updated.');
         expect((await renderContent('attachmentChangedNotification', { unitName: 'Sorting algorithms' })).textContent).toBe('An attachment in Sorting algorithms changed.');
     });
+    // The course title reaches the translation as courseName for every notification type. The channel notifications once used courseTitle,
+    // which nothing supplies, so the user saw the placeholder itself.
+    it.each([
+        ['addedToChannelNotification', 'You were added to general in Test Course.'],
+        ['removedFromChannelNotification', 'You were removed from general in Test Course.'],
+        ['channelDeletedNotification', 'general was deleted in Test Course.'],
+    ])('should show the course title in the English content of %s', async (notificationType, expectedContent) => {
+        const content = await renderContent(notificationType, { channelName: 'general' });
+
+        expect(content.textContent).toBe(expectedContent);
+    });
+
+    it.each([
+        ['addedToChannelNotification', 'Du bist general in Test Course beigetreten.'],
+        ['removedFromChannelNotification', 'Du wurdest aus general in Test Course entfernt.'],
+        ['channelDeletedNotification', 'general wurde in Test Course gelöscht.'],
+    ])('should show the course title in the German content of %s', async (notificationType, expectedContent) => {
+        TestBed.inject(TranslateService).use('de');
+
+        const content = await renderContent(notificationType, { channelName: 'general' });
+
+        expect(content.textContent).toBe(expectedContent);
+    });
+
     it.each([
         'newPostNotification',
         'newAnswerNotification',

@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { faBan, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,7 +22,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-manage-assessment-buttons',
     templateUrl: './manage-assessment-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, RouterLink, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ManageAssessmentButtonsComponent implements OnInit {
     private programmingAssessmentManualResultService = inject(ProgrammingAssessmentManualResultService);

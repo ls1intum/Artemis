@@ -10,7 +10,7 @@ import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { Router } from '@angular/router';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
@@ -43,6 +43,19 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     // Icons
     farBookmark = farBookmark;
     faBookmark = faBookmark;
+
+    protected openDropdownAt(event: MouseEvent): void {
+        this.dropdownPosition.set({ x: event.clientX, y: event.clientY });
+        this.showDropdown.set(true);
+        this.adjustDropdownPosition();
+    }
+
+    adjustDropdownPosition(): void {
+        const dropdownWidth = 200;
+        if (this.dropdownPosition().x + dropdownWidth > window.innerWidth) {
+            this.dropdownPosition.update((position) => cloneWith(position, { x: window.innerWidth - dropdownWidth - 10 }));
+        }
+    }
 
     ngOnInit(): void {
         this.content = this.posting()?.content;

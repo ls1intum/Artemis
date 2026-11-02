@@ -9,12 +9,13 @@ import { FormsModule } from '@angular/forms';
 import { TestCasePassedBuildsChartComponent } from 'app/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Tooltip } from 'primeng/tooltip';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
     selector: 'jhi-programming-exercise-task',
     templateUrl: './programming-exercise-task.component.html',
     styleUrls: ['../programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.scss'],
-    imports: [FaIconComponent, FormsModule, TestCasePassedBuildsChartComponent, ArtemisTranslatePipe, Tooltip],
+    imports: [FaIconComponent, FormsModule, TestCasePassedBuildsChartComponent, ArtemisTranslatePipe, Tooltip, PointsInputComponent],
 })
 export class ProgrammingExerciseTaskComponent implements OnInit {
     private programmingExerciseTaskService = inject(ProgrammingExerciseTaskService);
@@ -71,9 +72,8 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
             if (task.bonusMultiplier !== undefined) {
                 testCase.bonusMultiplier = task.bonusMultiplier;
             }
-            if (task.bonusPoints !== undefined) {
-                testCase.bonusPoints = task.bonusPoints / testCasesAmount;
-            }
+            // An emptied field has no value, which means no bonus: the tests lose theirs as well.
+            testCase.bonusPoints = (task.bonusPoints ?? 0) / testCasesAmount;
             if (task.visibility !== undefined) {
                 testCase.visibility = task.visibility;
             }

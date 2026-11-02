@@ -1,6 +1,6 @@
 <!-- As high as the title bar, so the page keeps as much room for its content as it can, also on small screens. -->
 <div class="lecture-edit-footer-bar mx-auto flex w-full max-w-4xl items-center gap-2 px-3.5 sm:px-6">
-    <div class="flex min-w-0 grow items-center gap-x-3 text-sm" aria-live="polite">
+    <div class="flex min-w-0 grow items-center gap-x-4! text-sm" aria-live="polite">
         @if (isSaving()) {
             <span class="min-w-0 truncate font-semibold" jhiTranslate="artemisApp.lecture.editFooter.saving" data-testid="lecture-edit-footer-status"></span>
         } @else if (hasChanges() || hasUnsavedContent()) {

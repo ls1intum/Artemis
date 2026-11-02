@@ -27,7 +27,7 @@ async function setUpPresentationNavigation() {
         of(new HttpResponse({ body: [42, 43].map((id) => ({ id, title: `Course ${courseId}`, courseId, exerciseId: 7, instances: [] })) })),
     );
     const create = vi.fn().mockReturnValue(of(new HttpResponse({ body: { id: 43 } })));
-    const getTitlesForCourse = vi.fn(() => of([]));
+    const getTitlesForCourseForStaff = vi.fn(() => of([]));
     const routes = presentationRoutes(courseManagementRoutes);
     expect(routes).toHaveLength(1);
     // Keep the real route data and component; isolate authorization and the surrounding course shell.
@@ -36,7 +36,7 @@ async function setUpPresentationNavigation() {
             provideRouter([{ path: 'course-management/:courseId', children: routes.map((route) => ({ ...route, canActivate: [], resolve: {} })) }]),
             { provide: RouteReuseStrategy, useClass: ArtemisRouteReuseStrategy },
             { provide: PresentationAssessmentService, useValue: { findAllByCourseId, create } },
-            { provide: ExerciseService, useValue: { getTitlesForCourse } },
+            { provide: ExerciseService, useValue: { getTitlesForCourseForStaff } },
             { provide: AlertService, useValue: { success: vi.fn(), addAlert: vi.fn() } },
             { provide: TranslateService, useValue: { instant: (key: string) => key, onLangChange: new Subject(), onTranslationChange: new Subject() } },
         ],
@@ -57,7 +57,7 @@ async function setUpPresentationNavigation() {
         .overrideComponent(SidebarCardItemComponent, { set: { template: '' } })
         .compileComponents();
     const harness = await RouterTestingHarness.create();
-    return { harness, findAllByCourseId, create, getTitlesForCourse };
+    return { harness, findAllByCourseId, create, getTitlesForCourseForStaff };
 }
 
 describe('presentation assessment url matcher', () => {
@@ -91,7 +91,7 @@ describe('presentation assessment route access', () => {
 
 describe('presentation course navigation', () => {
     it.each(['presentations', 'presentations/42', 'presentations/42/exercises/7'])('reloads the course and targets subsequent writes correctly for %s', async (path) => {
-        const { harness, findAllByCourseId, create, getTitlesForCourse } = await setUpPresentationNavigation();
+        const { harness, findAllByCourseId, create, getTitlesForCourseForStaff } = await setUpPresentationNavigation();
         const first = await harness.navigateByUrl(`/course-management/1/${path}`, PresentationAssessmentManagementComponent);
         const second = await harness.navigateByUrl(`/course-management/2/${path}`, PresentationAssessmentManagementComponent);
         expect(second).toBe(first);
@@ -99,11 +99,11 @@ describe('presentation course navigation', () => {
         expect(second.presentationAssessments()[0].courseId).toBe(2);
         expect(findAllByCourseId).toHaveBeenCalledWith(1);
         expect(findAllByCourseId).toHaveBeenCalledWith(2);
-        expect(getTitlesForCourse).toHaveBeenCalledWith(1);
-        expect(getTitlesForCourse).toHaveBeenCalledWith(2);
+        expect(getTitlesForCourseForStaff).toHaveBeenCalledWith(1);
+        expect(getTitlesForCourseForStaff).toHaveBeenCalledWith(2);
         const detail = await harness.navigateByUrl('/course-management/2/presentations/42/exercises/7', PresentationAssessmentManagementComponent);
         const loadCount = findAllByCourseId.mock.calls.length;
-        const exerciseLoadCount = getTitlesForCourse.mock.calls.length;
+        const exerciseLoadCount = getTitlesForCourseForStaff.mock.calls.length;
         const selected = await harness.navigateByUrl('/course-management/2/presentations/43/exercises/7', PresentationAssessmentManagementComponent);
         expect(selected).toBe(detail);
         expect(selected.selectedPresentationId()).toBe(43);
@@ -116,16 +116,16 @@ describe('presentation course navigation', () => {
             '/course-management/2/presentations/43/exercises/7',
         );
         expect(findAllByCourseId).toHaveBeenCalledTimes(loadCount);
-        expect(getTitlesForCourse).toHaveBeenCalledTimes(exerciseLoadCount);
+        expect(getTitlesForCourseForStaff).toHaveBeenCalledTimes(exerciseLoadCount);
         second.handlePresentationDialogSave({ presentationAssessment: { title: 'New presentation', maxPoints: 10 } });
         expect(create).toHaveBeenCalledWith(2, expect.objectContaining({ title: 'New presentation' }));
     });
 
     it('keeps the component and its loaded data when moving between the overview, a presentation and an exercise-linked presentation', async () => {
-        const { harness, findAllByCourseId, getTitlesForCourse } = await setUpPresentationNavigation();
+        const { harness, findAllByCourseId, getTitlesForCourseForStaff } = await setUpPresentationNavigation();
         const overview = await harness.navigateByUrl('/course-management/1/presentations', PresentationAssessmentManagementComponent);
         const loadCount = findAllByCourseId.mock.calls.length;
-        const exerciseLoadCount = getTitlesForCourse.mock.calls.length;
+        const exerciseLoadCount = getTitlesForCourseForStaff.mock.calls.length;
 
         const presentation = await harness.navigateByUrl('/course-management/1/presentations/42', PresentationAssessmentManagementComponent);
         const linkedPresentation = await harness.navigateByUrl('/course-management/1/presentations/43/exercises/7', PresentationAssessmentManagementComponent);
@@ -135,7 +135,7 @@ describe('presentation course navigation', () => {
         expect(linkedPresentation).toBe(overview);
         expect(backToOverview).toBe(overview);
         expect(findAllByCourseId).toHaveBeenCalledTimes(loadCount);
-        expect(getTitlesForCourse).toHaveBeenCalledTimes(exerciseLoadCount);
+        expect(getTitlesForCourseForStaff).toHaveBeenCalledTimes(exerciseLoadCount);
     });
 });
 
@@ -165,6 +165,21 @@ describe('courseManagementRoutes', () => {
         const creationRoute = courseManagementRoutes.find((route) => route.path === 'new');
 
         expect(creationRoute!.data?.['usesModuleBackground']).toBe(false);
+    });
+
+    it('uses tutor metadata only for preloading the eight lazy assessment and exercise subtrees', () => {
+        const children = containerRoute!.children?.find((route) => route.path === ':courseId' && route.children)?.children ?? [];
+        const lazyRoutes = children.filter((route) => route.path === '' && route.loadChildren);
+        expect(lazyRoutes).toHaveLength(8);
+        for (const route of lazyRoutes) {
+            expect(route.data).toEqual({ authorities: IS_AT_LEAST_TUTOR });
+            expect(route.canActivate).toBeUndefined();
+            expect(route.canMatch).toBeUndefined();
+        }
+        const redirects = children.filter((route) => route.redirectTo === 'exercises');
+        expect(redirects.map((route) => route.path)).toEqual(['text-exercises', 'modeling-exercises', 'file-upload-exercises', 'quiz-exercises', 'programming-exercises']);
+        expect(children.indexOf(lazyRoutes[1])).toBeLessThan(children.indexOf(redirects[0]));
+        expect(children.indexOf(redirects[4])).toBeLessThan(children.indexOf(lazyRoutes[2]));
     });
 
     it('provides course grading inside the management container', () => {

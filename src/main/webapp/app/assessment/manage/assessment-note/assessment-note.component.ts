@@ -1,7 +1,7 @@
+import { TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, inject, input, output, viewChild } from '@angular/core';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { autogrowTextarea } from 'app/foundation/util/textarea-autogrow.util';
 
 @Component({

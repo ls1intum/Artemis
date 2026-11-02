@@ -26,7 +26,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, boolean te
         @Nullable String confirmationStartText, @Nullable String confirmationEndText, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer examMaxPoints,
         @Nullable Boolean randomizeExerciseOrder, @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner,
         @Nullable String moduleNumber, @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable ZonedDateTime examSummaryPublicationDate,
-        @Nullable String channelName) {
+        @Nullable String channelName) implements ExamSettingsDTO {
 
     /**
      * Creates an ExamUpdateDTO from the given Exam domain object.
@@ -50,33 +50,8 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, boolean te
      */
     public Exam toEntity() {
         Exam exam = new Exam();
-        exam.setTitle(title);
         exam.setTestExam(testExam);
-        exam.setExamWithAttendanceCheck(examWithAttendanceCheck);
-        exam.setVisibleDate(visibleDate);
-        exam.setStartDate(startDate);
-        exam.setEndDate(endDate);
-        exam.setPublishResultsDate(publishResultsDate);
-        exam.setExamStudentReviewStart(examStudentReviewStart);
-        exam.setExamStudentReviewEnd(examStudentReviewEnd);
-        if (gracePeriod != null) {
-            exam.setGracePeriod(gracePeriod);
-        }
-        exam.setWorkingTime(workingTime);
-        exam.setStartText(startText);
-        exam.setEndText(endText);
-        exam.setConfirmationStartText(confirmationStartText);
-        exam.setConfirmationEndText(confirmationEndText);
-        exam.setExamMaxPoints(examMaxPoints);
-        exam.setRandomizeExerciseOrder(randomizeExerciseOrder);
-        exam.setNumberOfExercisesInExam(numberOfExercisesInExam);
-        exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRoundsInExam);
-        exam.setExaminer(examiner);
-        exam.setModuleNumber(moduleNumber);
-        exam.setCourseName(courseName);
-        exam.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        exam.setExamSummaryPublicationDate(examSummaryPublicationDate);
-        exam.setChannelName(channelName);
+        applySettingsTo(exam);
         return exam;
     }
 
@@ -87,32 +62,6 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, boolean te
      * @param exam the existing exam to update
      */
     public void applyTo(Exam exam) {
-        exam.setTitle(title);
-        // testExam cannot be changed after creation, so we don't set it here
-        exam.setExamWithAttendanceCheck(examWithAttendanceCheck);
-        exam.setVisibleDate(visibleDate);
-        exam.setStartDate(startDate);
-        exam.setEndDate(endDate);
-        exam.setPublishResultsDate(publishResultsDate);
-        exam.setExamStudentReviewStart(examStudentReviewStart);
-        exam.setExamStudentReviewEnd(examStudentReviewEnd);
-        if (gracePeriod != null) {
-            exam.setGracePeriod(gracePeriod);
-        }
-        exam.setWorkingTime(workingTime);
-        exam.setStartText(startText);
-        exam.setEndText(endText);
-        exam.setConfirmationStartText(confirmationStartText);
-        exam.setConfirmationEndText(confirmationEndText);
-        exam.setExamMaxPoints(examMaxPoints);
-        exam.setRandomizeExerciseOrder(randomizeExerciseOrder);
-        exam.setNumberOfExercisesInExam(numberOfExercisesInExam);
-        exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRoundsInExam);
-        exam.setExaminer(examiner);
-        exam.setModuleNumber(moduleNumber);
-        exam.setCourseName(courseName);
-        exam.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        exam.setExamSummaryPublicationDate(examSummaryPublicationDate);
-        exam.setChannelName(channelName);
+        applySettingsTo(exam);
     }
 }

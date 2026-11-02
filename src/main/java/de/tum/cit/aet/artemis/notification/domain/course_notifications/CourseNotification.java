@@ -141,7 +141,9 @@ public abstract class CourseNotification {
      *
      * @return Returns the category of the notification
      */
-    public abstract CourseNotificationCategory getCourseNotificationCategory();
+    public CourseNotificationCategory getCourseNotificationCategory() {
+        return getDeliveryPolicy().category();
+    }
 
     /**
      * This function should return the time interval a notification should stay in the database before getting
@@ -149,14 +151,21 @@ public abstract class CourseNotification {
      *
      * @return Returns the time interval of how long a notification should be kept in the database
      */
-    public abstract Duration getCleanupDuration();
+    public Duration getCleanupDuration() {
+        return getDeliveryPolicy().cleanupDuration();
+    }
 
     /**
      * This function should return which channels this notification supports (e.g. E-Mail, Push, etc.)
      *
      * @return Returns list of supported channels.
      */
-    public abstract List<NotificationChannelOption> getSupportedChannels();
+    public List<NotificationChannelOption> getSupportedChannels() {
+        return getDeliveryPolicy().channels();
+    }
+
+    /** The delivery and retention policy shared by notifications with the same audience. */
+    protected abstract CourseNotificationDeliveryPolicy getDeliveryPolicy();
 
     /**
      * This function should return the relative webapp url (e.g /courses/:courseId/communication?conversationId=:conversationId).

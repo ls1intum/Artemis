@@ -161,6 +161,7 @@
             (formSubmitted)="createOnlineUnit($event)"
             (formChanged)="onOnlineUnitChanged($event)"
             [formData]="onlineUnitFormData()"
+            [courseId]="lecture().course?.id!"
         />
     }
     @if (isAttachmentVideoUnitFormOpen()) {

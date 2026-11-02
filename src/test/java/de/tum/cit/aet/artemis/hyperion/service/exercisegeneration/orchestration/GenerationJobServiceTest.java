@@ -67,10 +67,12 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopi
 import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationInputDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
@@ -182,6 +184,69 @@ class GenerationJobServiceTest {
     }
 
     @Test
+    void preparedVariantIsReservedButNotDispatchedAndCannotBeReclaimedDuringRepositoryCopy() {
+        List<GenerationStartedEvent> dispatched = new ArrayList<>();
+        var service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
+            if (event instanceof GenerationStartedEvent start) {
+                dispatched.add(start);
+            }
+        }, mock(GenerationTokenUsageService.class));
+        service.init();
+        var owner = user("owner");
+        var target = exercise(42L);
+        var context = new GenerationVariantPreparation(7L, org.mockito.Mockito.mock(GenerationVariantPreparation.SourceSnapshot.class), null);
+        var settings = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, null, false, false);
+
+        var event = service.prepareVariantJob(owner, target, "Change the domain", "budget", settings, new ExerciseGenerationInputDTO("Change the domain", List.of(), 7L), context);
+
+        assertThat(dispatched).isEmpty();
+        assertThat(service.isOwnedActiveJob(42L, event.jobId())).isTrue();
+        assertThat(service.requestCancellation(42L, event.jobId(), owner)).isFalse();
+        assertThat(service.getStatus(owner, target).orElseThrow().cancellable()).isFalse();
+        assertThat(event.variantPreparation()).isEqualTo(context);
+        assertThat(service.dispatchPreparedJob(event)).isTrue();
+        assertThat(dispatched).containsExactly(event);
+        assertThat(service.allowCancellationAfterPreparation(42L, event.jobId())).isTrue();
+        assertThat(service.getStatus(owner, target).orElseThrow().cancellable()).isTrue();
+        assertThat(service.requestCancellation(42L, event.jobId(), owner)).isTrue();
+    }
+
+    @Test
+    void preparedVariantCannotMakeAReplacementJobCancellable() {
+        var owner = user("owner");
+        var target = exercise(42L);
+        String replacement = jobService.startJob(owner, target, "Generate", GenerationMode.GENERATE);
+        assertThat(jobService.enterNonCancellablePhase(42L, replacement)).isTrue();
+
+        assertThat(jobService.allowCancellationAfterPreparation(42L, "old-job")).isFalse();
+
+        assertThat(jobService.getStatus(owner, target).orElseThrow().cancellable()).isFalse();
+    }
+
+    @Test
+    void rejectedPreparedVariantLeavesAVisibleFailureAndReleasesItsDestination() {
+        var service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
+            if (event instanceof GenerationStartedEvent) {
+                throw new TaskRejectedException("Queue full");
+            }
+        }, mock(GenerationTokenUsageService.class));
+        service.init();
+        var owner = user("owner");
+        var target = exercise(42L);
+        var settings = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, null, false, false);
+        var event = service.prepareVariantJob(owner, target, "Change the domain", "budget", settings, new ExerciseGenerationInputDTO("Change the domain", List.of(), 7L),
+                new GenerationVariantPreparation(7L, org.mockito.Mockito.mock(GenerationVariantPreparation.SourceSnapshot.class), null));
+
+        assertThat(service.dispatchPreparedJob(event)).isFalse();
+
+        assertThat(service.hasActiveJob(42L)).isFalse();
+        var status = service.getStatus(owner, target).orElseThrow();
+        assertThat(status.running()).isFalse();
+        assertThat(status.events().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        assertThat(status.input().sourceExerciseId()).isEqualTo(7L);
+    }
+
+    @Test
     void startJob_secondConcurrentStartForSameExercise_throwsConflict() {
         ProgrammingExercise exercise = exercise(42L);
         User owner = user("owner");
@@ -211,7 +276,7 @@ class GenerationJobServiceTest {
     void terminalStatusIncludesTransientCompleteJobUsageOnlyForOwner() {
         GenerationTokenUsageService tokenUsageService = mock(GenerationTokenUsageService.class);
         GenerationJobService meteredJobService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, tokenUsageService);
+        }, tokenUsageService, null, new HyperionAgentProperties(), mock(HyperionEffortProfileService.class), Runnable::run, Duration.ofHours(4));
         meteredJobService.init();
         ProgrammingExercise exercise = exercise(47L);
         User owner = user("owner");
@@ -295,21 +360,6 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void providerRetriesMakeRunLevelAccountingIncompleteFromTheStart() {
-        GenerationJobService retryingProviderService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run, Duration.ofHours(4), false);
-        retryingProviderService.init();
-        ProgrammingExercise exercise = exercise(49L);
-        User owner = user("owner");
-
-        String jobId = retryingProviderService.startJob(owner, exercise, "do it", GenerationMode.GENERATE);
-        retryingProviderService.recordEvent(exercise.getId(), jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "failed"), true);
-
-        assertThat(retryingProviderService.getStatus(owner, exercise))
-                .hasValueSatisfying(status -> assertThat(status.accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE));
-    }
-
-    @Test
     void startJob_simultaneousStartsForSameExercise_admitsExactlyOne() throws Exception {
         ProgrammingExercise exercise = exercise(420L);
         ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -378,8 +428,7 @@ class GenerationJobServiceTest {
     void cancellationFenceUsesTheLongestEffortProfileDeadline() {
         var provider = spy(HyperionDistributedDataTestProvider.provider(hazelcastInstance));
         var service = new GenerationJobService(provider, event -> {
-        }, mock(GenerationTokenUsageService.class), null, Duration.ofHours(3).plusMinutes(1), Duration.ofMinutes(30), Runnable::run, Duration.ofHours(4), true,
-                Duration.ofHours(3));
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofHours(3).plusMinutes(1), Duration.ofMinutes(30), Runnable::run, Duration.ofHours(4), Duration.ofHours(3));
         service.init();
 
         String jobId = service.startJob(user("owner"), exercise(446L), "generate", GenerationMode.GENERATE);
@@ -1132,14 +1181,22 @@ class GenerationJobServiceTest {
     void initRejectsAnEffortProfileDeadlineThatOutlastsTheStaleJobTimeout() {
         // The deployment default (45m) fits inside the 50m stale timeout, but the run a profile hands out lasts 55m and its slot would be reclaimed before it can finish.
         GenerationJobService raisedByProfile = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, Duration.ofHours(4), true, Duration.ofMinutes(55));
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, Duration.ofHours(4), Duration.ofMinutes(55));
 
         assertThatThrownBy(raisedByProfile::init).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("stale-job-timeout").hasMessageContaining("profiles");
 
         GenerationJobService withinTheTimeout = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, Duration.ofHours(4), true, Duration.ofMinutes(48));
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, Duration.ofHours(4), Duration.ofMinutes(48));
 
         assertThatCode(withinTheTimeout::init).doesNotThrowAnyException();
+    }
+
+    @Test
+    void initRejectsAnEffortProfileDeadlineThatOutlastsRetainedRunIdentity() {
+        GenerationJobService invalid = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofHours(6), Duration.ofMinutes(45), Runnable::run, Duration.ofHours(4), Duration.ofHours(5));
+
+        assertThatThrownBy(invalid::init).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("terminal-replay-ttl");
     }
 
     @Test

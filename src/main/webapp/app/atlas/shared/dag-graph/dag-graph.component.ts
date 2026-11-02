@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, TemplateRef,
 import { Graph, layout as dagreLayout } from '@dagrejs/dagre';
 import { curveBundle, line } from 'd3-shape';
 import { DagGraphEdge, DagGraphLayout, DagGraphLayoutEdge, DagGraphLayoutNode, DagGraphNode, GraphNodeDimension, GraphPosition } from 'app/atlas/shared/dag-graph/dag-graph.model';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 
 interface PanState {
     pointerX: number;

@@ -17,8 +17,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisActivityDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisMessageResponseDTO(@Nullable Long id, @Nullable ZonedDateTime sentAt, @Nullable Boolean helpful, IrisMessageSender sender, @Nullable IrisMessageOrigin origin,
         @Nullable IrisProactiveOutcome proactiveOutcome, @Nullable String proactiveEpisodeId, List<IrisMessageContentResponseDTO> content,
-        @Nullable List<MemirisMemoryDTO> accessedMemories, @Nullable List<MemirisMemoryDTO> createdMemories, @Nullable List<PyrisActivityDTO> activities,
-        @Nullable Integer messageDifferentiator, @JsonProperty("final") @Nullable Boolean finalResult) {
+        @Nullable List<PyrisActivityDTO> activities, @Nullable Integer messageDifferentiator, @JsonProperty("final") @Nullable Boolean finalResult) {
 
     /**
      * Creates a response DTO from an {@link IrisMessage} entity.
@@ -29,14 +28,10 @@ public record IrisMessageResponseDTO(@Nullable Long id, @Nullable ZonedDateTime 
     public static IrisMessageResponseDTO of(IrisMessage message) {
         var content = message.getContent();
         List<IrisMessageContentResponseDTO> contentDTOs = content == null ? List.of() : content.stream().map(IrisMessageContentResponseDTO::of).toList();
-        var accessedMemories = message.getAccessedMemories();
-        var createdMemories = message.getCreatedMemories();
         var activities = message.getToolActivity();
         var finalResult = Boolean.TRUE.equals(message.getIntermediate()) ? Boolean.FALSE : null;
         return new IrisMessageResponseDTO(message.getId(), message.getSentAt(), message.getHelpful(), message.getSender(), message.getOrigin(), message.getProactiveOutcome(),
-                message.getProactiveEpisodeId(), contentDTOs, accessedMemories == null || accessedMemories.isEmpty() ? null : accessedMemories,
-                createdMemories == null || createdMemories.isEmpty() ? null : createdMemories, activities == null || activities.isEmpty() ? null : activities,
-                message.getMessageDifferentiator(), finalResult);
+                message.getProactiveEpisodeId(), contentDTOs, activities == null || activities.isEmpty() ? null : activities, message.getMessageDifferentiator(), finalResult);
     }
 
     /**

@@ -168,7 +168,7 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         // ACCOUNT
         seed(UserDeletionReferencePolicy.CONDUCT_AGREEMENT, userId, values("course_id", courseId));
         seed(UserDeletionReferencePolicy.USER_ACTIVITY, userId, values());
-        seed(UserDeletionReferencePolicy.USER_AI_PREFERENCE, userId, values());
+        seed(UserDeletionReferencePolicy.USER_AI_PREFERENCE, userId, values("selection_decision", "CLOUD_AI"));
         seed(UserDeletionReferencePolicy.RECOVERY_KEY, userId, values());
         seed(UserDeletionReferencePolicy.PERSONAL_VCS_TOKEN, userId, values());
         seed(UserDeletionReferencePolicy.USER_LTI_IDENTITY, userId, values());
@@ -180,6 +180,8 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
         seed(UserDeletionReferencePolicy.IDE_MAPPING, userId, values("programming_language", "JAVA", "ide_id", ideId));
         seed(UserDeletionReferencePolicy.PASSKEY, userId, values("credential_id", TEST_PREFIX + "cred", "last_used", now, "created_by", "test", "created_date", now,
                 "credential_type", "public-key", "public_key_cose", new byte[] { 1, 2, 3 }));
+        seed(UserDeletionReferencePolicy.AGENT_ACCESS_TOKEN, userId, values("name", "agent", "token_prefix", "art_pat_abcd", "token_hash", TEST_PREFIX + "tokenhash", "scopes",
+                "courses:read", "created_date", now, "expiry_date", inSixMonths));
         seed(UserDeletionReferencePolicy.SAVED_POST, userId, values("post_id", postId));
         seed(UserDeletionReferencePolicy.GLOBAL_NOTIFICATION_SETTING, userId, values("global_notification_type", "NEW_LOGIN"));
         seed(UserDeletionReferencePolicy.PUSH_NOTIFICATION_DEVICE, userId, values("device_type", 0, "token", TEST_PREFIX + "device"));

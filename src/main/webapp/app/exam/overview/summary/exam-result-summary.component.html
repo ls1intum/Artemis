@@ -48,6 +48,7 @@
     <div class="mb-6!" data-testid="exam-summary-result-overview">
         <jhi-exam-result-overview
             [studentExamWithGrade]="studentExamGradeInfoDTO()!"
+            [gradingKeyPurpose]="instructorView() || isTestRun() ? 'management' : 'student'"
             [isGradingKeyCollapsed]="isGradingKeyCollapsed()"
             [isBonusGradingKeyCollapsed]="isBonusGradingKeyCollapsed()"
             [exerciseInfos]="exerciseInfos()"
@@ -124,6 +125,7 @@
                                     [exerciseId]="exercise.id!"
                                     [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
                                     [displayedOnExamSummary]="true"
+                                    [forStaff]="instructorView()"
                                 />
                                 @if (exerciseInfos()[exercise.id!].releaseTestsWithExampleSolution) {
                                     <jhi-programming-exercise-example-solution-repo-download
@@ -132,6 +134,7 @@
                                         [includeTests]="true"
                                         [title]="'artemisApp.programmingExercise.export.downloadTestsWithExampleSolution'"
                                         [displayedOnExamSummary]="true"
+                                        [forStaff]="instructorView()"
                                         [tumAetUiTooltip]="'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate"
                                     />
                                 }
@@ -155,6 +158,7 @@
                                 @switch (exercise.type) {
                                     @case (TEXT) {
                                         <jhi-text-exam-summary
+                                            [viewingPurpose]="instructorView() || isTestRun() ? 'staff-preview' : 'owner'"
                                             [exercise]="exercise"
                                             [submission]="exerciseInfos()[exercise.id!]!.submission!"
                                             [expandProblemStatement]="expandProblemStatement()"
@@ -163,6 +167,7 @@
                                     }
                                     @case (MODELING) {
                                         <jhi-modeling-exam-summary
+                                            [viewingPurpose]="instructorView() || isTestRun() ? 'staff-preview' : 'owner'"
                                             [exercise]="exercise"
                                             [submission]="exerciseInfos()[exercise.id!]!.submission!"
                                             [isPrinting]="isPrinting()"
@@ -180,6 +185,7 @@
                                     }
                                     @case (FILE_UPLOAD) {
                                         <jhi-file-upload-exam-summary
+                                            [viewingPurpose]="instructorView() || isTestRun() ? 'staff-preview' : 'owner'"
                                             [submission]="exerciseInfos()[exercise.id!]!.submission!"
                                             [exercise]="exercise"
                                             [expandProblemStatement]="expandProblemStatement()"
@@ -200,6 +206,7 @@
                                         [result]="exerciseInfos()[exercise.id!]!.participation!.submissions![0].results?.[0]"
                                         [exam]="examWithOnlyIdAndStudentReviewPeriod()"
                                         [testRun]="isTestRun()"
+                                        [forStaff]="instructorView()"
                                     />
                                 }
                             }

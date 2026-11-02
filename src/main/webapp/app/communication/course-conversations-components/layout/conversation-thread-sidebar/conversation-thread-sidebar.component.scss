@@ -39,15 +39,6 @@
         display: block;
     }
 
-    .draggable-left {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-width: 1.5%;
-        max-width: 1.5%;
-    }
-
     .card {
         width: inherit;
         min-height: 0;

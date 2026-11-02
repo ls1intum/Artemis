@@ -14,4 +14,13 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
  * @param youtubeVideoId the extracted YouTube video ID; non-null only when {@code type == YOUTUBE}, {@code null} for all other types
  */
 public record ResolvedVideo(@Nullable String url, @Nullable VideoSourceType type, @Nullable String youtubeVideoId) {
+
+    /**
+     * A resolved TUM Live playlist is signed and works as a credential for seven hours, so it is left out of log output.
+     */
+    @Override
+    public String toString() {
+        String shownUrl = type == VideoSourceType.TUM_LIVE && url != null ? "[REDACTED]" : url;
+        return "ResolvedVideo[url=" + shownUrl + ", type=" + type + ", youtubeVideoId=" + youtubeVideoId + "]";
+    }
 }

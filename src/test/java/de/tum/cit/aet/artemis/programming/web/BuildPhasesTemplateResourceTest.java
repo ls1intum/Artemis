@@ -69,7 +69,7 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @ParameterizedTest
     @MethodSource("templateProvider")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetBuildPhasesTemplateFile(String templateKey, int expectedPhases) throws Exception {
         BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/" + templateKey, HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
@@ -77,13 +77,13 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetNonExistingBuildPhasesTemplateFile() throws Exception {
         request.get("/api/localci/phases/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true&examMode=true", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testFactTemplateUsesConfiguredDockerImage() throws Exception {
         BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/C/FACT?examMode=false", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
@@ -91,7 +91,7 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGccTemplateUsesConfiguredDockerImage() throws Exception {
         BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/C/GCC?examMode=true", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
@@ -100,7 +100,7 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @ParameterizedTest
     @ValueSource(strings = { "PYTHON?examMode=false", "PYTHON?sequentialRuns=true&examMode=false", "PYTHON?staticAnalysis=true&examMode=false" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPythonTemplatesOnlyCollectOfficialTestDirectories(String templateKey) throws Exception {
         BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/" + templateKey, HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
@@ -121,4 +121,32 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
             assertThat(phase.script()).isNotBlank();
         }
     }
+
+    @Autowired
+    private de.tum.cit.aet.artemis.core.service.ResourceLoaderService resourceLoaderService;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.localci.service.BuildScriptProviderService buildScriptProviderService;
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void malformedAdministratorTemplateReturnsNotFound() throws Exception {
+        Object original = org.springframework.test.util.ReflectionTestUtils.getField(resourceLoaderService, "templateFileSystemPath");
+        String filename = buildScriptProviderService.buildTemplateName(java.util.Optional.of(de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE), true, true,
+                "yaml");
+        var file = tempPath.resolve("templates/phases/java").resolve(filename);
+        java.nio.file.Files.createDirectories(file.getParent());
+        org.apache.commons.io.FileUtils.writeStringToFile((file).toFile(), "phases: not-a-list", java.nio.charset.StandardCharsets.UTF_8);
+        try {
+            org.springframework.test.util.ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", java.util.Optional.of(tempPath));
+            request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/localci/phases/templates/JAVA/PLAIN_GRADLE")
+                    .param("staticAnalysis", "true").param("sequentialRuns", "true").param("examMode", "false"))
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content().string(""));
+        }
+        finally {
+            org.springframework.test.util.ReflectionTestUtils.setField(resourceLoaderService, "templateFileSystemPath", original);
+        }
+    }
+
 }

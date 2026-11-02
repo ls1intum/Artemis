@@ -63,9 +63,10 @@ into consumers. `SmartInitializingSingleton` is too late: a consumer can schedul
 Clear the spy's recorded calls with `Mockito.clearInvocations(...)` after each test to bound its history;
 this preserves the startup answers and does not start a new stubbing.
 
-A scheduled task that rewrites shared state a test also writes (the `dockerImageCleanupInfo` map is
-cleared and refilled every five minutes) is switched off in the test contexts by its interval
-property instead.
+A scheduled task that replaces shared fixture state must not run autonomously while a test owns
+that state. The LocalCI contexts defer the Docker image cleanup-info refresh with its interval and
+initial-delay properties; tests invoke `pushDockerImageCleanupInfo()` directly to verify refreshes.
+This prevents the refresh from clearing a test-owned cleanup map between setup and assertions.
 
 Two mechanisms keep background work out of the next test:
 

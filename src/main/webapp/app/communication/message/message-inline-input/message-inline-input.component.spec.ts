@@ -73,6 +73,28 @@ describe('MessageInlineInputComponent', () => {
         communicationServiceUpdateStub = vi.spyOn(communicationService, 'updatePost');
     });
 
+    for (const modifier of ['ctrlKey', 'metaKey'] as const) {
+        it(`submits once through the actual Angular parent binding for ${modifier}+Enter`, () => {
+            component.posting.set(communicationPostToCreateUser1);
+            fixture.detectChanges();
+            const confirm = vi.spyOn(component, 'confirm').mockImplementation(() => undefined);
+            const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).nativeElement as HTMLElement;
+            editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, [modifier]: true }));
+            expect(confirm).toHaveBeenCalledOnce();
+        });
+    }
+
+    it('passes a distinct draft identity when equal-content messages are edited', () => {
+        component.posting.set({ id: 21, content: '' });
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.draftIdentity()).toBe('message:21');
+
+        component.posting.set({ id: 22, content: '' });
+        fixture.detectChanges();
+        expect(editor.draftIdentity()).toBe('message:22');
+    });
+
     it('should invoke communication service with created post', () => {
         component.posting.set(communicationPostToCreateUser1);
         fixture.detectChanges();

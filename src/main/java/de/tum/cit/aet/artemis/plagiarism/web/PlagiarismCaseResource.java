@@ -3,8 +3,11 @@ package de.tum.cit.aet.artemis.plagiarism.web;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +27,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -32,6 +34,10 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDTO;
@@ -65,15 +71,22 @@ public class PlagiarismCaseResource {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final Optional<ExamAccessApi> examAccessApi;
+
     private static final Logger log = LoggerFactory.getLogger(PlagiarismCaseResource.class);
 
     public PlagiarismCaseResource(CourseRepository courseRepository, AuthorizationCheckService authenticationCheckService, UserRepository userRepository,
-            PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository) {
+            PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository, ExerciseRepository exerciseRepository,
+            Optional<ExamAccessApi> examAccessApi) {
         this.courseRepository = courseRepository;
         this.authenticationCheckService = authenticationCheckService;
         this.userRepository = userRepository;
         this.plagiarismCaseService = plagiarismCaseService;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.examAccessApi = examAccessApi;
     }
 
     /**
@@ -114,19 +127,12 @@ public class PlagiarismCaseResource {
      * @return all plagiarism cases of the course
      */
     @GetMapping("courses/{courseId}/exams/{examId}/plagiarism-cases/for-instructor")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<PlagiarismCaseOverviewDTO>> getPlagiarismCasesForExamForInstructor(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request to get all plagiarism cases for instructor in exam with id: {}", examId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
+        ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
+        api.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         var plagiarismCases = plagiarismCaseRepository.findOverviewDtosByExamId(examId);
-        if (!plagiarismCases.isEmpty()) {
-            var plagiarismCaseExercise = plagiarismCases.getFirst().exercise();
-            if (plagiarismCaseExercise == null || !Long.valueOf(courseId).equals(plagiarismCaseExercise.courseId())) {
-                throw new ConflictException("Exam with id " + examId + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");
-            }
-        }
         return getPlagiarismCaseOverviewResponseEntity(plagiarismCases);
     }
 
@@ -138,13 +144,9 @@ public class PlagiarismCaseResource {
      * @return all plagiarism cases of the course
      */
     @GetMapping("courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/for-instructor")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<PlagiarismCaseDetailDTO> getPlagiarismCaseForInstructor(@PathVariable long courseId, @PathVariable long plagiarismCaseId) {
         log.debug("REST request to get plagiarism case for instructor with id: {}", plagiarismCaseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithAuthorities())) {
-            throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
-        }
         validatePlagiarismCaseCourse(plagiarismCaseId, courseId);
         var plagiarismCase = plagiarismCaseRepository.findDetailDtoByIdElseThrow(plagiarismCaseId);
         return ResponseEntity.ok(getPlagiarismCaseDetailResponse(plagiarismCase));
@@ -158,12 +160,13 @@ public class PlagiarismCaseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the number of plagiarism cases for the given exercise
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-cases-count")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Long> getNumberOfPlagiarismCasesForExercise(@PathVariable long courseId, @PathVariable long exerciseId) {
         log.debug("REST request to get number of plagiarism cases for exercise with id: {}", exerciseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, null)) {
-            throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
+        // the role of the user in the course only covers the exercise if it belongs to the course
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (!Long.valueOf(courseId).equals(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId())) {
+            throw new ConflictException("Exercise with id " + exerciseId + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");
         }
         return ResponseEntity.ok(plagiarismCaseRepository.countByExerciseId(exerciseId));
     }
@@ -177,14 +180,10 @@ public class PlagiarismCaseResource {
      * @return the updated plagiarism case
      */
     @PutMapping("courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/verdict")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<PlagiarismCaseVerdictResponseDTO> savePlagiarismCaseVerdict(@PathVariable long courseId, @PathVariable long plagiarismCaseId,
-            @RequestBody PlagiarismVerdictDTO plagiarismVerdictDTO) {
+            @Valid @RequestBody PlagiarismVerdictDTO plagiarismVerdictDTO) {
         log.debug("REST request to save plagiarism verdict for plagiarism case with id: {}", plagiarismCaseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithAuthorities())) {
-            throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
-        }
         validatePlagiarismCaseCourse(plagiarismCaseId, courseId);
         var plagiarismCase = plagiarismCaseService.updatePlagiarismCaseVerdict(plagiarismCaseId, plagiarismVerdictDTO);
         return ResponseEntity.ok(PlagiarismCaseVerdictResponseDTO.ofVerdict(plagiarismCase));

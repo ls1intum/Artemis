@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
@@ -42,9 +41,6 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
 
     @Autowired
     private PyrisPipelineService pyrisPipelineService;
-
-    @Autowired
-    private UserAiPreferenceService userAiPreferenceService;
 
     @Autowired
     private PyrisJobService pyrisJobService;
@@ -89,7 +85,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
     void executeAutonomousTutorPipeline_sendsRequestToPyris() {
         Post post = createPostInChannel(student, "How does inheritance work?");
         var postDTO = new PyrisPostDTO(post, Map.of());
-        var studentDTO = new PyrisUserDTO(student, userAiPreferenceService.isMemirisEnabled(student.getId()));
+        var studentDTO = new PyrisUserDTO(student);
 
         AtomicBoolean pipelineDone = new AtomicBoolean(false);
         AtomicReference<PyrisAutonomousTutorPipelineExecutionDTO> capturedDto = new AtomicReference<>();

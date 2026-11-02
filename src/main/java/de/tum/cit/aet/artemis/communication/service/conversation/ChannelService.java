@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.communication.service.conversation;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -418,6 +420,42 @@ public class ChannelService {
     }
 
     /**
+     * Refreshes the channel after an exercise's changed release date has been saved.
+     *
+     * @param originalReleaseDate the date before the update
+     * @param updatedExercise     the exercise with its persisted date
+     */
+    public void notifyExerciseChannelOfDateChange(@Nullable ZonedDateTime originalReleaseDate, Exercise updatedExercise) {
+        if (updatedExercise.getId() == null || !updatedExercise.isCourseExercise() || sameInstant(originalReleaseDate, updatedExercise.getReleaseDate())) {
+            return;
+        }
+        Channel channel = channelRepository.findChannelByExerciseId(updatedExercise.getId());
+        if (channel != null) {
+            conversationService.notifyChannelMembersAboutVisibilityChange(channel);
+        }
+    }
+
+    /**
+     * Refreshes the channel after an exam's changed visible date has been saved.
+     *
+     * @param originalVisibleDate the date before the update
+     * @param updatedExam         the exam with its persisted date
+     */
+    public void notifyExamChannelOfDateChange(@Nullable ZonedDateTime originalVisibleDate, Exam updatedExam) {
+        if (sameInstant(originalVisibleDate, updatedExam.getVisibleDate())) {
+            return;
+        }
+        Channel channel = channelRepository.findChannelByExamId(updatedExam.getId());
+        if (channel != null) {
+            conversationService.notifyChannelMembersAboutVisibilityChange(channel);
+        }
+    }
+
+    private static boolean sameInstant(@Nullable ZonedDateTime first, @Nullable ZonedDateTime second) {
+        return Objects.equals(first == null ? null : first.toInstant(), second == null ? null : second.toInstant());
+    }
+
+    /**
      * Update the channel of an exam.
      * Looks up the existing channel by exam ID and updates its name to match
      * the exam's current channel name.
@@ -583,5 +621,25 @@ public class ChannelService {
      */
     public void createDefaultChannels(Course course) {
         Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(course, channelType));
+    }
+
+    /**
+     * Finds the announcement channel an announcement should be posted to.
+     *
+     * @param courseId  the course the announcement belongs to
+     * @param channelId the requested announcement channel, or null for the course's default announcement channel
+     * @return the id of the announcement channel
+     * @throws BadRequestAlertException if the requested channel is not an announcement channel of the course, or the course has no
+     *                                      default announcement channel
+     */
+    public long findAnnouncementChannelIdElseThrow(long courseId, @Nullable Long channelId) {
+        List<Channel> announcementChannels = channelRepository.findChannelsByCourseId(courseId).stream().filter(Channel::getIsAnnouncementChannel).toList();
+        if (channelId != null) {
+            return announcementChannels.stream().filter(channel -> channelId.equals(channel.getId())).findFirst().map(Channel::getId)
+                    .orElseThrow(() -> new BadRequestAlertException("The channel is not an announcement channel of this course", CHANNEL_ENTITY_NAME, "notAnAnnouncementChannel"));
+        }
+        return announcementChannels.stream().filter(channel -> DefaultChannelType.ANNOUNCEMENT.getName().equals(channel.getName())).findFirst().map(Channel::getId)
+                .orElseThrow(() -> new BadRequestAlertException("The course has no default announcement channel, so a channelId is required", CHANNEL_ENTITY_NAME,
+                        "noDefaultAnnouncementChannel"));
     }
 }

@@ -196,6 +196,9 @@ public class TutorialGroupDemoService {
         TutorialGroup tutorialGroup = tutorialGroupRepository.save(new TutorialGroup(course, request.title(), request.additionalInformation(), request.capacity(),
                 request.isOnline(), request.campus(), request.language(), tutor, new HashSet<>()));
         TutorialGroupSchedule schedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(request.tutorialGroupSchedule());
+        if (schedule == null) {
+            throw new IllegalStateException("The demo tutorial group '" + request.title() + "' has no schedule");
+        }
         tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(course, tutorialGroup, schedule);
         // Saving the group again when its channel is created would otherwise remove the schedule as an orphan.
         tutorialGroup.setTutorialGroupSchedule(schedule);

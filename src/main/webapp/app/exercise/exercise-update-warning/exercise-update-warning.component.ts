@@ -1,27 +1,27 @@
-import { Component, inject, signal } from '@angular/core';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { Component, inject, input, signal } from '@angular/core';
 import { faBan, faCheck, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-exercise-update-warning',
     templateUrl: './exercise-update-warning.component.html',
     styleUrls: ['./exercise-update-warning.component.scss'],
-    imports: [TranslateDirective, FormsModule, FaIconComponent],
+    imports: [TumAetUiCheckboxComponent, TumAetUiButtonDirective, TranslateDirective, FormsModule, FaIconComponent],
 })
 export class ExerciseUpdateWarningComponent {
-    private activeModal = inject(NgbActiveModal, { optional: true });
-    private dialogRef = inject(DynamicDialogRef, { optional: true });
+    private dialogRef = inject(TumAetUiDialogRef, { optional: true });
 
-    instructionDeleted = false;
-    creditChanged = false;
+    readonly instructionDeleted = input(false);
+    readonly creditChanged = input(false);
     readonly deleteFeedback = signal(false);
-    usageCountChanged = false;
-    immediateReleaseWarning = '';
+    readonly usageCountChanged = input(false);
+    readonly immediateReleaseWarning = input('');
 
     confirmed = new Subject<void>();
     reEvaluated = new Subject<void>();
@@ -31,6 +31,12 @@ export class ExerciseUpdateWarningComponent {
     faBan = faBan;
     faCheck = faCheck;
     faExclamationTriangle = faExclamationTriangle;
+
+    constructor() {
+        // A shell dismissal (Escape) cancels the pending save just like the cancel button.
+        // The dialog completes this stream when it closes.
+        this.dialogRef?.dismissed?.subscribe(() => this.canceled.next());
+    }
 
     /**
      * Closes the modal
@@ -65,6 +71,5 @@ export class ExerciseUpdateWarningComponent {
 
     private closeDialog(): void {
         this.dialogRef?.close();
-        this.activeModal?.close();
     }
 }

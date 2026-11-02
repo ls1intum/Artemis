@@ -11,14 +11,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForQuizExerciseDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementExerciseDTO;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseContextDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
@@ -70,39 +69,11 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
             return null;
         }
 
-        Long courseId = null;
-        Double courseAccuracyOfScores = null;
-        // Light nested course projection (id, title, group names, complaint config, ...) so the unchanged client can read
-        // exercise.course for display links and to compute access rights (account.service reads the course group names).
-        // Only populated for course exercises, mirroring the original entity where exercise.course was set for course
-        // exercises only; exam exercises resolve their course client-side via the exercise group.
-        CourseForQuizExerciseDTO course = null;
-        Long exerciseGroupId = null;
-        Long examId = null;
-        ZonedDateTime examPublishResultsDate = null;
-        // The student modeling editor / exam result summary detect exam mode from the presence of exercise.exerciseGroup
-        // and read exercise.exerciseGroup.exam.publishResultsDate; carry that nested shape for exam exercises.
-        ModelingExerciseExamGroupDTO exerciseGroup = null;
+        var context = ExerciseResponseContextDTO.of(exercise, ModelingExerciseExamGroupDTO::of);
 
-        if (exercise.isExamExercise()) {
-            exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
-            exerciseGroup = ModelingExerciseExamGroupDTO.of(exercise.getExerciseGroup());
-            Exam exam = exercise.getExam();
-            if (exam != null) {
-                examId = exam.getId();
-                examPublishResultsDate = exam.getPublishResultsDate();
-            }
-        }
-        else {
-            Course courseEntity = exercise.getCourseViaExerciseGroupOrCourseMember();
-            if (courseEntity != null) {
-                courseId = courseEntity.getId();
-                courseAccuracyOfScores = courseEntity.getAccuracyOfScores() != null ? courseEntity.getAccuracyOfScores().doubleValue() : null;
-                course = CourseForQuizExerciseDTO.of(courseEntity);
-            }
-        }
-
-        List<GradingCriterionDTO> gradingCriterionDTOs = ModelingDtoCollections.listFromInitializedSet(exercise.getGradingCriteria(), GradingCriterionDTO::of);
+        List<GradingCriterionDTO> gradingCriterionDTOs = exercise.getGradingCriteria() != null && Hibernate.isInitialized(exercise.getGradingCriteria())
+                ? GradingCriterionDTO.ofAll(exercise.getGradingCriteria())
+                : null;
 
         Set<CompetencyLinkDTO> competencyLinkDTOs = ModelingDtoCollections.setFromInitializedSet(exercise.getCompetencyLinks(), CompetencyLinkDTO::of);
 
@@ -135,8 +106,8 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getAssessmentType(),
                 exercise.getSecondCorrectionEnabled(), exercise.getPresentationScoreEnabled(), exercise.getProblemStatement(), exercise.getDiagramType(),
                 exercise.getExampleSolutionModel(), exercise.getExampleSolutionExplanation(), exercise.getGradingInstructions(), categories, exercise.getChannelName(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), courseId, courseAccuracyOfScores, course, exerciseGroupId, examId, examPublishResultsDate,
-                teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO, exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs,
-                exercise.getMode() == ExerciseMode.TEAM, exerciseGroup, exerciseVariantGroupDTO);
+                exercise.getAllowComplaintsForAutomaticAssessments(), context.courseId(), context.courseAccuracyOfScores(), context.course(), context.exerciseGroupId(),
+                context.examId(), context.examPublishResultsDate(), teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO,
+                exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, context.exerciseGroup(), exerciseVariantGroupDTO);
     }
 }

@@ -1,7 +1,23 @@
-import { AfterViewInit, Component, HostListener, OnDestroy, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+    AfterViewInit,
+    Component,
+    DestroyRef,
+    ElementRef,
+    HostListener,
+    OnDestroy,
+    ViewEncapsulation,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EMPTY, Observable, Subject, Subscription, of } from 'rxjs';
-import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, Subject, Subscription, defer, of } from 'rxjs';
+import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -15,6 +31,8 @@ import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/
 import { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
+import { AttachmentAction } from 'app/editor/monaco-editor/model/actions/attachment.action';
+import { UrlAction } from 'app/editor/monaco-editor/model/actions/url.action';
 import { TaskAction } from 'app/editor/monaco-editor/model/actions/task.action';
 import { TestCaseAction } from 'app/editor/monaco-editor/model/actions/test-case.action';
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
@@ -26,24 +44,24 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/prog
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 
-import { RewriteAction } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { RewriteAction } from 'app/hyperion/editor/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS } from 'app/app.constants';
-import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import RewritingVariant from 'app/hyperion/editor/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { RewriteResult } from 'app/hyperion/editor/artemis-intelligence/rewriting-result';
 import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import {
     EditorSelectionWithPosition,
     INLINE_REFINEMENT_PROMPT_WIDTH_PX,
     InlineRefinementEvent,
     InstructionSelectionPosition,
-} from 'app/programming/manage/shared/problem-statement.utils';
+} from 'app/hyperion/problem-statement/problem-statement.utils';
 import { editor } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
 import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { InlineRefinementButtonComponent } from 'app/editor/monaco-editor/inline-refinement-button/inline-refinement-button.component';
+import { InlineRefinementButtonComponent } from 'app/hyperion/editor/inline-refinement-button/inline-refinement-button.component';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
@@ -66,6 +84,7 @@ import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
     ],
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnDestroy {
+    private readonly destroyRef = inject(DestroyRef);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private alertService = inject(AlertService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
@@ -103,6 +122,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     RewritingVariant.PROBLEM_STATEMENT,
                     courseId, // courseId is required by Hyperion API.
                     signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
+                    () => !this.isGeneratingOrRefining(),
                 ),
             );
         }
@@ -117,16 +137,21 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private problemStatementStateReplacementSubscription?: Subscription;
     private problemStatementInitialSyncFinalizedSubscription?: Subscription;
     private problemStatementSyncState?: ProblemStatementSyncState;
+    private canonicalSaveSequence = 0;
+    private acknowledgedCanonicalSaveSequence = 0;
     private problemStatementBinding?: MonacoBinding;
     private problemStatementBindingDestroyed = false;
-    private suppressUnsavedForNextProblemStatementChange = false;
-    private dirtySignalSuppressedDuringInitialSync = false;
+    private problemStatementChangeToSuppress?: string;
+    private problemStatementRevision = 0;
 
     readonly markdownEditorMonaco = viewChild(MarkdownEditorMonacoComponent);
+    private readonly markdownEditorHost = viewChild<MarkdownEditorMonacoComponent, ElementRef<HTMLElement>>(MarkdownEditorMonacoComponent, { read: ElementRef });
 
     readonly showStatus = input<boolean>(true);
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
     readonly editMode = input<boolean>(true);
+    readonly canonicalBaseIsolation = input(false);
+    readonly awaitingCanonicalSync = signal(false);
     readonly enableResize = input<boolean>(true);
     readonly initialEditorHeight = input.required<MarkdownEditorHeight>();
     /**
@@ -135,6 +160,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     readonly externalHeight = input<boolean>(false);
     readonly showSaveButton = input<boolean>(false);
+    readonly beforeSave = input<(() => Observable<boolean>) | undefined>();
     /**
      * Whether to show the preview button and default preview in the markdown editor.
      * Set to false when using an external preview component (e.g., in the code editor).
@@ -159,6 +185,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly hasUnsavedChanges = output<boolean>();
     readonly instructionChange = output<string>();
     readonly onProblemStatementSaved = output<void>();
+    readonly canonicalProblemStatementSaved = output<string | undefined>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
@@ -180,6 +207,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     constructor() {
+        effect(() => {
+            if (!this.isGeneratingOrRefining()) {
+                return;
+            }
+            const activeElement = document.activeElement;
+            if (activeElement instanceof HTMLElement && this.markdownEditorHost()?.nativeElement.contains(activeElement)) {
+                activeElement.blur();
+            }
+        });
+
         /**
          * React to exercise changes.
          * Note: this effect mutates `previousExercise` as an implementation detail for manual diffing.
@@ -220,6 +257,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     ngAfterViewInit() {
+        this.configureActionGuards();
         // If forced to render, generate the instruction HTML.
         const forceRender = this.forceRender();
         if (forceRender) {
@@ -248,14 +286,57 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.persistProblemStatement().subscribe();
     }
 
+    /** Capture the document at dispatch so a late Save response cannot acknowledge a replacement editor. */
+    createCanonicalSaveAcknowledgement(): (content: string | undefined) => void {
+        const exerciseId = this.exercise().id;
+        const doc = this.problemStatementSyncState?.doc;
+        const sequence = ++this.canonicalSaveSequence;
+        return (content) => {
+            if (sequence > this.acknowledgedCanonicalSaveSequence && this.canonicalBaseIsolation() && exerciseId !== undefined && doc) {
+                this.problemStatementSyncService.acknowledgeCanonicalSave(exerciseId, content, doc);
+                this.acknowledgedCanonicalSaveSequence = sequence;
+            }
+        };
+    }
+
     private persistProblemStatement(): Observable<void> {
+        if (this.isGeneratingOrRefining() || this.awaitingCanonicalSync()) return EMPTY;
+        const beforeSave = this.beforeSave();
+        if (!beforeSave) return this.persistRevalidatedProblemStatement();
+        if (this.savingInstructions()) return EMPTY;
+        this.savingInstructions.set(true);
+        return defer(beforeSave).pipe(
+            take(1),
+            takeUntilDestroyed(this.destroyRef),
+            switchMap((allowed) => (allowed ? this.persistRevalidatedProblemStatement() : EMPTY)),
+            finalize(() => this.savingInstructions.set(false)),
+            catchError(() => {
+                this.alertService.error('artemisApp.programmingExercise.problemStatementCouldNotBeUpdated');
+                return EMPTY;
+            }),
+        );
+    }
+
+    private persistRevalidatedProblemStatement(): Observable<void> {
+        if (this.isGeneratingOrRefining() || this.awaitingCanonicalSync()) {
+            return EMPTY;
+        }
         this.savingInstructions.set(true);
         const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
         const problemStatementToSave = currentProblemStatement?.trim() || undefined;
+        const exerciseId = this.exercise().id;
+        const submittedRevision = this.problemStatementRevision;
+        const acknowledgeCanonicalSave = this.createCanonicalSaveAcknowledgement();
         return this.programmingExerciseService.updateProblemStatement(this.exercise().id!, problemStatementToSave).pipe(
-            tap(() => {
-                this.unsavedChanges = false;
-                this.onProblemStatementSaved.emit();
+            tap((response) => {
+                if (response.body) {
+                    acknowledgeCanonicalSave(response.body.problemStatement);
+                    if (this.exercise().id === exerciseId) this.canonicalProblemStatementSaved.emit(response.body.problemStatement);
+                }
+                if (submittedRevision === this.problemStatementRevision && (this.getCurrentContent() ?? this.exercise().problemStatement) === currentProblemStatement) {
+                    this.unsavedChanges = false;
+                    this.onProblemStatementSaved.emit();
+                }
             }),
             map(() => undefined),
             catchError(() => {
@@ -285,6 +366,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     updateProblemStatement(problemStatement: string) {
+        if (this.isGeneratingOrRefining()) {
+            return;
+        }
+        this.applyProblemStatement(problemStatement);
+    }
+
+    private applyProblemStatement(problemStatement: string): void {
         if (this.exercise().problemStatement !== problemStatement) {
             // Guard against the internal `model.setValue('')` that clears Monaco before the Yjs binding is created (see initializeProblemStatementSync). While the initial sync is
             // still pending, a blank value is never a real user edit; propagating it to the parent would wipe the persisted problem statement if the exercise is saved before the sync
@@ -292,12 +380,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             if (this.problemStatementSyncService.isAwaitingInitialSync() && problemStatement.trim().length === 0) {
                 return;
             }
-            if (this.suppressUnsavedForNextProblemStatementChange) {
-                this.suppressUnsavedForNextProblemStatementChange = false;
-            } else if (this.shouldMarkProblemStatementAsUnsaved()) {
+            const suppressUnsaved = this.problemStatementChangeToSuppress === problemStatement;
+            this.problemStatementChangeToSuppress = undefined;
+            this.problemStatementRevision++;
+            if (!suppressUnsaved) {
                 this.unsavedChanges = true;
-            } else {
-                this.dirtySignalSuppressedDuringInitialSync = true;
             }
             // parent component should update `problemStatement` in `exercise`
             this.instructionChange.emit(problemStatement);
@@ -311,15 +398,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     generateHtml() {
         this.generateHtmlSubject.next();
-    }
-
-    private shouldMarkProblemStatementAsUnsaved(): boolean {
-        // During initial sync bootstrap, incoming Yjs content may replace the initial server state.
-        // We adopt this content without marking the statement as locally unsaved.
-        if (this.problemStatementSyncState && this.problemStatementSyncService.isAwaitingInitialSync()) {
-            return false;
-        }
-        return true;
     }
 
     private setupTestCaseSubscription() {
@@ -411,19 +489,19 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     /**
-     * Sets the editor text directly.
-     * Use this to revert content in the editor.
+     * Applies the trusted response of the current AI request. The request's loading flag remains set
+     * until observable finalization, so it must lock user actions without discarding this response.
      *
-     * @param text The text to set in the editor.
+     * @param text Generated draft to display and mark as an unsaved edit.
      */
-    setText(text: string): void {
+    applyGeneratedText(text: string): void {
         const monacoEditor = this.markdownEditorMonaco()?.monacoEditor?.();
         if (!monacoEditor) {
             return;
         }
 
         monacoEditor.setText(text);
-        this.updateProblemStatement(text);
+        this.applyProblemStatement(text);
     }
 
     /**
@@ -438,6 +516,22 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     clearReviewCommentDrafts(): void {
         this.markdownEditorMonaco()?.clearReviewCommentDrafts();
+    }
+
+    hasReviewCommentDrafts(): boolean {
+        return this.markdownEditorMonaco()?.hasReviewCommentDrafts() ?? false;
+    }
+
+    /** Accepts content reloaded from the server as the editor's clean baseline. */
+    acceptServerBaseline(exercise: ProgrammingExercise): void {
+        this.previousExercise = exercise;
+        this.unsavedChanges = false;
+        if (exercise.id) {
+            this.testCaseService
+                .refreshTestCases(exercise.id)
+                .pipe(catchError(() => EMPTY))
+                .subscribe();
+        }
     }
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
@@ -466,6 +560,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Shows floating refinement button when text is selected.
      */
     onEditorSelectionChange(selection: EditorSelectionWithPosition | undefined): void {
+        if (this.isGeneratingOrRefining()) {
+            this.hideInlineRefinementButton();
+            return;
+        }
         // Show/hide inline refinement button based on selection
         if (selection && selection.selectedText && selection.selectedText.trim().length > 0 && this.hyperionEnabled && !this.isAiApplying()) {
             const viewportWidth = window.innerWidth;
@@ -502,6 +600,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Emits the event for parent to process the refinement.
      */
     onInlineRefine(event: InlineRefinementEvent): void {
+        if (this.isGeneratingOrRefining()) {
+            this.hideInlineRefinementButton();
+            return;
+        }
         this.onInlineRefinement.emit(event);
         this.hideInlineRefinementButton();
     }
@@ -512,7 +614,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param payload The thread id whose consistency inline fix was applied in the editor.
      */
     onApplyInlineFix(payload: { threadId: number }): void {
-        if (this.savingInstructions()) {
+        if (this.savingInstructions() || this.isGeneratingOrRefining()) {
             return;
         }
 
@@ -532,6 +634,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param refined The new content to show in the modified editor.
      */
     applyRefinedContent(refined: string): void {
+        if (this.isGeneratingOrRefining()) {
+            return;
+        }
         this.markdownEditorMonaco()?.applyRefinedContent(refined);
         // No explicit updateProblemStatement call needed: Monaco's onDidChangeModelContent
         // event propagates the change via textChanged → markdownChange → updateProblemStatement.
@@ -541,6 +646,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Reverts all changes in the diff editor by restoring the snapshot taken when diff mode was entered.
      */
     revertAll(): void {
+        if (this.isGeneratingOrRefining()) {
+            return;
+        }
         this.markdownEditorMonaco()?.revertAll();
         const currentContent = this.markdownEditorMonaco()?.monacoEditor?.()?.getText();
         if (currentContent !== undefined) {
@@ -572,26 +680,23 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             return;
         }
         this.teardownProblemStatementSync();
-        this.suppressUnsavedForNextProblemStatementChange = false;
-        this.dirtySignalSuppressedDuringInitialSync = false;
+        this.problemStatementChangeToSuppress = undefined;
         // Keep fallback content LF-only before seeding Yjs. If a Windows client seeds CRLF,
         // Monaco/Yjs offsets diverge by one char per line break on LF peers.
         const normalizedText = this.normalizeLineEndings(initialText);
-        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, normalizedText);
+        this.awaitingCanonicalSync.set(this.canonicalBaseIsolation());
+        this.problemStatementSyncState = this.canonicalBaseIsolation()
+            ? this.problemStatementSyncService.init(exerciseId, normalizedText, true)
+            : this.problemStatementSyncService.init(exerciseId, normalizedText);
         model.setValue('');
         this.enforceLfEol(model);
         this.createProblemStatementBinding(this.problemStatementSyncState, model, editorInstance);
-        this.problemStatementInitialSyncFinalizedSubscription = this.problemStatementSyncService.initialSyncFinalized$.subscribe(
-            ({ contentChangedDuringFinalize, contentDivergedFromFallback }) => {
-                if (contentChangedDuringFinalize && this.dirtySignalSuppressedDuringInitialSync) {
-                    this.suppressUnsavedForNextProblemStatementChange = true;
-                }
-                if (contentDivergedFromFallback) {
-                    this.unsavedChanges = true;
-                }
-                this.dirtySignalSuppressedDuringInitialSync = false;
-            },
-        );
+        this.problemStatementInitialSyncFinalizedSubscription = this.problemStatementSyncService.initialSyncFinalized$.subscribe(({ contentDivergedFromFallback }) => {
+            this.awaitingCanonicalSync.set(false);
+            if (contentDivergedFromFallback) {
+                this.unsavedChanges = true;
+            }
+        });
         this.problemStatementStateReplacementSubscription = this.problemStatementSyncService.stateReplaced$.subscribe((syncState) => {
             this.problemStatementSyncState = syncState;
             // Detach the old binding before mutating the model so that the setValue does not
@@ -599,10 +704,14 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.problemStatementBinding?.destroy();
             this.problemStatementBinding = undefined;
             // Force model content to the replacement Yjs state to avoid merge/appending when rebinding.
-            this.suppressUnsavedForNextProblemStatementChange = true;
             // Late leader replacement can carry content originally seeded from Windows peers.
             // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
             const replacedText = this.normalizeLineEndings(syncState.text.toJSON());
+            const contentChanged = model.getValue() !== replacedText;
+            this.problemStatementChangeToSuppress = contentChanged ? replacedText : undefined;
+            if (contentChanged) {
+                this.unsavedChanges = true;
+            }
             model.setValue(replacedText);
             this.enforceLfEol(model);
             this.createProblemStatementBinding(syncState, model, editorInstance);
@@ -614,6 +723,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         return content.replace(/\r\n/g, '\n');
     }
 
+    private configureActionGuards(): void {
+        const canMutate = () => !this.isGeneratingOrRefining() && !this.awaitingCanonicalSync();
+        const actions = this.markdownEditorMonaco()?.defaultActions?.();
+        actions?.find((action) => action instanceof AttachmentAction)?.setExecutionGuard(canMutate);
+        actions?.find((action) => action instanceof UrlAction)?.setExecutionGuard(canMutate);
+    }
+
     /** Enforce LF on Monaco model to avoid CRLF/LF positional drift in collaborative edits. */
     private enforceLfEol(model: editor.ITextModel): void {
         model.setEOL(editor.EndOfLineSequence.LF);
@@ -623,6 +739,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Tear down Yjs synchronization and release Monaco binding resources.
      */
     private teardownProblemStatementSync() {
+        this.awaitingCanonicalSync.set(false);
         this.problemStatementStateReplacementSubscription?.unsubscribe();
         this.problemStatementStateReplacementSubscription = undefined;
         this.problemStatementInitialSyncFinalizedSubscription?.unsubscribe();
@@ -631,8 +748,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.problemStatementBinding = undefined;
         this.problemStatementBindingDestroyed = false;
         this.problemStatementSyncState = undefined;
-        this.suppressUnsavedForNextProblemStatementChange = false;
-        this.dirtySignalSuppressedDuringInitialSync = false;
+        this.problemStatementChangeToSuppress = undefined;
         this.problemStatementSyncService.reset();
     }
 

@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
@@ -146,6 +145,7 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     private void withAccessibleParticipation() throws Exception {
         lenient().when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         lenient().when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation)).thenReturn(exercise);
+        lenient().when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation)).thenReturn(exercise);
         lenient().when(userRepository.getUserWithAuthorities()).thenReturn(user);
         lenient().when(repositoryParticipationService.getRepositoryFromGitService(anyBoolean(), any())).thenReturn(repository);
     }
@@ -265,7 +265,6 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         when(programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation)).thenReturn(exercise);
         when(userRepository.getUserWithAuthorities()).thenReturn(user);
-        doThrow(new AccessForbiddenException("not an editor")).when(authCheckService).checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.getFilesAtCommit("abc123", PARTICIPATION_ID, RepositoryType.SOLUTION));
 

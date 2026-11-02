@@ -10,6 +10,7 @@ import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { CommunicationCrudAction, SortDirection } from 'app/communication/communication.util';
 import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
@@ -17,7 +18,7 @@ import { CourseWideSearchComponent } from 'app/communication/course-conversation
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
-import { BehaviorSubject, EMPTY, Subject, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, of, throwError } from 'rxjs';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
@@ -52,8 +53,16 @@ import { ConversationGlobalSearchComponent } from 'app/communication/shared/conv
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { provideTranslateService } from '@ngx-translate/core';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
+import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ConversationWebsocketDTO } from 'app/communication/shared/entities/conversation/conversation-websocket-dto.model';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -213,7 +222,7 @@ examples.forEach((activeConversation) => {
             courseConversationsService.setActiveConversation = vi.fn();
             courseConversationsService.setUpConversationService = vi.fn().mockReturnValue(EMPTY);
             courseConversationsService.forceRefresh = vi.fn().mockReturnValue(EMPTY);
-            courseConversationsService.markAsRead = vi.fn();
+            courseConversationsService.prepareConversationView = vi.fn().mockReturnValue(of(true));
             courseConversationsService.acceptCodeOfConduct = vi.fn();
             courseConversationsService.createGroupChat = vi.fn().mockReturnValue(EMPTY);
             courseConversationsService.createOneToOneChat = vi.fn().mockReturnValue(EMPTY);
@@ -270,6 +279,53 @@ examples.forEach((activeConversation) => {
             component.ngOnDestroy();
             vi.useRealTimers();
             vi.resetAllMocks();
+        });
+
+        it('waits for accepted view-entry metadata before replaying the retained selection or rewriting its URL', () => {
+            const ready = new Subject<boolean>();
+            vi.mocked(courseConversationsService.prepareConversationView).mockReturnValue(ready);
+            const retained = generateExampleChannelDTO({ id: 21, name: 'Lecture questions' } as ChannelDTO);
+            activeConversation$.next(retained);
+            queryParamsSubject.next({ conversationId: 21 });
+            const navigate = vi.spyOn(router, 'navigate').mockClear();
+            const mount = vi.spyOn(courseConversationsService, 'setConversationViewOpen');
+            fixture.detectChanges();
+            expect(mount).not.toHaveBeenCalled();
+            expect(component.activeConversation()).toBeUndefined();
+            expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            expect(navigate).not.toHaveBeenCalled();
+
+            ready.next(false);
+            expect(component.isLoading()).toBe(false);
+            expect(component.activeConversation()).toBeUndefined();
+            expect(navigate).not.toHaveBeenCalled();
+            ready.next(true);
+            fixture.detectChanges();
+            expect(mount).toHaveBeenCalledExactlyOnceWith(true);
+            expect(component.activeConversation()?.id).toBe(retained.id);
+            expect(setActiveConversationSpy).toHaveBeenCalledWith(retained.id);
+        });
+
+        it('initializes an absent sidebar from accepted conversations after the initial refresh is cancelled', () => {
+            const recovered = generateExampleChannelDTO({ id: 21, name: 'Lecture questions', unreadMessagesCount: 2 } as ChannelDTO);
+            const conversations = new Subject<ConversationDTO[]>();
+            vi.spyOn(courseConversationsService, 'conversationsOfUser$', 'get').mockReturnValue(conversations);
+            vi.mocked(courseConversationsService.forceRefresh).mockReturnValue(throwError(() => new Error('snapshot superseded')));
+            const cards = [{ id: 21, title: 'Lecture questions', isCurrent: false, conversation: recovered, size: 'S' as const }];
+            vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockReturnValue(cards);
+            vi.mocked(courseOverviewService.groupConversationsByChannelType).mockReturnValue({ recents: { entityData: [] }, generalChannels: { entityData: cards } });
+            fixture.detectChanges();
+            expect(component.sidebarData()).toBeUndefined();
+            expect(courseConversationsService.forceRefresh).toHaveBeenCalled();
+
+            conversations.next([recovered]);
+            fixture.detectChanges();
+
+            expect(component.sidebarData()).toBeDefined();
+            expect(component.conversationsOfUser()).toEqual([recovered]);
+            expect(component.sidebarConversations()).toEqual(cards);
+            expect(component.accordionConversationGroups().generalChannels.entityData[0].conversation?.unreadMessagesCount).toBe(2);
+            expect(courseConversationsService.forceRefresh).toHaveBeenCalledTimes(1);
         });
 
         it('should refresh an already open thread after its forwarded sources finish loading', () => {
@@ -433,6 +489,70 @@ examples.forEach((activeConversation) => {
 
                 expect(spy).toHaveBeenCalledExactlyOnceWith(ChannelsCreateDialogComponent, expect.anything());
             });
+
+            for (const kind of ['group', 'direct'] as const) {
+                it.each(['complete', 'error', 'cancel'] as const)(`preserves sidebar read state when ${kind} chat creation ends with %s`, (outcome) => {
+                    fixture.detectChanges();
+                    const previousSidebar = component.sidebarData();
+                    const previousCards = component.sidebarConversations();
+                    const replacement = [{ id: 44, title: 'Study group', isCurrent: false, conversation: { id: 44, unreadMessagesCount: 2 }, size: 'S' as const }];
+                    vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockReturnValue(replacement);
+                    const create = kind === 'group' ? vi.mocked(courseConversationsService.createGroupChat) : vi.mocked(courseConversationsService.createOneToOneChat);
+                    create.mockReturnValue(outcome === 'error' ? throwError(() => new Error('conversation reload failed')) : EMPTY);
+                    const ref = new DynamicDialogRef();
+                    vi.spyOn(dialogService, 'open').mockReturnValue(ref);
+                    if (kind === 'group') component.openCreateGroupChatDialog();
+                    else component.openCreateOneToOneChatDialog();
+
+                    const partners = [
+                        { id: 41, login: 'student-a' },
+                        { id: 42, login: 'student-b' },
+                    ];
+                    ref.close(outcome === 'cancel' ? undefined : kind === 'group' ? partners : partners[0]);
+
+                    if (outcome === 'cancel') {
+                        expect(create).not.toHaveBeenCalled();
+                    } else {
+                        expect(create).toHaveBeenCalledExactlyOnceWith(kind === 'group' ? ['student-a', 'student-b'] : 'student-a');
+                    }
+                    if (outcome === 'complete') {
+                        expect(component.sidebarData()).not.toBe(previousSidebar);
+                        expect(component.sidebarConversations()).toEqual(replacement);
+                        expect(component.sidebarConversations()[0].conversation?.unreadMessagesCount).toBe(2);
+                    } else {
+                        expect(component.sidebarData()).toBe(previousSidebar);
+                        expect(component.sidebarConversations()).toBe(previousCards);
+                    }
+                });
+            }
+
+            it.each([
+                ['modified', true, false],
+                ['unmodified', false, false],
+                ['failed reload', true, true],
+            ] as const)('opens the overview selection only after a valid %s result and retains unread cards on failure', (_context, modified, failed) => {
+                fixture.detectChanges();
+                const previousSidebar = component.sidebarData();
+                const previousCards = component.sidebarConversations();
+                const selected = generateExampleChannelDTO({ id: 77, unreadMessagesCount: 2 } as ChannelDTO);
+                const ref = new DynamicDialogRef();
+                vi.spyOn(dialogService, 'open').mockReturnValue(ref);
+                vi.mocked(courseConversationsService.forceRefresh).mockReturnValue(failed ? throwError(() => new Error('reload failed')) : EMPTY);
+                setActiveConversationSpy.mockClear();
+                component.openChannelOverviewDialog();
+
+                ref.close([selected, modified]);
+
+                if (failed) {
+                    expect(setActiveConversationSpy).not.toHaveBeenCalled();
+                    expect(component.sidebarData()).toBe(previousSidebar);
+                    expect(component.sidebarConversations()).toBe(previousCards);
+                } else {
+                    expect(setActiveConversationSpy).toHaveBeenCalledExactlyOnceWith(selected);
+                    expect(component.sidebarData()).not.toBe(previousSidebar);
+                }
+                if (modified) expect(courseConversationsService.forceRefresh).toHaveBeenCalledWith(false, true);
+            });
         });
 
         it('should update thread in post', () => {
@@ -496,6 +616,22 @@ examples.forEach((activeConversation) => {
             });
             fixture.changeDetectorRef.detectChanges();
             expect(component.courseWideSearchConfig.searchTerm).toBe('test');
+        });
+
+        it('should tell the service for as long as the conversation view is open', () => {
+            const setConversationViewOpen = vi.spyOn(courseConversationsService, 'setConversationViewOpen');
+
+            fixture.detectChanges();
+            expect(setConversationViewOpen).toHaveBeenCalledWith(true);
+
+            fixture.destroy();
+            expect(setConversationViewOpen).toHaveBeenLastCalledWith(false);
+        });
+
+        it('should show the newest messages of the course first when no search is active', () => {
+            fixture.detectChanges();
+            component.initializeCourseWideSearchConfig();
+            expect(component.courseWideSearchConfig.sortingOrder).toBe(SortDirection.DESCENDING);
         });
 
         it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
@@ -744,11 +880,70 @@ examples.forEach((activeConversation) => {
                 expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
             });
 
+            it('updates a direct chat after a membership update without fetching conversations', () => {
+                const updatedChat = { ...usedChat, isFavorite: true };
+                conversationsOfUser$.next([emptyChat, updatedChat]);
+
+                expect(component.sidebarConversations()[0].conversation).toBe(updatedChat);
+                expect(courseOverviewService.groupConversationsByChannelType).toHaveBeenCalledOnce();
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
+            it('adds a newly received direct chat immediately without a refresh', () => {
+                const receivedChat = { id: 103, type: ConversationType.ONE_TO_ONE, lastMessageDate: dayjs() } as ConversationDTO;
+                conversationsOfUser$.next([emptyChat, usedChat, receivedChat]);
+
+                expect(component.sidebarConversations().map((card) => card.id)).toEqual([usedChat.id, receivedChat.id]);
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
             it('should keep the chat out of the sidebar while it is still empty', () => {
                 conversationsOfUser$.next([emptyChat, usedChat]);
 
                 expect(courseOverviewService.groupConversationsByChannelType).not.toHaveBeenCalled();
                 expect(component.sidebarConversations().map((card) => card.id)).toEqual([usedChat.id]);
+            });
+        });
+
+        describe('the unread count of a conversation changes while the sidebar is shown', () => {
+            let channel: ConversationDTO;
+            let conversationsOfUser$: BehaviorSubject<ConversationDTO[]>;
+
+            beforeEach(() => {
+                channel = { id: 301, type: ConversationType.CHANNEL, unreadMessagesCount: 0 } as ConversationDTO;
+                conversationsOfUser$ = new BehaviorSubject<ConversationDTO[]>([channel]);
+                Object.defineProperty(courseConversationsService, 'conversationsOfUser$', { get: () => conversationsOfUser$.asObservable() });
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
+                vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockImplementation((conversations) =>
+                    conversations.map((conversation) => ({ id: conversation.id!, title: 'channel', size: 'S', conversation })),
+                );
+                fixture.detectChanges();
+                component.prepareSidebarData();
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockClear();
+                vi.mocked(courseOverviewService.groupConversationsByChannelType).mockClear();
+            });
+
+            it('should rebuild the sidebar so that a message or reply that arrived is shown', () => {
+                // the service raises the count of the cached channel in place, so the sidebar cards, which read it from that
+                // object, would not notice it without being rebuilt
+                channel.unreadMessagesCount = 1;
+                conversationsOfUser$.next([channel]);
+
+                expect(courseOverviewService.groupConversationsByChannelType).toHaveBeenCalledOnce();
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
+            it('should rebuild the sidebar when the conversation was marked as unread without a count', () => {
+                channel.hasUnreadMessage = true;
+                conversationsOfUser$.next([channel]);
+
+                expect(courseOverviewService.groupConversationsByChannelType).toHaveBeenCalledOnce();
+            });
+
+            it('should leave the sidebar alone when no unread count changed', () => {
+                conversationsOfUser$.next([channel]);
+
+                expect(courseOverviewService.groupConversationsByChannelType).not.toHaveBeenCalled();
             });
         });
 
@@ -1216,5 +1411,77 @@ examples.forEach((activeConversation) => {
 
             expect(component.pageTitle()).toBe('overview.communication');
         });
+    });
+});
+
+describe('CourseConversationsComponent membership updates with the conversation service', () => {
+    let fixture: ComponentFixture<CourseConversationsComponent>;
+    let service: CourseConversationsService;
+
+    beforeEach(() => vi.useFakeTimers());
+
+    afterEach(() => {
+        fixture?.destroy();
+        service?.ngOnDestroy();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('shows a cached empty direct chat immediately on its first-message membership frame even when refreshes fail', async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                CourseConversationsService,
+                MockProvider(ConversationService),
+                MockProvider(GroupChatService),
+                MockProvider(OneToOneChatService),
+                MockProvider(ChannelService),
+                MockProvider(WebsocketService),
+                MockProvider(CourseOverviewService),
+                MockProvider(DialogService),
+                MockProvider(AlertService),
+                MockProvider(FaqService),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: Router, useClass: MockRouter },
+                { provide: ActivatedRoute, useValue: {} },
+                { provide: BreakpointObserver, useValue: { observe: () => of({ matches: false, breakpoints: {} }), isMatched: () => false } },
+            ],
+        })
+            .overrideComponent(CourseConversationsComponent, {
+                set: { template: '', templateUrl: undefined, imports: [], providers: [{ provide: CommunicationService, useValue: {} }] },
+            })
+            .compileComponents();
+
+        const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as Course;
+        const emptyChat = generateOneToOneChatDTO({ id: 2 });
+        emptyChat.lastMessageDate = undefined;
+        const membership = new Subject<ConversationWebsocketDTO>();
+        const conversationService = TestBed.inject(ConversationService);
+        vi.spyOn(TestBed.inject(WebsocketService), 'subscribe').mockReturnValue(membership);
+        vi.spyOn(conversationService, 'convertServerDates').mockImplementation((conversation) => conversation);
+        const get = vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [emptyChat] })));
+        const overview = TestBed.inject(CourseOverviewService);
+        vi.spyOn(overview, 'mapConversationsToSidebarCardElements').mockImplementation((conversations) =>
+            conversations.map((conversation) => ({ id: conversation.id!, title: 'chat', size: 'S', conversation })),
+        );
+        vi.spyOn(overview, 'groupConversationsByChannelType').mockReturnValue({ recents: { entityData: [] } });
+        service = TestBed.inject(CourseConversationsService);
+        // Only wire the sidebar consumer; zoneless rendering must not also initialize the whole communication page.
+        vi.spyOn(CourseConversationsComponent.prototype, 'ngOnInit').mockImplementation(() => {});
+        fixture = TestBed.createComponent(CourseConversationsComponent);
+        const component = fixture.componentInstance;
+        component.course.set(course);
+        component.messagingEnabled = true;
+        component['subscribeToConversationsOfUser']();
+        service.setUpConversationService(course).subscribe();
+        expect(component.sidebarConversations()).toEqual([]);
+        get.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 }))).mockClear();
+
+        membership.next({ action: CommunicationCrudAction.CREATE, conversation: { ...emptyChat, lastMessageDate: dayjs('2026-01-01T12:00:00Z') } });
+
+        expect(component.sidebarConversations().map((card) => card.id)).toEqual([2]);
+        expect(get).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(10_000);
+        expect(get).toHaveBeenCalledTimes(2);
+        expect(component.sidebarConversations().map((card) => card.id)).toEqual([2]);
     });
 });

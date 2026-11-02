@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -329,5 +330,27 @@ class ProgrammingExerciseResultRevisionTest {
         ArgumentCaptor<Set<ProgrammingExerciseTestCase>> saved = ArgumentCaptor.captor();
         verify(cases, atLeastOnce()).saveAll(saved.capture());
         assertThat(saved.getAllValues().stream().flatMap(Set::stream).map(ProgrammingExerciseTestCase::getTestName)).contains("passingTest").doesNotContain("newFailingTest");
+    }
+
+    @Test
+    void aContainerOfAMultiContainerBuildDoesNotDeactivateTheTestsOfItsSiblings() {
+        service.extractTestCasesFromResultAndBroadcastUpdates(result(solutionHead.get(), testsHead.get(), "oldTest"), stale, false);
+        assertThat(old.isActive()).as("the reported test reappears").isTrue();
+        assertThat(generated.isActive()).as("a sibling may report the absent test").isTrue();
+    }
+
+    @Test
+    void aTestReappearingInAMergedSolutionBuildKeepsItsStoredType() {
+        old.setType(ProgrammingExerciseTestCaseType.STRUCTURAL);
+
+        service.reconcileTestCasesOfMergedSolutionBuild(Set.of("generatedTest", "oldTest"), stale, new MergedBuildRun(solutionHead.get(), testsHead.get(), true), true);
+
+        ArgumentCaptor<Set<ProgrammingExerciseTestCase>> saved = ArgumentCaptor.captor();
+        verify(cases).saveAll(saved.capture());
+        assertThat(saved.getValue()).hasSize(1);
+        ProgrammingExerciseTestCase reappeared = saved.getValue().iterator().next();
+        assertThat(reappeared.getTestName()).isEqualTo("oldTest");
+        assertThat(reappeared.isActive()).isTrue();
+        assertThat(reappeared.getType()).isEqualTo(ProgrammingExerciseTestCaseType.STRUCTURAL);
     }
 }

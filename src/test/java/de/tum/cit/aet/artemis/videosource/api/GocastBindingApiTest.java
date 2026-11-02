@@ -10,12 +10,13 @@ import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.videosource.service.GocastBindingService;
 import de.tum.cit.aet.artemis.videosource.service.GocastIntegrationException;
+import de.tum.cit.aet.artemis.videosource.service.GocastRecordingService;
 
 class GocastBindingApiTest {
 
     private final GocastBindingService bindingService = mock(GocastBindingService.class);
 
-    private final GocastBindingApi api = new GocastBindingApi(bindingService);
+    private final GocastBindingApi api = new GocastBindingApi(bindingService, mock(GocastRecordingService.class));
 
     @Test
     void disconnectsTheCourseBeforeItIsDeleted() {

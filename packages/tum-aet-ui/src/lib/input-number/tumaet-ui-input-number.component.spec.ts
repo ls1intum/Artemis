@@ -321,6 +321,7 @@ describe('TumAetUiInputNumberComponent (external CVA writes)', () => {
         [min]="0"
         [max]="9999"
         [step]="step()"
+        [snapToStep]="snapToStep()"
         [maxFractionDigits]="maxFractionDigits()"
         [locale]="locale()"
         [showButtons]="true"
@@ -330,6 +331,7 @@ describe('TumAetUiInputNumberComponent (external CVA writes)', () => {
 class DecimalHostComponent {
     value?: number;
     readonly step = signal(1);
+    readonly snapToStep = signal(false);
     readonly maxFractionDigits = signal(1);
     readonly locale = signal<string | undefined>('en');
 }
@@ -416,6 +418,60 @@ describe('TumAetUiInputNumberComponent (maxFractionDigits)', () => {
         buttons()[0].click(); // 0.2 + 0.1 would be 0.30000000000000004 unrounded
         fixture.detectChanges();
         expect(host.value).toBe(0.3);
+    });
+
+    describe('snapToStep', () => {
+        beforeEach(() => {
+            host.step.set(0.5);
+        });
+
+        it('adds the step to a value that is off the step grid by default', () => {
+            fixture.detectChanges();
+            type('1.3');
+            buttons()[0].click();
+            fixture.detectChanges();
+            expect(host.value).toBe(1.8);
+        });
+
+        it('steps a value that is off the step grid to the next multiple of the step in the direction of travel', () => {
+            host.snapToStep.set(true);
+            fixture.detectChanges();
+            type('1.3');
+            buttons()[0].click();
+            fixture.detectChanges();
+            expect(host.value).toBe(1.5);
+
+            type('1.3');
+            buttons()[1].click();
+            fixture.detectChanges();
+            expect(host.value).toBe(1);
+        });
+
+        it('steps a value that is on the step grid by the step', () => {
+            host.snapToStep.set(true);
+            fixture.detectChanges();
+            type('1.5');
+            buttons()[0].click();
+            fixture.detectChanges();
+            expect(host.value).toBe(2);
+            buttons()[1].click();
+            buttons()[1].click();
+            fixture.detectChanges();
+            expect(host.value).toBe(1);
+        });
+
+        it('snaps with the arrow keys as well', () => {
+            host.snapToStep.set(true);
+            fixture.detectChanges();
+            type('2.2');
+            input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+            fixture.detectChanges();
+            expect(host.value).toBe(2);
+            type('2.2');
+            input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+            fixture.detectChanges();
+            expect(host.value).toBe(2.5);
+        });
     });
 
     it('applies grouping to the integer part on blur', () => {
