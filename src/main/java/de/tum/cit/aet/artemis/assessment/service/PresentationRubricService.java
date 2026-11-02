@@ -220,8 +220,8 @@ public class PresentationRubricService {
                 levelEntities.add(level);
             }
         }
-        Map<Long, Double> recalculatedScores = weightsChanged ? recalculateScores(assessmentId, storedCriteria) : Map.of();
-        return new PresentationRubricChanges(false, storedCriteria, levelEntities, recalculatedScores);
+        Map<Double, List<Long>> instanceIdsByScore = weightsChanged ? recalculateScores(assessmentId, storedCriteria) : Map.of();
+        return new PresentationRubricChanges(false, storedCriteria, levelEntities, instanceIdsByScore);
     }
 
     /**
@@ -258,19 +258,19 @@ public class PresentationRubricService {
 
     /**
      * Recalculates the scores of all assessed instances with the new weights of the criteria.
+     * The instances are grouped by their new score, so that each distinct score is written with one statement.
      *
      * @param assessmentId the presentation assessment id
      * @param criteria     the criteria with their new weights
-     * @return the new score of every assessed instance by instance id
+     * @return the ids of the assessed instances grouped by their new, rounded score
      */
-    private Map<Long, Double> recalculateScores(long assessmentId, List<PresentationRubricCriterion> criteria) {
+    private Map<Double, List<Long>> recalculateScores(long assessmentId, List<PresentationRubricCriterion> criteria) {
         int accuracy = presentationAssessmentRepository.findAccuracyOfScoresById(assessmentId);
         Map<Long, Map<Long, Integer>> positionsByInstanceId = presentationRubricRatingRepository.findLevelPositionsByPresentationAssessmentId(assessmentId).stream()
                 .collect(Collectors.groupingBy(PresentationRubricRatingLevelDTO::instanceId,
                         Collectors.toMap(PresentationRubricRatingLevelDTO::criterionId, PresentationRubricRatingLevelDTO::levelPosition)));
-        Map<Long, Double> scores = new HashMap<>();
-        positionsByInstanceId.forEach((instanceId, positions) -> scores.put(instanceId, calculateScore(criteria, positions, accuracy)));
-        return scores;
+        return positionsByInstanceId.entrySet().stream()
+                .collect(Collectors.groupingBy(entry -> calculateScore(criteria, entry.getValue(), accuracy), Collectors.mapping(Map.Entry::getKey, Collectors.toList())));
     }
 
     /**

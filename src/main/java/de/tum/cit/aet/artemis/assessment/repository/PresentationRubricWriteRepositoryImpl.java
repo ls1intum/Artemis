@@ -54,6 +54,6 @@ public class PresentationRubricWriteRepositoryImpl implements PresentationRubric
     private void saveRubric(PresentationRubricChanges rubric) {
         criterionRepository.getObject().saveAll(rubric.criteria());
         levelRepository.saveAll(rubric.levels());
-        rubric.recalculatedScores().forEach(instanceRepository::updateRubricScore);
+        rubric.instanceIdsByScore().forEach((score, instanceIds) -> instanceRepository.updateRubricScores(instanceIds, score));
     }
 }

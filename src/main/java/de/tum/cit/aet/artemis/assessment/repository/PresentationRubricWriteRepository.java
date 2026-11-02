@@ -28,10 +28,10 @@ public interface PresentationRubricWriteRepository {
      * @param replacesStoredRubric whether the stored rubric is deleted before the criteria and levels are saved
      * @param criteria             the criteria to save
      * @param levels               the levels to save
-     * @param recalculatedScores   the new rubric score of every assessed instance by instance id, empty if no weight changed
+     * @param instanceIdsByScore   the assessed instances grouped by their recalculated rubric score, empty if no weight changed
      */
     record PresentationRubricChanges(boolean replacesStoredRubric, List<PresentationRubricCriterion> criteria, List<PresentationRubricLevel> levels,
-            Map<Long, Double> recalculatedScores) {
+            Map<Double, List<Long>> instanceIdsByScore) {
 
         public static final PresentationRubricChanges NONE = new PresentationRubricChanges(false, List.of(), List.of(), Map.of());
     }

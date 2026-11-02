@@ -207,6 +207,7 @@ public class PresentationAssessmentResource {
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<List<PresentationRubricRatingDTO>> getPresentationRubricRatings(@PathVariable long courseId, @PathVariable long assessmentId,
             @PathVariable long instanceId) {
+        log.debug("REST request to get the rubric ratings of presentation instance {} of assessment {} for course {}", instanceId, assessmentId, courseId);
         presentationAssessmentService.checkPresentationAssessmentsEnabled(courseId);
         return ResponseEntity.ok(presentationAssessmentService.getRatings(courseId, assessmentId, instanceId));
     }
