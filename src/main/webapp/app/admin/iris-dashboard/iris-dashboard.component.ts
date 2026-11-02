@@ -16,7 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisDashboardService } from './iris-dashboard.service';
 import { IrisDashboardAiSelection, IrisDashboardTimeSpan } from './iris-dashboard.model';
-import { getConfigResource } from 'app/openapi/api/iris-admin-dashboard-api';
+import { getConfigResource } from 'app/openapi/api/iris-admin-dashboard-resources';
 import { IrisDashboardBreakdownEntry } from 'app/openapi/model/iris-dashboard-breakdown-entry';
 import { IrisDashboardOverview } from 'app/openapi/model/iris-dashboard-overview';
 import { faRobot, faSync } from '@fortawesome/free-solid-svg-icons';
