@@ -201,8 +201,8 @@ failure", yet the log's `E2E counts:` line shows `0 failed`.
 
 **Tell.** `gh run view <run-id> --json jobs` shows the failing step is not the test step but
 `E2E Teardown`, and the log has `rm: cannot remove '...': Permission denied`. A later checkout can
-also fail with `EACCES` on `src/test/playwright/test-reports/.reporter-failed`. The Playwright
-container runs as root against a bind-mounted checkout, so newly created report directories and
+also fail with `EACCES` on the generated `.reporter-failed` marker in the Playwright report directory.
+The Playwright container runs as root against a bind-mounted checkout, so newly created report directories and
 nested artifacts can belong to root rather than the host runner user.
 
 **What to do.** Fix ownership at the producer, in `run-tests.sh`, not the teardown. Its exit trap
