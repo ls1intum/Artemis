@@ -21,7 +21,7 @@ class AttachmentVideoUnitDTOTest {
     void omitsPreviousRevisionWhileReplacementPdfIsBeingSplit() {
         var unit = unitWithAttachment(2, "current");
         var previousSlide = slide(unit, 1, "previous");
-        previousSlide.setHidden(ZonedDateTime.now().plusDays(1));
+        previousSlide.setHidden(ZonedDateTime.parse("2035-01-02T10:00:00Z"));
         unit.setSlides(List.of(previousSlide));
 
         var dto = AttachmentVideoUnitDTO.of(unit);
@@ -46,7 +46,7 @@ class AttachmentVideoUnitDTOTest {
         lecture.setId(71L);
         unit.setLecture(lecture);
         var current = slide(unit, 2, "current");
-        var hiddenUntil = ZonedDateTime.now().plusDays(1);
+        var hiddenUntil = ZonedDateTime.parse("2035-01-02T10:00:00Z");
         current.setHidden(hiddenUntil);
         var exercise = new TextExercise();
         exercise.setId(42L);
@@ -99,6 +99,34 @@ class AttachmentVideoUnitDTOTest {
 
         assertThat(dto.slideMetadataPending()).isFalse();
         assertThat(dto.slides()).extracting(SlideDTO::id).containsExactly(11L);
+    }
+
+    @Test
+    void allowsFullyVisiblePdfFallbackAfterBasicReplacementRetiresTheOldDeck() {
+        var unit = unitWithAttachment(2, "current");
+        var old = slide(unit, 1, "previous");
+        old.setSuperseded(true);
+        old.setHidden(ZonedDateTime.parse("2035-01-02T10:00:00Z"));
+        var exercise = new TextExercise();
+        exercise.setId(42L);
+        old.setExercise(exercise);
+        unit.setSlides(List.of(old));
+
+        var dto = AttachmentVideoUnitDTO.of(unit);
+
+        assertThat(dto.slideMetadataPending()).isFalse();
+        assertThat(dto.slides()).isEmpty();
+    }
+
+    @Test
+    void allowsPdfFallbackForUnitsThatNeverHadSlides() {
+        var unit = unitWithAttachment(1, "initial");
+        unit.setSlides(List.of());
+
+        var dto = AttachmentVideoUnitDTO.of(unit);
+
+        assertThat(dto.slideMetadataPending()).isFalse();
+        assertThat(dto.slides()).isEmpty();
     }
 
     private static AttachmentVideoUnit unitWithAttachment(Integer version, String hash) {

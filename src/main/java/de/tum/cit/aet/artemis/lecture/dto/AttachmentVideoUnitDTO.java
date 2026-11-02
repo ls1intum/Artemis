@@ -71,6 +71,7 @@ public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime release
         var attachmentEntity = unit.getAttachment();
         // Editor uploads keep the previous deck until asynchronous splitting reconciles its IDs and visibility.
         // Tell the preview to wait, rather than editing the new PDF with old metadata or temporary IDs.
+        // Basic file replacements intentionally retire that deck and reset visibility; with no active slides, the preview can use its fully visible PDF fallback.
         boolean slidesInitialized = unit.getSlides() != null && Hibernate.isInitialized(unit.getSlides());
         boolean slideMetadataPending = attachmentEntity != null && slidesInitialized && unit.getSlides().stream().filter(slide -> !slide.isSuperseded())
                 .anyMatch(slide -> !slide.belongsToRevision(attachmentEntity.getVersion(), attachmentEntity.getSha256Hash()));

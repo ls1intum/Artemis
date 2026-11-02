@@ -244,7 +244,6 @@ describe('PdfPreviewComponent', () => {
         const hidden = component.pageOrder()[0];
         expect(hidden.slideId).toMatch(/^temp_/);
         component.hidePages({ slideId: hidden.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
-        component.isFileChanged.set(true);
 
         await component.updateAttachmentWithFile();
 
@@ -254,6 +253,7 @@ describe('PdfPreviewComponent', () => {
         });
         expect(updateFormData.has('file')).toBe(true);
         expect(updateFormData.has('pageOrder')).toBe(true);
+        expect(updateFormData.has('hiddenPages')).toBe(true);
     });
 
     it('should replace the instructor PDF when its page content changes', async () => {
