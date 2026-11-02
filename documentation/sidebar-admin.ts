@@ -45,6 +45,8 @@ const sidebars: SidebarsConfig = {
         'benchmarking-tool',
         'telemetry',
         'feature-usage',
+        'client-error-reports',
+        'error-analysis',
         'cleanup-service',
         'extensions-setup',
         'tum-live-course-connection',
