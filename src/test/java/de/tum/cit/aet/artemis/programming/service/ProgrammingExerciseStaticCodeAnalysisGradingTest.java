@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.LazyInitializationException;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -26,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackMessage;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -34,6 +37,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 
@@ -152,7 +157,8 @@ class ProgrammingExerciseStaticCodeAnalysisGradingTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "file", "blankFile", "line", "zeroLine", "column", "zeroColumn", "message", "blankMessage" })
+    @ValueSource(strings = { "file", "blankFile", "unavailableFile", "line", "zeroLine", "endLine", "zeroEndLine", "column", "zeroColumn", "endColumn", "zeroEndColumn", "message",
+            "blankMessage" })
     void doesNotMergeIssuesWithoutEnoughInformation(String missing) {
         var first = issue("WhitespaceAfterCheck");
         var second = issue("WhitespaceAroundCheck");
@@ -160,10 +166,15 @@ class ProgrammingExerciseStaticCodeAnalysisGradingTest {
             switch (missing) {
                 case "file" -> feedback.setFilePath(null);
                 case "blankFile" -> feedback.setFilePath(" ");
+                case "unavailableFile" -> feedback.setFilePath("notAvailable");
                 case "line" -> feedback.setStartLine(null);
                 case "zeroLine" -> feedback.setStartLine(0);
+                case "endLine" -> feedback.setEndLine(null);
+                case "zeroEndLine" -> feedback.setEndLine(0);
                 case "column" -> feedback.setStartColumn(null);
                 case "zeroColumn" -> feedback.setStartColumn(0);
+                case "endColumn" -> feedback.setEndColumn(null);
+                case "zeroEndColumn" -> feedback.setEndColumn(0);
                 case "message" -> feedback.setMessage(null);
                 case "blankMessage" -> feedback.getMessage().setText(" ");
                 default -> throw new IllegalArgumentException(missing);
@@ -173,6 +184,28 @@ class ProgrammingExerciseStaticCodeAnalysisGradingTest {
         grade(first, second);
 
         assertThat(result.getScore()).isEqualTo(98.0);
+        assertThat(result.getScaFeedbacks()).extracting(ScaFeedback::getPenalty).containsExactly(0.1, 0.1);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    void chargesReportsWithoutFilePathsSeparatelyAfterIngestion(String filePath) {
+        var message = new FeedbackMessage();
+        message.setId(10L);
+        message.setText("'if' is not followed by whitespace.");
+        var messageService = mock(FeedbackMessageService.class);
+        when(messageService.getOrCreate(message.getText())).thenReturn(message);
+        var ingestionService = new ProgrammingExerciseFeedbackCreationService(testCaseRepository, null, null, null, categoryRepository, messageService, Optional.empty(), null,
+                null, "main");
+        var issues = List.of(new StaticCodeAnalysisIssue(filePath, 8, 8, 9, 9, "WhitespaceAfterCheck", "whitespace", message.getText(), "error", null),
+                new StaticCodeAnalysisIssue(filePath, 8, 8, 9, 9, "WhitespaceAroundCheck", "whitespace", message.getText(), "error", null));
+        var feedback = ingestionService.createFeedbackFromStaticCodeAnalysisReports(List.of(new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.CHECKSTYLE, issues)));
+        feedback.forEach(issue -> issue.setCategory(category.getName()));
+
+        grade(feedback.toArray(ScaFeedback[]::new));
+
+        assertThat(result.getScore()).isEqualTo(98.0);
+        assertThat(result.getScaFeedbacks()).hasSize(2);
         assertThat(result.getScaFeedbacks()).extracting(ScaFeedback::getPenalty).containsExactly(0.1, 0.1);
     }
 
