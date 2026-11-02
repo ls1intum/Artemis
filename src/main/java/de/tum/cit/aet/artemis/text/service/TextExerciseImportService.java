@@ -135,6 +135,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Copying the text exercise basis from {}", sourceExercise);
         prepareNewExerciseForImport(newExercise);
         super.copyExerciseBasis(newExercise, sourceExercise, gradingInstructionCopyTracker);
+        newExercise.validateTitle();
         // Prefer the caller's edited value (standalone import form), fall back to the source content.
         newExercise.setExampleSolution(firstNonNull(newExercise.getExampleSolution(), sourceExercise.getExampleSolution()));
     }
