@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.service.vcs.AbstractVersionControlService;
 
@@ -107,6 +108,12 @@ public class LoggingAspect {
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
         if (AbstractVersionControlService.isReadFullyShortReadOfBlockException(e)) {
             // ignore
+            return;
+        }
+
+        if (e instanceof RateLimitExceededException) {
+            // the answer is a 429 and the limit logs what is worth knowing: logging it again at error level in every layer that it passes
+            // would let a sender fill the log, and the error analysis would count the rejections as errors of the server
             return;
         }
 
