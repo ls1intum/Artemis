@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, input, output, signal, viewChild }
 import { FormsModule } from '@angular/forms';
 import { Course, Language } from 'app/course/shared/entities/course.model';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
@@ -25,7 +25,6 @@ import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/abou
 import { AthenaFeature, createAthenaCourseConfigState } from 'app/course/manage/services/athena-course-config.state';
 import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
 import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.component';
-import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-onboarding-general-settings',

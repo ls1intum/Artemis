@@ -358,8 +358,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         // 8+. Other management items
         sidebarItems.push(...this.addCommunicationItem(currentCourse));
         if (isInstructor) {
-            sidebarItems.push(...this.getIrisSettingsItem());
-            sidebarItems.push(...this.getAthenaSettingsItem());
+            sidebarItems.push(...this.getIrisSettingsItem(), ...this.getAthenaSettingsItem());
         }
         sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem(courseId));
         if (this.atlasEnabled && isEditor && this.learningPathsActive()) {
