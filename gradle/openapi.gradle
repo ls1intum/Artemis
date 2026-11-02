@@ -119,15 +119,15 @@
                 set: 'Array',
         ]
         languageSpecificPrimitives =['void']
-        // useHttpResource=true with separateResources=false adds inline GET resources alongside the
-        // existing Observable methods. useInjectFunction=true: inject() instead of constructor injection.
+        // Emit separate GET resource factories alongside all Observable methods.
+        // useInjectFunction=true: inject() instead of constructor injection.
         // readonlyModels=false: keep DTO properties mutable (Artemis builds/edits DTOs in place).
         // observeResponseHeaders=true: an operation whose 2xx response declares headers returns the
         // HttpResponse, so callers can read them (e.g. X-Has-Next of the quiz training questions).
         configOptions = [
             useHttpResource       : "true",
             useInjectFunction     : "true",
-            separateResources     : "false",
+            separateResources     : "true",
             readonlyModels        : "false",
             observeResponseHeaders: "true"
         ]

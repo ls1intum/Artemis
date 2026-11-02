@@ -1,4 +1,4 @@
-import type { GetBreakdownParams, GetOverviewParams } from 'app/openapi/api/iris-admin-dashboard-api';
+import type { GetBreakdownParams, GetOverviewParams } from 'app/openapi/api/iris-admin-dashboard-resources';
 
 /** UI windows expressed as fixed elapsed days; the server also accepts YEAR buckets. */
 export type IrisDashboardTimeSpan = 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER';
