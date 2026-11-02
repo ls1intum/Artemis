@@ -85,8 +85,9 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
     }
 
     /**
-     * Maps the record written into the exercise details file of an archive: the full response without the id of the
-     * team assignment configuration, which is a row of this instance and means nothing in a file read back elsewhere.
+     * Maps the record written into the exercise details file of an archive: the full response without the ids of the
+     * team assignment configuration and the grading criteria, which are rows of this instance and mean nothing in a file
+     * read back elsewhere.
      * The plagiarism configuration of a file upload exercise carries no id.
      *
      * @param exercise the exercise to export
@@ -126,6 +127,9 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
             teamAssignmentConfig = teamAssignmentConfig.withoutId();
         }
         List<GradingCriterionDTO> gradingCriteria = includeInitializedAssociations ? mapGradingCriteria(exercise.getGradingCriteria()) : null;
+        if (forExport && gradingCriteria != null) {
+            gradingCriteria = gradingCriteria.stream().map(GradingCriterionDTO::withoutIds).toList();
+        }
         Set<CompetencyLinkDTO> competencyLinks = includeInitializedAssociations && initialized(exercise.getCompetencyLinks())
                 ? exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet())
                 : null;

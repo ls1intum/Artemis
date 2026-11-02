@@ -23,7 +23,6 @@ import shortAnswerQuestion from './assets/quiz/short-answer-question.png';
 import existingQuestion from './assets/quiz/existing-question.png';
 import footer from './assets/quiz/footer.png';
 import importListQuizzes from './assets/quiz/import-list-quizzes.png';
-import exportQuizzesList from './assets/quiz/export-quizzes-list.png';
 import aiGenerationModal from './assets/quiz/ai-generation-modal.png';
 import aiRefinementPanel from './assets/quiz/ai-refinement-panel.png';
 import aiBulkRefinement from './assets/quiz/ai-bulk-refinement.png';
@@ -256,14 +255,14 @@ The **Import** tab of the **Manage Exercises** dialog, with **Quiz** picked, lis
 The eye button next to **Import** replaces the list with a preview of the quiz, showing its total points, its duration and all of its questions, so you can compare versions from different years or courses first.
 The preview has its own **Import** button, which does the same as **Import** in the list. **Back to list**, or the Escape key, returns to the list with your search and page unchanged. The title and both buttons stay in view while you scroll through the questions.
 
-### Export Questions
+### Export a Quiz
 
-The **Export** tab of the same dialog lists every quiz question in the course.
+The **Export** tab of the same dialog downloads a whole quiz, with its settings, questions and drag-and-drop images,
+as a ZIP file. **From file** on the **Import** tab reads it back, on this or another Artemis instance; see
+[Moving an Exercise Between Courses](/instructor/exercises/intro#moving-an-exercise-between-courses).
 
-<Image src={exportQuizzesList} alt="Dialog listing the course's quiz questions with a checkbox each" size={ImageSize.medium} caption="Choosing questions to export" />
-
-**Export** writes the questions you ticked to a JSON file, which the **From a file** tab of **Add Existing
-Questions** reads back — that is how a question travels between Artemis instances.
+To reuse single questions instead, **Export** on the quiz's detail page writes its questions to a JSON file, which the
+**From a file** tab of **Add Existing Questions** reads back.
 
 <Callout variant={CalloutVariant.info}>
 

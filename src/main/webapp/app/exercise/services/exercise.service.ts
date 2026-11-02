@@ -129,6 +129,19 @@ export class ExerciseService {
     }
 
     /**
+     * Downloads the exercise as a zip file that the import from file reads. A programming exercise also carries its template,
+     * solution and test repositories.
+     * @param exercise the exercise to export
+     */
+    exportToFile(exercise: Exercise): Observable<HttpResponse<Blob>> {
+        const url =
+            exercise.type === ExerciseType.PROGRAMMING
+                ? `api/programming/programming-exercises/${exercise.id}/export-instructor-exercise`
+                : `api/${exercise.type === ExerciseType.FILE_UPLOAD ? 'fileupload' : exercise.type}/${exercise.type}-exercises/${exercise.id}/export`;
+        return this.http.get(url, { observe: 'response', responseType: 'blob' });
+    }
+
+    /**
      * Get exercise with exerciseId from server
      * @param exerciseId - Exercise that should be loaded
      */

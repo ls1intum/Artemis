@@ -2653,4 +2653,27 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         request.get(courseUrl, HttpStatus.OK, QuizExercise.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testExportQuizExercise() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(3600);
+        quizExercise.setCategories(Set.of("{\"category\":\"export\"}"));
+        quizExercise = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
+        var dragAndDropQuestion = quizExercise.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast).findFirst()
+                .orElseThrow();
+        String backgroundFileName = new FileSystemLocation.DragAndDropBackground(dragAndDropQuestion.getBackgroundFilePath()).path().getFileName().toString();
+
+        var export = exerciseUtilService.readExerciseExport(request.getFile("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/export", OK));
+
+        assertThat(export.details()).containsEntry("type", "quiz").containsKey("categories").containsKey("quizQuestions");
+        assertThat(export.entries()).containsKey("images-for-drag-and-drop-question-" + dragAndDropQuestion.getId() + "/" + backgroundFileName);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testExportQuizExercise_asEditor_forbidden() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        request.getFile("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/export", FORBIDDEN);
+    }
 }

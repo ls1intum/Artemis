@@ -1357,4 +1357,24 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         request.get(courseUrl, HttpStatus.OK, FileUploadExerciseDTO.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportExercise() throws Exception {
+        fileUploadExercise.setProblemStatement("Upload a file");
+        fileUploadExercise.setCategories(Set.of("{\"category\":\"export\"}"));
+        fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise));
+
+        var export = exerciseUtilService.readExerciseExport(request.getFile("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export", HttpStatus.OK));
+
+        assertThat(export.details()).containsEntry("type", "file-upload").containsKey("categories");
+        ExerciseUtilService.assertExportedGradingCriteriaWithoutIds(export.details());
+        assertThat(export.entries().keySet()).anyMatch(name -> name.startsWith("Problem-Statement-"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void exportExercise_asEditor_forbidden() throws Exception {
+        request.getFile("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export", HttpStatus.FORBIDDEN);
+    }
 }

@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +27,8 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
+import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -67,12 +71,45 @@ public abstract class ExerciseWithSubmissionsExportService {
 
     private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
+    protected final FileService fileService;
+
+    protected final ZipFileService zipFileService;
+
     protected ExerciseWithSubmissionsExportService(JsonMapper objectMapper, SubmissionExportService submissionExportService,
-            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, FileService fileService,
+            ZipFileService zipFileService) {
         this.objectMapper = objectMapper;
         this.submissionExportService = submissionExportService;
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
+        this.fileService = fileService;
+        this.zipFileService = zipFileService;
+    }
+
+    /**
+     * Exports the exercise definition for download by an instructor: the problem statement with its embedded files and
+     * the exercise details, in the same layout as in a course archive, but without any submissions.
+     *
+     * @param exercise the exercise to export, with the associations its details should contain already loaded
+     * @return the path to the zip file, which is deleted again after a few minutes
+     * @throws IOException if the export is incomplete, for example because an embedded file is missing, or the zip file could not be created
+     */
+    public Path exportExerciseForDownload(Exercise exercise) throws IOException {
+        Path exportDir = fileService.createTemporaryDirectory(FilePathConverter.getTempFilePath(), "exercise-export-", 5);
+        List<Path> pathsToBeZipped = new ArrayList<>();
+        List<String> exportErrors = new ArrayList<>();
+        exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
+        // An exercise without a problem statement has nothing to export there, which the archive reports but is complete for a download.
+        // Any other error leaves out a part the import needs, so the instructor gets an error instead of a file that does not work.
+        if (exercise.getProblemStatement() != null && !exportErrors.isEmpty()) {
+            throw new IOException(String.join(" ", exportErrors));
+        }
+        var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
+        String zipFileName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
+        Path zipFilePath = exportDir.resolve(FileUtil.sanitizeFilename(zipFileName));
+        // both embedding syntaxes add the same files directory, which must only be zipped once
+        zipFileService.createTemporaryZipFile(zipFilePath, pathsToBeZipped.stream().distinct().toList(), 5);
+        return zipFilePath;
     }
 
     /**
@@ -180,7 +217,9 @@ public abstract class ExerciseWithSubmissionsExportService {
      * @param filePath         the path of the file that should be copied
      */
     private void constructFilenameAndCopyFile(Exercise exercise, List<String> exportErrors, Path embeddedFilesDir, String filePath) {
+        // Only the last segment names the file: the link is written by an editor, and "../" in it must not reach outside the markdown directory.
         String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
+        fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
         Path imageFilePath = FilePathConverter.getMarkdownFilePath().resolve(fileName);
         Path imageExportPath = embeddedFilesDir.resolve(fileName);
         // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied

@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Download, Page } from '@playwright/test';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MODELING_EXERCISE_BASE, PROGRAMMING_EXERCISE_BASE, QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE, UPLOAD_EXERCISE_BASE } from '../../constants';
 import { expect } from '@playwright/test';
@@ -165,6 +165,32 @@ export class CourseManagementExercisesPage {
 
     async importQuizExercise() {
         await this.selectExerciseTypeCard('import', 'quiz');
+    }
+
+    /**
+     * Downloads an exercise of the course through the Export tab of the Manage Exercises dialog.
+     * @param type the exercise type as it appears in the card test ids, for example 'text'
+     * @param exerciseId the id of the exercise to export
+     * @returns the downloaded zip file
+     */
+    async exportExercise(type: string, exerciseId: number): Promise<Download> {
+        await this.page.getByTestId('export-exercise-button').click();
+        await this.page.getByTestId(`export-${type}-exercise`).click();
+        const downloadPromise = this.page.waitForEvent('download');
+        await this.page.getByTestId(`export-exercise-${exerciseId}`).click();
+        return downloadPromise;
+    }
+
+    /**
+     * Imports an exported exercise through Import, From file, which opens the editor of a new exercise.
+     * @param type the exercise type as it appears in the card test ids, for example 'text'
+     * @param filePath the path of the exported zip file
+     */
+    async importExerciseFromFile(type: string, filePath: string) {
+        await this.selectExerciseTypeCard('import', type);
+        await this.page.getByTestId('import-from-file-tab').click();
+        await this.page.getByTestId('import-from-file-input').setInputFiles(filePath);
+        await this.page.getByTestId('upload-exercise-btn').click();
     }
 
     async clickImportExercise(exerciseID: number) {

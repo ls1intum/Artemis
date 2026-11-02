@@ -25,13 +25,16 @@
             (click)="setActiveTab('import')"
             jhiTranslate="artemisApp.exerciseManagement.addModal.tab.import"
         ></button>
-        <button
-            type="button"
-            [attr.aria-current]="activeTab() === 'export' ? 'true' : null"
-            class="tab-btn {{ activeTab() === 'export' ? 'tab-btn--active' : '' }}"
-            (click)="requestExport()"
-            jhiTranslate="artemisApp.exerciseManagement.addModal.tab.export"
-        ></button>
+        @if (canExport()) {
+            <button
+                type="button"
+                data-testid="export-tab"
+                [attr.aria-current]="activeTab() === 'export' ? 'true' : null"
+                class="tab-btn {{ activeTab() === 'export' ? 'tab-btn--active' : '' }}"
+                (click)="setActiveTab('export')"
+                jhiTranslate="artemisApp.exerciseManagement.addModal.tab.export"
+            ></button>
+        }
     </div>
 
     <!-- ── Create tab ── -->
@@ -103,7 +106,51 @@
         </div>
     }
 
-    <!-- The Export tab opens the quiz export dialog directly (see requestExport); no separate page is rendered here. -->
+    <!-- ── Export tab ── -->
+    @if (activeTab() === 'export' && canExport()) {
+        @if (exportType(); as type) {
+            <button type="button" class="back-link mb-3" data-testid="export-back" (click)="exportType.set(undefined)">
+                <fa-icon [icon]="faArrowLeft" class="me-1" />
+                <span jhiTranslate="entity.action.back"></span>
+            </button>
+            @for (exercise of exercisesToExport(); track exercise.id) {
+                <div class="export-row" [attr.data-testid]="'export-row-' + exercise.id">
+                    <span class="export-title">{{ exercise.title }}</span>
+                    <tumaet-ui-button
+                        size="small"
+                        severity="secondary"
+                        [icon]="faDownload"
+                        [loading]="exportingExerciseId() === exercise.id"
+                        [disabled]="exportingExerciseId() !== undefined"
+                        [ariaLabel]="'artemisApp.exerciseManagement.addModal.export.exportExercise' | artemisTranslate: { title: exercise.title }"
+                        [attr.data-testid]="'export-exercise-' + exercise.id"
+                        (clicked)="exportExercise(exercise)"
+                    >
+                        <span jhiTranslate="artemisApp.exerciseManagement.addModal.export.exportButton"></span>
+                    </tumaet-ui-button>
+                </div>
+            } @empty {
+                <p class="text-muted-color text-sm" jhiTranslate="artemisApp.exerciseManagement.addModal.export.empty"></p>
+            }
+        } @else {
+            <p class="text-muted-color text-sm mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.exportHint"></p>
+            <div class="exercise-grid">
+                @for (card of exerciseTypeCards(); track card.type) {
+                    <button class="exercise-card" [attr.data-testid]="'export-' + card.type + '-exercise'" (click)="exportType.set(card.type)" type="button">
+                        <div class="card-icon-wrapper">
+                            <fa-icon [icon]="card.icon" />
+                        </div>
+                        <h6 [jhiTranslate]="card.labelKey"></h6>
+                        <p [jhiTranslate]="card.descriptionKey"></p>
+                        <span class="card-cta">
+                            <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.select"></span>
+                            <fa-icon [icon]="faArrowRight" class="ms-1" />
+                        </span>
+                    </button>
+                }
+            </div>
+        }
+    }
 </tumaet-ui-dialog>
 
 @if (courseId(); as id) {
