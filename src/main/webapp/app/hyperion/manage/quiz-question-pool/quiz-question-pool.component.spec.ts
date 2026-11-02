@@ -298,6 +298,55 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.pendingInQueue()).toBe(500);
     });
 
+    it('should reach the decided questions of a fully decided queue past the largest reloadable range', () => {
+        const all = Array.from({ length: 520 }, (_, index) => ({ ...question(index + 1, 9, 'Arrays'), flagged: true, reviewState: 'APPROVED' as const }));
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const questionsSpy = vi
+            .spyOn(poolService, 'getQuestions')
+            .mockImplementation((_courseId, query) =>
+                of(query.flagged ? { ...page(all.slice(query.page * query.size, (query.page + 1) * query.size), 520), pendingCount: 0 } : page(questions())),
+            );
+        component.refresh();
+        while (component.needsReviewQuestions().length < 500) {
+            component.loadMoreNeedsReview();
+        }
+
+        component.loadMoreNeedsReview();
+
+        expect(questionsSpy).toHaveBeenLastCalledWith(1, { flagged: true, page: 25, size: 20 });
+        expect(component.needsReviewQuestions()).toHaveLength(520);
+        expect(component.remainingNeedsReview()).toBe(0);
+    });
+
+    it('should keep a decision taken while an appended queue page was loading in the pending count', () => {
+        const all = Array.from({ length: 520 }, (_, index) => ({ ...question(index + 1, 9, 'Arrays'), flagged: true }));
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const appended = new Subject<PoolQuestionPage>();
+        vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => {
+            if (!query.flagged) {
+                return of(page(questions()));
+            }
+            if (query.page === 25) {
+                return appended.asObservable();
+            }
+            return of({ ...page(all.slice(query.page * query.size, (query.page + 1) * query.size), 520), pendingCount: 520 });
+        });
+        component.refresh();
+        while (component.needsReviewQuestions().length < 500) {
+            component.loadMoreNeedsReview();
+        }
+        component.loadMoreNeedsReview();
+        vi.spyOn(poolService, 'review').mockReturnValue(of({ ...all[0], reviewState: 'APPROVED' }));
+        component.review({ questionId: 1, reviewState: 'APPROVED' });
+        expect(component.pendingInQueue()).toBe(519);
+
+        appended.next({ ...page(all.slice(500), 520), pendingCount: 520 });
+        appended.complete();
+
+        expect(component.needsReviewQuestions()).toHaveLength(520);
+        expect(component.pendingInQueue()).toBe(519);
+    });
+
     it('should recount the queue when a flagged question outside the loaded queue is reviewed', () => {
         const queued = { ...question(1, 9, 'Arrays'), flagged: true, reviewState: 'APPROVED' as const };
         const unloaded = { ...question(21, 9, 'Arrays'), flagged: true, reviewState: 'APPROVED' as const };
