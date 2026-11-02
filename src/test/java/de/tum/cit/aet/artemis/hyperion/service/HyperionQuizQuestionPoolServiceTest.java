@@ -7,7 +7,9 @@ import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -19,6 +21,7 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.core.task.TaskRejectedException;
@@ -246,11 +249,14 @@ class HyperionQuizQuestionPoolServiceTest {
         item.setId(3L);
         item.setCourse(course);
         when(itemRepository.findByIdElseThrow(3L)).thenReturn(item);
-        when(buildService.isRunning(5L)).thenReturn(false);
+        when(buildService.tryStart(5L)).thenReturn("lease");
 
         service.deleteItem(5L, 3L);
 
-        verify(itemRepository).deleteById(3L);
+        InOrder order = inOrder(buildService, itemRepository);
+        order.verify(buildService).tryStart(5L);
+        order.verify(itemRepository).deleteById(3L);
+        order.verify(buildService).release(5L, "lease");
     }
 
     @Test
@@ -261,22 +267,35 @@ class HyperionQuizQuestionPoolServiceTest {
         when(itemRepository.findByIdElseThrow(3L)).thenReturn(item);
 
         assertThatThrownBy(() -> service.deleteItem(6L, 3L)).isInstanceOf(EntityNotFoundException.class);
-        when(buildService.isRunning(5L)).thenReturn(true);
+        when(buildService.tryStart(5L)).thenReturn(null);
         assertThatThrownBy(() -> service.deleteItem(5L, 3L)).isInstanceOf(ConflictException.class);
         verify(itemRepository, never()).deleteById(anyLong());
+        verify(buildService, never()).release(anyLong(), any());
     }
 
     @Test
-    void deleteItems_clearsTheCompetencyOrThePoolAndReportsTheCount() {
-        when(buildService.isRunning(5L)).thenReturn(false);
+    void deleteItems_clearsTheCompetencyOrThePoolUnderTheBuildLeaseAndReportsTheCount() {
+        when(buildService.tryStart(5L)).thenReturn("lease");
         when(itemRepository.deleteAllForCourse(5L, 9L)).thenReturn(4);
         when(itemRepository.deleteAllForCourse(5L, null)).thenReturn(12);
 
         assertThat(service.deleteItems(5L, 9L).deleted()).isEqualTo(4);
         assertThat(service.deleteItems(5L, null).deleted()).isEqualTo(12);
+        verify(buildService, times(2)).release(5L, "lease");
 
-        when(buildService.isRunning(5L)).thenReturn(true);
+        when(buildService.tryStart(5L)).thenReturn(null);
         assertThatThrownBy(() -> service.deleteItems(5L, null)).isInstanceOf(ConflictException.class);
+        verify(itemRepository, never()).deleteAllForCourse(5L, 10L);
+    }
+
+    @Test
+    void deleteItems_releasesTheBuildLeaseWhenTheDeletionFails() {
+        when(buildService.tryStart(5L)).thenReturn("lease");
+        when(itemRepository.deleteAllForCourse(5L, null)).thenThrow(new IllegalStateException("database down"));
+
+        assertThatThrownBy(() -> service.deleteItems(5L, null)).isInstanceOf(IllegalStateException.class);
+
+        verify(buildService).release(5L, "lease");
     }
 
     @Test

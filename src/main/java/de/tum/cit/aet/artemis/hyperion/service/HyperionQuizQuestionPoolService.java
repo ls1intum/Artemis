@@ -262,15 +262,15 @@ public class HyperionQuizQuestionPoolService {
      * @param courseId   the course
      * @param questionId the pool item
      * @throws EntityNotFoundException if no such item exists in the course
-     * @throws ConflictException       if a build of the course is running
+     * @throws ConflictException       if a build of the course is running; the deletion holds the course's build lease, so no build starts
+     *                                     while it runs
      */
     public void deleteItem(long courseId, long questionId) {
         QuizQuestionPoolItem item = itemRepository.findByIdElseThrow(questionId);
         if (!Objects.equals(item.getCourse().getId(), courseId)) {
             throw new EntityNotFoundException("QuizQuestionPoolItem", questionId);
         }
-        rejectWhileBuilding(courseId);
-        itemRepository.deleteById(questionId);
+        whileHoldingTheBuildLease(courseId, () -> itemRepository.deleteById(questionId));
     }
 
     /**
@@ -282,13 +282,27 @@ public class HyperionQuizQuestionPoolService {
      * @throws ConflictException if a build of the course is running
      */
     public QuizQuestionPoolDeletionDTO deleteItems(long courseId, @Nullable Long competencyId) {
-        rejectWhileBuilding(courseId);
-        return new QuizQuestionPoolDeletionDTO(itemRepository.deleteAllForCourse(courseId, competencyId));
+        int[] deleted = new int[1];
+        whileHoldingTheBuildLease(courseId, () -> deleted[0] = itemRepository.deleteAllForCourse(courseId, competencyId));
+        return new QuizQuestionPoolDeletionDTO(deleted[0]);
     }
 
-    private void rejectWhileBuilding(long courseId) {
-        if (buildService.isRunning(courseId)) {
+    /**
+     * Runs a change of the pool while holding the course's build lease, so that no build can start, enqueue or work on the pool in the
+     * meantime. The lease is released afterwards, whatever the outcome.
+     *
+     * @throws ConflictException if a build of the course holds the lease
+     */
+    private void whileHoldingTheBuildLease(long courseId, Runnable change) {
+        String leaseToken = buildService.tryStart(courseId);
+        if (leaseToken == null) {
             throw new ConflictException("A build of this quiz question pool is running", "QuizQuestionPool", "buildRunning");
+        }
+        try {
+            change.run();
+        }
+        finally {
+            buildService.release(courseId, leaseToken);
         }
     }
 
