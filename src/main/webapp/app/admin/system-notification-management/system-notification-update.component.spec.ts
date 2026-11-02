@@ -208,19 +208,18 @@ describe('SystemNotificationManagementUpdateComponent', () => {
             expect(saveButton.disabled).toBe(true);
         });
 
-        it('should not show the maxlength error on an untouched field', () => {
+        it('should show the maxlength error even on an untouched field', () => {
             const control = component.form.get('text');
             control?.setValue('a'.repeat(2001));
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('#text-maxlength-error')).toBeNull();
-            expect(fixture.nativeElement.querySelector('#text')?.getAttribute('aria-describedby')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#text-maxlength-error')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#text')?.getAttribute('aria-describedby')).toBe('text-maxlength-error');
         });
 
-        it('should set aria-invalid and aria-describedby when error is visible', () => {
+        it('should set aria-invalid and aria-describedby when text exceeds 2000 characters', () => {
             const control = component.form.get('text');
             control?.setValue('a'.repeat(2001));
-            control?.markAsDirty();
             fixture.detectChanges();
 
             const input = fixture.nativeElement.querySelector('#text') as HTMLInputElement;
