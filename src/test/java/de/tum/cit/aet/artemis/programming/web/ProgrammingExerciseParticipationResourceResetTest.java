@@ -301,6 +301,7 @@ class ProgrammingExerciseParticipationResourceResetTest {
 
     @Test
     void checkIfParticipationHasResult_reportsWhetherAnyResultExists() throws Exception {
+        when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         when(resultRepository.existsBySubmissionParticipationId(PARTICIPATION_ID)).thenReturn(true);
 
         assertThat(resource.checkIfParticipationHashResult(PARTICIPATION_ID).getBody()).isTrue();
@@ -308,8 +309,20 @@ class ProgrammingExerciseParticipationResourceResetTest {
 
     @Test
     void checkIfParticipationHasResult_reportsFalseForAParticipationThatWasNeverBuilt() throws Exception {
+        when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
         when(resultRepository.existsBySubmissionParticipationId(PARTICIPATION_ID)).thenReturn(false);
 
         assertThat(resource.checkIfParticipationHashResult(PARTICIPATION_ID).getBody()).isFalse();
+    }
+
+    @Test
+    void checkIfParticipationHasResult_ofSomebodyElseIsRefusedWithoutReadingResults() throws Exception {
+        // The endpoint must apply the same access check as its siblings and must not even read whether a result exists for a participation the student may not access.
+        when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+        doThrow(new AccessForbiddenException("not yours")).when(participationAuthCheckService).checkCanAccessParticipationElseThrow(participation);
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.checkIfParticipationHashResult(PARTICIPATION_ID));
+
+        verify(resultRepository, never()).existsBySubmissionParticipationId(PARTICIPATION_ID);
     }
 }
