@@ -10,6 +10,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('AthenaService', () => {
@@ -81,6 +82,25 @@ describe('AthenaService', () => {
         expect(feedback).toBeDefined();
         expect(feedback.type).toBe(FeedbackType.MANUAL_UNREFERENCED);
         expect(feedback.gradingInstruction?.id).toBe(99);
+    });
+
+    it('maps a referenced text suggestion starting at zero to a text block', async () => {
+        const exercise = { ...exerciseBase, type: 'text' } as Exercise;
+        const submission = { id: 5, text: 'Hello World' } as TextSubmission;
+        const suggestion = new TextFeedbackSuggestion(1, exercise.id!, submission.id!, 'Title', 'Description', 2, 99, 0, 5);
+        const result = lastValueFrom(service.getTextFeedbackSuggestions(exercise, submission));
+        httpMock.expectOne('/api/athena/text-exercises/10/submissions/5/feedback-suggestions').flush([suggestion]);
+
+        const [blockRef] = await result;
+        expect(blockRef).toBeInstanceOf(TextBlockRef);
+        if (!(blockRef instanceof TextBlockRef)) {
+            throw new Error('Expected a referenced text suggestion');
+        }
+        expect(blockRef.block?.text).toBe('Hello');
+        expect(blockRef.block?.id).toBeTruthy();
+        expect(blockRef.feedback?.reference).toBe(blockRef.block?.id);
+        expect(blockRef.feedback?.credits).toBe(2);
+        expect(blockRef.feedback?.gradingInstruction?.id).toBe(99);
     });
 
     it('should use lineStart fallback when programming suggestion lacks an end line', async () => {
