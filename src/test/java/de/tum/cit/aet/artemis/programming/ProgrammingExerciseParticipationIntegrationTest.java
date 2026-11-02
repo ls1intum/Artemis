@@ -1562,7 +1562,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkIfParticipationHasResult_nonExistentParticipation_returnsNotFound() throws Exception {
-        long nonExistentParticipationId = participationRepository.findAll().stream().mapToLong(DomainObject::getId).max().orElse(0) + 1;
+        long nonExistentParticipationId = Long.MAX_VALUE;
 
         request.get("/api/programming/programming-exercise-participations/" + nonExistentParticipationId + "/has-result", HttpStatus.NOT_FOUND, Boolean.class);
     }
