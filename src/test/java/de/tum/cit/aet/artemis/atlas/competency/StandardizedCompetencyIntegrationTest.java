@@ -97,7 +97,6 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             request.getList("/api/atlas/standardized-competencies/sources", HttpStatus.OK, SourceDTO.class);
         }
 
-
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldBeReadableAsStudent() throws Exception {
