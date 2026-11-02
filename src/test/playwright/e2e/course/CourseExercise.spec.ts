@@ -44,13 +44,19 @@ test.describe('Course exercise', { tag: '@fast' }, () => {
         });
 
         test.afterEach('Delete Exercises', async ({ exerciseAPIRequests }) => {
+            const deletions: Promise<void>[] = [];
             for (const exercise of [exercise1, exercise2, exercise3]) {
                 if (exercise?.id !== undefined) {
-                    await exerciseAPIRequests.deleteQuizExercise(exercise.id);
+                    deletions.push(exerciseAPIRequests.deleteQuizExercise(exercise.id));
                 }
             }
             if (anchorExercise?.id !== undefined) {
-                await exerciseAPIRequests.deleteTextExercise(anchorExercise.id);
+                deletions.push(exerciseAPIRequests.deleteTextExercise(anchorExercise.id));
+            }
+            const results = await Promise.allSettled(deletions);
+            const failures = results.filter((result) => result.status === 'rejected').map((result) => result.reason);
+            if (failures.length > 0) {
+                throw new AggregateError(failures, `Failed to delete course exercise fixtures:\n${failures.map((failure) => String(failure)).join('\n')}`);
             }
         });
     });
