@@ -194,6 +194,10 @@ describe('UrlAction', () => {
             { where: 'a four-backtick block after a three-backtick line inside it', text: 'docs', lines: ['````', '```', 'open docs', '````'], line: 3 },
             { where: 'a tilde block after a backtick line inside it', text: 'docs', lines: ['~~~', '```', 'open docs', '~~~'], line: 3 },
             { where: 'a block after a line that only looks like its closing fence', text: 'docs', lines: ['```', '``` java', 'open docs', '```'], line: 3 },
+            { where: 'a code block indented by four spaces', text: 'docs', lines: ['    open docs'] },
+            { where: 'a code block indented by a tab', text: 'docs', lines: ['intro', '', '\topen docs'], line: 3 },
+            { where: 'an indented code block after a blank line inside it', text: 'docs', lines: ['    code', '', '    open docs'], line: 3 },
+            { where: 'an indented code block right after a heading', text: 'docs', lines: ['# Setup', '    open docs'], line: 2 },
         ])('should not handle the paste if the selection lies in $where', ({ text, lines, line }) => {
             selectOnLine(text, lines, line);
 
@@ -205,6 +209,9 @@ describe('UrlAction', () => {
             { after: 'a four-backtick block that contains a three-backtick line', lines: ['````', '```', '````', 'see the docs'] },
             { after: 'a closing fence longer than the opening one', lines: ['```', 'code', '`````', 'see the docs'] },
             { after: 'a line indented by four spaces, which is no fence', lines: ['    ```', 'see the docs'] },
+            { after: 'an indented code block', lines: ['    code', 'see the docs'] },
+            { after: 'a tab-indented code block and a blank line', lines: ['\tcode', '', 'see the docs'] },
+            { after: 'a paragraph, as an indented lazy continuation of it', lines: ['intro', '    see the docs'] },
         ])('should handle the paste in text after $after', ({ lines }) => {
             const selection = selectOnLine('docs', lines, lines.length);
 

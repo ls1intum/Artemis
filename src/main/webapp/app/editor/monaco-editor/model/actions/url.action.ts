@@ -38,6 +38,43 @@ function readCodeFence(line: string): CodeFence | undefined {
     return { marker, length: end - indent, info };
 }
 
+/**
+ * Checks whether a line is indented by at least four columns before its first character, which makes it indented code unless it
+ * continues a paragraph. A tab advances to the next multiple of four columns.
+ * @param line The line to check.
+ * @return true if the line has text indented by four columns or more, false for a blank or less indented line.
+ */
+function isIndentedByFourColumns(line: string): boolean {
+    let column = 0;
+    for (const character of line) {
+        if (character === ' ') {
+            column++;
+        } else if (character === '\t') {
+            column += 4 - (column % 4);
+        } else {
+            return column >= 4;
+        }
+    }
+    return false;
+}
+
+/**
+ * Checks whether a line is an ATX heading: at most three spaces, one to six number signs, then a space, a tab or the line end.
+ * @param line The line to check.
+ */
+function isAtxHeading(line: string): boolean {
+    let indent = 0;
+    while (line[indent] === ' ') {
+        indent++;
+    }
+    let end = indent;
+    while (line[end] === '#') {
+        end++;
+    }
+    const level = end - indent;
+    return indent <= 3 && level >= 1 && level <= 6 && (end === line.length || line[end] === ' ' || line[end] === '\t');
+}
+
 interface UrlArguments {
     text: string;
     url: string;
@@ -143,7 +180,7 @@ export class UrlAction extends TextStyleTextEditorAction {
 
     /**
      * Checks whether a selection on one line lies where a pasted link would not work: inside an existing link, i.e. its label or its
-     * destination (such as the placeholder the link button selects), inside an inline code span, or inside a fenced code block.
+     * destination (such as the placeholder the link button selects), inside an inline code span, or inside a fenced or indented code block.
      * @param editor The editor that contains the selection.
      * @param selection The selection, which starts and ends on the same line.
      */
@@ -157,16 +194,32 @@ export class UrlAction extends TextStyleTextEditorAction {
             return true;
         }
         // A code block is closed only by a fence of the same character, at least as long as the opening one and with no info string.
+        // An indented line starts a code block unless it continues a paragraph, so the lines before it decide which one it is.
         let openFence: CodeFence | undefined;
+        let inIndentedCode = false;
+        let inParagraph = false;
         for (let previousLine = 1; previousLine < lineNumber; previousLine++) {
-            const fence = readCodeFence(this.getLineText(editor, previousLine) ?? '');
-            if (!openFence) {
+            const text = this.getLineText(editor, previousLine) ?? '';
+            const fence = readCodeFence(text);
+            if (openFence) {
+                if (fence && fence.marker === openFence.marker && fence.length >= openFence.length && !fence.info.trim()) {
+                    openFence = undefined;
+                }
+            } else if (fence) {
                 openFence = fence;
-            } else if (fence && fence.marker === openFence.marker && fence.length >= openFence.length && !fence.info.trim()) {
-                openFence = undefined;
+                inIndentedCode = false;
+            } else if (text.trim()) {
+                inIndentedCode = isIndentedByFourColumns(text) && (inIndentedCode || !inParagraph);
+                inParagraph = !inIndentedCode && !isAtxHeading(text);
+                continue;
             }
+            // Fence lines, fenced code and blank lines end a paragraph; a blank line does not end an indented code block.
+            inParagraph = false;
         }
-        return openFence !== undefined || readCodeFence(line) !== undefined;
+        if (openFence !== undefined || readCodeFence(line) !== undefined) {
+            return true;
+        }
+        return isIndentedByFourColumns(line) && (inIndentedCode || !inParagraph);
     }
 
     /**
