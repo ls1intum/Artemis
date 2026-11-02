@@ -341,10 +341,10 @@ export default tseslint.config(
         },
     },
     // Keep diagnostics out of the console and off `globalThis` in production code.
-    //   - `no-console`: bare `console.*` is invisible in production; route real diagnostics to Sentry
-    //     (`captureException` from `@sentry/angular`). Specs may log freely (excluded below).
+    //   - `no-console`: bare `console.*` is invisible in production; route real diagnostics to the error reporter
+    //     (`captureException` from `app/core/error-reporting/capture-exception`). Specs may log freely (excluded below).
     //   - `no-restricted-globals` on `globalThis`: prod is already `globalThis`-free; this is a regression guard.
-    //     Use `window` for browser globals and Sentry for diagnostics. It is a separate rule from the Monaco
+    //     Use `window` for browser globals and the error reporter for diagnostics. It is a separate rule from the Monaco
     //     `no-restricted-syntax` block above, so the two do not clobber each other. Specs use `globalThis` for
     //     mocking (excluded below).
     {
@@ -356,7 +356,7 @@ export default tseslint.config(
                 'error',
                 {
                     name: 'globalThis',
-                    message: 'Do not use globalThis in production. Use `window` for browser globals, and Sentry captureException for diagnostics instead of globalThis.console.',
+                    message: 'Do not use globalThis in production. Use `window` for browser globals, and captureException from the error reporter for diagnostics instead of globalThis.console.',
                 },
             ],
         },
@@ -702,30 +702,26 @@ export default tseslint.config(
         },
     },
     {
-        // Regression lock: these modules are fully migrated to Tailwind + PrimeNG, so Bootstrap CSS classes are
+        // Regression lock: these modules are fully migrated to Tailwind + TUM AET UI, so Bootstrap CSS classes are
         // forbidden in their templates. Add each module here once it is fully Bootstrap-free. See client-development.mdx
         // (### Styling).
         files: [
             'src/main/webapp/app/admin/**/*.html',
             'src/main/webapp/app/course/request/**/*.html',
-            'src/main/webapp/app/exercise/result/**/*.html',
             'src/main/webapp/app/iris/manage/settings/**/*.html',
             'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
             'src/main/webapp/app/atlas/shared/competency-selection/**/*.html',
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.html',
-            'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.html',
             'src/main/webapp/app/localci/build-queue/**/*.html',
             'src/main/webapp/app/videosource/gocast/**/*.html',
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
             'src/main/webapp/app/shared-ui/user-registration-modal/**/*.html',
-            // Admin-reachable global shell + delete-dialog chain (rendered on every admin page / during admin deletes).
             'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
             'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
             'src/main/webapp/app/core/alert/**/*.html',
             'src/main/webapp/app/core/about-us/**/*.html',
             'src/main/webapp/app/core/feature-overview/**/*.html',
             'src/main/webapp/app/core/layouts/footer/**/*.html',
-            // Only the modal shell is migrated; its search subcomponents go with the navbar/search follow-up.
             'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
             'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
             'src/main/webapp/app/notification/**/*.html',
@@ -737,29 +733,46 @@ export default tseslint.config(
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
             'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
-            // The whole exam mode: instructor pages, student pages and the pieces they share, and the example solution that only the exam summary shows.
             'src/main/webapp/app/exam/**/*.html',
-            'src/main/webapp/app/exercise/example-solution/**/*.html',
-            'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
-            'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',
             'src/main/webapp/app/course/manage/update/**/*.html',
             'src/main/webapp/app/account/**/*.html',
-            // The lecture editor with its content, the pages that create, edit and split content, and the PDF drop zone and dialog.
             'src/main/webapp/app/lecture/manage/lecture-update/**/*.html',
             'src/main/webapp/app/lecture/manage/lecture-period/**/*.html',
             'src/main/webapp/app/lecture/manage/lecture-title-channel-name/**/*.html',
             'src/main/webapp/app/lecture/manage/lecture-units/**/*.html',
             'src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.html',
             'src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.html',
-            'src/main/webapp/app/exercise/participation/programming-exercise-participation-actions/**/*.html',
             'src/main/webapp/app/quiz/manage/question-reevaluation-actions/**/*.html',
-            'src/main/webapp/app/exercise/statistics/statistics-span-selector/**/*.html',
             'src/main/webapp/app/plagiarism/shared/case-header/**/*.html',
             'src/main/webapp/app/communication/saved-posting-banner/**/*.html',
             'src/main/webapp/app/communication/posting-create-edit-modal/post-create-edit-modal/**/*.html',
             'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
+            'src/main/webapp/app/exercise/**/*.html',
+            'src/main/webapp/app/assessment/**/*.html',
+            'src/main/webapp/app/shared-ui/table-view/**/*.html',
+            'src/main/webapp/app/shared-ui/components/buttons/button/**/*.html',
+            'src/main/webapp/app/exercise/result/**/*.html',
+            'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.html',
+            'src/main/webapp/app/exercise/example-solution/**/*.html',
+            'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
+            'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
+            'src/main/webapp/app/lecture/**/*.html',
+            'src/main/webapp/app/tutorialgroup/**/*.html',
+            'src/main/webapp/app/shared-ui/components/resizable-panels/**/*.html',
+            'src/main/webapp/app/shared-ui/components/buttons/confirm-autofocus-button/**/*.html',
+            'src/main/webapp/app/shared-ui/loading-indicator-overlay/**/*.html',
+            'src/main/webapp/app/shared-ui/loading-indicator-container/**/*.html',
+            'src/main/webapp/app/shared-ui/components/checklist-check/**/*.html',
+            'src/main/webapp/app/shared-ui/information-box/**/*.html',
+            'src/main/webapp/app/shared-ui/detail-overview-list/detail-overview-list.component.html',
+            'src/main/webapp/app/course/shared/course-sidebar-toggle-button/**/*.html',
+            'src/main/webapp/app/atlas/shared/competency-contribution/**/*.html',
+            'src/main/webapp/app/atlas/manage/orchestration-trigger/**/*.html',
+            'src/main/webapp/app/atlas/shared/orchestration-result-dialog/**/*.html',
+            'src/main/webapp/app/exercise/participation/programming-exercise-participation-actions/**/*.html',
+            'src/main/webapp/app/exercise/statistics/statistics-span-selector/**/*.html',
         ],
         languageOptions: {
             parser: angularTemplateParser,

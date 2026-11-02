@@ -264,7 +264,7 @@ class DistributedDataSurfaceTest {
         assertThat(surface).as("notification and direct-topic payloads must remain part of the compatibility gate").contains(named(QueueItemEvent.class),
                 named(QueueItemEvent.EventType.class), named(MapItemEvent.class), named(MapItemEvent.EventType.class), named(PerNodeCacheEviction.class),
                 named(WebsocketBrokerReconnectMessage.class), named(ControlAction.class));
-        // The link preview is the remaining @Cacheable value served by the distributed manager, so it is the sentinel
+        // The link preview is one of the @Cacheable values served by the distributed manager, so it is the sentinel
         // that proves this gate still covers Spring cache values at all.
         assertThat(surface).as("values stored through the distributed Spring cache must remain part of the compatibility gate").contains(named(LinkPreviewDTO.class));
 

@@ -65,6 +65,16 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
             """)
     List<UserCourseRoleDTO> findCourseRoleDTOsByUser_Id(@Param("userId") Long userId);
 
+    /**
+     * Whether the user holds any of the given roles in at least one course.
+     *
+     * @param userId the id of the user
+     * @param roles  the roles to look for
+     * @return {@code true} if the user holds one of the roles in some course
+     */
+    @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.role IN :roles)")
+    boolean existsByUser_IdAndRoleIn(@Param("userId") Long userId, @Param("roles") Collection<CourseRole> roles);
+
     @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role = :role)")
     boolean existsByUser_IdAndCourse_IdAndRole(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("role") CourseRole role);
 

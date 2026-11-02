@@ -1,11 +1,10 @@
+import { TumAetUiButtonComponent, TumAetUiDialogService, TumAetUiPopoverComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { Popover } from 'primeng/popover';
-import { ButtonModule } from 'primeng/button';
-import { Tag } from 'primeng/tag';
-import { Tooltip } from 'primeng/tooltip';
+
 import { faAngleDown, faRobot } from '@fortawesome/free-solid-svg-icons';
 import { faClock, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { type AnimationProp, FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,7 +23,7 @@ import {
     isAIResultAndTimedOut,
     isAthenaAIResult,
 } from 'app/exercise/result/result.utils';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
@@ -61,12 +60,21 @@ export function latestSubmissionRoute(exercise: Exercise, participation: Student
     selector: 'jhi-result-history-dropdown',
     templateUrl: './result-history-dropdown.component.html',
     styleUrls: ['./result-history-dropdown.component.scss'],
-    imports: [Popover, ButtonModule, Tag, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, Tooltip],
+    imports: [
+        TumAetUiTagComponent,
+        TumAetUiButtonComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiTooltipDirective,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
 })
 export class ResultHistoryDropdownComponent {
     private resultService = inject(ResultService);
     private translateService = inject(TranslateService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private router = inject(Router);
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
@@ -149,17 +157,13 @@ export class ResultHistoryDropdownComponent {
         this.displayedResultChange.emit(undefined);
     }
 
-    resultsPopover = viewChild<Popover>('resultsPopover');
+    resultsPopover = viewChild<TumAetUiPopoverComponent>('resultsPopover');
     dropdownArrow = viewChild<ElementRef>('dropdownArrow');
 
     toggleResultsPopover(event: Event) {
-        const popover = this.resultsPopover();
-        // Popover.overlayVisible is a plain boolean field, so read it directly (do not invoke it).
-        // When the popover is already open, close it; otherwise open it anchored to the dropdown arrow.
-        if (popover?.overlayVisible) {
-            popover.hide();
-        } else {
-            popover?.show(event, this.dropdownArrow()?.nativeElement);
+        const origin = this.dropdownArrow()?.nativeElement ?? event.currentTarget;
+        if (origin instanceof HTMLElement) {
+            this.resultsPopover()?.toggle(origin);
         }
     }
 
@@ -296,7 +300,7 @@ export class ResultHistoryDropdownComponent {
         this.selectedResultId.set(result.id);
         this.viewingSubmissionChange.emit(true);
         this.displayedResultChange.emit(result);
-        this.resultsPopover()?.hide();
+        this.resultsPopover()?.close();
         const exercise = this.exercise();
         const courseId = getCourseFromExercise(exercise)?.id;
 
@@ -340,19 +344,13 @@ export class ResultHistoryDropdownComponent {
 
         this.dialogService.open(FeedbackComponent, {
             header: this.translateService.instant('artemisApp.result.detail.feedback'),
-            width: '80rem',
-            breakpoints: {
-                '1400px': '75vw',
-                '1200px': '85vw',
-                '992px': '95vw',
-            },
-            modal: true,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
             // Don't auto-focus the first focusable element on show: in a long feedback list it is often
             // a link below the fold, which the browser scrolls into view and makes the modal open scrolled down.
-            focusOnShow: false,
+            autoFocus: 'dialog',
             inputValues: {
                 exercise,
                 result,

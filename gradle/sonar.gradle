@@ -5,7 +5,8 @@
 // the quality system Artemis actually enforces (Spotless, Checkstyle, Modernizer, ArchUnit, ~14
 // custom ESLint rules, Stylelint, the over-fetch detector, per-module coverage floors). Sonar is set
 // up alongside it, not instead of it, so the two grades can be compared on the same code before any
-// badge decision is made. Nothing here feeds a README badge yet; see `.github/workflows/README.md`.
+// badge decision is made. Sonar also serves the README project badges and the required PR gate;
+// see `.github/workflows/README.md`.
 //
 // SCOPE IS A CONTRACT WITH `.codacy.yaml`. The exclusion list below mirrors that file's repository-wide
 // `exclude_paths` floor, so neither tool grades exercise starter code, test code or internal tooling.

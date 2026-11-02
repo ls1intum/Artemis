@@ -32,6 +32,8 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
@@ -60,6 +62,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
+import io.swagger.v3.oas.annotations.Operation;
 
 @Conditional(LectureEnabled.class)
 @Lazy
@@ -271,6 +274,11 @@ public class LectureUnitResource {
     @FeatureUsage(UserFeature.LECTURE_CONTENT_PROCESSING)
     @GetMapping("lectures/{lectureId}/lecture-units/statuses")
     @EnforceAtLeastEditorInLecture
+    @AllowedScopes(AgentScope.LECTURES_WRITE)
+    @Operation(summary = "Get the processing status of the units of a lecture", description = """
+            Reports, for each attachment video unit of the lecture, how far the background processing of its slides and video has \
+            come: processingPhase is IDLE, TRANSCRIBING, INGESTING, DONE, FAILED or SKIPPED. Poll this after uploading slides; DONE or \
+            SKIPPED means nothing more is pending. The list is empty when processing is not enabled on this instance.""")
     public ResponseEntity<List<LectureUnitCombinedStatusDTO>> getUnitStatuses(@PathVariable Long lectureId) {
         log.debug("REST request to get combined statuses for all lecture units in lecture: {}", lectureId);
 

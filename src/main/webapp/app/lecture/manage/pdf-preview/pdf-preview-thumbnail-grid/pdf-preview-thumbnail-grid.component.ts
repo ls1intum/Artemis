@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, ElementRef, Renderer2, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
@@ -11,7 +12,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -21,11 +21,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
     imports: [
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPopoverComponent,
         NgTemplateOutlet,
         PdfPreviewEnlargedCanvasComponent,
         FaIconComponent,
         PdfPreviewDateBoxComponent,
-        NgbPopover,
         TranslateDirective,
         DragDropModule,
         ArtemisTranslatePipe,
@@ -193,6 +195,17 @@ export class PdfPreviewThumbnailGridComponent {
      * @param slideId The ID of the slide whose selection state is being toggled.
      * @param event The change event triggered by the checkbox interaction.
      */
+    togglePagePopover(slideId: string, event: Event, popover: TumAetUiPopoverComponent): void {
+        this.toggleVisibility(slideId, event);
+        if (event.currentTarget instanceof HTMLElement) {
+            popover.toggle(event.currentTarget);
+        }
+    }
+
+    isPageSelected(slideId: string): boolean {
+        return Array.from(this.selectedPages()).some((page) => page.slideId === slideId);
+    }
+
     togglePageSelection(slideId: string, event: Event): void {
         const checkbox = event.target as HTMLInputElement;
         const page = this.findPageBySlideId(slideId);

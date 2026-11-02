@@ -6,22 +6,3 @@
     font-weight: bold;
     color: var(--team-participation-table-current-exercise-text);
 }
-
-// Shadow on the right edge of the frozen-left column area
-// Targets the last left-frozen cell in each row using PrimeNG's .p-datatable-frozen-column class.
-.p-datatable-thead tr th.p-datatable-frozen-column:has(+ th:not(.p-datatable-frozen-column)),
-.p-datatable-tbody tr td.p-datatable-frozen-column:has(+ td:not(.p-datatable-frozen-column)) {
-    overflow: visible !important;
-
-    &::after {
-        $border-width: 1px;
-
-        content: '';
-        position: absolute;
-        width: 5px;
-        right: -5px;
-        top: -$border-width;
-        height: calc(100% + #{$border-width});
-        box-shadow: 8px 0 12px -15px inset var(--team-participation-table-box-shadow-color);
-    }
-}

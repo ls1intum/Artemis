@@ -11,7 +11,7 @@ import { of } from 'rxjs';
 
 import { AdminContainerComponent } from './admin-container.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Build, CompatibleVersions, Git, Java, ProfileInfo, SentryConfig } from 'app/core/layouts/profiles/profile-info.model';
+import { Build, CompatibleVersions, Git, Java, ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { LayoutService } from 'app/foundation/breakpoints/layout.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -58,7 +58,6 @@ describe('AdminContainerComponent', () => {
         operatorName: '',
         universityName: 'Artemis Test University',
         repositoryAuthenticationMechanisms: [],
-        sentry: new SentryConfig(),
         sshCloneURLTemplate: '',
         studentExamStoreSessionData: false,
         testServer: false,

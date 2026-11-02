@@ -66,9 +66,9 @@ public class OneToOneChatResource extends ConversationManagementResource {
     /**
      * POST courses/:courseId/one-to-one-chats : Starts a new one to one chat in a course with exactly one other participant.
      * <p>
-     * The partner is identified in the request body by either {@code userId} or {@code login} (see {@link OneToOneChatCreationDTO}). The body also tolerates the deprecated
-     * single-login array form for backwards compatibility. The canonical path is {@code courses/{courseId}/one-to-one-chats}; the legacy {@code .../one-to-one-chats/{userId}} path
-     * (partner id in the URL) is kept as a deprecated alias and resolved here.
+     * The partner is identified in the request body by either {@code userId} or {@code login} (see {@link OneToOneChatCreationDTO}). The canonical path is
+     * {@code courses/{courseId}/one-to-one-chats}; the legacy {@code .../one-to-one-chats/{userId}} path (partner id in the URL) is kept as a deprecated alias and resolved
+     * here.
      *
      * @param courseId    the id of the course
      * @param userId      the id of the other participant, only set when the deprecated {@code .../one-to-one-chats/{userId}} path is used

@@ -7,6 +7,7 @@ const sidebars: SidebarsConfig = {
         'course-management',
         'access-rights',
         'artemis-intelligence',
+        'agent-access',
         'scaling',
         {
             type: 'category',
@@ -44,6 +45,7 @@ const sidebars: SidebarsConfig = {
         'benchmarking-tool',
         'telemetry',
         'feature-usage',
+        'client-error-reports',
         'cleanup-service',
         'extensions-setup',
         'tum-live-course-connection',

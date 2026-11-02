@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { User } from 'app/account/user/user.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -60,8 +60,8 @@ describe('TeamsImportDialogComponent', () => {
             providers: [
                 MockProvider(TeamService),
                 MockProvider(AlertService),
-                { provide: DynamicDialogRef, useValue: { close: dialogRefCloseSpy } },
-                { provide: DynamicDialogConfig, useValue: dialogConfig },
+                { provide: TumAetUiDialogRef, useValue: { close: dialogRefCloseSpy } },
+                { provide: TumAetUiDialogConfig, useValue: dialogConfig },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
