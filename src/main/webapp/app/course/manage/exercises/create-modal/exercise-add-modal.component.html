@@ -140,8 +140,8 @@
                         <div class="card-icon-wrapper">
                             <fa-icon [icon]="card.icon" />
                         </div>
-                        <h6 [jhiTranslate]="card.labelKey"></h6>
-                        <p [jhiTranslate]="card.descriptionKey"></p>
+                        <h6>{{ card.labelKey | artemisTranslate }}</h6>
+                        <p>{{ card.descriptionKey | artemisTranslate }}</p>
                         <span class="card-cta">
                             <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.select"></span>
                             <fa-icon [icon]="faArrowRight" class="ms-1" />

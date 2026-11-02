@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -92,7 +93,8 @@ public abstract class ExerciseWithSubmissionsExportService {
      * @throws IOException if the export is incomplete, for example because an embedded file is missing, or the zip file could not be created
      */
     public Path exportExerciseForDownload(Exercise exercise) throws IOException {
-        Path exportDir = fileService.createTemporaryDirectory(FilePathConverter.getTempFilePath(), "exercise-export-", 5);
+        // createTemporaryDirectory never returns null, which static analysis cannot infer through its deletion scheduling
+        Path exportDir = Objects.requireNonNull(fileService.createTemporaryDirectory(FilePathConverter.getTempFilePath(), "exercise-export-", 5));
         List<Path> pathsToBeZipped = new ArrayList<>();
         List<String> exportErrors = new ArrayList<>();
         exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
@@ -102,7 +104,8 @@ public abstract class ExerciseWithSubmissionsExportService {
             throw new IOException(String.join(" ", exportErrors));
         }
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
-        String zipFileName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
+        String zipFileName = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp
+                + ".zip";
         Path zipFilePath = exportDir.resolve(FileUtil.sanitizeFilename(zipFileName));
         zipFileService.createTemporaryZipFile(zipFilePath, pathsToBeZipped, 5);
         return zipFilePath;
