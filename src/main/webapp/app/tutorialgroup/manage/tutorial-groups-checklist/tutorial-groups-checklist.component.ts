@@ -51,7 +51,7 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
                 take(1),
                 switchMap((params) => {
                     const courseId = Number(params.get('courseId'));
-                    return combineLatest([this.courseManagementService.find(courseId), this.tutorialGroupsConfigurationService.getOneOfCourse(courseId)]);
+                    return combineLatest([this.courseManagementService.findForInstructor(courseId), this.tutorialGroupsConfigurationService.getOneOfCourse(courseId)]);
                 }),
                 finalize(() => this.isLoading.set(false)),
                 takeUntil(this.ngUnsubscribe),

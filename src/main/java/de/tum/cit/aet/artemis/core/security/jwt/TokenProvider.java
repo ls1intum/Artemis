@@ -223,7 +223,8 @@ public class TokenProvider {
      */
     public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey,
             @Nullable String passkeyCredentialId, boolean isPasskeySuperAdminApproved, boolean rememberMe) {
-        String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
+        String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).map(TokenProvider::globalAuthority).distinct()
+                .collect(Collectors.joining(","));
 
         AuthenticationMethod authenticationMethod = AuthenticationMethod.fromAuthentication(authentication);
         if (authenticatedWithPasskey != null && authenticatedWithPasskey) {
@@ -270,7 +271,8 @@ public class TokenProvider {
             // leads to a 401 unauthorized error
             return null;
         }
-        List<? extends GrantedAuthority> authorities = Arrays.stream(authorityClaim.toString().split(",")).map(SimpleGrantedAuthority::new).toList();
+        List<? extends GrantedAuthority> authorities = Arrays.stream(authorityClaim.toString().split(",")).map(TokenProvider::globalAuthority).distinct()
+                .map(SimpleGrantedAuthority::new).toList();
 
         User principal = new User(claims.getSubject(), "", authorities);
         var authentication = new UsernamePasswordAuthenticationToken(principal, token, authorities);
@@ -286,6 +288,15 @@ public class TokenProvider {
         }
         authentication.setDetails(Map.copyOf(details));
         return authentication;
+    }
+
+    private static String globalAuthority(String authority) {
+        // Older tokens may carry only a teaching authority, which previously implied ordinary user access. Teaching
+        // permissions themselves are always checked against the current course roles, including when such a token rotates.
+        return switch (authority) {
+            case "ROLE_TA", "ROLE_EDITOR", "ROLE_INSTRUCTOR" -> "ROLE_USER";
+            default -> authority;
+        };
     }
 
     /**

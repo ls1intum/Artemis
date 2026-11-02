@@ -154,6 +154,27 @@ describe('Message editor conversion', () => {
         expect(messageToEditorHtml('One\nTwo\n\nThree')).toBe('<p>One<br>Two</p><p>Three</p>');
     });
 
+    it('keeps an empty line between mentions when the message is saved and reopened', () => {
+        const ada = '[user]Ada Example(ada_example)[/user]';
+        const ben = '[user]Ben Sample(ben_sample)[/user]';
+        const element = document.createElement('div');
+        element.append(messageToEditorFragment(`${ada}\n\n${ben}`));
+        const saved = editorToMessage(element);
+        expect(saved).toBe(`${ada}\n\n${ben}`);
+
+        const typed = document.createElement('div');
+        typed.append(messageToEditorFragment(ada));
+        const paragraph = typed.querySelector('p')!;
+        paragraph.append(document.createElement('br'), document.createElement('br'), ...Array.from(messageToEditorFragment(ben).querySelector('p')!.childNodes));
+        expect(editorToMessage(typed)).toBe(`${ada}\n\n${ben}`);
+    });
+
+    it('does not turn consecutive line breaks in a list item into a second paragraph', () => {
+        const element = document.createElement('div');
+        element.innerHTML = '<ul><li>one<br><br>two</li><li>three</li></ul>';
+        expect(editorToMessage(element)).toBe('- one\n  two\n- three');
+    });
+
     it('uses editable line-break elements for code instead of an invisible trailing newline', () => {
         expect(messageToEditorHtml('```java\na\nb\n```')).toBe('<pre><code class="language-java">a<br>b</code></pre>');
     });

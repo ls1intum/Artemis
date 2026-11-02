@@ -18,9 +18,7 @@
                         type="button"
                         class="feedback-suggestions-chrome__info apollon-chrome-iconbtn"
                         data-testid="feedback-suggestions-chrome-info"
-                        [pTooltip]="suggestionsInfo"
-                        tooltipPosition="bottom"
-                        tooltipStyleClass="feedback-suggestions-ai-tooltip"
+                        [tumAetUiTooltip]="suggestionsInfo"
                         [attr.aria-label]="suggestionsInfo"
                     >
                         <fa-icon [icon]="faQuestionCircle" />
@@ -32,9 +30,7 @@
                         type="button"
                         class="feedback-suggestions-chrome__info apollon-chrome-iconbtn"
                         data-testid="feedback-suggestions-chrome-info"
-                        [pTooltip]="automaticInfo"
-                        tooltipPosition="bottom"
-                        tooltipStyleClass="feedback-suggestions-ai-tooltip"
+                        [tumAetUiTooltip]="automaticInfo"
                         [attr.aria-label]="automaticInfo"
                     >
                         <fa-icon [icon]="faQuestionCircle" />
@@ -46,27 +42,25 @@
     }
 } @else {
     @if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && !isFeedbackSuggestionsEnabled()) {
-        <p-message severity="info" class="d-flex align-items-center gap-1">
+        <tumaet-ui-message severity="info" class="flex items-center gap-1">
             <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable"></span>
-        </p-message>
+        </tumaet-ui-message>
     }
     @if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled()) {
-        <p-message severity="info" class="d-flex align-items-center gap-1">
+        <tumaet-ui-message severity="info" class="flex items-center gap-1">
             <span>{{ 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate }}</span>
             <fa-icon
                 [icon]="faQuestionCircle"
                 size="lg"
                 class="cursor-pointer"
-                [pTooltip]="'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo' | artemisTranslate"
-                tooltipPosition="left"
-                tooltipStyleClass="feedback-suggestions-ai-tooltip"
+                [tumAetUiTooltip]="'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo' | artemisTranslate"
             />
-        </p-message>
+        </tumaet-ui-message>
     }
     @if (isLoading() && isFeedbackSuggestionsEnabled()) {
-        <p-message severity="secondary" class="d-flex align-items-center gap-1">
+        <tumaet-ui-message severity="secondary" class="flex items-center gap-1">
             <fa-icon [icon]="faCircleNotch" animation="spin" />
             <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"></span>
-        </p-message>
+        </tumaet-ui-message>
     }
 }

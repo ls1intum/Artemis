@@ -24,9 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.jplag.exceptions.ExitException;
 import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -59,16 +57,13 @@ public class ProgrammingExercisePlagiarismResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final Optional<PlagiarismResultApi> plagiarismResultApi;
 
     private final Optional<PlagiarismDetectionApi> plagiarismDetectionApi;
 
-    public ProgrammingExercisePlagiarismResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            Optional<PlagiarismResultApi> plagiarismResultApi, Optional<PlagiarismDetectionApi> plagiarismDetectionApi) {
+    public ProgrammingExercisePlagiarismResource(ProgrammingExerciseRepository programmingExerciseRepository, Optional<PlagiarismResultApi> plagiarismResultApi,
+            Optional<PlagiarismDetectionApi> plagiarismDetectionApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.authCheckService = authCheckService;
         this.plagiarismResultApi = plagiarismResultApi;
         this.plagiarismDetectionApi = plagiarismDetectionApi;
     }
@@ -80,13 +75,12 @@ public class ProgrammingExercisePlagiarismResource {
      * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the parameters are invalid
      */
     @GetMapping("programming-exercises/{exerciseId}/plagiarism-result")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<PlagiarismResultDTO> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
         PlagiarismResultApi api = plagiarismResultApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismResultApi.class));
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         var plagiarismResult = api.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(programmingExercise.getId());
         api.prepareResultForClient(plagiarismResult);
         return buildPlagiarismResultResponse(plagiarismResult);
@@ -105,14 +99,13 @@ public class ProgrammingExercisePlagiarismResource {
      */
     @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("programming-exercises/{exerciseId}/check-plagiarism")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     @FeatureToggle(Feature.PlagiarismChecks)
     public ResponseEntity<PlagiarismResultDTO> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws ExitException, IOException {
         PlagiarismDetectionApi api = plagiarismDetectionApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismDetectionApi.class));
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks for programming exercise: exerciseId={}.", exerciseId);
@@ -141,14 +134,13 @@ public class ProgrammingExercisePlagiarismResource {
      */
     @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping(value = "programming-exercises/{exerciseId}/check-plagiarism-jplag-report")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam int similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws IOException {
         PlagiarismDetectionApi api = plagiarismDetectionApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismDetectionApi.class));
 
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks with Jplag report for programming exercise: exerciseId={}.", exerciseId);

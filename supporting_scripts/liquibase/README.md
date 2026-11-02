@@ -37,6 +37,16 @@ timestamps, users, and chat messages and contents survive.
 It also verifies that a rollback stops with the backup recovery instructions.
 The Liquibase workflow runs it on both supported databases.
 
+The course authorities migration has a populated-data regression test as well:
+
+```bash
+python3 test_course_authorities_migration.py
+```
+
+It uses disposable containers on ports 16380 and 16381. It verifies that removing teaching
+authorities preserves ordinary user access, administrator authorities, and course roles, including
+accounts without an explicit `ROLE_USER`. The Liquibase workflow runs it on both supported databases.
+
 ## Cutting a baseline
 
 ```bash

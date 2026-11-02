@@ -1,10 +1,11 @@
+import { tumAetUiButtonClasses } from '@tumaet/ui-angular';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { DestroyRef, Directive, ElementRef, OnInit, Renderer2, inject, input, output } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType, DeleteDialogData, EntitySummary, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Observable } from 'rxjs';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonSize, ButtonType, getTumAetUiButtonOptions } from 'app/shared-ui/components/buttons/button/button.component';
 
 @Directive({ selector: '[jhiDeleteButton]', host: { '(click)': 'onClick($event)' } })
 export class DeleteButtonDirective implements OnInit {
@@ -32,34 +33,29 @@ export class DeleteButtonDirective implements OnInit {
     delete = output<{ [key: string]: boolean }>();
     animation = input<boolean>(true);
 
-    // Optional (not `!`): unset for icon-only variants (PrimeNG path), where applyActionLabel guards each read.
+    // Optional for callers that provide their own visible label or an icon-only presentation.
     deleteTextSpan?: HTMLElement;
     private callerProvidedAriaLabel = false;
 
-    /**
-     * Styles the host and gives it an accessible name. The Bootstrap `btn` classes and injected label span are
-     * gated behind `renderButtonStyle` so PrimeNG-styled callers stay Bootstrap-free; the translated action is
-     * set as the host's `aria-label` regardless (unless the caller set one), since the icon-only variants have
-     * no visible text for a screen reader to announce.
-     */
+    /** Applies package-owned button variants and keeps the translated accessible name current. */
     ngOnInit() {
         this.callerProvidedAriaLabel = !!this.elementRef.nativeElement.getAttribute('aria-label');
 
         if (this.renderButtonStyle()) {
-            this.renderer.addClass(this.elementRef.nativeElement, 'btn');
-            this.renderer.addClass(this.elementRef.nativeElement, this.buttonType());
-            this.renderer.addClass(this.elementRef.nativeElement, this.buttonSize());
+            for (const token of tumAetUiButtonClasses(getTumAetUiButtonOptions(this.buttonType(), this.buttonSize())).split(' ')) {
+                this.renderer.addClass(this.elementRef.nativeElement, token);
+            }
             this.renderer.addClass(this.elementRef.nativeElement, 'me-1');
         }
         this.renderer.setProperty(this.elementRef.nativeElement, 'type', 'submit');
 
-        // The label span's d-none/d-xl-inline classes are Bootstrap, so inject it only for the Bootstrap variant.
+        // Callers with their own label keep full control of its responsive presentation.
         if (this.renderButtonStyle() && this.renderButtonText()) {
             this.deleteTextSpan = this.renderer.createElement('span');
             if (this.buttonType() === ButtonType.ERROR) {
-                this.renderer.addClass(this.deleteTextSpan, 'd-none');
+                this.renderer.addClass(this.deleteTextSpan, 'hidden');
             }
-            this.renderer.addClass(this.deleteTextSpan, 'd-xl-inline');
+            this.renderer.addClass(this.deleteTextSpan, 'xl:inline');
             this.renderer.appendChild(this.elementRef.nativeElement, this.deleteTextSpan);
         }
 
@@ -98,7 +94,7 @@ export class DeleteButtonDirective implements OnInit {
         this.openDeleteDialog();
     }
 
-    /** Keeps the accessible name (and the Bootstrap label span, when present) on the translated action. */
+    /** Keeps the accessible name (and the visible label span, when present) on the translated action. */
     private applyActionLabel() {
         const action = this.translateService.instant(`entity.action.${this.actionType()}`);
         if (this.deleteTextSpan) {

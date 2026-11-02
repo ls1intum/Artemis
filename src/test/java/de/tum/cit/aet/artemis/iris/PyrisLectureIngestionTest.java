@@ -110,7 +110,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteLecturefromPyrisDatabaseWithCourseSettingsEnabled() {
         enableIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull(), ExpectedCount.twice());
@@ -121,7 +121,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteLecturefromPyrisDatabaseWithoutCurrentProcessableContent() {
         enableIrisFor(lecture1.getCourse());
         AttachmentVideoUnit unit = (AttachmentVideoUnit) lecture1.getLectureUnits().getFirst();
@@ -135,7 +135,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAllStagesDoneIngestionStateDone() throws Exception {
         activateIrisFor(lecture1.getCourse());
         if (lecture1.getLectureUnits().getFirst() instanceof AttachmentVideoUnit unit) {
@@ -148,7 +148,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAllStagesDoneRemovesDeletionIngestionJob() throws Exception {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
@@ -247,7 +247,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testLectureUnitLinkConstruction() {
         activateIrisFor(lecture1.getCourse());
 
@@ -271,7 +271,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testVideoUnitWithAttachmentWithoutStoredFileIsSentAsVideoOnly() {
         activateIrisFor(lecture1.getCourse());
         AttachmentVideoUnit videoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
@@ -294,7 +294,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testIngestTranscriptionForLectureUnit() {
         activateIrisFor(lecture1.getCourse());
         AttachmentVideoUnit unitWithTranscription = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
@@ -314,7 +314,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteLectureUnitWithTranscriptionFromPyrisDB() throws Exception {
         activateIrisFor(lecture1.getCourse());
         AttachmentVideoUnit unitWithTranscription = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
@@ -339,7 +339,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteLectureUnitWithTranscriptionKeepsJobIfNotDone() throws Exception {
         activateIrisFor(lecture1.getCourse());
         AttachmentVideoUnit unitWithTranscription = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
@@ -364,7 +364,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void ingestionCompleteSavesSlidePageNumbersFromDedicatedField() throws Exception {
         activateIrisFor(lecture1.getCourse());
         AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture1, 3, true);
@@ -392,7 +392,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUnitWithOnlyAnUnsupportedVideoIsNotProcessable() {
         activateIrisFor(lecture1.getCourse());
         AttachmentVideoUnit videoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);

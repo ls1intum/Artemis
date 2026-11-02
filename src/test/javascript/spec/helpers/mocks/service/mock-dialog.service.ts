@@ -2,8 +2,7 @@ import { Subject } from 'rxjs';
 import { type Mock, vi } from 'vitest';
 
 /**
- * Mock for PrimeNG DialogService used in tests.
- * This is needed because DeleteDialogService depends on DialogService.
+ * Supplies the observable close event and close method consumed by dialog callers in tests.
  */
 export class MockDialogService {
     private mockDialogRef = {

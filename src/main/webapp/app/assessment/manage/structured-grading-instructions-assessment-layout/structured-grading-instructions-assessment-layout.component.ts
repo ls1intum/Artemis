@@ -1,3 +1,11 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiMessageComponent,
+    TumAetUiTableDirective,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Component, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
@@ -5,11 +13,9 @@ import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumAetUiCheckboxComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -29,12 +35,15 @@ export interface SortedGradingCriterion {
         FaIconComponent,
         TranslateDirective,
         ExpandableSectionComponent,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         HelpIconComponent,
         MarkdownDirective,
         TumAetUiCheckboxComponent,
         TumAetUiTagComponent,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {

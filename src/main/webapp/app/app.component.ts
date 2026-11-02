@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, Renderer2, inject, signal } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { DOCUMENT, NgClass } from '@angular/common';
 import { Subscription } from 'rxjs';
@@ -43,7 +42,6 @@ export class AppComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private profileService = inject(ProfileService);
     private examParticipationService = inject(ExamParticipationService);
-    private sentryErrorHandler = inject(SentryErrorHandler);
     private themeService = inject(ThemeService);
     private document = inject<Document>(DOCUMENT);
     private renderer = inject(Renderer2);
@@ -73,16 +71,6 @@ export class AppComponent implements OnInit, OnDestroy {
     readonly isShownViaLti = signal(false);
     readonly usesModuleBackground = signal(false);
     readonly showPageRibbon = signal(true);
-
-    constructor() {
-        void this.setupErrorHandling();
-    }
-
-    private async setupErrorHandling() {
-        const profileInfo = this.profileService.getProfileInfo();
-        // sentry is only activated if it was specified in the application.yml file
-        void this.sentryErrorHandler.initSentry(profileInfo);
-    }
 
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot): string {
         const title: string = routeSnapshot.data['pageTitle'] ?? 'artemisApp';

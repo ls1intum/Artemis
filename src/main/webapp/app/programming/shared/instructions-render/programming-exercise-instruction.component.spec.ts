@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ApplicationRef, DebugElement, VERSION, WritableSignal } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -83,14 +83,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let programmingExerciseGradingService: ProgrammingExerciseGradingService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let themeService: ThemeService;
 
     let subscribeForLatestResultOfParticipationStub: ReturnType<typeof vi.spyOn>;
     let openModalStub: ReturnType<typeof vi.spyOn>;
     let getLatestResultWithFeedbacks: ReturnType<typeof vi.spyOn>;
 
-    const dialogRef = {} as unknown as DynamicDialogRef;
+    const dialogRef = {} as unknown as TumAetUiDialogRef;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -104,7 +104,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
@@ -118,7 +118,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         programmingExerciseGradingService = TestBed.inject(ProgrammingExerciseGradingService);
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
         themeService = TestBed.inject(ThemeService);
 
         subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
@@ -551,11 +551,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             FeedbackComponent,
             expect.objectContaining({
                 header: 'artemisApp.result.detail.feedbackForTask',
-                width: '50rem',
-                breakpoints: {
-                    '850px': '95vw',
-                },
-                modal: true,
+                size: 'large',
                 closable: true,
                 closeOnEscape: true,
                 dismissableMask: true,
@@ -618,7 +614,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),

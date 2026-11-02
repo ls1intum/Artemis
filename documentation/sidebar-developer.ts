@@ -71,6 +71,7 @@ const sidebars: SidebarsConfig = {
         'ai-pipelines',
         'deimos',
         'openapi',
+        'agent-access',
         'docker-compose',
         'mailpit-setup',
         'keycloak-saml2-setup',
@@ -82,7 +83,7 @@ const sidebars: SidebarsConfig = {
         {
             type: 'category',
             label: 'Hyperion',
-            items: ['hyperion/consistency-check', 'hyperion/quiz-generation'],
+            items: ['hyperion/consistency-check', 'hyperion/quiz-generation', 'hyperion/worker-modules'],
         },
     ],
 };

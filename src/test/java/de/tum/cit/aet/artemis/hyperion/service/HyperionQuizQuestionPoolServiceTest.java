@@ -1,0 +1,177 @@
+package de.tum.cit.aet.artemis.hyperion.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.core.task.TaskRejectedException;
+
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolBuildStartDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
+import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+
+class HyperionQuizQuestionPoolServiceTest {
+
+    @Mock
+    private HyperionQuizQuestionPoolBuildService buildService;
+
+    @Mock
+    private HyperionQuizQuestionPoolTaskService taskService;
+
+    @Mock
+    private QuizQuestionPoolItemRepository itemRepository;
+
+    @Mock
+    private HyperionCourseSettingsService settingsService;
+
+    @Mock
+    private CourseCompetencyApi courseCompetencyApi;
+
+    @Mock
+    private LectureUnitApi lectureUnitApi;
+
+    private HyperionQuizQuestionPoolService service;
+
+    private AutoCloseable mocks;
+
+    private Course course;
+
+    @BeforeEach
+    void setup() {
+        mocks = MockitoAnnotations.openMocks(this);
+        service = new HyperionQuizQuestionPoolService(buildService, taskService, itemRepository, settingsService, Optional.of(courseCompetencyApi), Optional.of(lectureUnitApi));
+        course = new Course();
+        course.setId(5L);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        mocks.close();
+    }
+
+    @Test
+    void startBuild_enqueuesAndDispatchesWhenTheSlotIsFree() {
+        when(buildService.tryStart(5L)).thenReturn("lease");
+        when(buildService.enqueue(course)).thenReturn(12);
+
+        QuizQuestionPoolBuildStartDTO result = service.startBuild(course, 7L);
+
+        assertThat(result).isEqualTo(new QuizQuestionPoolBuildStartDTO(true, 12));
+        verify(taskService).runBuildAsync(5L, 7L, "lease");
+    }
+
+    @Test
+    void startBuild_reportsAConflictWhenABuildIsRunning() {
+        when(buildService.tryStart(5L)).thenReturn(null);
+
+        QuizQuestionPoolBuildStartDTO result = service.startBuild(course, 7L);
+
+        assertThat(result).isEqualTo(new QuizQuestionPoolBuildStartDTO(false, 0));
+        verify(buildService, never()).enqueue(course);
+        verify(taskService, never()).runBuildAsync(eq(5L), eq(7L), any());
+    }
+
+    @Test
+    void startBuild_freesTheSlotWhenDispatchFails() {
+        when(buildService.tryStart(5L)).thenReturn("lease");
+        when(buildService.enqueue(course)).thenReturn(12);
+        doThrow(new TaskRejectedException("executor queue full")).when(taskService).runBuildAsync(5L, 7L, "lease");
+
+        assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(TaskRejectedException.class);
+
+        verify(buildService).release(5L, "lease");
+    }
+
+    @Test
+    void startBuild_freesTheSlotWhenEnqueuingFails() {
+        when(buildService.tryStart(5L)).thenReturn("lease");
+        when(buildService.enqueue(course)).thenThrow(new IllegalStateException("no competencies"));
+
+        assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(IllegalStateException.class);
+
+        verify(buildService).release(5L, "lease");
+        verify(taskService, never()).runBuildAsync(eq(5L), eq(7L), any());
+    }
+
+    @Test
+    void getProgress_aggregatesTheStateCounts() {
+        when(buildService.isRunning(5L)).thenReturn(true);
+        when(itemRepository.countByStateForCourse(5L)).thenReturn(List.of(new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.PENDING, 3),
+                new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.GENERATING, 1), new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.GENERATED, 2),
+                new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.FILTERED, 10), new QuizQuestionPoolStateCountDTO(QuizQuestionPoolItemState.FAILED_FILTER, 1)));
+        when(itemRepository.countByCourseIdAndAccepted(5L, true)).thenReturn(8);
+        when(itemRepository.countByCourseIdAndAccepted(5L, false)).thenReturn(2);
+
+        QuizQuestionPoolProgressDTO progress = service.getProgress(5L);
+
+        assertThat(progress).isEqualTo(new QuizQuestionPoolProgressDTO(true, 17, 4, 2, 10, 8, 2, 1));
+    }
+
+    @Test
+    void getItems_mapsItemsWithTheirCompetencyTitlesAndLectureUnitNames() {
+        Competency competency = new Competency();
+        competency.setId(9L);
+        competency.setTitle("Arrays");
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.of(competency));
+        TextUnit unit = new TextUnit();
+        unit.setId(4L);
+        unit.setName("Arrays in Java");
+        when(lectureUnitApi.findAllByIds(anyCollection())).thenReturn(List.of(unit));
+        QuizQuestionPoolItem item = new QuizQuestionPoolItem();
+        item.setId(1L);
+        item.setCourse(course);
+        item.setCompetencyId(9L);
+        item.setLectureUnitId(4L);
+        item.setLanguage(QuizQuestionGenerationLanguage.EN);
+        item.setQuestionType(QuizQuestionGenerationType.SINGLE_CHOICE);
+        item.setDifficulty(QuizQuestionDifficulty.MEDIUM);
+        item.setUpdatedAt(ZonedDateTime.now());
+        when(itemRepository.findAllByCourseIdAndCompetencyIdOrdered(5L, 9L)).thenReturn(List.of(item));
+
+        List<QuizQuestionPoolItemDTO> items = service.getItems(5L, 9L);
+
+        assertThat(items).hasSize(1);
+        assertThat(items.getFirst().competencyTitle()).isEqualTo("Arrays");
+        assertThat(items.getFirst().lectureUnitId()).isEqualTo(4L);
+        assertThat(items.getFirst().lectureUnitName()).isEqualTo("Arrays in Java");
+        assertThat(items.getFirst().state()).isEqualTo(QuizQuestionPoolItemState.PENDING);
+        verify(itemRepository, never()).findAllByCourseIdOrdered(5L);
+    }
+
+    @Test
+    void getItems_listsTheWholePoolWithoutACompetency() {
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.of());
+        when(itemRepository.findAllByCourseIdOrdered(5L)).thenReturn(List.of());
+
+        assertThat(service.getItems(5L, null)).isEmpty();
+        verify(lectureUnitApi, never()).findAllByIds(anyCollection());
+    }
+}

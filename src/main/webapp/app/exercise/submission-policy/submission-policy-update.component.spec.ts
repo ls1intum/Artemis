@@ -1,3 +1,6 @@
+import { typeIntoInputNumber } from 'test/helpers/input-number-test-helpers';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { effect } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -27,8 +30,27 @@ describe('Submission Policy Update Form Component', () => {
         fixture.detectChanges();
     };
 
+    const policyLabel = (type: SubmissionPolicyType): string =>
+        ({
+            [SubmissionPolicyType.NONE]: 'artemisApp.programmingExercise.submissionPolicy.none.optionLabel',
+            [SubmissionPolicyType.LOCK_REPOSITORY]: 'artemisApp.programmingExercise.submissionPolicy.lockRepository.optionLabel',
+            [SubmissionPolicyType.SUBMISSION_PENALTY]: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.optionLabel',
+        })[type];
+
+    const selectPolicy = async (field: HTMLButtonElement, type: SubmissionPolicyType, targetFixture = fixture) => {
+        field.click();
+        targetFixture.detectChanges();
+        await targetFixture.whenStable();
+        const option = Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).find((entry) => entry.textContent?.trim() === policyLabel(type));
+        expect(option).toBeDefined();
+        option!.click();
+        targetFixture.detectChanges();
+        await targetFixture.whenStable();
+    };
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
             imports: [SubmissionPolicyUpdateComponent, MockPipe(ArtemisTranslatePipe), mockTranslateDirective, mockHelpIconComponent],
         })
             .overrideComponent(SubmissionPolicyUpdateComponent, {
@@ -60,8 +82,7 @@ describe('Submission Policy Update Form Component', () => {
         // We revert the enum values, since 'none' is the default type for the type picker. Therefore we
         // need to set the picker to anything other than 'none' to test switching back to 'none' appropriately
         for (const type of Object.values(SubmissionPolicyType).reverse()) {
-            submissionPolicyTypeField.value = type;
-            submissionPolicyTypeField.dispatchEvent(new Event('change'));
+            await selectPolicy(submissionPolicyTypeField, type);
             await detectChanges();
 
             expect(programmingExercise.submissionPolicy!.type).toBe(type);
@@ -74,8 +95,7 @@ describe('Submission Policy Update Form Component', () => {
 
         const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
         for (const type of [SubmissionPolicyType.LOCK_REPOSITORY, SubmissionPolicyType.SUBMISSION_PENALTY]) {
-            submissionPolicyTypeField.value = type;
-            submissionPolicyTypeField.dispatchEvent(new Event('change'));
+            await selectPolicy(submissionPolicyTypeField, type);
             await detectChanges();
 
             const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
@@ -91,16 +111,42 @@ describe('Submission Policy Update Form Component', () => {
         await detectChanges();
 
         const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
-        submissionPolicyTypeField.value = SubmissionPolicyType.SUBMISSION_PENALTY;
-        submissionPolicyTypeField.dispatchEvent(new Event('change'));
+        await selectPolicy(submissionPolicyTypeField, SubmissionPolicyType.SUBMISSION_PENALTY);
         await detectChanges();
 
         const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
-        component.exceedingPenaltyControl.setValue(73.73);
-        submissionLimitExceededPenaltyInputField.dispatchEvent(new Event('input'));
-        fixture.detectChanges();
+        typeIntoInputNumber(submissionLimitExceededPenaltyInputField, '73.73');
+        await detectChanges();
 
         expect(programmingExercise.submissionPolicy?.exceedingPenalty).toBe(73.73);
+    });
+
+    it('accepts a pasted comma-decimal penalty as numeric points', async () => {
+        programmingExercise.submissionPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, submissionLimit: 5, exceedingPenalty: 1 };
+        await detectChanges();
+        const input = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty') as HTMLInputElement;
+        input.value = '73,125';
+        input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste', data: '73,125' }));
+        await detectChanges();
+
+        expect(programmingExercise.submissionPolicy.exceedingPenalty).toBe(73.125);
+        expect(component.exceedingPenaltyControl.valid).toBe(true);
+    });
+
+    it.each([
+        { key: 'ArrowUp', expectedPenalty: 3.5 },
+        { key: 'ArrowDown', expectedPenalty: 1.5 },
+    ])('keeps the saved policy model in sync when $key steps the penalty', async ({ key, expectedPenalty }) => {
+        programmingExercise.submissionPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, submissionLimit: 5, exceedingPenalty: 2.5 };
+        await detectChanges();
+        const input = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty') as HTMLInputElement;
+
+        input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+        await detectChanges();
+
+        expect(component.exceedingPenaltyControl.value).toBe(expectedPenalty);
+        expect(programmingExercise.submissionPolicy.exceedingPenalty).toBe(expectedPenalty);
+        expect(input.value).toBe(String(expectedPenalty));
     });
 
     it('should display correct input fields when penalty policy (lock repo) is already set', async () => {
@@ -110,7 +156,7 @@ describe('Submission Policy Update Form Component', () => {
         const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
         const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
 
-        expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+        expect(submissionPolicyTypeField.textContent?.trim()).toBe(policyLabel(SubmissionPolicyType.LOCK_REPOSITORY));
         expect(submissionLimitInputField.value).toBe('5');
     });
 
@@ -122,7 +168,7 @@ describe('Submission Policy Update Form Component', () => {
         const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
         const submissionLimitExceededPenaltyInputField = fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty');
 
-        expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.SUBMISSION_PENALTY);
+        expect(submissionPolicyTypeField.textContent?.trim()).toBe(policyLabel(SubmissionPolicyType.SUBMISSION_PENALTY));
         expect(submissionLimitInputField.value).toBe('5');
         expect(submissionLimitExceededPenaltyInputField.value).toBe('50.4');
     });
@@ -156,7 +202,7 @@ describe('Submission Policy Update Form Component', () => {
         await detectChanges();
 
         const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
-        expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.NONE);
+        expect(submissionPolicyTypeField.textContent?.trim()).toBe(policyLabel(SubmissionPolicyType.NONE));
 
         const loadedExercise = new ProgrammingExercise(undefined, undefined);
         loadedExercise.submissionPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 3 } as LockRepositoryPolicy;
@@ -164,7 +210,7 @@ describe('Submission Policy Update Form Component', () => {
         await detectChanges();
 
         const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
-        expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+        expect(submissionPolicyTypeField.textContent?.trim()).toBe(policyLabel(SubmissionPolicyType.LOCK_REPOSITORY));
         expect(submissionLimitInputField.value).toBe('3');
         // form-level validity for a lock policy: the submission limit control decides (see the invalid getter)
         expect(component.submissionLimitControl.valid).toBe(true);
@@ -250,7 +296,7 @@ describe('Submission Policy Update Form Component', () => {
 
         const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
         const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
-        expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+        expect(submissionPolicyTypeField.textContent?.trim()).toBe(policyLabel(SubmissionPolicyType.LOCK_REPOSITORY));
         expect(submissionLimitInputField.value).toBe('10');
         expect(component.submissionLimitControl.value).toBe(10);
         // The parent saves the re-emitted object, so the preserved edit must exist there too.
@@ -262,8 +308,7 @@ describe('Submission Policy Update Form Component', () => {
         await detectChanges();
 
         const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
-        submissionPolicyTypeField.value = SubmissionPolicyType.NONE;
-        submissionPolicyTypeField.dispatchEvent(new Event('change'));
+        await selectPolicy(submissionPolicyTypeField, SubmissionPolicyType.NONE);
         await detectChanges();
 
         const reEmittedExercise = new ProgrammingExercise(undefined, undefined);
@@ -271,7 +316,7 @@ describe('Submission Policy Update Form Component', () => {
         fixture.componentRef.setInput('programmingExercise', reEmittedExercise);
         await detectChanges();
 
-        expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.NONE);
+        expect(submissionPolicyTypeField.textContent?.trim()).toBe(policyLabel(SubmissionPolicyType.NONE));
         expect(reEmittedExercise.submissionPolicy!.type).toBe(SubmissionPolicyType.NONE);
     });
 
@@ -299,8 +344,7 @@ describe('Submission Policy Update Form Component', () => {
         await detectChanges();
 
         const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
-        submissionPolicyTypeField.value = SubmissionPolicyType.LOCK_REPOSITORY;
-        submissionPolicyTypeField.dispatchEvent(new Event('change'));
+        await selectPolicy(submissionPolicyTypeField, SubmissionPolicyType.LOCK_REPOSITORY);
         await detectChanges();
         component.submissionLimitControl.setValue(10);
         component.submissionLimitControl.markAsDirty();
@@ -311,7 +355,7 @@ describe('Submission Policy Update Form Component', () => {
         fixture.componentRef.setInput('programmingExercise', fetchedExercise);
         await detectChanges();
 
-        expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+        expect(submissionPolicyTypeField.textContent?.trim()).toBe(policyLabel(SubmissionPolicyType.LOCK_REPOSITORY));
         expect(fetchedExercise.submissionPolicy!.type).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
         expect(fetchedExercise.submissionPolicy!.submissionLimit).toBe(10);
         expect(fetchedExercise.submissionPolicy!.exceedingPenalty).toBeUndefined();
@@ -346,8 +390,7 @@ describe('Submission Policy Update Form Component', () => {
         await freshFixture.whenStable();
 
         const submissionPolicyTypeField = freshFixture.nativeElement.querySelector('#field_submissionPolicy');
-        submissionPolicyTypeField.value = SubmissionPolicyType.LOCK_REPOSITORY;
-        submissionPolicyTypeField.dispatchEvent(new Event('change'));
+        await selectPolicy(submissionPolicyTypeField, SubmissionPolicyType.LOCK_REPOSITORY, freshFixture);
         freshFixture.detectChanges();
         await freshFixture.whenStable();
 
@@ -358,7 +401,7 @@ describe('Submission Policy Update Form Component', () => {
         await freshFixture.whenStable();
         freshFixture.detectChanges();
 
-        expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.SUBMISSION_PENALTY);
+        expect(submissionPolicyTypeField.textContent?.trim()).toBe(policyLabel(SubmissionPolicyType.SUBMISSION_PENALTY));
         expect(freshFixture.nativeElement.querySelector('#field_submissionLimit').value).toBe('5');
         expect(freshFixture.componentInstance.invalid).toBe(false);
     });
@@ -371,7 +414,7 @@ describe('Submission Policy Update Form Component', () => {
 
         const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
         const submissionLimitInputField = fixture.nativeElement.querySelector('#field_submissionLimit');
-        expect(submissionPolicyTypeField.value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+        expect(submissionPolicyTypeField.textContent?.trim()).toBe(policyLabel(SubmissionPolicyType.LOCK_REPOSITORY));
         expect(submissionLimitInputField.value).toBe('5');
         expect(typeChangeSpy).toHaveBeenCalledTimes(1);
     });
@@ -380,8 +423,7 @@ describe('Submission Policy Update Form Component', () => {
     describe('keeping the form and the model in sync across policy type switches (#7445)', () => {
         const pickType = async (type: SubmissionPolicyType) => {
             const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
-            submissionPolicyTypeField.value = type;
-            submissionPolicyTypeField.dispatchEvent(new Event('change'));
+            await selectPolicy(submissionPolicyTypeField, type);
             await detectChanges();
         };
 
@@ -392,8 +434,7 @@ describe('Submission Policy Update Form Component', () => {
         };
 
         const typePenalty = async (penalty: number) => {
-            component.exceedingPenaltyControl.setValue(penalty);
-            fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty').dispatchEvent(new Event('input'));
+            typeIntoInputNumber(fixture.nativeElement.querySelector('#field_submissionLimitExceededPenalty'), String(penalty));
             await detectChanges();
         };
 
@@ -493,7 +534,7 @@ describe('Submission Policy Update Form Component', () => {
             fixture.componentRef.setInput('programmingExercise', exerciseWithPolicy(2, 7));
             await detectChanges();
 
-            expect(fixture.nativeElement.querySelector('#field_submissionPolicy').value).toBe(SubmissionPolicyType.LOCK_REPOSITORY);
+            expect(fixture.nativeElement.querySelector('#field_submissionPolicy').textContent.trim()).toBe(policyLabel(SubmissionPolicyType.LOCK_REPOSITORY));
             expect(fixture.nativeElement.querySelector('#field_submissionLimit').value).toBe('7');
             expect(component.submissionLimitControl.value).toBe(7);
         });
@@ -523,7 +564,7 @@ describe('Submission Policy Update Form Component', () => {
             fixture.componentRef.setInput('programmingExercise', secondExercise);
             await detectChanges();
 
-            expect(fixture.nativeElement.querySelector('#field_submissionPolicy').value).toBe(SubmissionPolicyType.NONE);
+            expect(fixture.nativeElement.querySelector('#field_submissionPolicy').textContent.trim()).toBe(policyLabel(SubmissionPolicyType.NONE));
             expect(component.invalid).toBe(false);
         });
 

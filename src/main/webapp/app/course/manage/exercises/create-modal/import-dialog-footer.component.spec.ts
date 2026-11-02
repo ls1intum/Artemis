@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { IMPORT_DIALOG_BACK, ImportDialogFooterComponent } from 'app/course/manage/exercises/create-modal/import-dialog-footer.component';
@@ -9,17 +9,17 @@ import { IMPORT_DIALOG_BACK, ImportDialogFooterComponent } from 'app/course/mana
 describe('ImportDialogFooterComponent', () => {
     let fixture: ComponentFixture<ImportDialogFooterComponent>;
     let component: ImportDialogFooterComponent;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ImportDialogFooterComponent],
-            providers: [MockProvider(DynamicDialogRef), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [MockProvider(TumAetUiDialogRef), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ImportDialogFooterComponent);
         component = fixture.componentInstance;
-        dialogRef = TestBed.inject(DynamicDialogRef);
+        dialogRef = TestBed.inject(TumAetUiDialogRef);
     });
 
     it('closes the dialog with the back sentinel', () => {

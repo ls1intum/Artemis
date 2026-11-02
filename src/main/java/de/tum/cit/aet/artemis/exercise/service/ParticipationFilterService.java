@@ -88,7 +88,7 @@ public class ParticipationFilterService {
 
         if (optionalSubmission.isPresent()) {
             Submission submission = optionalSubmission.get();
-            Result latestResult = submission.getLatestResult();
+            Result latestResult = submission.getLatestGradingResult();
             if (latestResult != null) {
                 results = Set.of(latestResult);
                 if (isStudent) {

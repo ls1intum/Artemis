@@ -149,7 +149,14 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Also loads the example submission if the new parameter is not set.
      */
     private loadAll(): void {
-        this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
+        const training = this.readOnly() || this.toComplete();
+        const exam = this.route.snapshot.paramMap.has('examId');
+        const exerciseSource = exam
+            ? training
+                ? this.exerciseService.findForExamAssessment(this.exerciseId)
+                : this.exerciseService.findForExamManagement(this.exerciseId)
+            : this.exerciseService.findForStaff(this.exerciseId);
+        exerciseSource.subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
         });
 
@@ -192,11 +199,16 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         });
     }
 
+    private exampleResultPurpose(): 'training' | 'instructor' {
+        const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        return !this.readOnly() && !this.toComplete() && this.accountService.isAtLeastInstructorInCourseWithId(courseId) ? 'instructor' : 'training';
+    }
+
     private fetchExampleResult(): Promise<void> {
         return new Promise((resolve) => {
             this.assessmentsService
                 // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                .getExampleResult(this.exerciseId, this.submission?.id!)
+                .getExampleResult(this.exerciseId, this.submission?.id!, this.exampleResultPurpose())
                 .pipe(filter(notUndefined))
                 .subscribe((result) => {
                     if (result && result.id) {

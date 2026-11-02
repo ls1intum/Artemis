@@ -1,10 +1,11 @@
 <input
+    tumAetUiInput
     [attr.aria-label]="'artemisApp.exercise.notificationText' | artemisTranslate"
     placeholder="{{ 'artemisApp.exercise.notificationText' | artemisTranslate }}"
     title="{{ 'artemisApp.exercise.notificationText' | artemisTranslate }}"
     minlength="3"
     type="text"
-    class="form-control form-control-sm"
+    class="text-sm"
     name="notificationText"
     id="field_notification_text"
     (change)="onInputChanged()"

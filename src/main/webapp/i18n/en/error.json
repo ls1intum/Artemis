@@ -191,7 +191,6 @@
             "invalidSeatCondition": "Room {{ roomNumber }} has an unknown seat condition: '{{ seatCondition }}'",
             "missingLayouts": "Couldn't parse layouts from room {{ roomNumber }}",
             "malformedLayout": "Layout {{ layoutName }} is malformed in room {{ roomNumber }}",
-            "unknownLayoutType": "Unknown layout type '{{ layoutType }}' in layout '{{ layoutName }}' in room {{ roomNumber }}",
             "invalidLayout": "The layout {{ layoutName }} in room {{ roomNumber }} is invalid",
             "seatNotFoundFixedSelection": "The seat at row index {{ rowIndex }} and seat index {{ seatIndex }} in room {{ roomNumber }} does not exist",
             "missingDefaultLayout": "The room {{ roomNumber }} does not have a default layout",
@@ -368,6 +367,9 @@
         "invalidBuildContainerRepository": "The repository selection of the build container {{ container }} contains an entry without a repository type.",
         "buildContainerMemorySwapBelowMemory": "The build container {{ container }} would run with a memory swap limit of {{ memorySwap }} MB below its memory limit of {{ memory }} MB. Set its memory swap limit as well, or leave the memory limit to the exercise.",
         "sharingInfoMissing": "The sharing platform information is missing.",
-        "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
+        "problemStatementTooLong": "The problem statement must not exceed 100,000 characters.",
+        "generationBriefRequired": "Enter a brief before generating an exercise without a problem statement.",
+        "generationCapacityUnavailable": "Artemis has no free capacity for AI generation right now. Nothing has been generated — try again in a few minutes.",
+        "exerciseGenerationRunning": "Another operation or an unfinished recovery is protecting this exercise. Try again later; contact an administrator if recovery is required."
     }
 }

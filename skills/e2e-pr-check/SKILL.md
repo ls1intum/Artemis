@@ -19,27 +19,53 @@ revision and committed diff:
 
 It prints five `OUTPUT:` lines. The ones that matter:
 
-- `RUN_ALL_TESTS=true` means the change hit `runAllTestsPatterns` (Spring config, `deployment/docker/`,
-  `build.gradle`, `angular.json`) or touched Playwright infrastructure outside `e2e/`. Say so
-  explicitly rather than quietly running a subset. Then either run the full suite or agree with the
-  user on a narrower scope, but do not present a subset as sufficient coverage.
-- `RELEVANT_TESTS` is the space-separated list of spec paths to run, relative to
-  `src/test/playwright`. It always includes the always-run specs (`e2e/Login.spec.ts`,
-  `e2e/Logout.spec.ts`, `e2e/SystemHealth.spec.ts`).
-- `REMAINING_TESTS` is everything else. CI runs it as phase 2 only after phase 1 passes. Locally it
-  is normally not worth running.
+- `RUN_ALL_TESTS=true` requires the full suite. This includes configuration and Playwright
+  infrastructure changes, global/shared runtime changes, unmapped files, an invalid mapping, or an
+  unavailable base comparison. Say why the selector chose a full
+  run. Do not present a subset as sufficient coverage.
+- When `RUN_ALL_TESTS=false`, `RELEVANT_TESTS` is the space-separated set of paths relative to
+  `src/test/playwright`. It includes module tests, declared cross-module consumer workflows, changed specs
+  and the always-run smoke specs (`e2e/Login.spec.ts`, `e2e/Logout.spec.ts`, `e2e/SystemHealth.spec.ts`).
+- `REMAINING_TESTS` contains the disjoint rest of the discovered suite. Computing this
+  set does not mean CI ran it. Ordinary eligible internal PRs run Phase 1 only and intentionally
+  omit Phase 2. Full PR mode (`run_full_suite=true` on the reusable workflow) runs Phase 2 after
+  Phase 1 passes its gate. Locally, use selected scope only when the resolver authorizes it, including
+  eligible application-source changes. Do not reduce the selection to the changed module's folder:
+  the consumer workflows are part of its coverage.
 
 Two things about the input:
 
-- **It diffs commits, not the working tree.** The script runs `git diff --name-only <base>...HEAD`.
-  Uncommitted changes are invisible; identify their affected specs separately. Do not commit only
-  to make the selector work. If there are no committed changes, the resolver selects all tests.
+- **It diffs commits, not the working tree.** The script compares `<base>...HEAD` from the merge
+  base. Uncommitted changes are invisible; identify their affected specs separately. Do not commit
+  only to make the selector work. No committed changes or a failed base comparison selects all
+  tests. Renames classify both the old and new paths; deleted specs are omitted from test arguments.
 - **Use the pull request's actual base.** The base is the first argument. `origin/develop` is only
   correct for a pull request that targets `develop`.
 
+CI sets `run_full_suite=false` for ordinary internal PR runs. The selector can still require all
+E2E tests, which run in one full-suite job for global runtime, helpers and unknown inputs. The mapping's
+dependency contract must account for every discovered spec before partial coverage is allowed. Adding
+a new unassigned spec requires updating the contract. Java/client unit tests and documentation alongside
+a mapped source change do not independently force full E2E.
+Fork PRs do not start E2E; draft and test/documentation-only PRs can also skip it through the umbrella
+workflow's change filters.
+
+Non-PR E2E runs use the full suite: integration-branch pushes, release events, merge-group events
+when a merge queue is configured, and manual CI runs. A green selective PR result does not prove a
+full E2E run, and merge-group coverage is not guaranteed for every PR. To request full CI for a
+branch explicitly:
+
+```bash
+gh workflow run ci.yml --ref <branch> -f force_build=true
+```
+
+The PR comment and job summary identify selected versus full scope. Report the scope actually
+executed, including intentional Phase 2 omission.
+
 ## Step 2: choose the runner
 
-Default to the single-node runner. It is faster and it is what most changes need.
+Default to the single-node runner. It is faster and it is what most changes need. When step 1
+requires the full suite, omit `--specs` from the chosen runner command.
 
 ```bash
 ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --specs "<RELEVANT_TESTS from step 1>"
