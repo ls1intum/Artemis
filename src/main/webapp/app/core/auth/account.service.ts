@@ -7,7 +7,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
@@ -152,9 +151,6 @@ export class AccountService implements IAccountService {
                     const user = response.body!;
                     if (user) {
                         this.userIdentity.set(user);
-
-                        // improved error tracking in sentry
-                        setUser({ username: user.login! });
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting

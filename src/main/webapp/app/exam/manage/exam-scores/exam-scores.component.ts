@@ -22,7 +22,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { declareExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -840,35 +840,28 @@ export class ExamScoresComponent implements OnInit {
             const regularCalculation = {
                 scoreAchieved: overallScore,
                 pointsAchieved: overAllPoints,
-                userId: studentResult.userId,
-                userLogin: studentResult.login,
             };
             // checking if the same as in the exam scores map
             const examScoreDTO = this.studentIdToExamScoreDTOs.get(studentResult.userId);
             if (!examScoreDTO) {
-                const errorMessage = `Exam scores not included in new calculation: ${JSON.stringify(regularCalculation)}`;
-                this.logErrorOnSentry(errorMessage);
+                // Only the id of the student locates the discrepancy. The report must not contain the login or the scores of a student,
+                // as it is written to the console of whoever has this page open.
+                this.reportScoreCalculationError(`Exam scores of the student with the ID ${studentResult.userId} are not included in the new calculation`);
             } else {
                 examScoreDTO.scoreAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.scoreAchieved, this.course());
                 examScoreDTO.pointsAchieved = roundValueSpecifiedByCourseSettings(examScoreDTO.pointsAchieved, this.course());
 
                 if (Math.abs(examScoreDTO.pointsAchieved - regularCalculation.pointsAchieved) > 0.1) {
-                    const errorMessage = `Different exam points in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation: ${JSON.stringify(
-                        examScoreDTO,
-                    )}`;
-                    this.logErrorOnSentry(errorMessage);
+                    this.reportScoreCalculationError(`Different exam points of the student with the ID ${studentResult.userId} in the new calculation`);
                 }
                 if (Math.abs(examScoreDTO.scoreAchieved - regularCalculation.scoreAchieved) > 0.1) {
-                    const errorMessage = `Different exam score in new calculation. Regular Calculation: ${JSON.stringify(regularCalculation)}. New Calculation : ${JSON.stringify(
-                        examScoreDTO,
-                    )}`;
-                    this.logErrorOnSentry(errorMessage);
+                    this.reportScoreCalculationError(`Different exam score of the student with the ID ${studentResult.userId} in the new calculation`);
                 }
             }
         }
     }
 
-    logErrorOnSentry(errorMessage: string) {
+    reportScoreCalculationError(errorMessage: string) {
         captureException(new Error(errorMessage));
     }
 

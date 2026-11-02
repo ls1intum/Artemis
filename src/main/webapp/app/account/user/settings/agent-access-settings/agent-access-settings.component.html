@@ -83,7 +83,15 @@
 
             <div class="mb-4! sm:w-1/2">
                 <tumaet-ui-form-field controlId="agent-token-name" [label]="'artemisApp.userSettings.agentAccess.name' | artemisTranslate" required>
-                    <input #nameInput tumAetUiInput id="agent-token-name" maxlength="100" [value]="tokenName()" (input)="tokenName.set(nameInput.value)" />
+                    <input
+                        #nameInput
+                        tumAetUiInput
+                        id="agent-token-name"
+                        [attr.aria-label]="'artemisApp.userSettings.agentAccess.name' | artemisTranslate"
+                        maxlength="100"
+                        [value]="tokenName()"
+                        (input)="tokenName.set(nameInput.value)"
+                    />
                 </tumaet-ui-form-field>
             </div>
 
@@ -100,7 +108,16 @@
 
             <div class="mb-4! sm:w-1/4">
                 <tumaet-ui-form-field controlId="agent-token-lifetime" [label]="'artemisApp.userSettings.agentAccess.lifetimeInDays' | artemisTranslate" required>
-                    <input #lifetimeInput tumAetUiInput id="agent-token-lifetime" type="number" min="1" [value]="lifetimeInDays()" (input)="onLifetimeInput(lifetimeInput.value)" />
+                    <input
+                        #lifetimeInput
+                        tumAetUiInput
+                        id="agent-token-lifetime"
+                        [attr.aria-label]="'artemisApp.userSettings.agentAccess.lifetimeInDays' | artemisTranslate"
+                        type="number"
+                        min="1"
+                        [value]="lifetimeInDays()"
+                        (input)="onLifetimeInput(lifetimeInput.value)"
+                    />
                 </tumaet-ui-form-field>
             </div>
 

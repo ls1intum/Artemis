@@ -5,6 +5,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -46,7 +47,7 @@ import de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO;
  * lease reaper this replaces Artemis pushing work over a webhook and then inferring the worker's
  * liveness from the absence of progress callbacks.
  * <p>
- * Authentication: unlike the status update endpoints, no job token can exist before a claim, so these
+ * Authentication: unlike the status update endpoints, no callback token can exist before a claim, so these
  * endpoints authenticate with the shared Pyris secret ({@code artemis.iris.secret-token}) — the same
  * secret pair the two services already use in the other direction, compared in constant time.
  */
@@ -77,7 +78,7 @@ public class PyrisInternalIngestionWorkerResource {
 
     /**
      * {@code POST api/iris/internal/ingestion/worker/claim} : Claim pending ingestion jobs for a
-     * pulling Pyris worker. Each claimed unit is prepared (job token registered, execution payload
+     * pulling Pyris worker. Each claimed unit is prepared (job registered, execution payload
      * assembled) and activated (phase transition, worker lease opened) before it is returned, so a
      * returned job is guaranteed to be authenticated and tracked. A claim whose response is lost on
      * the wire leaves a lease that is never renewed and is reclaimed by the lease reaper.
@@ -126,7 +127,7 @@ public class PyrisInternalIngestionWorkerResource {
                 // Isolate each claimed item: claimUnitsForWorker already claimed the whole batch, so
                 // one unexpected preparation failure (e.g. the attachment became unreadable between
                 // claim and preparation) must not abort jobs already activated earlier in this loop.
-                // prepareLectureUnitIngestion registers its job token only after this step succeeds
+                // prepareLectureUnitIngestion registers its job only after this step succeeds
                 // (see PyrisWebhookService#prepareLectureAdditionJob), so a failure here never leaks
                 // one. The failure is charged to the claim, so an error that repeats runs out of retries
                 // instead of being released and re-claimed for free.
@@ -141,13 +142,13 @@ public class PyrisInternalIngestionWorkerResource {
             // Activate with what the payload carries: the fingerprint Iris stamps (without the video when it could not be resolved), and no
             // transcription phase for a run that has no video to transcribe.
             ProcessingPhase targetPhase = prepared.includesVideo() ? claim.targetPhase() : ProcessingPhase.INGESTING;
-            if (!processingStateCallbackApi.get().activateClaimedJob(claim.lectureUnitId(), prepared.jobToken(), targetPhase, prepared.contentFingerprint(), request.bootId(),
+            if (!processingStateCallbackApi.get().activateClaimedJob(claim.lectureUnitId(), prepared.runId(), targetPhase, prepared.contentFingerprint(), request.bootId(),
                     claim.claimToken())) {
                 // The claim lapsed between claiming and preparing (released, re-claimed by a newer request, or already
-                // activated). A job the ledger does not track must not be handed to the worker. The token registered
+                // activated). A job the ledger does not track must not be handed to the worker. The job registered
                 // moments ago by prepareLectureUnitIngestion is now unusable too: release it rather than leaving it
                 // in the job map until ingestionJobTimeout expires on its own.
-                pyrisWebhookService.revokePreparedIngestionJob(prepared.jobToken());
+                pyrisWebhookService.revokePreparedIngestionJob(prepared.runId());
                 log.info("Claimed unit {} lost its claim before activation, not handing it to the worker", claim.lectureUnitId());
                 continue;
             }
@@ -162,21 +163,38 @@ public class PyrisInternalIngestionWorkerResource {
      * the worker process is alive; the response lists runs Artemis no longer tracks so the worker can
      * stop executing them.
      *
-     * @param request        the worker's boot id and its currently executing job tokens
+     * <p>
+     * Only entries that are run ids of this version, which are UUIDs, renew a lease. Any other entry is a value from a run
+     * started before the upgrade to signed callback tokens: its callbacks can no longer authenticate, so it is reported
+     * revoked without touching its row, its lease lapses, and the lease reaper queues the unit again.
+     *
+     * @param request        the worker's boot id and the run ids it is currently executing
      * @param servletRequest the HTTP request, for secret authentication
-     * @return the tokens from the request that no longer belong to an in-flight run
+     * @return the entries from the request, exactly as sent, that no longer belong to an in-flight run
      */
     @PostMapping("heartbeat")
     @Internal
     public ResponseEntity<PyrisWorkerHeartbeatResponseDTO> heartbeat(@RequestBody PyrisWorkerHeartbeatRequestDTO request, HttpServletRequest servletRequest) {
         authenticate(servletRequest);
-        List<String> activeTokens = request.activeJobTokens() != null ? request.activeJobTokens() : List.of();
+        List<String> reported = request.reportedRunIds();
         if (processingStateCallbackApi.isEmpty()) {
             // Lecture module disabled: nothing the worker runs is tracked here, tell it to stop everything.
-            return ResponseEntity.ok(new PyrisWorkerHeartbeatResponseDTO(activeTokens));
+            return ResponseEntity.ok(PyrisWorkerHeartbeatResponseDTO.of(reported));
         }
-        List<String> revoked = processingStateCallbackApi.get().renewWorkerLeases(request.bootId(), activeTokens);
-        return ResponseEntity.ok(new PyrisWorkerHeartbeatResponseDTO(revoked));
+        List<String> runIds = reported.stream().filter(PyrisInternalIngestionWorkerResource::isRunId).toList();
+        List<String> revoked = new ArrayList<>(reported.stream().filter(entry -> !isRunId(entry)).toList());
+        revoked.addAll(processingStateCallbackApi.get().renewWorkerLeases(request.bootId(), runIds));
+        return ResponseEntity.ok(PyrisWorkerHeartbeatResponseDTO.of(revoked));
+    }
+
+    private static boolean isRunId(String entry) {
+        try {
+            // Round trip, because UUID.fromString also accepts forms such as "1-1-1-1-1".
+            return entry != null && UUID.fromString(entry).toString().equals(entry);
+        }
+        catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     private void authenticate(HttpServletRequest request) {

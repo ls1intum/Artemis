@@ -131,7 +131,7 @@ artemis:
       drain-interval: PT30S # Pause between two runs of the job that works off the queue
       drain-batch-size: 200 # Most mails one run of the job sends
   rate-limiting:
-    enabled: false
+    enabled: true # The limit for client error reports cannot be disabled
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
     login-options-requests-per-minute: 30
