@@ -125,8 +125,11 @@ public class HyperionQuizQuestionPoolBuildService {
     /** Name of the distributed map that holds, for every course that is being built, the settings the build planned its cells with. */
     static final String BUILD_SETTINGS = "hyperion-quiz-pool-build-settings";
 
-    /** Name of the distributed map that holds, for every course whose running build was asked to stop, the lease token of that build. */
+    /** Name of the distributed map that marks, by lease token, the builds that were asked to stop. */
     static final String BUILD_CANCELLATIONS = "hyperion-quiz-pool-build-cancellations";
+
+    /** How long a cancel request is kept for a build that never released its lease to clear it. */
+    private static final Duration CANCEL_REQUEST_LIFETIME = Duration.ofDays(1);
 
     @Nullable
     private final ChatClient chatClient;
@@ -159,7 +162,7 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private final DistributedMap<Long, HyperionCourseSettings> buildSettings;
 
-    private final DistributedMap<Long, String> cancelRequests;
+    private final DistributedMap<String, Boolean> cancelRequests;
 
     private final Duration leaseDuration;
 
@@ -195,7 +198,7 @@ public class HyperionQuizQuestionPoolBuildService {
         this.leaseDuration = Duration.ofMinutes(buildLeaseMinutes);
         this.buildLeases = distributedDataProvider.getMap(BUILD_LEASES);
         this.buildSettings = distributedDataProvider.getMap(BUILD_SETTINGS);
-        this.cancelRequests = distributedDataProvider.getMap(BUILD_CANCELLATIONS);
+        this.cancelRequests = distributedDataProvider.getExpiringMap(BUILD_CANCELLATIONS, CANCEL_REQUEST_LIFETIME);
     }
 
     /**
@@ -303,7 +306,7 @@ public class HyperionQuizQuestionPoolBuildService {
         String current = buildLeases.get(courseId);
         if (current != null && leaseToken.equals(tokenOf(current))) {
             buildSettings.remove(courseId);
-            cancelRequests.remove(courseId, leaseToken);
+            cancelRequests.remove(leaseToken);
             buildLeases.remove(courseId, current);
         }
     }
@@ -332,7 +335,8 @@ public class HyperionQuizQuestionPoolBuildService {
 
     /**
      * Asks the course's running build to stop after the unit of work it is on. The build then drops the items it has not generated yet.
-     * The request names the build's lease, so a request that arrives as that build ends never stops a later build of the course.
+     * The request is stored under the build's lease, so a request that arrives as that build ends neither stops nor replaces the request of
+     * a later build of the course.
      *
      * @param courseId the course
      * @return whether a build was running and stops
@@ -342,13 +346,13 @@ public class HyperionQuizQuestionPoolBuildService {
         if (current == null || isExpired(current, System.currentTimeMillis())) {
             return false;
         }
-        cancelRequests.put(courseId, tokenOf(current));
+        cancelRequests.put(tokenOf(current), Boolean.TRUE);
         return true;
     }
 
-    /** Whether the build holding the given lease was asked to stop; a request for an earlier build of the course does not count. */
-    private boolean isCancelRequested(long courseId, String leaseToken) {
-        return leaseToken.equals(cancelRequests.get(courseId));
+    /** Whether the build holding the given lease was asked to stop; a request for another build of the course does not count. */
+    private boolean isCancelRequested(String leaseToken) {
+        return Boolean.TRUE.equals(cancelRequests.get(leaseToken));
     }
 
     /**
@@ -520,7 +524,7 @@ public class HyperionQuizQuestionPoolBuildService {
         boolean leaseHeld = true;
         boolean cancelled = false;
         while (leaseHeld) {
-            if (isCancelRequested(courseId, leaseToken)) {
+            if (isCancelRequested(leaseToken)) {
                 cancelled = true;
                 break;
             }

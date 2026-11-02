@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -90,7 +91,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     private LocalMap<Long, HyperionCourseSettings> buildSettings;
 
-    private LocalMap<Long, String> cancellations;
+    private LocalMap<String, Boolean> cancellations;
 
     private AutoCloseable mocks;
 
@@ -102,7 +103,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         cancellations = new LocalMap<>();
         lenient().when(distributedDataProvider.<Long, String>getMap(HyperionQuizQuestionPoolBuildService.BUILD_LEASES)).thenReturn(leases);
         lenient().when(distributedDataProvider.<Long, HyperionCourseSettings>getMap(HyperionQuizQuestionPoolBuildService.BUILD_SETTINGS)).thenReturn(buildSettings);
-        lenient().when(distributedDataProvider.<Long, String>getMap(HyperionQuizQuestionPoolBuildService.BUILD_CANCELLATIONS)).thenReturn(cancellations);
+        lenient().when(distributedDataProvider.<String, Boolean>getExpiringMap(eq(HyperionQuizQuestionPoolBuildService.BUILD_CANCELLATIONS), any())).thenReturn(cancellations);
     }
 
     @AfterEach
@@ -290,7 +291,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         when(settingsService.getSettings(5L)).thenReturn(HyperionCourseSettings.defaultSettings());
         String first = service.tryStart(5L);
         service.release(5L, first);
-        cancellations.put(5L, first);
+        cancellations.put(first, Boolean.TRUE);
 
         String second = service.tryStart(5L);
         service.build(5L, 7L, second);
@@ -311,7 +312,23 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         service.release(5L, expired);
 
         assertThat(buildSettings.get(5L)).isEqualTo(HyperionCourseSettings.defaultSettings());
-        assertThat(cancellations.get(5L)).isEqualTo(later);
+        assertThat(cancellations.get(later)).isTrue();
+    }
+
+    @Test
+    void requestCancel_ofAnEarlierBuildDoesNotReplaceTheCancelRequestOfTheNextBuild() {
+        HyperionQuizQuestionPoolBuildService service = service();
+        String first = service.tryStart(5L);
+        String delayedFirstLease = leases.get(5L);
+        service.release(5L, first);
+        String second = service.tryStart(5L);
+        service.requestCancel(5L);
+
+        cancellations.put(delayedFirstLease.substring(0, delayedFirstLease.lastIndexOf('|')), Boolean.TRUE);
+
+        assertThat(cancellations.get(second)).isTrue();
+        service.release(5L, second);
+        assertThat(cancellations.get(second)).isNull();
     }
 
     @Test
