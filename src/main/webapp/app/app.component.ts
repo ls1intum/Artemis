@@ -13,6 +13,7 @@ import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-togg
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ClientErrorHandler } from 'app/core/error-reporting/client-error.handler';
 import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
 import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
 import { SetupPasskeyModalComponent } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
@@ -48,6 +49,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private ltiService = inject(LtiService);
     private featureToggleService = inject(FeatureToggleService);
     private embedPdfPreloadService = inject(EmbedPdfPreloadService);
+    private clientErrorHandler = inject(ClientErrorHandler);
     private lazyRouteRecoveryService = inject(LazyRouteRecoveryService);
 
     protected readonly FeatureToggle = FeatureToggle;
@@ -71,6 +73,10 @@ export class AppComponent implements OnInit, OnDestroy {
     readonly isShownViaLti = signal(false);
     readonly usesModuleBackground = signal(false);
     readonly showPageRibbon = signal(true);
+
+    constructor() {
+        this.clientErrorHandler.reportIfPasskeyIsNotSupported();
+    }
 
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot): string {
         const title: string = routeSnapshot.data['pageTitle'] ?? 'artemisApp';
