@@ -18,6 +18,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { BuildJobDetail } from 'app/localci/shared/entities/build-job.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('BuildJobDetailComponent', () => {
     let component: BuildJobDetailComponent;
@@ -78,6 +80,7 @@ describe('BuildJobDetailComponent', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: mockRoute },
+                { provide: AccountService, useClass: MockAccountService },
                 {
                     provide: BuildOverviewService,
                     useValue: {
@@ -133,6 +136,46 @@ describe('BuildJobDetailComponent', () => {
     it('should subscribe to websocket topic for admin view', () => {
         fixture.detectChanges();
         expect(websocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-job/test-job-1');
+    });
+
+    it.each(['course', 'administration'])('should retain agent name mapping for approved administrators in the %s view', (view) => {
+        vi.spyOn(mockRoute.snapshot.paramMap, 'get').mockImplementation((key) => (key === 'courseId' ? (view === 'course' ? '123' : null) : 'test-job-1'));
+        const accountService = TestBed.inject(AccountService);
+        vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(true);
+        vi.mocked(buildQueueService.getBuildJobByIdForCourse).mockReturnValue(of(mockFinishedJob));
+        vi.mocked(buildQueueService.getBuildJobById).mockReturnValue(of(mockFinishedJob));
+        vi.mocked(TestBed.inject(BuildAgentsService).getBuildAgentSummary).mockReturnValue(
+            of([{ buildAgent: { name: 'agent1', displayName: 'Agent 1', memberAddress: 'agent1' } }]),
+        );
+
+        fixture.detectChanges();
+
+        expect(component.isAdministrationView()).toBe(view === 'administration');
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).toHaveBeenCalledOnce();
+        expect(component.getBuildAgentName()).toBe('Agent 1');
+        expect(component.getBuildAgentLinkName()).toBe('agent1');
+    });
+
+    it('should skip the agent summary for course instructors', () => {
+        vi.spyOn(mockRoute.snapshot.paramMap, 'get').mockImplementation((key) => (key === 'courseId' ? '123' : 'test-job-1'));
+        vi.spyOn(TestBed.inject(AccountService), 'isAdmin').mockReturnValue(false);
+
+        fixture.detectChanges();
+
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).not.toHaveBeenCalled();
+        expect(component.buildJob()).toEqual(mockRunningJob);
+    });
+
+    it.each(['course', 'administration'])('should skip the agent summary for an unapproved administrator in the %s view', (view) => {
+        vi.spyOn(mockRoute.snapshot.paramMap, 'get').mockImplementation((key) => (key === 'courseId' ? (view === 'course' ? '123' : null) : 'test-job-1'));
+        const accountService = TestBed.inject(AccountService);
+        vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(true);
+        vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
+
+        fixture.detectChanges();
+
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).not.toHaveBeenCalled();
+        expect(component.buildJob()).toEqual(mockRunningJob);
     });
 
     it('should reject an invalid course route before requesting build or administrator data', () => {
@@ -531,6 +574,7 @@ describe('BuildJobDetailComponent', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: courseRoute },
+                { provide: AccountService, useValue: { hasAdministratorAccess: () => false } },
                 {
                     provide: BuildOverviewService,
                     useValue: {

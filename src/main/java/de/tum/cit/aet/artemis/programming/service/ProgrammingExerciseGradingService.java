@@ -1074,10 +1074,12 @@ public class ProgrammingExerciseGradingService {
         Set<CheckstyleIssueOccurrence> occurrences = new HashSet<>();
         List<ScaFeedback> feedbackToPenalize = new ArrayList<>();
         for (var feedback : categoryFeedback) {
-            // Feedback ingestion replaces absent paths with "notAvailable"; this placeholder cannot identify a source file.
+            // Ingestion replaces absent paths and truncates long ones, so neither reliably identifies a source file.
             if (feedback.getTool() != StaticCodeAnalysisTool.CHECKSTYLE || StringUtils.isBlank(feedback.getFilePath()) || "notAvailable".equals(feedback.getFilePath())
-                    || feedback.getStartLine() == null || feedback.getStartLine() <= 0 || feedback.getEndLine() == null || feedback.getEndLine() <= 0
-                    || feedback.getStartColumn() == null || feedback.getStartColumn() <= 0 || feedback.getEndColumn() == null || feedback.getEndColumn() <= 0) {
+                    || feedback.getFilePath().length() >= ScaFeedback.MAX_FILE_PATH_LENGTH || feedback.getStartLine() == null || feedback.getStartLine() <= 0
+                    || feedback.getEndLine() == null || feedback.getEndLine() <= 0 || feedback.getEndLine() < feedback.getStartLine() || feedback.getStartColumn() == null
+                    || feedback.getStartColumn() <= 0 || feedback.getEndColumn() == null || feedback.getEndColumn() <= 0
+                    || (feedback.getEndLine().equals(feedback.getStartLine()) && feedback.getEndColumn() < feedback.getStartColumn())) {
                 feedbackToPenalize.add(feedback);
                 continue;
             }

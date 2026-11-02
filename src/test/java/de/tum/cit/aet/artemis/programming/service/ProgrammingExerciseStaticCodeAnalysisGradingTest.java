@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
@@ -157,8 +158,8 @@ class ProgrammingExerciseStaticCodeAnalysisGradingTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "file", "blankFile", "unavailableFile", "line", "zeroLine", "endLine", "zeroEndLine", "column", "zeroColumn", "endColumn", "zeroEndColumn", "message",
-            "blankMessage" })
+    @ValueSource(strings = { "file", "blankFile", "unavailableFile", "line", "zeroLine", "endLine", "zeroEndLine", "reversedLines", "column", "zeroColumn", "endColumn",
+            "zeroEndColumn", "reversedColumns", "message", "blankMessage" })
     void doesNotMergeIssuesWithoutEnoughInformation(String missing) {
         var first = issue("WhitespaceAfterCheck");
         var second = issue("WhitespaceAroundCheck");
@@ -171,10 +172,12 @@ class ProgrammingExerciseStaticCodeAnalysisGradingTest {
                 case "zeroLine" -> feedback.setStartLine(0);
                 case "endLine" -> feedback.setEndLine(null);
                 case "zeroEndLine" -> feedback.setEndLine(0);
+                case "reversedLines" -> feedback.setEndLine(7);
                 case "column" -> feedback.setStartColumn(null);
                 case "zeroColumn" -> feedback.setStartColumn(0);
                 case "endColumn" -> feedback.setEndColumn(null);
                 case "zeroEndColumn" -> feedback.setEndColumn(0);
+                case "reversedColumns" -> feedback.setEndColumn(8);
                 case "message" -> feedback.setMessage(null);
                 case "blankMessage" -> feedback.getMessage().setText(" ");
                 default -> throw new IllegalArgumentException(missing);
@@ -190,22 +193,38 @@ class ProgrammingExerciseStaticCodeAnalysisGradingTest {
     @ParameterizedTest
     @NullAndEmptySource
     void chargesReportsWithoutFilePathsSeparatelyAfterIngestion(String filePath) {
-        var message = new FeedbackMessage();
-        message.setId(10L);
-        message.setText("'if' is not followed by whitespace.");
-        var messageService = mock(FeedbackMessageService.class);
-        when(messageService.getOrCreate(message.getText())).thenReturn(message);
-        var ingestionService = new ProgrammingExerciseFeedbackCreationService(testCaseRepository, null, null, null, categoryRepository, messageService, Optional.empty(), null,
-                null, "main");
-        var issues = List.of(new StaticCodeAnalysisIssue(filePath, 8, 8, 9, 9, "WhitespaceAfterCheck", "whitespace", message.getText(), "error", null),
-                new StaticCodeAnalysisIssue(filePath, 8, 8, 9, 9, "WhitespaceAroundCheck", "whitespace", message.getText(), "error", null));
-        var feedback = ingestionService.createFeedbackFromStaticCodeAnalysisReports(List.of(new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.CHECKSTYLE, issues)));
-        feedback.forEach(issue -> issue.setCategory(category.getName()));
+        var feedback = ingestIssues(filePath, filePath);
 
         grade(feedback.toArray(ScaFeedback[]::new));
 
         assertThat(result.getScore()).isEqualTo(98.0);
         assertThat(result.getScaFeedbacks()).hasSize(2);
+        assertThat(result.getScaFeedbacks()).extracting(ScaFeedback::getPenalty).containsExactly(0.1, 0.1);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "511, 99.0", "512, 98.0", "513, 98.0" })
+    void onlyDeduplicatesPathsBelowTheIngestionLimit(int pathLength, double expectedScore) {
+        var first = issue("WhitespaceAfterCheck");
+        var second = issue("WhitespaceAroundCheck");
+        first.setFilePath("x".repeat(pathLength));
+        second.setFilePath(first.getFilePath());
+
+        grade(first, second);
+
+        assertThat(result.getScore()).isEqualTo(expectedScore);
+        assertThat(result.getScaFeedbacks()).hasSize(2);
+    }
+
+    @Test
+    void chargesDifferentFilesSeparatelyWhenIngestionTruncatesTheirPathsToTheSamePrefix() {
+        var commonPrefix = "x".repeat(ScaFeedback.MAX_FILE_PATH_LENGTH);
+        var feedback = ingestIssues(commonPrefix + "First.java", commonPrefix + "Second.java");
+        assertThat(feedback).extracting(ScaFeedback::getFilePath).containsExactly(commonPrefix, commonPrefix);
+
+        grade(feedback.toArray(ScaFeedback[]::new));
+
+        assertThat(result.getScore()).isEqualTo(98.0);
         assertThat(result.getScaFeedbacks()).extracting(ScaFeedback::getPenalty).containsExactly(0.1, 0.1);
     }
 
@@ -268,6 +287,21 @@ class ProgrammingExerciseStaticCodeAnalysisGradingTest {
         var message = new FeedbackMessage();
         message.setText("'if' is not followed by whitespace.");
         feedback.setMessage(message);
+        return feedback;
+    }
+
+    private List<ScaFeedback> ingestIssues(String firstPath, String secondPath) {
+        var message = new FeedbackMessage();
+        message.setId(10L);
+        message.setText("'if' is not followed by whitespace.");
+        var messageService = mock(FeedbackMessageService.class);
+        when(messageService.getOrCreate(message.getText())).thenReturn(message);
+        var ingestionService = new ProgrammingExerciseFeedbackCreationService(testCaseRepository, null, null, null, categoryRepository, messageService, Optional.empty(), null,
+                null, "main");
+        var issues = List.of(new StaticCodeAnalysisIssue(firstPath, 8, 8, 9, 9, "WhitespaceAfterCheck", "whitespace", message.getText(), "error", null),
+                new StaticCodeAnalysisIssue(secondPath, 8, 8, 9, 9, "WhitespaceAroundCheck", "whitespace", message.getText(), "error", null));
+        var feedback = ingestionService.createFeedbackFromStaticCodeAnalysisReports(List.of(new StaticCodeAnalysisReportDTO(StaticCodeAnalysisTool.CHECKSTYLE, issues)));
+        feedback.forEach(issue -> issue.setCategory(category.getName()));
         return feedback;
     }
 

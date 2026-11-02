@@ -25,6 +25,7 @@ import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-i
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-build-job-detail',
@@ -51,6 +52,7 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
     private buildAgentsService = inject(BuildAgentsService);
     private websocketService = inject(WebsocketService);
     private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
 
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
 
@@ -210,7 +212,7 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
 
         this.loadBuildJob();
         this.initWebsocketSubscription();
-        if (this.isAdministrationView()) {
+        if (this.accountService.hasAdministratorAccess()) {
             this.loadBuildAgents();
         }
 
