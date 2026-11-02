@@ -198,6 +198,10 @@ describe('UrlAction', () => {
             { where: 'a code block indented by a tab', text: 'docs', lines: ['intro', '', '\topen docs'], line: 3 },
             { where: 'an indented code block after a blank line inside it', text: 'docs', lines: ['    code', '', '    open docs'], line: 3 },
             { where: 'an indented code block right after a heading', text: 'docs', lines: ['# Setup', '    open docs'], line: 2 },
+            { where: 'an indented code block right after a horizontal rule', text: 'docs', lines: ['---', '    open docs'], line: 2 },
+            { where: 'an indented code block right after an underlined heading', text: 'docs', lines: ['Setup', '=====', '    open docs'], line: 3 },
+            { where: 'a code block inside a list item', text: 'docs', lines: ['- step', '', '        open docs'], line: 3 },
+            { where: 'a fenced code block inside a block quote', text: 'docs', lines: ['> ```', '> open docs'], line: 2 },
         ])('should not handle the paste if the selection lies in $where', ({ text, lines, line }) => {
             selectOnLine(text, lines, line);
 
@@ -212,6 +216,8 @@ describe('UrlAction', () => {
             { after: 'an indented code block', lines: ['    code', 'see the docs'] },
             { after: 'a tab-indented code block and a blank line', lines: ['\tcode', '', 'see the docs'] },
             { after: 'a paragraph, as an indented lazy continuation of it', lines: ['intro', '    see the docs'] },
+            { after: 'a blank line, as an indented paragraph of a list item', lines: ['- step', '', '    see the docs'] },
+            { after: 'a blank line, as an indented paragraph of a numbered list item', lines: ['1.  step', '', '    see the docs'] },
         ])('should handle the paste in text after $after', ({ lines }) => {
             const selection = selectOnLine('docs', lines, lines.length);
 

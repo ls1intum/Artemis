@@ -5,75 +5,10 @@ import { isHttpUrl, sanitizeStringForMarkdownEditor } from 'app/foundation/util/
 import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { TranslateService } from '@ngx-translate/core';
+import MarkdownIt from 'markdown-it';
 
-interface CodeFence {
-    marker: string;
-    length: number;
-    info: string;
-}
-
-/**
- * Reads a Markdown code fence line: at most three spaces, then at least three backticks or tildes, then an optional info string,
- * which may not contain a backtick after a backtick fence.
- * @param line The line to read.
- * @return the fence's character, length and the text after it, or undefined if the line is no code fence.
- */
-function readCodeFence(line: string): CodeFence | undefined {
-    let indent = 0;
-    while (line[indent] === ' ') {
-        indent++;
-    }
-    const marker = line[indent];
-    if (indent > 3 || (marker !== '`' && marker !== '~')) {
-        return undefined;
-    }
-    let end = indent;
-    while (line[end] === marker) {
-        end++;
-    }
-    const info = line.slice(end);
-    if (end - indent < 3 || (marker === '`' && info.includes('`'))) {
-        return undefined;
-    }
-    return { marker, length: end - indent, info };
-}
-
-/**
- * Checks whether a line is indented by at least four columns before its first character, which makes it indented code unless it
- * continues a paragraph. A tab advances to the next multiple of four columns.
- * @param line The line to check.
- * @return true if the line has text indented by four columns or more, false for a blank or less indented line.
- */
-function isIndentedByFourColumns(line: string): boolean {
-    let column = 0;
-    for (const character of line) {
-        if (character === ' ') {
-            column++;
-        } else if (character === '\t') {
-            column += 4 - (column % 4);
-        } else {
-            return column >= 4;
-        }
-    }
-    return false;
-}
-
-/**
- * Checks whether a line is an ATX heading: at most three spaces, one to six number signs, then a space, a tab or the line end.
- * @param line The line to check.
- */
-function isAtxHeading(line: string): boolean {
-    let indent = 0;
-    while (line[indent] === ' ') {
-        indent++;
-    }
-    let end = indent;
-    while (line[end] === '#') {
-        end++;
-    }
-    const level = end - indent;
-    return indent <= 3 && level >= 1 && level <= 6 && (end === line.length || line[end] === ' ' || line[end] === '\t');
-}
+/** A plain CommonMark parser, only used to find the code blocks around a selection. */
+const markdownParser = MarkdownIt();
 
 interface UrlArguments {
     text: string;
@@ -193,33 +128,12 @@ export class UrlAction extends TextStyleTextEditorAction {
         if (overlapsSelection(/\[[^\]]*\]\([^)]*\)/g) || overlapsSelection(/`[^`]*`/g)) {
             return true;
         }
-        // A code block is closed only by a fence of the same character, at least as long as the opening one and with no info string.
-        // An indented line starts a code block unless it continues a paragraph, so the lines before it decide which one it is.
-        let openFence: CodeFence | undefined;
-        let inIndentedCode = false;
-        let inParagraph = false;
-        for (let previousLine = 1; previousLine < lineNumber; previousLine++) {
-            const text = this.getLineText(editor, previousLine) ?? '';
-            const fence = readCodeFence(text);
-            if (openFence) {
-                if (fence && fence.marker === openFence.marker && fence.length >= openFence.length && !fence.info.trim()) {
-                    openFence = undefined;
-                }
-            } else if (fence) {
-                openFence = fence;
-                inIndentedCode = false;
-            } else if (text.trim()) {
-                inIndentedCode = isIndentedByFourColumns(text) && (inIndentedCode || !inParagraph);
-                inParagraph = !inIndentedCode && !isAtxHeading(text);
-                continue;
-            }
-            // Fence lines, fenced code and blank lines end a paragraph; a blank line does not end an indented code block.
-            inParagraph = false;
-        }
-        if (openFence !== undefined || readCodeFence(line) !== undefined) {
-            return true;
-        }
-        return isIndentedByFourColumns(line) && (inIndentedCode || !inParagraph);
+        // Only the lines up to the selection decide whether it is in a code block, so the rest of the document is not parsed.
+        const linesUpToSelection = Array.from({ length: lineNumber }, (_, index) => this.getLineText(editor, index + 1) ?? '');
+        const lineIndex = lineNumber - 1;
+        return markdownParser
+            .parse(linesUpToSelection.join('\n'), {})
+            .some((token) => (token.type === 'fence' || token.type === 'code_block') && !!token.map && token.map[0] <= lineIndex && lineIndex < token.map[1]);
     }
 
     /**
