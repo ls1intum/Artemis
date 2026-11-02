@@ -142,8 +142,14 @@ class ProgrammingExerciseStaticCodeAnalysisGradingTest {
         var second = issue("WhitespaceAroundCheck");
         switch (difference) {
             case "file" -> second.setFilePath("src/Other.java");
-            case "line" -> second.setStartLine(9);
-            case "column" -> second.setStartColumn(10);
+            case "line" -> {
+                second.setStartLine(9);
+                second.setEndLine(9);
+            }
+            case "column" -> {
+                second.setStartColumn(10);
+                second.setEndColumn(10);
+            }
             case "endLine" -> second.setEndLine(9);
             case "endColumn" -> second.setEndColumn(10);
             case "message" -> second.getMessage().setText("'if' is not preceded with whitespace.");
