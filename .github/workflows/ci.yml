@@ -383,7 +383,7 @@ jobs:
           F_CLIENT_TESTS: ${{ steps.relevant.outputs.client_tests }}
           F_E2E: ${{ steps.relevant.outputs.e2e_tests }}
           EVENT_NAME: ${{ github.event_name }}
-          IS_DRAFT: ${{ github.event.pull_request.draft || false }}
+          IS_DRAFT: false  # demo: run E2E on this draft pull request
           CHANGED_FILES: ${{ github.event.pull_request.changed_files || 0 }}
         run: |
           set -Eeuo pipefail
