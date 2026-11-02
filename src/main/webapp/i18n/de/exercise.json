@@ -66,6 +66,12 @@
                 "loading": "Lade...",
                 "searchInCourses": "Suche in Kursen?",
                 "searchInExams": "Suche in Klausuren?",
+                "preview": {
+                    "title": "Vorschau: {{ title }}",
+                    "buttonLabel": "Vorschau von {{ title }}",
+                    "backToList": "Zurück zur Liste",
+                    "loadFailed": "Die Vorschau konnte nicht geladen werden."
+                },
                 "table": {
                     "title": "Titel",
                     "language": "Sprache",
@@ -316,6 +322,7 @@
                         "timeoutSeconds": "Timeout (Sekunden)",
                         "dockerFlags": "Docker-Flags",
                         "theiaImage": "Theia-Image",
+                        "onlineIdeExperienceLevel": "Online-IDE-Erfahrungsstufe",
                         "allowBranching": "Branching erlauben",
                         "branchRegex": "Branch-Regex"
                     }

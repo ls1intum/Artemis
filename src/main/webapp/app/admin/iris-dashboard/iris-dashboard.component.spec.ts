@@ -88,6 +88,47 @@ describe('IrisDashboardComponent', () => {
         expect(dashboardService.getOverview).toHaveBeenCalledTimes(2);
     });
 
+    it('should request all users by default', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.selectedAiSelection().value).toBe('ALL');
+        expect(dashboardService.getOverview).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'ALL');
+        expect(dashboardService.getBreakdown).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'CHAT_MODE', 'ALL');
+        expect(dashboardService.getBreakdown).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'COURSE', 'ALL');
+        expect(dashboardService.getBreakdown).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'MODEL', 'ALL');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.irisDashboard.aiSelection.hint');
+    });
+
+    it('should reload all data for the chosen AI selection', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        vi.mocked(dashboardService.getOverview).mockClear();
+        vi.mocked(dashboardService.getBreakdown).mockClear();
+
+        const local = component.aiSelectionOptions().find((option) => option.value === 'LOCAL')!;
+        component.onAiSelectionChange(local);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.selectedAiSelection()).toBe(local);
+        expect(dashboardService.getOverview).toHaveBeenCalledOnce();
+        expect(dashboardService.getOverview).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'LOCAL');
+        expect(dashboardService.getBreakdown).toHaveBeenCalledTimes(3);
+        expect(dashboardService.getBreakdown).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'CHAT_MODE', 'LOCAL');
+        expect(dashboardService.getBreakdown).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'COURSE', 'LOCAL');
+        expect(dashboardService.getBreakdown).toHaveBeenCalledWith(expect.any(String), expect.any(String), 'MODEL', 'LOCAL');
+        expect(fixture.nativeElement.textContent).toContain('artemisApp.irisDashboard.aiSelection.hint');
+    });
+
+    it('should keep the AI selection when the time span changes', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component.onAiSelectionChange(component.aiSelectionOptions().find((option) => option.value === 'CLOUD')!);
+        component.onTimeSpanChange(component.timeSpanOptions()[0]);
+        await fixture.whenStable();
+        expect(dashboardService.getOverview).toHaveBeenLastCalledWith(expect.any(String), expect.any(String), 'CLOUD');
+    });
+
     it('should set error signal on overview failure', async () => {
         vi.spyOn(dashboardService, 'getOverview').mockReturnValue(throwError(() => new Error('Server error')));
         fixture.detectChanges();

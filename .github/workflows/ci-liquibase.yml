@@ -38,7 +38,7 @@ jobs:
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.14'
       - name: Changelog layout check
@@ -66,16 +66,16 @@ jobs:
           # demand, which needs the credentials actions/checkout leaves behind.
           persist-credentials: true
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.14'
       - name: Setup Java
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'temurin'
           java-version: ${{ env.java }}
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       # Only to resolve the JDBC drivers the Liquibase CLI image needs, so that the checks connect
       # with the same driver versions the application does. No compilation.
       - name: Export JDBC drivers
@@ -84,3 +84,9 @@ jobs:
         run: python3 supporting_scripts/liquibase/verify_schema.py --database ${{ matrix.database }}
       - name: Reset-key migration with existing data
         run: python3 supporting_scripts/liquibase/test_reset_key_migration.py --database ${{ matrix.database }}
+      - name: Memiris cleanup with existing data
+        run: python3 supporting_scripts/liquibase/test_memiris_cleanup_migration.py --database ${{ matrix.database }}
+      - name: One-to-one chat pair migration with existing data
+        run: python3 supporting_scripts/liquibase/test_one_to_one_chat_pair_migration.py --database ${{ matrix.database }}
+      - name: Course authorities migration with existing data
+        run: python3 supporting_scripts/liquibase/test_course_authorities_migration.py --database ${{ matrix.database }}

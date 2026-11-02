@@ -8,8 +8,10 @@
     min-height: 0;
     flex-direction: column;
     align-items: stretch;
+
     // A page may give its rails another colour: the assessment pages use the colour of their panels
     background: var(--collapsed-panel-rail-background, var(--code-editor-file-browser-header-background));
+
     // A page whose panels have no frame of their own around the rail (the assessment pages) frames it, like the rail of the exercise details
     border: var(--collapsed-panel-rail-border, 0);
     border-radius: var(--collapsed-panel-rail-radius, 0);

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.domain;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,15 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
     String getRepositoryUri();
 
     void setRepositoryUri(String repositoryUri);
+
+    /**
+     * Stores the canonical URI representation for each programming participation kind.
+     *
+     * @param repositoryUri repository location to store
+     */
+    default void setRepositoryUri(@NonNull LocalVCRepositoryUri repositoryUri) {
+        setRepositoryUri(repositoryUri.getURI().toString());
+    }
 
     String getBuildPlanId();
 

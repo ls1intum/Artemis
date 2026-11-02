@@ -23,7 +23,6 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLEnabled;
@@ -247,34 +246,9 @@ public class AtlasMLService {
         if (!isAtlasMLFeatureEnabled("map competency to competency operation")) {
             return false;
         }
-        try {
-            log.debug("Mapping competency {} to competency {}", sourceCompetencyId, targetCompetencyId);
-
-            HttpHeaders headers = buildHeadersWithAuth();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            MapCompetencyToCompetencyRequestDTO requestBody = new MapCompetencyToCompetencyRequestDTO(sourceCompetencyId, targetCompetencyId);
-            HttpEntity<MapCompetencyToCompetencyRequestDTO> entity = new HttpEntity<>(requestBody, headers);
-
-            String url = config.getAtlasmlBaseUrl() + MAP_COMPETENCY_TO_COMPETENCY_ENDPOINT;
-            ResponseEntity<Void> response = atlasmlRestTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
-
-            boolean isSuccessful = response.getStatusCode().is2xxSuccessful();
-            log.debug("Map competency to competency result: {}", isSuccessful);
-            return isSuccessful;
-        }
-        catch (HttpClientErrorException | HttpServerErrorException e) {
-            log.error("Failed to map competency to competency with HTTP error: {}", e.getMessage());
-            return false;
-        }
-        catch (ResourceAccessException e) {
-            log.error("Failed to map competency to competency due to connection issue: {}", e.getMessage());
-            return false;
-        }
-        catch (Exception e) {
-            log.error("Unexpected error while mapping competency to competency", e);
-            return false;
-        }
+        log.debug("Mapping competency {} to competency {}", sourceCompetencyId, targetCompetencyId);
+        return postCompetencyMapping(new MapCompetencyToCompetencyRequestDTO(sourceCompetencyId, targetCompetencyId), MAP_COMPETENCY_TO_COMPETENCY_ENDPOINT,
+                "competency to competency");
     }
 
     /**
@@ -290,32 +264,34 @@ public class AtlasMLService {
         if (!isAtlasMLFeatureEnabled("map competency to exercise operation")) {
             return false;
         }
-        try {
-            log.debug("Mapping competency {} to exercise {}", competencyId, exerciseId);
+        log.debug("Mapping competency {} to exercise {}", competencyId, exerciseId);
+        return postCompetencyMapping(new MapCompetencyToExerciseRequestDTO(exerciseId, competencyId), MAP_COMPETENCY_TO_EXERCISE_ENDPOINT, "competency to exercise");
+    }
 
+    private boolean postCompetencyMapping(Object requestBody, String endpoint, String operation) {
+        try {
             HttpHeaders headers = buildHeadersWithAuth();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            MapCompetencyToExerciseRequestDTO requestBody = new MapCompetencyToExerciseRequestDTO(exerciseId, competencyId);
-            HttpEntity<MapCompetencyToExerciseRequestDTO> entity = new HttpEntity<>(requestBody, headers);
+            HttpEntity<Object> entity = new HttpEntity<>(requestBody, headers);
 
-            String url = config.getAtlasmlBaseUrl() + MAP_COMPETENCY_TO_EXERCISE_ENDPOINT;
+            String url = config.getAtlasmlBaseUrl() + endpoint;
             ResponseEntity<Void> response = atlasmlRestTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
 
             boolean isSuccessful = response.getStatusCode().is2xxSuccessful();
-            log.debug("Map competency to exercise result: {}", isSuccessful);
+            log.debug("Map {} result: {}", operation, isSuccessful);
             return isSuccessful;
         }
         catch (HttpClientErrorException | HttpServerErrorException e) {
-            log.error("Failed to map competency to exercise with HTTP error: {}", e.getMessage());
+            log.error("Failed to map {} with HTTP error: {}", operation, e.getMessage());
             return false;
         }
         catch (ResourceAccessException e) {
-            log.error("Failed to map competency to exercise due to connection issue: {}", e.getMessage());
+            log.error("Failed to map {} due to connection issue: {}", operation, e.getMessage());
             return false;
         }
         catch (Exception e) {
-            log.error("Unexpected error while mapping competency to exercise", e);
+            log.error("Unexpected error while mapping " + operation, e);
             return false;
         }
     }
@@ -555,18 +531,21 @@ public class AtlasMLService {
 
         try {
             JsonMapper objectMapper = JsonObjectMapper.get();
-            JsonNode root = objectMapper.readTree(responseBody);
+            AtlasMLHealthResponse healthResponse = objectMapper.readValue(responseBody, AtlasMLHealthResponse.class);
             boolean isHealthy = isHttpHealthy;
+            if (healthResponse == null) {
+                // the payload is the JSON literal null, which carries neither a status nor components
+                return new ConnectorHealth(isHealthy, additionalInfo);
+            }
 
-            String overallStatus = getText(root, "status");
+            String overallStatus = nonBlankOrNull(healthResponse.status());
             if (overallStatus != null) {
                 additionalInfo.put("status", summarizeStatus(overallStatus, null));
                 isHealthy = isHealthy && isHealthyStatus(overallStatus);
             }
 
-            JsonNode components = root.path("components");
-            if (components.isObject()) {
-                components.properties().forEach(entry -> flattenComponentHealthInto(additionalInfo, entry.getKey(), entry.getValue()));
+            if (healthResponse.components() != null) {
+                healthResponse.components().forEach((componentName, component) -> flattenComponentHealthInto(additionalInfo, componentName, component));
             }
 
             return new ConnectorHealth(isHealthy, additionalInfo);
@@ -577,14 +556,14 @@ public class AtlasMLService {
         }
     }
 
-    private void flattenComponentHealthInto(Map<String, Object> additionalInfo, String componentName, JsonNode componentNode) {
-        String componentStatus = getText(componentNode, "status");
-        String componentMessage = getText(componentNode, "message");
+    private void flattenComponentHealthInto(Map<String, Object> additionalInfo, String componentName, AtlasMLHealthResponse.ComponentHealth component) {
+        String componentStatus = component != null ? nonBlankOrNull(component.status()) : null;
+        String componentMessage = component != null ? nonBlankOrNull(component.message()) : null;
         additionalInfo.put(componentName, summarizeStatus(componentStatus, componentMessage));
 
-        JsonNode collections = componentNode.path("collections");
-        if (collections.isObject()) {
-            collections.properties().forEach(entry -> additionalInfo.put("collection " + entry.getKey(), summarizeStatus(getText(entry.getValue(), "status"), null)));
+        if (component != null && component.collections() != null) {
+            component.collections().forEach((collectionName, collection) -> additionalInfo.put("collection " + collectionName,
+                    summarizeStatus(collection != null ? nonBlankOrNull(collection.status()) : null, null)));
         }
     }
 
@@ -641,12 +620,7 @@ public class AtlasMLService {
         return status.toLowerCase(Locale.ROOT);
     }
 
-    private static String getText(JsonNode node, String fieldName) {
-        JsonNode child = node.path(fieldName);
-        if (child.isMissingNode() || child.isNull() || !child.isValueNode()) {
-            return null;
-        }
-        String value = child.asString();
+    private static String nonBlankOrNull(String value) {
         return value == null || value.isBlank() ? null : value;
     }
 }

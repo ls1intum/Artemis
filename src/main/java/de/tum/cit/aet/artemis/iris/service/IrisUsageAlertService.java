@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
+import de.tum.cit.aet.artemis.iris.config.IrisDashboardAiSelection;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO;
@@ -191,7 +192,7 @@ public class IrisUsageAlertService {
             var lookbackStart = now.minus(Duration.ofMinutes(alert.getLookbackMinutes()));
             var staleBefore = dashboardService.computeStaleBefore(now, now);
 
-            var overview = dashboardService.computeOverview(lookbackStart, staleBefore);
+            var overview = dashboardService.computeOverview(lookbackStart, staleBefore, IrisDashboardAiSelection.ALL);
 
             // Gate eligibility on sessions that were ACTIVE in the window (had a user message), not sessions CREATED in the window.
             // overview.activeSessions() requires creation_date in-window, which would wrongly exclude long-lived sessions whose

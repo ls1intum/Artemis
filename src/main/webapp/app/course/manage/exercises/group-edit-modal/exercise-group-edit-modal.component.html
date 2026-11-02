@@ -25,12 +25,11 @@
                         class="text-muted"
                     />
                 </label>
-                <tumaet-ui-input-number
+                <jhi-points-input
                     inputId="group-edit-max-points"
                     [ngModel]="draftMaxPoints()"
                     (ngModelChange)="draftMaxPoints.set($event)"
                     [min]="0"
-                    [maxFractionDigits]="1"
                     [showButtons]="true"
                     [placeholder]="'artemisApp.exerciseManagement.groupEdit.maxPointsPlaceholder' | artemisTranslate"
                 />

@@ -1,3 +1,5 @@
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { AiGenerationGuard } from 'app/hyperion/admin/ai-generation.guard';
 import { CanActivateFn, Router, Routes } from '@angular/router';
 import { inject } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -199,6 +201,17 @@ const childRoutes: Routes = [
         data: {
             authorities: IS_AT_LEAST_SUPER_ADMIN,
             pageTitle: 'artemisApp.adminPasskeyManagement.title',
+        },
+    },
+    { path: 'ai-workers', redirectTo: 'ai-generation', pathMatch: 'full' },
+    { path: 'hyperion-generations', redirectTo: 'ai-generation', pathMatch: 'full' },
+    {
+        path: 'ai-generation',
+        canActivate: [UserRouteAccessService, AiGenerationGuard],
+        loadComponent: () => import('app/hyperion/admin/hyperion-generations.component').then((m) => m.HyperionGenerationsComponent),
+        data: {
+            pageTitle: 'artemisApp.hyperion.workers.title',
+            authorities: IS_AT_LEAST_ADMIN,
         },
     },
     {

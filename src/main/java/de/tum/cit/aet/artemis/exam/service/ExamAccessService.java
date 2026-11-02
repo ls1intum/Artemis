@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -84,6 +85,20 @@ public class ExamAccessService {
      * @throws EntityNotFoundException if the course of the exam exercise cannot be resolved
      */
     public void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, User user) {
+        checkIfAllowedToGetExamResult(examExercise, studentParticipation, user, true);
+    }
+
+    /**
+     * Applies exam result timing to an owner view, including when the owner teaches the course.
+     *
+     * @param examExercise         the owning exam exercise
+     * @param studentParticipation the participation used for individual working time
+     */
+    public void checkIfOwnerAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation) {
+        checkIfAllowedToGetExamResult(examExercise, studentParticipation, null, false);
+    }
+
+    private void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, @Nullable User user, boolean staffView) {
         if (!examExercise.isExamExercise()) {
             throw new ConflictException("Given examExercise does not belong to an exam", "Exercise", "notExamExercise");
         }
@@ -92,7 +107,7 @@ public class ExamAccessService {
         if (course == null) {
             throw new EntityNotFoundException("Course", "of exam exercise " + examExercise.getId());
         }
-        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        if (staffView && authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return;
         }
         Exam exam = examExercise.getExam();
@@ -337,6 +352,26 @@ public class ExamAccessService {
     }
 
     /**
+     * Checks the fixed student example-solution audience without a staff enrollment exemption.
+     *
+     * @param exercise the exam exercise
+     */
+    public void checkStudentExampleSolutionAccessElseThrow(Exercise exercise) {
+        if (!exercise.isExamExercise()) {
+            throw new ConflictException("Given exercise does not belong to an exam", "Exercise", "notExamExercise");
+        }
+        Exam exam = exercise.getExerciseGroup().getExam();
+        User user = userRepository.getUserWithAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, exam.getCourse(), user);
+        if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(exam.getCourse().getId(), exam.getId(), user.getId())) {
+            throw new AccessForbiddenException("You are not allowed to access this exam!");
+        }
+        if (!exercise.isExampleSolutionPublished()) {
+            throw new AccessForbiddenException("Example solution for exam is not published yet!");
+        }
+    }
+
+    /**
      * Checks if the current user is eligible to access the example solutions for the given exercise and
      * if the example solution is published.
      * Eligibility conditions vary based on user roles.
@@ -356,7 +391,13 @@ public class ExamAccessService {
         }
     }
 
-    private void checkExamBelongsToCourseElseThrow(Long courseId, Long examId) {
+    /**
+     * Checks that the exam exists and belongs to the given course. This check does not verify any role.
+     *
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     */
+    public void checkExamBelongsToCourseElseThrow(Long courseId, Long examId) {
         // TODO: move this check directly into the database for performance reasons
         Optional<Exam> exam = examRepository.findById(examId);
         if (exam.isEmpty()) {

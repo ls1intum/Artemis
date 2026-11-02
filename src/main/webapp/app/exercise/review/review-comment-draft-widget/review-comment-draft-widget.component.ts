@@ -1,6 +1,8 @@
+import { TumAetUiButtonDirective, TumAetUiInputDirective } from '@tumaet/ui-angular';
+
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonDirective } from 'primeng/button';
+
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentThreadLocationType, CreateCommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
@@ -14,7 +16,7 @@ import { CommentContentType } from 'app/exercise/shared/entities/review/comment-
     // Monaco view zones render outside Angular's host tree, so styles must stay global.
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [FormsModule, ButtonDirective, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, TumAetUiInputDirective, FormsModule, ArtemisTranslatePipe],
 })
 export class ReviewCommentDraftWidgetComponent {
     private readonly reviewCommentService = inject(ExerciseReviewCommentService);

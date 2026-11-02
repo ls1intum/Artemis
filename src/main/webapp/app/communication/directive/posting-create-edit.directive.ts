@@ -1,10 +1,10 @@
+import { Observable } from 'rxjs';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { Directive, OnInit, effect, inject, model, output, signal, untracked } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { PostingEditType } from 'app/communication/communication.util';
-
-import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 
 // Note: this number should be the same as in Posting.java
 export const MAX_CONTENT_LENGTH = 5000;
@@ -20,7 +20,6 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
 
     readonly isLoading = signal(false);
     maxContentLength = MAX_CONTENT_LENGTH;
-    editorHeight = MarkdownEditorHeight.INLINE;
     content = '';
     formGroup!: FormGroup; // set by resetFormGroup() (implemented in subclasses)
 
@@ -70,6 +69,21 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
                 this.createPosting();
             }
         }
+    }
+
+    /** Sends an independent form payload and leaves success cleanup ordering to the editor. */
+    protected submitPosting(request: (payload: T) => Observable<T>, onSuccess: (posting: T) => void): void {
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading.set(false);
+            return;
+        }
+        const payload = deepClone(posting);
+        payload.content = this.formGroup.get('content')?.value;
+        request(payload).subscribe({
+            next: onSuccess,
+            error: () => this.isLoading.set(false),
+        });
     }
 
     abstract resetFormGroup(): void;

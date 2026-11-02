@@ -1,3 +1,4 @@
+import { onUserChange } from 'app/core/auth/user-change.util';
 import { OnDestroy, Service, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
@@ -36,17 +37,10 @@ export class ScoresStorageService implements OnDestroy {
      */
     private storedAchievedPointsPerVariantGroup: Map<number, Map<number, number>> = new Map();
 
-    private currentUserId?: number;
     private authenticationStateSubscription: Subscription;
 
     constructor() {
-        this.currentUserId = this.accountService.userIdentity()?.id;
-        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
-            if (this.currentUserId !== user?.id) {
-                this.currentUserId = user?.id;
-                this.resetState();
-            }
-        });
+        this.authenticationStateSubscription = onUserChange(this.accountService, () => this.resetState());
     }
 
     ngOnDestroy(): void {

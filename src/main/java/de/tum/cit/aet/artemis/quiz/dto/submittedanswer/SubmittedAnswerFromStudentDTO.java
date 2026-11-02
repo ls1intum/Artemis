@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
         @DiscriminatorMapping(value = "drag-and-drop", schema = DragAndDropSubmittedAnswerFromStudentDTO.class),
         @DiscriminatorMapping(value = "short-answer", schema = ShortAnswerSubmittedAnswerFromStudentDTO.class) }, oneOf = { MultipleChoiceSubmittedAnswerFromStudentDTO.class,
                 DragAndDropSubmittedAnswerFromStudentDTO.class, ShortAnswerSubmittedAnswerFromStudentDTO.class })
-
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceSubmittedAnswerFromStudentDTO.class, name = "multiple-choice"),
         @JsonSubTypes.Type(value = DragAndDropSubmittedAnswerFromStudentDTO.class, name = "drag-and-drop"),

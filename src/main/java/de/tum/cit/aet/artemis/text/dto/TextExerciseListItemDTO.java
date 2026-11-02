@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.text.dto;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 
@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TextExerciseListItemDTO(Long id, String title, String shortName, String type, ExerciseType exerciseType, ZonedDateTime releaseDate, ZonedDateTime dueDate,
         ZonedDateTime assessmentDueDate, Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean presentationScoreEnabled, Boolean teamMode,
-        Set<String> categories, Set<GradingCriterionDTO> gradingCriteria, Long courseId, CourseRefDTO course, Long examId, String examTitle, TextExerciseExamGroupDTO exerciseGroup)
-        implements Serializable {
+        Set<String> categories, List<GradingCriterionDTO> gradingCriteria, Long courseId, CourseRefDTO course, Long examId, String examTitle,
+        TextExerciseExamGroupDTO exerciseGroup) implements Serializable {
 
     /**
      * Creates a {@link TextExerciseListItemDTO} from the given {@link TextExercise}.
@@ -64,10 +64,10 @@ public record TextExerciseListItemDTO(Long id, String title, String shortName, S
             }
         }
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs;
+        List<GradingCriterionDTO> gradingCriterionDTOs;
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriterionDTOs = GradingCriterionDTO.ofAll(criteria);
         }
         else {
             gradingCriterionDTOs = null;

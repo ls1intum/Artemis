@@ -81,7 +81,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractProgrammingIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getTasks_asTutor_excludesInactiveTestCasesAndDoesNotMutateJoinTable() throws Exception {
         var joinRowsBefore = taskTestCaseJoinRows();
 
@@ -111,7 +111,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractProgrammingIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getTasksWithUnassignedTestCases_asTutor_includesSyntheticNullIdTaskAndDoesNotMutateJoinTable() throws Exception {
         var unassignedTestCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testUnassigned");
         var joinRowsBefore = taskTestCaseJoinRows();

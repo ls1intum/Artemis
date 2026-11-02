@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -27,10 +29,18 @@ describe('CourseAvailableTabsService', () => {
     let service: CourseAvailableTabsService;
     let courseManagementService: CourseManagementService;
     let fetchSpy: ReturnType<typeof vi.spyOn>;
+    let navigationId: number;
 
     beforeEach(() => {
+        navigationId = 1;
         TestBed.configureTestingModule({
-            providers: [{ provide: AccountService, useClass: MockAccountService }, provideHttpClient(), MockProvider(AlertService)],
+            providers: [
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: Router, useValue: { currentNavigation: () => ({ id: navigationId }), lastSuccessfulNavigation: () => null } },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(AlertService),
+            ],
         });
         service = TestBed.inject(CourseAvailableTabsService);
         service.clear();
@@ -39,6 +49,7 @@ describe('CourseAvailableTabsService', () => {
     });
 
     afterEach(() => {
+        TestBed.inject(HttpTestingController).verify();
         vi.restoreAllMocks();
     });
 
@@ -61,6 +72,91 @@ describe('CourseAvailableTabsService', () => {
         service.loadIfNeeded(1).subscribe();
         service.loadIfNeeded(1).subscribe();
         expect(fetchSpy).toHaveBeenCalledOnce();
+    });
+
+    it('shares one HTTP request between concurrent tab readers and delivers the response to both', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        const first: CourseAvailableTabs[] = [];
+        const second: CourseAvailableTabs[] = [];
+        service.loadIfNeeded(589).subscribe((value) => first.push(value));
+        service.loadIfNeeded(589).subscribe((value) => second.push(value));
+
+        const requests = http.match('api/course/courses/589/available-tabs');
+        expect(requests).toHaveLength(1);
+        const response = tabs({ lectures: true, competencies: true });
+        requests[0].flush(response);
+
+        expect(first).toEqual([response]);
+        expect(second).toEqual([response]);
+        expect(service.tabsFor(589)).toEqual(response);
+    });
+
+    it('starts a fresh request after every reader cancels an unfinished load', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        const subscription = service.loadIfNeeded(589).subscribe();
+        const cancelled = http.expectOne('api/course/courses/589/available-tabs');
+        subscription.unsubscribe();
+        expect(cancelled.cancelled).toBe(true);
+
+        const values: CourseAvailableTabs[] = [];
+        service.loadIfNeeded(589).subscribe((value) => values.push(value));
+        const response = tabs({ lectures: true });
+        http.expectOne('api/course/courses/589/available-tabs').flush(response);
+        expect(values).toEqual([response]);
+    });
+
+    it('starts a new request for a later navigation and keeps its response when the older request finishes', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        const earlierValues: CourseAvailableTabs[] = [];
+        service.loadIfNeeded(589).subscribe((value) => earlierValues.push(value));
+        const previous = http.expectOne('api/course/courses/589/available-tabs');
+
+        navigationId = 2;
+        const currentValues: CourseAvailableTabs[] = [];
+        service.loadIfNeeded(589).subscribe((value) => currentValues.push(value));
+        const current = http.expectOne('api/course/courses/589/available-tabs');
+        const response = tabs({ lectures: true, competencies: true });
+        current.flush(response);
+        const previousResponse = tabs({ lectures: true });
+        previous.flush(previousResponse);
+
+        expect(currentValues).toEqual([response]);
+        expect(earlierValues).toEqual([previousResponse]);
+        expect(service.tabsFor(589)).toEqual(response);
+    });
+
+    it('does not retain a late response under a different navigation id', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        service.loadIfNeeded(589).subscribe();
+        const previous = http.expectOne('api/course/courses/589/available-tabs');
+
+        navigationId = 2;
+        previous.flush(tabs({ lectures: true }));
+        expect(service.tabsFor(589)).toBeUndefined();
+
+        service.loadIfNeeded(589).subscribe();
+        const response = tabs({ competencies: true });
+        http.expectOne('api/course/courses/589/available-tabs').flush(response);
+        expect(service.tabsFor(589)).toEqual(response);
+    });
+
+    it('does not retain a response from a request cleared before it completes', () => {
+        fetchSpy.mockRestore();
+        const http = TestBed.inject(HttpTestingController);
+        service.loadIfNeeded(589).subscribe();
+        const previous = http.expectOne('api/course/courses/589/available-tabs');
+        service.clear();
+        previous.flush(tabs({ lectures: true }));
+        expect(service.tabsFor(589)).toBeUndefined();
+
+        service.loadIfNeeded(589).subscribe();
+        const response = tabs({ competencies: true });
+        http.expectOne('api/course/courses/589/available-tabs').flush(response);
+        expect(service.tabsFor(589)).toEqual(response);
     });
 
     it('should refetch for a different course and drop the previous one', () => {

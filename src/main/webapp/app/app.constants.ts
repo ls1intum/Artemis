@@ -66,6 +66,10 @@ export const MODULE_FEATURE_ATLASLLM = 'atlasllm';
 
 export const MODULE_FEATURE_HYPERION = 'hyperion';
 
+export const MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = 'hyperion-exercise-generation';
+
+export const MODULE_FEATURE_AIWORKER = 'aiworker';
+
 export const MODULE_FEATURE_DEIMOS = 'deimos';
 
 export const MODULE_FEATURE_IRIS = 'iris';
@@ -100,12 +104,16 @@ export const MODULE_FEATURE_THEIA = 'theia';
 
 export const MODULE_FEATURE_GLOBAL_SEARCH = 'globalsearch';
 
+export const MODULE_FEATURE_AGENT_ACCESS = 'agent-access';
+
 export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
     | typeof MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN
     | typeof MODULE_FEATURE_ATLAS
     | typeof MODULE_FEATURE_ATLASLLM
     | typeof MODULE_FEATURE_HYPERION
+    | typeof MODULE_FEATURE_HYPERION_EXERCISE_GENERATION
+    | typeof MODULE_FEATURE_AIWORKER
     | typeof MODULE_FEATURE_DEIMOS
     | typeof MODULE_FEATURE_IRIS
     | typeof MODULE_FEATURE_EXAM
@@ -122,7 +130,8 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_LDAP
     | typeof MODULE_FEATURE_SAML2
     | typeof MODULE_FEATURE_THEIA
-    | typeof MODULE_FEATURE_GLOBAL_SEARCH;
+    | typeof MODULE_FEATURE_GLOBAL_SEARCH
+    | typeof MODULE_FEATURE_AGENT_ACCESS;
 
 export const PROFILE_LOCALCI = 'localci';
 

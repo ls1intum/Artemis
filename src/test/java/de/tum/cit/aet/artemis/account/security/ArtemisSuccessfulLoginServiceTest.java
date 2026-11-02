@@ -1,14 +1,18 @@
 package de.tum.cit.aet.artemis.account.security;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.mail.internet.MimeMessage;
 
@@ -40,7 +44,7 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendEmailToUserWhenServiceMethodIsInvoked() throws EntityNotFoundException {
         String username = TEST_PREFIX + "student1";
 
@@ -53,7 +57,7 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendEmailToUserWhenLogingInWithEmail() throws EntityNotFoundException {
         String username = TEST_PREFIX + "student1";
 
@@ -65,8 +69,28 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
                 eq("mail/notification/newLoginEmail"), anyMap()));
     }
 
+    /**
+     * The login mail ends in the shared {@code JavaMailSender} spy. If it were sent from a pool thread, it could still be on its way when the next test stubs or
+     * resets that spy, which corrupts Mockito's state and fails that test in its {@code @BeforeEach}. Under the test profile it has to be sent by the thread that
+     * triggers the login.
+     */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldSendTheLoginEmailOnTheCallingThread() {
+        Thread testThread = Thread.currentThread();
+        AtomicReference<Thread> sendingThread = new AtomicReference<>();
+        doAnswer(invocation -> {
+            sendingThread.set(Thread.currentThread());
+            return null;
+        }).when(javaMailSender).send(any(MimeMessage.class));
+
+        artemisSuccessfulLoginService.sendLoginEmail(TEST_PREFIX + "student1", AuthenticationMethod.PASSWORD, null);
+
+        await().atMost(5, SECONDS).untilAsserted(() -> assertThat(sendingThread.get()).isSameAs(testThread));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldHandleUserNotFoundGracefully() throws EntityNotFoundException {
         String username = "nonexistentuser";
         doNothing().when(javaMailSender).send(any(MimeMessage.class));

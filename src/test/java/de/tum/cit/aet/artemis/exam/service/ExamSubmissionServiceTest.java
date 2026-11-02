@@ -190,7 +190,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCheckSubmissionAllowance_testRun() {
         final var instructor = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         studentExam.setTestRun(true);

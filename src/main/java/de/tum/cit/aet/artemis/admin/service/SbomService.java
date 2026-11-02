@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -18,8 +17,10 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.admin.dto.CombinedSbomDTO;
@@ -102,8 +103,8 @@ public class SbomService {
         }
 
         try (InputStream inputStream = resource.getInputStream()) {
-            JsonNode root = objectMapper.readTree(inputStream);
-            return parseCycloneDxSbom(root);
+            CycloneDxDocument document = objectMapper.readValue(inputStream, CycloneDxDocument.class);
+            return parseCycloneDxSbom(document);
         }
         // Jackson 3 exceptions are unchecked and no longer extend IOException, so a malformed payload no longer
         // arrives here on its own — JacksonException has to be named explicitly.
@@ -113,28 +114,52 @@ public class SbomService {
         }
     }
 
-    private SbomDTO parseCycloneDxSbom(JsonNode root) {
-        String bomFormat = getTextValue(root, "bomFormat");
-        String specVersion = getTextValue(root, "specVersion");
-        String serialNumber = getTextValue(root, "serialNumber");
-        int version = root.has("version") ? root.get("version").asInt() : 1;
+    /* Multiple records that model the part of a CycloneDX document that is used here, for Jackson deserialization */
 
-        SbomMetadataDTO metadata = parseMetadata(root.get("metadata"));
-        List<SbomComponentDTO> components = parseComponents(root.get("components"));
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record CycloneDxDocument(String bomFormat, String specVersion, String serialNumber, Integer version, CycloneDxMetadata metadata, List<CycloneDxComponent> components) {
+    }
 
-        return new SbomDTO(bomFormat, specVersion, serialNumber, version, metadata, components);
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record CycloneDxMetadata(String timestamp, CycloneDxComponent component) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record CycloneDxComponent(String group, String name, String version, String type, String purl, String description, List<CycloneDxLicenseEntry> licenses) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record CycloneDxLicenseEntry(CycloneDxLicense license, String expression) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record CycloneDxLicense(String id, String name) {
+    }
+
+    private SbomDTO parseCycloneDxSbom(CycloneDxDocument document) {
+        int version = document.version() != null ? document.version() : 1;
+
+        SbomMetadataDTO metadata = parseMetadata(document.metadata());
+        List<SbomComponentDTO> components = parseComponents(document.components());
+
+        return new SbomDTO(document.bomFormat(), document.specVersion(), document.serialNumber(), version, metadata, components);
     }
 
     @Nullable
-    private SbomMetadataDTO parseMetadata(JsonNode metadataNode) {
-        if (metadataNode == null) {
+    private SbomMetadataDTO parseMetadata(@Nullable CycloneDxMetadata metadata) {
+        if (metadata == null) {
             return null;
         }
 
         Instant timestamp = null;
-        if (metadataNode.has("timestamp")) {
+        if (metadata.timestamp() != null) {
             try {
-                timestamp = Instant.parse(metadataNode.get("timestamp").asString());
+                timestamp = Instant.parse(metadata.timestamp());
             }
             catch (Exception e) {
                 log.debug("Failed to parse SBOM timestamp", e);
@@ -143,74 +168,60 @@ public class SbomService {
 
         String componentName = null;
         String componentVersion = null;
-        JsonNode componentNode = metadataNode.get("component");
-        if (componentNode != null) {
-            componentName = getTextValue(componentNode, "name");
-            componentVersion = getTextValue(componentNode, "version");
+        if (metadata.component() != null) {
+            componentName = metadata.component().name();
+            componentVersion = metadata.component().version();
         }
 
         return new SbomMetadataDTO(timestamp, componentName, componentVersion);
     }
 
-    private List<SbomComponentDTO> parseComponents(JsonNode componentsNode) {
+    private List<SbomComponentDTO> parseComponents(@Nullable List<CycloneDxComponent> componentInputs) {
         List<SbomComponentDTO> components = new ArrayList<>();
-        if (componentsNode == null || !componentsNode.isArray()) {
+        if (componentInputs == null) {
             return components;
         }
 
-        for (JsonNode componentNode : componentsNode) {
-            SbomComponentDTO component = parseComponent(componentNode);
-            components.add(component);
+        for (CycloneDxComponent componentInput : componentInputs) {
+            if (componentInput != null) {
+                components.add(parseComponent(componentInput));
+            }
         }
 
         return components;
     }
 
-    private SbomComponentDTO parseComponent(JsonNode node) {
-        String group = getTextValue(node, "group");
-        String name = getTextValue(node, "name");
-        String version = getTextValue(node, "version");
-        String type = getTextValue(node, "type");
-        String purl = getTextValue(node, "purl");
-        String description = getTextValue(node, "description");
+    private SbomComponentDTO parseComponent(CycloneDxComponent component) {
+        List<String> licenses = parseLicenses(component.licenses());
 
-        List<String> licenses = parseLicenses(node.get("licenses"));
-
-        return new SbomComponentDTO(group, name, version, type, purl, licenses, description);
+        return new SbomComponentDTO(component.group(), component.name(), component.version(), component.type(), component.purl(), licenses, component.description());
     }
 
-    private List<String> parseLicenses(JsonNode licensesNode) {
+    private List<String> parseLicenses(@Nullable List<CycloneDxLicenseEntry> licenseEntries) {
         List<String> licenses = new ArrayList<>();
-        if (licensesNode == null || !licensesNode.isArray()) {
+        if (licenseEntries == null) {
             return licenses;
         }
 
-        for (JsonNode licenseEntry : licensesNode) {
-            JsonNode licenseNode = licenseEntry.get("license");
-            if (licenseNode != null) {
-                String licenseId = getTextValue(licenseNode, "id");
-                if (licenseId != null) {
-                    licenses.add(licenseId);
+        for (CycloneDxLicenseEntry licenseEntry : licenseEntries) {
+            if (licenseEntry == null) {
+                continue;
+            }
+            CycloneDxLicense license = licenseEntry.license();
+            if (license != null) {
+                if (license.id() != null) {
+                    licenses.add(license.id());
                 }
-                else {
-                    String licenseName = getTextValue(licenseNode, "name");
-                    if (licenseName != null) {
-                        licenses.add(licenseName);
-                    }
+                else if (license.name() != null) {
+                    licenses.add(license.name());
                 }
             }
             // Handle expression format (e.g., "MIT OR Apache-2.0")
-            String expression = getTextValue(licenseEntry, "expression");
-            if (expression != null) {
-                licenses.add(expression);
+            if (licenseEntry.expression() != null) {
+                licenses.add(licenseEntry.expression());
             }
         }
 
         return licenses;
-    }
-
-    @Nullable
-    private String getTextValue(JsonNode node, String fieldName) {
-        return Optional.ofNullable(node.get(fieldName)).filter(JsonNode::isString).map(JsonNode::asString).orElse(null);
     }
 }

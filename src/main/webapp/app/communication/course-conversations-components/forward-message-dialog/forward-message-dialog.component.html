@@ -68,23 +68,11 @@
     </div>
 
     <h5 jhiTranslate="artemisApp.communication.forward.addMessage"></h5>
-    <jhi-markdown-editor-monaco
-        class="markdown-editor background-editor-color w-100"
-        [markdown]="newPost.content"
-        (markdownChange)="updateField($event)"
-        [enableResize]="false"
-        [enableFileUpload]="false"
-        [showDefaultPreview]="true"
-        [colorAction]="undefined"
-        [headerActions]="undefined"
-        [metaActions]="[]"
-        [defaultActions]="defaultActions()"
-        [initialEditorHeight]="editorHeight()"
-        [resizableMinHeight]="editorHeight()"
-        [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
-    />
+    @if (courseId(); as currentCourseId) {
+        <jhi-message-editor [content]="newPost.content ?? ''" (contentChange)="updateField($event)" [courseId]="currentCourseId" [suppressNewlineOnEnter]="false" />
+    }
     <div class="col mt-1 text-end">
-        <p class="small my-0 ms-2" [style.color]="isMessageValid() ? 'inherit' : 'red'">{{ newPost.content?.length ?? 0 }} / {{ maxContentLength }}</p>
+        <p class="small my-0 ms-2" [class.text-state-danger]="!isMessageValid()">{{ newPost.content?.length ?? 0 }} / {{ maxContentLength }}</p>
     </div>
 
     @if (postToForward()) {

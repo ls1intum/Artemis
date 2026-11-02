@@ -264,6 +264,9 @@ export class ExerciseSplitPanelComponent {
                 const type = exercise.type;
                 if (type === ExerciseType.QUIZ) {
                     const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
+                    // The bare exercise URL is only an entry point. Keeping it in history makes Back reopen it and
+                    // immediately redirect to the quiz again. A switch from an active mode remains a user navigation.
+                    const replaceUrl = currentSegment === undefined;
                     if (mode === 'practice') {
                         // Already on a practice route — either viewing a result or a fresh attempt is in progress.
                         // Do not re-navigate, so an in-progress attempt is never disrupted.
@@ -274,12 +277,12 @@ export class ExerciseSplitPanelComponent {
                         // otherwise start the first attempt. Gate on testRun so we never navigate with a graded participation id.
                         const practiceParticipationId = participation?.testRun ? participation.id : undefined;
                         if (practiceParticipationId) {
-                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice', practiceParticipationId], { relativeTo: this.route.parent });
+                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice', practiceParticipationId], { relativeTo: this.route.parent, replaceUrl });
                         } else {
-                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice'], { relativeTo: this.route.parent });
+                            void this.router.navigate(['quiz-exercises', exercise.id, 'practice'], { relativeTo: this.route.parent, replaceUrl });
                         }
                     } else if (currentSegment !== 'live') {
-                        void this.router.navigate(['quiz-exercises', exercise.id, 'live'], { relativeTo: this.route.parent });
+                        void this.router.navigate(['quiz-exercises', exercise.id, 'live'], { relativeTo: this.route.parent, replaceUrl });
                     }
                     return;
                 }

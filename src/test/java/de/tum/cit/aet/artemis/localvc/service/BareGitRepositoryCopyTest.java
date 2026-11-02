@@ -8,6 +8,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -62,13 +63,34 @@ class BareGitRepositoryCopyTest {
     void copyBareRepositoryWithoutHistory_copiesTheStateOfTheSourceBranch() throws Exception {
         seedRepository("abc-exercise", "template");
 
-        try (Repository copy = bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH)) {
+        try (Repository copy = bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH, Map.of())) {
             assertThat(copy.resolve(Constants.R_HEADS + DEFAULT_BRANCH)).as("the copy has the branch that was copied").isNotNull();
         }
 
         assertThat(readFileFromBranchHead("abc-student1")).as("the copy carries the content of the source").isEqualTo("template");
         // The configuration is applied to the copy before it is published, so a repository that arrives at its final path is already usable.
         assertThat(headTargetOf("abc-student1")).as("the copy is configured, so HEAD names the default branch").isEqualTo(Constants.R_HEADS + DEFAULT_BRANCH);
+    }
+
+    @Test
+    void copyBareRepositoryWithoutHistory_withAdditionalFiles_writesThemIntoTheSingleCommit() throws Exception {
+        seedRepository("abc-exercise", "template");
+        ObjectId templateHead = branchHeadOf("abc-exercise");
+
+        bareGitRepositoryService
+                .copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH,
+                        Map.of(".vscode/eduide.json", "{ \"level\": \"expert\" }".getBytes(StandardCharsets.UTF_8), "README.md", "replaced".getBytes(StandardCharsets.UTF_8)))
+                .close();
+
+        assertThat(readFileFromBranchHead("abc-student1", ".vscode/eduide.json")).as("a file in a directory the source does not have is added")
+                .isEqualTo("{ \"level\": \"expert\" }");
+        assertThat(readFileFromBranchHead("abc-student1")).as("a file the source already has is replaced").isEqualTo("replaced");
+        try (org.eclipse.jgit.lib.Repository copy = open("abc-student1"); RevWalk walk = new RevWalk(copy)) {
+            RevCommit head = walk.parseCommit(copy.resolve(Constants.R_HEADS + DEFAULT_BRANCH));
+            assertThat(head.getParentCount()).as("the files are part of the copy's only commit rather than a second one").isZero();
+        }
+        assertThat(branchHeadOf("abc-exercise")).as("the source stays untouched").isEqualTo(templateHead);
+        assertThat(readFileFromBranchHead("abc-exercise")).isEqualTo("template");
     }
 
     @ParameterizedTest
@@ -86,7 +108,7 @@ class BareGitRepositoryCopyTest {
         }
 
         try (Repository copy = withHistory ? bareGitRepositoryService.copyBareRepositoryWithHistory(uriFor("abc-exercise"), uriFor("abc-student1"), sourceBranch)
-                : bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), sourceBranch)) {
+                : bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), sourceBranch, Map.of())) {
             assertThat(copy.resolve(Constants.HEAD)).as("HEAD resolves to the copied commit").isNotNull().isEqualTo(copy.resolve(Constants.R_HEADS + DEFAULT_BRANCH));
             assertThat(copy.getRefDatabase().getRefsByPrefix(Constants.R_HEADS)).extracting(ref -> ref.getName()).containsExactly(Constants.R_HEADS + DEFAULT_BRANCH);
         }
@@ -110,7 +132,7 @@ class BareGitRepositoryCopyTest {
         seedRepository("abc-exercise", "template");
 
         assertThatExceptionOfType(IOException.class)
-                .isThrownBy(() -> bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), "no-such-branch"))
+                .isThrownBy(() -> bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), "no-such-branch", Map.of()))
                 .withMessageContaining("no-such-branch");
 
         // A failed copy that leaves an unborn repository behind is what a concurrent request would delete while the copy
@@ -124,7 +146,7 @@ class BareGitRepositoryCopyTest {
         seedRepository("abc-student1", "already copied by the other request");
         ObjectId headBeforeTheCopy = branchHeadOf("abc-student1");
 
-        try (Repository copy = bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH)) {
+        try (Repository copy = bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH, Map.of())) {
             assertThat(copy.resolve(Constants.R_HEADS + DEFAULT_BRANCH)).as("the repository that is already there is handed back").isEqualTo(headBeforeTheCopy);
         }
 
@@ -150,7 +172,7 @@ class BareGitRepositoryCopyTest {
     void copyBareRepositoryWithoutHistory_leavesNothingBesidesTheRepositoriesInTheProject() throws Exception {
         seedRepository("abc-exercise", "template");
 
-        bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH).close();
+        bareGitRepositoryService.copyBareRepositoryWithoutHistory(uriFor("abc-exercise"), uriFor("abc-student1"), DEFAULT_BRANCH, Map.of()).close();
 
         try (var entries = Files.list(baseDir.resolve(PROJECT_KEY))) {
             assertThat(entries.map(entry -> entry.getFileName().toString())).as("a completed copy does not leave a working directory behind")
@@ -202,9 +224,13 @@ class BareGitRepositoryCopyTest {
     }
 
     private String readFileFromBranchHead(String repositorySlug) throws IOException {
+        return readFileFromBranchHead(repositorySlug, "README.md");
+    }
+
+    private String readFileFromBranchHead(String repositorySlug, String path) throws IOException {
         try (org.eclipse.jgit.lib.Repository repository = open(repositorySlug); RevWalk walk = new RevWalk(repository)) {
             RevCommit head = walk.parseCommit(repository.resolve(Constants.R_HEADS + DEFAULT_BRANCH));
-            try (TreeWalk treeWalk = TreeWalk.forPath(repository, "README.md", head.getTree())) {
+            try (TreeWalk treeWalk = TreeWalk.forPath(repository, path, head.getTree())) {
                 return new String(repository.open(treeWalk.getObjectId(0)).getBytes(), StandardCharsets.UTF_8);
             }
         }

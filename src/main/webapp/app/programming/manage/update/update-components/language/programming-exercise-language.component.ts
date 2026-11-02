@@ -38,6 +38,11 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     readonly programmingExercise = model.required<ProgrammingExercise>();
     readonly programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
+    /**
+     * Whether the online IDE is allowed, passed separately from the exercise: the checkbox lives in the mode section and
+     * changes the exercise in place, which would not make this section render the online IDE settings.
+     */
+    readonly allowOnlineIde = input(false);
 
     readonly selectLanguageField = viewChild<NgModel>('select');
     readonly packageNameField = viewChild<NgModel>('packageName');

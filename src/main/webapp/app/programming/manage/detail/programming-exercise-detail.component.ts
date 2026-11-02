@@ -1,3 +1,4 @@
+import { HyperionRunLinkComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-link.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
@@ -13,7 +14,6 @@ import {
     faHistory,
     faListAlt,
     faPencilAlt,
-    faTable,
     faTrash,
     faUndo,
     faUserCheck,
@@ -53,7 +53,7 @@ import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/featur
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { CreateVariantWithAiButtonComponent } from 'app/course/manage/exercises/create-variant-modal/create-variant-with-ai-button.component';
+import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -77,6 +77,7 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
     styleUrls: ['./programming-exercise-detail.component.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        HyperionRunLinkComponent,
         TranslateDirective,
         DocumentationButtonComponent,
         RouterLink,
@@ -140,7 +141,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly faBook = faBook;
     protected readonly faWrench = faWrench;
     protected readonly faCheckDouble = faCheckDouble;
-    protected readonly faTable = faTable;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faFileSignature = faFileSignature;
     protected readonly faListAlt = faListAlt;

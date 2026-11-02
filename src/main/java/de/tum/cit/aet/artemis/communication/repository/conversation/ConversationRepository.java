@@ -87,14 +87,21 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
                 JOIN c.posts p
                 LEFT JOIN ConversationParticipant cp ON c.id = cp.conversation.id AND cp.user.id = :userId
                 LEFT JOIN Channel ch ON c.id = ch.id
+                LEFT JOIN ch.exercise exercise
+                LEFT JOIN ch.exam exam
             WHERE c.course.id = :courseId
             AND p.author.id <> :userId
+            AND (cp.id IS NULL OR cp.isMuted = FALSE)
             AND (
                 p.creationDate > cp.lastRead OR
                 (ch.isCourseWide = TRUE AND cp.id IS NULL)
             )
+            AND (:isTutor = TRUE OR (
+                (exercise.id IS NULL OR (exercise.exerciseGroup IS NULL AND (exercise.releaseDate IS NULL OR exercise.releaseDate < :now)))
+                AND (exercise.id IS NOT NULL OR exam.id IS NULL OR exam.visibleDate < :now)
+            ))
             """)
-    boolean userHasUnreadMessageInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    boolean userHasUnreadMessageInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId, @Param("isTutor") boolean isTutor, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT DISTINCT c

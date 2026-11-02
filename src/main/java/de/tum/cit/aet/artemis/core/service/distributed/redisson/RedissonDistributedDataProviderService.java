@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.RedisDistributedDataCondition;
@@ -37,8 +38,12 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueu
 import de.tum.cit.aet.artemis.core.service.distributed.api.set.DistributedSet;
 import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 
+// Exactly one provider bean exists at runtime, because the conditions of all three match one value of
+// artemis.distributed-data.provider each. Static analysis cannot evaluate those conditions and reports every injection of
+// DistributedDataProvider as ambiguous (Sonar java:S9352); @Primary names the preferred provider for it and changes nothing at runtime.
 @Lazy
 @Service
+@Primary
 @Conditional(RedisDistributedDataCondition.class)
 public class RedissonDistributedDataProviderService implements DistributedDataProvider {
 

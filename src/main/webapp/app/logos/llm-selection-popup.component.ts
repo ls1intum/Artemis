@@ -6,28 +6,23 @@ import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LLMModalResult, LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
-import { AccountService } from 'app/core/auth/account.service';
-import { FormsModule } from '@angular/forms';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 @Component({
     selector: 'jhi-llm-selection-modal',
     templateUrl: './llm-selection-popup.component.html',
     styleUrls: ['./llm-selection-popup.component.scss'],
-    imports: [TranslateDirective, FormsModule, ToggleSwitchModule],
+    imports: [TranslateDirective],
 })
 export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private modalService = inject(LLMSelectionModalService);
     protected themeService = inject(ThemeService);
     private profileService = inject(ProfileService);
-    private accountService = inject(AccountService);
     private router = inject(Router);
 
     readonly choice = output<LLMModalResult>();
 
     readonly isVisible = signal(false);
     readonly currentSelection = signal<LLMSelectionDecision | undefined>(undefined);
-    readonly memirisEnabled = signal(true);
     private modalSubscription?: Subscription;
 
     readonly isOnPremiseEnabled = signal<boolean>(undefined!);
@@ -35,7 +30,6 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.modalSubscription = this.modalService.openModal$.subscribe((currentSelection) => {
             this.currentSelection.set(currentSelection);
-            this.memirisEnabled.set(this.accountService.userIdentity()?.memirisEnabled ?? true);
             this.open();
         });
         this.isOnPremiseEnabled.set(this.profileService.isLLMDeploymentEnabled());
@@ -69,10 +63,6 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
         this.choice.emit(LLMSelectionDecision.NO_AI);
         this.modalService.emitChoice(LLMSelectionDecision.NO_AI);
         this.close();
-    }
-
-    onMemirisToggle(): void {
-        this.accountService.setUserEnabledMemiris(this.memirisEnabled());
     }
 
     onBackdropClick(event: MouseEvent): void {

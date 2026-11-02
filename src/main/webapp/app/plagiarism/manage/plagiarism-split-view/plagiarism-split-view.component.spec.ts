@@ -1,3 +1,4 @@
+import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -317,5 +318,16 @@ describe('Plagiarism Split View Component', () => {
         expect(plagComp.matches?.map((match) => match.startA)).toEqual(originalPlagComp.matches?.map((match) => match.startB));
         expect(plagComp.matches?.map((match) => match.startB)).toEqual(originalPlagComp.matches?.map((match) => match.startA));
         expect(plagComp.matches?.map((match) => match.length)).toEqual(originalPlagComp.matches?.map((match) => match.length));
+    });
+    it.each([false, true])('passes student viewing purpose %s to both plagiarism panes', (forStudent) => {
+        fixture.componentRef.setInput('forStudent', forStudent);
+        fixture.componentRef.setInput('exercise', textExercise);
+        vi.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
+        fixture.detectChanges();
+        const viewers = fixture.debugElement.queryAll(By.directive(TextSubmissionViewerComponent));
+        expect(viewers).toHaveLength(2);
+        for (const viewer of viewers) {
+            expect(viewer.componentInstance.viewingPurpose()).toBe(forStudent ? 'owner' : 'staff-preview');
+        }
     });
 });

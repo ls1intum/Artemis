@@ -1,0 +1,47 @@
+.hyperion-activity-title {
+    margin: 0.25rem 0;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    font-weight: var(--font-weight-semibold);
+
+    /* Not `--bs-heading-color`: the heading takes the colour of the surface it sits on, like every other heading here. */
+    color: inherit;
+}
+
+.hyperion-liveness {
+    color: var(--text-body-secondary);
+    transition: color var(--default-transition-duration) var(--default-transition-timing-function);
+}
+
+[data-liveness='stalled'] .hyperion-liveness {
+    color: var(--artemis-alert-warning-color);
+    font-weight: 500;
+}
+
+/*
+ * The log reserves the height of its full rolling window. Without it, the first few messages of a run grow the list
+ * downwards and push the page under the reader between one event and the next.
+ */
+.hyperion-activity-log {
+    min-height: calc(var(--hyperion-activity-rows, 5) * 1.5rem);
+}
+
+.hyperion-activity-row-entering {
+    animation: hyperion-activity-row-enter var(--default-transition-duration) var(--default-transition-timing-function);
+}
+
+@keyframes hyperion-activity-row-enter {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hyperion-activity-row-entering {
+        animation: none;
+    }
+}

@@ -16,12 +16,7 @@
         </div>
     }
     @if (posting()?.isSaved) {
-        <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }">
-            <div class="post-is-saved-message-content">
-                <fa-icon [icon]="faBookmark" />
-                <span class="text-secondary" jhiTranslate="artemisApp.communication.post.saved"></span>
-            </div>
-        </div>
+        <div jhi-saved-posting-banner class="post-is-saved-message post-content-padding fs-xx-small py-1" [consecutive]="isConsecutive()"></div>
     }
     @if (isConsecutive()) {
         <span class="post-time fs-small" ngbTooltip="{{ posting()?.creationDate | artemisDate: 'time' }}">

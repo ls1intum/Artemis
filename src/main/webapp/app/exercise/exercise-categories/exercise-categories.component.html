@@ -1,19 +1,19 @@
 @if (exercise(); as exercise) {
     @if (showTags(); as showTags) {
         @if (exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs()) && showTags.notReleased) {
-            <span [ngClass]="isSmall() ? 'small' : 'fw-medium h4'">
+            <span [ngClass]="isSmall() ? 'text-sm' : 'font-medium text-lg'">
                 <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
                     <jhi-not-released-tag [exercise]="exercise" />
                 </a>
             </span>
         }
         @if (asQuizExercise(exercise).isActiveQuiz && showTags.quizLive) {
-            <span [ngClass]="isSmall() ? 'small' : 'fw-medium h4'">
-                <span class="badge bg-success" jhiTranslate="artemisApp.courseOverview.exerciseList.live"></span>
+            <span [ngClass]="isSmall() ? 'text-sm' : 'font-medium text-lg'">
+                <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-state-success" jhiTranslate="artemisApp.courseOverview.exerciseList.live"></span>
             </span>
         }
         @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY && showTags.includedInScore) {
-            <span [ngClass]="isSmall() ? 'small' : 'fw-medium h4'">
+            <span [ngClass]="isSmall() ? 'text-sm' : 'font-medium text-lg'">
                 <a [routerLink]="['/courses', exercise.course?.id, 'exercises', exercise.id!]">
                     <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
                 </a>
@@ -21,13 +21,15 @@
         }
         @for (category of exercise.categories; track category) {
             @if (category.category) {
-                <span [ngClass]="isSmall() ? 'small' : 'fw-medium h4'">
-                    <span class="badge" [style.background-color]="category.color">{{ category.category | truncate: 30 }}</span>
+                <span [ngClass]="isSmall() ? 'text-sm' : 'font-medium text-lg'">
+                    <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold" [style.background-color]="category.color">{{
+                        category.category | truncate: 30
+                    }}</span>
                 </span>
             }
         }
         @if (exercise.difficulty && showTags.difficulty) {
-            <span [ngClass]="isSmall() ? 'small' : 'fw-medium h4'">
+            <span [ngClass]="isSmall() ? 'text-sm' : 'font-medium text-lg'">
                 <jhi-difficulty-badge [exercise]="exercise" [showNoLevel]="showTags.difficultyIfNoLevel ?? false" />
             </span>
         }

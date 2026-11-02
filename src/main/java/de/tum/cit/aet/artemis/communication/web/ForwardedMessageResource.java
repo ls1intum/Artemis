@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,6 +29,7 @@ import de.tum.cit.aet.artemis.communication.dto.ForwardedMessagesGroupDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ForwardedMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.service.ForwardedMessageService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -58,12 +58,15 @@ public class ForwardedMessageResource {
 
     private final UserRepository userRepository;
 
+    private final ForwardedMessageService forwardedMessageService;
+
     public ForwardedMessageResource(ForwardedMessageRepository forwardedMessageRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, ForwardedMessageService forwardedMessageService) {
         this.forwardedMessageRepository = forwardedMessageRepository;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.userRepository = userRepository;
+        this.forwardedMessageService = forwardedMessageService;
     }
 
     /**
@@ -82,20 +85,13 @@ public class ForwardedMessageResource {
 
         User user = userRepository.getUser();
 
-        // authorization checks: we need to verify that the user has access to the postings with the given IDs in postingIds
-        // this is the case if the post is in a course wide channel or if the user is part of the OneToOne / Channel
-        switch (forwardedMessageDTO.sourceType()) {
-            case POST -> postRepository.userHasAccessToAllPostsElseThrow(Collections.singleton(forwardedMessageDTO.sourceId()), user.getId());
-            case ANSWER -> answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(Collections.singleton(forwardedMessageDTO.sourceId()), user.getId());
-        }
-
         // Rejects creation of forwarded messages that already have an ID, since new entries must not be pre-existing.
         if (forwardedMessageDTO.id() != null) {
             throw new BadRequestAlertException("A new forwarded message cannot already have an ID", ENTITY_NAME, "idExists");
         }
 
         ForwardedMessage forwardedMessage = forwardedMessageDTO.toEntity();
-        ForwardedMessage savedMessage = forwardedMessageRepository.save(forwardedMessage);
+        ForwardedMessage savedMessage = forwardedMessageService.create(forwardedMessage, user);
 
         log.info("createForwardedMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/communication/forwarded-messages/" + savedMessage.getId())).body(new ForwardedMessageDTO(savedMessage));

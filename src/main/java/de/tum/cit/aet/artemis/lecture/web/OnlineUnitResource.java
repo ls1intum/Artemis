@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
 import org.jsoup.Jsoup;
@@ -36,7 +37,9 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLi
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -108,7 +111,7 @@ public class OnlineUnitResource {
      */
     @PutMapping("lectures/{lectureId}/online-units")
     @EnforceAtLeastEditorInLecture
-    public ResponseEntity<OnlineUnitDTO> updateOnlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnitDTO onlineUnitDto) {
+    public ResponseEntity<OnlineUnitDTO> updateOnlineUnit(@PathVariable Long lectureId, @Valid @RequestBody OnlineUnitDTO onlineUnitDto) {
         log.debug("REST request to update an online unit : {}", onlineUnitDto);
         if (onlineUnitDto.id() == null) {
             throw new BadRequestException();
@@ -173,7 +176,7 @@ public class OnlineUnitResource {
      */
     @PostMapping("lectures/{lectureId}/online-units")
     @EnforceAtLeastEditorInLecture
-    public ResponseEntity<OnlineUnitDTO> createOnlineUnit(@PathVariable Long lectureId, @RequestBody final OnlineUnitDTO onlineUnitDto) throws URISyntaxException {
+    public ResponseEntity<OnlineUnitDTO> createOnlineUnit(@PathVariable Long lectureId, @Valid @RequestBody final OnlineUnitDTO onlineUnitDto) throws URISyntaxException {
         log.debug("REST request to create onlineUnit : {}", onlineUnitDto);
         if (onlineUnitDto.id() != null) {
             throw new BadRequestAlertException("A new online unit cannot have an id", ENTITY_NAME, "idExists");
@@ -263,12 +266,14 @@ public class OnlineUnitResource {
     /**
      * GET /lectures/online-units/fetch-online-resource : Fetch the website's metadata from the specified link to an online resource.
      *
-     * @param link The link (as request parameter) to the website to fetch the metadata from
+     * @param link     The link (as request parameter) to the website to fetch the metadata from
+     * @param courseId The id of the course in which the user wants to create or edit the online unit (the user needs at least the editor role there)
      * @return the ResponseEntity with status 200 (OK) and with body a DTO with link, meta title, and meta description
      */
     @GetMapping("lectures/online-units/fetch-online-resource")
-    @EnforceAtLeastEditor
-    public ResponseEntity<OnlineResourceDTO> getOnlineResource(@RequestParam("link") String link) {
+    @EnforceAtLeastEditorInCourse
+    @LimitRequestsPerMinute(type = RateLimitType.ONLINE_RESOURCE_FETCH)
+    public ResponseEntity<OnlineResourceDTO> getOnlineResource(@RequestParam("link") String link, @RequestParam("courseId") Long courseId) {
         // Ensure that the link is a correctly formed URL
         URL url = validateUrlStringAndReturnUrl(link);
 

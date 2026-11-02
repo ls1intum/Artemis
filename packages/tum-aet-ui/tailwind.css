@@ -25,6 +25,7 @@
     tumaet-ui-date-picker,
     tumaet-ui-dialog,
     tumaet-ui-doughnut-chart,
+    tumaet-ui-dynamic-dialog-host,
     tumaet-ui-empty-state,
     tumaet-ui-form-field,
     tumaet-ui-icon-field,
@@ -45,6 +46,7 @@
     tumaet-ui-search-field,
     tumaet-ui-select,
     tumaet-ui-select-button,
+    tumaet-ui-splitter,
     tumaet-ui-tab,
     tumaet-ui-tab-list,
     tumaet-ui-tab-panel,
@@ -92,39 +94,75 @@
     font: inherit;
 }
 
+.tumaet-ui-btn {
+    position: relative;
+    appearance: none;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    border-radius: var(--tumaet-ui-radius-md);
+}
+
+.tumaet-ui-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: transparent;
+    pointer-events: none;
+    transition: background-color 0.15s ease;
+}
+
+.tumaet-ui-btn:hover:not(:disabled):not([aria-disabled='true'])::after {
+    background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
+}
+
+.tumaet-ui-btn[aria-disabled='true'] {
+    cursor: not-allowed;
+}
+
+.tumaet-ui-btn:focus-visible {
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: 2px;
+}
+
+.tumaet-ui-btn:disabled {
+    cursor: default;
+}
+
 .tumaet-ui-button-group {
     display: inline-flex;
 }
 
 .tumaet-ui-button-group > tumaet-ui-button,
-.tumaet-ui-button-group > button:not(.tumaet-ui-btn) {
+.tumaet-ui-button-group > button {
     margin: 0;
 }
 
 .tumaet-ui-button-group > tumaet-ui-button:not(:first-of-type, :last-of-type) .tumaet-ui-btn,
-.tumaet-ui-button-group > button:not(.tumaet-ui-btn, :first-of-type, :last-of-type) {
+.tumaet-ui-button-group > button:not(:first-of-type, :last-of-type) {
     border-radius: 0;
 }
 
 .tumaet-ui-button-group > tumaet-ui-button:first-of-type:not(:only-of-type) .tumaet-ui-btn,
-.tumaet-ui-button-group > button:not(.tumaet-ui-btn):first-of-type:not(:only-of-type) {
+.tumaet-ui-button-group > button:first-of-type:not(:only-of-type) {
     border-start-end-radius: 0;
     border-end-end-radius: 0;
 }
 
 .tumaet-ui-button-group > tumaet-ui-button:last-of-type:not(:only-of-type) .tumaet-ui-btn,
-.tumaet-ui-button-group > button:not(.tumaet-ui-btn):last-of-type:not(:only-of-type) {
+.tumaet-ui-button-group > button:last-of-type:not(:only-of-type) {
     border-start-start-radius: 0;
     border-end-start-radius: 0;
 }
 
 .tumaet-ui-button-group > tumaet-ui-button:not(:last-of-type) .tumaet-ui-btn,
-.tumaet-ui-button-group > button:not(.tumaet-ui-btn):not(:last-of-type) {
+.tumaet-ui-button-group > button:not(:last-of-type) {
     border-inline-end: 0 none;
 }
 
 .tumaet-ui-button-group .tumaet-ui-btn:focus-visible,
-.tumaet-ui-button-group > button:not(.tumaet-ui-btn):focus-visible {
+.tumaet-ui-button-group > button:focus-visible {
     position: relative;
     z-index: 1;
 }

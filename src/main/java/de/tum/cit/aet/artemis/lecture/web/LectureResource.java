@@ -47,11 +47,13 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastInstructorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -71,14 +73,18 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureLearningStatisticsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing Lecture.
@@ -119,9 +125,12 @@ public class LectureResource {
 
     private final YouTubeUrlService youTubeUrlService;
 
+    private final LectureUnitRepository lectureUnitRepository;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ChannelService channelService, ChannelRepository channelRepository,
-            SlideRepository slideRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
+            SlideRepository slideRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService,
+            LectureUnitRepository lectureUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -133,6 +142,7 @@ public class LectureResource {
         this.slideRepository = slideRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
+        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     /**
@@ -143,13 +153,24 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("lectures")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
+    @AllowedScopes(AgentScope.LECTURES_WRITE)
+    @Operation(summary = "Create a lecture", description = """
+            Creates an empty lecture in a course (set course with its id). title is required; startDate, if set, must not be after \
+            endDate. A lecture has no release date of its own: students see it with its title and description at once, and only \
+            its units can stay hidden with a releaseDate in the future. channelName names the lecture's communication channel and is derived from the \
+            title if omitted.""")
+    @ApiResponse(responseCode = "201", description = "The lecture was created.")
     public ResponseEntity<SimpleLectureDTO> createLecture(@RequestBody SimpleLectureDTO newLectureDto) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", newLectureDto);
         if (newLectureDto.id() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
         }
         validateLectureDates(newLectureDto.startDate(), newLectureDto.endDate());
+        if (newLectureDto.course == null || newLectureDto.course.id() == null) {
+            throw new BadRequestAlertException("A new lecture must belong to a course", ENTITY_NAME, "courseMissing");
+        }
         Course course = courseRepository.findByIdElseThrow(newLectureDto.course.id());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
@@ -231,7 +252,8 @@ public class LectureResource {
      *         Server Error) if the lecture couldn't be updated
      */
     @PutMapping("lectures")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<SimpleLectureDTO> updateLecture(@RequestBody SimpleLectureDTO updatedLectureDto) {
         log.debug("REST request to update Lecture : {}", updatedLectureDto);
         if (updatedLectureDto.id() == null) {
@@ -279,7 +301,8 @@ public class LectureResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("lectures")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<SearchResultPageDTO<SimpleLectureDTO>> getAllLecturesOnPage(SearchTermPageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithAuthorities();
         final SearchResultPageDTO<Lecture> lecturePage = lectureService.getAllOnPageWithSize(search, user);
@@ -343,6 +366,19 @@ public class LectureResource {
     public ResponseEntity<Set<LectureForOverviewDTO>> getLecturesForCourseOverview(@PathVariable Long courseId) {
         log.debug("REST request to get the lectures of course {} for the course overview", courseId);
         return ResponseEntity.ok(lectureRepository.findAllForOverviewByCourseId(courseId));
+    }
+
+    /**
+     * Counts released learning materials and the current user's completions in one aggregate query.
+     *
+     * @param courseId the authorized course
+     * @return counts by lecture and material type, without other users' completion records or material payloads
+     */
+    @GetMapping("courses/{courseId}/learning-statistics")
+    @FeatureUsage(UserFeature.STUDENT_COURSE_STATISTICS)
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<LectureLearningStatisticsDTO>> getLearningStatistics(@PathVariable Long courseId) {
+        return ResponseEntity.ok(lectureUnitRepository.findLearningStatistics(courseId, userRepository.getUserWithAuthorities().getId(), ZonedDateTime.now()));
     }
 
     /**
@@ -492,7 +528,7 @@ public class LectureResource {
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("lectures/import")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<SimpleLectureDTO> importLecture(@RequestParam long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
         final var user = userRepository.getUserWithAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(sourceLectureId);
@@ -551,16 +587,9 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("lectures/{lectureId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInLecture
     public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId) {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lectureId);
-
-        Course course = lecture.getCourse();
-        if (course == null) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture, true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();

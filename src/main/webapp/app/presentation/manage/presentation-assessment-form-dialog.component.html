@@ -19,16 +19,12 @@
 
         <div class="presentation-assessment-field">
             <label for="presentation-assessment-max-points" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></label>
-            <tumaet-ui-input-number
+            <jhi-points-input
                 inputId="presentation-assessment-max-points"
-                [fluid]="true"
+                fluid
                 [min]="minPoints"
                 [max]="maxPointsUpperBound"
                 [step]="0.001"
-                [maxFractionDigits]="3"
-                [useGrouping]="false"
-                locale="en-US"
-                [acceptedDecimalSeparators]="acceptedPointsDecimalSeparators"
                 formControlName="maxPoints"
                 [placeholder]="'artemisApp.presentationAssessment.placeholder.maxPoints' | artemisTranslate"
             />

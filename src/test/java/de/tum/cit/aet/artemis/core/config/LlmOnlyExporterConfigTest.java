@@ -34,4 +34,34 @@ class LlmOnlyExporterConfigTest {
             assertThat(context.getBean("otlpLlmTraceExporter", SpanExporter.class)).isNotNull();
         }
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "aiworker", "prod,aiworker" })
+    void workerDoesNotLoadExporterWithInheritedLangfuseSettings(String profiles) {
+        try (AnnotationConfigApplicationContext context = exporterContext(profiles)) {
+            assertThat(context.getBeansOfType(LlmOnlyExporterConfig.class)).isEmpty();
+            assertThat(context.getBeansOfType(SpanExporter.class)).isEmpty();
+            assertThat(context.containsBean("otlpLlmTraceExporter")).isFalse();
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "core", "buildagent", "prod,core", "prod,buildagent" })
+    void serverAndBuildAgentStillLoadEnabledExporter(String profiles) {
+        try (AnnotationConfigApplicationContext context = exporterContext(profiles)) {
+            assertThat(context.getBean("otlpLlmTraceExporter", SpanExporter.class)).isNotNull();
+        }
+    }
+
+    private AnnotationConfigApplicationContext exporterContext(String profiles) {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+        context.getEnvironment().setActiveProfiles(profiles.split(","));
+        context.getEnvironment().getPropertySources()
+                .addFirst(new MapPropertySource("test", Map.of("management.langfuse.enabled", "true", "management.opentelemetry.tracing.export.otlp.endpoint",
+                        "https://example.test/v1/traces", "management.opentelemetry.tracing.export.otlp.headers.Authorization", "Basic test")));
+        context.register(LlmOnlyExporterConfig.class);
+        context.refresh();
+        return context;
+    }
+
 }

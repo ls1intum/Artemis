@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupsConfigurationTestRepository;
 
 /**
  * Pins what reading a course costs.
@@ -63,6 +64,9 @@ class CourseConfigurationLoadProfileTest extends AbstractSpringIntegrationIndepe
     @Autowired
     private CourseConfigurationRepository courseConfigurationRepository;
 
+    @Autowired
+    private TutorialGroupsConfigurationTestRepository tutorialGroupsConfigurationRepository;
+
     private long courseId;
 
     private long examId;
@@ -71,15 +75,19 @@ class CourseConfigurationLoadProfileTest extends AbstractSpringIntegrationIndepe
 
     @BeforeEach
     void setup() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         Course course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        course.setOnlineCourse(true);
+        course.setEnrollmentEnabled(false);
         CourseAthenaConfig athenaConfig = new CourseAthenaConfig();
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
         CourseConfiguration configuration = new CourseConfiguration();
         configuration.setGradeRelevant(false);
+        configuration.setPresentationAssessmentsEnabled(true);
         course.setCourseConfiguration(configuration);
         courseId = courseUtilService.saveWithConfigurations(course).getId();
+        tutorialGroupsConfigurationRepository.updateSettings(courseId, "2026-10-01", "2027-02-01", false, false);
 
         Exam exam = examUtilService.addExamWithExerciseGroup(courseRepository.findByIdElseThrow(courseId), true);
         examId = exam.getId();
@@ -121,18 +129,89 @@ class CourseConfigurationLoadProfileTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void anInstructorReadingTheCourseReadsEachConfigurationExactlyOnce() throws Exception {
-        List<String> statements = statementsOf(() -> request.get("/api/course/courses/" + courseId, HttpStatus.OK, CourseManagementDTO.class));
+        List<String> statements = statementsOf(() -> request.get("/api/course/courses/" + courseId + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class));
 
         assertThat(statements.stream().filter(sql -> ATHENA_CONFIG_TABLE.matcher(sql).find())).as("reads of course_athena_config").hasSize(1);
         assertThat(statements.stream().filter(sql -> COURSE_CONFIGURATION_TABLE.matcher(sql).find())).as("reads of course_configuration").hasSize(1);
 
+        assertThat(statements.stream().filter(sql -> sql.contains("tutorial_groups_configuration"))).hasSize(1);
+        assertThat(statements.stream().filter(sql -> sql.contains("online_course_configuration"))).hasSize(1);
+        assertThat(statements.stream().filter(sql -> sql.contains("count(distinct") && sql.contains("user_course_role"))).hasSize(1);
+
         // and what they read reaches the response, which is what the instructor edits
-        CourseManagementDTO course = request.get("/api/course/courses/" + courseId, HttpStatus.OK, CourseManagementDTO.class);
+        CourseManagementDTO course = request.get("/api/course/courses/" + courseId + "/for-instructor", HttpStatus.OK, CourseManagementDTO.class);
         assertThat(course.athenaGradingFeedbackEnabled()).isTrue();
         assertThat(course.courseConfiguration()).isNotNull();
         assertThat(course.courseConfiguration().gradeRelevant()).isFalse();
+        assertThat(course.presentationAssessmentsEnabled()).isTrue();
+        assertThat(course.numberOfStudents()).isEqualTo(1);
+        assertThat(course.tutorialGroupsConfiguration()).isNotNull();
+        assertThat(course.onlineCourseConfiguration()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void studentProjectionStaysScalarForInstructor() throws Exception {
+        assertThat(tablesRead(() -> request.get("/api/course/courses/" + courseId, HttpStatus.OK, CourseManagementDTO.class))).isEmpty();
+        CourseManagementDTO dto = request.get("/api/course/courses/" + courseId, HttpStatus.OK, CourseManagementDTO.class);
+        assertThat(dto.courseConfiguration()).isNull();
+        assertThat(dto.onlineCourseConfiguration()).isNull();
+        assertThat(dto.tutorialGroupsConfiguration()).isNull();
+        assertThat(dto.numberOfStudents()).isNull();
+        assertThat(dto.presentationAssessmentsEnabled()).isFalse();
+        assertThat(dto.athenaGradingFeedbackEnabled()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void tutorProjectionStaysLimitedForInstructor() throws Exception {
+        List<String> statements = statementsOf(() -> request.get("/api/course/courses/" + courseId + "/for-tutor", HttpStatus.OK, CourseManagementDTO.class));
+        assertThat(statements.stream().filter(sql -> ATHENA_CONFIG_TABLE.matcher(sql).find())).isEmpty();
+        assertThat(statements.stream().filter(sql -> COURSE_CONFIGURATION_TABLE.matcher(sql).find())).hasSize(1);
+        assertThat(statements.stream().filter(sql -> sql.contains("online_course_configuration"))).isEmpty();
+        assertThat(statements.stream().filter(sql -> sql.contains("tutorial_groups_configuration"))).hasSize(1);
+        assertThat(statements.stream().filter(sql -> sql.contains("count(distinct") && sql.contains("user_course_role"))).hasSize(1);
+        CourseManagementDTO dto = request.get("/api/course/courses/" + courseId + "/for-tutor", HttpStatus.OK, CourseManagementDTO.class);
+        assertThat(dto.courseConfiguration()).isNull();
+        assertThat(dto.onlineCourseConfiguration()).isNull();
+        assertThat(dto.numberOfStudents()).isEqualTo(1);
+        assertThat(dto.tutorialGroupsConfiguration()).isNotNull();
+        assertThat(dto.presentationAssessmentsEnabled()).isTrue();
+        assertThat(dto.athenaGradingFeedbackEnabled()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentCannotReadStaffProjectionsOrForeignCourse() throws Exception {
+        request.get("/api/course/courses/" + courseId + "/for-tutor", HttpStatus.FORBIDDEN, CourseManagementDTO.class);
+        request.get("/api/course/courses/" + courseId + "/for-instructor", HttpStatus.FORBIDDEN, CourseManagementDTO.class);
+        long foreignCourseId = courseUtilService.createCourse().getId();
+        request.get("/api/course/courses/" + foreignCourseId, HttpStatus.FORBIDDEN, CourseManagementDTO.class);
+        request.get("/api/course/courses/" + foreignCourseId + "/for-tutor", HttpStatus.FORBIDDEN, CourseManagementDTO.class);
+        request.get("/api/course/courses/" + foreignCourseId + "/for-instructor", HttpStatus.FORBIDDEN, CourseManagementDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void tutorCannotReadInstructorProjection() throws Exception {
+        var tutorCourse = request.get("/api/course/courses/" + courseId + "/for-tutor", HttpStatus.OK, CourseManagementDTO.class);
+        assertThat(tutorCourse.presentationAssessmentsEnabled()).isTrue();
+        assertThat(tutorCourse.courseConfiguration()).isNull();
+        assertThat(tutorCourse.numberOfStudents()).isEqualTo(1);
+        request.get("/api/course/courses/" + courseId + "/for-instructor", HttpStatus.FORBIDDEN, CourseManagementDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void unconfiguredCourseKeepsOptionalConfigurationsNull() throws Exception {
+        long unconfiguredCourseId = courseUtilService.createEnrolledCourse(TEST_PREFIX).getId();
+        for (String suffix : List.of("/for-tutor", "/for-instructor")) {
+            var dto = request.get("/api/course/courses/" + unconfiguredCourseId + suffix, HttpStatus.OK, CourseManagementDTO.class);
+            assertThat(dto.tutorialGroupsConfiguration()).isNull();
+            assertThat(dto.onlineCourseConfiguration()).isNull();
+        }
     }
 
     @Test
@@ -181,7 +260,7 @@ class CourseConfigurationLoadProfileTest extends AbstractSpringIntegrationIndepe
      */
     private List<String> tablesRead(ThrowingCall call) throws Exception {
         List<String> statements = statementsOf(call);
-        return List.of("course_athena_config", "course_configuration").stream()
+        return List.of("course_athena_config", "course_configuration", "tutorial_groups_configuration", "online_course_configuration").stream()
                 .filter(table -> statements.stream().anyMatch(sql -> Pattern.compile("\\b" + table + "\\b").matcher(sql).find())).toList();
     }
 

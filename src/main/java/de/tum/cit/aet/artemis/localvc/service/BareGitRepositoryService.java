@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,6 +21,10 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
+import org.eclipse.jgit.dircache.DirCache;
+import org.eclipse.jgit.dircache.DirCacheBuilder;
+import org.eclipse.jgit.dircache.DirCacheEditor;
+import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.Constants;
@@ -27,6 +32,7 @@ import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.ObjectStream;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.RefUpdate;
@@ -184,15 +190,20 @@ public class BareGitRepositoryService extends AbstractGitService {
      * with a fresh tree built from the source repository's latest state. The commit's author and
      * committer information is taken from the first commit of the source repository.
      * <p>
+     * The additional files are written into that same commit, replacing files of the source at the same path. A copy therefore never consists of the
+     * template's state followed by a second commit, and a copy that fails leaves neither behind.
+     * <p>
      * This method avoids cloning the source repository and directly works with its object database for performance reasons.
      *
-     * @param sourceRepoUri the URI of the source bare repository to copy from
-     * @param targetRepoUri the URI where the new bare repository will be created
-     * @param sourceBranch  the name of the branch to copy (e.g., "main" or "master")
+     * @param sourceRepoUri   the URI of the source bare repository to copy from
+     * @param targetRepoUri   the URI where the new bare repository will be created
+     * @param sourceBranch    the name of the branch to copy (e.g., "main" or "master")
+     * @param additionalFiles the files to add to the commit, by repository-relative path with forward slashes
      * @return a Repository object representing the newly created bare repository
      * @throws IOException if there is an error accessing the repositories or creating the new commit
      */
-    public Repository copyBareRepositoryWithoutHistory(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
+    public Repository copyBareRepositoryWithoutHistory(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, String sourceBranch,
+            Map<String, byte[]> additionalFiles) throws IOException {
         log.debug("copy bare repository without history from {} to {} for source branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
         // Closed once the copy is done: it holds an object database and its pack descriptors, and a copy runs on every exercise creation and every first start of
         // a participation, so leaving it open leaks one reader per copy for the lifetime of the node.
@@ -225,7 +236,7 @@ public class BareGitRepositoryService extends AbstractGitService {
                         PersonIdent personIdent = getFirstCommitPersonIdent(sourceRepo, branchHead);
 
                         // Walk the tree, insert blobs into target repo, and build a new tree
-                        ObjectId newTreeId = buildCleanTreeFromSource(sourceRepo, inserter, headTree);
+                        ObjectId newTreeId = addFilesToTree(inserter, buildCleanTreeFromSource(sourceRepo, inserter, headTree), additionalFiles);
                         log.debug("found newTreeId {} for target repository {}", newTreeId, targetRepoUri);
                         inserter.flush();
 
@@ -465,6 +476,42 @@ public class BareGitRepositoryService extends AbstractGitService {
             }
         }
         throw new IOException("First commit not found");
+    }
+
+    /**
+     * Adds files to a tree, replacing entries at the same path, and creates the missing directories on the way.
+     *
+     * @param inserter the inserter of the repository the tree lives in; objects it has not flushed yet are visible to it
+     * @param treeId   the tree to add the files to
+     * @param files    the content of each file, by repository-relative path with forward slashes
+     * @return the id of the resulting tree, which is {@code treeId} itself when there are no files to add
+     * @throws IOException if the tree cannot be read or the new objects cannot be inserted
+     */
+    private static ObjectId addFilesToTree(ObjectInserter inserter, ObjectId treeId, Map<String, byte[]> files) throws IOException {
+        if (files.isEmpty()) {
+            return treeId;
+        }
+        DirCache index = DirCache.newInCore();
+        DirCacheBuilder builder = index.builder();
+        try (ObjectReader reader = inserter.newReader()) {
+            builder.addTree(new byte[0], DirCacheEntry.STAGE_0, reader, treeId);
+        }
+        builder.finish();
+
+        DirCacheEditor editor = index.editor();
+        for (Map.Entry<String, byte[]> file : files.entrySet()) {
+            ObjectId blobId = inserter.insert(Constants.OBJ_BLOB, file.getValue());
+            editor.add(new DirCacheEditor.PathEdit(file.getKey()) {
+
+                @Override
+                public void apply(DirCacheEntry entry) {
+                    entry.setFileMode(FileMode.REGULAR_FILE);
+                    entry.setObjectId(blobId);
+                }
+            });
+        }
+        editor.finish();
+        return index.writeTree(inserter);
     }
 
     /**

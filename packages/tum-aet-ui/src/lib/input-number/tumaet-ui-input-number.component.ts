@@ -33,6 +33,12 @@ export class TumAetUiInputNumberComponent implements ControlValueAccessor {
     readonly max = input<number>();
     /** Increment / decrement applied by the stepper buttons and Arrow Up / Down keys. */
     readonly step = input(1, { transform: numberAttribute });
+    /**
+     * Makes a step from a value that is not a multiple of the step land on the next multiple in the direction of travel,
+     * like `stepUp` and `stepDown` of a native number input: with a step of `0.5`, `1.3` steps up to `1.5` and down to `1`.
+     * By default the step is added to the value as it is, so `1.3` steps up to `1.8`.
+     */
+    readonly snapToStep = input(false, { transform: booleanAttribute });
     /** Shows increment and decrement controls. */
     readonly showButtons = input(false, { transform: booleanAttribute });
     /** Text displayed before the formatted number. */
@@ -315,6 +321,18 @@ export class TumAetUiInputNumberComponent implements ControlValueAccessor {
         el.setSelectionRange(nextCaret, nextCaret);
     }
 
+    private steppedValue(base: number, delta: number): number {
+        const step = Math.abs(delta);
+        if (!this.snapToStep() || step === 0) {
+            return base + delta;
+        }
+        const gridPosition = base / step;
+        if (Math.abs(gridPosition - Math.round(gridPosition)) < 1e-9) {
+            return base + delta;
+        }
+        return (delta > 0 ? Math.ceil(gridPosition) : Math.floor(gridPosition)) * step;
+    }
+
     protected onStep(delta: number): void {
         if (this.isDisabled()) {
             return;
@@ -322,7 +340,7 @@ export class TumAetUiInputNumberComponent implements ControlValueAccessor {
         const base = this.cvaValue() ?? 0;
         // Round to the field's precision so a fractional step does not leak binary float error into the model
         // (0.2 + 0.1 is 0.30000000000000004). Harmless in integer mode, where the step is a whole number.
-        const stepped = Number((base + delta).toFixed(this.maxFractionDigits()));
+        const stepped = Number(this.steppedValue(base, delta).toFixed(this.maxFractionDigits()));
         const next = this.clamp(stepped);
         this.cvaValue.set(next);
         this.displayText.set(this.format(next));

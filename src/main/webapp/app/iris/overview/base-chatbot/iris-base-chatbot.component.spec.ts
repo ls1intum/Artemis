@@ -22,10 +22,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import {
     mockClientMessage,
-    mockClientMessageWithMemories,
     mockServerMessage,
     mockServerMessage2,
-    mockServerMessageWithMemories,
     mockServerSessionHttpResponse,
     mockServerSessionHttpResponseWithEmptyConversation,
     mockServerSessionHttpResponseWithId,
@@ -194,6 +192,37 @@ describe('IrisBaseChatbotComponent', () => {
     it('should trigger onboarding flow once gating signals are satisfied', () => {
         // The effect runs during change detection, which already ran in beforeEach.
         expect(mockOnboardingService.showOnboardingIfNeeded).toHaveBeenCalled();
+    });
+
+    describe('initial focus', () => {
+        let focusedFixture: ComponentFixture<IrisBaseChatbotComponent>;
+        let outside: HTMLButtonElement;
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+            outside = document.body.appendChild(document.createElement('button'));
+            focusedFixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            focusedFixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            document.body.appendChild(focusedFixture.nativeElement);
+            focusedFixture.detectChanges();
+        });
+
+        afterEach(() => {
+            focusedFixture.nativeElement.remove();
+            outside.remove();
+            vi.useRealTimers();
+        });
+
+        it('focuses the message input when nothing else is focused', () => {
+            vi.advanceTimersByTime(150);
+            expect(document.activeElement).toBe(focusedFixture.nativeElement.querySelector('textarea'));
+        });
+
+        it('keeps the focus on an element outside the chat, e.g. the tab that opened it', () => {
+            outside.focus();
+            vi.advanceTimersByTime(150);
+            expect(document.activeElement).toBe(outside);
+        });
     });
 
     describe('when user has not accepted LLM usage policy', () => {
@@ -743,20 +772,6 @@ describe('IrisBaseChatbotComponent', () => {
         expect(clientChats).toHaveLength(1);
         expect(myChats).toHaveLength(1);
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should render memories indicator for messages with memories', async () => {
-        const messagesWithMemories = [mockClientMessageWithMemories, mockServerMessageWithMemories];
-        vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(messagesWithMemories));
-
-        fixture = TestBed.createComponent(IrisBaseChatbotComponent);
-        component = fixture.componentInstance;
-        fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        const indicators = fixture.nativeElement.querySelectorAll('[data-testid="memories-indicator-button"]');
-        expect(indicators.length).toBeGreaterThan(0);
     });
 
     describe('persisted activity trail', () => {

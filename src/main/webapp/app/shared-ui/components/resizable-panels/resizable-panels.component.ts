@@ -1,13 +1,34 @@
-import { SPLITTER_GUTTER_SIZE, splitterPassThrough } from 'app/assessment/manage/assessment-workspace/splitter-pass-through';
-import { AfterViewInit, Component, Directive, ElementRef, OnDestroy, TemplateRef, computed, contentChildren, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+    AfterViewInit,
+    Component,
+    Directive,
+    ElementRef,
+    Injector,
+    OnDestroy,
+    TemplateRef,
+    afterNextRender,
+    computed,
+    contentChildren,
+    effect,
+    inject,
+    input,
+    signal,
+    untracked,
+} from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { SplitterModule } from 'primeng/splitter';
-import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiSplitterComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTabPanelComponent,
+    TumAetUiTabPanelsComponent,
+    TumAetUiTabsComponent,
+} from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -30,25 +51,27 @@ export class PanelDirective {
         CdkScrollable,
         FaIconComponent,
         NgTemplateOutlet,
-        SplitterModule,
+        TumAetUiSplitterComponent,
         TumAetUiTabsComponent,
         TumAetUiTabListComponent,
         TumAetUiTabComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabPanelComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
     ],
 })
 export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
-    private readonly elementRef = inject(ElementRef);
+    private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly document = inject(DOCUMENT);
+    private readonly injector = inject(Injector);
 
     /** Width in px below which the split collapses into a single tabbed panel */
     readonly collapseBelowPx = input(768);
     /** Use the viewport width for the responsive breakpoint instead of this component's content width. */
     readonly useViewportWidthForCollapse = input(false);
     /**
-     * When set, the chosen split sizes are persisted under this key (localStorage, via the splitter's native
-     * stateful mode) so they survive a reload. When omitted, sizes are only kept in memory for the session.
+     * Persists split sizes under this localStorage key across reloads. Without a key, sizes stay in memory.
      */
     readonly storageKey = input<string | undefined>(undefined);
     /**
@@ -74,14 +97,12 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     });
 
     /**
-     * Gutter size (px) of the splitter: the divider between the two panels, as wide as on every other page that divides panels
-     * (the assessment workspace, the code editor). The template binds `gutterSize` below, so the value the splitter renders and
-     * the value the flex-basis arithmetic assumes cannot drift apart.
+     * Gutter size (px) of the splitter: the grey divider between the two panels, so it matches `--spacing-divider`,
+     * the width every other divider in the shells uses. The template binds `gutterSize` below, so the value the
+     * splitter renders and the value the flex-basis arithmetic assumes cannot drift apart.
      */
-    private static readonly GUTTER_SIZE = SPLITTER_GUTTER_SIZE;
+    private static readonly GUTTER_SIZE = 6;
     protected readonly gutterSize = ResizablePanelsComponent.GUTTER_SIZE;
-    /** Looks like the splitter of the assessment pages; only the test ids are this component's own. */
-    protected readonly passThrough = splitterPassThrough('horizontal', { gutter: 'splitter-gutter', panel: 'splitter-panel' });
     /** Split (percent) used when reopening without a usable saved size. */
     private static readonly DEFAULT_SIZES = [65, 35];
 
@@ -106,18 +127,11 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Split sizes (in percent) of the two splitter panels, persisted across mode switches.
-     * Updated on (onResizeEnd); fed to the splitter via {@link panelSizesForSplitter}.
+     * Updated on resizeEnd; fed to the splitter via {@link panelSizesForSplitter}.
      */
     readonly savedSizes = signal<number[] | undefined>(undefined);
 
-    /**
-     * The array actually bound to the splitter's [panelSizes]. It MUST be a copy of {@link savedSizes}: PrimeNG's
-     * `set panelSizes` adopts the bound array by reference and then mutates it in place on every drag
-     * (primeng-splitter.mjs). Binding `savedSizes()` directly would alias the signal's array to the splitter's
-     * internal buffer, so a drag would silently corrupt the remembered split (a near-zero snap size would leak into
-     * savedSizes + localStorage and reopen/reload jammed). Spreading here hands the splitter a throwaway copy.
-     */
-    readonly panelSizesForSplitter = computed(() => [...(this.savedSizes() ?? this.defaultSizes())]);
+    readonly panelSizesForSplitter = computed(() => this.savedSizes() ?? this.defaultSizes());
 
     private resizeObserver?: ResizeObserver;
     private rightPanelCollapseChangedByUser = false;
@@ -191,13 +205,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         this.resizeObserver?.disconnect();
     }
 
-    /**
-     * Seeds {@link savedSizes} from the splitter's persisted localStorage entry on init. The splitter restores the
-     * panel widths itself (stateStorage="local"), but it never feeds them back to this component, so savedSizes
-     * stays undefined after a reload. Without this, the first collapse/expand (or a drag-to-collapse) would fall
-     * back to {@link DEFAULT_SIZES} and silently discard the user's persisted custom split. No-op when no
-     * storageKey is set or the stored value is not a usable two-number split.
-     */
+    /** Restores compatible persisted sizes, ignoring malformed, unavailable or degenerate storage. */
     private seedSavedSizesFromStorage(): void {
         const key = this.storageKey();
         if (!key) {
@@ -208,7 +216,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
             if (!raw) {
                 return;
             }
-            // Matches PrimeNG's Splitter stateStorage format: JSON.stringify(number[]).
+            // Retains the existing JSON array format.
             const parsed = parseJson<number[]>(raw);
             // Only seed a usable split: two finite numbers, a positive left, and a right above the collapse
             // threshold. A near-zero/degenerate stored value (external tampering, legacy data) is ignored so the
@@ -245,52 +253,40 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     }
 
     expandRightPanel(index?: number): void {
+        const restoreFocus = !!this.elementRef.nativeElement.querySelector('.collapsed-right-panel')?.contains(this.document.activeElement);
         if (index !== undefined) {
             this._activeRightIndex.set(index);
         }
         this.rightPanelCollapseChangedByUser = true;
         this._isRightPanelCollapsed.set(false);
         this.restoreUsableSplit();
-    }
-
-    /**
-     * Reopens the right panel with a visible split. After a drag-to-collapse the splitter keeps the near-zero
-     * position the slider was dragged to, and only re-applies its panel sizes when the `panelSizes` input changes,
-     * not when the collapse state toggles. So expanding would otherwise show the panel jammed against the edge,
-     * invisible until the user drags the slider back (a reviewer finding). Re-apply a usable split: refresh
-     * savedSizes (a new reference, so the splitter re-applies it and the persisted size matches) and also write the
-     * panel flex-basis directly as a safeguard, in case the splitter does not pick up the change on expand.
-     */
-    private restoreUsableSplit(): void {
-        const current = this.savedSizes();
-        const usable = current && (current[1] ?? 0) >= this.collapseSnapPercent() ? [...current] : [...this.defaultSizes()];
-        this.savedSizes.set(usable);
-
-        // Direct-child combinator: PrimeNG applies the root class to the <p-splitter> host and renders the panel
-        // divs as its direct children (it selects them the same way: el.children.filter(data-pc-section==="panel")).
-        // A descendant selector would also match panels of a nested PrimeNG component projected into a panel.
-        const panels = this.elementRef.nativeElement.querySelectorAll('.resizable-panels-splitter > [data-pc-section="panel"]') as NodeListOf<HTMLElement>;
-        if (panels.length >= 2) {
-            // Mirrors PrimeNG's own flexBasis formula: calc(size% - (panels-1) * gutterSize px).
-            panels[0].style.flexBasis = `calc(${usable[0]}% - ${ResizablePanelsComponent.GUTTER_SIZE}px)`;
-            panels[1].style.flexBasis = `calc(${usable[1]}% - ${ResizablePanelsComponent.GUTTER_SIZE}px)`;
+        if (restoreFocus) {
+            this.focusAfterRender('[role="tab"][aria-selected="true"]');
         }
     }
 
-    collapseRightPanel(): void {
-        this.rightPanelCollapseChangedByUser = true;
-        this._isRightPanelCollapsed.set(true);
+    private restoreUsableSplit(): void {
+        const current = this.savedSizes();
+        this.savedSizes.set(current && (current[1] ?? 0) > this.collapseSnapPercent() ? [...current] : [...this.defaultSizes()]);
     }
 
-    /**
-     * Persists the split sizes on drag end, and snaps the right panel shut when it is dragged narrower than
-     * {@link collapseSnapPercent} (drag-to-collapse, the split.js `snapOffset` behaviour). When snapping closed,
-     * the near-zero drag size is not kept as the remembered split, so reopening (or reloading) uses a usable width.
-     *
-     * The incoming `sizes` is the splitter's own internal array, which it mutates in place on the next drag, so it
-     * must be copied before being stored. The splitter also persists that raw size to localStorage (stateStorage)
-     * before this handler runs, so on a snap-collapse the stored size must be overwritten too.
-     */
+    collapseRightPanel(): void {
+        const active = this.document.activeElement;
+        const restoreFocus =
+            !!this.elementRef.nativeElement.querySelector('[data-testid="right-panel-content"]')?.contains(active) ||
+            active === this.elementRef.nativeElement.querySelector('[role="separator"]');
+        this.rightPanelCollapseChangedByUser = true;
+        this._isRightPanelCollapsed.set(true);
+        if (restoreFocus) {
+            this.focusAfterRender('[data-testid="collapsed-panel-tab"]');
+        }
+    }
+
+    private focusAfterRender(selector: string): void {
+        afterNextRender(() => this.elementRef.nativeElement.querySelector<HTMLElement>(selector)?.focus(), { injector: this.injector });
+    }
+
+    /** Remembers usable sizes and snaps narrow secondary panels shut without losing their reopen width. */
     onResizeEnd(rawSizes: (number | string)[]): void {
         const sizes = rawSizes.map(Number);
         if (sizes.some((size) => !Number.isFinite(size))) {
@@ -298,9 +294,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         }
         const rightSize = sizes[1] ?? 0;
         if (this.collapseSnapPercent() > 0 && rightSize <= this.collapseSnapPercent()) {
-            // Only reuse the remembered split if it is itself usable. Guards against a degenerate value (and, as a
-            // belt-and-suspenders to panelSizesForSplitter's copy, against any near-zero size that aliasing might
-            // have left in savedSizes), so reopening/reloading never restores a jammed sliver.
+            // A snap never replaces the usable reopen width.
             const remembered = this.savedSizes();
             const reopenSizes = remembered && (remembered[1] ?? 0) > this.collapseSnapPercent() ? [...remembered] : [...this.defaultSizes()];
             this.savedSizes.set(reopenSizes);
@@ -309,21 +303,17 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
             return;
         }
         this.savedSizes.set([...sizes]);
+        this.persistSizes(sizes);
     }
 
-    /**
-     * Mirrors the chosen sizes into the splitter's own localStorage entry. The splitter persists its raw drag
-     * sizes there (stateStorage="local") before {@link onResizeEnd} runs, so after a drag-to-collapse its storage
-     * holds the near-zero size; overwriting it keeps a reload from restoring the collapsed sliver. No-op when no
-     * storageKey is set (sizes are then only kept in memory anyway).
-     */
+    /** Retains the existing localStorage format for previously saved layouts. */
     private persistSizes(sizes: number[]): void {
         const key = this.storageKey();
         if (!key) {
             return;
         }
         try {
-            // Matches PrimeNG's Splitter stateStorage format: JSON.stringify(number[]) under the stateKey.
+            // Retains the existing JSON array format under the storage key.
             this.document.defaultView?.localStorage.setItem(key, JSON.stringify(sizes));
         } catch {
             // localStorage may be unavailable (private mode / no window); the in-memory savedSizes still applies.

@@ -1,0 +1,152 @@
+---
+id: atlas-agent
+title: Atlas Agent
+sidebar_label: Atlas Agent
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+The Atlas agent uses a language model to build the competency network of your course and to keep it current. A
+competency network consists of the [competencies](/instructor/analytics/adaptive-learning#competencies) of a course,
+the relations between them and the links from exercises and lecture units to them.
+
+Atlas offers two ways to work. The **AI Competency Assistant** is a chat that proposes competencies, relations and
+exercise links and saves nothing until you approve. Automatic competency updates work the other way round: Atlas
+reads an exercise or lecture unit, changes the competencies and their links directly and reports afterwards what it
+did.
+
+A typical course combines both:
+
+1. Build the network with the AI Competency Assistant. It is the only part of the Atlas agent that creates relations, and
+   [learning paths](/instructor/analytics/adaptive-learning#learning-paths) need relations to order the competencies.
+2. Ask your administrator to turn on automatic competency updates for the course, so that new and edited exercises and
+   lecture units are linked to the right competencies.
+3. Read the update reports from time to time, and check the **State** panel of the learning path management page for
+   missing relations.
+
+## Before you start
+
+Atlas needs a configured language model, so it is only available when your administrator has enabled the
+**Atlas AI (LLM)** module and the **Atlas Agent** feature. Automatic competency updates are also switched on per course,
+and only an administrator can do that. If you do not see the features described on this page, contact your
+administrator and point them to the [Atlas agent setup](/admin/artemis-intelligence#enable-the-atlas-agent).
+
+Only instructors of the course can use the AI Competency Assistant and **Suggest competencies**. Editors and tutors do
+not see them.
+
+## Build competencies with the AI Competency Assistant
+
+Open **Competency Management** of your course and click the round chat button (hover text "Chat with AI Assistant").
+Describe what you need, for example "Create competencies for the topics of this course" or "Link the exercises to the
+existing competencies". The assistant knows the course description, the exercises with their titles, types, points and
+dates, and the existing competencies and relations.
+
+For a simple request, the assistant answers with a preview right away. For a request that needs several steps, such as
+creating competencies and then mapping their relations and exercises, it first proposes a plan. Click
+**Approve Plan** to start it. The assistant then walks through the steps and shows a preview for each of them.
+
+Nothing is saved until you confirm a preview:
+
+| Preview                   | What you confirm                                                                                                                                               |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Competencies              | **Create** or **Create All (n)** for new competencies, **Update** or **Update All (n)** for changes to existing ones                                           |
+| Relations                 | **Map** for a new relation, **Update** for a changed one. Several relations are shown as a graph.                                                              |
+| Exercise-competency links | Select the competencies and their weight (**LOW**, **MEDIUM** or **HIGH**) and click **Save Mappings**. Your selection is saved, not the assistant's proposal. |
+
+<Callout variant={CalloutVariant.info}>
+
+    **Save Mappings** replaces all competency links of the exercise with your selection. If you uncheck a competency that
+    was already linked, the link is removed. Link it again to restore it.
+
+</Callout>
+
+If you prefer to answer in text, you can also confirm a preview with a reply such as "looks good". To abort a running
+plan, type `cancel` or `stop`.
+
+The conversation is stored per course and per instructor, so other instructors of the course do not see it. The
+assistant remembers your most recent messages, and pending plans and previews expire after a while. If a preview has
+expired, ask the assistant to show it again.
+
+## Suggest competencies for one exercise or lecture unit
+
+You can let Atlas review a single learning object:
+
+- On the detail page of a programming, text, modeling, quiz or file upload exercise, click **Suggest competencies**.
+  The button is not available for exam exercises.
+- On the lecture unit management page of a lecture, click the wand icon in the row of a lecture unit. Text units with
+  content, online units and attachment or video units with a description are supported; other units have no wand icon.
+
+Atlas reads the content of the learning object and the existing competencies of the course. It then creates, edits or
+deletes competencies and links or unlinks the learning object, without asking you first. If other changes of the course
+are already waiting for an automatic update, Atlas includes them in the same run.
+
+When the run is finished, a dialog lists every change with its **Action**, **Competency**, **Detail** and **Reason**.
+If the run stops halfway, the dialog shows the changes it already applied, so you can check them and correct any that
+are wrong. Atlas runs only once at a time per course. If another run is still in progress, wait for it to finish and
+try again.
+
+## Automatic competency updates
+
+When your administrator has turned on automatic competency updates for the course (the course setting
+**Atlas Auto-Orchestration Enabled**), Atlas reacts to changes of your course content. Creating an exercise or a
+supported lecture unit, or changing its content, puts it in a queue. Content means, for example, the title, problem
+statement, quiz questions, example solution or repositories of an exercise, or the text or description of a lecture
+unit. Changes to dates, points and similar settings, and renaming a lecture unit or replacing its file, do not count.
+
+Atlas waits until the course content has not changed for 30 minutes, so that it does not run in the middle of your
+edits. Every further change restarts the wait. It then processes everything in the queue in one run. The number of
+automatic runs per course and day is limited; changes that exceed the limit wait for the next day. Your administrator
+can change both values for the course.
+
+Atlas only processes changes made while automatic updates are on. Turning them on does not process the content that
+already exists; use **Suggest competencies** for that. To stop automatic updates, ask your administrator to turn them
+off; changes that are still waiting are then discarded.
+
+After each automatic run, course staff who have the course open in course management see a short summary. Runs that
+changed something, stopped halfway or failed also send an email to the instructors of the course that lists the
+changes (up to 50) with their reasons. You can turn this email off for yourself in the notification settings of the course, under
+**Automatic competency updates (instructors)**.
+
+## Review and correct changes
+
+Changes from **Suggest competencies** and from automatic updates are saved immediately.
+
+<Callout variant={CalloutVariant.info}>
+
+    There is no undo for Atlas changes. Correct them on the **Competency Management** page or in the competency
+    selection of the exercise or lecture unit. Atlas may also edit or unlink competencies you created yourself.
+
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+
+    Atlas may delete a competency that no longer has any linked exercises or lecture units. Deleting a competency also
+    deletes its relations and the progress of all students in it. Creating the competency again restores neither.
+
+</Callout>
+
+Competencies that Atlas creates on its own have no relations. Add them with the AI Competency Assistant or in the
+relation form on the **Competency Management** page, as described in
+[Manage Relations](/instructor/analytics/adaptive-learning#manage-relations).
+
+## What Atlas sends to the language model
+
+Atlas sends course content to the language model your administrator configured. For exercises, this includes the
+problem statement, example solutions and quiz questions with their correct answers. For lecture units, it includes
+the text or description of the unit and, if Iris has processed the lecture, matching passages of the lecture slides
+and transcripts. The AI Competency Assistant also sends the course description, your messages and the competencies,
+relations and exercise details of the course. If your instance uses a similarity service for competencies, Atlas also
+sends exercise content to it to find similar competencies.
+
+Atlas does not send student submissions, results or other personal data of students.
+
+## Troubleshooting
+
+| Problem                                                  | What to do                                                                                                                                                                                               |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The chat button on **Competency Management** is missing  | Only instructors see it, and only when the **Atlas Agent** feature is enabled. Contact your administrator.                                                                                               |
+| **Suggest competencies** or the wand icon is missing     | Only instructors see them, and only when the **Atlas Agent** feature is enabled. Exam exercises and unsupported lecture units have no button.                                                            |
+| Atlas reports that another run is in progress            | Wait until the other run of the course has finished and try again.                                                                                                                                       |
+| An edit did not trigger an automatic update              | Atlas waits 30 minutes after the last change, the daily limit may be reached, or the edit did not change content. Ask your administrator whether automatic updates are on for the course.                |
+| The assistant answers with an error after a long request | Artemis stops waiting after 30 seconds, but the assistant may still finish. Reopen the chat or check **Competency Management** before you repeat the request, and split long requests into smaller ones. |

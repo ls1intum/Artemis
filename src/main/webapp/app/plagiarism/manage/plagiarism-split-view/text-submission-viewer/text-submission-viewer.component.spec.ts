@@ -74,7 +74,7 @@ describe('Text Submission Viewer Component', () => {
         // The constructor effect reloads whenever plagiarismSubmission() changes (replaces the former ngOnChanges).
         fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
         fixture.detectChanges();
-        expect(textSubmissionService.getTextSubmission).toHaveBeenCalledWith(2);
+        expect(textSubmissionService.getTextSubmission).toHaveBeenCalledWith(2, 'owner');
         expect(comp.isProgrammingExercise()).toBe(false);
     });
 
@@ -562,5 +562,12 @@ describe('Text Submission Viewer Component', () => {
         const updatedFileContent = comp.insertMatchTokens(fileContent);
 
         expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+    it.each(['owner', 'staff-preview'] as const)('dispatches the explicit %s plagiarism purpose', (purpose) => {
+        fixture.componentRef.setInput('viewingPurpose', purpose);
+        const load = vi.spyOn(textSubmissionService, 'getTextSubmission').mockReturnValue(of({ text: 'Test' }));
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 2 } as PlagiarismSubmission);
+        fixture.detectChanges();
+        expect(load).toHaveBeenCalledWith(2, purpose);
     });
 });

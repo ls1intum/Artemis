@@ -1,7 +1,6 @@
-import { Component, ViewEncapsulation, computed, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SelectModule } from 'primeng/select';
 
 export interface FilterGroup {
     /** i18n key for the group header label. Empty string renders no header. */
@@ -13,8 +12,7 @@ export interface FilterGroup {
     selector: 'jhi-filter-dropdown',
     templateUrl: './filter-dropdown.component.html',
     styleUrls: ['./filter-dropdown.component.scss'],
-    imports: [FormsModule, ArtemisTranslatePipe, SelectModule],
-    encapsulation: ViewEncapsulation.None,
+    imports: [FormsModule, ArtemisTranslatePipe],
 })
 export class FilterDropdownComponent {
     readonly filters = input<string[]>([]);

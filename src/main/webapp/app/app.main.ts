@@ -30,9 +30,9 @@ bootstrapApplication(AppComponent, appConfig)
         tooltipConfig.disableTooltip = breakpointObserver.isMatched(Breakpoints.Handset);
     })
     .catch((err) => {
-        // This is the last-resort handler for a failed application bootstrap. It runs before AppComponent has
-        // initialized Sentry (see AppComponent.initSentry), so captureException would be a no-op here — the
-        // console is the only reliable channel to surface a startup failure instead of it vanishing silently.
-        // eslint-disable-next-line no-console, no-undef -- bootstrap failure handler; Sentry is not yet initialized
+        // This is the last-resort handler for a failed application bootstrap. The application and its error
+        // reporting are not running, so the console is the only reliable channel to surface a startup failure
+        // instead of it vanishing silently.
+        // eslint-disable-next-line no-console, no-undef -- bootstrap failure handler
         console.error('Failed to bootstrap the Angular application', err);
     });

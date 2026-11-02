@@ -166,3 +166,77 @@
         display: none;
     }
 }
+
+// Communication places its composers at the bottom. Start popups below the measured navbar so
+// a notification from another conversation cannot cover Send while the user writes a message.
+.course-notification-popup-overlay.is-communication {
+    top: calc(var(--navbar-height, 68px) + 1rem);
+    bottom: auto;
+    min-width: 0;
+    width: min(20rem, calc(100vw - 2rem));
+
+    > .notification-animation-wrapper {
+        top: 1.5rem;
+        bottom: auto;
+        width: 100%;
+        transition:
+            opacity 0.4s ease-out,
+            top 0.4s ease-in-out;
+    }
+
+    > .notification-animation-wrapper:nth-last-child(2) {
+        top: 0;
+    }
+
+    > .notification-animation-wrapper:nth-last-child(3) {
+        top: 0.5rem;
+    }
+
+    > .notification-animation-wrapper:nth-last-child(4) {
+        top: 1rem;
+    }
+
+    &:not(.is-expanded):not(.hidden) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: stretch;
+
+        > .notification-animation-wrapper {
+            position: relative;
+            grid-area: 1 / 1;
+        }
+
+        .course-notification-popup-overlay-collapse {
+            position: relative;
+            grid-area: 2 / 1;
+
+            // Relative card offsets do not grow the grid row; reserve their largest offset below it.
+            margin-top: 1.5rem;
+            bottom: auto;
+            width: 100%;
+        }
+    }
+
+    // Expanded cards retain their order and flow downwards. Scrolling the list keeps large
+    // stacks inside the viewport instead of placing older cards above the navbar.
+    &.is-expanded {
+        min-height: 0;
+        max-height: calc(100dvh - var(--navbar-height, 68px) - 2rem);
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        gap: 0.5rem;
+        overflow: hidden auto;
+
+        > .notification-animation-wrapper {
+            position: static;
+            flex-shrink: 0;
+        }
+
+        .course-notification-popup-overlay-collapse {
+            position: static;
+            width: 100%;
+            flex-shrink: 0;
+        }
+    }
+}
