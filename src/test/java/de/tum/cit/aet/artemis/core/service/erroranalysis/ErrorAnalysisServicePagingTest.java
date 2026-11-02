@@ -37,7 +37,7 @@ class ErrorAnalysisServicePagingTest {
         String[] names = { "a", "b", "c", "d", "e", "f", "g" };
         for (int i = 0; i < names.length; i++) {
             for (int times = 0; times <= i; times++) {
-                buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error " + names[i]);
+                buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error " + names[i]);
             }
             clock.advance(Duration.ofMinutes(1));
         }
@@ -111,8 +111,8 @@ class ErrorAnalysisServicePagingTest {
 
     @Test
     void sortsBySeverityAndLocationAndKeepsTheRestInAStableOrder() {
-        buffer.record(ErrorLocation.CLIENT, ErrorSeverity.CRITICAL, null, "critical client error");
-        buffer.record(ErrorLocation.CLIENT, ErrorSeverity.WARN, null, "client warning");
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.CRITICAL, null, "critical client error");
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.WARN, null, "client warning");
         service.flush();
 
         List<ErrorGroupDTO> bySeverity = service.getGroups(ErrorAnalysisSpan.RELEASE, null, ErrorSeverity.WARN, ErrorAnalysisSortField.SEVERITY, false, 0, 100).groups();
@@ -129,11 +129,11 @@ class ErrorAnalysisServicePagingTest {
     @Test
     void groupsThatAreEqualInTheSortFieldKeepTheSameOrderWheneverAsked() {
         // the same count for three groups
-        buffer.record(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "tie one");
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "tie one");
         clock.advance(Duration.ofMinutes(1));
-        buffer.record(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "tie two");
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "tie two");
         clock.advance(Duration.ofMinutes(1));
-        buffer.record(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "tie three");
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "tie three");
         service.flush();
 
         List<String> first = messages(service.getGroups(ErrorAnalysisSpan.RELEASE, ErrorLocation.CLIENT, ErrorSeverity.ERROR, ErrorAnalysisSortField.COUNT, true, 0, 10));
@@ -144,9 +144,9 @@ class ErrorAnalysisServicePagingTest {
 
     @Test
     void anAscendingSortKeepsTheMostRecentOfEqualGroupsFirstToo() {
-        buffer.record(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "tie one");
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "tie one");
         clock.advance(Duration.ofMinutes(1));
-        buffer.record(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "tie two");
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.ERROR, "10.6", "tie two");
         service.flush();
 
         assertThat(messages(service.getGroups(ErrorAnalysisSpan.RELEASE, ErrorLocation.CLIENT, ErrorSeverity.ERROR, ErrorAnalysisSortField.COUNT, false, 0, 10)))

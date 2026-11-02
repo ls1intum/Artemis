@@ -30,9 +30,9 @@ public class ErrorAnalysisAppender extends AppenderBase<ILoggingEvent> {
         try {
             ErrorSeverity severity = event.getLevel().isGreaterOrEqual(Level.ERROR) ? ErrorSeverity.ERROR : ErrorSeverity.WARN;
             // the release of this node, which the analysis knows and this appender, created by Logback before Spring, does not
-            ErrorAnalysisBuffer.shared().record(ErrorLocation.SERVER, severity, null, describe(event));
+            ErrorAnalysisBuffer.shared().count(ErrorLocation.SERVER, severity, null, describe(event));
         }
-        catch (RuntimeException exception) {
+        catch (RuntimeException _) {
             // nothing to do: the analysis must not make logging fail, and an error here could not be logged without recursion
         }
     }

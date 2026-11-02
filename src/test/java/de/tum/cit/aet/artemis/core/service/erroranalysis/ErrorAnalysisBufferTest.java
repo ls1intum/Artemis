@@ -34,9 +34,9 @@ class ErrorAnalysisBufferTest {
 
     @Test
     void groupsErrorsThatDifferOnlyInNumbersAndIdentifiers() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "ExerciseService: Could not find exercise 17");
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "ExerciseService: Could not find exercise 42");
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "ExerciseService: Could not find exercise   9");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "ExerciseService: Could not find exercise 17");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "ExerciseService: Could not find exercise 42");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "ExerciseService: Could not find exercise   9");
 
         Map<String, PendingGroup> groups = buffer.snapshot();
 
@@ -55,26 +55,26 @@ class ErrorAnalysisBufferTest {
 
     @Test
     void doesNotGroupErrorsOfDifferentLocationsOrSeverities() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "same message");
-        buffer.record(ErrorLocation.CLIENT, ErrorSeverity.ERROR, null, "same message");
-        buffer.record(ErrorLocation.CLIENT, ErrorSeverity.WARN, null, "same message");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "same message");
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.ERROR, null, "same message");
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.WARN, null, "same message");
 
         assertThat(buffer.snapshot()).hasSize(3);
     }
 
     @Test
     void doesNotCountAHint() {
-        buffer.record(ErrorLocation.CLIENT, ErrorSeverity.INFO, null, "browser without passkeys");
+        buffer.count(ErrorLocation.CLIENT, ErrorSeverity.INFO, null, "browser without passkeys");
 
         assertThat(buffer.snapshot()).isEmpty();
     }
 
     @Test
     void remembersWhenAnErrorHappenedFirstAndLastAndCountsPerHour() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
         clock.advance(Duration.ofHours(5));
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
 
         PendingGroup group = buffer.snapshot().values().iterator().next();
 
@@ -85,16 +85,16 @@ class ErrorAnalysisBufferTest {
 
     @Test
     void shortensALongMessage() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "word ".repeat(1_000));
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "word ".repeat(1_000));
 
         assertThat(buffer.snapshot().values().iterator().next().pattern).hasSize(ErrorAnalysisBuffer.MAX_MESSAGE_LENGTH);
     }
 
     @Test
     void forgetsWhatIsOlderThanTheLongestTimeSpan() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
         clock.advance(Duration.ofDays(31));
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
 
         assertThat(buffer.snapshot().values().iterator().next().perHour).containsOnlyKeys(hourOf(START) + 31 * 24);
     }
@@ -102,12 +102,12 @@ class ErrorAnalysisBufferTest {
     @Test
     void keepsAtMostTheAllowedNumberOfGroupsAndForgetsTheOneSeenLongestAgo() {
         for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS; i++) {
-            buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
+            buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
             clock.advance(Duration.ofSeconds(1));
         }
         assertThat(buffer.snapshot()).hasSize(ErrorAnalysisBuffer.MAX_GROUPS);
 
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "one more");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "one more");
 
         Map<String, PendingGroup> groups = buffer.snapshot();
         assertThat(groups).hasSize(ErrorAnalysisBuffer.MAX_GROUPS);
@@ -118,12 +118,12 @@ class ErrorAnalysisBufferTest {
     @Test
     void aClientCannotPushTheGroupsOfTheServerOut() {
         for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS; i++) {
-            buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
+            buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
             clock.advance(Duration.ofSeconds(1));
         }
 
         for (int i = 0; i < 50; i++) {
-            buffer.record(ErrorLocation.CLIENT, ErrorSeverity.ERROR, null, "client error " + (char) ('a' + i % 26) + (char) ('a' + i / 26));
+            buffer.count(ErrorLocation.CLIENT, ErrorSeverity.ERROR, null, "client error " + (char) ('a' + i % 26) + (char) ('a' + i / 26));
             clock.advance(Duration.ofSeconds(1));
         }
 
@@ -135,21 +135,21 @@ class ErrorAnalysisBufferTest {
 
     @Test
     void aVeryLongMessageIsShortenedToWhatGroupsAreComparedBy() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "word ".repeat(200_000));
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "word ".repeat(200_000));
 
         assertThat(buffer.snapshot().values()).singleElement().satisfies(group -> assertThat(group.pattern).hasSize(ErrorAnalysisBuffer.MAX_MESSAGE_LENGTH));
     }
 
     @Test
     void anEmailAddressThatTheCutOfALongMessageGoesThroughDoesNotLeaveItsStartInThePattern() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "1".repeat(1_190) + " Alice.Smith@example.org and more text");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "1".repeat(1_190) + " Alice.Smith@example.org and more text");
 
         assertThat(buffer.snapshot().values()).singleElement().satisfies(group -> assertThat(group.pattern).doesNotContain("Alice").doesNotContain("Smith"));
     }
 
     @Test
     void aMessageWithoutAnySpaceThatIsTooLongIsNotKeptAsItIs() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "x".repeat(1_000_000));
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "x".repeat(1_000_000));
 
         assertThat(buffer.snapshot().values()).singleElement().satisfies(group -> assertThat(group.pattern).isEqualTo("<too long>"));
     }
@@ -157,12 +157,12 @@ class ErrorAnalysisBufferTest {
     @Test
     void restoringAFailedFlushKeepsTheLimitWhileNewGroupsArrive() {
         for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS; i++) {
-            buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "drained " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
+            buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "drained " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
             clock.advance(Duration.ofSeconds(1));
         }
         Map<String, PendingGroup> failed = buffer.drain();
         for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS; i++) {
-            buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "arrived " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
+            buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "arrived " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
             clock.advance(Duration.ofSeconds(1));
         }
 
@@ -173,7 +173,7 @@ class ErrorAnalysisBufferTest {
 
     @Test
     void drainTakesEverythingAndStartsAgain() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
 
         Map<String, PendingGroup> drained = buffer.drain();
 
@@ -183,10 +183,10 @@ class ErrorAnalysisBufferTest {
 
     @Test
     void restoreAddsWhatWasNotWrittenToWhatWasCollectedMeanwhile() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
         Map<String, PendingGroup> drained = buffer.drain();
         clock.advance(Duration.ofMinutes(1));
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
 
         buffer.restore(drained);
 
@@ -198,7 +198,7 @@ class ErrorAnalysisBufferTest {
 
     @Test
     void aSnapshotIsACopy() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
 
         buffer.snapshot().values().iterator().next().perHour.clear();
 

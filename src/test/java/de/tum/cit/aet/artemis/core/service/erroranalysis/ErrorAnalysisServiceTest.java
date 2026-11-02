@@ -67,10 +67,10 @@ class ErrorAnalysisServiceTest {
 
     @Test
     void everyNodeAnswersWithTheErrorsOfAllNodes() {
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "Could not find exercise 17");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "Could not find exercise 17");
         clock.advance(Duration.ofHours(2));
-        bufferOfNode2.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "Could not find exercise 42");
-        bufferOfNode2.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "Could not find exercise 43");
+        bufferOfNode2.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "Could not find exercise 42");
+        bufferOfNode2.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "Could not find exercise 43");
         node1.flush();
         node2.flush();
 
@@ -86,8 +86,8 @@ class ErrorAnalysisServiceTest {
 
     @Test
     void aNodeAlsoSeesWhatItHasNotHandedToTheClusterYetButNotWhatAnotherNodeHasNotHanded() {
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "only on the first node");
-        bufferOfNode2.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "only on the second node");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "only on the first node");
+        bufferOfNode2.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "only on the second node");
 
         assertThat(errorsOfTheLastDay(node1)).extracting(ErrorGroupDTO::message).containsExactly("only on the first node");
         assertThat(errorsOfTheLastDay(node2)).extracting(ErrorGroupDTO::message).containsExactly("only on the second node");
@@ -100,7 +100,7 @@ class ErrorAnalysisServiceTest {
 
     @Test
     void doesNotCountAnErrorTwiceWhenItIsFlushedAndQueriedAgain() {
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
         node1.flush();
         node1.flush();
 
@@ -109,10 +109,10 @@ class ErrorAnalysisServiceTest {
 
     @Test
     void addsTheCountsOfFlushesThatFollowEachOther() {
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
         node1.flush();
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
-        bufferOfNode2.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        bufferOfNode2.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
         node1.flush();
         node2.flush();
 
@@ -133,7 +133,7 @@ class ErrorAnalysisServiceTest {
     @Test
     void aClientCannotPushTheErrorsOfTheServerOutOfTheCluster() {
         for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS; i++) {
-            bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
+            bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
             clock.advance(Duration.ofSeconds(1));
         }
         node1.flush();
@@ -153,7 +153,7 @@ class ErrorAnalysisServiceTest {
     @Test
     void theCountsOfAGroupThatWasForgottenAreForgottenWithIt() {
         for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS; i++) {
-            bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
+            bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
             clock.advance(Duration.ofSeconds(1));
         }
         node1.flush();
@@ -161,7 +161,7 @@ class ErrorAnalysisServiceTest {
         assertThat(counts.size()).isEqualTo(ErrorAnalysisBuffer.MAX_GROUPS);
 
         for (int i = 0; i < 20; i++) {
-            bufferOfNode2.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "one more " + (char) ('a' + i));
+            bufferOfNode2.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "one more " + (char) ('a' + i));
             clock.advance(Duration.ofSeconds(1));
             node2.flush();
         }
@@ -178,7 +178,7 @@ class ErrorAnalysisServiceTest {
                     START.toEpochMilli() + 3_600_000 + i));
         }
 
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "the next one");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "the next one");
         clock.advance(Duration.ofMinutes(1));
         node1.flush();
 
@@ -191,9 +191,9 @@ class ErrorAnalysisServiceTest {
         DistributedMap<String, Long> counts = spy(cluster.<String, Long>getExpiringMap("error-analysis-counts", Duration.ofDays(31)));
         doReturn(counts).when(unreliableCluster).getExpiringMap(eq("error-analysis-counts"), any());
         ErrorAnalysisService unreliableNode = new ErrorAnalysisService(unreliableCluster, bufferOfNode1, clock, RELEASE);
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
         unreliableNode.flush();
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
         doThrow(new IllegalStateException("cluster not reachable")).when(counts).refreshTimeToLive(anyString(), any(Duration.class));
 
         unreliableNode.flush();
@@ -213,11 +213,11 @@ class ErrorAnalysisServiceTest {
 
     @Test
     void countsOnlyTheErrorsOfTheSelectedTimeSpan() {
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "old and new");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "old and new");
         node1.flush();
         clock.advance(Duration.ofDays(3));
-        bufferOfNode2.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "old and new");
-        bufferOfNode2.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "only recent");
+        bufferOfNode2.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "old and new");
+        bufferOfNode2.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "only recent");
         node2.flush();
         clock.advance(Duration.ofHours(2));
 
@@ -229,10 +229,10 @@ class ErrorAnalysisServiceTest {
 
     @Test
     void keepsTheFirstSeenOfAGroupThatIsOlderThanTheTimeSpan() {
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
         node1.flush();
         clock.advance(Duration.ofDays(3));
-        bufferOfNode2.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        bufferOfNode2.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
         node2.flush();
 
         assertThat(errorsOfTheLastDay(node1)).singleElement().satisfies(group -> {
@@ -243,7 +243,7 @@ class ErrorAnalysisServiceTest {
 
     @Test
     void leavesOutAGroupThatDidNotHappenInTheTimeSpan() {
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "long ago");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "long ago");
         node1.flush();
         clock.advance(Duration.ofDays(10));
 
@@ -253,9 +253,9 @@ class ErrorAnalysisServiceTest {
 
     @Test
     void filtersByLocationAndByMinimumSeverity() {
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "server error");
-        bufferOfNode2.record(ErrorLocation.CLIENT, ErrorSeverity.WARN, null, "client warning");
-        bufferOfNode2.record(ErrorLocation.CLIENT, ErrorSeverity.CRITICAL, null, "client critical");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "server error");
+        bufferOfNode2.count(ErrorLocation.CLIENT, ErrorSeverity.WARN, null, "client warning");
+        bufferOfNode2.count(ErrorLocation.CLIENT, ErrorSeverity.CRITICAL, null, "client critical");
         node1.flush();
         node2.flush();
 
@@ -269,11 +269,11 @@ class ErrorAnalysisServiceTest {
 
     @Test
     void listsTheMostFrequentGroupFirstAndTheMostRecentOfEqualOnes() {
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "rare and old");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "rare and old");
         clock.advance(Duration.ofMinutes(1));
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "rare and new");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "rare and new");
         for (int i = 0; i < 3; i++) {
-            bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "frequent");
+            bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "frequent");
         }
         node1.flush();
 
@@ -283,13 +283,13 @@ class ErrorAnalysisServiceTest {
     @Test
     void keepsAtMostTheAllowedNumberOfGroupsInTheClusterAndForgetsTheOneSeenLongestAgo() {
         for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS; i++) {
-            bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
+            bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
             clock.advance(Duration.ofSeconds(1));
         }
         node1.flush();
         assertThat(errorsOfTheLastDay(node2)).hasSize(ErrorAnalysisBuffer.MAX_GROUPS);
 
-        bufferOfNode2.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "one more");
+        bufferOfNode2.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "one more");
         node2.flush();
 
         List<ErrorGroupDTO> groups = errorsOfTheLastDay(node1);
@@ -306,9 +306,9 @@ class ErrorAnalysisServiceTest {
         ErrorAnalysisService unreliableNode = new ErrorAnalysisService(unreliableCluster, bufferOfNode1, clock, RELEASE);
 
         // two hours of one group: the first hour is written, the second fails
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
         clock.advance(Duration.ofHours(1));
-        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
         doCallRealMethod().doThrow(new IllegalStateException("cluster not reachable")).doCallRealMethod().when(counts).putIfAbsent(anyString(), any(Long.class),
                 any(Duration.class));
 

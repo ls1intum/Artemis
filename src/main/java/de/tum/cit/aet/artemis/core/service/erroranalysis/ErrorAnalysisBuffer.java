@@ -76,7 +76,7 @@ public final class ErrorAnalysisBuffer {
      *                     The service decides what it counts as, because only it knows the release that is running.
      * @param message  what went wrong, the numbers and identifiers in it do not tell groups apart
      */
-    public void record(ErrorLocation location, ErrorSeverity severity, String version, String message) {
+    public void count(ErrorLocation location, ErrorSeverity severity, String version, String message) {
         if (!severity.isAtLeast(ErrorSeverity.WARN)) {
             return;
         }

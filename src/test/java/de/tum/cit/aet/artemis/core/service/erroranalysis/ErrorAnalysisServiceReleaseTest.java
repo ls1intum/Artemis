@@ -49,7 +49,7 @@ class ErrorAnalysisServiceReleaseTest {
     }
 
     private void serverError(String message) {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, message);
+        buffer.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, message);
     }
 
     @Test

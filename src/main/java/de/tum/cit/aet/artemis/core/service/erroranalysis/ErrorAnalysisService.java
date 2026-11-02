@@ -107,7 +107,7 @@ public class ErrorAnalysisService {
      * @param message  what went wrong, already cleaned of personal data
      */
     public void recordClientError(ErrorSeverity severity, String version, String message) {
-        buffer.record(ErrorLocation.CLIENT, severity, version == null ? OTHER_VERSION : effectiveVersion(version), message);
+        buffer.count(ErrorLocation.CLIENT, severity, version == null ? OTHER_VERSION : effectiveVersion(version), message);
     }
 
     /**
