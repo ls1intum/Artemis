@@ -227,6 +227,55 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.remainingNeedsReview()).toBe(20);
     });
 
+    it('should reach the undecided questions behind a reviewed first page with Load more', () => {
+        const all = Array.from({ length: 40 }, (_, index) => ({ ...question(index + 1, 9, 'Arrays'), flagged: true }));
+        const decided = new Set<number>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const questionsSpy = vi.spyOn(poolService, 'getQuestions').mockImplementation((_courseId, query) => {
+            if (!query.flagged) {
+                return of(page(questions()));
+            }
+            const ordered = [...all.filter((item) => !decided.has(item.id)), ...all.filter((item) => decided.has(item.id))].map((item) =>
+                decided.has(item.id) ? { ...item, reviewState: 'APPROVED' as const } : item,
+            );
+            return of({ ...page(ordered.slice(query.page * query.size, (query.page + 1) * query.size), 40), pendingCount: 40 - decided.size });
+        });
+        component.refresh();
+        for (const item of component.needsReviewQuestions()) {
+            decided.add(item.id);
+            vi.spyOn(poolService, 'review').mockReturnValue(of({ ...item, reviewState: 'APPROVED' }));
+            component.review({ questionId: item.id, reviewState: 'APPROVED' });
+        }
+
+        component.loadMoreNeedsReview();
+
+        expect(questionsSpy).toHaveBeenLastCalledWith(1, { flagged: true, page: 0, size: 40 });
+        expect(component.needsReviewQuestions()).toHaveLength(40);
+        expect(component.needsReviewQuestions().filter((item) => item.reviewState === 'PENDING')).toHaveLength(20);
+        expect(component.pendingInQueue()).toBe(20);
+    });
+
+    it('should recount the queue when a flagged question outside the loaded queue is reviewed', () => {
+        const queued = { ...question(1, 9, 'Arrays'), flagged: true, reviewState: 'APPROVED' as const };
+        const unloaded = { ...question(21, 9, 'Arrays'), flagged: true, reviewState: 'APPROVED' as const };
+        let pending = 0;
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const questionsSpy = vi
+            .spyOn(poolService, 'getQuestions')
+            .mockImplementation((_courseId, query) => of(query.flagged ? { ...page([queued], 2), pendingCount: pending } : page([queued, unloaded])));
+        component.refresh();
+        expect(component.allFlaggedReviewed()).toBe(true);
+        const queueCallsBefore = questionsSpy.mock.calls.filter((call) => call[1].flagged).length;
+
+        pending = 1;
+        vi.spyOn(poolService, 'review').mockReturnValue(of({ ...unloaded, reviewState: 'PENDING' }));
+        component.review({ questionId: 21, reviewState: 'PENDING' });
+
+        expect(questionsSpy.mock.calls.filter((call) => call[1].flagged)).toHaveLength(queueCallsBefore + 1);
+        expect(component.pendingInQueue()).toBe(1);
+        expect(component.allFlaggedReviewed()).toBe(false);
+    });
+
     it('should keep the newest review queue when an older queue response arrives later', () => {
         const flagged = { ...question(1, 9, 'Arrays'), flagged: true };
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });

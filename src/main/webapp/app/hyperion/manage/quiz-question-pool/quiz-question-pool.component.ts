@@ -429,31 +429,38 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
             });
     }
 
-    /** Appends the next page of the review queue. */
+    /**
+     * Loads 20 more questions of the review queue. Decisions move questions behind the undecided ones in the server's order, so the
+     * queue reloads its whole range including the next 20 instead of asking for the page after the loaded ones; past the largest
+     * range one request may load, it appends the next page.
+     */
     loadMoreNeedsReview(): void {
         const courseId = this.courseId();
         if (!courseId || this.isLoadingMoreNeedsReview() || this.remainingNeedsReview() === 0) {
             return;
         }
         this.isLoadingMoreNeedsReview.set(true);
+        const loaded = this.needsReviewQuestions().length;
+        const more =
+            loaded + PAGE_SIZE <= MAX_REFRESH_SIZE ? this.reloadNeedsReview(courseId, loaded + PAGE_SIZE) : this.appendNeedsReviewPage(courseId, Math.floor(loaded / PAGE_SIZE));
+        more.pipe(
+            finalize(() => this.isLoadingMoreNeedsReview.set(false)),
+            takeUntilDestroyed(this.destroyRef),
+        ).subscribe({ error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.errors.loadFailed') });
+    }
+
+    private appendNeedsReviewPage(courseId: number, page: number): Observable<unknown> {
         const requestedAt = ++this.requestSequence;
-        const page = Math.floor(this.needsReviewQuestions().length / PAGE_SIZE);
-        this.poolService
-            .getQuestions(courseId, { flagged: true, page, size: PAGE_SIZE })
-            .pipe(
-                finalize(() => this.isLoadingMoreNeedsReview.set(false)),
-                takeUntilDestroyed(this.destroyRef),
-            )
-            .subscribe({
-                next: (result) => {
-                    if (this.isCurrent(courseId) && requestedAt > this.appliedQueueAt) {
-                        const known = new Set(this.needsReviewQuestions().map((question) => question.id));
-                        this.needsReviewQuestions.update((current) => [...current, ...result.items.filter((question) => !known.has(question.id))]);
-                        this.needsReviewTotal.set(result.totalCount);
-                    }
-                },
-                error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.errors.loadFailed'),
-            });
+        return this.poolService.getQuestions(courseId, { flagged: true, page, size: PAGE_SIZE }).pipe(
+            tap((result) => {
+                if (this.isCurrent(courseId) && requestedAt > this.appliedQueueAt) {
+                    const known = new Set(this.needsReviewQuestions().map((question) => question.id));
+                    this.needsReviewQuestions.update((current) => [...current, ...result.items.filter((question) => !known.has(question.id))]);
+                    this.needsReviewTotal.set(result.totalCount);
+                    this.pendingInQueue.set(result.pendingCount ?? this.pendingInQueue());
+                }
+            }),
+        );
     }
 
     ngOnDestroy(): void {
@@ -734,6 +741,10 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
                             this.pendingInQueue.update((pending) =>
                                 Math.max(0, pending + (updated.reviewState === 'PENDING' ? 1 : 0) - (previous.reviewState === 'PENDING' ? 1 : 0)),
                             );
+                        } else if (!previous && updated.flagged) {
+                            this.reloadNeedsReview(courseId, this.refreshSize(this.needsReviewQuestions().length))
+                                .pipe(takeUntilDestroyed(this.destroyRef))
+                                .subscribe({ error: () => this.alertService.error('artemisApp.hyperion.quizQuestionPool.errors.loadFailed') });
                         }
                         this.questions.update((questions) => questions.map((question) => (question.id === updated.id ? updated : question)));
                         this.needsReviewQuestions.update((queue) => queue.map((question) => (question.id === updated.id ? updated : question)));
