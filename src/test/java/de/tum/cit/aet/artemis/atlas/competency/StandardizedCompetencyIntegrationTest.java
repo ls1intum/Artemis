@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompete
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.SourceDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
 
 class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest {
 
@@ -58,10 +60,47 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
     class PreAuthorize {
 
         // The catalogue of standardized competencies is static data that every authenticated user may read.
+        private void testAllReadsWhenFeatureDisabled() throws Exception {
+            request.get("/api/atlas/standardized-competencies/1", HttpStatus.FORBIDDEN, StandardizedCompetencyResultDTO.class);
+            request.get("/api/atlas/standardized-competencies/for-tree-view", HttpStatus.FORBIDDEN, KnowledgeAreaResultDTO.class);
+            request.get("/api/atlas/standardized-competencies/sources", HttpStatus.FORBIDDEN, SourceDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldAllowInstructorReads() throws Exception {
+            request.get("/api/atlas/standardized-competencies/" + standardizedCompetency.getId(), HttpStatus.OK, StandardizedCompetencyResultDTO.class);
+            request.getList("/api/atlas/standardized-competencies/for-tree-view", HttpStatus.OK, KnowledgeAreaResultDTO.class);
+            request.getList("/api/atlas/standardized-competencies/sources", HttpStatus.OK, SourceDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldDenyAllReadsWhenFeatureDisabled() throws Exception {
+            boolean previouslyEnabled = featureToggleService.isFeatureEnabled(Feature.StandardizedCompetencies);
+            featureToggleService.disableFeature(Feature.StandardizedCompetencies);
+            try {
+                this.testAllReadsWhenFeatureDisabled();
+            }
+            finally {
+                if (previouslyEnabled) {
+                    featureToggleService.enableFeature(Feature.StandardizedCompetencies);
+                }
+            }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void shouldAllowTutorReads() throws Exception {
+            request.get("/api/atlas/standardized-competencies/" + standardizedCompetency.getId(), HttpStatus.OK, StandardizedCompetencyResultDTO.class);
+            request.getList("/api/atlas/standardized-competencies/for-tree-view", HttpStatus.OK, KnowledgeAreaResultDTO.class);
+            request.getList("/api/atlas/standardized-competencies/sources", HttpStatus.OK, SourceDTO.class);
+        }
+
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldBeReadableAsStudent() throws Exception {
-            request.get("/api/atlas/standardized-competencies/" + standardizedCompetency.getId(), HttpStatus.OK, StandardizedCompetency.class);
+            request.get("/api/atlas/standardized-competencies/" + standardizedCompetency.getId(), HttpStatus.OK, StandardizedCompetencyResultDTO.class);
             request.getList("/api/atlas/standardized-competencies/for-tree-view", HttpStatus.OK, KnowledgeAreaResultDTO.class);
             request.getList("/api/atlas/standardized-competencies/sources", HttpStatus.OK, SourceDTO.class);
         }
@@ -428,6 +467,28 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
     @Nested
     class StandardizedCompetencyResource {
 
+        @Test
+        void shouldOmitNonEmptyOptionalFieldsWithoutInventingCollections() throws Exception {
+            var mapper = request.getObjectMapper();
+            var competency = mapper.readTree(mapper.writeValueAsString(new StandardizedCompetencyResultDTO(1L, "", null, null, "", null, null)));
+            var area = mapper.readTree(mapper.writeValueAsString(new KnowledgeAreaResultDTO(2L, "", "", null, null, List.of(), List.of())));
+            var citation = mapper.readTree(mapper.writeValueAsString(new SourceDTO(3L, "", null, "")));
+            assertThat(competency.properties().stream().map(Map.Entry::getKey).toList()).containsExactly("id");
+            assertThat(area.properties().stream().map(Map.Entry::getKey).toList()).containsExactly("id");
+            assertThat(citation.properties().stream().map(Map.Entry::getKey).toList()).containsExactly("id");
+            assertThat(mapper.writeValueAsString(List.of())).isEqualTo("[]");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldReturnEmptyListsForAnEmptyCatalog() throws Exception {
+            standardizedCompetencyRepository.deleteAll();
+            knowledgeAreaRepository.deleteAll();
+            sourceRepository.deleteAll();
+            assertThat(request.get("/api/atlas/standardized-competencies/for-tree-view", HttpStatus.OK, String.class)).isEqualTo("[]");
+            assertThat(request.get("/api/atlas/standardized-competencies/sources", HttpStatus.OK, String.class)).isEqualTo("[]");
+        }
+
         @Nested
         class GetStandardizedCompetency {
 
@@ -437,14 +498,24 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 var expectedCompetency = standardizedCompetencyUtilService.saveStandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "1.0.0",
                         knowledgeArea, source);
 
-                var actualCompetency = request.get("/api/atlas/standardized-competencies/" + expectedCompetency.getId(), HttpStatus.OK, StandardizedCompetency.class);
-                assertThat(actualCompetency).isEqualTo(expectedCompetency);
+                var responseJson = request.get("/api/atlas/standardized-competencies/" + expectedCompetency.getId(), HttpStatus.OK, String.class);
+                var actualCompetency = request.getObjectMapper().readValue(responseJson, StandardizedCompetencyResultDTO.class);
+                assertThat(actualCompetency.id()).isEqualTo(expectedCompetency.getId());
+                assertThat(actualCompetency.title()).isEqualTo("Competency");
+                assertThat(actualCompetency.description()).isEqualTo("description");
+                assertThat(actualCompetency.taxonomy()).isEqualTo(CompetencyTaxonomy.ANALYZE);
+                assertThat(actualCompetency.version()).isEqualTo("1.0.0");
+                assertThat(actualCompetency.knowledgeAreaId()).isEqualTo(knowledgeArea.getId());
+                assertThat(actualCompetency.sourceId()).isEqualTo(source.getId());
+                var body = request.getObjectMapper().readTree(responseJson);
+                assertThat(body.properties().stream().map(Map.Entry::getKey).toList()).containsExactlyInAnyOrder("id", "title", "description", "taxonomy", "version",
+                        "knowledgeAreaId", "sourceId");
             }
 
             @Test
             @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
             void shouldReturn404() throws Exception {
-                request.get("/api/atlas/standardized-competencies/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, StandardizedCompetency.class);
+                request.get("/api/atlas/standardized-competencies/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, StandardizedCompetencyResultDTO.class);
             }
         }
 
@@ -470,6 +541,14 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 assertThat(actualKnowledgeAreaA).isEqualTo(KnowledgeAreaResultDTO.of(knowledgeAreaA));
                 assertThat(actualKnowledgeAreaB).isEqualTo(KnowledgeAreaResultDTO.of(knowledgeAreaB));
                 assertThat(actualKnowledgeAreaB.competencies().getFirst()).isEqualTo(StandardizedCompetencyResultDTO.of(competency1));
+                assertThat(knowledgeAreaTree).extracting(KnowledgeAreaResultDTO::id).containsExactly(knowledgeAreaA.getId(), knowledgeArea.getId());
+                assertThat(actualKnowledgeAreaA.parentId()).isNull();
+                assertThat(actualKnowledgeAreaA.competencies()).isNull();
+                assertThat(actualKnowledgeAreaA.children()).hasSize(1);
+                assertThat(actualKnowledgeAreaB.children()).isNull();
+                assertThat(actualKnowledgeAreaB.parentId()).isEqualTo(knowledgeAreaA.getId());
+                assertThat(actualKnowledgeAreaB.competencies()).hasSize(1);
+                assertThat(actualKnowledgeAreaB.competencies().getFirst().sourceId()).isNull();
             }
         }
 
@@ -480,13 +559,24 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
             void shouldReturnSources() throws Exception {
                 var source1 = new Source("title", "author", "http://localhost:1");
-                var source2 = new Source("title2", "author2", "http://localhost:2");
-                var sources = sourceRepository.saveAll(List.of(source1, source2));
-                var expectedSources = sources.stream().map(SourceDTO::of).toList();
+                var source2 = new Source("title2", "author2", null);
+                var source3 = new Source("title3", "author3", "");
+                sourceRepository.saveAll(List.of(source1, source2, source3));
+                var expectedSources = List.of(SourceDTO.of(source), SourceDTO.of(source1), new SourceDTO(source2.getId(), "title2", "author2", null),
+                        new SourceDTO(source3.getId(), "title3", "author3", null));
 
                 var actualSources = request.getList("/api/atlas/standardized-competencies/sources", HttpStatus.OK, SourceDTO.class);
 
-                assertThat(actualSources).containsAll(expectedSources);
+                assertThat(actualSources).containsExactlyInAnyOrderElementsOf(expectedSources);
+                assertThat(actualSources).filteredOn(dto -> dto.id() == source2.getId()).singleElement().satisfies(dto -> assertThat(dto.uri()).isNull());
+                assertThat(actualSources).filteredOn(dto -> dto.id() == source3.getId()).singleElement().satisfies(dto -> assertThat(dto.uri()).isNull());
+                var body = request.getObjectMapper().readTree(request.get("/api/atlas/standardized-competencies/sources", HttpStatus.OK, String.class));
+                body.forEach(citation -> {
+                    assertThat(citation.has("competencies")).isFalse();
+                    if (citation.get("id").asLong() == source2.getId() || citation.get("id").asLong() == source3.getId()) {
+                        assertThat(citation.has("uri")).isFalse();
+                    }
+                });
             }
         }
     }

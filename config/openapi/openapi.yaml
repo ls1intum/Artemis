@@ -247,6 +247,21 @@ paths:
             application/json:
               schema: {type: object}
         '200': {description: OK}
+  /api/quiz/quiz-exercises/{quizExerciseId}/end-now:
+    put:
+      tags: [quiz-exercise]
+      operationId: endQuizExercise
+      parameters:
+      - name: quizExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizExerciseDates'}
   /api/quiz/quiz-exercises/{quizExerciseId}/add-batch:
     put:
       tags: [quiz-exercise-batch]
@@ -1338,7 +1353,7 @@ paths:
         '200':
           description: OK
           content:
-            application/json:
+            text/plain:
               schema: {type: string}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/unregistered-students:
     get:
@@ -1432,6 +1447,40 @@ paths:
                 type: array
                 items: {type: string}
                 uniqueItems: true
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/for-tutor:
+    get:
+      tags: [tutorial-group]
+      operationId: getTutorialGroupsForCourseForTutor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TutorialGroupSummary'}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/for-instructor:
+    get:
+      tags: [tutorial-group]
+      operationId: getTutorialGroupsForCourseForInstructor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TutorialGroupSummary'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/export/json:
     get:
       tags: [tutorial-group]
@@ -1764,6 +1813,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizExerciseForStudentResponse'}
+  /api/quiz/quiz-exercises/{quizExerciseId}/for-exam:
+    get:
+      tags: [quiz-exercise-retrieval]
+      operationId: getQuizExerciseForExam
+      parameters:
+      - name: quizExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizExerciseDetails'}
   /api/quiz/quiz-exercises/{exerciseId}/participations/{participationId}/result:
     get:
       tags: [quiz-participation]
@@ -2182,6 +2246,45 @@ paths:
           content:
             text/calendar:
               schema: {type: string}
+  /api/atlas/standardized-competencies/{competencyId}:
+    get:
+      tags: [standardized-competency]
+      operationId: getStandardizedCompetency
+      parameters:
+      - name: competencyId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StandardizedCompetencyResult'}
+  /api/atlas/standardized-competencies/sources:
+    get:
+      tags: [standardized-competency]
+      operationId: getSources
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Source'}
+  /api/atlas/standardized-competencies/for-tree-view:
+    get:
+      tags: [standardized-competency]
+      operationId: getAllForTreeView
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/KnowledgeAreaResult'}
   /api/aiworker/admin/workers:
     get:
       tags: [admin-ai-worker]
@@ -3140,6 +3243,14 @@ components:
       properties:
         title: {type: string}
         course: {$ref: '#/components/schemas/QuizSearchCourse'}
+    TutorialGroupConfigurationFreePeriod:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        start: {type: string}
+        end: {type: string}
+        reason: {type: string}
+      required: [end, start]
     QuizQuestionTraining:
       type: object
       properties:
@@ -3289,6 +3400,7 @@ components:
       properties:
         date: {type: string, format: date}
         count: {type: integer, format: int64}
+      required: [count, date]
     QuizExerciseWithQuestionsForStudent:
       required: [quizQuestionsType]
       type: object
@@ -3579,6 +3691,10 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    CourseWithId:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     MissingEntity:
       type: object
       properties:
@@ -3774,6 +3890,21 @@ components:
         points: {type: number, format: double}
         ratedCounter: {type: integer, format: int32}
         unRatedCounter: {type: integer, format: int32}
+    KnowledgeAreaResult:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortTitle: {type: string}
+        description: {type: string}
+        parentId: {type: integer, format: int64}
+        children:
+          type: array
+          items: {$ref: '#/components/schemas/KnowledgeAreaResult'}
+        competencies:
+          type: array
+          items: {$ref: '#/components/schemas/StandardizedCompetencyResult'}
+      required: [id]
     ExerciseGenerationCapabilities:
       type: object
       properties:
@@ -3884,6 +4015,7 @@ components:
         testRunParticipationsExist: {type: boolean}
         isEditable: {type: boolean}
         canBeEvaluated: {type: boolean}
+        exerciseGroup: {$ref: '#/components/schemas/ExerciseGroupWithIdAndExam'}
     TutorialGroupSummary:
       type: object
       properties:
@@ -4566,7 +4698,7 @@ components:
         usePublicTutorialGroupChannels: {type: boolean}
         tutorialGroupFreePeriods:
           type: array
-          items: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
+          items: {$ref: '#/components/schemas/TutorialGroupConfigurationFreePeriod'}
           uniqueItems: true
       required: [tutorialPeriodEndInclusive, tutorialPeriodStartInclusive, usePublicTutorialGroupChannels,
         useTutorialGroupChannels]
@@ -4823,6 +4955,11 @@ components:
           items: {$ref: '#/components/schemas/QuestionStatistics'}
         participantsRated: {type: integer, format: int32}
         participantsUnrated: {type: integer, format: int32}
+    ExamWithIdAndCourse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        course: {$ref: '#/components/schemas/CourseWithId'}
     QuizPointStatistic:
       type: object
       properties:
@@ -5250,6 +5387,11 @@ components:
             (1-indexed)}
         endLine: {type: integer, format: int32, description: 'Ending line number (1-indexed,
             inclusive)'}
+    ExerciseGroupWithIdAndExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exam: {$ref: '#/components/schemas/ExamWithIdAndCourse'}
     SubmittedAnswerBeforeEvaluation:
       discriminator:
         propertyName: type
@@ -5376,6 +5518,14 @@ components:
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
         exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
+    Source:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        author: {type: string}
+        uri: {type: string}
+      required: [id]
     VariantPlacement:
       type: object
       properties:
@@ -5441,6 +5591,7 @@ components:
       properties:
         freePeriodId: {type: integer, format: int64}
         count: {type: integer, format: int64}
+      required: [count, freePeriodId]
     ShortAnswerSubmittedTextFromLiveClient:
       type: object
       properties:
@@ -5490,6 +5641,19 @@ components:
         text: {type: string, maxLength: 255, minLength: 0}
         spotId: {type: integer, format: int64}
       required: [spotId, text]
+    StandardizedCompetencyResult:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        taxonomy:
+          type: string
+          enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
+        version: {type: string}
+        knowledgeAreaId: {type: integer, format: int64}
+        sourceId: {type: integer, format: int64}
+      required: [id]
     QualityIssue:
       type: object
       description: A quality issue found in the problem statement
