@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Lazy;
@@ -86,8 +85,7 @@ public class QuizExerciseWithSubmissionsExportService {
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String zipFileName = quizExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName() + "-" + quizExercise.getTitle() + "-" + quizExercise.getId() + "-"
                 + timestamp + ".zip";
-        // createTemporaryDirectory never returns null, which static analysis cannot infer through its deletion scheduling
-        Path exportDir = Objects.requireNonNull(fileService.createTemporaryDirectory(FilePathConverter.getTempFilePath(), "exercise-export-", 5));
+        Path exportDir = fileService.createTemporaryDirectory(FilePathConverter.getTempFilePath(), "exercise-export-", 5);
         List<String> exportErrors = new ArrayList<>();
         List<Path> pathsToBeZipped = exportExerciseDefinition(quizExercise, exportDir, exportErrors);
         // A missing image or details file would make the import fail, so the instructor gets an error instead of the file.

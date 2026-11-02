@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOExceptionList;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -266,7 +267,7 @@ public class FileService implements DisposableBean {
      * @return the newly created directory
      * @throws IOException if the directory could not be created
      */
-    public Path createTemporaryDirectory(Path parent, String prefix, long deleteDelayInMinutes) throws IOException {
+    public @NonNull Path createTemporaryDirectory(Path parent, String prefix, long deleteDelayInMinutes) throws IOException {
         if (tempFileUtilService == null) {
             throw new IllegalStateException("Cannot create a temporary directory: this FileService was constructed directly instead of being injected");
         }
