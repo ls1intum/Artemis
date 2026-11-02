@@ -695,8 +695,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 // suggestion's `text` is always a title (Athena's own, prefixed with its accepted/adapted state) once
                 // that prefix is stripped.
                 const isTextTitle = isSuggestion || Feedback.isTextTitle(feedback);
-                // A saved default title is left out, so Apollon shows the default for the current points as its placeholder.
-                const title = isSuggestion ? this.stripSuggestionPrefix(feedback.text ?? '') : isTextTitle && !this.isDefaultTitle(feedback.text ?? '') ? feedback.text : undefined;
+                let title: string | undefined;
+                if (isSuggestion) {
+                    title = this.stripSuggestionPrefix(feedback.text ?? '');
+                } else if (isTextTitle && !this.isDefaultTitle(feedback.text ?? '')) {
+                    // A saved default title is left out, so Apollon shows the default for the current points as its placeholder.
+                    title = feedback.text;
+                }
                 const feedbackContent = isTextTitle ? (feedback.detailText ?? '') : (feedback.text ?? '');
                 this.shownInApollon.set(feedback.referenceId!, feedbackContent);
                 if (isSuggestion) {
