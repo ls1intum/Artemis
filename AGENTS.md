@@ -43,6 +43,9 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - Jackson 3 uses `tools.jackson`; annotations remain `com.fasterxml.jackson.annotation`. Inject
   the configured `JsonMapper` in Spring beans; see the [REST API guideline](documentation/docs/developer/guidelines/rest-api.mdx)
   for other contexts.
+- Read and write JSON through records, never through the Jackson tree model (`JsonNode`, `ObjectNode`,
+  `ArrayNode`, `readTree`, `valueToTree`, `createObjectNode`) in production code, without exceptions.
+  [REST API guideline](documentation/docs/developer/guidelines/rest-api.mdx#use-records-not-the-tree-model)
 - Every websocket destination is a declared topic: a `WebsocketTopic` with its `WebsocketTopicAccess`
   rule, or a `WebsocketUserTopic`, as a constant of the module's `web/<Module>WebsocketTopics` class.
   Send only through `WebsocketMessagingService` with `TOPIC.at(...)`. Clients send only to `/app/...`

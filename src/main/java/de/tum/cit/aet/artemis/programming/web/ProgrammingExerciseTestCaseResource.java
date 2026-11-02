@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -32,8 +35,10 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseRespons
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDraftGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
+import io.swagger.v3.oas.annotations.Operation;
 
 /**
  * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are no endpoints available for POST,
@@ -62,10 +67,13 @@ public class ProgrammingExerciseTestCaseResource {
 
     private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
+    private final ProgrammingExerciseDraftGuardService programmingExerciseDraftGuard;
+
     public ProgrammingExerciseTestCaseResource(ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
             ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, ExerciseVersionService exerciseVersionService,
-            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard, ProgrammingExerciseDraftGuardService programmingExerciseDraftGuard) {
+        this.programmingExerciseDraftGuard = programmingExerciseDraftGuard;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
         this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
@@ -83,8 +91,16 @@ public class ProgrammingExerciseTestCaseResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/test-cases")
     @EnforceAtLeastTutorInExercise
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
+    @Operation(summary = "List the test cases of a programming exercise", description = """
+            Returns the test cases of a programming exercise with their ids, weights, bonus settings and visibility. Use the ids to \
+            change weights and visibility. Test cases exist once the build has run against the test repository. Exercises of exams \
+            cannot be read with a personal access token.""")
     public ResponseEntity<Set<ProgrammingExerciseTestCaseResponseDTO>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
+        if (AgentDraftRules.isTokenRequest()) {
+            AgentDraftRules.rejectExamExercise(programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exerciseId));
+        }
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId);
         Set<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
         return ResponseEntity.ok(testCaseDTOs);
@@ -101,13 +117,20 @@ public class ProgrammingExerciseTestCaseResource {
      */
     @PatchMapping("programming-exercises/{exerciseId}/update-test-cases")
     @EnforceAtLeastEditorInExercise
+    @AllowedScopes(AgentScope.PROGRAMMING_DRAFT)
+    @Operation(summary = "Set the weights and visibility of test cases", description = """
+            Changes weight, bonusMultiplier, bonusPoints and visibility of existing test cases, identified by id. Test cases themselves \
+            come from the tests in the test repository when the build runs; they cannot be created here. A request with a personal \
+            access token can change only an exercise that students cannot see yet and that has no student participations.""")
     public ResponseEntity<Set<ProgrammingExerciseTestCaseResponseDTO>> updateTestCases(@PathVariable Long exerciseId,
             @RequestBody Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) {
         log.debug("REST request to update the weights {} of the exercise {}", testCaseProgrammingExerciseTestCaseDTOS, exerciseId);
         var authorizationExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
+        programmingExerciseDraftGuard.requireDraftForTokenRequest(authorizationExercise);
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId) : authorizationExercise;
+            programmingExerciseDraftGuard.requireDraftForTokenRequest(programmingExercise);
             Set<ProgrammingExerciseTestCase> updatedTests = programmingExerciseTestCaseService.update(exerciseId, testCaseProgrammingExerciseTestCaseDTOS);
             // A test case is now marked as AFTER_DUE_DATE: a scheduled score update might be needed.
             if (updatedTests.stream().anyMatch(ProgrammingExerciseTestCase::isAfterDueDate)) {

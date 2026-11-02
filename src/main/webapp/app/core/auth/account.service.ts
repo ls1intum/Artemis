@@ -7,7 +7,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
@@ -153,9 +152,6 @@ export class AccountService implements IAccountService {
                     if (user) {
                         this.userIdentity.set(user);
 
-                        // improved error tracking in sentry
-                        setUser({ username: user.login! });
-
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting
                         const langKey = this.userIdentity()?.langKey || this.sessionStorageService.retrieve<string>('locale');
@@ -274,6 +270,14 @@ export class AccountService implements IAccountService {
      */
     hasEditorAccess(): boolean {
         return this.hasAnyAuthorityDirect([Authority.INSTRUCTOR, Authority.EDITOR]) || this.hasAdministratorAccess();
+    }
+
+    /**
+     * Whether the user may create personal access tokens for agent access, as the server decides: an editor or instructor of at least one course who is not
+     * an administrator.
+     */
+    mayCreateAgentTokens(): boolean {
+        return !this.isAdmin() && this.hasAnyAuthorityDirect([Authority.INSTRUCTOR, Authority.EDITOR]);
     }
 
     /**

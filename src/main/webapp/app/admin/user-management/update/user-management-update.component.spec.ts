@@ -13,7 +13,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Title } from '@angular/platform-browser';
-import * as Sentry from '@sentry/angular';
+import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
 
 import { UserManagementUpdateComponent } from 'app/admin/user-management/update/user-management-update.component';
 import { User } from 'app/account/user/user.model';
@@ -35,9 +35,9 @@ import { PROFILE_JENKINS } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 
-// Mock Sentry before tests run to prevent actual error reporting
-vi.mock('@sentry/angular', async () => {
-    const actual = await vi.importActual('@sentry/angular');
+// Mock the error reporter before tests run to prevent actual error reporting
+vi.mock('app/core/error-reporting/capture-exception', async () => {
+    const actual = await vi.importActual('app/core/error-reporting/capture-exception');
     return {
         ...actual,
         captureException: vi.fn(),
@@ -189,7 +189,7 @@ describe('UserManagementUpdateComponent', () => {
             const updateTitleSpy = vi.spyOn(languageHelper, 'updateTitle');
             const getTranslationSpy = vi.spyOn(translateService, 'get').mockReturnValue(of(undefined));
             const setTitleSpy = vi.spyOn(titleService, 'setTitle');
-            const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
+            const captureExceptionSpy = vi.spyOn(ErrorReporting, 'captureException');
 
             translateService.use('en');
 

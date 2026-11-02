@@ -26,7 +26,7 @@ import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators
 import { RemoveAuxiliaryRepositoryButtonComponent } from '../../remove-auxiliary-repository-button.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { AddAuxiliaryRepositoryButtonComponent } from '../../add-auxiliary-repository-button.component';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { ProgrammingExerciseDifficultyComponent } from '../difficulty/programming-exercise-difficulty.component';
 import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
@@ -53,7 +53,7 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
         RemoveAuxiliaryRepositoryButtonComponent,
         ButtonComponent,
         AddAuxiliaryRepositoryButtonComponent,
-        CategorySelectorPrimengComponent,
+        CategorySelectorComponent,
         ProgrammingExerciseDifficultyComponent,
         KeyValuePipe,
         RemoveKeysPipe,

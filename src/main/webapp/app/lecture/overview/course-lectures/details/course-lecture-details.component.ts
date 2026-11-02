@@ -1,3 +1,5 @@
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
@@ -59,6 +61,9 @@ export interface LectureUnitCompletionEvent {
     templateUrl: './course-lecture-details.component.html',
     styleUrls: ['../../../../course/overview/course-overview/course-overview.scss'],
     imports: [
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiProgressSpinnerComponent,
         TranslateDirective,
         ExerciseUnitComponent,
         AttachmentVideoUnitComponent,

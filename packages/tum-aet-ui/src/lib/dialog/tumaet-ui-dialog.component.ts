@@ -95,6 +95,8 @@ export class TumAetUiDialogComponent implements OnDestroy {
     readonly closeButtonAriaLabel = input<string>();
     readonly role = input<DialogRole>('dialog');
     readonly ariaDescribedBy = input<string>();
+    /** Initial focus target. Dialog focus keeps long content at its starting scroll position. */
+    readonly autoFocus = input<'dialog' | 'first-tabbable'>('first-tabbable');
 
     readonly shown = output<void>();
     readonly hidden = output<void>();
@@ -151,6 +153,7 @@ export class TumAetUiDialogComponent implements OnDestroy {
             ariaLabelledBy: labelledBy ?? null,
             ariaDescribedBy: this.ariaDescribedBy() ?? null,
             restoreFocus: true,
+            autoFocus: this.autoFocus(),
         });
         this.dialogRef = ref;
         lockPageScroll();

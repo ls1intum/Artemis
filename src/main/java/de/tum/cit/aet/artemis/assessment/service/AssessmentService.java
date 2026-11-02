@@ -132,6 +132,9 @@ public class AssessmentService {
      * @return the updated Result
      */
     public Result updateAssessmentAfterComplaint(Result originalResult, Exercise exercise, AssessmentUpdateBaseDTO assessmentUpdate) {
+        if (originalResult == null) {
+            throw new BadRequestAlertException("The result you are referring to does not exist", "AssessmentUpdate", "resultnotfound");
+        }
         // a complaint update may retain the existing feedback, in which case there is nothing new to validate
         if (assessmentUpdate.feedbacks() != null) {
             resultService.validateGradingInstructions(assessmentUpdate.feedbacks(), exercise.getId());

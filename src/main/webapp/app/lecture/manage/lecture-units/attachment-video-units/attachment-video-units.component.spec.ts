@@ -15,9 +15,8 @@ import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/ser
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockAttachmentVideoUnitsService } from 'test/helpers/mocks/service/mock-attachment-video-units.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
@@ -75,7 +74,6 @@ describe('AttachmentVideoUnitsComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 FormsModule,
-                MockModule(NgbTooltipModule),
                 FaIconComponent,
                 AttachmentVideoUnitsComponent,
                 LectureUnitLayoutStubComponent,

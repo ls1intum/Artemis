@@ -42,6 +42,9 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentDraftRules;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -72,6 +75,8 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Conditional(LectureEnabled.class)
 @Lazy
@@ -266,10 +271,25 @@ public class AttachmentVideoUnitResource {
      */
     @PostMapping(value = "lectures/{lectureId}/attachment-video-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLecture
+    @AllowedScopes(AgentScope.LECTURES_WRITE)
+    @Operation(summary = "Add a unit with slides or a video to a lecture", description = """
+            Adds an attachment video unit to a lecture. Send multipart/form-data with the part attachmentVideoUnit (JSON: name, \
+            releaseDate, description, videoSource), and for slides the part attachment (JSON: name, attachmentType FILE, \
+            releaseDate) together with the part file (the PDF). A request with a personal access token must set releaseDate to a \
+            time in the future, on the unit and on the attachment. The material becomes visible automatically when its release dates \
+            have passed, so the instructor must review it before those dates and can move them in the Artemis web interface. The unit is \
+            returned at once; splitting the PDF into slides and indexing it for Iris continue in the background, and their progress \
+            is reported by the lecture unit status endpoint.""")
+    @ApiResponse(responseCode = "201", description = "The unit was created as a draft.")
     public ResponseEntity<AttachmentVideoUnitDTO> createAttachmentVideoUnit(@PathVariable Long lectureId,
             @Valid @RequestPart("attachmentVideoUnit") AttachmentVideoUnitDTO attachmentVideoUnitDTO, @RequestPart(required = false) AttachmentDTO attachment,
             @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename) throws URISyntaxException {
         log.debug("REST request to create AttachmentVideoUnit {} with Attachment {}", attachmentVideoUnitDTO, attachment);
+        AgentDraftRules.requireDraftDatesForCreate(attachmentVideoUnitDTO.releaseDate(), null);
+        if (attachment != null) {
+            // The attachment has a release date of its own, so a hidden unit must not hold a file that is already visible.
+            AgentDraftRules.requireDraftDatesForCreate(attachment.releaseDate(), null);
+        }
         if (attachmentVideoUnitDTO.id() != null) {
             throw new BadRequestAlertException("A new attachment video unit cannot already have an ID", ENTITY_NAME, "idexists");
         }

@@ -69,6 +69,8 @@ public class LoggingAspect {
      * approval URL, plus repository methods whose arguments contain approval identifiers.</li>
      * <li>{@code AttachmentVideoUnitPlaylistResource} returns a signed TUM Live playlist as a plain string. The value objects that carry such a playlist
      * through other beans ({@code ResolvedVideo}, {@code TumLivePlaylistLookup} and the Iris lecture DTOs) redact it in {@code toString()} instead.</li>
+     * <li>{@code PersonalAccessTokenService} receives the secret of a personal access token to authenticate it and returns it when a token is created, and
+     * {@code PersonalAccessTokenResource} returns it in the response.</li>
      * <li>{@code PyrisCallbackTokenService} issues the token Pyris authenticates its callbacks with and receives the
      * presented one to verify, so it appears as both a return value and an argument.</li>
      * </ul>
@@ -77,6 +79,7 @@ public class LoggingAspect {
             + " && !within(de.tum.cit.aet.artemis.videosource.service.Gocast*)" + " && !within(de.tum.cit.aet.artemis.videosource.repository.Gocast*)"
             + " && !within(de.tum.cit.aet.artemis.videosource.web.Gocast*)" + " && !within(de.tum.cit.aet.artemis.videosource.web.open.Gocast*)"
             + " && !within(de.tum.cit.aet.artemis.lecture.web.AttachmentVideoUnitPlaylistResource)"
+            + " && !within(de.tum.cit.aet.artemis.account.service.PersonalAccessTokenService)" + " && !within(de.tum.cit.aet.artemis.account.web.PersonalAccessTokenResource)"
             + " && !within(de.tum.cit.aet.artemis.iris.service.pyris.PyrisCallbackTokenService)")
     public void notACredentialHandlingBean() {
         // Method is empty as this is just a Pointcut, the implementations are in the advices.

@@ -30,7 +30,7 @@ import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.m
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
@@ -38,7 +38,7 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-vi.mock('@sentry/angular', () => ({
+vi.mock('app/core/error-reporting/capture-exception', () => ({
     captureException: vi.fn(),
 }));
 

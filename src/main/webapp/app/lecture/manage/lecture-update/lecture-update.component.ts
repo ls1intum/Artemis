@@ -6,7 +6,7 @@ import { Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleCheck, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal, onError } from 'app/foundation/util/global.utils';
@@ -31,6 +31,7 @@ import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUns
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import {
     TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
     TumAetUiButtonGroupComponent,
     TumAetUiCheckboxComponent,
     TumAetUiConfirmDialogComponent,
@@ -74,6 +75,7 @@ interface PdfUploadConfirmationText {
     // Enter is handled on the host: the sections it saves are no controls themselves, so they take no key handlers.
     host: { '(window:beforeunload)': 'onBeforeUnload($event)', '(keydown.enter)': 'onEnterInDetails($event)' },
     imports: [
+        TumAetUiButtonDirective,
         FormsModule,
         TranslateDirective,
         DocumentationButtonComponent,

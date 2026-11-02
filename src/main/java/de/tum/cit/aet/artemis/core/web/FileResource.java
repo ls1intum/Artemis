@@ -726,7 +726,8 @@ public class FileResource {
         Path actualPath = path.resolve(filename);
         long lastModified = FileHttpRequestValidator.getLastModified(actualPath);
         if (lastModified >= 0 && FileHttpRequestValidator.isNotModified(requestHeaders, lastModified)) {
-            var response = ResponseEntity.status(HttpStatus.NOT_MODIFIED).lastModified(lastModified);
+            // The container sends no content type with a 304, but the security headers are chosen by it, and browsers copy them onto the cached file
+            var response = ResponseEntity.status(HttpStatus.NOT_MODIFIED).lastModified(lastModified).contentType(fileDownloadService.getMediaTypeFromFilename(filename));
             Optional<CacheControl> cacheControl = cachePolicy.cacheControl();
             if (cacheControl.isPresent()) {
                 response = response.cacheControl(cacheControl.orElseThrow()).varyBy(HttpHeaders.AUTHORIZATION, HttpHeaders.COOKIE);

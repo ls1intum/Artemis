@@ -62,11 +62,11 @@
                         </h4>
 
                         @if (badge(); as badge) {
-                            <p-tag
+                            <tumaet-ui-tag
                                 id="result-score-badge"
                                 [severity]="badge.severity"
                                 [value]="badge.text | artemisTranslate | uppercase"
-                                [pTooltip]="badge.tooltip | artemisTranslate"
+                                [tumAetUiTooltip]="badge.tooltip | artemisTranslate"
                             />
                         }
                     </div>
@@ -75,7 +75,7 @@
                     @if (exerciseType() === ExerciseType.PROGRAMMING && result().submission) {
                         <p>
                             {{ 'artemisApp.feedback.modal.submitted' | artemisTranslate }}
-                            <span [pTooltip]="result().submission!.submissionDate | artemisDate">
+                            <span [tumAetUiTooltip]="result().submission!.submissionDate | artemisDate">
                                 {{ result().submission!.submissionDate | artemisTimeAgo }}
                             </span>
                             - {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
@@ -113,7 +113,7 @@
             @if (!loadingFailed() && resultIsPreliminary(result(), participation(), resolvedExercise())) {
                 <div>
                     <div class="flex justify-end m-1">
-                        <p-tag severity="warn" [value]="'artemisApp.result.preliminary' | artemisTranslate | uppercase" />
+                        <tumaet-ui-tag severity="warn" [value]="'artemisApp.result.preliminary' | artemisTranslate | uppercase" />
                     </div>
                     @if (result()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
                         <p jhiTranslate="artemisApp.result.preliminaryTooltipAthena"></p>
@@ -188,6 +188,8 @@
 </div>
 <div class="flex justify-end min-w-full">
     @if (dialogRef) {
-        <p-button id="feedback-close" severity="secondary" [outlined]="true" size="small" (onClick)="dialogRef.close()" [label]="'entity.action.close' | artemisTranslate" />
+        <tumaet-ui-button id="feedback-close" severity="secondary" variant="outlined" size="small" (clicked)="dialogRef.close()">{{
+            'entity.action.close' | artemisTranslate
+        }}</tumaet-ui-button>
     }
 </div>

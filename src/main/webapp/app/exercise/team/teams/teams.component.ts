@@ -15,7 +15,7 @@ import { TeamUpdateButtonComponent } from '../team-update-dialog/team-update-but
 import { TeamDeleteButtonComponent } from '../team-update-dialog/team-delete-button.component';
 import { TeamStudentsListComponent } from '../team-participate/team-students-list.component';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
-import { SelectButton } from 'primeng/selectbutton';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -40,7 +40,7 @@ type TeamRow = Team & { studentsSearchText: string };
         TeamStudentsListComponent,
         TeamDeleteButtonComponent,
         TableViewComponent,
-        SelectButton,
+        TumAetUiSelectButtonComponent,
         ArtemisTranslatePipe,
     ],
 })
@@ -97,7 +97,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
         { field: 'id', headerKey: 'global.field.id', sort: true, width: '4rem', templateRef: this.idTemplate() },
         { field: 'name', headerKey: 'artemisApp.team.name.label', sort: true, width: '8rem' },
         { field: 'shortName', headerKey: 'artemisApp.team.shortName.label', sort: true, width: '8rem', templateRef: this.shortNameTemplate() },
-        { field: 'owner.name', headerKey: 'artemisApp.team.tutor', sort: true, width: '10rem', templateRef: this.ownerTemplate() },
+        { field: 'owner.name', headerKey: 'artemisApp.team.tutor', sort: true, width: '8rem', templateRef: this.ownerTemplate() },
         { field: 'students', headerKey: 'artemisApp.team.students', sort: false, templateRef: this.studentsTemplate() },
     ]);
 
