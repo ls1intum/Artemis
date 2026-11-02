@@ -8,14 +8,14 @@ There are two ways to take an account out of service, and they are very differen
 out but keeps everything they did. **Deleting** it removes the account and the data belonging to it, and cannot be
 undone.
 
-|  | Deactivate | Delete permanently |
-| --- | --- | --- |
-| Can the person sign in afterwards? | No | No |
-| Can it be undone? | Yes, by an administrator | **No** |
-| Submissions, results, exam records, posts | Kept | Removed |
-| Passkeys, SSH keys, VCS access tokens | Revoked | Revoked |
-| Name still visible in courses | Yes | No |
-| Use it when | Someone should lose access: they left the university, an account is misused, or you are unsure | The person asked to have their data erased, or the account is a duplicate or a test account |
+|                                           | Deactivate                                                                                     | Delete permanently                                                                          |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Can the person sign in afterwards?        | No                                                                                             | No                                                                                          |
+| Can it be undone?                         | Yes, by an administrator                                                                       | **No**                                                                                      |
+| Submissions, results, exam records, posts | Kept                                                                                           | Removed                                                                                     |
+| Passkeys, SSH keys, VCS access tokens     | Revoked                                                                                        | Revoked                                                                                     |
+| Name still visible in courses             | Yes                                                                                            | No                                                                                          |
+| Use it when                               | Someone should lose access: they left the university, an account is misused, or you are unsure | The person asked to have their data erased, or the account is a duplicate or a test account |
 
 If you are not sure which you need, deactivate. It stops access just as effectively, and you can still delete the
 account later.
@@ -54,10 +54,10 @@ a confirmation. The automatic paths under
 
 ### Where to start
 
-| Where | What it deletes |
-| --- | --- |
-| The trash icon in an account's row | That one account |
-| The trash icon in the toolbar | Every account you ticked in the list |
+| Where                                        | What it deletes                                  |
+| -------------------------------------------- | ------------------------------------------------ |
+| The trash icon in an account's row           | That one account                                 |
+| The trash icon in the toolbar                | Every account you ticked in the list             |
 | **Delete not enrolled users** in the toolbar | The accounts that are not a member of any course |
 
 :::caution
@@ -75,14 +75,19 @@ dialog before confirming.
 
 The dialog lists the accounts it is about to delete and, for each kind of data, what will happen to it:
 
-| What the dialog says | What it means |
-| --- | --- |
-| **Delete** | The data belongs to this person alone and is removed. |
-| **Remove membership** | The thing itself is kept and the person is taken out of it, for example a course, an organization, a team, a conversation or a tutorial group. |
-| **Keep record without user reference** | The record belongs to someone else and stays, with the person's name removed from it. This is the work they did *for* others, such as an assessment they graded, a response they wrote to a complaint, or a post they verified. |
+| What the dialog says                   | What it means                                                                                                                                                                                                                   |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Delete**                             | The data belongs to this person alone and is removed.                                                                                                                                                                           |
+| **Remove membership**                  | The thing itself is kept and the person is taken out of it, for example a course, an organization, a team, a conversation or a tutorial group.                                                                                  |
+| **Keep record without user reference** | The record belongs to someone else and stays, with the person's name removed from it. This is the work they did _for_ others, such as an assessment they graded, a response they wrote to a complaint, or a post they verified. |
+
+Account deletion also removes exercise versions authored by the account, including
+versions referenced by AI authoring history. If a required recovery snapshot is
+deleted, automatic AI undo is no longer available. See
+[Hyperion administration](hyperion.mdx#authoring-history-and-version-restoration).
 
 Read the number the dialog shows as the size of the job, not as a count of rows about to disappear. It counts the
-records that name the person directly, across all three actions above, so it includes the memberships that are only
+records that name the person directly, across the actions above, so it includes the memberships that are only
 removed and the records that are only detached, both of which survive. It also leaves out everything that hangs below
 a deleted record and goes with it, such as the replies under a deleted thread or the submissions and results under a
 deleted participation. The number can therefore come out either side of the rows actually deleted, and it is the
@@ -162,7 +167,7 @@ Neither of these ever overrides a retention period. Such an account is deleted o
 retention period is gone, and it is the course, exam, plagiarism and communication cleanups that remove that data. An
 account that still has course roles, participations, exam records, scores, complaints, plagiarism cases, posts, team
 memberships, tutorial group registrations, LTI launches or course requests is therefore left alone for now. The **Data
-Cleanup** page counts these accounts as *Users blocked by remaining references*, and starting the job by hand does not
+Cleanup** page counts these accounts as _Users blocked by remaining references_, and starting the job by hand does not
 change that. They are deleted on a later run, once the cleanup that owns their data has run. If an account has to go
 immediately, delete it as an administrator and accept the retention override.
 
@@ -170,7 +175,7 @@ immediately, delete it as an administrator and accept the retention override.
 
 Older Artemis versions did not delete accounts, they anonymized them: the personal details were overwritten and the
 account was flagged as deleted, so that everything referring to it stayed readable. An instance that has been upgraded
-may still contain such accounts. In the user list they show up as *Deleted User* with a meaningless login and an email
+may still contain such accounts. In the user list they show up as _Deleted User_ with a meaningless login and an email
 address ending in `@user.deleted`. They cannot sign in, and no new ones are created.
 
 You do not have to do anything about them. The automatic cleanup deletes each one as soon as nothing refers to it any

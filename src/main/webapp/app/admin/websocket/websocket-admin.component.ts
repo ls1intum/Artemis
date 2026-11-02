@@ -101,76 +101,20 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Trigger a reconnect on the target node(s). If no target is passed, all core nodes are addressed.
-     */
     reconnect(target?: string) {
-        const availableTargets = target
-            ? this.coreNodes()
-                  .filter((node) => node.memberId === target)
-                  .map((node) => node.memberId)
-            : this.coreNodes().map((node) => node.memberId);
-
-        if (availableTargets.length === 0) {
-            this.alertService.error('artemisApp.websocketAdmin.noCoreNodes');
-            return;
-        }
-
-        this.reconnecting.set(true);
-        const request$ =
-            availableTargets.length === 1
-                ? this.websocketAdminService.triggerAction('RECONNECT', availableTargets[0])
-                : forkJoin(availableTargets.map((nodeId) => this.websocketAdminService.triggerAction('RECONNECT', nodeId))).pipe(map(() => void 0));
-
-        request$.subscribe({
-            next: () => {
-                this.reconnecting.set(false);
-                this.alertService.success('artemisApp.websocketAdmin.reconnectRequested');
-            },
-            error: () => {
-                this.reconnecting.set(false);
-                this.alertService.error('artemisApp.websocketAdmin.reconnectFailed');
-            },
-        });
+        this.triggerAction('RECONNECT', 'reconnect', target);
     }
 
-    /**
-     * Trigger a disconnect on the target node(s). If no target is passed, all core nodes are addressed.
-     */
     disconnect(target?: string) {
-        const availableTargets = target
-            ? this.coreNodes()
-                  .filter((node) => node.memberId === target)
-                  .map((node) => node.memberId)
-            : this.coreNodes().map((node) => node.memberId);
-
-        if (availableTargets.length === 0) {
-            this.alertService.error('artemisApp.websocketAdmin.noCoreNodes');
-            return;
-        }
-
-        this.reconnecting.set(true);
-        const request$ =
-            availableTargets.length === 1
-                ? this.websocketAdminService.triggerAction('DISCONNECT', availableTargets[0])
-                : forkJoin(availableTargets.map((nodeId) => this.websocketAdminService.triggerAction('DISCONNECT', nodeId))).pipe(map(() => void 0));
-
-        request$.subscribe({
-            next: () => {
-                this.reconnecting.set(false);
-                this.alertService.success('artemisApp.websocketAdmin.disconnectRequested');
-            },
-            error: () => {
-                this.reconnecting.set(false);
-                this.alertService.error('artemisApp.websocketAdmin.disconnectFailed');
-            },
-        });
+        this.triggerAction('DISCONNECT', 'disconnect', target);
     }
 
-    /**
-     * Trigger a connect on the target node(s). If no target is passed, all core nodes are addressed.
-     */
     connect(target?: string) {
+        this.triggerAction('CONNECT', 'connect', target);
+    }
+
+    /** Execute one broker action for the selected node, or for every available core node. */
+    private triggerAction(action: 'RECONNECT' | 'DISCONNECT' | 'CONNECT', translation: string, target?: string) {
         const availableTargets = target
             ? this.coreNodes()
                   .filter((node) => node.memberId === target)
@@ -185,17 +129,17 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
         this.reconnecting.set(true);
         const request$ =
             availableTargets.length === 1
-                ? this.websocketAdminService.triggerAction('CONNECT', availableTargets[0])
-                : forkJoin(availableTargets.map((nodeId) => this.websocketAdminService.triggerAction('CONNECT', nodeId))).pipe(map(() => void 0));
+                ? this.websocketAdminService.triggerAction(action, availableTargets[0])
+                : forkJoin(availableTargets.map((nodeId) => this.websocketAdminService.triggerAction(action, nodeId))).pipe(map(() => void 0));
 
         request$.subscribe({
             next: () => {
                 this.reconnecting.set(false);
-                this.alertService.success('artemisApp.websocketAdmin.connectRequested');
+                this.alertService.success(`artemisApp.websocketAdmin.${translation}Requested`);
             },
             error: () => {
                 this.reconnecting.set(false);
-                this.alertService.error('artemisApp.websocketAdmin.connectFailed');
+                this.alertService.error(`artemisApp.websocketAdmin.${translation}Failed`);
             },
         });
     }

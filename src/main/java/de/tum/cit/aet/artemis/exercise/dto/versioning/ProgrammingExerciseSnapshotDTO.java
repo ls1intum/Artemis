@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.core.util.CollectionUtil;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
+import de.tum.cit.aet.artemis.programming.domain.OnlineIdeExperienceLevel;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
@@ -22,14 +23,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<AuxiliaryRepositorySnapshotDTO> auxiliaryRepositories, Boolean allowOnlineEditor,
         Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, ProgrammingLanguage programmingLanguage,
         String packageName, Boolean showTestNamesToStudents, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, String projectKey,
-        ParticipationSnapshotDTO templateParticipation, ParticipationSnapshotDTO solutionParticipation, Set<ProgrammingExerciseTestCaseDTO> testCases,
+        ParticipationSnapshotDTO templateParticipation, ParticipationSnapshotDTO solutionParticipation, Set<ProgrammingExerciseTestCaseSnapshotDTO> testCases,
         Set<ProgrammingExerciseTaskSnapshotDTO> tasks, Set<StaticCodeAnalysisCategorySnapshotDTO> staticCodeAnalysisCategories, SubmissionPolicySnapshotDTO submissionPolicy,
         ProjectType projectType, Boolean releaseTestsWithExampleSolution, ProgrammingExerciseBuildConfigSnapshotDTO buildConfig,
         // Derivative fields for versioning
@@ -83,7 +83,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
         var analysisCategories = CollectionUtil
                 .nullIfEmpty(exercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategorySnapshotDTO::of).collect(Collectors.toSet()));
         var tasks = CollectionUtil.nullIfEmpty(exercise.getTasks().stream().map(ProgrammingExerciseTaskSnapshotDTO::of).collect(Collectors.toSet()));
-        var testCases = CollectionUtil.nullIfEmpty(exercise.getTestCases().stream().map(ProgrammingExerciseTestCaseDTO::of).collect(Collectors.toSet()));
+        var testCases = CollectionUtil.nullIfEmpty(exercise.getTestCases().stream().map(ProgrammingExerciseTestCaseSnapshotDTO::of).collect(Collectors.toSet()));
 
         return new ProgrammingExerciseSnapshotDTO(exercise.getTestRepositoryUri(), auxiliaryRepositoriesDTO, exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
                 exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(),
@@ -107,10 +107,10 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record ProgrammingExerciseTaskSnapshotDTO(long id, String taskName, Set<ProgrammingExerciseTestCaseDTO> testCases) implements Serializable {
+    public record ProgrammingExerciseTaskSnapshotDTO(long id, String taskName, Set<ProgrammingExerciseTestCaseSnapshotDTO> testCases) implements Serializable {
 
         private static ProgrammingExerciseTaskSnapshotDTO of(ProgrammingExerciseTask task) {
-            var testCases = CollectionUtil.nullIfEmpty(task.getTestCases().stream().map(ProgrammingExerciseTestCaseDTO::of).collect(Collectors.toSet()));
+            var testCases = CollectionUtil.nullIfEmpty(task.getTestCases().stream().map(ProgrammingExerciseTestCaseSnapshotDTO::of).collect(Collectors.toSet()));
             return new ProgrammingExerciseTaskSnapshotDTO(task.getId(), task.getTaskName(), testCases);
         }
     }
@@ -141,7 +141,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ProgrammingExerciseBuildConfigSnapshotDTO(Boolean sequentialTestRuns, String branch, String buildPlanConfiguration, String buildScript,
             boolean checkoutSolutionRepository, String testCheckoutPath, String assignmentCheckoutPath, String solutionCheckoutPath, int timeoutSeconds, String dockerFlags,
-            String theiaImage, boolean allowBranching, String branchRegex) implements Serializable {
+            String theiaImage, OnlineIdeExperienceLevel onlineIdeExperienceLevel, boolean allowBranching, String branchRegex) implements Serializable {
 
         private static ProgrammingExerciseBuildConfigSnapshotDTO of(ProgrammingExerciseBuildConfig buildConfig) {
             if (buildConfig == null) {
@@ -150,7 +150,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
             return new ProgrammingExerciseBuildConfigSnapshotDTO(buildConfig.hasSequentialTestRuns() ? buildConfig.hasSequentialTestRuns() : null, buildConfig.getBranch(),
                     buildConfig.getBuildPlanConfiguration(), buildConfig.getBuildScript(), buildConfig.getCheckoutSolutionRepository(), buildConfig.getTestCheckoutPath(),
                     buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(), buildConfig.getTimeoutSeconds(), buildConfig.getDockerFlags(),
-                    buildConfig.getTheiaImage(), buildConfig.isAllowBranching(), buildConfig.getBranchRegex());
+                    buildConfig.getTheiaImage(), buildConfig.getOnlineIdeExperienceLevel(), buildConfig.isAllowBranching(), buildConfig.getBranchRegex());
         }
     }
 

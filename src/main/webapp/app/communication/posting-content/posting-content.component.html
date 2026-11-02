@@ -16,13 +16,12 @@
             <span class="toggle-content" jhiTranslate="{{ showContent ? 'artemisApp.communication.post.collapseContent' : 'artemisApp.communication.post.showContent' }}"></span>
             @if (showContent) {
                 <div>
-                    @for (postingContentPart of postingContentParts(); track contentPartTrack($index)) {
-                        <jhi-posting-content-part
-                            [postingContentPart]="postingContentPart"
-                            (userReferenceClicked)="userReferenceClicked.emit($event)"
-                            (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-                        />
-                    }
+                    <jhi-posting-markdown
+                        [markdown]="postingMarkdown()"
+                        [references]="postingContentParts()"
+                        (userReferenceClicked)="userReferenceClicked.emit($event)"
+                        (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+                    />
                     @if (isEdited()) {
                         <span class="edited-text" jhiTranslate="artemisApp.communication.edited"></span>
                     }
@@ -33,13 +32,12 @@
     <!-- not in preview mode: content always shown -->
     @if (!previewMode()) {
         <div class="pb-1">
-            @for (postingContentPart of postingContentParts(); track contentPartTrack($index)) {
-                <jhi-posting-content-part
-                    [postingContentPart]="postingContentPart"
-                    (userReferenceClicked)="userReferenceClicked.emit($event)"
-                    (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-                />
-            }
+            <jhi-posting-markdown
+                [markdown]="postingMarkdown()"
+                [references]="postingContentParts()"
+                (userReferenceClicked)="userReferenceClicked.emit($event)"
+                (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+            />
             @if (isEdited()) {
                 <span class="edited-text" jhiTranslate="artemisApp.communication.edited"></span>
             }

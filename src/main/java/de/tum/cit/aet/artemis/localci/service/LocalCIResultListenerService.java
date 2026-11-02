@@ -7,6 +7,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
+
 /**
  * Periodically drains and processes build results that are still present in the
  * distributed build result queue used by the local CI.
@@ -51,18 +54,27 @@ public class LocalCIResultListenerService {
      */
     @Scheduled(fixedRate = 5 * 1000) // every 5 seconds
     public void processQueuedResults() {
-        final int resultQueueSize = distributedDataAccessService.getResultQueueSize();
+        var results = distributedDataAccessService.getDistributedBuildResultQueue();
+        var deferred = distributedDataAccessService.getDistributedDeferredBuildResultQueue();
+        // Snapshot both before submitting anything, so results deferred by this sweep wait until the next one.
+        int resultCount = results.size();
+        int deferredCount = deferred.size();
+        submitQueuedResults(results, resultCount, localCIResultProcessingService::processResultAsync);
+        submitQueuedResults(deferred, deferredCount, localCIResultProcessingService::processDeferredResultAsync);
+    }
+
+    private void submitQueuedResults(DistributedQueue<ResultQueueItem> queue, int resultQueueSize, Runnable submit) {
         if (resultQueueSize == 0) {
             return;
         }
         log.info("Scheduled task found {} queued results in the distributed build result queue. Will process these results now.", resultQueueSize);
         for (int i = 0; i < resultQueueSize; i++) {
-            if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
+            if (queue.peek() == null) {
                 log.info("Finished processing queued results early as the queue is now empty.");
                 break;
             }
             try {
-                localCIResultProcessingService.processResultAsync();
+                submit.run();
             }
             catch (Exception ex) {
                 log.warn("Processing a queued result failed. Continuing with remaining items", ex);

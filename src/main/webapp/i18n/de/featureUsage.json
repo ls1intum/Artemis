@@ -541,10 +541,6 @@
                         "name": "Iris-Chat",
                         "description": "Mit Iris über einen Kurs, eine Aufgabe oder eine Vorlesung chatten."
                     },
-                    "IRIS_MEMORY": {
-                        "name": "Iris-Erinnerungen",
-                        "description": "Was Iris sich über Studierende merkt, und das Löschen davon."
-                    },
                     "IRIS_STRUGGLE_INTERVENTION": {
                         "name": "Iris-Hilfe bei Schwierigkeiten",
                         "description": "Iris bietet Hilfe an, wenn Studierende nicht weiterkommen."
@@ -668,6 +664,10 @@
                     "PERSONAL_DATA_EXPORT": {
                         "name": "Export persönlicher Daten",
                         "description": "Export der eigenen Daten."
+                    },
+                    "AGENT_ACCESS": {
+                        "name": "Zugriffstoken für Agenten",
+                        "description": "Persönliche Zugriffstoken erstellen und widerrufen, mit denen Coding-Agenten im eigenen Namen handeln."
                     },
                     "LTI": {
                         "name": "LTI",

@@ -5,7 +5,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faDownLeftAndUpRightToCenter, faExclamationTriangle, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { type CollaborationUser, DEFAULT_LABELS, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
@@ -19,7 +19,7 @@ import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exe
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
-import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getLatestSubmissionResult, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
@@ -30,7 +30,7 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/mod
 import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
-import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
+import { EditorViewingPurpose, ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { ModelingAssessmentPanelDirective } from 'app/modeling/manage/assess/modeling-assessment-panel.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -115,6 +115,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return names && referenceId ? names[referenceId] : undefined;
     }
 
+    viewingPurpose = input<EditorViewingPurpose>('owner');
     participationId = input<number>();
     inputExercise = input<ModelingExercise>();
     inputSubmission = input<ModelingSubmission>();
@@ -286,7 +287,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private fetchLatestSubmission() {
-        return this.modelingSubmissionService.getLatestSubmissionForModelingEditor(this.effectiveParticipationId()).pipe(
+        return this.modelingSubmissionService.getLatestSubmissionForModelingEditor(this.effectiveParticipationId(), this.viewingPurpose()).pipe(
             catchError((error: HttpErrorResponse) => {
                 onError(this.alertService, error);
                 return of(null);
@@ -295,7 +296,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private fetchSubmissionHistory() {
-        return this.modelingSubmissionService.getSubmissionsWithResultsForParticipation(this.effectiveParticipationId()).pipe(
+        return this.modelingSubmissionService.getSubmissionsWithResultsForParticipation(this.effectiveParticipationId(), this.viewingPurpose()).pipe(
             catchError((error: HttpErrorResponse) => {
                 onError(this.alertService, error);
                 return of([]);
@@ -314,16 +315,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 );
                 const sortedResultHistory = this.sortedSubmissionHistory()
                     .map((submission) => {
-                        let latestResult: Result | undefined;
-
-                        if (submission?.results && submission.results.length > 0) {
-                            const sortedResults = [...submission.results].sort((a, b) => {
-                                const dateA = a.completionDate ? dayjs(a.completionDate).valueOf() : 0;
-                                const dateB = b.completionDate ? dayjs(b.completionDate).valueOf() : 0;
-                                return dateB - dateA;
-                            });
-                            latestResult = sortedResults[0];
-                        }
+                        const latestResult = this.sortResultsByCompletionDate(submission.results ?? [])[0];
 
                         if (latestResult) {
                             latestResult.submission = submission;
@@ -336,12 +328,19 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         );
     }
 
+    private canDisplayResult(result: Result): boolean {
+        // Athena requests carry a completion timestamp for their lease or failure, even without an assessment.
+        return result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA || result.successful === true;
+    }
+
     private sortResultsByCompletionDate(results: Result[]): Result[] {
-        return results.sort((a, b) => {
-            const dateA = a.completionDate ? dayjs(a.completionDate).valueOf() : 0;
-            const dateB = b.completionDate ? dayjs(b.completionDate).valueOf() : 0;
-            return dateB - dateA;
-        });
+        return results
+            .filter((result) => this.canDisplayResult(result))
+            .sort((a, b) => {
+                const dateA = a.completionDate ? dayjs(a.completionDate).valueOf() : 0;
+                const dateB = b.completionDate ? dayjs(b.completionDate).valueOf() : 0;
+                return dateB - dateA;
+            });
     }
 
     private inputValuesArePresent(): boolean {
@@ -396,10 +395,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
 
         this.submission.set(modelingSubmission);
-
-        if (getLatestSubmissionResult(modelingSubmission) && !(this.isFeedbackView() && this.resultId)) {
-            modelingSubmission.results = [getLatestSubmissionResult(modelingSubmission)!];
-        }
         this.participation.set(modelingSubmission.participation as StudentParticipation);
         this.isOwnerOfParticipation.set(this.accountService.isOwnerOfParticipation(this.participation()));
 
@@ -425,8 +420,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.updateModelAndExplanation();
 
         this.subscribeToWebsockets();
-        if ((getLatestSubmissionResult(this.submission()) && this.isAfterAssessmentDueDate) || this.isFeedbackView()) {
-            this.result.set(getLatestSubmissionResult(this.submission()));
+        // Keep every request in the submission for quota and pending-request guards; select feedback independently.
+        const latestDisplayableResult = getNewestResult(this.submission().results?.filter((result) => this.canDisplayResult(result)));
+        if ((latestDisplayableResult && this.isAfterAssessmentDueDate) || this.isFeedbackView()) {
+            this.result.set(latestDisplayableResult);
             if (this.isFeedbackView() && this.submissionId) {
                 if (this.resultId) {
                     this.result.set(this.submission().results?.find((result) => result.id === this.resultId));
@@ -436,12 +433,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             }
         }
         const result = this.result();
-        if (this.submission().submitted && result && result.completionDate) {
+        if (this.submission().submitted && result && result.completionDate && this.canDisplayResult(result)) {
             if (result.feedbacks && result.feedbacks.length > 0) {
                 this.assessmentResult.set(this.modelingAssessmentService.convertResult(result));
                 this.prepareAssessmentData();
             } else if (!this.isAutomaticResult && this.isFeedbackView() && this.resultId && this.submissionId) {
-                this.modelingAssessmentService.getAssessment(this.submissionId, this.resultId).subscribe({
+                this.modelingAssessmentService.getAssessment(this.submissionId, this.resultId, this.viewingPurpose()).subscribe({
                     next: (assessmentResult: Result) => {
                         this.assessmentResult.set(assessmentResult);
                         this.prepareAssessmentData();
@@ -525,14 +522,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private handleAthenaAssessment(result: Result): void {
-        if (result.completionDate) {
+        if (result.successful === true) {
             this.assessmentResult.set(this.modelingAssessmentService.convertResult(result));
             this.result.set(this.assessmentResult());
             this.prepareAssessmentData();
-
-            if (result.successful) {
-                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.modelingExercise()?.title ?? '' });
-            }
+            this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.modelingExercise()?.title ?? '' });
         } else if (result.successful === false) {
             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
         }

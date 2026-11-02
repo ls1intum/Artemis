@@ -13,13 +13,13 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
     templateUrl: './quiz-scoring-info-student-modal.component.html',
     styleUrls: ['./quiz-scoring-info-student-modal.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, NgClass, DialogModule],
+    imports: [NgTemplateOutlet, TranslateDirective, FaIconComponent, NgClass, DialogModule],
 })
 export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     private translateService = inject(TranslateService);

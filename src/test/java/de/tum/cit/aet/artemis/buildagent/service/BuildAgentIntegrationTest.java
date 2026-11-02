@@ -111,6 +111,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.clear();
         processingJobs.clear();
         resultQueue.clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
         // Ensure the build agent is not paused from a previous test
         if (sharedQueueProcessingService.isPaused()) {
             resumeBuildAgentTopic.publish(buildAgentShortName);
@@ -138,6 +139,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.clear();
         processingJobs.clear();
         resultQueue.clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
 
         // Ensure the build agent is resumed after each test to not affect subsequent tests.
         if (sharedQueueProcessingService.isPaused()) {
@@ -149,6 +151,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.clear();
         processingJobs.clear();
         resultQueue.clear();
+        distributedDataAccessService.getDistributedDeferredBuildResultQueue().clear();
 
         // Wait for this test's own in-flight jobs to finish executing before the next test's @BeforeEach runs,
         // for the same reason as the wait in clearQueues() above.

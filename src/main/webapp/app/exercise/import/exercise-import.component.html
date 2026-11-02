@@ -1,82 +1,160 @@
-<div class="modal-body pt-2!">
-    <div class="form-group form-inline">
+<!-- The list stays in the DOM while a quiz is previewed, so that the search, the page and the focus target of the row survive. -->
+<div data-testid="exercise-import-list" class="p-4! pt-2!" [hidden]="preview() !== undefined">
+    <div class="mb-4! flex flex-wrap items-center gap-2">
         <span jhiTranslate="artemisApp.exercise.import.search"></span>:
-        <input [attr.aria-label]="'artemisApp.exercise.import.search' | artemisTranslate" class="form-control mx-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
-        <div class="form-check form-check-inline">
-            <input class="form-check-input" type="checkbox" id="courseFilter" [checked]="isCourseFilter()" [disabled]="!isExamFilter()" (change)="onCourseFilterChange()" />
-            <label class="form-check-label" for="courseFilter" jhiTranslate="artemisApp.exercise.import.searchInCourses"></label>
+        <input
+            tumAetUiInput
+            [attr.aria-label]="'artemisApp.exercise.import.search' | artemisTranslate"
+            class="w-full mx-2"
+            type="text"
+            name="searchExcercise"
+            [(ngModel)]="searchTerm"
+        />
+        <div class="inline-flex items-center gap-2 me-3!">
+            <tumaet-ui-checkbox class="accent-primary" inputId="courseFilter" [checked]="isCourseFilter()" [disabled]="!isExamFilter()" (changed)="onCourseFilterChange()" />
+            <label class="cursor-pointer" for="courseFilter" jhiTranslate="artemisApp.exercise.import.searchInCourses"></label>
         </div>
-        <div class="form-check form-check-inline">
-            <input class="form-check-input" type="checkbox" id="examFilter" [checked]="isExamFilter()" [disabled]="!isCourseFilter()" (change)="onExamFilterChange()" />
-            <label class="form-check-label" for="examFilter" jhiTranslate="artemisApp.exercise.import.searchInExams"></label>
+        <div class="inline-flex items-center gap-2 me-3!">
+            <tumaet-ui-checkbox class="accent-primary" inputId="examFilter" [checked]="isExamFilter()" [disabled]="!isCourseFilter()" (changed)="onExamFilterChange()" />
+            <label class="cursor-pointer" for="examFilter" jhiTranslate="artemisApp.exercise.import.searchInExams"></label>
         </div>
         @if (loading()) {
-            <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
+            <span class="ms-3!" jhiTranslate="artemisApp.exercise.import.loading"></span>
         }
     </div>
-    <table class="table table-striped">
-        <thead class="thead-dark">
-            <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()">
-                <th jhiSortBy="ID" class="col-1">
-                    <span>#</span>
-                    <fa-icon [icon]="faSort" />
-                </th>
-                <th jhiSortBy="TITLE" class="col-4">
-                    <span jhiTranslate="artemisApp.exercise.import.table.title"></span>
-                    <fa-icon [icon]="faSort" />
-                </th>
-                @if (selectedExerciseType() === ExerciseType.PROGRAMMING) {
-                    <th jhiSortBy="PROGRAMMING_LANGUAGE" class="col-2">
-                        <span jhiTranslate="artemisApp.exercise.import.table.language"></span>
+    <div class="overflow-x-auto">
+        <table tumAetUiTable striped class="w-full border-collapse text-sm [&_tbody_tr:nth-child(odd)]:bg-surface-raised">
+            <thead class="bg-surface-raised">
+                <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()">
+                    <th jhiSortBy="ID" class="w-1/12">
+                        <span>#</span>
                         <fa-icon [icon]="faSort" />
                     </th>
-                }
-                <th jhiSortBy="COURSE_TITLE" class="col-4">
-                    <span [hidden]="!isCourseFilter()" jhiTranslate="artemisApp.exercise.import.table.course"></span>
-                    <span [hidden]="!(isCourseFilter() && isExamFilter())"> | </span>
-                    <span [hidden]="!isExamFilter()" jhiTranslate="artemisApp.exercise.import.table.exam"></span>
-                    @if (!(isCourseFilter() && isExamFilter())) {
+                    <th jhiSortBy="TITLE" class="w-1/3">
+                        <span jhiTranslate="artemisApp.exercise.import.table.title"></span>
                         <fa-icon [icon]="faSort" />
-                    }
-                </th>
-                <th class="col-2" [hidden]="!(isCourseFilter() && isExamFilter())">
-                    <span jhiTranslate="artemisApp.exercise.import.table.examQuestion"></span>
-                </th>
-                <th class="col-1"></th>
-            </tr>
-        </thead>
-        <tbody>
-            @for (exercise of content().resultsOnPage; track trackId($index, exercise)) {
-                <tr [class]="'exercise-' + exercise.id">
-                    <td class="col-1">
-                        <span [class.ngb-highlight]="'' + exercise.id === searchTerm"> {{ exercise.id }}</span>
-                    </td>
-                    <td class="text-break col-4">
-                        <ngb-highlight [result]="exercise.title" [term]="searchTerm" />
-                    </td>
+                    </th>
                     @if (selectedExerciseType() === ExerciseType.PROGRAMMING) {
-                        <td class="text-break col-3">
-                            <span>{{ asProgrammingExercise(exercise)?.programmingLanguage }}</span>
-                        </td>
+                        <th jhiSortBy="PROGRAMMING_LANGUAGE" class="w-1/6">
+                            <span jhiTranslate="artemisApp.exercise.import.table.language"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
                     }
-                    <td class="text-break col-4">
-                        <ngb-highlight [result]="exercise | courseTitle" [term]="searchTerm" />
-                    </td>
-                    <td class="col-2" [hidden]="!(isCourseFilter() && isExamFilter())">
-                        <div style="text-align: center; vertical-align: middle">
-                            @if (exercise.exerciseGroup) {
-                                <fa-icon [icon]="faCheck" />
-                            }
-                        </div>
-                    </td>
-                    <td class="col-1">
-                        <jhi-button (onClick)="selectImport(exercise)" class="import" [title]="'artemisApp.exercise.import.table.doImport'" />
-                    </td>
+                    <th jhiSortBy="COURSE_TITLE" class="w-1/3">
+                        <span [hidden]="!isCourseFilter()" jhiTranslate="artemisApp.exercise.import.table.course"></span>
+                        <span [hidden]="!(isCourseFilter() && isExamFilter())"> | </span>
+                        <span [hidden]="!isExamFilter()" jhiTranslate="artemisApp.exercise.import.table.exam"></span>
+                        @if (!(isCourseFilter() && isExamFilter())) {
+                            <fa-icon [icon]="faSort" />
+                        }
+                    </th>
+                    <th class="w-1/6" [hidden]="!(isCourseFilter() && isExamFilter())">
+                        <span jhiTranslate="artemisApp.exercise.import.table.examQuestion"></span>
+                    </th>
+                    <th class="w-1/12"></th>
                 </tr>
-            }
-        </tbody>
-    </table>
-    <div class="d-flex justify-content-between p-2">
-        <p-paginator [first]="(state.page - 1) * state.pageSize" [rows]="state.pageSize" [totalRecords]="total()" (onPageChange)="onPaginatorPageChange($event)" />
+            </thead>
+            <tbody>
+                @for (exercise of content().resultsOnPage; track trackId($index, exercise)) {
+                    <tr [class]="'exercise-' + exercise.id">
+                        <td class="w-1/12">
+                            <span [class.font-semibold]="'' + exercise.id === searchTerm"> {{ exercise.id }}</span>
+                        </td>
+                        <td class="break-words w-1/3">
+                            @for (part of highlightParts(exercise.title); track $index) {
+                                <span [class.font-semibold]="part.highlighted">{{ part.text }}</span>
+                            }
+                        </td>
+                        @if (selectedExerciseType() === ExerciseType.PROGRAMMING) {
+                            <td class="break-words w-1/4">
+                                <span>{{ asProgrammingExercise(exercise)?.programmingLanguage }}</span>
+                            </td>
+                        }
+                        <td class="break-words w-1/3">
+                            @for (part of highlightParts(exercise | courseTitle); track $index) {
+                                <span [class.font-semibold]="part.highlighted">{{ part.text }}</span>
+                            }
+                        </td>
+                        <td class="w-1/6" [hidden]="!(isCourseFilter() && isExamFilter())">
+                            <div style="text-align: center; vertical-align: middle">
+                                @if (exercise.exerciseGroup) {
+                                    <fa-icon [icon]="faCheck" />
+                                }
+                            </div>
+                        </td>
+                        <td class="w-1/12">
+                            <div class="flex items-center gap-2">
+                                @if (isPreviewAvailable()) {
+                                    <tumaet-ui-button
+                                        severity="secondary"
+                                        variant="outlined"
+                                        size="small"
+                                        [icon]="faEye"
+                                        [loading]="previewLoadingId() === exercise.id"
+                                        [disabled]="previewLoadingId() !== undefined"
+                                        [ariaLabel]="'artemisApp.exercise.import.preview.buttonLabel' | artemisTranslate: { title: exercise.title }"
+                                        [tumAetUiTooltip]="'entity.action.preview' | artemisTranslate"
+                                        tumAetUiTooltipDescribesHost="false"
+                                        [attr.data-testid]="'preview-exercise-' + exercise.id"
+                                        (clicked)="openPreview(exercise, $event)"
+                                    />
+                                }
+                                <tumaet-ui-button (clicked)="selectImport(exercise)" class="import"
+                                    ><span jhiTranslate="artemisApp.exercise.import.table.doImport"></span
+                                ></tumaet-ui-button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="flex justify-between p-2">
+        <!-- The search API supplies page counts, not an exact number of records. -->
+        <tumaet-ui-paginator
+            [page]="state.page - 1"
+            [pageSize]="state.pageSize"
+            [totalRecords]="total()"
+            [showRowsPerPage]="false"
+            [showCurrentPageReport]="false"
+            (pageChange)="onPageChange($event + 1)"
+        />
     </div>
 </div>
+@if (preview(); as current) {
+    <!-- The preview replaces the list inside the dialog that hosts this component. A dialog of its own would have to stack above that
+         dialog, and the layers of the two libraries are independent of each other. Escape leads back to the list, like the button. -->
+    <div class="flex flex-col gap-4! px-4! pb-4!" data-testid="exercise-import-preview">
+        <!-- The heading comes first so that the focus it receives is followed by the buttons. The header stays in view while the questions scroll. -->
+        <div class="sticky top-0 z-10 flex items-center justify-between gap-2 bg-(--module-bg) py-2">
+            <h3 #previewHeading tabindex="-1" class="m-0! min-w-0 flex-1 text-lg font-semibold break-words" data-testid="exercise-import-preview-title">
+                {{ 'artemisApp.exercise.import.preview.title' | artemisTranslate: { title: current.quiz.title } }}
+            </h3>
+            <div class="flex shrink-0 items-center gap-2">
+                <tumaet-ui-button severity="secondary" variant="outlined" size="small" [icon]="faArrowLeft" data-testid="exercise-import-preview-back" (clicked)="closePreview()">
+                    <span jhiTranslate="artemisApp.exercise.import.preview.backToList"></span>
+                </tumaet-ui-button>
+                <tumaet-ui-button size="small" data-testid="exercise-import-preview-import" (clicked)="importPreviewed()">
+                    <span jhiTranslate="artemisApp.exercise.import.table.doImport"></span>
+                </tumaet-ui-button>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm" data-testid="exercise-import-preview-summary">
+            <span>
+                <span class="font-semibold" jhiTranslate="artemisApp.quizExercise.totalPoints"></span>:
+                <span data-testid="exercise-import-preview-points">{{ previewTotalPoints() }}</span>
+            </span>
+            @if (current.quiz.duration !== undefined) {
+                <span>
+                    <span class="font-semibold" jhiTranslate="artemisApp.quizExercise.duration"></span>:
+                    <span data-testid="exercise-import-preview-duration">{{ current.quiz.duration | artemisDurationFromSeconds }}</span>
+                </span>
+            }
+        </div>
+        @for (question of current.quiz.quizQuestions; track question.id; let i = $index) {
+            <jhi-quiz-question-preview [question]="question" [questionIndex]="i + 1" />
+        } @empty {
+            <p data-testid="exercise-import-preview-empty" jhiTranslate="artemisApp.quizExercise.noQuestions"></p>
+        }
+    </div>
+}

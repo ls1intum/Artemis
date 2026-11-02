@@ -34,7 +34,8 @@
             "queued": "In Warteschlange...",
             "toolTip": "Abgaben werden zuerst in die Warteschlange gestellt und dann verarbeitet. Die geschätzte Zeit für jeden Schritt wird angezeigt. Bitte beachte, dass dies nur eine Schätzung ist und variieren kann.",
             "buildFailed": "Build gescheitert",
-            "noBuildOutput": "Keine Build-Ergebnisse verfügbar.",
+            "noBuildOutput": "Keine Build-Ausgabe verfügbar.",
+            "buildOutputOnlyOnFailure": "Die Build-Ausgabe wird nur bei einem fehlgeschlagenen Build angezeigt. Testergebnisse findest Du im Feedback.",
             "generatingFeedback": "Feedback wird generiert...",
             "selectFile": "Wähle eine Datei aus, um zu beginnen!",
             "binaryFileSelected": "Diese Datei ist eine Binärdatei, die nicht angezeigt werden kann.",
@@ -136,7 +137,15 @@
             "switchEditors": "Code-Editor wechseln",
             "buildOutputAndFeedback": "Build-Ergebnisse und allgemeines Feedback",
             "toggleBuildOutput": "Build-Ergebnisse ein- oder ausblenden",
-            "toggleBuildOutputAndFeedback": "Build-Ergebnisse und allgemeines Feedback ein- oder ausblenden"
+            "toggleBuildOutputAndFeedback": "Build-Ergebnisse und allgemeines Feedback ein- oder ausblenden",
+            "buildOutputTab": "Build Ergebnisse",
+            "collapseBottomPanel": "Unteres Panel einklappen",
+            "expandBottomPanel": "Unteres Panel ausklappen",
+            "resizeBottomPanel": "Größe des unteren Panels ändern",
+            "resizeFileBrowser": "Größe des Dateibrowsers ändern",
+            "resizeInstructions": "Größe der Aufgabenstellung ändern",
+            "resizeMainEditor": "Größe des Haupteditors ändern",
+            "bottomPanels": "Untere Editor-Panels"
         }
     }
 }

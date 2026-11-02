@@ -28,7 +28,7 @@
     }
     @if (!isBuilding() && !rawBuildLogs().length) {
         <div class="card-body">
-            <p class="text-center no-buildoutput" jhiTranslate="artemisApp.editor.noBuildOutput"></p>
+            <p class="text-center no-buildoutput" [jhiTranslate]="emptyStateTranslationKey()"></p>
         </div>
     }
     @if (isBuilding()) {

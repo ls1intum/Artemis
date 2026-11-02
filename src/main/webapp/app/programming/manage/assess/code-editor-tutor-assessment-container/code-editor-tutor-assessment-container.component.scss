@@ -44,6 +44,7 @@
     display: flex;
     min-width: 0;
     flex: 1 1 auto;
+
     // The tabs run down to the line below the header, so the indicator of the selected tab sits on it
     align-items: stretch;
 }

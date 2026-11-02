@@ -25,6 +25,7 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import type { Mock } from 'vitest';
 import { By } from '@angular/platform-browser';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { NgModel } from '@angular/forms';
 
 /**
@@ -166,6 +167,16 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.backupQuestion).toEqual(question1);
         expect(component.filePreviewPaths()).toEqual(new Map<string, string>());
         expect(component.mouse).toStrictEqual(new DragAndDropMouseEvent());
+    });
+
+    it('should take points with a decimal separator and cut off the fraction after three digits', () => {
+        fixture.detectChanges();
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('input#score');
+
+        typeIntoInputNumber(input, '5.5555');
+
+        expect(input.value).toBe('5.555');
+        expect(component.question().points).toBe(5.555);
     });
 
     it('should detect changes and update component', () => {

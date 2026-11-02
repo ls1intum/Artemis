@@ -5,6 +5,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
@@ -63,7 +65,9 @@ public record ModelingExerciseListItemDTO(Long id, String title, String shortNam
             }
         }
 
-        var gradingCriterionDTOs = ModelingDtoCollections.listFromInitializedSet(exercise.getGradingCriteria(), GradingCriterionDTO::of);
+        var gradingCriterionDTOs = exercise.getGradingCriteria() != null && Hibernate.isInitialized(exercise.getGradingCriteria())
+                ? GradingCriterionDTO.ofAll(exercise.getGradingCriteria())
+                : null;
 
         // Light course reference (id + title) so the client courseTitle pipe can render the course column in the list and
         // the cross-course import search; resolves the course for both course and exam exercises.

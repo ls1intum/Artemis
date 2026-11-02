@@ -71,9 +71,7 @@
                     (resizeMove)="detailPanelWidth.set($event.width)"
                     data-testid="sc-detail-panel"
                 >
-                    <div class="draggable-left" data-testid="sc-detail-resize-handle">
-                        <fa-icon [icon]="faGripLinesVertical" />
-                    </div>
+                    <div class="draggable-left panel-divider-x" data-testid="sc-detail-resize-handle"></div>
                     <div class="detail-content">
                         <ng-container [ngTemplateOutlet]="detailTemplate" />
                     </div>

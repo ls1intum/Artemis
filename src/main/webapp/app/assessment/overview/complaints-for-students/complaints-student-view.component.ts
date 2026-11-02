@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, ElementRef, Injector, OnInit, afterNextRender, inject, input, signal, viewChild } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
@@ -22,7 +23,6 @@ import { ComplaintRequestComponent } from 'app/assessment/overview/complaint-req
 import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-response/complaint-response.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-complaint-student-view',
@@ -49,6 +49,8 @@ export class ComplaintsStudentViewComponent implements OnInit {
     readonly exam = input<Exam>();
     readonly isCurrentUserSubmissionAuthor = input<boolean>();
     readonly testRun = input(false);
+    // Staff looking at the submission of a student read its complaint through the assessment endpoint, the default one serves only the owner
+    readonly forStaff = input(false);
 
     submission!: Submission; // set in ngOnInit() from the participation's submissions before loadPotentialComplaint() reads it
     readonly complaint = signal<Complaint | undefined>(undefined);
@@ -103,8 +105,8 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     loadPotentialComplaint(): void {
-        this.complaintService
-            .findBySubmissionId(this.submission.id!)
+        const submissionId = this.submission.id!;
+        (this.forStaff() ? this.complaintService.findBySubmissionIdForAssessment(submissionId) : this.complaintService.findBySubmissionId(submissionId))
             .pipe(filter((res) => !!res.body))
             .subscribe((res: HttpResponse<ComplaintDTO>) => {
                 this.complaint.set(this.complaintService.convertComplaintFromServer(res.body!, this.result()));

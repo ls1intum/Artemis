@@ -1,11 +1,11 @@
-import { Page, expect } from '@playwright/test';
+import { Locator, Page, expect } from '@playwright/test';
 import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { UserCredentials } from '../../users';
 import { CommunicationAPIRequests } from '../../requests/CommunicationAPIRequests';
-import { readResponseJson, setMonacoEditorContent, setMonacoEditorContentByLocator } from '../../utils';
+import { readResponseJson } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.
@@ -279,25 +279,48 @@ export class CourseMessagesPage {
     }
 
     /**
-     * Writes a message in the message field.
+     * Replaces the message field with plain text through the active editor.
+     * Formatted messages should be composed with the editor's formatting controls.
      * @param message - The message to be written.
      */
     async writeMessage(message: string) {
-        // Use the specific posting markdown editor container
-        await setMonacoEditorContent(this.page, 'jhi-posting-markdown-editor', message);
+        await this.setMessageContent(this.getMainMessageInput(), message);
     }
 
     /**
-     * Returns the Monaco editor of the main (non-thread) message input.
+     * Returns the main composer rather than an inline edit form or a thread reply.
+     * The main composer follows the posts in document order.
+     */
+    private getMainMessageInput() {
+        return this.page.locator('jhi-message-inline-input').filter({ visible: true }).last();
+    }
+
+    private getActiveMessageEditor(container: Locator) {
+        return container.getByTestId('formatted-message-input').filter({ visible: true });
+    }
+
+    /** Replaces plain message text through the native rich editor. */
+    private async setMessageContent(container: Locator, message: string) {
+        const editor = this.getActiveMessageEditor(container);
+        await editor.waitFor({ state: 'visible', timeout: 10000 });
+        await editor.fill(message);
+    }
+
+    private getSendButton(container: Locator) {
+        return container.getByTestId('send-formatted-message').or(container.locator('#save')).filter({ visible: true });
+    }
+
+    /**
+     * Returns the visible editor of the main (non-thread) message input.
      */
     getMessageEditor() {
-        return this.page.locator('jhi-posting-markdown-editor .monaco-editor').first();
+        return this.getActiveMessageEditor(this.getMainMessageInput());
     }
 
     /**
      * Focuses the main message editor and types the given text via real keystrokes rather than
-     * Monaco's `setValue` API (used by {@link writeMessage}). Behavior that only reacts to actual
-     * typing, such as the emoji shortcode suggest widget, requires this instead of `fill`/`setValue`.
+     * the replacement operation in {@link writeMessage}. This exercises the active editor's native
+     * keyboard handlers and completion behavior.
      * @param text - The text to type into the editor.
      */
     async typeInMessageEditor(text: string) {
@@ -308,30 +331,18 @@ export class CourseMessagesPage {
     }
 
     /**
-     * Returns the locator for Monaco's suggest widget (the autocomplete popup shown while typing),
-     * scoped to its `visible` state class so a hidden (but still DOM-attached) widget from a
-     * previous session does not cause a strict-mode match with the currently open one.
-     *
-     * Monaco builds this overlay itself and offers no way to put attributes on it, so unlike the rest
-     * of the suite this locator has to name Monaco's own classes.
-     */
-    getSuggestWidget() {
-        return this.page.locator('.suggest-widget.visible');
-    }
-
-    /**
      * Returns the locator for the rendered text content of the main message editor.
      */
     getMessageEditorText() {
-        return this.getMessageEditor().locator('.view-lines');
+        const container = this.getMainMessageInput();
+        return this.getActiveMessageEditor(container);
     }
 
     /**
-     * Waits until the send button becomes enabled. The editor propagates content to the send form
-     * with a debounce, so the button's enabled state only mirrors form validity a moment after typing.
+     * Waits until the latest rich-editor edit has made the send form valid.
      */
     async waitUntilSendEnabled() {
-        await expect(this.page.locator('#save')).toBeEnabled({ timeout: 10000 });
+        await expect(this.getSendButton(this.getMainMessageInput())).toBeEnabled({ timeout: 10000 });
     }
 
     /**
@@ -340,10 +351,11 @@ export class CourseMessagesPage {
      * @returns The created message.
      */
     async sendMessageWithEnterKey(): Promise<Post> {
+        await this.waitUntilSendEnabled();
         const responsePromise = this.page.waitForResponse(
             (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/messages') && resp.request().method() === 'POST',
         );
-        await this.page.keyboard.press('Enter');
+        await this.getMessageEditor().press('Enter');
         const response = await responsePromise;
         expect(response.status()).toBe(201);
         return readResponseJson(response);
@@ -406,11 +418,10 @@ export class CourseMessagesPage {
             await postLocator.getByTestId('posting-reaction-edit').click();
         }
 
-        // Use the setMonacoEditorContentByLocator utility to set the content directly
-        await setMonacoEditorContentByLocator(this.page, postLocator, message);
+        await this.setMessageContent(postLocator, message);
 
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
-        await postLocator.locator('#save').click();
+        await this.getSendButton(postLocator).click();
         await responsePromise;
     }
 
@@ -461,7 +472,7 @@ export class CourseMessagesPage {
         const responsePromise = this.page.waitForResponse(
             (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/messages') && resp.request().method() === 'POST',
         );
-        const saveButton = this.page.locator('#save');
+        const saveButton = this.getSendButton(this.getMainMessageInput());
         await expect(saveButton).toBeEnabled({ timeout: 10000 });
         await saveButton.click({ timeout: 10000 });
         const response = await responsePromise;
@@ -758,10 +769,10 @@ export class CourseMessagesPage {
      */
     async replyInThread(content: string): Promise<Post> {
         const threadSidebar = this.page.locator('.expanded-thread');
-        const replyContainer = threadSidebar.locator('jhi-message-reply-inline-input jhi-posting-markdown-editor');
-        await setMonacoEditorContentByLocator(this.page, replyContainer, content);
+        const replyContainer = threadSidebar.locator('jhi-message-reply-inline-input');
+        await this.setMessageContent(replyContainer, content);
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages') && resp.request().method() === 'POST');
-        await threadSidebar.locator('jhi-message-reply-inline-input #save').click();
+        await this.getSendButton(replyContainer).click();
         const response = await responsePromise;
         return readResponseJson(response);
     }
@@ -838,7 +849,7 @@ export class CourseMessagesPage {
             }
         }
         if (extraContent) {
-            await setMonacoEditorContent(this.page, 'jhi-forward-message-dialog jhi-markdown-editor-monaco', extraContent);
+            await dialog.getByTestId('formatted-message-input').fill(extraContent);
         }
         // forwarding first creates the container post, then the forwarded-message link(s)
         const forwardResponse = this.page.waitForResponse((resp) => resp.url().includes('/forwarded-messages') && resp.request().method() === 'POST');
@@ -987,7 +998,7 @@ export class CourseMessagesPage {
         // Click "Edit Message" from the dropdown by matching translated text
         await this.page.getByTestId('posting-menu-edit').click();
 
-        await setMonacoEditorContentByLocator(this.page, replyLocator, newContent);
+        await this.setMessageContent(replyLocator, newContent);
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages/') && resp.request().method() === 'PUT');
         await replyLocator.getByTestId('answer-post-edit-save').click();
         await responsePromise;

@@ -71,6 +71,7 @@
                                 <jhi-programming-exercise-example-solution-repo-download
                                     class="ms-2"
                                     [exerciseId]="exercise().id!"
+                                    [forStaff]="!!exercise().isAtLeastTutor"
                                     [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
                                 />
                             </dd>
@@ -79,6 +80,7 @@
                                     <jhi-programming-exercise-example-solution-repo-download
                                         class="ms-2"
                                         [exerciseId]="exercise().id!"
+                                        [forStaff]="!!exercise().isAtLeastTutor"
                                         [includeTests]="true"
                                         [title]="'artemisApp.programmingExercise.export.downloadTestsWithExampleSolution'"
                                         ngbTooltip="{{ 'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate }}"

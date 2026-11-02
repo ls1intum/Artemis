@@ -1,5 +1,5 @@
-import { ApplicationRef, Binding, WritableSignal, inputBinding, signal } from '@angular/core';
-import { DirectiveFixture, TestBed } from '@angular/core/testing';
+import { ApplicationRef, Binding, Component, WritableSignal, inputBinding, signal } from '@angular/core';
+import { ComponentFixture, DirectiveFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { TumAetUiTooltipDirective } from './tumaet-ui-tooltip.directive';
 
@@ -101,13 +101,60 @@ describe('TumAetUiTooltipDirective', () => {
         const tooltip = bubble()!;
 
         button.dispatchEvent(new MouseEvent('mouseleave'));
-        tooltip.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.spyOn(tooltip, 'getBoundingClientRect').mockReturnValue(new DOMRect(10, 10, 100, 40));
+        document.dispatchEvent(new MouseEvent('pointermove', { clientX: 40, clientY: 30 }));
         vi.advanceTimersByTime(1);
         expect(bubble()).toBe(tooltip);
 
-        tooltip.dispatchEvent(new MouseEvent('mouseleave'));
+        document.dispatchEvent(new MouseEvent('pointermove', { clientX: 200, clientY: 100 }));
         vi.advanceTimersByTime(1);
         expect(bubble()).toBeNull();
+    });
+
+    it('does not postpone hiding as the pointer keeps moving outside the bubble', () => {
+        fixture.destroy();
+        fixture = createTooltip([inputBinding('tumAetUiTooltip', text), inputBinding('hideDelayMs', () => 100)]);
+        fixture.detectChanges();
+        button = fixture.nativeElement as HTMLButtonElement;
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        vi.spyOn(bubble()!, 'getBoundingClientRect').mockReturnValue(new DOMRect(10, 10, 100, 40));
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        for (let i = 0; i < 3; i++) {
+            vi.advanceTimersByTime(30);
+            document.dispatchEvent(new MouseEvent('pointermove', { clientX: 200 + i, clientY: 100 }));
+        }
+        vi.advanceTimersByTime(11);
+        expect(bubble()).toBeNull();
+    });
+
+    it('clears geometric hover when the pointer leaves the document', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        vi.spyOn(bubble()!, 'getBoundingClientRect').mockReturnValue(new DOMRect(10, 10, 100, 40));
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+        document.dispatchEvent(new MouseEvent('pointermove', { clientX: 40, clientY: 30 }));
+        document.dispatchEvent(new Event('pointerleave'));
+        vi.advanceTimersByTime(1);
+        expect(bubble()).toBeNull();
+    });
+
+    it('dismisses a focused tooltip when its window loses focus', () => {
+        button.dispatchEvent(new Event('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(1);
+        window.dispatchEvent(new Event('blur'));
+        expect(bubble()).toBeNull();
+    });
+
+    it('dismisses on pointer down without consuming the underlying control action', () => {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        const action = new MouseEvent('pointerdown', { bubbles: true, cancelable: true });
+
+        document.dispatchEvent(action);
+
+        expect(bubble()).toBeNull();
+        expect(action.defaultPrevented).toBe(false);
     });
 
     it('hides the tooltip on Escape', () => {
@@ -290,5 +337,38 @@ describe('TumAetUiTooltipDirective when tumAetUiTooltipDescribesHost changes whi
 
         // The bubble is disposed, so a surviving token would point at nothing.
         expect(button.getAttribute('aria-describedby')).toBeNull();
+    });
+});
+
+@Component({
+    template: `<ng-template #help
+            ><strong>Grading guidance</strong><span>{{ score() }} points</span></ng-template
+        >
+        <button [tumAetUiTooltip]="help" [showDelayMs]="0">Help</button>`,
+    imports: [TumAetUiTooltipDirective],
+})
+class TemplateTooltipHostComponent {
+    readonly score = signal(5);
+}
+
+describe('Template tooltip content', () => {
+    it('renders and updates a consumer template while preserving its bindings', () => {
+        vi.useFakeTimers();
+        let fixture: ComponentFixture<TemplateTooltipHostComponent> | undefined;
+        try {
+            fixture = TestBed.createComponent(TemplateTooltipHostComponent);
+            fixture.detectChanges();
+            const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+            button.dispatchEvent(new MouseEvent('mouseenter'));
+            vi.advanceTimersByTime(1);
+            TestBed.inject(ApplicationRef).tick();
+            expect(document.querySelector('[role="tooltip"] strong')?.textContent).toBe('Grading guidance');
+            fixture.componentInstance.score.set(8);
+            TestBed.inject(ApplicationRef).tick();
+            expect(document.querySelector('[role="tooltip"]')?.textContent).toContain('8 points');
+        } finally {
+            fixture?.destroy();
+            vi.useRealTimers();
+        }
     });
 });

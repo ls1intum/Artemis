@@ -71,7 +71,7 @@ test.describe('Exam student registration', { tag: '@slow' }, () => {
 
     test('Removing a student takes their access and exam but keeps what they handed in', async ({ page, login, examAPIRequests, exerciseAPIRequests }) => {
         const { exercise } = await prepareExamWithThreeStudentsWhoHandedIn(login, page, examAPIRequests, exerciseAPIRequests);
-        const before = await exerciseAPIRequests.getExerciseParticipations(exercise.id!);
+        const before = await exerciseAPIRequests.getExerciseParticipations(exercise.id!, 'exam');
         expect(before, 'every registered student has a participation').toHaveLength(3);
         expect(await handedInTexts(page, exercise.id!)).toEqual([`Answer of ${studentOne.username}`, `Answer of ${studentTwo.username}`]);
 
@@ -84,7 +84,7 @@ test.describe('Exam student registration', { tag: '@slow' }, () => {
         // The individual exam of the student is gone, the ones of the others are not, and the work of the student is still stored.
         await login(admin);
         expect(await examAPIRequests.getAllStudentExams(exam)).toHaveLength(2);
-        const after = await exerciseAPIRequests.getExerciseParticipations(exercise.id!);
+        const after = await exerciseAPIRequests.getExerciseParticipations(exercise.id!, 'exam');
         expect(after, 'the participation of the removed student is kept').toHaveLength(3);
         expect(await handedInTexts(page, exercise.id!), 'and so are the submissions').toEqual([`Answer of ${studentOne.username}`, `Answer of ${studentTwo.username}`]);
 
@@ -108,7 +108,7 @@ test.describe('Exam student registration', { tag: '@slow' }, () => {
 
         await login(admin);
         expect(await examAPIRequests.getAllStudentExams(exam)).toHaveLength(2);
-        const after = await exerciseAPIRequests.getExerciseParticipations(exercise.id!);
+        const after = await exerciseAPIRequests.getExerciseParticipations(exercise.id!, 'exam');
         expect(after, 'the participation of the removed student is deleted with their submission').toHaveLength(2);
         expect(after.map((participation) => participation.studentLogin).sort()).toEqual([studentOne.username, studentThree.username]);
         expect(await handedInTexts(page, exercise.id!), 'only the submission of the removed student is deleted').toEqual([`Answer of ${studentOne.username}`]);

@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -40,6 +42,37 @@ class GenerationTokenUsageServiceTest {
                 de.tum.cit.aet.artemis.admin.domain.LLMServiceType.ATLAS, "ATLAS_ORCHESTRATION", builder -> builder.withCourse(1L), ignored -> {
                 });
         org.mockito.Mockito.verifyNoInteractions(persistence);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "true,false,3", "false,true,10", "true,true,0" })
+    void missingTokenCountsPreventPersistenceButKeepKnownBudgetUsage(boolean missingInput, boolean missingOutput, long expectedBillableTokens) {
+        var usage = org.mockito.Mockito.mock(org.springframework.ai.chat.metadata.Usage.class);
+        org.mockito.Mockito.when(usage.getPromptTokens()).thenReturn(missingInput ? null : 10);
+        org.mockito.Mockito.when(usage.getCompletionTokens()).thenReturn(missingOutput ? null : 3);
+        var metadata = org.springframework.ai.chat.metadata.ChatResponseMetadata.builder().usage(usage).build();
+        var response = new org.springframework.ai.chat.model.ChatResponse(java.util.List.of(), metadata);
+
+        assertThat(llmTokenUsageService.trackChatResponseTokenUsage(response, de.tum.cit.aet.artemis.admin.domain.LLMServiceType.HYPERION, "generation", builder -> builder,
+                ignored -> {
+                })).isFalse();
+        assertThat(GenerationTokenUsageService.billableTokens(response, 1)).isEqualTo(expectedBillableTokens);
+        org.mockito.Mockito.verifyNoInteractions(persistence);
+    }
+
+    @Test
+    void missingModelNameKeepsUsageButLeavesCostEstimateIncomplete() {
+        var metadata = org.springframework.ai.chat.metadata.ChatResponseMetadata.builder().model(null).usage(new org.springframework.ai.chat.metadata.DefaultUsage(10, 3)).build();
+        var response = new org.springframework.ai.chat.model.ChatResponse(java.util.List.of(), metadata);
+        var observed = new java.util.concurrent.atomic.AtomicReference<GenerationUsage>();
+
+        assertThat(llmTokenUsageService.trackChatResponseTokenUsage(response, de.tum.cit.aet.artemis.admin.domain.LLMServiceType.HYPERION, "generation", builder -> builder,
+                observed::set)).isTrue();
+
+        assertThat(observed.get().model()).isEmpty();
+        assertThat(observed.get().numInputTokens()).isEqualTo(10);
+        assertThat(observed.get().numOutputTokens()).isEqualTo(3);
+        assertThat(observed.get().costEstimateComplete()).isFalse();
     }
 
     @Test

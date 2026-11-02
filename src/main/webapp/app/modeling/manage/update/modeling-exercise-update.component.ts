@@ -1,9 +1,9 @@
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
@@ -25,7 +25,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ModelingEditorBottomCenterDirective } from 'app/modeling/shared/modeling-editor/modeling-editor-bottom-center.directive';
 import { ModelingEditorTopLeftDirective } from 'app/modeling/shared/modeling-editor/modeling-editor-top-left.directive';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
@@ -62,6 +62,7 @@ import { ModelingMarkdownExplanationEditorComponent } from 'app/modeling/shared/
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -74,7 +75,7 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
         FormStatusBarComponent,
         ExerciseTitleChannelNameComponent,
         HelpIconComponent,
-        CategorySelectorPrimengComponent,
+        CategorySelectorComponent,
         DifficultyPickerComponent,
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
@@ -93,6 +94,7 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
         ModelingMarkdownExplanationEditorComponent,
         ExerciseGroupTimelineLockComponent,
         ExerciseGroupDateNoticeComponent,
+        PointsInputComponent,
     ],
     providers: [TumAetUiConfirmationService],
 })
@@ -103,7 +105,7 @@ export class ModelingExerciseUpdateComponent implements OnDestroy, OnInit {
     private readonly document = inject(DOCUMENT);
     private readonly alertService = inject(AlertService);
     private readonly modelingExerciseService = inject(ModelingExerciseService);
-    private readonly modalService = inject(NgbModal);
+    private readonly modalService = inject(TumAetUiDialogService);
     private readonly popupService = inject(ExerciseUpdateWarningService);
     private readonly courseService = inject(CourseManagementService);
     private readonly exerciseService = inject(ExerciseService);
@@ -266,7 +268,7 @@ export class ModelingExerciseUpdateComponent implements OnDestroy, OnInit {
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => this.exerciseState.patch('exerciseGroup', res.body!));
                             this.exerciseState.patch('course', undefined);
                         } else {
-                            this.courseService.find(courseId).subscribe((res) => this.exerciseState.patch('course', res.body!));
+                            this.courseService.findForManagement(courseId).subscribe((res) => this.exerciseState.patch('course', res.body!));
                             this.exerciseState.patch('exerciseGroup', undefined);
                         }
                         this.exerciseState.update(resetForImport);

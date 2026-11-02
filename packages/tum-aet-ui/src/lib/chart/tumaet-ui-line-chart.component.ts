@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, afterNextRender, booleanAttribute, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { TumAetUiChartClipPathComponent } from './tumaet-ui-chart-clip-path.component';
+import { TumAetUiChartCanvasDirective } from './tumaet-ui-chart-canvas.directive';
+import { chartDataRows, createChartVisibility, observeChartSize, visibleChartSeries } from './tumaet-ui-chart-state';
+import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { TumAetUiChartDatumContext, TumAetUiChartSelectEvent, TumAetUiChartSeries, TumAetUiLineChartConfig } from './tumaet-ui-chart.types';
 import { allIntegers, bandScale, finiteValues, linearScale, niceDomain } from './tumaet-ui-chart.scales';
 import { CurvePoint, linearPath, monotoneCubicPath, segmentsOf } from './tumaet-ui-chart.curves';
 import {
-    ChartAxisTitle,
     ChartGridLine,
-    ChartLegendItem,
     ChartTick,
     ValueTick,
     axisTitleViews,
@@ -15,6 +16,7 @@ import {
     gridLineViews,
     legendPositionOf,
     placeTooltip,
+    seriesLegendItems,
     valueTickViews,
 } from './tumaet-ui-chart.frame';
 import { TumAetUiChartAxesComponent } from './tumaet-ui-chart-axes.component';
@@ -49,11 +51,18 @@ let nextLineChartId = 0;
     selector: 'tumaet-ui-line-chart',
     templateUrl: './tumaet-ui-line-chart.component.html',
     styleUrl: './tumaet-ui-line-chart.component.scss',
-    imports: [TumAetUiChartAxesComponent, TumAetUiChartLegendComponent, TumAetUiChartTooltipComponent, TumAetUiChartDataTableComponent],
+    imports: [
+        TumAetUiChartClipPathComponent,
+        TumAetUiChartCanvasDirective,
+        TumAetUiChartAxesComponent,
+        TumAetUiChartLegendComponent,
+        TumAetUiChartTooltipComponent,
+        TumAetUiChartDataTableComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'tumaet-ui-line-chart' },
 })
-export class TumAetUiLineChartComponent implements OnDestroy {
+export class TumAetUiLineChartComponent {
     private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly canvas = viewChild.required<ElementRef<SVGSVGElement>>('canvas');
 
@@ -77,51 +86,15 @@ export class TumAetUiLineChartComponent implements OnDestroy {
         return datumAccessibleName(context, this.series().length > 1);
     }
 
-    private readonly size = signal({ width: 0, height: 0 });
+    private readonly size = observeChartSize(this.canvas);
     protected readonly hovered = signal<{ index: number; x: number; y: number; hostWidth: number; hostHeight: number } | undefined>(undefined);
-    private resizeObserver?: ResizeObserver;
-
-    constructor() {
-        afterNextRender(() => {
-            const element = this.canvas().nativeElement;
-            const rect = element.getBoundingClientRect();
-            this.size.set({ width: rect.width, height: rect.height });
-            if (typeof ResizeObserver === 'undefined') {
-                return;
-            }
-            this.resizeObserver = new ResizeObserver((entries) => {
-                const box = entries[0]?.contentRect;
-                if (box) {
-                    this.size.set({ width: box.width, height: box.height });
-                }
-            });
-            this.resizeObserver.observe(element);
-        });
-    }
-
-    ngOnDestroy(): void {
-        this.resizeObserver?.disconnect();
-    }
-
     /** Series the reader switched off in the legend, by index. */
-    private readonly hiddenSeries = signal<ReadonlySet<string>>(new Set());
-
-    protected onLegendToggle(key: string): void {
-        this.hiddenSeries.update((hidden) => {
-            const next = new Set(hidden);
-            if (!next.delete(key)) {
-                next.add(key);
-            }
-            return next;
-        });
-    }
+    private readonly visibility = createChartVisibility();
+    private readonly hiddenSeries = this.visibility.hidden;
+    protected readonly onLegendToggle = this.visibility.toggle;
 
     /** The series actually drawn, paired with their original index so meta and colors stay aligned. */
-    private readonly visibleSeries = computed(() =>
-        this.series()
-            .map((entry, index) => ({ entry, index }))
-            .filter(({ index }) => !this.hiddenSeries().has(`${index}`)),
-    );
+    private readonly visibleSeries = visibleChartSeries(this.series, this.hiddenSeries);
 
     /** Keep integer-valued series on whole-number ticks. */
     private readonly minTickStep = computed(() => (allIntegers(this.visibleSeries().flatMap(({ entry }) => [...entry.data])) ? 1 : 0));
@@ -246,24 +219,11 @@ export class TumAetUiLineChartComponent implements OnDestroy {
         return [...value, ...category];
     });
 
-    protected readonly axisTitles = computed<ChartAxisTitle[]>(() => {
-        const titles = axisTitleViews(this.plot(), this.frame().margin, this.config().xAxis?.label, this.config().yAxis?.label);
-        return [titles.x, titles.y].filter((title): title is ChartAxisTitle => title !== undefined);
-    });
+    protected readonly axisTitles = computed(() => axisTitleViews(this.plot(), this.frame().margin, this.config().xAxis?.label, this.config().yAxis?.label));
 
     protected readonly legendPosition = computed(() => legendPositionOf(this.config().legend));
 
-    protected readonly legendItems = computed<ChartLegendItem[]>(() =>
-        this.series()
-            .map((entry, index) => ({ entry, index }))
-            .filter(({ entry }) => entry.label && !entry.referenceLine)
-            .map(({ entry, index }) => ({
-                key: `${index}`,
-                label: entry.label!,
-                color: entry.color ?? 'var(--tumaet-ui-primary-color)',
-                hidden: this.hiddenSeries().has(`${index}`),
-            })),
-    );
+    protected readonly legendItems = computed(() => seriesLegendItems(this.series(), this.hiddenSeries(), 'exclude'));
 
     /** The x coordinate of the guide drawn through the hovered category. */
     protected readonly guideX = computed(() => {
@@ -309,12 +269,7 @@ export class TumAetUiLineChartComponent implements OnDestroy {
         };
     });
 
-    protected readonly accessibleRows = computed(() =>
-        this.labels().map((label, index) => ({
-            label,
-            values: this.series().map((entry) => ({ seriesLabel: entry.label, value: entry.data[index] })),
-        })),
-    );
+    protected readonly accessibleRows = computed(() => chartDataRows(this.labels(), this.series()));
 
     /** Resolves a pointer position to the nearest category, so hovering anywhere reports a series. */
     protected onPlotMove(event: MouseEvent): void {

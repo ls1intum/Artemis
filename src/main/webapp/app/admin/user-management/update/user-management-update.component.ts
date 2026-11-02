@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/account/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -16,7 +15,6 @@ import {
     TumAetUiDialogComponent,
     TumAetUiFormFieldComponent,
     TumAetUiInputDirective,
-    TumAetUiMessageComponent,
     TumAetUiSelectComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
@@ -54,7 +52,6 @@ import { UserCourseRolesComponent } from 'app/admin/user-management/course-roles
         TumAetUiCheckboxComponent,
         TumAetUiSelectComponent,
         TumAetUiChipComponent,
-        TumAetUiMessageComponent,
         TumAetUiButtonComponent,
         TumAetUiButtonDirective,
         TumAetUiDialogComponent,
@@ -114,15 +111,12 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
 
-    /** Sorted authorities by role hierarchy (super admin > admin > instructor > editor > tutor) */
+    /** Sorted authorities by role hierarchy (super admin > admin > user) */
     readonly sortedAuthorities = computed(() => {
         const roleOrder: Record<string, number> = {
             ROLE_SUPER_ADMIN: 0,
             ROLE_ADMIN: 1,
-            ROLE_INSTRUCTOR: 2,
-            ROLE_EDITOR: 3,
-            ROLE_TA: 4,
-            ROLE_USER: 5,
+            ROLE_USER: 2,
         };
         return [...this.authorities()].sort((a, b) => {
             const orderA = roleOrder[a] ?? 999;
@@ -138,9 +132,6 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly authorityTranslationKeys: Record<string, string> = {
         ROLE_SUPER_ADMIN: 'artemisApp.userManagement.roles.superAdmin',
         ROLE_ADMIN: 'artemisApp.userManagement.roles.admin',
-        ROLE_INSTRUCTOR: 'artemisApp.userManagement.roles.instructor',
-        ROLE_EDITOR: 'artemisApp.userManagement.roles.editor',
-        ROLE_TA: 'artemisApp.userManagement.roles.tutor',
         ROLE_USER: 'artemisApp.userManagement.roles.user',
     };
 
@@ -153,26 +144,6 @@ export class UserManagementUpdateComponent implements OnInit {
     /** The login the server knows the edited user by. Unlike the login field of the form, it does not change while typing, so it identifies the user in course role requests. */
     readonly persistedLogin = signal<string | undefined>(undefined);
 
-    /** Whether the authorities in the form reflect the server after the latest change of a course role. */
-    protected readonly authoritySync = signal<'idle' | 'syncing' | 'failed'>('idle');
-
-    /** How many requests that add or remove a course role are running. */
-    private readonly courseRoleChangesInProgress = signal(0);
-
-    /** The form cannot be saved while it might still submit authorities that a change of the course roles has made outdated. */
-    /** The global roles cannot be edited while a change of the course roles is about to change them. */
-    protected readonly authorityEditingBlocked = computed(() => this.courseRoleChangesInProgress() > 0 || this.authoritySync() === 'syncing');
-
-    protected readonly saveBlockedByCourseRoles = computed(() => this.courseRoleChangesInProgress() > 0 || this.authoritySync() !== 'idle');
-
-    private authoritySyncSubscription?: Subscription;
-
-    /** The global roles that the latest change of the course roles added or removed, so the administrator notices that the checkboxes changed on their own. */
-    protected readonly authorityChange = signal<{ added: string[]; removed: string[] } | undefined>(undefined);
-
-    /** The global authorities of the edited user as last seen on the server, to tell what a change of course roles did to them. */
-    private serverAuthorities = new Set<string>();
-
     /** Whether Jenkins profile is active */
     private isJenkins = false;
 
@@ -180,7 +151,6 @@ export class UserManagementUpdateComponent implements OnInit {
      * Initializes the component by loading user data, authorities and languages.
      */
     ngOnInit(): void {
-        this.destroyRef.onDestroy(() => this.authoritySyncSubscription?.unsubscribe());
         // create a new user, and only overwrite it if we fetch a user to edit
         this.user.set(new User());
         this.route.parent!.data.subscribe(({ user }) => {
@@ -189,7 +159,6 @@ export class UserManagementUpdateComponent implements OnInit {
                 this.oldLogin = this.user().login;
                 // A user who is being created has no login on the server yet.
                 this.persistedLogin.set(this.user().id === undefined ? undefined : this.oldLogin);
-                this.serverAuthorities = new Set(this.user().authorities);
                 this.organizationService.getOrganizationsByUser(this.user().id!).subscribe((organizations) => {
                     // Rebuild the user reference so the async organization update renders under zoneless.
                     this.user.update((currentUser) => cloneWith(currentUser, { organizations }));
@@ -226,9 +195,6 @@ export class UserManagementUpdateComponent implements OnInit {
      * Shows a warning for Jenkins users when login changes.
      */
     async save(): Promise<void> {
-        if (this.saveBlockedByCourseRoles()) {
-            return;
-        }
         const passwordControl = this.editForm.get('password')!;
         if (passwordControl.invalid) {
             passwordControl.markAsTouched();
@@ -301,44 +267,6 @@ export class UserManagementUpdateComponent implements OnInit {
     }
 
     /**
-     * Applies what a change of the course roles did to the global authorities of the user to the authorities in the form.
-     * Giving or taking a tutor, editor or instructor role grants or revokes the matching global authority on the server at once.
-     * Saving the form submits its authorities, so without this they would still be the old ones and the save would silently undo that change.
-     * Only the difference is applied, so authorities the administrator changed in the form but did not save yet are kept.
-     * Saving is blocked until this succeeded, and a response that a later refresh superseded is dropped.
-     */
-    onCourseRolesChanged(): void {
-        const login = this.persistedLogin();
-        if (!login) {
-            return;
-        }
-        this.authoritySync.set('syncing');
-        this.authoritySyncSubscription?.unsubscribe();
-        this.authoritySyncSubscription = this.userService.findUser(login).subscribe({
-            next: (reloadedUser) => {
-                const latest = reloadedUser.authorities ?? [];
-                const added = latest.filter((authority) => !this.serverAuthorities.has(authority));
-                const removed = [...this.serverAuthorities].filter((authority) => !latest.includes(authority));
-                this.serverAuthorities = new Set(latest);
-                this.authorityChange.set(added.length > 0 || removed.length > 0 ? { added, removed } : undefined);
-                const authoritiesControl = this.editForm.get('authorities');
-                const current: string[] = authoritiesControl?.value ?? [];
-                authoritiesControl?.setValue([...current.filter((authority) => !removed.includes(authority)), ...added.filter((authority) => !current.includes(authority))]);
-                this.authoritySync.set('idle');
-            },
-            error: () => this.authoritySync.set('failed'),
-        });
-    }
-
-    /**
-     * Tracks whether a request that adds or removes a course role is running. Its effect on the global authorities is only known once it ended and they were refreshed.
-     * @param inProgress whether such a request is running
-     */
-    onCourseRoleChangeInProgress(inProgress: boolean): void {
-        this.courseRoleChangesInProgress.update((running) => Math.max(0, running + (inProgress ? 1 : -1)));
-    }
-
-    /**
      * Opens the organizations modal used to select an organization to add
      */
     openOrganizationsModal() {
@@ -404,7 +332,7 @@ export class UserManagementUpdateComponent implements OnInit {
             firstName: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
             lastName: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
             password: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH), passwordMaxBytesValidator]],
-            email: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
+            email: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH), Validators.email]],
             visibleRegistrationNumber: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
             activated: [''],
             isTestUser: [''],

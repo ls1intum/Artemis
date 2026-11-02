@@ -3,8 +3,7 @@
    ========================================================================== */
 
 .editor-wrapper {
-    /* The width of the dividers between the panels, the same as the gutter of the splitters on the other pages
-       (SPLITTER_GUTTER_SIZE in splitter-pass-through.ts), and the colour of the grip drawn on them. */
+    /* The width of the grips below the editor and the build output of a grid that does not fill the page, and the colour of the grip drawn on them. */
     --code-editor-divider: 12px;
     --code-editor-divider-grip: color-mix(in srgb, var(--tumaet-ui-text-color) 62%, transparent);
 
@@ -426,7 +425,6 @@
 .rg-main-bottom,
 .rg-bottom-bottom {
     height: var(--code-editor-divider);
-    /* The grey of the shell, like the gutters of the splitters (splitterPassThrough) */
     background: var(--bs-body-bg);
     cursor: row-resize;
 
@@ -500,16 +498,14 @@
 }
 
 /* ==========================================================================
-   The file browser, the editor and the instructions: the panels of one splitter
+   The file browser, the editor and the instructions: the panels of two splitters
    ========================================================================== */
 
 .editor-main__content > .editor-sidebars {
-    width: 100%;
-    height: 100%;
     min-width: 0;
 }
 
-/* Each column fills its panel; the widths the columns had before the splitter set them are the splitter's now. */
+/* Each column fills its panel; the widths the columns had before the splitters set them are the splitters' now. */
 .editor-wrapper .editor-sidebars {
     .editor-sidebar-left,
     .editor-sidebar-right,
@@ -522,42 +518,19 @@
     }
 }
 
-/* The editor keeps a share of the width; the splitter cannot limit it (see sidebarMinSizes), so it is limited here. The panels around it shrink
-   to make room, as when the splitter's own limit holds. In an assessment the editor is the second panel of the inner splitter, and the
-   area it sits in keeps a share beside the instructions, like the text and modeling assessment workspace. */
-.editor-wrapper .editor-sidebars:not(.editor-sidebars--inner, .editor-sidebars--outer) > [data-pc-section='panel']:nth-child(3) {
-    min-width: 30%;
-}
-
-.editor-wrapper .editor-sidebars--inner > [data-pc-section='panel']:nth-child(3) {
-    min-width: 36%;
-}
-
-.editor-wrapper .editor-sidebars--outer > [data-pc-section='panel']:first-child {
-    min-width: 36%;
-}
-
-/* The splitter's children alternate panel, gutter, panel, gutter, panel, so its gutters are the 2nd and the 2nd to last child.
-   A collapsed side keeps only its header strip and its divider cannot be dragged. */
-.editor-sidebars--left-collapsed > [data-pc-section='panel']:first-of-type,
-.editor-sidebars--right-collapsed > [data-pc-section='panel']:last-of-type {
-    min-width: 3rem !important;
+/* The kit's splitter collapses only its second panel (the instructions, through collapsedSecondSize), so the file browser, the first panel
+   of the inner splitter, is collapsed here: it keeps just its rail, and the divider beside it is not there to drag. The splitter sizes its
+   panels by inline styles, hence the !important. */
+.editor-sidebars--left-collapsed > .tumaet-ui-splitter-panel:first-child {
     flex: 0 0 3rem !important;
 }
 
-.editor-sidebars--left-collapsed > [data-pc-section='gutter']:nth-child(2),
-.editor-sidebars--right-collapsed > [data-pc-section='gutter']:nth-last-child(2) {
-    pointer-events: none;
-
-    /* The divider only keeps the space beside the strip: a grip on it would offer a drag that does nothing, and the strip
-       itself opens the panel again. The grip is hidden, not removed, because it is what gives the divider its width. */
-    [data-pc-section='gutterhandle'] {
-        visibility: hidden;
-    }
+.editor-sidebars--left-collapsed > .tumaet-ui-splitter-separator {
+    display: none;
 }
 
-/* A collapsed side is a strip that stands for the panel. On the exercise page it is grey like a collapsed header, so it recedes
-   behind the editor; in an assessment it stays white like the panels around it, and so does the space beside it. */
+/* A collapsed side is a rail that stands for the panel. On the exercise page it is grey like a collapsed header, so it recedes
+   behind the editor; in an assessment it stays white like the panels around it. */
 .editor-wrapper:not(.assessment-workspace) {
     .editor-sidebars--left-collapsed .editor-sidebar-left .card,
     .editor-sidebars--right-collapsed .editor-sidebar-right .card {
@@ -570,16 +543,4 @@
     .editor-sidebars--right-collapsed .editor-sidebar-right .card {
         background-color: var(--module-bg);
     }
-
-    /* The divider's own background is an inline style of the splitter's pass-through, hence the !important */
-    .editor-sidebars--left-collapsed > [data-pc-section='gutter']:nth-child(2),
-    .editor-sidebars--right-collapsed > [data-pc-section='gutter']:nth-last-child(2) {
-        background: var(--module-bg) !important;
-    }
-}
-
-/* Without instructions the panel and the divider in front of it are not there, and the editor takes their room */
-.editor-sidebars--right-hidden > [data-pc-section='panel']:last-of-type,
-.editor-sidebars--right-hidden > [data-pc-section='gutter']:nth-last-child(2) {
-    display: none !important;
 }

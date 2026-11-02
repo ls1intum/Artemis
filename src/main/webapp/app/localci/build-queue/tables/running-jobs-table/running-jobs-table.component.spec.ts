@@ -192,18 +192,6 @@ describe('RunningJobsTableComponent', () => {
         expect(jobClickSpy).not.toHaveBeenCalled();
     });
 
-    it('should emit cancelAll event when cancel all is triggered', () => {
-        fixture.componentRef.setInput('buildJobs', mockRunningJobs);
-        fixture.detectChanges();
-
-        const cancelAllSpy = vi.fn();
-        component.cancelAll.subscribe(cancelAllSpy);
-
-        component.onCancelAll();
-
-        expect(cancelAllSpy).toHaveBeenCalled();
-    });
-
     it('should trigger jobClick when Enter key is pressed on row and target equals currentTarget', () => {
         fixture.componentRef.setInput('buildJobs', mockRunningJobs);
         fixture.detectChanges();

@@ -59,8 +59,18 @@ describe('StatisticsScoreDistributionGraphComponent', () => {
         component.selectChartBar(event);
 
         expect(routeInNewTabStub).toHaveBeenCalledOnce();
-        expect(routeInNewTabStub).toHaveBeenCalledWith([`/course-management/2/file-upload-exercises/1/scores`], {
+        expect(routeInNewTabStub).toHaveBeenCalledWith([`/course-management/2/file-upload-exercises/1/participations`], {
             queryParams: { scoreRangeFilter: expectedLabels.indexOf(label) },
+        });
+    });
+
+    it('should preserve the exam and exercise group when opening a score range', () => {
+        fixture.componentRef.setInput('exerciseGroup', { id: 3, exam: { id: 4 } });
+
+        component.selectChartBar({ seriesIndex: 0, index: 5, label: expectedLabels[5] });
+
+        expect(routeInNewTabStub).toHaveBeenCalledExactlyOnceWith(['/course-management/2/exams/4/exercise-groups/3/file-upload-exercises/1/participations'], {
+            queryParams: { scoreRangeFilter: 5 },
         });
     });
 });

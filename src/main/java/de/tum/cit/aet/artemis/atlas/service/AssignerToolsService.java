@@ -122,40 +122,13 @@ public class AssignerToolsService {
             @ToolParam(description = "evidence-strength weight: 1.0 (stand-alone evidence), 0.5 (partial), 0.3 (incidental). Must be > 0 and <= 1.0") Double weight,
             @ToolParam(description = "one-sentence outcome of the evidence test naming the chosen band (1.0 / 0.5 / 0.3) and why it is honest") String justification,
             ToolContext toolContext) {
-        markWorkerToolActivity(toolContext);
-        Long courseId = courseIdFromContext(toolContext);
-        if (courseId == null) {
-            return missingCourseContextError(objectMapper, toolContext);
+        LinkMutationContext context = prepareLinkMutation(competencyId, exerciseId, "exerciseId", true, weight, justification, toolContext);
+        if (context.error() != null) {
+            return context.error();
         }
-        if (!tryReserveWriteSlot(toolContext)) {
-            return writeQuotaError(objectMapper, toolContext);
-        }
-        if (competencyId == null || exerciseId == null) {
-            return mutationErrorJson(objectMapper, "competencyId and exerciseId are required.", toolContext);
-        }
-        if (weight == null) {
-            return mutationErrorJson(objectMapper, "weight is required: pick 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental).", toolContext);
-        }
-        Double matchedBand = matchAllowedBand(weight);
-        if (matchedBand == null) {
-            return mutationErrorJson(objectMapper,
-                    "weight must be one of 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental). If the evidence is too weak to link, do not call this tool.", toolContext);
-        }
-        String justificationError = validateJustification(objectMapper, justification, toolContext);
-        if (justificationError != null) {
-            return justificationError;
-        }
-        double effectiveWeight = matchedBand;
-
-        // See editCompetency: scalar-only mutation, no fetch-join needed.
-        Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
-        if (competencyOpt.isEmpty()) {
-            return mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
-        }
-        CourseCompetency competency = competencyOpt.get();
-        if (!belongsToCourse(competency, courseId)) {
-            return mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
-        }
+        Long courseId = context.courseId();
+        CourseCompetency competency = context.competency();
+        double effectiveWeight = context.weight();
 
         Exercise exercise;
         try {
@@ -207,30 +180,12 @@ public class AssignerToolsService {
     public String unassignExerciseFromCompetency(@ToolParam(description = "id of the competency") Long competencyId, @ToolParam(description = "id of the exercise") Long exerciseId,
             @ToolParam(description = "one-sentence reason stating (a) why the current link fails the evidence test and (b) which competency is the better home") String justification,
             ToolContext toolContext) {
-        markWorkerToolActivity(toolContext);
-        Long courseId = courseIdFromContext(toolContext);
-        if (courseId == null) {
-            return missingCourseContextError(objectMapper, toolContext);
+        LinkMutationContext context = prepareLinkMutation(competencyId, exerciseId, "exerciseId", false, null, justification, toolContext);
+        if (context.error() != null) {
+            return context.error();
         }
-        if (!tryReserveWriteSlot(toolContext)) {
-            return writeQuotaError(objectMapper, toolContext);
-        }
-        if (competencyId == null || exerciseId == null) {
-            return mutationErrorJson(objectMapper, "competencyId and exerciseId are required.", toolContext);
-        }
-        String justificationError = validateJustification(objectMapper, justification, toolContext);
-        if (justificationError != null) {
-            return justificationError;
-        }
-        // See editCompetency: scalar-only mutation, no fetch-join needed.
-        Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
-        if (competencyOpt.isEmpty()) {
-            return mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
-        }
-        CourseCompetency competency = competencyOpt.get();
-        if (!belongsToCourse(competency, courseId)) {
-            return mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
-        }
+        Long courseId = context.courseId();
+        CourseCompetency competency = context.competency();
 
         CompetencyExerciseLink existingLink = competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(exerciseId, competencyId).orElse(null);
         if (existingLink == null) {
@@ -270,39 +225,13 @@ public class AssignerToolsService {
             @ToolParam(description = "evidence-strength weight: 1.0 (stand-alone evidence), 0.5 (partial), 0.3 (incidental). Must be > 0 and <= 1.0") Double weight,
             @ToolParam(description = "one-sentence outcome of the evidence test naming the chosen band (1.0 / 0.5 / 0.3) and why it is honest") String justification,
             ToolContext toolContext) {
-        markWorkerToolActivity(toolContext);
-        Long courseId = courseIdFromContext(toolContext);
-        if (courseId == null) {
-            return missingCourseContextError(objectMapper, toolContext);
+        LinkMutationContext context = prepareLinkMutation(competencyId, lectureUnitId, "lectureUnitId", true, weight, justification, toolContext);
+        if (context.error() != null) {
+            return context.error();
         }
-        if (!tryReserveWriteSlot(toolContext)) {
-            return writeQuotaError(objectMapper, toolContext);
-        }
-        if (competencyId == null || lectureUnitId == null) {
-            return mutationErrorJson(objectMapper, "competencyId and lectureUnitId are required.", toolContext);
-        }
-        if (weight == null) {
-            return mutationErrorJson(objectMapper, "weight is required: pick 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental).", toolContext);
-        }
-        Double matchedBand = matchAllowedBand(weight);
-        if (matchedBand == null) {
-            return mutationErrorJson(objectMapper,
-                    "weight must be one of 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental). If the evidence is too weak to link, do not call this tool.", toolContext);
-        }
-        String justificationError = validateJustification(objectMapper, justification, toolContext);
-        if (justificationError != null) {
-            return justificationError;
-        }
-        double effectiveWeight = matchedBand;
-
-        Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
-        if (competencyOpt.isEmpty()) {
-            return mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
-        }
-        CourseCompetency competency = competencyOpt.get();
-        if (!belongsToCourse(competency, courseId)) {
-            return mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
-        }
+        Long courseId = context.courseId();
+        CourseCompetency competency = context.competency();
+        double effectiveWeight = context.weight();
 
         LectureUnit lectureUnit = findLectureUnitInCourse(lectureUnitId, courseId);
         if (lectureUnit == null) {
@@ -349,29 +278,12 @@ public class AssignerToolsService {
             @ToolParam(description = "id of the lecture unit") Long lectureUnitId,
             @ToolParam(description = "one-sentence reason stating (a) why the current link fails the evidence test and (b) which competency is the better home") String justification,
             ToolContext toolContext) {
-        markWorkerToolActivity(toolContext);
-        Long courseId = courseIdFromContext(toolContext);
-        if (courseId == null) {
-            return missingCourseContextError(objectMapper, toolContext);
+        LinkMutationContext context = prepareLinkMutation(competencyId, lectureUnitId, "lectureUnitId", false, null, justification, toolContext);
+        if (context.error() != null) {
+            return context.error();
         }
-        if (!tryReserveWriteSlot(toolContext)) {
-            return writeQuotaError(objectMapper, toolContext);
-        }
-        if (competencyId == null || lectureUnitId == null) {
-            return mutationErrorJson(objectMapper, "competencyId and lectureUnitId are required.", toolContext);
-        }
-        String justificationError = validateJustification(objectMapper, justification, toolContext);
-        if (justificationError != null) {
-            return justificationError;
-        }
-        Optional<CourseCompetency> competencyOpt = courseCompetencyRepository.findById(competencyId);
-        if (competencyOpt.isEmpty()) {
-            return mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext);
-        }
-        CourseCompetency competency = competencyOpt.get();
-        if (!belongsToCourse(competency, courseId)) {
-            return mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext);
-        }
+        Long courseId = context.courseId();
+        CourseCompetency competency = context.competency();
 
         CompetencyLectureUnitLink existingLink = competencyLectureUnitLinkRepository.findByLectureUnitIdAndCompetencyId(lectureUnitId, competencyId).orElse(null);
         if (existingLink == null) {
@@ -390,6 +302,53 @@ public class AssignerToolsService {
         appendAction(toolContext, AppliedActionDTO.unassignLectureUnit(competencyId, competency.getTitle(), lectureUnitId, detail, justification.trim()));
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(lectureUnit));
         return toJson(objectMapper, Map.of("status", "ok", "competencyId", competencyId, "lectureUnitId", lectureUnitId));
+    }
+
+    private record LinkMutationContext(Long courseId, CourseCompetency competency, Double weight, String error) {
+
+        static LinkMutationContext failure(String error) {
+            return new LinkMutationContext(null, null, null, error);
+        }
+    }
+
+    /** Keeps quota, request validation and course scoping in the same order for all link mutations. */
+    private LinkMutationContext prepareLinkMutation(Long competencyId, Long targetId, String targetIdName, boolean assigning, Double weight, String justification,
+            ToolContext toolContext) {
+        markWorkerToolActivity(toolContext);
+        Long courseId = courseIdFromContext(toolContext);
+        if (courseId == null) {
+            return LinkMutationContext.failure(missingCourseContextError(objectMapper, toolContext));
+        }
+        if (!tryReserveWriteSlot(toolContext)) {
+            return LinkMutationContext.failure(writeQuotaError(objectMapper, toolContext));
+        }
+        if (competencyId == null || targetId == null) {
+            return LinkMutationContext.failure(mutationErrorJson(objectMapper, "competencyId and " + targetIdName + " are required.", toolContext));
+        }
+        Double matchedBand = null;
+        if (assigning) {
+            if (weight == null) {
+                return LinkMutationContext.failure(mutationErrorJson(objectMapper, "weight is required: pick 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental).", toolContext));
+            }
+            matchedBand = matchAllowedBand(weight);
+            if (matchedBand == null) {
+                return LinkMutationContext.failure(mutationErrorJson(objectMapper,
+                        "weight must be one of 1.0 (stand-alone), 0.5 (partial), or 0.3 (incidental). If the evidence is too weak to link, do not call this tool.", toolContext));
+            }
+        }
+        String justificationError = validateJustification(objectMapper, justification, toolContext);
+        if (justificationError != null) {
+            return LinkMutationContext.failure(justificationError);
+        }
+        // Only scalars are changed; no association fetch join is required.
+        Optional<CourseCompetency> competency = courseCompetencyRepository.findById(competencyId);
+        if (competency.isEmpty()) {
+            return LinkMutationContext.failure(mutationErrorJson(objectMapper, "Competency not found: " + competencyId, toolContext));
+        }
+        if (!belongsToCourse(competency.get(), courseId)) {
+            return LinkMutationContext.failure(mutationErrorJson(objectMapper, "Competency " + competencyId + " does not belong to the current course.", toolContext));
+        }
+        return new LinkMutationContext(courseId, competency.get(), matchedBand, null);
     }
 
     /**

@@ -1,3 +1,4 @@
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { Component, computed, effect, inject, input, model, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -22,7 +23,6 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /** The sections of the instructions. As tabs, each is one tab. */

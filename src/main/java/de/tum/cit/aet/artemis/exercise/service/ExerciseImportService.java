@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.Hibernate;
@@ -18,10 +19,15 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
+import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseImportSettingsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
@@ -46,6 +52,32 @@ public abstract class ExerciseImportService {
         this.resultRepository = resultRepository;
         this.feedbackService = feedbackService;
         this.exerciseConfigurationService = exerciseConfigurationService;
+    }
+
+    /**
+     * Prepares import-owned criteria and competency references, then resolves the destination parents in request order.
+     * Course/group exclusivity and authorization remain the caller's subsequent checks.
+     *
+     * @param dto              submitted import references
+     * @param exercise         transient import target
+     * @param courseRepository course lookup
+     * @param exerciseGroupApi optional exam group lookup
+     * @param entityName       name used by competency input errors
+     */
+    public static void applyImportReferences(ExerciseImportSettingsDTO dto, Exercise exercise, CourseRepository courseRepository, Optional<ExerciseGroupApi> exerciseGroupApi,
+            String entityName) {
+        if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
+            exercise.setGradingCriteria(GradingCriteriaMapper.create(dto.gradingCriteria(), exercise));
+        }
+        if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
+            exercise.setCompetencyLinks(CompetencyExerciseLinkService.toTransientLinks(dto, exercise, entityName));
+        }
+        if (dto.courseId() != null) {
+            exercise.setCourse(courseRepository.findByIdElseThrow(dto.courseId()));
+        }
+        if (dto.exerciseGroupId() != null) {
+            exercise.setExerciseGroup(exerciseGroupApi.orElseThrow(() -> new ExamApiNotPresentException(ExerciseGroupApi.class)).findByIdElseThrow(dto.exerciseGroupId()));
+        }
     }
 
     /**

@@ -130,7 +130,7 @@ public class IrisDashboardEmailService {
                 sent++;
             }
             catch (Exception e) {
-                log.error("Failed to send Iris digest to {}", email, e);
+                log.error("Failed to send Iris digest (exception {})", e.getClass().getSimpleName());
             }
         }
         return sent;
@@ -150,7 +150,7 @@ public class IrisDashboardEmailService {
                 sent++;
             }
             catch (Exception e) {
-                log.error("Failed to send Iris alert to {}", email, e);
+                log.error("Failed to send Iris alert (exception {})", e.getClass().getSimpleName());
             }
         }
         return sent;
@@ -176,13 +176,13 @@ public class IrisDashboardEmailService {
             try {
                 var parsed = new InternetAddress(trimmed, true);
                 if (parsed.getPersonal() != null || !trimmed.equals(parsed.getAddress())) {
-                    log.warn("Iris email recipient rejected (display-name form): {}", trimmed);
+                    log.warn("Iris email recipient rejected (display-name form)");
                     continue;
                 }
                 seen.putIfAbsent(trimmed.toLowerCase(Locale.ROOT), trimmed);
             }
             catch (Exception e) {
-                log.warn("Iris email recipient rejected (invalid address): {}", trimmed);
+                log.warn("Iris email recipient rejected (invalid address)");
             }
         }
         return new ArrayList<>(seen.values());

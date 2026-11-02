@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import 'app/foundation/util/map.extension';
 
-vi.mock('@sentry/angular', async (importOriginal) => {
-    const originalModule = await importOriginal<typeof import('@sentry/angular')>();
+vi.mock('app/core/error-reporting/capture-exception', async (importOriginal) => {
+    const originalModule = await importOriginal<typeof import('app/core/error-reporting/capture-exception')>();
     return {
         ...originalModule,
         captureException: vi.fn(),
@@ -15,7 +15,7 @@ import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/htt
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
 import { User } from 'app/account/user/user.model';
-import * as Sentry from '@sentry/angular';
+import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -129,7 +129,7 @@ describe('EntityTitleService', () => {
         { type: undefined, ids: [] },
     ])('captures an exception if invalid parameters are supplied to getTitle', async ({ type, ids }) => {
         // Re-mock to get reference because direct import doesn't work here
-        const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
+        const captureSpy = vi.spyOn(ErrorReporting, 'captureException').mockImplementation(() => '');
         captureSpy.mockClear();
 
         // @ts-ignore we want to test invalid params
@@ -153,7 +153,7 @@ describe('EntityTitleService', () => {
         { type: undefined, ids: [], title: undefined },
     ])('captures an exception if invalid parameters are supplied to setTitle', ({ type, ids, title }) => {
         // Re-mock to get reference because direct import doesn't work here
-        const captureSpy = vi.spyOn(Sentry, 'captureException').mockImplementation(() => '');
+        const captureSpy = vi.spyOn(ErrorReporting, 'captureException').mockImplementation(() => '');
         captureSpy.mockClear();
 
         // @ts-ignore we want to test invalid params

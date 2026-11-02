@@ -17,8 +17,7 @@ import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { vi } from 'vitest';
 import { faInfo, faMinus } from '@fortawesome/free-solid-svg-icons';
-
-const CREDITS_STEP = 0.5;
+import { typeIntoInputNumber } from 'test/helpers/input-number-test-helpers';
 
 describe('UnifiedFeedbackComponent', () => {
     let component: UnifiedFeedbackComponent;
@@ -486,100 +485,134 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackTitle()).toBe('Encapsulation is broken');
     });
 
-    it('should step the credits up and down by half a point', () => {
+    /**
+     * A model value reaches the inner input of the points input after two microtasks, one for the `ngModel` of the
+     * template and one for the `ngModel` inside the points input, so every render settles twice.
+     */
+    async function settle(): Promise<void> {
+        for (let round = 0; round < 2; round++) {
+            fixture.detectChanges();
+            await fixture.whenStable();
+        }
+        fixture.detectChanges();
+    }
+
+    function creditsInputElement(): HTMLInputElement {
+        return fixture.nativeElement.querySelector('[data-testid="unified-feedback-points-input"] input') as HTMLInputElement;
+    }
+
+    function pressArrow(key: 'ArrowUp' | 'ArrowDown'): void {
+        creditsInputElement().dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    }
+
+    function leaveCreditsInput(): void {
+        creditsInputElement().dispatchEvent(new Event('focusout', { bubbles: true }));
+    }
+
+    it('should step the credits up and down by half a point with the arrow keys', async () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackCredits.set(1);
-        fixture.detectChanges();
+        await settle();
 
-        component.stepCredits(CREDITS_STEP);
+        pressArrow('ArrowUp');
         expect(component.feedbackCredits()).toBe(1.5);
 
-        component.stepCredits(-CREDITS_STEP);
+        pressArrow('ArrowDown');
         expect(component.feedbackCredits()).toBe(1);
     });
 
-    it('should snap a hand-typed value onto the half-point grid in the direction of travel when stepping', () => {
+    it('should step an off-grid typed value to the next half point in the direction of travel without leaving the field', async () => {
         fixture.componentRef.setInput('editable', true);
-        component.feedbackCredits.set(1.3);
-        fixture.detectChanges();
+        component.feedbackCredits.set(0);
+        await settle();
 
-        component.stepCredits(CREDITS_STEP);
+        typeIntoInputNumber(creditsInputElement(), '1.3', { leave: false });
+        pressArrow('ArrowUp');
         expect(component.feedbackCredits()).toBe(1.5);
 
-        component.feedbackCredits.set(1.3);
-        component.stepCredits(-CREDITS_STEP);
+        typeIntoInputNumber(creditsInputElement(), '1.3', { leave: false });
+        pressArrow('ArrowDown');
         expect(component.feedbackCredits()).toBe(1);
+
+        typeIntoInputNumber(creditsInputElement(), '-1.3', { leave: false });
+        pressArrow('ArrowUp');
+        expect(component.feedbackCredits()).toBe(-1);
+        typeIntoInputNumber(creditsInputElement(), '-1.3', { leave: false });
+        pressArrow('ArrowDown');
+        expect(component.feedbackCredits()).toBe(-1.5);
     });
 
-    it('should normalize hand-typed credits onto the half-point grid', () => {
+    it('should step the credits below zero because negative credits are valid', async () => {
         fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        await settle();
 
-        component.onCreditsChange(0.3);
-        expect(component.feedbackCredits()).toBe(0.5);
-
-        component.onCreditsChange(-0.3);
+        pressArrow('ArrowDown');
         expect(component.feedbackCredits()).toBe(-0.5);
     });
 
-    it('should clamp credits to the range from -100 to 100', () => {
+    it('should keep the credits within the range from -100 to 100 when the field is left', async () => {
         fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        await settle();
 
-        component.onCreditsChange(99999);
+        typeIntoInputNumber(creditsInputElement(), '150');
+        await settle();
         expect(component.feedbackCredits()).toBe(100);
 
-        component.onCreditsChange(-99999);
-        expect(component.feedbackCredits()).toBe(-100);
-
-        component.feedbackCredits.set(100);
-        component.stepCredits(CREDITS_STEP);
-        expect(component.feedbackCredits()).toBe(100);
-
-        component.feedbackCredits.set(-100);
-        component.stepCredits(-CREDITS_STEP);
+        typeIntoInputNumber(creditsInputElement(), '-150');
+        await settle();
         expect(component.feedbackCredits()).toBe(-100);
     });
 
-    it('should clamp credits beyond the bounds while typing, but leave in-range values until change', async () => {
+    it('should snap a typed value onto the half-point grid when the field is left', async () => {
         fixture.componentRef.setInput('editable', true);
-        component.feedbackCredits.set(2);
-        fixture.detectChanges();
-        const input: HTMLInputElement = fixture.nativeElement.querySelector('.unified-feedback-points-input');
+        component.feedbackCredits.set(0);
+        await settle();
 
-        // Typing one more digit after 100: the credits are already at the bound, so only the field changes.
-        component.feedbackCredits.set(100);
-        await fixture.whenStable();
-        input.value = '1000';
-        input.dispatchEvent(new Event('input'));
-        await fixture.whenStable();
-        expect(component.feedbackCredits()).toBe(100);
-        expect(input.value).toBe('100');
-        // The bounds are enforced by clamping, not by a form validator, so the field is never flagged invalid.
-        expect(input.classList).not.toContain('ng-invalid');
+        typeIntoInputNumber(creditsInputElement(), '0.3', { leave: false });
+        // Not snapped while typing: this would fight the caret.
+        expect(component.feedbackCredits()).toBe(0.3);
 
-        component.onCreditsInput('-500');
-        expect(component.feedbackCredits()).toBe(-100);
-        expect(input.value).toBe('-100');
+        leaveCreditsInput();
+        await settle();
+        expect(component.feedbackCredits()).toBe(0.5);
+        expect(creditsInputElement().value).toBe('0.5');
 
-        component.feedbackCredits.set(2);
-        component.onCreditsInput('1.3');
-        expect(component.feedbackCredits()).toBe(2);
+        typeIntoInputNumber(creditsInputElement(), '-0.3');
+        await settle();
+        expect(component.feedbackCredits()).toBe(-0.5);
+        expect(creditsInputElement().value).toBe('-0.5');
     });
 
-    it('should not step the credits when read-only or linked to a grading instruction', () => {
+    it('should show the snapped value again when snapping lands on the value the model already held', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(1.5);
+        await settle();
+
+        typeIntoInputNumber(creditsInputElement(), '1.6', { leave: false });
+        await settle();
+        expect(component.feedbackCredits()).toBe(1.6);
+
+        leaveCreditsInput();
+        await settle();
+        expect(component.feedbackCredits()).toBe(1.5);
+        expect(creditsInputElement().value).toBe('1.5');
+    });
+
+    it('should not step the credits when read-only or linked to a grading instruction', async () => {
         fixture.componentRef.setInput('editable', true);
         fixture.componentRef.setInput('readOnly', true);
         component.feedbackCredits.set(1);
-        fixture.detectChanges();
+        await settle();
 
-        component.stepCredits(CREDITS_STEP);
-        expect(component.feedbackCredits()).toBe(1);
+        expect(creditsInputElement().disabled).toBe(true);
 
         fixture.componentRef.setInput('readOnly', false);
         fixture.componentRef.setInput('feedback', { credits: 1, gradingInstruction: { feedback: 'Fixed rubric text', credits: 1 } } as any);
-        fixture.detectChanges();
+        await settle();
 
-        component.stepCredits(CREDITS_STEP);
-        expect(component.feedbackCredits()).toBe(1);
+        expect(creditsInputElement().disabled).toBe(true);
     });
 
     it('should stay adapted once already adapted, even if a later edit happens to match the original wording', () => {
@@ -739,7 +772,7 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.detectChanges();
 
         const titleInput = fixture.nativeElement.querySelector('.unified-feedback-title-input') as HTMLTextAreaElement;
-        const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
+        const pointsInput = creditsInputElement();
         const detailInput = fixture.nativeElement.querySelector('.unified-feedback-detail-input') as HTMLTextAreaElement;
 
         expect(titleInput).toBeTruthy();
@@ -755,76 +788,54 @@ describe('UnifiedFeedbackComponent', () => {
     it('should snap a typed points value onto the half-point grid on change', async () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackCredits.set(1);
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
+        await settle();
 
-        const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
-        pointsInput.value = '2.3';
-        pointsInput.dispatchEvent(new Event('change'));
-        fixture.detectChanges();
+        typeIntoInputNumber(creditsInputElement(), '2.3');
+        await settle();
 
         expect(component.feedbackCredits()).toBe(2.5);
     });
 
-    it('should clear feedbackCredits to undefined immediately when the points field is emptied, without waiting for change', async () => {
+    it('should clear feedbackCredits to undefined immediately when the points field is emptied, without leaving the field', async () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackCredits.set(1);
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
+        await settle();
 
-        const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
+        const pointsInput = creditsInputElement();
         pointsInput.value = '';
-        pointsInput.dispatchEvent(new Event('input'));
+        pointsInput.dispatchEvent(new Event('input', { bubbles: true }));
         fixture.detectChanges();
 
         expect(component.feedbackCredits()).toBeUndefined();
     });
 
-    it('should increment and decrement the points via the stepper buttons', async () => {
+    it('should accept a comma as decimal separator in the points field', async () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackCredits.set(1);
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
+        await settle();
 
-        const steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
-        expect(steps).toHaveLength(2);
+        typeIntoInputNumber(creditsInputElement(), '2,5');
+        await settle();
 
-        steps[1].click();
-        expect(component.feedbackCredits()).toBe(1.5);
-
-        steps[0].click();
-        steps[0].click();
-        expect(component.feedbackCredits()).toBe(0.5);
+        expect(component.feedbackCredits()).toBe(2.5);
     });
 
-    it('should use the raw pre-blur value when a stepper click follows an off-grid, uncommitted edit (regression test for double-snapping when the click blurs the input)', async () => {
+    it('should increment and decrement the points via the step buttons', async () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackCredits.set(1);
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
+        await settle();
 
-        const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
-        const incrementButton = (fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>)[1];
+        const increment = fixture.nativeElement.querySelector('.tumaet-ui-input-number-increment') as HTMLButtonElement;
+        const decrement = fixture.nativeElement.querySelector('.tumaet-ui-input-number-decrement') as HTMLButtonElement;
+        expect(increment).toBeTruthy();
+        expect(decrement).toBeTruthy();
 
-        pointsInput.focus();
-        pointsInput.value = '1.3';
-        pointsInput.dispatchEvent(new Event('input', { bubbles: true }));
-
-        // Mirrors the real browser event order for a click on a button while another element is focused:
-        // mousedown fires first (where the raw value must be captured), then the button steals focus, which
-        // blurs the input and fires `change` - normalizing it to 1.5 - before the button's own `click` runs.
-        incrementButton.dispatchEvent(new Event('mousedown', { bubbles: true }));
-        pointsInput.dispatchEvent(new Event('change', { bubbles: true }));
-        incrementButton.dispatchEvent(new Event('click', { bubbles: true }));
-        fixture.detectChanges();
-
-        // Without the fix this comes out as 2: blur snaps 1.3 to 1.5, then stepping from the already-snapped
-        // value adds another whole step instead of landing on the next grid point.
+        increment.click();
         expect(component.feedbackCredits()).toBe(1.5);
+
+        decrement.click();
+        decrement.click();
+        expect(component.feedbackCredits()).toBe(0.5);
     });
 
     it('should render the plain dismiss button when nothing would be lost', () => {
@@ -1099,23 +1110,25 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.detectChanges();
 
         const chip = fixture.nativeElement.querySelector('[data-testid="linked-criterion"]');
-        const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
-        const steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
+        const pointsInput = creditsInputElement();
+        const steps = fixture.nativeElement.querySelectorAll('.tumaet-ui-input-number-button') as NodeListOf<HTMLButtonElement>;
 
         expect(chip).not.toBeNull();
         expect(pointsInput.disabled).toBe(true);
+        expect(steps).toHaveLength(2);
         expect(steps[0].disabled).toBe(true);
         expect(steps[1].disabled).toBe(true);
     });
 
-    it('should disable the steppers and show the linked criterion after a grading instruction is assigned in place post-render (regression test for the stale-computed rubric-state bug)', () => {
+    it('should disable the points input and show the linked criterion after a grading instruction is assigned in place post-render (regression test for the stale-computed rubric-state bug)', async () => {
         fixture.componentRef.setInput('editable', true);
         const feedback = { credits: 0 } as Feedback;
         fixture.componentRef.setInput('feedback', feedback);
         component.feedbackCredits.set(0);
-        fixture.detectChanges();
+        await settle();
 
-        let steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
+        let steps = fixture.nativeElement.querySelectorAll('.tumaet-ui-input-number-button') as NodeListOf<HTMLButtonElement>;
+        expect(creditsInputElement().disabled).toBe(false);
         expect(steps[0].disabled).toBe(false);
         expect(steps[1].disabled).toBe(false);
         expect(fixture.nativeElement.querySelector('[data-testid="linked-criterion"]')).toBeNull();
@@ -1126,9 +1139,10 @@ describe('UnifiedFeedbackComponent', () => {
         feedback.gradingInstruction = { feedback: 'Fixed rubric text', credits: 2 } as any;
         fixture.componentRef.setInput('feedback', feedback);
         component.feedbackCredits.set(2);
-        fixture.detectChanges();
+        await settle();
 
-        steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
+        steps = fixture.nativeElement.querySelectorAll('.tumaet-ui-input-number-button') as NodeListOf<HTMLButtonElement>;
+        expect(creditsInputElement().disabled).toBe(true);
         expect(steps[0].disabled).toBe(true);
         expect(steps[1].disabled).toBe(true);
         expect(fixture.nativeElement.querySelector('[data-testid="linked-criterion"]')).not.toBeNull();

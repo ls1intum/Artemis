@@ -208,15 +208,12 @@
                         <label for="examMaxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title"></label>
                         <fa-icon [icon]="faExclamationTriangle" class="text-state-warning" [tumAetUiTooltip]="'artemisApp.examManagement.maxPoints.warning' | artemisTranslate" />
                     </div>
-                    <input
-                        tumAetUiInput
-                        id="examMaxPoints"
+                    <jhi-points-input
+                        fluid
+                        inputId="examMaxPoints"
                         name="examMaxPoints"
-                        class="w-full"
-                        type="number"
-                        min="1"
-                        max="9999"
-                        step="1"
+                        [min]="1"
+                        [max]="9999"
                         pattern="\d*"
                         [(ngModel)]="exam.examMaxPoints"
                         #examMaxPointsInput="ngModel"

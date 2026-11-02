@@ -66,6 +66,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
+import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationSeedService;
@@ -357,9 +358,8 @@ class GenerationPersistenceServiceTest {
     void persistRejectsSupportedSecretFileBeforeAnyDurableWrite() throws Exception {
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("src/Fixture.java", GITHUB_SENTINEL), Map.of("Test.java", "x"), "safe statement");
 
-        assertThatThrownBy(() -> service.persist(exercise, user, outcome))
-                .isInstanceOf(de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy.SecretMaterialException.class).hasMessageContaining("GITHUB_TOKEN")
-                .hasMessageNotContaining(GITHUB_SENTINEL);
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(HyperionSecretMaterialPolicy.SecretMaterialException.class)
+                .hasMessageContaining("GITHUB_TOKEN").hasMessageNotContaining(GITHUB_SENTINEL);
         verify(repositoryService, never()).createFile(any(), any(), any());
         verify(repositoryService, never()).deleteFile(any(), any());
         verify(gitService, never()).getOrCheckoutRepositoryOnBranch(any(), any(), any());
@@ -371,9 +371,8 @@ class GenerationPersistenceServiceTest {
     void persistRejectsSupportedSecretProblemStatementBeforeAnyDurableWrite() throws Exception {
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), GITHUB_SENTINEL);
 
-        assertThatThrownBy(() -> service.persist(exercise, user, outcome))
-                .isInstanceOf(de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy.SecretMaterialException.class).hasMessageContaining("GITHUB_TOKEN")
-                .hasMessageNotContaining(GITHUB_SENTINEL);
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(HyperionSecretMaterialPolicy.SecretMaterialException.class)
+                .hasMessageContaining("GITHUB_TOKEN").hasMessageNotContaining(GITHUB_SENTINEL);
         verify(repositoryService, never()).createFile(any(), any(), any());
         verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
         verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any());
@@ -535,7 +534,10 @@ class GenerationPersistenceServiceTest {
 
         assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOfSatisfying(GenerationIncompleteException.class, failure -> {
             assertThat(failure.liveExerciseChanged()).isTrue();
-            assertThat(failure.savedRepositoryCommits()).containsEntry(RepositoryType.TEMPLATE, "hash-template");
+            assertThat(failure.savedRepositoryCommits()).containsEntry(RepositoryType.TEMPLATE, "hash-template").containsEntry(RepositoryType.SOLUTION, "hash-solution")
+                    .containsEntry(RepositoryType.TESTS, "hash-tests");
+            assertThat(failure).hasMessageContaining("The exercise was saved, but releasing its reservation failed").hasCauseInstanceOf(IllegalStateException.class);
+            assertThat(failure.getCause()).hasMessage("coordination unavailable");
         });
         assertThat(liveSaves.getSlotInfo(exercise.getId())).isPresent();
         assertThatThrownBy(() -> liveSaves.claim(exercise.getId())).isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
@@ -708,6 +710,53 @@ class GenerationPersistenceServiceTest {
                 .hasMessageContaining("changed after Hyperion verified");
 
         verify(repositoryService, never()).commitChanges(any(), any());
+    }
+
+    @Test
+    void persist_emptyVerifiedTemplateRemovesOldFiles() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(repositoryService.getFiles(repository)).thenReturn(Map.of("src/Old.java", FileType.FILE, "src/old.class", FileType.FILE), Map.of(), Map.of());
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        GenerationOutcome outcome = outcomeWith(Map.of(), Map.of("Solution.java", "solution"), Map.of("Test.java", "test"), "");
+        when(outcome.seedRepositoryHeads()).thenReturn(Map.of(RepositoryType.TEMPLATE, "pre-template"));
+
+        GenerationPersistenceService.PersistResult result = service.persist(exercise, user, outcome);
+
+        verify(repositoryService).deleteFile(repository, "src/Old.java");
+        verify(repositoryService).deleteFile(repository, "src/old.class");
+        verify(gitService).pushCommitWithLease(repository, "hash-template", "main", "pre-template");
+        assertThat(result.postPersistHeads()).containsEntry(RepositoryType.TEMPLATE, "hash-template");
+    }
+
+    @Test
+    void persist_emptyVerifiedTemplateRejectsChangedHeadBeforeDeletingFiles() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.getLocalHeadHash(repository)).thenReturn("changed-template");
+        GenerationOutcome outcome = outcomeWith(Map.of(), Map.of("Solution.java", "solution"), Map.of("Test.java", "test"), "");
+        when(outcome.seedRepositoryHeads()).thenReturn(Map.of(RepositoryType.TEMPLATE, "pre-template"));
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class)
+                .hasMessageContaining("changed after Hyperion verified");
+
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+    }
+
+    @Test
+    void persist_emptyVerifiedTemplateAlreadyCleanDoesNotCreateCommit() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.isWorkingCopyClean(repository)).thenReturn(true, false, false);
+        when(gitService.getLastCommitHash(templateUri, "main")).thenReturn("pre-template");
+        when(gitService.getLastCommitHash(solutionUri, "main")).thenReturn("hash-template");
+        when(gitService.getLastCommitHash(testsUri, "main")).thenReturn("hash-solution");
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        GenerationOutcome outcome = outcomeWith(Map.of(), Map.of("Solution.java", "solution"), Map.of("Test.java", "test"), "");
+        when(outcome.seedRepositoryHeads()).thenReturn(Map.of(RepositoryType.TEMPLATE, "pre-template"));
+
+        GenerationPersistenceService.PersistResult result = service.persist(exercise, user, outcome);
+
+        assertThat(result.postPersistHeads()).doesNotContainKey(RepositoryType.TEMPLATE);
+        verify(gitService, never()).pushCommitWithLease(repository, "hash-template", "main", "pre-template");
+        verify(repositoryService, never()).deleteFile(any(), anyString());
     }
 
     @Test
@@ -1056,6 +1105,37 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
+    void preservationChecksPersistWithZeroCreditAndTheirPreviousGradingCanBeRestored() {
+        ProgrammingExerciseTestCase assessed = new ProgrammingExerciseTestCase().testName("acceptsFraction").weight(1.0).visibility(Visibility.ALWAYS).active(true);
+        ProgrammingExerciseTestCase preservation = new ProgrammingExerciseTestCase().testName("preservesGuard").weight(2.0).bonusPoints(2.0).visibility(Visibility.AFTER_DUE_DATE)
+                .active(true);
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(assessed, preservation));
+        String plan = """
+                {"tests":[
+                  {"name":"acceptsFraction","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"preservesGuard","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}
+                ]}
+                """;
+
+        GenerationPersistenceService.PersistResult saved = service.persist(exercise, user, outcomeWithPlan(Map.of(), Map.of(), Map.of(), "", plan));
+
+        assertThat(assessed.getWeight()).isEqualTo(3.0);
+        assertThat(preservation.getWeight()).isZero();
+        assertThat(preservation.getBonusPoints()).isZero();
+        assertThat(new de.tum.cit.aet.artemis.programming.service.TestCasePointsService(testCaseRepository).calculatePointsForTestCase(preservation, Set.of(assessed, preservation),
+                exercise, 3.0, false)).isZero();
+        preservation.setBonusPoints(1.0);
+        assertThat(service.canRestoreGrading(1L, saved.previousGrading(), saved.savedGrading())).isFalse();
+        preservation.setBonusPoints(0.0);
+        assertThat(preservation.getVisibility()).isEqualTo(Visibility.ALWAYS);
+        assertThat(service.resyncAfterRevertWithSignal(exercise, user, null, null, null, null, null, Map.of(), saved.previousGrading(), saved.savedGrading(), () -> true)).isTrue();
+        assertThat(assessed.getWeight()).isEqualTo(1.0);
+        assertThat(preservation.getWeight()).isEqualTo(2.0);
+        assertThat(preservation.getBonusPoints()).isEqualTo(2.0);
+        assertThat(preservation.getVisibility()).isEqualTo(Visibility.AFTER_DUE_DATE);
+    }
+
+    @Test
     void persist_appliesVerifiedPlanEvenWhenTheTestsRepositoryHasNoNewCommit() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("hash-template", "hash-solution", null);
@@ -1290,7 +1370,7 @@ class GenerationPersistenceServiceTest {
         var binary = new WorkspaceFile("solution/src/main/resources/fixture.bin", bytes, false);
         var source = new WorkspaceFile("solution/src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8), false);
         var candidate = new WorkspaceSnapshot(List.of(binary, source));
-        var seed = new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of()));
+        var seed = new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of(), Set.of()));
         var output = new GenerationOutput(candidate, new VerificationResult(true, true, true, 1, List.of()), candidate.sha256(), SpecFidelityReport.empty(), "CONVERGED", null,
                 GenerationOutput.AccountingState.INCOMPLETE, "default");
         GenerationOutcome outcome = ReflectionTestUtils.invokeMethod(GenerationOutcome.class, "received", output, seed, false);
@@ -1311,16 +1391,34 @@ class GenerationPersistenceServiceTest {
 
     @Test
     void generateDeletesStaleBinaryFromTheClearedSourceRoot(@org.junit.jupiter.api.io.TempDir Path workingTree) throws Exception {
+        byte[] oldBytes = { 0, 1, 2, 3 };
+        byte[] wrapperBytes = { 0, 4, 5, 6 };
         Path staleBinary = workingTree.resolve("src/main/resources/old-solution.bin");
-        FileUtils.writeByteArrayToFile(staleBinary.toFile(), new byte[] { 0, 1, 2, 3 });
+        Path wrapperPath = workingTree.resolve("gradle/wrapper/gradle-wrapper.jar");
+        FileUtils.writeByteArrayToFile(staleBinary.toFile(), oldBytes);
+        FileUtils.writeByteArrayToFile(wrapperPath.toFile(), wrapperBytes);
+        var oldFile = new WorkspaceFile("solution/src/main/resources/old-solution.bin", oldBytes, false);
+        var wrapper = new WorkspaceFile("solution/gradle/wrapper/gradle-wrapper.jar", wrapperBytes, false);
+        var seed = new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(oldFile, wrapper)).forMode(de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode.GENERATE),
+                Map.of(), new GradingContext(false, Set.of(), Set.of()));
+        var source = new WorkspaceFile("solution/src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8), false);
+        var candidate = new WorkspaceSnapshot(List.of(wrapper, source));
+        var output = new GenerationOutput(candidate, new VerificationResult(true, true, true, 1, List.of()), candidate.sha256(), SpecFidelityReport.empty(), "CONVERGED", null,
+                GenerationOutput.AccountingState.INCOMPLETE, "default");
+        GenerationOutcome outcome = ReflectionTestUtils.invokeMethod(GenerationOutcome.class, "received", output, seed, false);
         stubSuccessfulCheckoutAndCommits();
+        when(gitService.getLocalHeadHash(repository)).thenReturn("pre-solution");
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("hash-solution");
         when(repository.getLocalPath()).thenReturn(workingTree);
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
-        when(repositoryService.getFiles(any())).thenReturn(Map.of("src/Main.java", FileType.FILE, "src/main/resources/old-solution.bin", FileType.FILE), Map.of(), Map.of());
+        when(repositoryService.getFiles(repository)).thenReturn(Map.of("src/main/resources/old-solution.bin", FileType.FILE, "gradle/wrapper/gradle-wrapper.jar", FileType.FILE));
 
-        service.persist(exercise, user, outcomeWith(Map.of("src/Main.java", "class Main {}"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), ""));
+        service.persist(exercise, user, outcome);
 
+        assertThat(outcome.candidatePaths(RepositoryType.SOLUTION)).containsExactlyInAnyOrder("src/Main.java", "gradle/wrapper/gradle-wrapper.jar");
         verify(repositoryService).deleteFile(repository, "src/main/resources/old-solution.bin");
+        verify(repositoryService, never()).deleteFile(repository, "gradle/wrapper/gradle-wrapper.jar");
+        assertThat(FileUtils.readFileToByteArray(wrapperPath.toFile())).containsExactly(wrapperBytes);
     }
 
     @Test
@@ -1646,19 +1744,6 @@ class GenerationPersistenceServiceTest {
         verify(repositoryService, atLeastOnce()).createFile(any(), eq("X.java"), captor.capture());
         String written = new String(captor.getValue().readAllBytes(), StandardCharsets.UTF_8);
         assertThat(written).isEqualTo(dirty);
-    }
-
-    @Test
-    void extractTitleFromH1_returnsFirstLevelOneHeading_ignoringDeeperHeadingsAndLeadingBlankLines() {
-        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("# Roman Numerals\n\nConvert integers 1..3999."))
-                .isEqualTo("Roman Numerals");
-        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("\n\n#   Balanced BST   \n## Tasks"))
-                .isEqualTo("Balanced BST");
-        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("## Subsection only\nbody")).isNull();
-        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("No heading at all")).isNull();
-        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("#NotAHeading")).isNull();
-        String longHeading = "# " + "x".repeat(400);
-        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading(longHeading)).hasSize(255);
     }
 
     @ParameterizedTest

@@ -1,3 +1,8 @@
+:host {
+    display: block;
+    min-width: 0;
+}
+
 .forwarded-message-container {
     display: flex;
     padding-top: 0.3rem;
@@ -9,11 +14,16 @@
         display: flex;
         flex-direction: column;
         width: 100%;
+        min-width: 0;
     }
 
     .forwarded-message-missing-label {
         padding-top: 0.3rem;
         color: var(--communication-gray);
+    }
+
+    .forwarded-message-channel {
+        flex-wrap: wrap;
     }
 
     .forwarded-message-header {
@@ -39,6 +49,7 @@
 .left-border-line {
     background-color: var(--communication-gray);
     width: 4px;
+    flex-shrink: 0;
     border-radius: 3px;
     margin-right: 0.5rem;
 }

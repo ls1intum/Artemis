@@ -1,4 +1,3 @@
-/* stylelint-disable selector-pseudo-element-no-unknown */
 :host {
     display: flex;
     flex: 1;
@@ -6,116 +5,50 @@
     overflow: hidden;
 }
 
-// ::ng-deep is required to style the PrimeNG Splitter internals (no public API for these overrides).
-:host ::ng-deep .resizable-panels-splitter {
-    border: 0;
-    background: transparent;
+.panel-surface {
+    background: var(--tumaet-ui-content-background);
 
-    // The current PrimeNG Splitter renders its panels as `p-splitterpanel`. This class name has
-    // changed across PrimeNG majors, so revisit these selectors when upgrading PrimeNG.
-    // Only the panels of this splitter: the editors inside them may hold splitters of their own, which these rules would reach
-    // through a descendant selector (and did: their handles showed this one's grip on top of their own).
-    > .p-splitterpanel {
-        display: flex;
-        min-width: 0;
-        min-height: 0;
-        overflow: hidden;
-    }
-
-    // The gutter and its grip are styled by the pass-through (splitterPassThrough), the same as on the assessment pages.
-
-    // Collapsed state: the splitter stays mounted (so the left panel survives), but the right panel shrinks to the
-    // icon rail and the gutter is hidden. !important overrides PrimeNG's inline flex-basis from panelSizes.
-    &.right-collapsed {
-        // The rail keeps the width of the divider as a margin, which shows the splitter's own background: the grey of the shell,
-        // like the divider it stands in for, not the colour of the panels. The root's inline background needs the !important.
-        background-color: var(--bs-body-bg) !important;
-
-        > .p-splitterpanel:first-child {
-            flex: 1 1 auto !important;
-        }
-
-        > .p-splitterpanel:last-child {
-            flex: 0 0 auto !important;
-        }
-
-        > .p-splitter-gutter {
-            display: none !important;
-        }
+    &[hidden] {
+        display: none;
     }
 }
 
-// Framed like the panels it sits beside (the general feedback panel, the editor's cards) and like its own collapsed rail
-.right-panel {
-    border: var(--bs-border-width) solid var(--bs-border-color);
-}
-
-// The tab row of the right panel is grey like the header of the general feedback panel, so the headers of the page read alike. It
-// draws the line below the tabs, and the tabs run down to it, so the indicator of the selected tab sits on that line.
-.right-panel-header {
-    background-color: var(--hover-slightly-darker-body-bg);
-    // Inside the header, not a border: the tabs lie over it by paint order, so the indicator covers it at every zoom
-    box-shadow: inset 0 calc(-1 * var(--bs-border-width)) 0 var(--bs-border-color);
-}
-
-.right-panel-collapse-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    align-self: stretch;
-    width: 2.5rem;
-    padding: 0;
-    color: var(--bs-body-color);
-    background: transparent;
-    border: 0;
-    border-left: var(--bs-border-width) solid var(--bs-border-color);
-
-    &:hover,
-    &:focus-visible {
-        color: var(--bs-primary);
-        background: var(--hover-slightly-darker-body-bg);
-    }
-}
-
-.right-panel-tabs {
-    min-width: 0;
-
-    tumaet-ui-tab-list {
-        flex: 1 1 auto;
-    }
-}
-
-.collapsed-right-panel {
-    width: 3rem;
-    min-width: 3rem;
-
-    /* Stands in for the gutter, which is hidden while collapsed, so the grey divider stays the same width. */
-    margin-left: var(--spacing-divider);
-    border: var(--bs-border-width) solid var(--bs-border-color);
-}
-
-// The rail that stands for the collapsed panel is grey like a header, so it recedes instead of reading as one more white card.
-// It is also a `module-bg` element, whose class has the same weight as this rule without the second class.
-.collapsed-right-panel.module-bg {
-    // The colour of the headers of the code editor (the file tab above its editor), so every rail is the colour of a collapsed header
-    background: var(--code-editor-file-browser-header-background);
-}
-
+.right-panel-collapse-button,
 .collapsed-right-panel-tab {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    min-height: 2.75rem;
     padding: 0.5rem;
-    color: var(--bs-body-color);
+    color: var(--tumaet-ui-text-color);
     background: transparent;
     border: 0;
-    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+    border-bottom: 1px solid var(--tumaet-ui-border-color);
 
     &:hover,
-    &:focus-visible {
-        color: var(--bs-primary);
-        background: var(--hover-slightly-darker-body-bg);
+    &:focus-visible,
+    &.active {
+        color: var(--tumaet-ui-primary-color);
+        background: var(--tumaet-ui-hover-background);
     }
+
+    &:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: -2px;
+    }
+}
+
+.right-panel-collapse-button {
+    align-self: stretch;
+    width: 2.5rem;
+    border-left: 1px solid var(--tumaet-ui-border-color);
+}
+
+.collapsed-right-panel {
+    width: 3rem;
+    border: 1px solid var(--tumaet-ui-border-color);
+}
+
+.collapsed-right-panel-tab {
+    width: 100%;
+    min-height: 2.75rem;
 }

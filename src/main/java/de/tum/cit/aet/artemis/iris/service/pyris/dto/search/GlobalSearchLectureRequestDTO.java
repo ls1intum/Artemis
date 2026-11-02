@@ -5,6 +5,7 @@ import java.util.List;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
@@ -21,8 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * {@link PyrisLectureSearchRequestDTO} (which does carry the access context) is built from this in the connector.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GlobalSearchLectureRequestDTO(@NotBlank String query, @Min(1) @Max(20) int limit, @Nullable @Size(max = MAX_COURSE_ID_FILTERS) List<Long> courseIds,
-        @Nullable @Size(max = MAX_COURSE_ID_FILTERS) List<Long> excludeCourseIds) {
+public record GlobalSearchLectureRequestDTO(@NotBlank String query, @Min(1) @Max(20) int limit, @Nullable @Size(max = MAX_COURSE_ID_FILTERS) List<@NotNull Long> courseIds,
+        @Nullable @Size(max = MAX_COURSE_ID_FILTERS) List<@NotNull Long> excludeCourseIds) {
 
     /**
      * Upper bound on the number of course ids honoured per list, mirroring the metadata search endpoint. A caller has

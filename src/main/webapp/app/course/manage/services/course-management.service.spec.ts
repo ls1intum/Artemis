@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
@@ -251,6 +251,44 @@ describe('Course Management Service', () => {
 
         httpMock.expectOne({ method: 'GET', url: 'api/course/time-zones' }).flush(['Europe/Kyiv', 'UTC']);
         expect(timeZones).toEqual(['Europe/Kyiv', 'UTC']);
+    });
+
+    it.each(['findForTutor', 'findForInstructor'] as const)('%s preserves conversion and title side effects', (method) => {
+        const titleSpy = vi.spyOn(entityTitleService, 'setTitle');
+        let body: Course | null | undefined;
+        courseManagementService[method](7).subscribe((response) => (body = response.body));
+        const suffix = method === 'findForTutor' ? 'for-tutor' : 'for-instructor';
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/${suffix}` }).flush({ id: 7, title: 'Course', startDate: '2026-10-14T14:00:00Z' });
+        expect(body?.startDate?.toISOString()).toBe('2026-10-14T14:00:00.000Z');
+        expect(titleSpy).toHaveBeenCalled();
+    });
+
+    it.each([
+        ['STUDENT', 'for-tutor'],
+        ['TEACHING_ASSISTANT', 'for-tutor'],
+        ['EDITOR', 'for-tutor'],
+        ['INSTRUCTOR', 'for-instructor'],
+    ] as const)('management chooses %s audience before reading a course', (role, suffix) => {
+        accountService.userIdentity.set(Object.assign(new User(), { id: 9, courseRoles: [{ courseId: 7, roles: [role] }] }));
+        courseManagementService.findForManagement(7).subscribe();
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/${suffix}` }).flush({ id: 7 });
+    });
+
+    it('selects the instructor projection for a numeric course ID from route parameters', () => {
+        accountService.userIdentity.set(Object.assign(new User(), { id: 9, courseRoles: [{ courseId: 7, roles: ['INSTRUCTOR'] }] }));
+        const route = new ActivatedRouteSnapshot();
+        route.params = { courseId: '7' };
+        courseManagementService.findForManagement(route.params['courseId']).subscribe();
+        const request = httpMock.expectOne((request) => request.url.startsWith(`${resourceUrl}/7/`));
+        request.flush({ id: 7 });
+        expect(request.request.url).toBe(`${resourceUrl}/7/for-instructor`);
+    });
+
+    it('management uses tutor projection for a passkey-blocked administrator without instructor membership', () => {
+        accountService.userIdentity.set(Object.assign(new User(), { id: 9, authorities: ['ROLE_ADMIN'], courseRoles: [] }));
+        vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(true);
+        courseManagementService.findForManagement(7).subscribe();
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/7/for-tutor` }).flush({ id: 7 });
     });
 
     it('should find the course', () => {

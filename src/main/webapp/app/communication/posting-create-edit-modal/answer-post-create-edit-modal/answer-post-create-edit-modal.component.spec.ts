@@ -34,6 +34,10 @@ describe('AnswerPostCreateEditModalComponent', () => {
             ],
             providers: [FormBuilder, { provide: CommunicationService, useClass: MockCommunicationService }, { provide: ViewContainerRef, useClass: MockViewContainerRef }],
         });
+        TestBed.overrideComponent(AnswerPostCreateEditModalComponent, {
+            remove: { imports: [PostingMarkdownEditorComponent, ArtemisTranslatePipe] },
+            add: { imports: [MockComponent(PostingMarkdownEditorComponent), MockPipe(ArtemisTranslatePipe)] },
+        });
         fixture = TestBed.createComponent(AnswerPostCreateEditModalComponent);
         component = fixture.componentInstance;
         communicationService = TestBed.inject(CommunicationService);
@@ -43,6 +47,24 @@ describe('AnswerPostCreateEditModalComponent', () => {
     afterEach(() => {
         vi.restoreAllMocks();
     });
+
+    for (const modifier of ['ctrlKey', 'metaKey'] as const) {
+        it(`submits once through the embedded answer form for ${modifier}+Enter`, () => {
+            component.posting.set(communicationAnswerPostToCreateUser1);
+            fixture.detectChanges();
+            const view = component.postingEditor()!.createEmbeddedView({});
+            try {
+                view.detectChanges();
+                const form = view.rootNodes.find((node: Node) => node instanceof HTMLFormElement) as HTMLFormElement;
+                const editor = form.querySelector('jhi-posting-markdown-editor')!;
+                const confirm = vi.spyOn(component, 'confirm').mockImplementation(() => undefined);
+                editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, [modifier]: true }));
+                expect(confirm).toHaveBeenCalledOnce();
+            } finally {
+                view.destroy();
+            }
+        });
+    }
 
     it('should init modal with correct content and title for answer post with id', { timeout: 30000 }, () => {
         component.posting.set(communicationResolvingAnswerPostUser1);
@@ -217,19 +239,17 @@ describe('AnswerPostCreateEditModalComponent editor template', () => {
         view.destroy();
     });
 
-    it('should flush the pending editor text before Save submits the reply', () => {
+    it('saves the latest synchronous form value when Save submits the reply', () => {
         component.posting.set(communicationAnswerPostUser2);
         const updateSpy = vi.spyOn(TestBed.inject(CommunicationService), 'updateAnswerPost');
-        // the editor debounces its text changes, so the form control only receives the latest text once the editor is flushed
-        const flushSpy = vi.fn(() => component.formGroup.get('content')!.setValue('latest text typed right before Save'));
-        MockInstance(PostingMarkdownEditorComponent, 'flushPendingTextChange', flushSpy);
         const view = renderEditor();
         const form = view.rootNodes[0] as HTMLElement;
         document.body.appendChild(form);
+        component.formGroup.get('content')!.setValue('latest text typed right before Save');
+        view.detectChanges();
 
         (form.querySelector('[data-testid="answer-post-edit-save"] button') as HTMLButtonElement).click();
 
-        expect(flushSpy).toHaveBeenCalledOnce();
         expect(updateSpy).toHaveBeenCalledOnce();
         expect(updateSpy.mock.calls[0][0].content).toBe('latest text typed right before Save');
         form.remove();

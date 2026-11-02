@@ -1,5 +1,5 @@
 import { OnDestroy, Service } from '@angular/core';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { IWatchParams, ReconnectionTimeMode, RxStomp, RxStompConfig, RxStompState, TickerStrategy } from '@stomp/rx-stomp';
 import { IMessage } from '@stomp/stompjs';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -426,7 +426,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
                 try {
                     payload = WebsocketService.decodeAndDecompress(payload);
                 } catch (error) {
-                    captureException(error, { mechanism: { handled: true, type: 'websocket-decompression', data: { message: 'Failed to decompress message' } } });
+                    captureException(error, { extra: { mechanism: 'websocket-decompression', message: 'Failed to decompress message' } });
                     throw error;
                 }
             }
@@ -537,7 +537,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * @param data Data to send through the WebSocket connection.
      *
      * @remarks
-     * - If compression fails, the method logs the error via Sentry and falls back to sending the uncompressed payload.
+     * - If compression fails, the method reports the error and falls back to sending the uncompressed payload.
      * - If the connection is not active, nothing is sent.
      */
     send<T>(path: string, data: T): void {
@@ -550,7 +550,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
                     const base64StringPayload = WebsocketService.compressAndEncode(jsonPayload);
                     this.rxStomp!.publish({ destination: path, body: base64StringPayload, headers: COMPRESSION_HEADER });
                 } catch (error) {
-                    captureException(error, { mechanism: { handled: true, type: 'websocket-compression', data: { message: 'Failed to compress message' } } });
+                    captureException(error, { extra: { mechanism: 'websocket-compression', message: 'Failed to compress message' } });
                     // Send uncompressed payload if an error occurs
                     this.rxStomp!.publish({ destination: path, body: jsonPayload, headers: {} });
                 }
@@ -605,7 +605,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             // Drop a frame that cannot be decoded instead of letting it error the stream. All consumers of a
             // destination share one subscription, so an error would disconnect every one of them (and, because
             // `share` resets on error, silently leave them without a subscription) over a single bad message.
-            // The failure itself is still reported to Sentry inside the decoder.
+            // The failure itself is still reported inside the decoder.
             mergeMap((message) => {
                 try {
                     return of(decode(message));

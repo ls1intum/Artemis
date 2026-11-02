@@ -1,30 +1,39 @@
-import { Component, DestroyRef, ElementRef, HostListener, Renderer2, ViewEncapsulation, afterNextRender, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import {
+    Component,
+    DestroyRef,
+    ElementRef,
+    HostListener,
+    OnInit,
+    Renderer2,
+    ViewEncapsulation,
+    afterNextRender,
+    computed,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ResizeType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 import { FeedbackSplitComponent } from 'app/exercise/feedback-bottom-panel/feedback-split.component';
-import { SplitterModule } from 'primeng/splitter';
-import type { SplitterResizeEndEvent } from 'primeng/types/splitter';
-import { SPLITTER_GUTTER_SIZE, splitterPassThrough } from 'app/assessment/manage/assessment-workspace/splitter-pass-through';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
+import { parseJson } from 'app/foundation/util/json.util';
 import { NgTemplateOutlet } from '@angular/common';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { CollapsedPanelRailComponent, CollapsedPanelRailItem } from 'app/shared-ui/components/collapsed-panel-rail/collapsed-panel-rail.component';
-
-/** The splitters of the grid, by the selector the panels are found with. */
-const SIDEBARS = '.editor-sidebars:not(.editor-sidebars--inner):not(.editor-sidebars--outer)';
-const INNER = '.editor-sidebars--inner';
-const OUTER = '.editor-sidebars--outer';
 
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
     styleUrls: ['./code-editor-grid.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [ResizableDirective, FeedbackSplitComponent, NgTemplateOutlet, SplitterModule, CollapsedPanelRailComponent],
+    imports: [ResizableDirective, FeedbackSplitComponent, NgTemplateOutlet, TumAetUiSplitterComponent, CollapsedPanelRailComponent],
     host: { '[class.code-editor-grid--fill]': 'fillHeight()' },
 })
-export class CodeEditorGridComponent {
+export class CodeEditorGridComponent implements OnInit {
     private renderer = inject(Renderer2);
     private readonly destroyRef = inject(DestroyRef);
 
@@ -95,44 +104,26 @@ export class CodeEditorGridComponent {
 
     protected readonly ResizeType = ResizeType;
 
-    protected readonly gutterSize = SPLITTER_GUTTER_SIZE;
-    // An assessment's dividers have the colour of its panels, a student's the grey of the shell
-    protected readonly passThrough = computed(() => splitterPassThrough('horizontal', {}, this.assessmentWorkspace() ? 'panel' : 'shell'));
-    /** The widths (percent) of the file browser, the editor and the instructions; the splitter remembers what the user drags them to. */
-    protected readonly sidebarSizes = [24, 46, 30];
     /**
-     * An assessment's two splitters: the file browser beside the editor (inner), and that area beside the instructions (outer), whose shares
-     * are the same as the three panels above would have in an assessment: 20, 45 and 35.
+     * The file browser beside the editor (inner), and that area beside the instructions (outer). The kit's splitter divides two panels, so
+     * the three columns are two splitters, on the exercise page as in an assessment, where the bottom area lies under the inner one.
+     * These are the widths (percent) the user last chose; until then the defaults apply.
      */
-    protected readonly assessmentInnerSizes = [30, 70];
-    protected readonly assessmentOuterSizes = [65, 35];
-    protected readonly assessmentMinSizes = [5, 5];
-    /**
-     * The smallest widths (percent) the splitter lets its panels shrink to. PrimeNG applies only the first two of them, and always the
-     * first to the panel before the dragged divider and the second to the panel after it, whichever divider that is: with three panels a
-     * larger second value would stop the instructions from shrinking, since it is the editor's. So the three are the same, the least a
-     * panel may shrink to, and the editor's own minimum is a style (see `editor-sidebars` in the stylesheet).
-     */
-    protected readonly sidebarMinSizes = [5, 5, 5];
+    private readonly chosenInnerSizes = signal<number[] | undefined>(undefined);
+    private readonly chosenOuterSizes = signal<number[] | undefined>(undefined);
+    protected readonly innerSizes = computed(() => this.chosenInnerSizes() ?? (this.assessmentWorkspace() ? [30, 70] : [34, 66]));
+    protected readonly outerSizes = computed(() => this.chosenOuterSizes() ?? (this.assessmentWorkspace() ? [65, 35] : [70, 30]));
+    /** The editor, and the area it sits in beside the instructions, keep a share of the width, like the text and modeling assessment workspace. */
+    protected readonly innerMinSizes = [5, 36];
+    protected readonly outerMinSizes = [36, 5];
     /**
      * The width (px) at or below which dragging the file browser or the instructions narrower collapses them. A width rather than a share, so that the
-     * panel collapses at the same point on a narrow page (the exercise's split panel) and on a wide one (the assessment). It lies
-     * above the smallest width {@link sidebarMinSizes} allows, which the drag cannot go below, so a quick drag that stops a little
-     * short of that collapses the panel as well.
+     * panel collapses at the same point on a narrow page (the exercise's split panel) and on a wide one (the assessment).
      */
     private static readonly SIDEBAR_SNAP_PX = 140;
-    private lastSidebarSizes?: number[];
-    private lastInnerSizes?: number[];
-    private lastOuterSizes?: number[];
-    private innerSizesBeforeDrag?: number[];
-    private outerSizesBeforeDrag?: number[];
-    /** The sizes the drag in progress started from, as the splitter reports them when it starts, also for the very first drag. */
-    private sizesBeforeDrag?: number[];
-
-    /** Where the splitters remember their sizes. */
-    protected readonly sidebarStateKey = 'code-editor-sidebars';
-    protected readonly assessmentInnerStateKey = 'code-editor-assessment-inner';
-    protected readonly assessmentOuterStateKey = 'code-editor-assessment-outer';
+    /** Where the chosen widths are remembered between visits. */
+    private readonly innerStorageKey = computed(() => (this.assessmentWorkspace() ? 'code-editor-assessment-inner' : 'code-editor-sidebars-inner'));
+    private readonly outerStorageKey = computed(() => (this.assessmentWorkspace() ? 'code-editor-assessment-outer' : 'code-editor-sidebars-outer'));
 
     constructor() {
         afterNextRender(() => {
@@ -146,103 +137,61 @@ export class CodeEditorGridComponent {
         this.recomputeMaxConstraints();
     }
 
-    /** The user finished dragging a divider between the file browser, the editor and the instructions. */
-    protected onSidebarsResized(event: SplitterResizeEndEvent): void {
-        const sizes = event.sizes.map(Number);
-        const before = this.sizesBeforeDrag ?? this.lastSidebarSizes;
-        this.sizesBeforeDrag = undefined;
-        // The splitter reports the new sizes only; the divider next to the file browser moved when the file browser's own share changed
-        const fileBrowserMoved = before !== undefined && Math.abs(sizes[0] - before[0]) > 0.01;
-        if (fileBrowserMoved && !this.fileBrowserIsCollapsed() && this.panelWidthInPixels(SIDEBARS, sizes[0], 3) <= CodeEditorGridComponent.SIDEBAR_SNAP_PX) {
-            // Dragged shut: the collapsed strip stands in for the panel, and the narrow width is not what it reopens with
-            this.restoreSizes(SIDEBARS, this.sidebarStateKey, before ?? this.sidebarSizes);
-            this.collapseFileBrowserRequest.emit();
-            this.onResize.emit(ResizeType.SIDEBAR_LEFT);
-            return;
-        }
-        const instructionsMoved = before !== undefined && Math.abs(sizes[2] - before[2]) > 0.01;
-        if (
-            instructionsMoved &&
-            this.showEditorSidebarRight() &&
-            !this.rightPanelIsCollapsed() &&
-            this.panelWidthInPixels(SIDEBARS, sizes[2], 3) <= CodeEditorGridComponent.SIDEBAR_SNAP_PX
-        ) {
-            this.restoreSizes(SIDEBARS, this.sidebarStateKey, before ?? this.sidebarSizes);
-            this.collapseInstructionsRequest.emit();
-            this.onResize.emit(ResizeType.SIDEBAR_RIGHT);
-            return;
-        }
-        this.lastSidebarSizes = sizes;
-        this.onResize.emit(fileBrowserMoved ? ResizeType.SIDEBAR_LEFT : ResizeType.SIDEBAR_RIGHT);
+    ngOnInit(): void {
+        this.chosenInnerSizes.set(this.readSavedSizes(this.innerStorageKey()));
+        this.chosenOuterSizes.set(this.readSavedSizes(this.outerStorageKey()));
     }
 
-    /** The drag starts from the sizes the panels have now. */
-    protected onSidebarsResizeStart(event: { sizes: (number | string)[] }): void {
-        this.sizesBeforeDrag = event.sizes.map(Number);
-    }
-
-    /** The user finished dragging the divider between an assessment's file browser and its editor. */
-    protected onInnerResized(event: SplitterResizeEndEvent): void {
-        const sizes = event.sizes.map(Number);
-        const before = this.innerSizesBeforeDrag ?? this.lastInnerSizes;
-        this.innerSizesBeforeDrag = undefined;
-        if (!this.fileBrowserIsCollapsed() && this.panelWidthInPixels(INNER, sizes[0], 2) <= CodeEditorGridComponent.SIDEBAR_SNAP_PX) {
-            this.restoreSizes(INNER, this.assessmentInnerStateKey, before ?? this.assessmentInnerSizes);
+    /** The user finished dragging the divider between the file browser and the editor. */
+    protected onInnerResizeEnd(sizes: number[]): void {
+        if (this.fileBrowserElement().nativeElement.getBoundingClientRect().width <= CodeEditorGridComponent.SIDEBAR_SNAP_PX) {
+            // Dragged shut: the rail stands in for the panel, and the sliver is not what it reopens with, so the splitter goes back to the
+            // widths chosen before
+            this.chosenInnerSizes.set([...this.innerSizes()]);
             this.collapseFileBrowserRequest.emit();
         } else {
-            this.lastInnerSizes = sizes;
+            this.chosenInnerSizes.set(sizes);
+            this.saveSizes(this.innerStorageKey(), sizes);
         }
         this.onResize.emit(ResizeType.SIDEBAR_LEFT);
     }
 
-    protected onInnerResizeStart(event: { sizes: (number | string)[] }): void {
-        this.innerSizesBeforeDrag = event.sizes.map(Number);
-    }
-
-    /** The user finished dragging the divider between an assessment's file browser and editor area, and its instructions. */
-    protected onOuterResized(event: SplitterResizeEndEvent): void {
-        const sizes = event.sizes.map(Number);
-        const before = this.outerSizesBeforeDrag ?? this.lastOuterSizes;
-        this.outerSizesBeforeDrag = undefined;
-        if (this.showEditorSidebarRight() && !this.rightPanelIsCollapsed() && this.panelWidthInPixels(OUTER, sizes[1], 2) <= CodeEditorGridComponent.SIDEBAR_SNAP_PX) {
-            this.restoreSizes(OUTER, this.assessmentOuterStateKey, before ?? this.assessmentOuterSizes);
-            // The grid collapses the column itself, to its rail
-            this.toggleCollapse({ event: new MouseEvent('click'), horizontal: true }, CollapsableCodeEditorElement.Instructions);
+    /** The user finished dragging the divider between the area of the file browser and the editor, and the instructions. */
+    protected onOuterResizeEnd(sizes: number[]): void {
+        if (this.instructionsElement().nativeElement.getBoundingClientRect().width <= CodeEditorGridComponent.SIDEBAR_SNAP_PX) {
+            this.chosenOuterSizes.set([...this.outerSizes()]);
+            if (this.assessmentWorkspace()) {
+                // An assessment's grid collapses the column itself, to its rail
+                this.toggleCollapse({ event: new MouseEvent('click'), horizontal: true }, CollapsableCodeEditorElement.Instructions);
+            } else {
+                this.collapseInstructionsRequest.emit();
+            }
         } else {
-            this.lastOuterSizes = sizes;
+            this.chosenOuterSizes.set(sizes);
+            this.saveSizes(this.outerStorageKey(), sizes);
         }
         this.onResize.emit(ResizeType.SIDEBAR_RIGHT);
     }
 
-    protected onOuterResizeStart(event: { sizes: (number | string)[] }): void {
-        this.outerSizesBeforeDrag = event.sizes.map(Number);
-    }
-
-    /** The width (px) of a panel that takes the given share (percent) of a splitter, whose share leaves out its dividers. */
-    private panelWidthInPixels(selector: string, share: number, panels: number): number {
-        const splitter = this.editorWrapperElement()?.nativeElement.querySelector(selector);
-        const width = splitter?.getBoundingClientRect().width ?? 0;
-        return (share / 100) * Math.max(0, width - (panels - 1) * this.gutterSize);
-    }
-
-    /**
-     * Puts the panels of a splitter back to the given widths. The splitter has stored the width of the last drag already, and keeps it on
-     * the panels until its sizes input changes, so both are overwritten: otherwise a reopened panel, or the next visit, would start as
-     * the sliver it was dragged to.
-     */
-    private restoreSizes(selector: string, stateKey: string, sizes: number[]): void {
+    private readSavedSizes(key: string): number[] | undefined {
         try {
-            localStorage.setItem(stateKey, JSON.stringify(sizes));
-        } catch {
-            // Storage is blocked; the widths below still apply for this visit
-        }
-        const panels = this.editorWrapperElement()?.nativeElement.querySelectorAll<HTMLElement>(`${selector} > [data-pc-section="panel"]`);
-        panels?.forEach((panel, index) => {
-            if (sizes[index] !== undefined) {
-                // The same formula as the splitter's own: the share of the width without the dividers
-                panel.style.flexBasis = `calc(${sizes[index]}% - ${(panels.length - 1) * this.gutterSize}px)`;
+            const raw = localStorage.getItem(key);
+            const parsed = raw === null ? undefined : parseJson<unknown>(raw);
+            if (Array.isArray(parsed) && parsed.length === 2 && parsed.every((size) => typeof size === 'number' && size > 0)) {
+                return parsed;
             }
-        });
+        } catch {
+            // Not JSON, or storage is blocked: the default widths apply
+        }
+        return undefined;
+    }
+
+    private saveSizes(key: string, sizes: number[]): void {
+        try {
+            localStorage.setItem(key, JSON.stringify(sizes));
+        } catch {
+            // Storage is blocked; the widths still apply for this visit
+        }
     }
 
     /** Re-emit a panel resize and refresh the sum-aware maxima so the next drag accounts for the new sizes. */

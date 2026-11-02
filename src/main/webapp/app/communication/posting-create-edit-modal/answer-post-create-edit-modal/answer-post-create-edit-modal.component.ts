@@ -5,7 +5,6 @@ import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/communication/communication.util';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -57,25 +56,16 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        const posting = this.posting();
-        if (!posting) {
-            this.isLoading.set(false);
-            return;
-        }
-        const payload = deepClone(posting);
-        payload.content = this.formGroup.get('content')?.value;
-        this.communicationService.createAnswerPost(payload).subscribe({
-            next: (answerPost: AnswerPost) => {
+        this.submitPosting(
+            (payload) => this.communicationService.createAnswerPost(payload),
+            (answerPost: AnswerPost) => {
                 this.resetFormGroup();
                 this.isLoading.set(false);
                 // clear before emitting so that a parent can reopen the editor in its onCreate handler
                 this.createEditAnswerPostContainerRef()?.clear();
                 this.onCreate.emit(answerPost);
             },
-            error: () => {
-                this.isLoading.set(false);
-            },
-        });
+        );
     }
 
     /**
@@ -83,24 +73,15 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        const posting = this.posting();
-        if (!posting) {
-            this.isLoading.set(false);
-            return;
-        }
-        const payload = deepClone(posting);
-        payload.content = this.formGroup.get('content')?.value;
-        this.communicationService.updateAnswerPost(payload).subscribe({
-            next: (updatedPost: AnswerPost) => {
+        this.submitPosting(
+            (payload) => this.communicationService.updateAnswerPost(payload),
+            (updatedPost: AnswerPost) => {
                 this.postingUpdated.emit(updatedPost);
                 this.isLoading.set(false);
                 this.isInputOpen.set(false);
                 this.createEditAnswerPostContainerRef()?.clear();
             },
-            error: () => {
-                this.isLoading.set(false);
-            },
-        });
+        );
     }
 
     /**

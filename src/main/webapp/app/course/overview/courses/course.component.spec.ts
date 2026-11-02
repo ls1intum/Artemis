@@ -296,7 +296,9 @@ describe('CoursesComponent', () => {
     });
 
     it('should show the course request action to instructors', () => {
-        accountService.authenticate(createAuthenticatedUser(Authority.INSTRUCTOR));
+        const instructor = createAuthenticatedUser(Authority.STUDENT);
+        instructor.courseRoles = [{ courseId: 1, roles: ['INSTRUCTOR'] }];
+        accountService.authenticate(instructor);
         component.coursesLoaded.set(true);
         fixture.detectChanges();
 

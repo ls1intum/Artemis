@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { MultipleChoiceQuestionEditComponent } from 'app/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -308,6 +309,15 @@ describe('MultipleChoiceQuestionEditComponent', async () => {
         expect(component.question().hint).toBeUndefined();
         expect(component.question().hasCorrectOption).toBeUndefined();
     }
+
+    it('should take points with a decimal separator and cut off the fraction after three digits', () => {
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('input#score');
+
+        typeIntoInputNumber(input, '5.5555');
+
+        expect(input.value).toBe('5.555');
+        expect(component.question().points).toBe(5.555);
+    });
 
     it('should trigger delete button', async () => {
         const spy = vi.spyOn(component, 'deleteQuestion');

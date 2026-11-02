@@ -27,8 +27,8 @@ span {
         // shadow, since an inline sentence that wraps shows it only at the start of its first line and the end of its last.
         &.active {
             box-shadow:
-                inset 2px 0 0 currentColor,
-                inset -2px 0 0 currentColor;
+                inset 2px 0 0 currentcolor,
+                inset -2px 0 0 currentcolor;
         }
 
         &.positive-feedback {

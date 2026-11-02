@@ -5,7 +5,7 @@
             "name": "Name",
             "username": "Login",
             "title": "Kursbewertungen",
-            "exerciseDashboard": "Übungsbewertungen",
+            "exerciseDashboard": "Übungsteilnahmen",
             "participated": "Teilgenommen an Übungen",
             "successful": "Erfolgreich abgeschlossen",
             "quizPoints": "Quiz Points (%)",

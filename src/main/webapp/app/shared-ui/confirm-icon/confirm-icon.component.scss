@@ -20,6 +20,15 @@
     }
 }
 
+:host(.confirm-icon-fill-parent) {
+    align-self: stretch;
+
+    .confirm-icon-button {
+        height: 100%;
+        padding: 0 0.5rem;
+    }
+}
+
 .confirm-icon-danger {
     color: var(--danger);
 }

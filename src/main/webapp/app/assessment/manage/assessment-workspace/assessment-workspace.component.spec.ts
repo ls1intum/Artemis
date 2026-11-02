@@ -46,7 +46,7 @@ describe('AssessmentWorkspaceComponent', () => {
     let fixture: ComponentFixture<AssessmentWorkspaceTestHostComponent>;
 
     const primary = () => fixture.debugElement.query(By.css('.assessment-workspace__primary-split'));
-    const dragInstructions = (sizes: number[]) => primary().triggerEventHandler('onResizeEnd', { originalEvent: new MouseEvent('mouseup'), sizes });
+    const dragInstructions = (sizes: number[]) => primary().triggerEventHandler('resizeEnd', sizes);
     const instructionsRail = () => fixture.nativeElement.querySelector('[data-testid="collapsed-assessment-instructions"]') as HTMLButtonElement | null;
     const detailsPanel = () => fixture.nativeElement.querySelector('[data-testid="assessment-workspace-details"]') as HTMLElement | null;
     const detailsIcons = () => fixture.nativeElement.querySelectorAll('[data-testid^="feedback-bottom-panel-toggle"]') as NodeListOf<HTMLButtonElement>;
@@ -103,19 +103,22 @@ describe('AssessmentWorkspaceComponent', () => {
 
     describe('collapsing the instructions', () => {
         it('collapses them to their rail when dragged to a sliver, and opens them again from the rail', () => {
-            primary().triggerEventHandler('onResizeStart', { originalEvent: new MouseEvent('mousedown'), sizes: [70, 30] });
+            dragInstructions([70, 30]);
             dragInstructions([95, 5]);
             fixture.detectChanges();
 
             expect(instructionsRail()).not.toBeNull();
             expect(primary().nativeElement.classList).toContain('assessment-workspace__primary-split--collapsed');
+            expect(primary().componentInstance.collapsedSecondSize()).toBe('3rem');
+            // The sliver is not kept: the instructions reopen with the split chosen before
             expect(JSON.parse(localStorage.getItem('test-assessment-workspace')!)).toEqual([70, 30]);
 
             instructionsRail()!.click();
             fixture.detectChanges();
 
             expect(instructionsRail()).toBeNull();
-            expect(primary().componentInstance.panelSizes).toEqual([70, 30]);
+            expect(primary().componentInstance.collapsedSecondSize()).toBeUndefined();
+            expect(primary().componentInstance.panelSizes()).toEqual([70, 30]);
         });
 
         it('keeps them while they are dragged to a usable size', () => {
@@ -123,14 +126,14 @@ describe('AssessmentWorkspaceComponent', () => {
             fixture.detectChanges();
 
             expect(instructionsRail()).toBeNull();
-            expect(primary().componentInstance.panelSizes).toEqual([75, 25]);
+            expect(primary().componentInstance.panelSizes()).toEqual([75, 25]);
         });
 
         it('only limits them in height, and never collapses them, while they are stacked under the area', () => {
             ResizeObserverMock.instance!.emit(400);
             fixture.detectChanges();
 
-            expect(primary().componentInstance.minSizes).toEqual([36, 24]);
+            expect(primary().componentInstance.minSizes()).toEqual([36, 24]);
             dragInstructions([95, 5]);
             fixture.detectChanges();
 
@@ -163,16 +166,16 @@ describe('AssessmentWorkspaceComponent', () => {
         });
 
         it('collapses to one icon for each tab when dragged down to a sliver', () => {
-            const splitter = fixture.debugElement.query(By.css('.assessment-workspace__area p-splitter'));
-            splitter.triggerEventHandler('onResizeEnd', { originalEvent: new MouseEvent('mouseup'), sizes: [92, 8] });
+            const splitter = fixture.debugElement.query(By.css('.assessment-workspace__area tumaet-ui-splitter'));
+            splitter.triggerEventHandler('resizeEnd', [92, 8]);
             fixture.detectChanges();
 
             expect(detailsIcons()).toHaveLength(2);
         });
 
         it('keeps the panel open while it is dragged to a usable height', () => {
-            const splitter = fixture.debugElement.query(By.css('.assessment-workspace__area p-splitter'));
-            splitter.triggerEventHandler('onResizeEnd', { originalEvent: new MouseEvent('mouseup'), sizes: [70, 30] });
+            const splitter = fixture.debugElement.query(By.css('.assessment-workspace__area tumaet-ui-splitter'));
+            splitter.triggerEventHandler('resizeEnd', [70, 30]);
             fixture.detectChanges();
 
             expect(detailsIcons()).toHaveLength(1);

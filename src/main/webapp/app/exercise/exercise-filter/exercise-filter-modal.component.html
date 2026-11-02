@@ -1,13 +1,23 @@
 <form name="exerciseFilterForm" (ngSubmit)="applyFilter()">
-    <div class="modal-header">
-        <h4 class="modal-title">
+    <div class="flex items-center justify-between gap-3! border-b border-border p-4!">
+        <h4 class="text-xl font-semibold">
             <fa-icon [icon]="faFilter" />
             <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.modalTitle"></span>
         </h4>
-        <button type="button" class="btn-close" (click)="closeModal()"></button>
+        <button
+            severity="secondary"
+            tumAetUiButton
+            data-testid="exercise-filter-close"
+            variant="text"
+            type="button"
+            [attr.aria-label]="'entity.action.cancel' | artemisTranslate"
+            (click)="closeModal()"
+        >
+            ×
+        </button>
     </div>
-    <div class="modal-body">
-        <div class="form-group">
+    <div class="p-4!">
+        <div class="mb-4!">
             @if (noFiltersAvailable()) {
                 <div>
                     <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.noFilterAvailable"></span>
@@ -15,30 +25,30 @@
             }
 
             @if (selectableCategoryOptions().length || selectedCategoryOptions().length) {
-                <label for="exercise-categories-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.categories"></label>
+                <label for="exercise-categories-filter-selection" class="block font-medium mb-1 text-base font-semibold" jhiTranslate="artemisApp.exercise.categories"></label>
 
-                <input
-                    #categoryInput
-                    id="exercise-categories-filter-selection"
-                    type="text"
-                    class="form-control mb-2"
+                <tumaet-ui-autocomplete
+                    #categoriesFilterSelection
+                    inputId="exercise-categories-filter-selection"
                     name="category-filter-selection"
-                    [(ngModel)]="model"
-                    [ngbTypeahead]="search"
+                    class="mb-2 block w-full"
+                    [ngModel]="model"
+                    [suggestions]="categorySuggestions()"
+                    optionLabel="label"
+                    [completeOnFocus]="true"
+                    [minLength]="0"
+                    [debounceMs]="200"
                     [placeholder]="
                         (!selectableCategoryOptions().length ? 'artemisApp.courseOverview.exerciseFilter.noMoreOptions' : 'artemisApp.exercise.selectCategories') | artemisTranslate
                     "
-                    (focus)="focus$.next(categoryInput.value)"
-                    (click)="click$.next(categoryInput.value)"
-                    #categoriesFilterSelection="ngbTypeahead"
-                    (selectItem)="onSelectItem($event)"
-                    [resultFormatter]="resultFormatter"
-                    (keydown.enter)="onSelectItem($event)"
+                    (searchRequested)="requestCategorySearch($event.query)"
+                    (optionSelected)="selectCategory($event)"
                     [disabled]="!selectableCategoryOptions().length"
+                    [ngModelOptions]="{ standalone: true }"
                 />
 
-                <div class="row">
-                    <div class="d-flex flex-row flex-wrap">
+                <div class="flex flex-wrap">
+                    <div class="flex flex-row flex-wrap">
                         @for (categoryFilterOption of selectedCategoryOptions(); track categoryFilterOption) {
                             <div class="p-1">
                                 <jhi-custom-exercise-category-badge
@@ -55,13 +65,13 @@
         </div>
 
         @if (typeFilter()?.isDisplayed) {
-            <div class="form-group">
-                <label for="exercise-type-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.ratingList.exerciseType"></label>
-                <div id="exercise-type-filter-selection">
+            <div class="mb-4!">
+                <span id="exercise-type-filter-label" class="block font-medium mb-1 text-base font-semibold" jhiTranslate="artemisApp.ratingList.exerciseType"></span>
+                <div id="exercise-type-filter-selection" role="group" aria-labelledby="exercise-type-filter-label">
                     @for (typeFilter of typeFilter()!.options; track typeFilter) {
-                        <div class="form-check form-check-inline no-left-margin-padding">
-                            <label class="pointer">
-                                <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" class="pointer" />
+                        <div class="inline-flex items-center gap-2 me-3! m-0 p-0">
+                            <label class="cursor-pointer">
+                                <tumaet-ui-checkbox [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" class="cursor-pointer" [ngModelOptions]="{ standalone: true }" />
                                 <fa-icon [icon]="typeFilter.icon" class="ms-2" />
                                 <span [jhiTranslate]="typeFilter.name" class="ms-1"></span>
                             </label>
@@ -74,13 +84,18 @@
         <!--    On typescript version 5.5.4 the explicit check for difficultyFilter is needed,
         as otherwise typescript thinks it could be undefined in the loop (the client would not start in this case) -->
         @if (difficultyFilter()?.isDisplayed && difficultyFilter()) {
-            <div class="form-group">
-                <label for="difficulty-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.difficulty"></label>
-                <div id="difficulty-filter-selection">
+            <div class="mb-4!">
+                <span id="difficulty-filter-label" class="block font-medium mb-1 text-base font-semibold" jhiTranslate="artemisApp.exercise.difficulty"></span>
+                <div id="difficulty-filter-selection" role="group" aria-labelledby="difficulty-filter-label">
                     @for (difficultyFilterOption of difficultyFilter()!.options; track difficultyFilterOption) {
-                        <div class="form-check form-check-inline no-left-margin-padding">
-                            <label class="pointer">
-                                <input type="checkbox" [(ngModel)]="difficultyFilterOption.checked" [name]="difficultyFilterOption.value" class="pointer" />
+                        <div class="inline-flex items-center gap-2 me-3! m-0 p-0">
+                            <label class="cursor-pointer">
+                                <tumaet-ui-checkbox
+                                    [(ngModel)]="difficultyFilterOption.checked"
+                                    [name]="difficultyFilterOption.value"
+                                    class="cursor-pointer"
+                                    [ngModelOptions]="{ standalone: true }"
+                                />
                                 <span [jhiTranslate]="difficultyFilterOption.name" class="ms-1"></span>
                             </label>
                         </div>
@@ -92,8 +107,12 @@
         <!--    On typescript version 5.5.4 the explicit check for achievedScore is needed,
         as otherwise typescript thinks achievedScore could be undefined (the client would not start in this case) -->
         @if (achievedScore && achievedScore?.isDisplayed) {
-            <div class="form-group">
-                <label class="form-control-label h6" for="achieved-score-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"></label>
+            <div class="mb-4!">
+                <label
+                    class="block font-medium mb-1 text-base font-semibold"
+                    for="achieved-score-range-slider"
+                    jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"
+                ></label>
                 <jhi-range-slider
                     id="achieved-score-range-slider"
                     [generalMinValue]="achievedScore.filter.generalMin"
@@ -109,8 +128,12 @@
         <!--    On typescript version 5.5.4 the explicit check for achievablePoints is needed,
         as otherwise typescript thinks achievablePoints could be undefined (the client would not start in this case) -->
         @if (achievablePoints && achievablePoints.isDisplayed) {
-            <div class="form-group">
-                <label class="form-control-label h6" for="achieved-points-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"></label>
+            <div class="mb-4!">
+                <label
+                    class="block font-medium mb-1 text-base font-semibold"
+                    for="achieved-points-range-slider"
+                    jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"
+                ></label>
                 <jhi-range-slider
                     id="achieved-points-range-slider"
                     [generalMinValue]="achievablePoints.filter.generalMin"
@@ -122,16 +145,17 @@
             </div>
         }
     </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" (click)="clearFilter()">
+    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4!">
+        <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" (click)="clearFilter()">
             <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.clearFilter"></span>
         </button>
 
         <div class="ms-auto">
-            <button type="button" class="btn btn-secondary" (click)="closeModal()" jhiTranslate="entity.action.cancel" aria-label="Close"></button>
+            <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" (click)="closeModal()" jhiTranslate="entity.action.cancel"></button>
             <button
+                tumAetUiButton
                 type="button"
-                class="btn btn-primary"
+                class=""
                 (click)="applyFilter()"
                 jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter"
                 [disabled]="noFiltersAvailable()"

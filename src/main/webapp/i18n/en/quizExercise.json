@@ -195,6 +195,8 @@
             "fromACourse": "From a course",
             "fromAnExam": "From an exam",
             "addSelectedQuestions": "Add Selected Questions",
+            "addThisQuestion": "Add This Question",
+            "previewQuestion": "Preview question {{ title }}",
             "selectCourse": "Select a Course",
             "selectExam": "Select an Exam",
             "selectQuizExercise": "Select a Quiz Exercise",

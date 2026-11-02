@@ -4,7 +4,7 @@ import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-to
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -28,7 +28,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DialogService } from 'primeng/dynamicdialog';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('Course Exam Archive Button Component', () => {
     let comp: CourseExamArchiveButtonComponent;
@@ -208,7 +208,7 @@ describe('Course Exam Archive Button Component', () => {
             const alertService = TestBed.inject(AlertService);
             const alertServiceSpy = vi.spyOn(alertService, 'success');
 
-            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
+            vi.spyOn(courseManagementService, 'findForInstructor').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
@@ -221,7 +221,7 @@ describe('Course Exam Archive Button Component', () => {
         it('should display warning and reload course on archive complete with warnings', () => {
             const dialogService = TestBed.inject(DialogService);
 
-            vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
+            vi.spyOn(courseManagementService, 'findForInstructor').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
             const openDialogSpy = vi.spyOn(dialogService, 'open');
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED_WITH_WARNINGS', message: 'warning 1\nwarning 2' };
@@ -305,5 +305,36 @@ describe('Course Exam Archive Button Component', () => {
             expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(comp.exam()).toBeDefined();
         });
+    });
+    it('requires overwrite confirmation before archiving an existing course archive', () => {
+        fixture.componentRef.setInput('archiveMode', 'Course');
+        fixture.componentRef.setInput('course', { id: 123, title: 'Archived course', isAtLeastInstructor: true, endDate: dayjs('2020-01-01'), courseArchivePath: 'archive.zip' });
+        fixture.detectChanges();
+        const warning = new Subject<string>();
+        const overwrite = new Subject<string>();
+        const dialog = TestBed.inject(DialogService);
+        vi.mocked(dialog.open)
+            .mockReturnValueOnce(Object.assign(new DynamicDialogRef(), { onClose: warning }))
+            .mockReturnValueOnce(Object.assign(new DynamicDialogRef(), { onClose: overwrite }));
+        const archive = vi.spyOn(courseManagementService, 'archiveCourse').mockReturnValue(of(new HttpResponse<void>()));
+        comp.openArchiveWarningDialog();
+        warning.next('archive-confirm');
+        expect(dialog.open).toHaveBeenCalledTimes(2);
+        expect(archive).not.toHaveBeenCalled();
+        overwrite.next('archive');
+        expect(archive).toHaveBeenCalledExactlyOnceWith(123);
+    });
+
+    it('shows the course-specific archive failure text and retains the existing archive', () => {
+        fixture.componentRef.setInput('archiveMode', 'Course');
+        fixture.componentRef.setInput('course', { id: 123, title: 'Archived course', isAtLeastInstructor: true, endDate: dayjs('2020-01-01'), courseArchivePath: 'archive.zip' });
+        fixture.detectChanges();
+        const translate = vi.spyOn(TestBed.inject(TranslateService), 'instant');
+        const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.handleArchiveStateChanges({ exportState: 'COMPLETED_WITH_ERRORS', message: '', subMessage: 'exportFailed' });
+        expect(translate).toHaveBeenCalledWith('artemisApp.courseExamArchive.archiveCourseError.exportFailed', { courseName: 'Archived course' });
+        expect(error).toHaveBeenCalledOnce();
+        expect(comp.canDownloadArchive()).toBe(true);
+        expect(comp.isBeingArchived()).toBe(false);
     });
 });

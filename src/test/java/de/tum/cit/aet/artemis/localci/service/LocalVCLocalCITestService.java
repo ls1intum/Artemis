@@ -8,6 +8,7 @@ import static org.assertj.core.api.Fail.fail;
 import static org.awaitility.Awaitility.await;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -225,7 +226,25 @@ public class LocalVCLocalCITestService {
     public LocalVCTestRepository cloneWorkingCopy(String projectKey, String repositorySlug) throws GitAPIException, IOException {
         Path bareRepositoryPath = localVCBasePath.resolve(projectKey).resolve(repositorySlug + ".git");
         Path workingCopyPath = tempFileUtilService.createTempDirectory(workingCopyBasePath(), repositorySlug + "-");
-        Git workingCopy = Git.cloneRepository().setURI(bareRepositoryPath.toUri().toString()).setDirectory(workingCopyPath.toFile()).setBranch(defaultBranch).call();
+        Git workingCopy;
+        try {
+            workingCopy = Git.cloneRepository().setURI(bareRepositoryPath.toUri().toString()).setDirectory(workingCopyPath.toFile()).setBranch(defaultBranch)
+                    .setTransportConfigCallback(_ -> {
+                        // Clone also fetches, so configure the scratch repository before its first transport operation.
+                        // Otherwise JGit can return with background GC still changing files while the test deletes it.
+                        try (Git initializedWorkingCopy = Git.open(workingCopyPath.toFile())) {
+                            var config = initializedWorkingCopy.getRepository().getConfig();
+                            config.setBoolean("gc", null, "autoDetach", false);
+                            config.save();
+                        }
+                        catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    }).call();
+        }
+        catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
         return new LocalVCTestRepository(projectKey, repositorySlug, bareRepositoryPath, Git.open(bareRepositoryPath.toFile()), workingCopyPath, workingCopy);
     }
 

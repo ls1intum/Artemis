@@ -1,5 +1,5 @@
 <ng-template #instructionsSection>
-    <section class="assessment-workspace__section">
+    <section class="assessment-workspace__section" data-testid="assessment-workspace-instructions">
         <header class="assessment-workspace__section-header" [class.assessment-workspace__section-header--custom]="customInstructionsHeader()">
             @if (customInstructionsHeader()) {
                 <ng-content select="[assessmentWorkspaceInstructionsHeader]" />
@@ -59,24 +59,21 @@
     }
 </ng-template>
 
-<p-splitter
+<!-- Collapsed, the instructions keep just their rail and the line between them and the area is not there to drag. -->
+<tumaet-ui-splitter
     class="assessment-workspace assessment-workspace__primary-split"
+    data-testid="assessment-workspace"
     [class.assessment-workspace__split--vertical]="primaryVertical()"
     [class.assessment-workspace__primary-split--collapsed]="instructionsCollapsed()"
     [layout]="primaryLayout()"
     [panelSizes]="primarySizes()"
     [minSizes]="primaryMinSizes()"
-    [gutterSize]="gutterSize"
-    [pt]="primaryPassThrough()"
-    [stateKey]="storageKey()"
-    stateStorage="local"
-    (onResizeStart)="onResizeStart($event)"
-    (onResizeEnd)="onResizeEnd($event)"
+    [collapsedSecondSize]="railSize()"
+    (resizeEnd)="onResizeEnd($event)"
 >
     <ng-template #panel>
         <jhi-feedback-split
             class="assessment-workspace__area"
-            gutterStyle="panel"
             [storageKey]="detailsStorageKey()"
             [hasBottom]="showDetails()"
             [bottomTemplate]="detailsPanel"
@@ -103,8 +100,8 @@
                 (expand)="instructionsCollapsed.set(false)"
             />
         }
-        <div class="assessment-workspace__panel-body" [class.d-none]="instructionsCollapsed()">
+        <div class="assessment-workspace__panel-body" [class.assessment-workspace__panel-body--hidden]="instructionsCollapsed()">
             <ng-container [ngTemplateOutlet]="instructionsSection" />
         </div>
     </ng-template>
-</p-splitter>
+</tumaet-ui-splitter>

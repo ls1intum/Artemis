@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.iris.config.IrisDashboardAiSelection;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardBreakdownDimension;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardMetric;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
@@ -51,48 +52,52 @@ public class IrisAdminDashboardResource {
     /**
      * GET /api/iris/admin/dashboard/overview : Get dashboard KPI overview.
      *
-     * @param from start of the time window (inclusive)
-     * @param to   end of the time window (exclusive)
+     * @param from        start of the time window (inclusive)
+     * @param to          end of the time window (exclusive)
+     * @param aiSelection only count users with this current AI selection; ALL (the default) applies no filter
      * @return the overview DTO
      */
     @GetMapping("overview")
     @EnforceAdmin
-    public ResponseEntity<IrisDashboardOverviewDTO> getOverview(@RequestParam Instant from, @RequestParam Instant to) {
+    public ResponseEntity<IrisDashboardOverviewDTO> getOverview(@RequestParam Instant from, @RequestParam Instant to,
+            @RequestParam(defaultValue = "ALL") IrisDashboardAiSelection aiSelection) {
         validateWindow(from, to);
-        return ResponseEntity.ok(dashboardService.computeOverview(from, to));
+        return ResponseEntity.ok(dashboardService.computeOverview(from, to, aiSelection));
     }
 
     /**
      * GET /api/iris/admin/dashboard/time-series : Get time-series data for a metric.
      *
-     * @param from   start of the time window (inclusive)
-     * @param to     end of the time window (exclusive)
-     * @param span   bucket span (DAY, WEEK, MONTH, QUARTER, YEAR)
-     * @param metric the metric to compute
+     * @param from        start of the time window (inclusive)
+     * @param to          end of the time window (exclusive)
+     * @param span        bucket span (DAY, WEEK, MONTH, QUARTER, YEAR)
+     * @param metric      the metric to compute
+     * @param aiSelection only count users with this current AI selection; ALL (the default) applies no filter
      * @return the time-series DTO
      */
     @GetMapping("time-series")
     @EnforceAdmin
     public ResponseEntity<IrisDashboardTimeSeriesDTO> getTimeSeries(@RequestParam Instant from, @RequestParam Instant to, @RequestParam String span,
-            @RequestParam IrisDashboardMetric metric) {
+            @RequestParam IrisDashboardMetric metric, @RequestParam(defaultValue = "ALL") IrisDashboardAiSelection aiSelection) {
         validateWindow(from, to);
-        return ResponseEntity.ok(dashboardService.computeTimeSeries(from, to, span, metric));
+        return ResponseEntity.ok(dashboardService.computeTimeSeries(from, to, span, metric, aiSelection));
     }
 
     /**
      * GET /api/iris/admin/dashboard/breakdown : Get breakdown data by dimension.
      *
-     * @param from      start of the time window (inclusive)
-     * @param to        end of the time window (exclusive)
-     * @param dimension the breakdown dimension
+     * @param from        start of the time window (inclusive)
+     * @param to          end of the time window (exclusive)
+     * @param dimension   the breakdown dimension
+     * @param aiSelection only count users with this current AI selection; ALL (the default) applies no filter
      * @return the breakdown entries
      */
     @GetMapping("breakdown")
     @EnforceAdmin
     public ResponseEntity<List<IrisDashboardBreakdownEntryDTO>> getBreakdown(@RequestParam Instant from, @RequestParam Instant to,
-            @RequestParam IrisDashboardBreakdownDimension dimension) {
+            @RequestParam IrisDashboardBreakdownDimension dimension, @RequestParam(defaultValue = "ALL") IrisDashboardAiSelection aiSelection) {
         validateWindow(from, to);
-        return ResponseEntity.ok(dashboardService.computeBreakdown(from, to, dimension));
+        return ResponseEntity.ok(dashboardService.computeBreakdown(from, to, dimension, aiSelection));
     }
 
     /**

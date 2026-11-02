@@ -10,9 +10,9 @@
     <nav class="editor-statusbar" [hidden]="!showEditorNavbar()">
         <ng-content select="[editorNavbar]" />
     </nav>
-    <!-- The three columns, each declared once and put into the splitter that holds them: the exercise page has one splitter for all
-         three, an assessment has one for the file browser and the editor inside the area above the bottom panel, and one that sets
-         that whole area beside the instructions, so the bottom panel lies under the file browser and the editor only. -->
+    <!-- The three columns, each declared once and put into the two splitters that hold them: one for the file browser and the editor,
+         and one that sets that area beside the instructions. In an assessment the bottom panel lies in that area, under the file browser
+         and the editor only. -->
     <ng-template #fileBrowserPanel>
         <div #fileBrowser class="editor-sidebar-left collapsable" data-testid="editor-sidebar-left">
             <ng-content select="[editorSidebarLeft]" />
@@ -37,6 +37,51 @@
             <ng-content select="[editorSidebarRight]" />
         </div>
     </ng-template>
+    <!-- A collapsed file browser keeps just its rail and the line beside it is not there to drag; the kit's splitter collapses only its
+         second panel, so the stylesheet does that for the first. -->
+    <ng-template #fileBrowserAndEditor>
+        <tumaet-ui-splitter
+            class="editor-sidebars editor-sidebars--inner"
+            [class.editor-sidebars--left-collapsed]="fileBrowserIsCollapsed()"
+            [panelSizes]="innerSizes()"
+            [minSizes]="innerMinSizes"
+            (resizeEnd)="onInnerResizeEnd($event)"
+        >
+            <ng-template #panel><ng-container [ngTemplateOutlet]="fileBrowserPanel" /></ng-template>
+            <ng-template #panel><ng-container [ngTemplateOutlet]="centerPanel" /></ng-template>
+        </tumaet-ui-splitter>
+    </ng-template>
+    <!-- Collapsed, the instructions keep just their rail, and without instructions their panel takes no room. -->
+    <ng-template #columns>
+        <tumaet-ui-splitter
+            class="editor-sidebars editor-sidebars--outer"
+            [class.editor-sidebars--right-collapsed]="rightPanelIsCollapsed()"
+            [panelSizes]="outerSizes()"
+            [minSizes]="outerMinSizes"
+            [collapsedSecondSize]="!showEditorSidebarRight() ? '0px' : rightPanelIsCollapsed() ? '3rem' : undefined"
+            (resizeEnd)="onOuterResizeEnd($event)"
+        >
+            <ng-template #panel>
+                @if (assessmentWorkspace()) {
+                    <jhi-feedback-split
+                        class="editor-split"
+                        storageKey="code-editor-assessment-main-bottom-split"
+                        [bottomTemplate]="bottomArea"
+                        [expanded]="!buildOutputIsCollapsed()"
+                        [minSizes]="[30, 8]"
+                        [collapseSnapPercent]="15"
+                        (collapseRequested)="collapseBuildOutput()"
+                        (resizeEnd)="onPanelResized(ResizeType.MAIN_BOTTOM)"
+                    >
+                        <div feedbackSplitTop class="editor-split__top"><ng-container [ngTemplateOutlet]="fileBrowserAndEditor" /></div>
+                    </jhi-feedback-split>
+                } @else {
+                    <ng-container [ngTemplateOutlet]="fileBrowserAndEditor" />
+                }
+            </ng-template>
+            <ng-template #panel><ng-container [ngTemplateOutlet]="instructionsPanel" /></ng-template>
+        </tumaet-ui-splitter>
+    </ng-template>
     <!-- The editor and the bottom area are rendered in one of two places: a filling grid divides them with a splitter, as the
          assessment pages do; any other grid stacks them and gives the editor a grip to drag. -->
     <ng-template #mainArea>
@@ -48,27 +93,7 @@
             (resizeEnd)="onPanelResized(ResizeType.MAIN_BOTTOM)"
         >
             <div class="editor-main__content">
-                <!-- The file browser, the editor and the instructions are the panels of one splitter, the same as the panels of
-                     the assessment pages. A collapsed or hidden side keeps its panel; the styles shrink or hide it. -->
-                <p-splitter
-                    class="editor-sidebars"
-                    [class.editor-sidebars--left-collapsed]="fileBrowserIsCollapsed()"
-                    [class.editor-sidebars--right-collapsed]="rightPanelIsCollapsed()"
-                    [class.editor-sidebars--right-hidden]="!showEditorSidebarRight()"
-                    layout="horizontal"
-                    [panelSizes]="sidebarSizes"
-                    [minSizes]="sidebarMinSizes"
-                    [gutterSize]="gutterSize"
-                    [pt]="passThrough()"
-                    [stateKey]="sidebarStateKey"
-                    stateStorage="local"
-                    (onResizeStart)="onSidebarsResizeStart($event)"
-                    (onResizeEnd)="onSidebarsResized($event)"
-                >
-                    <ng-template #panel><ng-container [ngTemplateOutlet]="fileBrowserPanel" /></ng-template>
-                    <ng-template #panel><ng-container [ngTemplateOutlet]="centerPanel" /></ng-template>
-                    <ng-template #panel><ng-container [ngTemplateOutlet]="instructionsPanel" /></ng-template>
-                </p-splitter>
+                <ng-container [ngTemplateOutlet]="columns" />
             </div>
             @if (!fillLayout()) {
                 <div class="rg-main-bottom" data-testid="draggableIconForMain"></div>
@@ -96,54 +121,7 @@
              the whole height. The columns are styled inside the main area, as everywhere else. -->
         <div class="editor-main">
             <div class="editor-main__content">
-                <p-splitter
-                    class="editor-sidebars editor-sidebars--outer"
-                    [class.editor-sidebars--right-collapsed]="rightPanelIsCollapsed()"
-                    [class.editor-sidebars--right-hidden]="!showEditorSidebarRight()"
-                    layout="horizontal"
-                    [panelSizes]="assessmentOuterSizes"
-                    [minSizes]="assessmentMinSizes"
-                    [gutterSize]="gutterSize"
-                    [pt]="passThrough()"
-                    [stateKey]="assessmentOuterStateKey"
-                    stateStorage="local"
-                    (onResizeStart)="onOuterResizeStart($event)"
-                    (onResizeEnd)="onOuterResized($event)"
-                >
-                    <ng-template #panel>
-                        <jhi-feedback-split
-                            class="editor-split"
-                            storageKey="code-editor-assessment-main-bottom-split"
-                            gutterStyle="panel"
-                            [bottomTemplate]="bottomArea"
-                            [expanded]="!buildOutputIsCollapsed()"
-                            [minSizes]="[30, 8]"
-                            [collapseSnapPercent]="15"
-                            (collapseRequested)="collapseBuildOutput()"
-                            (resizeEnd)="onPanelResized(ResizeType.MAIN_BOTTOM)"
-                        >
-                            <div feedbackSplitTop class="editor-split__top">
-                                <p-splitter
-                                    class="editor-sidebars editor-sidebars--inner"
-                                    [class.editor-sidebars--left-collapsed]="fileBrowserIsCollapsed()"
-                                    layout="horizontal"
-                                    [panelSizes]="assessmentInnerSizes"
-                                    [minSizes]="assessmentMinSizes"
-                                    [gutterSize]="gutterSize"
-                                    [pt]="passThrough()"
-                                    [stateKey]="assessmentInnerStateKey"
-                                    stateStorage="local"
-                                    (onResizeStart)="onInnerResizeStart($event)"
-                                    (onResizeEnd)="onInnerResized($event)"
-                                >
-                                    <ng-template #panel><ng-container [ngTemplateOutlet]="fileBrowserPanel" /></ng-template>
-                                    <ng-template #panel><ng-container [ngTemplateOutlet]="centerPanel" /></ng-template>
-                                </p-splitter>
-                            </div>
-                        </jhi-feedback-split>
-                    </ng-template>
-                    <ng-template #panel><ng-container [ngTemplateOutlet]="instructionsPanel" /></ng-template>
-                </p-splitter>
+                <ng-container [ngTemplateOutlet]="columns" />
             </div>
         </div>
     } @else if (fillHeight()) {

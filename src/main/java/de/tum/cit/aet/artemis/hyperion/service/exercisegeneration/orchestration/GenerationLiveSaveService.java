@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.CanonicalMaps;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /** Coordinates durable authoring operations, not the preceding generation work. */
@@ -411,7 +412,8 @@ public class GenerationLiveSaveService {
         }
 
         public LiveSaveSlot {
-            readers = Map.copyOf(readers);
+            // Compared by encoded bytes in Redis, so the encoding must survive a round trip; Map.copyOf does not.
+            readers = CanonicalMaps.copyOf(readers);
         }
     }
 

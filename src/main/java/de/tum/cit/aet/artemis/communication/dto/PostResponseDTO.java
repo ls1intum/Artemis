@@ -80,4 +80,10 @@ public record PostResponseDTO(Long id, @Nullable UserSummaryDTO author, @Nullabl
                 post.getTitle(), post.isVisibleForStudents(), post.getDisplayPriority(), ConversationRefDTO.from(post.getConversation()),
                 PlagiarismCaseRefDTO.from(post.getPlagiarismCase()), post.isResolved(), post.getIsSaved(), post.getHasForwardedMessages(), reactions, answers);
     }
+
+    /** Returns the intentionally shared message without private conversation metadata, reactions, or thread contents. */
+    public static PostResponseDTO fromForwardedSource(Post post) {
+        return new PostResponseDTO(post.getId(), UserSummaryDTO.from(post.getAuthor()), post.getAuthorRole(), post.getCreationDate(), post.getUpdatedDate(), post.getContent(),
+                post.getTitle(), null, null, null, null, false, false, false, Set.of(), List.of());
+    }
 }

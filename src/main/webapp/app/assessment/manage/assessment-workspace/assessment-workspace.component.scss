@@ -66,14 +66,14 @@
     align-self: stretch;
     margin: -0.5rem -0.75rem -0.5rem auto;
     padding: 0;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     background: transparent;
     border: 0;
-    border-left: var(--bs-border-width) solid var(--bs-border-color);
+    border-left: 1px solid var(--border-color);
 
     &:hover,
     &:focus-visible {
-        color: var(--bs-primary);
+        color: var(--primary);
         background: var(--hover-slightly-darker-body-bg);
     }
 }
@@ -104,6 +104,11 @@
     display: contents;
 }
 
+// Collapsed instructions stay rendered behind their rail, so their tabs keep their state
+.assessment-workspace__panel-body--hidden {
+    display: none;
+}
+
 // The area of the canvas and the details panel fills its panel, the canvas takes what the details panel leaves
 .assessment-workspace__area {
     width: 100%;
@@ -117,6 +122,7 @@
     --feedback-panel-header-align: stretch;
     --feedback-panel-header-border-width: 0px;
     --feedback-panel-header-line-width: 1px;
+
     // The tabs start at the edge of the panel, as the tabs of the right panel of the exercise details do
     --feedback-panel-header-padding-start: 0;
     --feedback-panel-header-border: var(--border-color);
@@ -132,29 +138,7 @@
     align-items: stretch;
 }
 
-// The instructions collapsed to their rail: the rail has its size and the line between the two is not there to drag. The panels' inline
-// sizes come from PrimeNG, hence the !important. The gap stands in for the line.
-:host ::ng-deep .assessment-workspace__primary-split {
-    --rail-size: 3rem;
-
-    &.assessment-workspace__split--vertical {
-        --rail-size: 2.75rem;
-    }
-
-    &.assessment-workspace__primary-split--collapsed {
-        gap: 12px;
-        background-color: var(--module-bg) !important;
-
-        > [data-pc-section='gutter'] {
-            display: none !important;
-        }
-
-        > [data-pc-section='panel']:first-of-type {
-            flex: 1 1 0 !important;
-        }
-
-        > [data-pc-section='panel']:last-of-type {
-            flex: 0 0 var(--rail-size) !important;
-        }
-    }
+// The instructions collapsed to their rail: the line between the two is not there to drag, so a gap stands in for it
+.assessment-workspace__primary-split--collapsed {
+    gap: 12px;
 }

@@ -17,7 +17,6 @@ import 'app/foundation/util/array.extension';
 
 import { FileUploadSubmissionComponent } from './file-upload-submission.component';
 import { FileUploadSubmissionService } from '../file-upload-submission.service';
-import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadParticipation, FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -47,7 +46,6 @@ describe('FileUploadSubmissionComponent', () => {
     let component: FileUploadSubmissionComponent;
     let fixture: ComponentFixture<FileUploadSubmissionComponent>;
     let fileUploadSubmissionService: FileUploadSubmissionService;
-    let fileUploadAssessmentService: FileUploadAssessmentService;
     let alertService: AlertService;
     let participationWebsocketService: ParticipationWebsocketService;
     let fileService: FileService;
@@ -138,6 +136,7 @@ describe('FileUploadSubmissionComponent', () => {
                     provide: AccountService,
                     useValue: {
                         isOwnerOfParticipation: vi.fn().mockReturnValue(true),
+                        setAccessRightsForExerciseAndReferencedCourse: vi.fn(),
                     },
                 },
                 {
@@ -185,7 +184,6 @@ describe('FileUploadSubmissionComponent', () => {
         component = fixture.componentInstance;
 
         fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
-        fileUploadAssessmentService = TestBed.inject(FileUploadAssessmentService);
         alertService = TestBed.inject(AlertService);
         participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
         fileService = TestBed.inject(FileService);
@@ -208,7 +206,7 @@ describe('FileUploadSubmissionComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(fileUploadSubmissionService.getDataForFileUploadEditor).toHaveBeenCalledWith(111);
+            expect(fileUploadSubmissionService.getDataForFileUploadEditor).toHaveBeenCalledWith(111, 'owner');
             expect(component.submission()).toEqual(submission);
         });
 
@@ -277,22 +275,18 @@ describe('FileUploadSubmissionComponent', () => {
             expect(accountService.isOwnerOfParticipation).not.toHaveBeenCalled();
         });
 
-        it('should load the completed assessment result for a submitted DTO', async () => {
+        it('should use the completed assessment result supplied by the selected editor DTO', async () => {
             const exercise = createExercise();
             const submission = createSubmittedSubmission(exercise);
             const initialResult = createResult(submission);
-            const assessmentResult = createResult(submission);
-            assessmentResult.id = 1000;
             submission.results = [initialResult];
             submission.participation = Object.assign(new FileUploadParticipation(), submission.participation, { isOwner: true });
             vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
-            const getAssessmentSpy = vi.spyOn(fileUploadAssessmentService, 'getAssessment').mockReturnValue(of(assessmentResult));
 
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(getAssessmentSpy).toHaveBeenCalledWith(submission.id);
-            expect(component.result()).toBe(assessmentResult);
+            expect(component.result()).toBe(initialResult);
             expect(component.submissionFile()).toBeUndefined();
         });
 

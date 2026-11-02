@@ -6,7 +6,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { faCog, faListCheck, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faPlus, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { takeUntil } from 'rxjs/operators';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -35,8 +35,8 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     readonly isTutorialGroupConfigurationCreated = signal(false);
 
     protected readonly faCog = faCog;
-    protected readonly faListCheck = faListCheck;
     protected readonly faPlus = faPlus;
+    protected readonly faUsers = faUsers;
 
     ngUnsubscribe = new Subject<void>();
 
@@ -51,7 +51,7 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
                 take(1),
                 switchMap((params) => {
                     const courseId = Number(params.get('courseId'));
-                    return combineLatest([this.courseManagementService.find(courseId), this.tutorialGroupsConfigurationService.getOneOfCourse(courseId)]);
+                    return combineLatest([this.courseManagementService.findForInstructor(courseId), this.tutorialGroupsConfigurationService.getOneOfCourse(courseId)]);
                 }),
                 finalize(() => this.isLoading.set(false)),
                 takeUntil(this.ngUnsubscribe),

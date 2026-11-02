@@ -32,7 +32,6 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -47,13 +46,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -117,9 +114,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     private IrisMessageService irisMessageService;
 
     @Autowired
-    private UserAiPreferenceService userAiPreferenceService;
-
-    @Autowired
     private IrisSessionRepository irisSessionRepository;
 
     @Autowired
@@ -133,9 +127,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private IrisSessionService irisSessionService;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -154,10 +145,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     private AtomicBoolean pipelineDone;
 
-    private boolean memirisFeatureEnabledBeforeTest;
-
-    private boolean student1MemirisEnabledBeforeTest;
-
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
@@ -166,20 +153,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @BeforeEach
     void initMessageTestState() {
         pipelineDone = new AtomicBoolean(false);
-        memirisFeatureEnabledBeforeTest = featureToggleService.isFeatureEnabled(Feature.Memiris);
-        student1MemirisEnabledBeforeTest = userAiPreferenceService.isMemirisEnabled(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
-    }
-
-    @AfterEach
-    void restoreFeatureToggleState() {
-        if (memirisFeatureEnabledBeforeTest) {
-            featureToggleService.enableFeature(Feature.Memiris);
-        }
-        else {
-            featureToggleService.disableFeature(Feature.Memiris);
-        }
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        userAiPreferenceService.setMemirisEnabled(user.getId(), student1MemirisEnabledBeforeTest);
     }
 
     // =========================================================================
@@ -227,25 +200,32 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         await().until(pipelineDone::get);
     }
 
+    /**
+     * A Pyris version from before the Memiris removal still sends the memory lists on its callbacks. Artemis no longer reads
+     * them, but must still accept the callback and deliver the answer.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void sendOneMessage_disablesMemirisInPyrisDtoWhenFeatureDisabled() throws Exception {
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        userUtilService.setMemirisEnabled(user, true);
-        featureToggleService.disableFeature(Feature.Memiris);
-
+    void sendOneMessage_acceptsLegacyMemoryFieldsInPyrisCallback() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
         IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
 
         mockChatResponse(dto -> {
-            assertThat(dto.user().memirisEnabled()).isFalse();
+            String jobId = dto.settings().authenticationToken();
+            ObjectNode body = JsonObjectMapper.get().valueToTree(new PyrisChatStatusUpdateDTO("Hello World", FINISHED, null, null, null, null));
+            body.putArray("accessedMemories").addObject().put("id", "m1").put("title", "Memory").put("content", "Content");
+            body.putArray("createdMemories").addObject().put("id", "m2").put("title", "Memory").put("content", "Content");
+            var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
+            assertThatNoException()
+                    .isThrownBy(() -> request.postStringWithoutLocation("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status", body.toString(), HttpStatus.OK, headers));
             pipelineDone.set(true);
         });
 
         request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
         await().until(pipelineDone::get);
-        // the toggle suppresses Memiris for this request without touching what the account itself chose
-        assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isTrue();
+
+        User user = userTestRepository.findByIdElseThrow(session.getUserId());
+        verifyWebsocketActivityWasExactly(user.getLogin(), String.valueOf(session.getId()), messageDTO(messageToSend.getContent()), statusDTO(RUNNING), messageDTO("Hello World"));
     }
 
     @Test
@@ -581,16 +561,16 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
         Instant from = Instant.now().minusSeconds(5);
 
-        long thumbsUpBaseline = irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5));
-        long totalBaseline = irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5));
+        long thumbsUpBaseline = irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5), "ALL");
+        long totalBaseline = irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5), "ALL");
 
         // A final (non-intermediate) helpful LLM answer must be counted by the rating aggregates.
         IrisMessage finalMessage = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
         finalMessage.setHelpful(true);
         irisMessageService.saveMessage(finalMessage, session, IrisMessageSender.LLM);
 
-        long thumbsUpAfterFinal = irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5));
-        long totalAfterFinal = irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5));
+        long thumbsUpAfterFinal = irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5), "ALL");
+        long totalAfterFinal = irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5), "ALL");
         assertThat(thumbsUpAfterFinal).isEqualTo(thumbsUpBaseline + 1);
         assertThat(totalAfterFinal).isEqualTo(totalBaseline + 1);
 
@@ -600,8 +580,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         intermediateMessage.setIntermediate(true);
         irisMessageService.saveMessage(intermediateMessage, session, IrisMessageSender.LLM);
 
-        assertThat(irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5))).isEqualTo(thumbsUpAfterFinal);
-        assertThat(irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5))).isEqualTo(totalAfterFinal);
+        assertThat(irisAdminDashboardRepository.countThumbsUp(from, Instant.now().plusSeconds(5), "ALL")).isEqualTo(thumbsUpAfterFinal);
+        assertThat(irisAdminDashboardRepository.countTotalLlmMessages(from, Instant.now().plusSeconds(5), "ALL")).isEqualTo(totalAfterFinal);
     }
 
     @ParameterizedTest
@@ -737,7 +717,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @ParameterizedTest
     @EnumSource(value = IrisChatMode.class, names = { "TEXT_EXERCISE_CHAT", "LECTURE_CHAT" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteOwningEntity_cascadesSessionsAndMessages(IrisChatMode mode) throws Exception {
         IrisChatSession session = createSessionForUser(mode, "instructor1");
         irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
@@ -779,7 +759,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(null, RUNNING, null, null, null, null, null, null, "partial", 1, null, null), HttpStatus.OK, headers);
+                new PyrisChatStatusUpdateDTO(null, RUNNING, null, null, null, null, "partial", 1, null, null), HttpStatus.OK, headers);
 
         assertThat(pyrisJobService.getJob(jobId)).isNull();
     }
@@ -919,7 +899,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             });
 
             IrisMessage source = new IrisMessage();
-            source.addContent(new IrisJsonMessageContent(JsonNodeFactory.instance.objectNode().put("k1", "v1").put("k2", "v2").put("k3", "v3")));
+            source.addContent(IrisJsonMessageContent.ofJson("{\"k1\":\"v1\",\"k2\":\"v2\",\"k3\":\"v3\"}"));
             List<IrisMessageContentDTO> contentDtos = source.getContent().stream().map(content -> new IrisMessageContentDTO("json", null, content.getContentAsString())).toList();
             IrisMessageRequestDTO requestDto = new IrisMessageRequestDTO(contentDtos, 42, Map.of(), null, null);
 
@@ -962,7 +942,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void deleteProgrammingExercise_cascadesSessionsAndMessages() throws Exception {
             IrisChatSession session = createProgrammingSession(programmingExercise, "instructor1");
             irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
@@ -1103,7 +1083,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             var content = sendAndGetLlmResponseContent(mcqJson).getFirst();
 
             assertThat(content).isInstanceOf(IrisJsonMessageContent.class);
-            assertThat(((IrisJsonMessageContent) content).getJsonNode().get("type").asString()).isEqualTo("mcq");
+            assertThat(JsonObjectMapper.get().readTree(((IrisJsonMessageContent) content).getContentAsString()).get("type").asString()).isEqualTo("mcq");
         }
 
         @Test
@@ -1139,7 +1119,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
             assertThat(contents).hasSize(3);
             assertThat(((IrisTextMessageContent) contents.get(0)).getTextContent()).isEqualTo("Here are your questions!");
-            assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asString()).isEqualTo("mcq");
+            assertThat(JsonObjectMapper.get().readTree(((IrisJsonMessageContent) contents.get(1)).getContentAsString()).get("type").asString()).isEqualTo("mcq");
             assertThat(((IrisTextMessageContent) contents.get(2)).getTextContent()).isEqualTo("Good luck!");
         }
 
@@ -1153,7 +1133,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             var contents = sendAndGetLlmResponseContent(mixed);
 
             assertThat(contents).hasSize(3);
-            assertThat(((IrisJsonMessageContent) contents.get(1)).getJsonNode().get("type").asString()).isEqualTo("mcq-set");
+            assertThat(JsonObjectMapper.get().readTree(((IrisJsonMessageContent) contents.get(1)).getContentAsString()).get("type").asString()).isEqualTo("mcq-set");
         }
 
         @Test
@@ -1174,8 +1154,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
             assertThat(contents).hasSize(1);
             var jsonContent = (IrisJsonMessageContent) contents.getFirst();
-            assertThat(jsonContent.getJsonNode().get("type").asString()).isEqualTo("mcq");
-            assertThat(jsonContent.getJsonNode().get("question").asString()).isEqualTo("What is 2+2?");
+            assertThat(JsonObjectMapper.get().readTree(jsonContent.getContentAsString()).get("type").asString()).isEqualTo("mcq");
+            assertThat(JsonObjectMapper.get().readTree(jsonContent.getContentAsString()).get("question").asString()).isEqualTo("What is 2+2?");
         }
 
         @Test
@@ -1256,6 +1236,48 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             var json = readJsonContent(session, message);
             assertThat(json.get("response").get("selectedIndex").asInt()).isEqualTo(1);
             assertThat(json.get("response").get("submitted").asBoolean()).isTrue();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_preservesSingleQuestionAndOptionExtensions() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            String content = """
+                    {"type":"mcq","question":"Q?","options":[
+                      {"text":"A","correct":false,"extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0},
+                      {"text":"B","correct":true,"metadata":{"nested":[null,"",[],{},false,0]}}],
+                     "explanation":"E.","metadata":{"nested":[null,"",[],{},false,0]},
+                     "extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0}
+                    """;
+            IrisMessage message = saveLlmMessageWithMcqContent(session, content);
+
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(1, true, null), HttpStatus.OK);
+
+            ObjectNode expected = (ObjectNode) JsonObjectMapper.get().readTree(content);
+            expected.set("response", JsonObjectMapper.get().readTree("{\"selectedIndex\":1,\"submitted\":true}"));
+            assertThat(readJsonContent(session, message)).isEqualTo(expected);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void saveMcqResponse_preservesSetQuestionOptionAndStoredResponseExtensions() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+            String content = """
+                    {"type":"mcq-set","metadata":{"nested":[null,"",[],{},false,0]},"questions":[
+                      {"question":"Q1?","options":[{"text":"A","correct":false,"extension":null},{"text":"B","correct":true}],
+                       "explanation":"E1.","extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0},
+                      {"question":"Q2?","options":[{"text":"C","correct":true},{"text":"D","correct":false}],"explanation":"E2."}],
+                     "responses":[
+                       {"questionIndex":0,"selectedIndex":0,"submitted":false,"extension":null,"metadata":{"nested":[null,"",[],{},false,0]}},
+                       {"questionIndex":1,"selectedIndex":1,"submitted":true,"extension":null,"empty":"","array":[],"object":{},"flag":false,"count":0}]}
+                    """;
+            IrisMessage message = saveLlmMessageWithMcqContent(session, content);
+
+            request.put(mcqResponseUrl(session, message), new IrisMcqResponseDTO(1, true, 0), HttpStatus.OK);
+
+            ObjectNode expected = (ObjectNode) JsonObjectMapper.get().readTree(content);
+            ((ObjectNode) expected.path("responses").get(0)).put("selectedIndex", 1).put("submitted", true);
+            assertThat(readJsonContent(session, message)).isEqualTo(expected);
         }
 
         @Test
@@ -1374,7 +1396,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         private JsonNode readJsonContent(IrisChatSession session, IrisMessage message) {
             var reloaded = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
             var updatedMessage = reloaded.getMessages().stream().filter(m -> m.getId().equals(message.getId())).findFirst().orElseThrow();
-            return ((IrisJsonMessageContent) updatedMessage.getContent().stream().filter(IrisJsonMessageContent.class::isInstance).findFirst().orElseThrow()).getJsonNode();
+            return JsonObjectMapper.get()
+                    .readTree(((IrisJsonMessageContent) updatedMessage.getContent().stream().filter(IrisJsonMessageContent.class::isInstance).findFirst().orElseThrow())
+                            .getContentAsString());
         }
 
         private String mcqResponseUrl(IrisChatSession session, IrisMessage message) {
@@ -1705,7 +1729,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     private void sendStatus(String jobId, String result, PyrisRunState runState, String sessionTitle, List<String> suggestions) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, runState, null, sessionTitle, suggestions, null, null, null), HttpStatus.OK, headers);
+                new PyrisChatStatusUpdateDTO(result, runState, null, sessionTitle, suggestions, null), HttpStatus.OK, headers);
     }
 
     private static String messagesUrl(IrisChatSession session) {
@@ -1719,4 +1743,16 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     private static String proactiveOutcomeUrl(IrisChatSession session, IrisMessage message) {
         return "/api/iris/sessions/" + session.getId() + "/messages/" + message.getId() + "/proactive-outcome";
     }
+
+    @ParameterizedTest
+    @EnumSource(value = IrisChatMode.class, names = { "COURSE_CHAT", "LECTURE_CHAT", "TEXT_EXERCISE_CHAT", "PROGRAMMING_EXERCISE_CHAT" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void tutorSuggestionRejectsOrdinaryChatSession(IrisChatMode mode) throws Exception {
+        var session = createSessionForUser(mode, "student1");
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+        request.postWithoutResponseBody("/api/iris/sessions/" + session.getId() + "/tutor-suggestion", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+        assertThat(irisChatSessionRepository.findById(session.getId())).isPresent();
+    }
+
 }

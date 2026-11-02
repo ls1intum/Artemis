@@ -32,10 +32,6 @@ type IsUnion<T, U = T> = T extends unknown ? ([U] extends [T] ? false : true) : 
  * type includes it. Pass a plain object and a ref to one component type; a union of components is rejected. Inputs are named
  * by the class member; an input that is declared with an `alias` is set under its alias.
  *
- * The library must not import from the Artemis application, so it keeps this counterpart of `setInputs` in
- * `src/main/webapp/app/foundation/util/set-inputs.util.ts`. The two are meant to be identical in logic and types; change
- * both when you change one.
- *
  * @param ref The reference of the created component
  * @param values The inputs to set, by class member; omitted inputs keep their current value
  */
