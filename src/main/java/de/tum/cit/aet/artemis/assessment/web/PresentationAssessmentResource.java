@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstancesBatc
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricDTO;
+import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricRatingDTO;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.assessment.service.PresentationAssessmentService;
 import de.tum.cit.aet.artemis.assessment.service.PresentationRubricService;
@@ -192,6 +193,22 @@ public class PresentationAssessmentResource {
         presentationAssessmentService.checkPresentationAssessmentsEnabled(courseId);
         presentationAssessmentService.delete(courseId, assessmentId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET /api/assessment/courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}/ratings : get the rubric ratings of an instance.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @param instanceId   the instance id
+     * @return the ResponseEntity with status 200 (OK) and the ratings in the order of the rubric
+     */
+    @GetMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}/ratings")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<List<PresentationRubricRatingDTO>> getPresentationRubricRatings(@PathVariable long courseId, @PathVariable long assessmentId,
+            @PathVariable long instanceId) {
+        presentationAssessmentService.checkPresentationAssessmentsEnabled(courseId);
+        return ResponseEntity.ok(presentationAssessmentService.getRatings(courseId, assessmentId, instanceId));
     }
 
     /**

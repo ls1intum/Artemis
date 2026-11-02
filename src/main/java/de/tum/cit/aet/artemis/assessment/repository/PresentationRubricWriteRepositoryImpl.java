@@ -19,11 +19,14 @@ public class PresentationRubricWriteRepositoryImpl implements PresentationRubric
 
     private final PresentationRubricLevelRepository levelRepository;
 
+    private final PresentationAssessmentInstanceRepository instanceRepository;
+
     public PresentationRubricWriteRepositoryImpl(PresentationAssessmentRepository assessmentRepository, ObjectProvider<PresentationRubricCriterionRepository> criterionRepository,
-            PresentationRubricLevelRepository levelRepository) {
+            PresentationRubricLevelRepository levelRepository, PresentationAssessmentInstanceRepository instanceRepository) {
         this.assessmentRepository = assessmentRepository;
         this.criterionRepository = criterionRepository;
         this.levelRepository = levelRepository;
+        this.instanceRepository = instanceRepository;
     }
 
     @Override
@@ -51,5 +54,6 @@ public class PresentationRubricWriteRepositoryImpl implements PresentationRubric
     private void saveRubric(PresentationRubricChanges rubric) {
         criterionRepository.getObject().saveAll(rubric.criteria());
         levelRepository.saveAll(rubric.levels());
+        rubric.recalculatedScores().forEach(instanceRepository::updateRubricScore);
     }
 }

@@ -122,6 +122,21 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
     long countByPresentationAssessmentIdAndRubricScoreIsNotNull(long presentationAssessmentId);
 
     /**
+     * Sets the recalculated rubric score of an instance.
+     *
+     * @param instanceId  the instance id
+     * @param rubricScore the new rubric score
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE PresentationAssessmentInstance instance
+            SET instance.rubricScore = :rubricScore
+            WHERE instance.id = :instanceId
+            """)
+    void updateRubricScore(@Param("instanceId") long instanceId, @Param("rubricScore") double rubricScore);
+
+    /**
      * Returns the logins of those of the given students that already have an instance of the presentation assessment.
      *
      * @param assessmentId the presentation assessment id

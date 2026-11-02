@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -26,15 +27,19 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationGradingMethod;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricRating;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstancesBatchCreateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
+import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricRatingDTO;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricRatingRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricWriteRepository.PresentationRubricChanges;
+import de.tum.cit.aet.artemis.assessment.service.PresentationRubricService.RubricGrade;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -71,10 +76,12 @@ public class PresentationAssessmentService {
 
     private final PresentationRubricCriterionRepository presentationRubricCriterionRepository;
 
+    private final PresentationRubricRatingRepository presentationRubricRatingRepository;
+
     public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository, CourseRepository courseRepository,
             CourseConfigurationRepository courseConfigurationRepository, PresentationRubricService presentationRubricService,
-            PresentationRubricCriterionRepository presentationRubricCriterionRepository) {
+            PresentationRubricCriterionRepository presentationRubricCriterionRepository, PresentationRubricRatingRepository presentationRubricRatingRepository) {
         this.presentationAssessmentRepository = presentationAssessmentRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -83,6 +90,7 @@ public class PresentationAssessmentService {
         this.courseConfigurationRepository = courseConfigurationRepository;
         this.presentationRubricService = presentationRubricService;
         this.presentationRubricCriterionRepository = presentationRubricCriterionRepository;
+        this.presentationRubricRatingRepository = presentationRubricRatingRepository;
     }
 
     /**
@@ -259,9 +267,11 @@ public class PresentationAssessmentService {
         long expectedVersion = assessment.getVersion();
 
         PresentationAssessmentInstance instance = findInstanceElseThrow(courseId, assessmentId, instanceId);
-        applyInstanceDto(courseId, assessment, instance, dto);
+        RubricGrade grade = gradeRubric(assessment, dto.ratings());
+        applyInstanceDto(courseId, assessment, instance, dto, grade);
 
-        presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, expectedVersion, instance);
+        List<PresentationRubricRating> ratings = grade == null ? null : grade.ratingsFor(instance);
+        presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, assessmentId, expectedVersion, instance, ratings);
 
         return findInstanceElseThrow(courseId, assessmentId, instanceId);
     }
@@ -283,10 +293,36 @@ public class PresentationAssessmentService {
             throw new BadRequestAlertException("At least one student must be selected", PresentationAssessmentInstance.ENTITY_NAME, "individualInstanceHasInvalidStudentCount");
         }
         rejectAlreadyAssignedStudents(assessmentId, students);
+        RubricGrade grade = gradeRubric(assessment, dto.ratings());
 
-        List<PresentationAssessmentInstance> instances = students.stream().map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student))
+        List<PresentationAssessmentInstance> instances = students.stream().map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student, grade))
                 .toList();
-        return presentationAssessmentInstanceRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances);
+        List<PresentationRubricRating> ratings = grade == null ? List.of() : instances.stream().flatMap(instance -> grade.ratingsFor(instance).stream()).toList();
+        return presentationAssessmentInstanceRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances, ratings);
+    }
+
+    /**
+     * Loads the ratings of an instance, so that an assessed instance can be opened again.
+     *
+     * @param courseId     the owning course id
+     * @param assessmentId the presentation assessment id
+     * @param instanceId   the instance id
+     * @return the ratings of the instance, in the order of the rubric
+     */
+    public List<PresentationRubricRatingDTO> getRatings(long courseId, long assessmentId, long instanceId) {
+        findInstanceElseThrow(courseId, assessmentId, instanceId);
+        return presentationRubricRatingRepository.findAllByInstanceIdOrderByCriterionPosition(instanceId).stream().map(PresentationRubricRatingDTO::of).toList();
+    }
+
+    /**
+     * Validates the ratings of a request once, so that a batch does not repeat it for every student.
+     * Ratings for another grading method are rejected later together with the other results.
+     */
+    private @Nullable RubricGrade gradeRubric(PresentationAssessment assessment, @Nullable List<PresentationRubricRatingDTO> ratings) {
+        if (ratings == null || assessment.getGradingMethod() != PresentationGradingMethod.RUBRIC) {
+            return null;
+        }
+        return presentationRubricService.grade(assessment.getId(), ratings);
     }
 
     /**
@@ -308,7 +344,8 @@ public class PresentationAssessmentService {
                 .orElseThrow(() -> new EntityNotFoundException(PresentationAssessmentInstance.ENTITY_NAME, instanceId));
     }
 
-    private void applyInstanceDto(long courseId, PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto) {
+    private void applyInstanceDto(long courseId, PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto,
+            @Nullable RubricGrade grade) {
         // The course membership is only checked when the presenter changes, so a grade or remark can still be recorded for a student who left the course.
         boolean presenterUnchanged = dto.studentLogin() != null && dto.studentLogin().trim().equals(instance.getStudent().getLogin());
         User student = presenterUnchanged ? instance.getStudent() : resolveAssignedCourseStudent(courseId, dto.studentLogin());
@@ -316,7 +353,7 @@ public class PresentationAssessmentService {
                 && presentationAssessmentInstanceRepository.existsByPresentationAssessmentIdAndStudentIdAndIdNot(assessment.getId(), student.getId(), instance.getId())) {
             throwStudentAlreadyAssigned(List.of(student.getLogin()));
         }
-        applyInstanceData(assessment, instance, dto);
+        applyInstanceData(assessment, instance, dto, grade);
         instance.setStudent(student);
     }
 
@@ -337,11 +374,12 @@ public class PresentationAssessmentService {
                 "studentAlreadyAssigned", Map.of("logins", joinedLogins));
     }
 
-    private void applyInstanceData(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto) {
+    private void applyInstanceData(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto,
+            @Nullable RubricGrade grade) {
         if (dto.presentationDate().toLocalDate().isBefore(EARLIEST_PRESENTATION_DATE)) {
             throw new BadRequestAlertException("The presentation date cannot be before 1970-01-01", PresentationAssessmentInstance.ENTITY_NAME, "presentationDateBeforeUnixEpoch");
         }
-        applyResult(assessment, instance, dto);
+        applyResult(assessment, instance, dto, grade);
         instance.setPresentationDate(dto.presentationDate());
         instance.setLanguage(dto.language());
         instance.setMode(dto.mode());
@@ -350,16 +388,17 @@ public class PresentationAssessmentService {
         instance.setRemark(dto.remark());
     }
 
-    private void applyResult(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto) {
+    private void applyResult(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto,
+            @Nullable RubricGrade grade) {
         boolean hadResult = instance.getResultPoints() != null || instance.getPassed() != null || instance.getRubricScore() != null;
         switch (assessment.getGradingMethod()) {
             case PASS_FAIL -> {
-                rejectResultOfOtherMethod(dto.resultPoints() != null);
+                rejectResultOfOtherMethod(dto.resultPoints() != null || dto.ratings() != null);
                 rejectRemovedResult(hadResult, dto.passed() != null);
                 instance.setPassed(dto.passed());
             }
             case SCORE -> {
-                rejectResultOfOtherMethod(dto.passed() != null);
+                rejectResultOfOtherMethod(dto.passed() != null || dto.ratings() != null);
                 rejectRemovedResult(hadResult, dto.resultPoints() != null);
                 if (dto.resultPoints() != null && dto.resultPoints() > assessment.getMaxPoints()) {
                     throw new BadRequestAlertException("The achieved result points cannot exceed the maximum points", PresentationAssessmentInstance.ENTITY_NAME,
@@ -367,8 +406,11 @@ public class PresentationAssessmentService {
                 }
                 instance.setResultPoints(dto.resultPoints());
             }
-            // the rubric score is calculated from the ratings, which a later change adds
-            case RUBRIC -> rejectResultOfOtherMethod(dto.passed() != null || dto.resultPoints() != null);
+            case RUBRIC -> {
+                rejectResultOfOtherMethod(dto.passed() != null || dto.resultPoints() != null);
+                rejectRemovedResult(hadResult, grade != null);
+                instance.setRubricScore(grade == null ? null : grade.score());
+            }
         }
     }
 
@@ -385,10 +427,11 @@ public class PresentationAssessmentService {
         }
     }
 
-    private PresentationAssessmentInstance createIndividualInstance(PresentationAssessment assessment, PresentationAssessmentInstanceRequestDTO dto, User student) {
+    private PresentationAssessmentInstance createIndividualInstance(PresentationAssessment assessment, PresentationAssessmentInstanceRequestDTO dto, User student,
+            @Nullable RubricGrade grade) {
         PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
         instance.setPresentationAssessment(assessment);
-        applyInstanceData(assessment, instance, dto);
+        applyInstanceData(assessment, instance, dto, grade);
         instance.setStudent(student);
         return instance;
     }

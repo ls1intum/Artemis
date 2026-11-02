@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -22,15 +23,17 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricLevel;
 public interface PresentationRubricWriteRepository {
 
     /**
-     * The rubric part of a write: whether it replaces the stored rubric, and the criteria and levels to save.
+     * The rubric part of a write: whether it replaces the stored rubric, the criteria and levels to save, and the recalculated scores of assessed instances.
      *
      * @param replacesStoredRubric whether the stored rubric is deleted before the criteria and levels are saved
      * @param criteria             the criteria to save
      * @param levels               the levels to save
+     * @param recalculatedScores   the new rubric score of every assessed instance by instance id, empty if no weight changed
      */
-    record PresentationRubricChanges(boolean replacesStoredRubric, List<PresentationRubricCriterion> criteria, List<PresentationRubricLevel> levels) {
+    record PresentationRubricChanges(boolean replacesStoredRubric, List<PresentationRubricCriterion> criteria, List<PresentationRubricLevel> levels,
+            Map<Long, Double> recalculatedScores) {
 
-        public static final PresentationRubricChanges NONE = new PresentationRubricChanges(false, List.of(), List.of());
+        public static final PresentationRubricChanges NONE = new PresentationRubricChanges(false, List.of(), List.of(), Map.of());
     }
 
     /**

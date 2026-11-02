@@ -92,4 +92,17 @@ public interface PresentationAssessmentRepository extends ArtemisJpaRepository<P
             """)
     int incrementVersionIfMatches(@Param("assessmentId") long assessmentId, @Param("courseId") long courseId, @Param("expectedVersion") long expectedVersion);
 
+    /**
+     * Returns the number of decimal places the course of a presentation assessment rounds scores to.
+     *
+     * @param assessmentId the presentation assessment id
+     * @return the accuracy of scores of the course
+     */
+    @Query("""
+            SELECT assessment.course.accuracyOfScores
+            FROM PresentationAssessment assessment
+            WHERE assessment.id = :assessmentId
+            """)
+    int findAccuracyOfScoresById(@Param("assessmentId") long assessmentId);
+
 }
