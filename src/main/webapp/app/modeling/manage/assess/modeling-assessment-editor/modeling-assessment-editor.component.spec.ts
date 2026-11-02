@@ -661,6 +661,64 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
         });
 
+        it('should refuse to submit points outside the bounds and name the bounds', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const saveSpy = vi.spyOn(service, 'saveAssessment');
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
+            component.ngOnInit();
+            await fixture.whenStable();
+            component.unreferencedFeedback.set([{ credits: -100.5, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'too many points' } as Feedback]);
+
+            component.onSubmitAssessment();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should name the bounds when the server refuses the submitted points', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            vi.spyOn(service, 'saveAssessment').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+            );
+            vi.spyOn(window, 'confirm').mockReturnValue(true);
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            component.onSubmitAssessment();
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should refuse to update points outside the bounds after a complaint and name the bounds', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            const updateSpy = vi.spyOn(service, 'updateAssessmentAfterComplaint');
+            component.ngOnInit();
+            await fixture.whenStable();
+            component.unreferencedFeedback.set([{ credits: 100.5, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'too many points' } as Feedback]);
+            vi.spyOn(component, 'validateFeedback').mockImplementation(() => component.assessmentsAreValid.set(true));
+            let onErrorCalled = false;
+
+            component.onUpdateAssessmentAfterComplaint({ complaintResponse: new ComplaintResponse(), onSuccess: () => {}, onError: () => (onErrorCalled = true) });
+
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(onErrorCalled).toBe(true);
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
+        it('should name the bounds when the server refuses the points after a complaint', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            vi.spyOn(service, 'updateAssessmentAfterComplaint').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', entityName: 'Feedback' } })),
+            );
+            component.ngOnInit();
+            await fixture.whenStable();
+            vi.spyOn(component, 'validateFeedback').mockImplementation(() => component.assessmentsAreValid.set(true));
+
+            component.onUpdateAssessmentAfterComplaint({ complaintResponse: new ComplaintResponse(), onSuccess: () => {}, onError: () => {} });
+
+            expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+        });
+
         describe('when the exam is not over yet', () => {
             const notPossibleYetResponse = () =>
                 new HttpErrorResponse({
