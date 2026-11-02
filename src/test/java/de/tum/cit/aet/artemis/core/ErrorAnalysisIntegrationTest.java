@@ -63,7 +63,9 @@ class ErrorAnalysisIntegrationTest extends AbstractSpringIntegrationIndependentT
     private List<ErrorGroupDTO> analysis(MultiValueMap<String, String> params) throws Exception {
         params.putIfAbsent("sortBy", List.of("LAST_SEEN"));
         params.putIfAbsent("size", List.of("100"));
-        return request.get(ANALYSIS_ENDPOINT, HttpStatus.OK, ErrorAnalysisPageDTO.class, params).groups().stream().filter(group -> group.message().startsWith(marker)).toList();
+        // the server leaves out a list of groups that is empty, as it does for every DTO
+        List<ErrorGroupDTO> groups = request.get(ANALYSIS_ENDPOINT, HttpStatus.OK, ErrorAnalysisPageDTO.class, params).groups();
+        return groups == null ? List.of() : groups.stream().filter(group -> group.message().startsWith(marker)).toList();
     }
 
     private static MultiValueMap<String, String> params(String... keyValues) {
