@@ -367,6 +367,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
+  /api/lti/courses/{courseId}/online-course-configuration:
+    put:
+      tags: [lti]
+      operationId: updateOnlineCourseConfiguration
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/OnlineCourseConfiguration'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OnlineCourseConfiguration'}
   /api/lti/admin/lti-platforms:
     get:
       tags: [admin-lti-configuration]
@@ -943,6 +963,43 @@ paths:
         required: true
       responses:
         '200': {description: OK}
+  /api/lti/lti13/courses/{courseId}/deep-linking:
+    post:
+      tags: [lti]
+      operationId: lti13DeepLinking
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: resourceType
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [EXERCISE, GROUPED_EXERCISE, LECTURE, GROUPED_LECTURE, COMPETENCY,
+            LEARNING_PATH, IRIS]
+      - name: contentIds
+        in: query
+        required: false
+        schema:
+          type: array
+          items: {type: integer, format: int64}
+          uniqueItems: true
+      - name: ltiIdToken
+        in: query
+        required: true
+        schema: {type: string}
+      - name: clientRegistrationId
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DeepLinkingTarget'}
   /api/lti/admin/lti13/dynamic-registration:
     post:
       tags: [admin-lti-configuration]
@@ -1964,6 +2021,24 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/LeaderboardWithCurrentUserEntry'}
+  /api/lti/courses/for-lti-dashboard:
+    get:
+      tags: [lti]
+      operationId: findAllOnlineCoursesForLtiDashboard
+      parameters:
+      - name: clientId
+        in: query
+        required: true
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/OnlineCourse'}
+                uniqueItems: true
   /api/lti/admin/lti-platforms/{platformId}:
     get:
       tags: [admin-lti-configuration]
@@ -4233,6 +4308,17 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    OnlineCourse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        registrationId: {type: string}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        description: {type: string}
+        numberOfStudents: {type: integer, format: int64}
     QuizQuestionPoolItem:
       type: object
       description: One item of a course's quiz question pool
@@ -4967,6 +5053,14 @@ components:
         jwkSetUri: {type: string, maxLength: 255, minLength: 0}
         tokenUri: {type: string, maxLength: 255, minLength: 0}
       required: [authorizationUri, clientId, id, jwkSetUri, registrationId, tokenUri]
+    OnlineCourseConfiguration:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        userPrefix: {type: string, maxLength: 30, minLength: 0}
+        requireExistingUser: {type: boolean}
+        ltiPlatformConfiguration: {$ref: '#/components/schemas/LtiPlatformConfiguration'}
+      required: [requireExistingUser, userPrefix]
     QuizStatisticsOverview:
       type: object
       properties:
@@ -5892,6 +5986,10 @@ components:
         fresh: {type: integer, format: int32, description: How many of this round's
             findings are new since the previous round}
       required: [advisory, attempt, blocking, carriedOver, drained, fresh, round]
+    DeepLinkingTarget:
+      type: object
+      properties:
+        targetLinkUri: {type: string}
     ConversationUser:
       type: object
       properties:

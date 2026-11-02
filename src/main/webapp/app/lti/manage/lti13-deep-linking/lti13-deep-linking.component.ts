@@ -5,7 +5,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/foundation/service/sort.service';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { LtiApi } from 'app/openapi/api/lti-api';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -42,7 +42,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly sortService = inject(SortService);
     private readonly courseManagementService = inject(CourseManagementService);
-    private readonly http = inject(HttpClient);
+    private readonly ltiApi = inject(LtiApi);
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly alertService = inject(AlertService);
@@ -220,12 +220,8 @@ export class Lti13DeepLinkingComponent implements OnInit {
             const ltiIdToken = this.sessionStorageService.retrieve<string>('ltiIdToken') ?? '';
             const clientRegistrationId = this.sessionStorageService.retrieve<string>('clientRegistrationId') ?? '';
 
-            type DeepLinkingResponse = {
-                targetLinkUri: string;
-            };
-
             let resourceType: DeepLinkingType;
-            let contentIds: string | undefined = undefined;
+            let contentIds: number[] | undefined;
 
             if (this.selectedExercises?.size) {
                 if (this.isExerciseGroupingActive()) {
@@ -233,14 +229,14 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 } else {
                     resourceType = DeepLinkingType.EXERCISE;
                 }
-                contentIds = Array.from(this.selectedExercises).join(',');
+                contentIds = Array.from(this.selectedExercises);
             } else if (this.selectedLectures?.size) {
                 if (this.isLectureGroupingActive()) {
                     resourceType = DeepLinkingType.GROUPED_LECTURE;
                 } else {
                     resourceType = DeepLinkingType.LECTURE;
                 }
-                contentIds = Array.from(this.selectedLectures).join(',');
+                contentIds = Array.from(this.selectedLectures);
             } else if (this.isCompetencySelected()) {
                 resourceType = DeepLinkingType.COMPETENCY;
             } else if (this.isLearningPathSelected()) {
@@ -252,32 +248,20 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 return;
             }
 
-            const httpParams = new HttpParams()
-                .set('resourceType', resourceType)
-                .set('ltiIdToken', ltiIdToken)
-                .set('clientRegistrationId', clientRegistrationId)
-                // Set contentIds only if it exists
-                .set('contentIds', contentIds || '');
-
-            this.http
-                .post<DeepLinkingResponse>(`api/lti/lti13/courses/${this.courseId}/deep-linking`, null, {
-                    observe: 'response',
-                    params: httpParams,
-                })
-                .subscribe({
-                    next: (response) => {
-                        if (response.status === 200 && response.body) {
-                            window.location.replace(response.body.targetLinkUri);
-                        } else {
-                            this.isLinking.set(false);
-                            this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
-                        }
-                    },
-                    error: (error) => {
+            this.ltiApi.lti13DeepLinking(this.courseId, resourceType, ltiIdToken, clientRegistrationId, contentIds).subscribe({
+                next: (response) => {
+                    if (response?.targetLinkUri) {
+                        window.location.replace(response.targetLinkUri);
+                    } else {
                         this.isLinking.set(false);
-                        onError(this.alertService, error);
-                    },
-                });
+                        this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
+                    }
+                },
+                error: (error) => {
+                    this.isLinking.set(false);
+                    onError(this.alertService, error);
+                },
+            });
         } else {
             this.alertService.error('artemisApp.lti13.deepLinking.selectToLink');
         }

@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
+import { LtiPlatformConfigurationUpdate } from 'app/openapi/model/lti-platform-configuration-update';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -101,7 +102,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     /**
      * Update existing platform configuration
      */
-    updateLtiConfiguration(platformConfiguration: LtiPlatformConfiguration) {
+    updateLtiConfiguration(platformConfiguration: LtiPlatformConfigurationUpdate) {
         this.ltiConfigurationService
             .updateLtiPlatformConfiguration(platformConfiguration)
             .pipe(
@@ -120,7 +121,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     /**
      * Create new platform configuration
      */
-    addLtiConfiguration(platformConfiguration: LtiPlatformConfiguration) {
+    addLtiConfiguration(platformConfiguration: LtiPlatformConfigurationUpdate) {
         this.ltiConfigurationService
             .addLtiPlatformConfiguration(platformConfiguration)
             .pipe(

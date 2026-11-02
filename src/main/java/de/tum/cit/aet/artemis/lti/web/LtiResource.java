@@ -46,6 +46,9 @@ import de.tum.cit.aet.artemis.lti.repository.OnlineCourseConfigurationRepository
 import de.tum.cit.aet.artemis.lti.service.DeepLinkingType;
 import de.tum.cit.aet.artemis.lti.service.LtiDeepLinkingService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller to handle LTI13 launches.
@@ -159,6 +162,7 @@ public class LtiResource {
      * @throws BadRequestAlertException If LTI is not configured for the course, if no valid deep linking type is provided,
      *                                      or if content IDs are required but not provided for the specified resource type.
      */
+    @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DeepLinkingTargetDTO.class)))
     @PostMapping("lti13/courses/{courseId}/deep-linking")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "resourceType") DeepLinkingType resourceType,

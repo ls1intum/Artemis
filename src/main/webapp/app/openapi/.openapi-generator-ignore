@@ -44,6 +44,7 @@ api/hyperion-programming-variant-resources.ts
 api/hyperion-exercise-generation-resources.ts
 api/hyperion-problem-statement-resources.ts
 api/quiz-exercise-deletion-resources.ts
+api/lti-resources.ts
 api/quiz-training-resources.ts
 api/admin-hyperion-generation-resources.ts
 api/quiz-exercise-batch-resources.ts

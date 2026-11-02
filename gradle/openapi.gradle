@@ -53,10 +53,10 @@
                 // picked by an annotation instead, so it has to scan everything: the global setting applies to its group too.
                 "-Dspringdoc.packages-to-scan=" + (openApiGroup
                     ? "de.tum.cit.aet.artemis"
-                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.lti.web.admin"),
+                    : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.lti.web"),
                 // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
                 // of the specification: in the generated client each alias would become a name/name_ method pair.
-                "-Dspringdoc.paths-to-exclude=/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
+                "-Dspringdoc.paths-to-exclude=/.well-known/jwks.json,/api/lti/public/**,/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
                 "-Dartemis.hyperion.enabled=true",
                 "-Dartemis.hyperion.exercise-generation.enabled=true",
                 // Controller introspection only; no generation job is admitted by this documentation process.

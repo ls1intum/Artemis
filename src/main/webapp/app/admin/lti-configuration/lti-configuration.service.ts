@@ -30,7 +30,7 @@ export class LtiConfigurationService {
      * @param ltiPlatformConfiguration The configuration to add.
      * @return Observable of the HTTP response.
      */
-    addLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<LtiPlatformConfiguration> {
+    addLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfigurationUpdate): Observable<LtiPlatformConfiguration> {
         return this.api.addLtiPlatformConfiguration(this.toDTO(ltiPlatformConfiguration));
     }
 
@@ -39,17 +39,17 @@ export class LtiConfigurationService {
      * @param ltiPlatformConfiguration The configuration to update.
      * @return Observable of the HTTP response.
      */
-    updateLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<LtiPlatformConfiguration> {
+    updateLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfigurationUpdate): Observable<LtiPlatformConfiguration> {
         return this.api.updateLtiPlatformConfiguration(this.toDTO(ltiPlatformConfiguration));
     }
 
-    private toDTO(config: LtiPlatformConfiguration): LtiPlatformConfigurationUpdate {
+    private toDTO(config: LtiPlatformConfigurationUpdate): LtiPlatformConfigurationUpdate {
         return {
             id: config.id,
             registrationId: config.registrationId,
             clientId: config.clientId,
             originalUrl: config.originalUrl,
-            customName: config.customName!,
+            customName: config.customName,
             authorizationUri: config.authorizationUri,
             jwkSetUri: config.jwkSetUri,
             tokenUri: config.tokenUri,

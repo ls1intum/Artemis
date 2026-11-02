@@ -7,6 +7,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
+import { LtiPlatformConfigurationUpdate } from 'app/openapi/model/lti-platform-configuration-update';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 
@@ -80,7 +81,7 @@ describe('LtiConfigurationService', () => {
     });
 
     it('should update lti platform', () => {
-        const dummyConfig: LtiPlatformConfiguration = {
+        const dummyConfig: LtiPlatformConfigurationUpdate = {
             id: 1,
             customName: 'Updated Platform',
             clientId: 'updated-client-id',
@@ -109,7 +110,7 @@ describe('LtiConfigurationService', () => {
     });
 
     it('should add new lti platform', () => {
-        const dummyConfig: LtiPlatformConfiguration = {
+        const dummyConfig: LtiPlatformConfigurationUpdate = {
             customName: 'New Platform',
             clientId: 'created-client-id',
             authorizationUri: 'http://lms.com/api/lti_consumer/v1/auth-login',

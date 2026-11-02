@@ -21,7 +21,7 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { take } from 'rxjs/operators';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
+import { OnlineCourseConfiguration } from 'app/openapi/model/online-course-configuration';
 import { CourseForDashboardDTO, ParticipationResultDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -143,8 +143,7 @@ describe('Course Management Service', () => {
         scoresPerExerciseType.set(ExerciseType.TEXT, courseScores);
         scoresPerExerciseType.set(ExerciseType.FILE_UPLOAD, courseScores);
 
-        onlineCourseConfiguration = new OnlineCourseConfiguration();
-        onlineCourseConfiguration.id = 234;
+        onlineCourseConfiguration = { id: 234, userPrefix: 'prefix', requireExistingUser: false };
         returnedFromService = { ...course } as Course;
         convertExercisesDateFromServerSpy = vi.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
         parseExerciseCategoriesSpy = vi.spyOn(ExerciseService, 'parseExerciseCategories');
@@ -191,10 +190,11 @@ describe('Course Management Service', () => {
         courseManagementService
             .updateOnlineCourseConfiguration(1, onlineCourseConfiguration)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course));
+            .subscribe((res) => expect(res).toEqual(onlineCourseConfiguration));
 
-        const req = httpMock.expectOne({ method: 'PUT', url: `api/lti/courses/1/online-course-configuration` });
-        req.flush(returnedFromService);
+        const req = httpMock.expectOne({ method: 'PUT', url: '/api/lti/courses/1/online-course-configuration' });
+        expect(req.request.body).toEqual(onlineCourseConfiguration);
+        req.flush(onlineCourseConfiguration);
     });
 
     it('should fetch online courses for given registration ID', () => {
@@ -209,9 +209,18 @@ describe('Course Management Service', () => {
             expect(courses).toEqual(mockResponse);
         });
 
-        const req = httpMock.expectOne(`api/lti/courses/for-lti-dashboard?clientId=${mockClientId}`);
+        const req = httpMock.expectOne(`/api/lti/courses/for-lti-dashboard?clientId=${mockClientId}`);
         expect(req.request.method).toBe('GET');
         req.flush(mockResponse);
+    });
+
+    it('converts LTI dashboard dates and keeps absent dates absent', () => {
+        courseManagementService.findAllOnlineCoursesWithRegistrationId('client-123').subscribe((courses) => {
+            expect(courses[0].startDate?.toISOString()).toBe('2026-01-02T03:04:05.000Z');
+            expect(courses[0].endDate).toBeUndefined();
+        });
+
+        httpMock.expectOne('/api/lti/courses/for-lti-dashboard?clientId=client-123').flush([{ id: 1, startDate: '2026-01-02T03:04:05Z' }]);
     });
 
     it('should search the users of a course by login or name within the given roles', () => {
