@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -50,16 +50,13 @@ public abstract class ExerciseWithSubmissionsExportService {
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
     // Dependency to ARTEMIS_FILE_PATH_PREFIX is OK because parsing problem statements is business logic
-    private static final Pattern EMBEDDED_FILE_MARKDOWN_SYNTAX = Pattern.compile("\\[.*] *\\(%smarkdown/.*\\)".formatted(ARTEMIS_FILE_PATH_PREFIX));
-
-    // Dependency to ARTEMIS_FILE_PATH_PREFIX is OK because parsing problem statements is business logic
-    private static final Pattern EMBEDDED_FILE_MARKDOWN_WITH_HOVERTEXT = Pattern.compile("\\(%smarkdown/.* \".*\"\\)".formatted(ARTEMIS_FILE_PATH_PREFIX));
-
-    // Dependency to ARTEMIS_FILE_PATH_PREFIX is OK because parsing problem statements is business logic
-    private static final Pattern EMBEDDED_FILE_HTML_SYNTAX = Pattern.compile("<img src=\"%smarkdown/.*\".*>".formatted(ARTEMIS_FILE_PATH_PREFIX));
-
-    // Dependency to ARTEMIS_FILE_PATH_PREFIX is OK because parsing problem statements is business logic
     private static final String API_MARKDOWN_FILE_PATH = "%smarkdown/".formatted(ARTEMIS_FILE_PATH_PREFIX);
+
+    /**
+     * A link to an uploaded markdown file, in Markdown or HTML syntax, with the file name as group 1. The name ends where the link ends, so
+     * several links on one line are separate matches.
+     */
+    private static final Pattern EMBEDDED_FILE = Pattern.compile(Pattern.quote(API_MARKDOWN_FILE_PATH) + "([^\\s()\"'<>]+)");
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseWithSubmissionsExportService.class);
 
@@ -107,8 +104,7 @@ public abstract class ExerciseWithSubmissionsExportService {
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String zipFileName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp + ".zip";
         Path zipFilePath = exportDir.resolve(FileUtil.sanitizeFilename(zipFileName));
-        // both embedding syntaxes add the same files directory, which must only be zipped once
-        zipFileService.createTemporaryZipFile(zipFilePath, pathsToBeZipped.stream().distinct().toList(), 5);
+        zipFileService.createTemporaryZipFile(zipFilePath, pathsToBeZipped, 5);
         return zipFilePath;
     }
 
@@ -145,126 +141,45 @@ public abstract class ExerciseWithSubmissionsExportService {
     /**
      * In case the problem statement contains embedded files, they need to be part of the zip, so they can be imported again.
      *
-     * @param exercise        the programming exercise that is exported
+     * @param exercise        the exercise that is exported
      * @param outputDir       the directory where the content of the export is stored
      * @param pathsToBeZipped the paths that should be included in the zip file
+     * @param exportErrors    List of failures that occurred during the export
      */
     private void copyEmbeddedFiles(Exercise exercise, Path outputDir, List<Path> pathsToBeZipped, List<String> exportErrors) {
-        Set<String> embeddedFilesWithMarkdownSyntax = new HashSet<>();
-        Set<String> embeddedFilesWithHtmlSyntax = new HashSet<>();
-
-        Matcher matcherForMarkdownSyntax = EMBEDDED_FILE_MARKDOWN_SYNTAX.matcher(exercise.getProblemStatement());
-        Matcher matcherForHtmlSyntax = EMBEDDED_FILE_HTML_SYNTAX.matcher(exercise.getProblemStatement());
-        checkForMatchesInProblemStatementAndCreateDirectoryForFiles(outputDir, pathsToBeZipped, exportErrors, embeddedFilesWithMarkdownSyntax, matcherForMarkdownSyntax);
-        Path embeddedFilesDir = checkForMatchesInProblemStatementAndCreateDirectoryForFiles(outputDir, pathsToBeZipped, exportErrors, embeddedFilesWithHtmlSyntax,
-                matcherForHtmlSyntax);
-        // if the returned path is null the directory could not be created
-        if (embeddedFilesDir == null) {
+        Set<String> fileNames = new LinkedHashSet<>();
+        Matcher matcher = EMBEDDED_FILE.matcher(exercise.getProblemStatement());
+        while (matcher.find()) {
+            String fileName = matcher.group(1);
+            // Uploaded markdown files lie directly in the markdown directory. A link with a path names none of them, and an editor must not
+            // be able to make the export copy a file from outside that directory.
+            if (!fileName.contains("/") && !fileName.contains("\\") && !fileName.equals("..")) {
+                fileNames.add(fileName);
+            }
+        }
+        log.debug("Found embedded files: {} ", fileNames);
+        if (fileNames.isEmpty()) {
             return;
         }
-        copyFilesEmbeddedWithMarkdownSyntax(exercise, exportErrors, embeddedFilesWithMarkdownSyntax, embeddedFilesDir);
-        copyFilesEmbeddedWithHtmlSyntax(exercise, exportErrors, embeddedFilesWithHtmlSyntax, embeddedFilesDir);
-
-    }
-
-    /**
-     * Copies the files that are embedded with Markdown syntax to the embedded files' directory.
-     *
-     * @param exercise                        the programming exercise that is exported
-     * @param exportErrors                    List of failures that occurred during the export
-     * @param embeddedFilesWithMarkdownSyntax the files that are embedded with Markdown syntax
-     * @param embeddedFilesDir                the directory where the embedded files are stored
-     */
-    private void copyFilesEmbeddedWithMarkdownSyntax(Exercise exercise, List<String> exportErrors, Set<String> embeddedFilesWithMarkdownSyntax, Path embeddedFilesDir) {
-        for (String embeddedFile : embeddedFilesWithMarkdownSyntax) {
-            // avoid matching other closing ] or () in the squared brackets by getting the index of the last ]
-            String lastPartOfMatchedString = embeddedFile.substring(embeddedFile.lastIndexOf("]") + 1);
-            String filePath;
-
-            if (EMBEDDED_FILE_MARKDOWN_WITH_HOVERTEXT.matcher(lastPartOfMatchedString).matches()) {
-                filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(" "));
-            }
-            else {
-                filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(")"));
-            }
-
-            constructFilenameAndCopyFile(exercise, exportErrors, embeddedFilesDir, filePath);
+        Path embeddedFilesDir = outputDir.resolve("files");
+        try {
+            Files.createDirectories(embeddedFilesDir);
         }
-    }
-
-    /**
-     * Copies the files that are embedded with html syntax to the embedded files' directory.
-     *
-     * @param exercise                    the programming exercise that is exported
-     * @param exportErrors                List of failures that occurred during the export
-     * @param embeddedFilesWithHtmlSyntax the files that are embedded with html syntax
-     * @param embeddedFilesDir            the directory where the embedded files are stored
-     */
-    private void copyFilesEmbeddedWithHtmlSyntax(Exercise exercise, List<String> exportErrors, Set<String> embeddedFilesWithHtmlSyntax, Path embeddedFilesDir) {
-        for (String embeddedFile : embeddedFilesWithHtmlSyntax) {
-            int indexOfFirstQuotationMark = embeddedFile.indexOf('"');
-            String filePath = embeddedFile.substring(embeddedFile.indexOf("src=") + 5, embeddedFile.indexOf('"', indexOfFirstQuotationMark + 1));
-            constructFilenameAndCopyFile(exercise, exportErrors, embeddedFilesDir, filePath);
+        catch (IOException e) {
+            exportErrors.add("Could not create directory for embedded files: " + e.getMessage());
+            log.warn("Could not create directory for embedded files. Won't include embedded files.", e);
+            return;
         }
-    }
-
-    /**
-     * Extracts the filename from the matched string and copies the file to the embedded files' directory.
-     *
-     * @param exercise         the programming exercise that is exported
-     * @param exportErrors     List of failures that occurred during the export
-     * @param embeddedFilesDir the directory where the embedded files are stored
-     * @param filePath         the path of the file that should be copied
-     */
-    private void constructFilenameAndCopyFile(Exercise exercise, List<String> exportErrors, Path embeddedFilesDir, String filePath) {
-        // Only the last segment names the file: the link is written by an editor, and "../" in it must not reach outside the markdown directory.
-        String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
-        fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
-        Path imageFilePath = FilePathConverter.getMarkdownFilePath().resolve(fileName);
-        Path imageExportPath = embeddedFilesDir.resolve(fileName);
-        // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied
-        if (!Files.exists(imageExportPath)) {
+        pathsToBeZipped.add(embeddedFilesDir);
+        for (String fileName : fileNames) {
             try {
-                FileUtils.copyFile(imageFilePath.toFile(), imageExportPath.toFile());
+                FileUtils.copyFile(FilePathConverter.getMarkdownFilePath().resolve(fileName).toFile(), embeddedFilesDir.resolve(fileName).toFile());
             }
             catch (IOException e) {
                 exportErrors.add("Failed to copy embedded files: " + e.getMessage());
                 log.warn("Could not copy embedded file {} for exercise with id {}", fileName, exercise.getId());
             }
         }
-    }
-
-    /**
-     * Checks for matches in the problem statement and creates a directory for the embedded files.
-     *
-     * @param outputDir       the directory where the content of the export is stored
-     * @param pathsToBeZipped the paths that should be included in the zip file
-     * @param exportErrors    List of failures that occurred during the export
-     * @param embeddedFiles   the files that are embedded in the problem statement
-     * @param matcher         the matcher that is used to find the embedded files
-     * @return the path to the embedded files directory or null if the directory could not be created
-     */
-    private Path checkForMatchesInProblemStatementAndCreateDirectoryForFiles(Path outputDir, List<Path> pathsToBeZipped, List<String> exportErrors, Set<String> embeddedFiles,
-            Matcher matcher) {
-        while (matcher.find()) {
-            embeddedFiles.add(matcher.group());
-        }
-        log.debug("Found embedded files: {} ", embeddedFiles);
-        Path embeddedFilesDir = outputDir.resolve("files");
-        if (!embeddedFiles.isEmpty()) {
-            if (!Files.exists(embeddedFilesDir)) {
-                try {
-                    Files.createDirectory(embeddedFilesDir);
-                }
-                catch (IOException e) {
-                    exportErrors.add("Could not create directory for embedded files: " + e.getMessage());
-                    log.warn("Could not create directory for embedded files. Won't include embedded files.", e);
-                    return null;
-                }
-            }
-            pathsToBeZipped.add(embeddedFilesDir);
-        }
-        return embeddedFilesDir;
     }
 
     /**

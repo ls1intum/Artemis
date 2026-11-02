@@ -1375,6 +1375,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void exportExercise_asEditor_forbidden() throws Exception {
+        // the exercise of the setup is not saved yet
+        fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         request.getFile("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export", HttpStatus.FORBIDDEN);
     }
 }

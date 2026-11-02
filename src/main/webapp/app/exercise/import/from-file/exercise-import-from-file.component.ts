@@ -142,7 +142,8 @@ export class ExerciseImportFromFileComponent {
                 const response = await this.fileUploaderService.uploadMarkdownFile(new File([data], fileName), this.selectedCourseId());
                 // Matches the whole link up to the file name, whatever prefix the source server used for its markdown files.
                 const escapedFileName = fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const oldLink = new RegExp(`[^\\s()"'<>]*markdown/${escapedFileName}`, 'g');
+                // The name must end where the link ends, so that A.png does not also match a link to A.png2.
+                const oldLink = new RegExp(`[^\\s()"'<>]*markdown/${escapedFileName}(?=[\\s()"'<>]|$)`, 'g');
                 exercise.problemStatement = exercise.problemStatement.replace(oldLink, response.path!);
             } catch (error) {
                 this.alertService.error('artemisApp.exercise.importFromFile.imageUploadFailed', { fileName });

@@ -112,7 +112,7 @@ public class QuizExerciseWithSubmissionsExportService {
         quizExercise.setExerciseGroup(null);
         try {
             // the same record the quiz endpoints return, so the file keeps the questions with their solutions but no entity graph
-            exportedPaths.add(FileUtil.writeObjectToJsonFile(QuizExerciseDetailsDTO.of(quizExercise), objectMapper,
+            exportedPaths.add(FileUtil.writeObjectToJsonFile(QuizExerciseDetailsDTO.forExport(quizExercise), objectMapper,
                     exerciseExportDir.resolve("Exercise-Details-" + quizExercise.getSanitizedExerciseTitle() + ".json")));
         }
         // Jackson 3 exceptions are unchecked and no longer extend IOException, so a serialization failure would

@@ -2484,9 +2484,14 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void exportExercise() throws Exception {
         String embeddedFileName = "Markdown_" + UUID.randomUUID() + ".png";
+        String secondEmbeddedFileName = "Markdown_" + UUID.randomUUID() + ".png";
         Path embeddedFile = FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName);
+        Path secondEmbeddedFile = FilePathConverter.getMarkdownFilePath().resolve(secondEmbeddedFileName);
         FileUtils.writeByteArrayToFile(embeddedFile.toFile(), new byte[] { 1, 2, 3 });
-        textExercise.setProblemStatement("Look at ![image](/api/core/files/markdown/" + embeddedFileName + ")");
+        FileUtils.writeByteArrayToFile(secondEmbeddedFile.toFile(), new byte[] { 4, 5, 6 });
+        // Both images on one line, one in Markdown and one in HTML syntax, and a link with a path that must not be followed.
+        textExercise.setProblemStatement("Look at ![image](/api/core/files/markdown/" + embeddedFileName + ") and <img src=\"/api/core/files/markdown/" + secondEmbeddedFileName
+                + "\" width=\"100\"> but not ![x](/api/core/files/markdown/../../config/application.yml)");
         textExercise.setCategories(Set.of("{\"category\":\"export\"}"));
         textExerciseRepository.save(textExercise);
         gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(textExercise));
@@ -2496,10 +2501,12 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
             assertThat(export.details()).containsEntry("type", "text").containsKey("categories");
             ExerciseUtilService.assertExportedGradingCriteriaWithoutIds(export.details());
-            assertThat(export.entries().keySet()).anyMatch(name -> name.startsWith("Problem-Statement-")).contains("files/" + embeddedFileName);
+            assertThat(export.entries().keySet()).anyMatch(name -> name.startsWith("Problem-Statement-")).contains("files/" + embeddedFileName, "files/" + secondEmbeddedFileName);
+            assertThat(export.entries().keySet()).filteredOn(name -> name.startsWith("files/")).hasSize(2);
         }
         finally {
             Files.deleteIfExists(embeddedFile);
+            Files.deleteIfExists(secondEmbeddedFile);
         }
     }
 

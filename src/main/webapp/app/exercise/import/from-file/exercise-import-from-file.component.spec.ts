@@ -97,6 +97,25 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(component.exercise?.problemStatement).toBe('See ![diagram](/api/core/files/markdown/Markdown_new.png) and <img src="/api/core/files/markdown/Markdown_new.png">');
     });
 
+    it('should upload and relink every image when several share one line', async () => {
+        const uploadSpy = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockImplementation(async (file: File) => ({ path: `/api/core/files/markdown/new_${file.name}` }));
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.problemStatement = '![a](/api/core/files/markdown/A.png) ![b](/api/core/files/markdown/B.png) ![c](/api/core/files/markdown/A.png2)';
+        const zip = new ZipBuilder();
+        zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
+        zip.file('files/A.png', 'a');
+        zip.file('files/B.png', 'b');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+
+        await component.uploadExercise();
+
+        expect(uploadSpy).toHaveBeenCalledTimes(2);
+        expect(component.exercise?.problemStatement).toBe(
+            '![a](/api/core/files/markdown/new_A.png) ![b](/api/core/files/markdown/new_B.png) ![c](/api/core/files/markdown/A.png2)',
+        );
+    });
+
     it('should not open the editor if a problem statement image cannot be uploaded', async () => {
         vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockRejectedValue(new Error('upload failed'));
         const alertSpy = vi.spyOn(alertService, 'error');
