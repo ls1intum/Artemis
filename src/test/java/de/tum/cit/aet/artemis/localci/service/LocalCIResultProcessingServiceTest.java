@@ -37,6 +37,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -988,6 +989,28 @@ class LocalCIResultProcessingServiceTest {
         resultProcessingService.processResultAsync();
 
         verify(localCIQueueWebsocketService, never()).sendChangedFinishedBuildJobOverWebsocket(any());
+    }
+
+    /** A missing job that an agent picked up after the sweep's query keeps its group open, instead of it being closed with a partial result. */
+    @ParameterizedTest
+    @EnumSource(value = BuildStatus.class, names = { "QUEUED", "BUILDING" })
+    void theSweepLeavesAGroupOpenWhoseMissingJobRunsAgain(BuildStatus statusOfTheResumedJob) {
+        withBuildGroupFoundByTheSweep();
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.existsResultInProgressOfBuildGroup("group-1")).thenReturn(true);
+        Result aggregate = new Result();
+        aggregate.setId(7L);
+        BuildJob finishedJob = new BuildJob(containerJob("group-1", 3, "container_a"), BuildStatus.SUCCESSFUL, aggregate);
+        BuildJob resumedJob = new BuildJob(containerJob("group-1", 3, "container_b"), statusOfTheResumedJob, null);
+        BuildJob missingJob = new BuildJob(containerJob("group-1", 3, "container_c"), BuildStatus.MISSING, null);
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(finishedJob, resumedJob, missingJob));
+
+        assertThat(sweep()).isZero();
+
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any(), any());
+        verify(programmingExerciseGradingService, never()).discardContainerResult(anyLong());
+        assertThat(missingJob.getBuildStatus()).as("a lost job is not closed while the group stays open").isEqualTo(BuildStatus.MISSING);
+        verify(aggregationLocks).unlock("group-1");
     }
 
     /** The sweep takes the exercise's result-processing admission, so it writes no result while the exercise is being deleted. */

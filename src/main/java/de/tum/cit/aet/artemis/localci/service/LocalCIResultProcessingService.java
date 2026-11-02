@@ -449,6 +449,12 @@ public class LocalCIResultProcessingService {
             if (jobs.isEmpty()) {
                 return false;
             }
+            // A missing job can be picked up again after the sweep's query, which changes its status without this lock. Its
+            // container is running, so the group stays open for it.
+            if (jobs.stream().anyMatch(job -> !FINISHED_BUILD_STATUSES.contains(job.getBuildStatus()) && job.getBuildStatus() != BuildStatus.MISSING)) {
+                log.info("Not closing build group {}: a job of the group is queued or building again", buildGroupId);
+                return false;
+            }
             // All jobs of a group share the participation and the push, so any one of them describes the build.
             BuildJob buildJob = jobs.getFirst();
             // A job that is still missing is one the query found to be retried no more, so its container is lost.
@@ -470,13 +476,12 @@ public class LocalCIResultProcessingService {
                 participation.setProgrammingExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation));
             }
             closeLostJobs(lostJobs, BuildStatus.ERROR);
-            // A job row does not store the expected count; every job of the group has finished or was closed as lost
-            // above, so their number is that count.
-            long finishedJobs = jobs.stream().filter(job -> FINISHED_BUILD_STATUSES.contains(job.getBuildStatus())).count();
+            // A job row does not store the expected count, but every job of a group is saved before any is published, so
+            // their number is that count.
             ZonedDateTime completionDate = jobs.stream().map(BuildJob::getBuildCompletionDate).filter(Objects::nonNull).max(Comparator.naturalOrder())
                     .orElseGet(ZonedDateTime::now);
             // the sweep has no container result, so the revisions the build ran are unknown
-            Result finalizedResult = finalizeIfGroupComplete(jobs, (int) finishedJobs, participation, completionDate, null);
+            Result finalizedResult = finalizeIfGroupComplete(jobs, jobs.size(), participation, completionDate, null);
             if (finalizedResult == null) {
                 return false;
             }
