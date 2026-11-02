@@ -250,8 +250,9 @@ export class Lti13DeepLinkingComponent implements OnInit {
 
             this.ltiApi.lti13DeepLinking(this.courseId, resourceType, ltiIdToken, clientRegistrationId, contentIds).subscribe({
                 next: (response) => {
-                    if (response?.targetLinkUri) {
-                        window.location.replace(response.targetLinkUri);
+                    const target = this.localDeepLinkTarget(response?.targetLinkUri);
+                    if (target) {
+                        void this.router.navigateByUrl(target, { replaceUrl: true });
                     } else {
                         this.isLinking.set(false);
                         this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
@@ -264,6 +265,22 @@ export class Lti13DeepLinkingComponent implements OnInit {
             });
         } else {
             this.alertService.error('artemisApp.lti13.deepLinking.selectToLink');
+        }
+    }
+
+    /** Restricts the server's deep-link response to the local content-selection route. */
+    private localDeepLinkTarget(target: string | undefined): string | undefined {
+        if (!target) {
+            return undefined;
+        }
+        try {
+            const url = new URL(target, window.location.origin);
+            if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.username || url.password || url.pathname !== '/lti/select-content') {
+                return undefined;
+            }
+            return url.pathname + url.search + url.hash;
+        } catch {
+            return undefined;
         }
     }
 }
