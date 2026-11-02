@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.localci.service.BuildAgentAddressRegistryService;
 import de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
  * Tests the decision made when a build agent presents the clone token of a build job over https.
@@ -410,5 +411,62 @@ class BuildJobCloneTokenAuthenticationTest {
 
         verify(buildAgentInformationMap, never()).get(any());
         verify(distributedDataAccessService, never()).getProcessingJobsForAgentByName(any());
+    }
+
+    /**
+     * The admission decision for a valid clone-token handshake must be {@link GitHandshakeDecision.BuildAgentClone} and
+     * must not spend the ordinary authentication rate limit, so that build agents are never throttled during an exam
+     * peak. This is the exemption the enumeration fix must preserve while moving the rate limit ahead of resolution.
+     */
+    @Test
+    void aValidCloneTokenHandshakeIsNotChargedToTheAuthenticationRateLimit() {
+        when(distributedDataAccessService.getProcessingJobsForAgentByName(AGENT_NAME)).thenReturn(List.of(buildJob(CLONE_TOKEN, assignmentRepositoryUri)));
+
+        GitHandshakeDecision decision = localVCServletService
+                .admitGitRequest(infoRefsRequest(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS), RepositoryActionType.READ);
+
+        assertThat(decision).isInstanceOf(GitHandshakeDecision.BuildAgentClone.class);
+        verify(rateLimitService, never()).enforcePerMinute(any(), eq(RateLimitType.AUTHENTICATION));
+    }
+
+    /**
+     * A bogus credential that merely starts with the clone-token prefix is not a valid clone token, so it must fall
+     * through to the ordinary authentication rate limit rather than inheriting the build-agent exemption. Otherwise the
+     * prefix would be a throttling bypass.
+     */
+    @Test
+    void aBogusCredentialWithTheClonePrefixStillMeetsTheAuthenticationRateLimit() {
+        GitHandshakeDecision decision = localVCServletService.admitGitRequest(
+                infoRefsRequest("not-a-build-agent", BuildJobCloneTokenService.CLONE_TOKEN_PREFIX + "forged", "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS),
+                RepositoryActionType.READ);
+
+        assertThat(decision).isInstanceOf(GitHandshakeDecision.OrdinaryAuthentication.class);
+        verify(rateLimitService).enforcePerMinute(any(), eq(RateLimitType.AUTHENTICATION));
+    }
+
+    /**
+     * When the admission filter already decided the request is a build-agent clone, the authentication filter must honour
+     * that decision and neither repeat the (side-effecting) clone-token validation nor the rate limit.
+     */
+    @Test
+    void aPrePopulatedBuildAgentDecisionShortCircuitsWithoutRepeatingTheCheckOrTheRateLimit() throws Exception {
+        HttpServletRequest request = infoRefsRequest(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS);
+        when(request.getAttribute(LocalVCServletService.GIT_HANDSHAKE_DECISION_REQUEST_ATTRIBUTE)).thenReturn(new GitHandshakeDecision.BuildAgentClone());
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+
+        verify(rateLimitService, never()).enforcePerMinute(any(), eq(RateLimitType.AUTHENTICATION));
+        verify(distributedDataAccessService, never()).getProcessingJobsForAgentByName(any());
+    }
+
+    private static HttpServletRequest infoRefsRequest(String username, String password, String repositoryPath, String peerAddress) {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String credentials = Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic " + credentials);
+        when(request.getMethod()).thenReturn("GET");
+        when(request.getRequestURI()).thenReturn(repositoryPath + "/info/refs");
+        when(request.getParameter("service")).thenReturn("git-upload-pack");
+        when(request.getRemoteAddr()).thenReturn(peerAddress);
+        return request;
     }
 }
