@@ -247,6 +247,21 @@ paths:
             application/json:
               schema: {type: object}
         '200': {description: OK}
+  /api/quiz/quiz-exercises/{quizExerciseId}/end-now:
+    put:
+      tags: [quiz-exercise]
+      operationId: endQuizExercise
+      parameters:
+      - name: quizExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizExerciseDates'}
   /api/quiz/quiz-exercises/{quizExerciseId}/add-batch:
     put:
       tags: [quiz-exercise-batch]
@@ -1432,6 +1447,40 @@ paths:
                 type: array
                 items: {type: string}
                 uniqueItems: true
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/for-tutor:
+    get:
+      tags: [tutorial-group]
+      operationId: getTutorialGroupsForCourseForTutor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TutorialGroupSummary'}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/for-instructor:
+    get:
+      tags: [tutorial-group]
+      operationId: getTutorialGroupsForCourseForInstructor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TutorialGroupSummary'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/export/json:
     get:
       tags: [tutorial-group]
@@ -1764,6 +1813,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizExerciseForStudentResponse'}
+  /api/quiz/quiz-exercises/{quizExerciseId}/for-exam:
+    get:
+      tags: [quiz-exercise-retrieval]
+      operationId: getQuizExerciseForExam
+      parameters:
+      - name: quizExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizExerciseDetails'}
   /api/quiz/quiz-exercises/{exerciseId}/participations/{participationId}/result:
     get:
       tags: [quiz-participation]
@@ -2182,6 +2246,69 @@ paths:
           content:
             text/calendar:
               schema: {type: string}
+  /api/athena/text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions:
+    get:
+      tags: [athena]
+      operationId: getTextFeedbackSuggestions
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TextFeedback'}
+  /api/athena/programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions:
+    get:
+      tags: [athena]
+      operationId: getProgrammingFeedbackSuggestions
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ProgrammingFeedback'}
+  /api/athena/modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions:
+    get:
+      tags: [athena]
+      operationId: getModelingFeedbackSuggestions
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: submissionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ModelingFeedback'}
   /api/aiworker/admin/workers:
     get:
       tags: [admin-ai-worker]
@@ -3579,6 +3706,10 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    CourseWithId:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     MissingEntity:
       type: object
       properties:
@@ -3884,6 +4015,7 @@ components:
         testRunParticipationsExist: {type: boolean}
         isEditable: {type: boolean}
         canBeEvaluated: {type: boolean}
+        exerciseGroup: {$ref: '#/components/schemas/ExerciseGroupWithIdAndExam'}
     TutorialGroupSummary:
       type: object
       properties:
@@ -4515,6 +4647,17 @@ components:
           enum: [LOWER, MATCH, HIGHER, UNKNOWN]
         taskCount: {type: integer, format: int32}
         testCount: {type: integer, format: int32}
+    ModelingFeedback:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exerciseId: {type: integer, format: int64}
+        submissionId: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        credits: {type: number, format: double}
+        structuredGradingInstructionId: {type: integer, format: int64}
+        reference: {type: string}
     QuizExerciseWithQuestions:
       type: object
       properties:
@@ -4630,6 +4773,19 @@ components:
         location: {type: string}
         tutorialGroupFreePeriod: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
         attendanceCount: {type: integer, format: int32}
+    ProgrammingFeedback:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exerciseId: {type: integer, format: int64}
+        submissionId: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        credits: {type: number, format: double}
+        structuredGradingInstructionId: {type: integer, format: int64}
+        filePath: {type: string}
+        lineStart: {type: integer, format: int32}
+        lineEnd: {type: integer, format: int32}
     ShortAnswerSubmittedAnswerAfterEvaluation:
       required: [type]
       type: object
@@ -4823,6 +4979,11 @@ components:
           items: {$ref: '#/components/schemas/QuestionStatistics'}
         participantsRated: {type: integer, format: int32}
         participantsUnrated: {type: integer, format: int32}
+    ExamWithIdAndCourse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        course: {$ref: '#/components/schemas/CourseWithId'}
     QuizPointStatistic:
       type: object
       properties:
@@ -5103,6 +5264,18 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
+    TextFeedback:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exerciseId: {type: integer, format: int64}
+        submissionId: {type: integer, format: int64}
+        title: {type: string}
+        description: {type: string}
+        credits: {type: number, format: double}
+        structuredGradingInstructionId: {type: integer, format: int64}
+        indexStart: {type: integer, format: int32}
+        indexEnd: {type: integer, format: int32}
     CodeGenerationJobStart:
       type: object
       properties:
@@ -5250,6 +5423,11 @@ components:
             (1-indexed)}
         endLine: {type: integer, format: int32, description: 'Ending line number (1-indexed,
             inclusive)'}
+    ExerciseGroupWithIdAndExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exam: {$ref: '#/components/schemas/ExamWithIdAndCourse'}
     SubmittedAnswerBeforeEvaluation:
       discriminator:
         propertyName: type

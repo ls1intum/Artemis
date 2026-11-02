@@ -1,6 +1,7 @@
 api/admin-ai-worker-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
+api/athena-api.ts
 api/calendar-api.ts
 api/global-search-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
@@ -63,6 +64,7 @@ model/course-browser-data.ts
 model/course-competency.ts
 model/course-for-quiz-exercise.ts
 model/course-for-search-filter.ts
+model/course-with-id.ts
 model/create-exercise-variant-group.ts
 model/create-or-update-tutorial-group-request.ts
 model/create-or-update-tutorial-group-session-request.ts
@@ -94,6 +96,7 @@ model/drop-location-re-evaluate.ts
 model/drop-location.ts
 model/entity-id-ref.ts
 model/exam-seat.ts
+model/exam-with-id-and-course.ts
 model/exercise-generation-activity.ts
 model/exercise-generation-capabilities.ts
 model/exercise-generation-effort-profile.ts
@@ -114,6 +117,7 @@ model/exercise-generation-status.ts
 model/exercise-generation-usage.ts
 model/exercise-generation-verdict.ts
 model/exercise-generation-wedged-slot.ts
+model/exercise-group-with-id-and-exam.ts
 model/exercise-variant-group-reference.ts
 model/generated-assessment-criterion.ts
 model/generated-assessment-instruction.ts
@@ -132,6 +136,7 @@ model/leaderboard-setting.ts
 model/leaderboard-with-current-user-entry.ts
 model/missing-content.ts
 model/missing-entity.ts
+model/modeling-feedback.ts
 model/multiple-choice-question-create.ts
 model/multiple-choice-question-from-editor.ts
 model/multiple-choice-question-re-evaluate.ts
@@ -150,6 +155,7 @@ model/problem-statement-refinement-response.ts
 model/problem-statement-rewrite-request.ts
 model/problem-statement-rewrite-response.ts
 model/problem-statement-targeted-refinement-request.ts
+model/programming-feedback.ts
 model/quality-issue-location.ts
 model/quality-issue.ts
 model/question-statistics.ts
@@ -246,6 +252,7 @@ model/submitted-answer-after-evaluation.ts
 model/submitted-answer-before-evaluation.ts
 model/submitted-answer-from-live-client.ts
 model/submitted-answer-from-student.ts
+model/text-feedback.ts
 model/timing.ts
 model/tokens.ts
 model/tutorial-group-configuration.ts
