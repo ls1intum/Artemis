@@ -85,7 +85,7 @@ class ErrorAnalysisBufferTest {
 
     @Test
     void shortensALongMessage() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "x".repeat(5_000));
+        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "word ".repeat(1_000));
 
         assertThat(buffer.snapshot().values().iterator().next().pattern).hasSize(ErrorAnalysisBuffer.MAX_MESSAGE_LENGTH);
     }
@@ -135,9 +135,40 @@ class ErrorAnalysisBufferTest {
 
     @Test
     void aVeryLongMessageIsShortenedToWhatGroupsAreComparedBy() {
-        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "x".repeat(1_000_000));
+        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "word ".repeat(200_000));
 
         assertThat(buffer.snapshot().values()).singleElement().satisfies(group -> assertThat(group.pattern).hasSize(ErrorAnalysisBuffer.MAX_MESSAGE_LENGTH));
+    }
+
+    @Test
+    void anEmailAddressThatTheCutOfALongMessageGoesThroughDoesNotLeaveItsStartInThePattern() {
+        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "1".repeat(1_190) + " Alice.Smith@example.org and more text");
+
+        assertThat(buffer.snapshot().values()).singleElement().satisfies(group -> assertThat(group.pattern).doesNotContain("Alice").doesNotContain("Smith"));
+    }
+
+    @Test
+    void aMessageWithoutAnySpaceThatIsTooLongIsNotKeptAsItIs() {
+        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "x".repeat(1_000_000));
+
+        assertThat(buffer.snapshot().values()).singleElement().satisfies(group -> assertThat(group.pattern).isEqualTo("<too long>"));
+    }
+
+    @Test
+    void restoringAFailedFlushKeepsTheLimitWhileNewGroupsArrive() {
+        for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS; i++) {
+            buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "drained " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
+            clock.advance(Duration.ofSeconds(1));
+        }
+        Map<String, PendingGroup> failed = buffer.drain();
+        for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS; i++) {
+            buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "arrived " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
+            clock.advance(Duration.ofSeconds(1));
+        }
+
+        buffer.restore(failed);
+
+        assertThat(buffer.snapshot()).hasSize(ErrorAnalysisBuffer.MAX_GROUPS);
     }
 
     @Test

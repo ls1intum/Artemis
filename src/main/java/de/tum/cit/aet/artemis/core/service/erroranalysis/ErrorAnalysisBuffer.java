@@ -88,8 +88,16 @@ public final class ErrorAnalysisBuffer {
     private synchronized void add(ErrorLocation location, ErrorSeverity severity, String version, String pattern) {
         long now = clock.millis();
         pending.computeIfAbsent(keyOf(location, severity, version, pattern), key -> new PendingGroup(location, severity, version, pattern, now)).add(now);
-        if (pending.size() > MAX_GROUPS) {
-            chooseGroupToForget(pending.values(), group -> group.location, group -> group.lastSeenMillis).ifPresent(oldest -> pending.values().remove(oldest));
+        keepWithinLimit();
+    }
+
+    private void keepWithinLimit() {
+        while (pending.size() > MAX_GROUPS) {
+            Optional<PendingGroup> oldest = chooseGroupToForget(pending.values(), group -> group.location, group -> group.lastSeenMillis);
+            if (oldest.isEmpty()) {
+                return;
+            }
+            pending.values().remove(oldest.get());
         }
     }
 
@@ -128,6 +136,8 @@ public final class ErrorAnalysisBuffer {
      */
     synchronized void restore(Map<String, PendingGroup> notWritten) {
         notWritten.forEach((key, group) -> pending.merge(key, group, PendingGroup::mergedWith));
+        // what was collected while the flush ran and what comes back together can be more than the buffer may hold
+        keepWithinLimit();
     }
 
     /**
@@ -156,12 +166,41 @@ public final class ErrorAnalysisBuffer {
      * Replaces what tells two otherwise identical errors apart by placeholders, and shortens the message.
      */
     static String toPattern(String message) {
-        String bounded = message == null ? "" : message.substring(0, Math.min(message.length(), MAX_MESSAGE_LENGTH * 4));
+        String bounded = bound(message);
         String pattern = EMAIL.matcher(bounded).replaceAll("<email>");
         pattern = UUID.matcher(pattern).replaceAll("<uuid>");
         pattern = NUMBER.matcher(pattern).replaceAll("<n>");
         pattern = WHITESPACE.matcher(pattern).replaceAll(" ").strip();
         return pattern.length() <= MAX_MESSAGE_LENGTH ? pattern : pattern.substring(0, MAX_MESSAGE_LENGTH);
+    }
+
+    /**
+     * Cuts a long message to what is looked at, without the word that the cut goes through: the end of an email address that was cut off
+     * would not be recognized, and the start of it would stay in the pattern.
+     */
+    private static String bound(String message) {
+        if (message == null) {
+            return "";
+        }
+        int limit = MAX_MESSAGE_LENGTH * 4;
+        if (message.length() <= limit) {
+            return message;
+        }
+        String cut = message.substring(0, limit);
+        if (!Character.isWhitespace(message.charAt(limit))) {
+            int lastSpace = lastWhitespace(cut);
+            cut = lastSpace < 0 ? "<too long>" : cut.substring(0, lastSpace);
+        }
+        return cut;
+    }
+
+    private static int lastWhitespace(String text) {
+        for (int index = text.length() - 1; index >= 0; index--) {
+            if (Character.isWhitespace(text.charAt(index))) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     /**

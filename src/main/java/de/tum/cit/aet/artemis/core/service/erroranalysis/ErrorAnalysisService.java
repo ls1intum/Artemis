@@ -8,7 +8,6 @@ import static de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorAnalysisBuf
 import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -254,11 +253,8 @@ public class ErrorAnalysisService {
         for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
             ErrorGroupState current = groups.get(key);
             if (current == null) {
-                if (!makeRoomForAnotherGroup(incoming.location())) {
-                    return false;
-                }
                 if (groups.putIfAbsent(key, incoming, ENTRY_TIME_TO_LIVE) == null) {
-                    return true;
+                    return keepWithinLimit(key);
                 }
                 continue;
             }
@@ -272,25 +268,64 @@ public class ErrorAnalysisService {
     }
 
     /**
-     * Forgets a group if the cluster keeps as many groups as it may: the one seen longest ago among those that a client reported, so that a
-     * client, which reports without signing in, cannot push the errors of the server out. The group of a client is not kept if there is no
-     * other group of a client to forget.
+     * Forgets groups while the cluster keeps more than it may, after a group was added.
+     * <p>
+     * The limit is enforced after the insertion and not before it, because nodes that add a group at the same time cannot agree on who
+     * takes the last place, and a check before the insertion would let each of them take it. Every node that adds a group trims
+     * afterwards, so the cluster is back at the limit as soon as the last of them is done.
+     * <p>
+     * The group seen longest ago among those that a client reported is forgotten first, so that a client, which reports without signing in,
+     * cannot push the errors of the server out. The group of a client is therefore the one that goes if there is no other group of a client.
+     * The counts of a forgotten group are removed with it, so what is stored stays bounded by the number of groups.
      *
-     * @param incomingLocation where the errors of the group that needs the room happened
-     * @return whether there is room for the group now
+     * @param key the key of the group that was just added
+     * @return whether the group is still there
      */
-    private boolean makeRoomForAnotherGroup(ErrorLocation incomingLocation) {
-        if (groups.size() < MAX_GROUPS) {
-            return true;
+    private boolean keepWithinLimit(String key) {
+        // only a removal that another node did first counts as an attempt, a removal that worked is progress
+        int lost = 0;
+        boolean kept = true;
+        while (lost < MAX_ATTEMPTS && groups.size() > MAX_GROUPS) {
+            Map<String, ErrorGroupState> existing = groups.getMapCopy();
+            Optional<Map.Entry<String, ErrorGroupState>> victim = ErrorAnalysisBuffer.chooseGroupToForget(existing.entrySet(), entry -> entry.getValue().location(),
+                    entry -> entry.getValue().lastSeenMillis());
+            if (victim.isEmpty()) {
+                break;
+            }
+            // another node may have forgotten it first, then the next attempt looks at what is left
+            if (groups.remove(victim.get().getKey(), victim.get().getValue())) {
+                removeCounts(victim.get().getKey(), victim.get().getValue());
+                kept &= !victim.get().getKey().equals(key);
+            }
+            else {
+                lost++;
+            }
         }
-        Collection<Map.Entry<String, ErrorGroupState>> existing = groups.getMapCopy().entrySet();
-        Optional<Map.Entry<String, ErrorGroupState>> victim = ErrorAnalysisBuffer.chooseGroupToForget(existing, entry -> entry.getValue().location(),
-                entry -> entry.getValue().lastSeenMillis());
-        if (victim.isEmpty() || incomingLocation == ErrorLocation.CLIENT && victim.get().getValue().location() != ErrorLocation.CLIENT) {
-            return false;
+        return kept;
+    }
+
+    /**
+     * Removes the counts of a group that was forgotten: they exist only for the hours between the first and the last error of the group.
+     */
+    private void removeCounts(String key, ErrorGroupState state) {
+        long lastHour = state.lastSeenMillis() / MILLIS_PER_HOUR;
+        long firstHour = Math.max(state.firstSeenMillis() / MILLIS_PER_HOUR, lastHour - ENTRY_TIME_TO_LIVE.toHours());
+        for (long hour = firstHour; hour <= lastHour; hour++) {
+            counts.remove(hour + ":" + key);
         }
-        groups.remove(victim.get().getKey(), victim.get().getValue());
-        return true;
+    }
+
+    /**
+     * Extends the life of a count that was just increased. This must not fail the write: the increase has happened, and a retry
+     * would add it again. A count whose life was not extended expires a little earlier, which does no harm.
+     */
+    private void refreshTimeToLive(String countKey) {
+        try {
+            counts.refreshTimeToLive(countKey, ENTRY_TIME_TO_LIVE);
+        }
+        catch (RuntimeException exception) {
+            log.warn("Could not extend the life of a count of the error analysis, it expires earlier", exception);
+        }
     }
 
     private void add(String countKey, long delta) {
@@ -300,7 +335,7 @@ public class ErrorAnalysisService {
                 return;
             }
             if (counts.replace(countKey, current, current + delta)) {
-                counts.refreshTimeToLive(countKey, ENTRY_TIME_TO_LIVE);
+                refreshTimeToLive(countKey);
                 return;
             }
         }

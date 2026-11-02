@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
 import java.time.Duration;
@@ -147,6 +148,58 @@ class ErrorAnalysisServiceTest {
         assertThat(groups).hasSize(ErrorAnalysisBuffer.MAX_GROUPS);
         assertThat(groups).filteredOn(group -> group.location() == ErrorLocation.SERVER).hasSize(ErrorAnalysisBuffer.MAX_GROUPS);
         assertThat(groups).filteredOn(group -> group.location() == ErrorLocation.CLIENT).isEmpty();
+    }
+
+    @Test
+    void theCountsOfAGroupThatWasForgottenAreForgottenWithIt() {
+        for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS; i++) {
+            bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
+            clock.advance(Duration.ofSeconds(1));
+        }
+        node1.flush();
+        DistributedMap<String, Long> counts = cluster.getExpiringMap("error-analysis-counts", Duration.ofDays(31));
+        assertThat(counts.size()).isEqualTo(ErrorAnalysisBuffer.MAX_GROUPS);
+
+        for (int i = 0; i < 20; i++) {
+            bufferOfNode2.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "one more " + (char) ('a' + i));
+            clock.advance(Duration.ofSeconds(1));
+            node2.flush();
+        }
+
+        assertThat(counts.size()).isEqualTo(ErrorAnalysisBuffer.MAX_GROUPS);
+    }
+
+    @Test
+    void theClusterIsBroughtBackToTheLimitByTheNextGroupThatIsAdded() {
+        DistributedMap<String, ErrorGroupState> groups = cluster.getExpiringMap("error-analysis-groups", Duration.ofDays(31));
+        // what two nodes that added a group at the same moment leave behind: more groups than the limit
+        for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS + 3; i++) {
+            groups.put("SERVER|ERROR|10.6|group " + i, new ErrorGroupState(ErrorLocation.SERVER, ErrorSeverity.ERROR, RELEASE, "group " + i, START.toEpochMilli() + 3_600_000 + i,
+                    START.toEpochMilli() + 3_600_000 + i));
+        }
+
+        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "the next one");
+        clock.advance(Duration.ofMinutes(1));
+        node1.flush();
+
+        assertThat(groups.size()).isEqualTo(ErrorAnalysisBuffer.MAX_GROUPS);
+    }
+
+    @Test
+    void aFailedExtensionOfTheLifeOfACountDoesNotCountTheIncreaseAgain() {
+        DistributedDataProvider unreliableCluster = spy(cluster);
+        DistributedMap<String, Long> counts = spy(cluster.<String, Long>getExpiringMap("error-analysis-counts", Duration.ofDays(31)));
+        doReturn(counts).when(unreliableCluster).getExpiringMap(eq("error-analysis-counts"), any());
+        ErrorAnalysisService unreliableNode = new ErrorAnalysisService(unreliableCluster, bufferOfNode1, clock, RELEASE);
+        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        unreliableNode.flush();
+        bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+        doThrow(new IllegalStateException("cluster not reachable")).when(counts).refreshTimeToLive(anyString(), any(Duration.class));
+
+        unreliableNode.flush();
+        unreliableNode.flush();
+
+        assertThat(errorsOfTheLastDay(node2)).singleElement().extracting(ErrorGroupDTO::count).isEqualTo(2L);
     }
 
     @Test
