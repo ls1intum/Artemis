@@ -107,11 +107,14 @@ describe('ExerciseTableComponent', () => {
         it('uses group release dates rather than overridden individual dates', () => {
             const grouped: Exercise = { id: 4, type: ExerciseType.TEXT, dueDate: dayjs('2026-01-01'), releaseDate: dayjs('2026-01-01') } as Exercise;
             const group: CourseExerciseGroup = { id: 10, exercises: [grouped], releaseDate: dayjs('2026-01-20') };
-            fixture.componentRef.setInput('exercises', [grouped, dated1, undated]);
+            fixture.componentRef.setInput('exercises', [undated, grouped, dated1]);
             fixture.componentRef.setInput('groups', [group]);
 
             component.sortBy('dueDate');
             expect(component.sortedExercises().map((e) => e.id)).toEqual([1, 4, 3]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([4, 1, 3]);
         });
 
         it('uses group start dates and keeps fully undated groups last', () => {
