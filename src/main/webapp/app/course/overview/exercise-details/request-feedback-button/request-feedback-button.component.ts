@@ -320,8 +320,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     // Same pending-request/request-limit checks as isFeedbackRequestBlocked(), but derived from the given
     // participation directly rather than from this component's own (possibly stale, see acceptLLMUsage()) signals.
     private isFeedbackRequestBlockedForParticipation(participation?: StudentParticipation): boolean {
-        const pendingAthenaResult = getAllResultsOfAllSubmissions(participation?.submissions).find(isPendingAthenaFeedbackResult);
-        return !!pendingAthenaResult || countSuccessfulAthenaFeedbackRequests(participation) >= this.feedbackRequestLimit;
+        const hasPendingAthenaResult = getAllResultsOfAllSubmissions(participation?.submissions).some(isPendingAthenaFeedbackResult);
+        return hasPendingAthenaResult || countSuccessfulAthenaFeedbackRequests(participation) >= this.feedbackRequestLimit;
     }
 
     private processFeedbackRequest(exerciseId: number, participation: StudentParticipation | undefined) {
