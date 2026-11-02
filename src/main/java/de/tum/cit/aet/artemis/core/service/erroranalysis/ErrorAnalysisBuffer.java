@@ -2,10 +2,14 @@ package de.tum.cit.aet.artemis.core.service.erroranalysis;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.function.ToLongFunction;
 import java.util.regex.Pattern;
 
 import de.tum.cit.aet.artemis.core.domain.ErrorLocation;
@@ -72,16 +76,38 @@ public final class ErrorAnalysisBuffer {
      *                     The service decides what it counts as, because only it knows the release that is running.
      * @param message  what went wrong, the numbers and identifiers in it do not tell groups apart
      */
-    public synchronized void record(ErrorLocation location, ErrorSeverity severity, String version, String message) {
+    public void record(ErrorLocation location, ErrorSeverity severity, String version, String message) {
         if (!severity.isAtLeast(ErrorSeverity.WARN)) {
             return;
         }
-        long now = clock.millis();
+        // the matching of the patterns can take a while for a long message, so it happens before the lock is taken: a log call must not wait for it
         String pattern = toPattern(message);
+        add(location, severity, version, pattern);
+    }
+
+    private synchronized void add(ErrorLocation location, ErrorSeverity severity, String version, String pattern) {
+        long now = clock.millis();
         pending.computeIfAbsent(keyOf(location, severity, version, pattern), key -> new PendingGroup(location, severity, version, pattern, now)).add(now);
         if (pending.size() > MAX_GROUPS) {
-            pending.values().stream().min(Comparator.comparingLong(group -> group.lastSeenMillis)).ifPresent(oldest -> pending.values().remove(oldest));
+            chooseGroupToForget(pending.values(), group -> group.location, group -> group.lastSeenMillis).ifPresent(oldest -> pending.values().remove(oldest));
         }
+    }
+
+    /**
+     * Chooses the group to forget when there are more groups than allowed: the one seen longest ago among the groups that a client reported,
+     * and only if there is none of them, the one seen longest ago of all. A client reports without signing in, so it must not be able to push
+     * the errors of the server out by reporting many different errors.
+     *
+     * @param groups   the groups, including the one that was just added
+     * @param location where the errors of a group happened
+     * @param lastSeen when the last error of a group happened
+     * @param <G>      the kind of group
+     * @return the group to forget
+     */
+    static <G> Optional<G> chooseGroupToForget(Collection<G> groups, Function<G, ErrorLocation> location, ToLongFunction<G> lastSeen) {
+        Comparator<G> longestAgo = Comparator.comparingLong(lastSeen);
+        Optional<G> reportedByClient = groups.stream().filter(group -> location.apply(group) == ErrorLocation.CLIENT).min(longestAgo);
+        return reportedByClient.isPresent() ? reportedByClient : groups.stream().min(longestAgo);
     }
 
     /**
@@ -130,7 +156,8 @@ public final class ErrorAnalysisBuffer {
      * Replaces what tells two otherwise identical errors apart by placeholders, and shortens the message.
      */
     static String toPattern(String message) {
-        String pattern = EMAIL.matcher(message == null ? "" : message).replaceAll("<email>");
+        String bounded = message == null ? "" : message.substring(0, Math.min(message.length(), MAX_MESSAGE_LENGTH * 4));
+        String pattern = EMAIL.matcher(bounded).replaceAll("<email>");
         pattern = UUID.matcher(pattern).replaceAll("<uuid>");
         pattern = NUMBER.matcher(pattern).replaceAll("<n>");
         pattern = WHITESPACE.matcher(pattern).replaceAll(" ").strip();

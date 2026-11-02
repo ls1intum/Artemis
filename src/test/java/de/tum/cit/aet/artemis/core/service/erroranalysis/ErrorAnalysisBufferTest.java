@@ -116,6 +116,31 @@ class ErrorAnalysisBufferTest {
     }
 
     @Test
+    void aClientCannotPushTheGroupsOfTheServerOut() {
+        for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS; i++) {
+            buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
+            clock.advance(Duration.ofSeconds(1));
+        }
+
+        for (int i = 0; i < 50; i++) {
+            buffer.record(ErrorLocation.CLIENT, ErrorSeverity.ERROR, null, "client error " + (char) ('a' + i % 26) + (char) ('a' + i / 26));
+            clock.advance(Duration.ofSeconds(1));
+        }
+
+        Map<String, PendingGroup> groups = buffer.snapshot();
+        assertThat(groups).hasSize(ErrorAnalysisBuffer.MAX_GROUPS);
+        assertThat(groups.values()).filteredOn(group -> group.location == ErrorLocation.SERVER).hasSize(ErrorAnalysisBuffer.MAX_GROUPS);
+        assertThat(groups.values()).filteredOn(group -> group.location == ErrorLocation.CLIENT).isEmpty();
+    }
+
+    @Test
+    void aVeryLongMessageIsShortenedToWhatGroupsAreComparedBy() {
+        buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "x".repeat(1_000_000));
+
+        assertThat(buffer.snapshot().values()).singleElement().satisfies(group -> assertThat(group.pattern).hasSize(ErrorAnalysisBuffer.MAX_MESSAGE_LENGTH));
+    }
+
+    @Test
     void drainTakesEverythingAndStartsAgain() {
         buffer.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
 

@@ -8,11 +8,13 @@ import static de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorAnalysisBuf
 import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import jakarta.annotation.PreDestroy;
 
@@ -106,7 +108,7 @@ public class ErrorAnalysisService {
      * @param message  what went wrong, already cleaned of personal data
      */
     public void recordClientError(ErrorSeverity severity, String version, String message) {
-        buffer.record(ErrorLocation.CLIENT, severity, version == null ? OTHER_VERSION : version.strip(), message);
+        buffer.record(ErrorLocation.CLIENT, severity, version == null ? OTHER_VERSION : effectiveVersion(version), message);
     }
 
     /**
@@ -232,7 +234,11 @@ public class ErrorAnalysisService {
     private void write(PendingGroup group) {
         String version = effectiveVersion(group.version);
         String key = ErrorAnalysisBuffer.keyOf(group.location, group.severity, version, group.pattern);
-        registerGroup(key, group.toState(version));
+        if (!registerGroup(key, group.toState(version))) {
+            // there is no room for it, and trying again would not change that
+            group.perHour.clear();
+            return;
+        }
         for (Iterator<Map.Entry<Long, Long>> hours = group.perHour.entrySet().iterator(); hours.hasNext();) {
             Map.Entry<Long, Long> hour = hours.next();
             add(hour.getKey() + ":" + key, hour.getValue());
@@ -244,34 +250,47 @@ public class ErrorAnalysisService {
     /**
      * Creates the group or widens what the cluster knows about when it happened first and last.
      */
-    private void registerGroup(String key, ErrorGroupState incoming) {
+    private boolean registerGroup(String key, ErrorGroupState incoming) {
         for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
             ErrorGroupState current = groups.get(key);
             if (current == null) {
-                makeRoomForAnotherGroup();
+                if (!makeRoomForAnotherGroup(incoming.location())) {
+                    return false;
+                }
                 if (groups.putIfAbsent(key, incoming, ENTRY_TIME_TO_LIVE) == null) {
-                    return;
+                    return true;
                 }
                 continue;
             }
             ErrorGroupState merged = current.mergedWith(incoming);
             if (merged.equals(current) || groups.replace(key, current, merged)) {
                 groups.refreshTimeToLive(key, ENTRY_TIME_TO_LIVE);
-                return;
+                return true;
             }
         }
         throw new IllegalStateException("The group is written by other nodes all the time");
     }
 
     /**
-     * Forgets the group that was seen the longest time ago if the cluster keeps as many groups as it may.
+     * Forgets a group if the cluster keeps as many groups as it may: the one seen longest ago among those that a client reported, so that a
+     * client, which reports without signing in, cannot push the errors of the server out. The group of a client is not kept if there is no
+     * other group of a client to forget.
+     *
+     * @param incomingLocation where the errors of the group that needs the room happened
+     * @return whether there is room for the group now
      */
-    private void makeRoomForAnotherGroup() {
+    private boolean makeRoomForAnotherGroup(ErrorLocation incomingLocation) {
         if (groups.size() < MAX_GROUPS) {
-            return;
+            return true;
         }
-        groups.getMapCopy().entrySet().stream().min(Comparator.comparingLong(entry -> entry.getValue().lastSeenMillis()))
-                .ifPresent(oldest -> groups.remove(oldest.getKey(), oldest.getValue()));
+        Collection<Map.Entry<String, ErrorGroupState>> existing = groups.getMapCopy().entrySet();
+        Optional<Map.Entry<String, ErrorGroupState>> victim = ErrorAnalysisBuffer.chooseGroupToForget(existing, entry -> entry.getValue().location(),
+                entry -> entry.getValue().lastSeenMillis());
+        if (victim.isEmpty() || incomingLocation == ErrorLocation.CLIENT && victim.get().getValue().location() != ErrorLocation.CLIENT) {
+            return false;
+        }
+        groups.remove(victim.get().getKey(), victim.get().getValue());
+        return true;
     }
 
     private void add(String countKey, long delta) {

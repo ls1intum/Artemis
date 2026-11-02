@@ -130,6 +130,35 @@ class ErrorAnalysisServiceTest {
     }
 
     @Test
+    void aClientCannotPushTheErrorsOfTheServerOutOfTheCluster() {
+        for (int i = 0; i < ErrorAnalysisBuffer.MAX_GROUPS; i++) {
+            bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "error kind " + (char) ('a' + i % 26) + (char) ('a' + i / 26 % 26) + (char) ('a' + i / 676));
+            clock.advance(Duration.ofSeconds(1));
+        }
+        node1.flush();
+
+        for (int i = 0; i < 5; i++) {
+            node2.recordClientError(ErrorSeverity.ERROR, RELEASE, "client error " + (char) ('a' + i));
+            clock.advance(Duration.ofSeconds(1));
+            node2.flush();
+        }
+
+        List<ErrorGroupDTO> groups = errorsOfTheLastDay(node1);
+        assertThat(groups).hasSize(ErrorAnalysisBuffer.MAX_GROUPS);
+        assertThat(groups).filteredOn(group -> group.location() == ErrorLocation.SERVER).hasSize(ErrorAnalysisBuffer.MAX_GROUPS);
+        assertThat(groups).filteredOn(group -> group.location() == ErrorLocation.CLIENT).isEmpty();
+    }
+
+    @Test
+    void aClientCannotMakeGroupsOutOfVersionsItInvents() {
+        for (int i = 0; i < 20; i++) {
+            node1.recordClientError(ErrorSeverity.ERROR, "99." + i, "same error");
+        }
+
+        assertThat(bufferOfNode1.snapshot()).hasSize(1);
+    }
+
+    @Test
     void countsOnlyTheErrorsOfTheSelectedTimeSpan() {
         bufferOfNode1.record(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "old and new");
         node1.flush();
