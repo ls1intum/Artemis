@@ -64,7 +64,7 @@ describe('BuildJobDetailComponent', () => {
     const mockRoute = {
         snapshot: {
             paramMap: {
-                get: (key: string) => {
+                get: (key: string): string | null => {
                     if (key === 'jobId') return 'test-job-1';
                     if (key === 'courseId') return null;
                     return null;
@@ -127,6 +127,7 @@ describe('BuildJobDetailComponent', () => {
         expect(buildQueueService.getBuildJobById).toHaveBeenCalledWith('test-job-1');
         expect(component.buildJob()).toEqual(mockRunningJob);
         expect(component.isLoading()).toBe(false);
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).toHaveBeenCalledOnce();
     });
 
     it('should subscribe to websocket topic for admin view', () => {
@@ -134,22 +135,30 @@ describe('BuildJobDetailComponent', () => {
         expect(websocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-job/test-job-1');
     });
 
-    it('should handle course view with route params', () => {
-        // Note: Cannot override provider after TestBed instantiation.
-        // Testing the logic by directly calling methods with course context
-        vi.mocked(buildQueueService.getBuildJobByIdForCourse).mockReturnValue(of(mockRunningJob));
+    it('should reject an invalid course route before requesting build or administrator data', () => {
+        vi.spyOn(mockRoute.snapshot.paramMap, 'get').mockImplementation((key) => (key === 'courseId' ? 'invalid' : 'test-job-1'));
+
         fixture.detectChanges();
 
-        // Verify admin topic is used for admin view
-        expect(websocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-job/test-job-1');
+        expect(component.notFound()).toBe(true);
+        expect(component.isLoading()).toBe(false);
+        expect(buildQueueService.getBuildJobById).not.toHaveBeenCalled();
+        expect(buildQueueService.getBuildJobByIdForCourse).not.toHaveBeenCalled();
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).not.toHaveBeenCalled();
+        expect(websocketService.subscribe).not.toHaveBeenCalled();
     });
 
-    it('should handle missing job ID gracefully', () => {
-        // Test the component with existing route
+    it('should reject a missing job ID before requesting build or administrator data', () => {
+        vi.spyOn(mockRoute.snapshot.paramMap, 'get').mockReturnValue(null);
+
         fixture.detectChanges();
 
-        // The component loads because we have a valid job ID in the mock route
-        expect(component.buildJob()).toBeTruthy();
+        expect(component.notFound()).toBe(true);
+        expect(component.isLoading()).toBe(false);
+        expect(buildQueueService.getBuildJobById).not.toHaveBeenCalled();
+        expect(buildQueueService.getBuildJobByIdForCourse).not.toHaveBeenCalled();
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).not.toHaveBeenCalled();
+        expect(websocketService.subscribe).not.toHaveBeenCalled();
     });
 
     it('should set notFound on 404 error', () => {
@@ -562,5 +571,7 @@ describe('BuildJobDetailComponent', () => {
         expect(courseBuildQueueService.getBuildJobByIdForCourse).toHaveBeenCalledWith(123, 'test-job-1');
         expect(courseWebsocketService.subscribe).toHaveBeenCalledWith('/topic/courses/123/build-job/test-job-1');
         expect(courseComponent.isAdministrationView()).toBe(false);
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).not.toHaveBeenCalled();
+        expect(courseComponent.buildJob()).toEqual(mockRunningJob);
     });
 });

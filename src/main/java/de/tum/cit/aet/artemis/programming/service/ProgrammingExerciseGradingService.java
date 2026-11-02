@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
@@ -1034,8 +1035,8 @@ public class ProgrammingExerciseGradingService {
                 continue;
             }
 
-            // get all feedback in this category
-            List<ScaFeedback> categoryFeedback = feedbackByCategory.getOrDefault(category.getName(), List.of());
+            // Keep overlapping Checkstyle diagnostics, but charge each occurrence only once within its category.
+            List<ScaFeedback> categoryFeedback = getScaFeedbackToPenalize(feedbackByCategory.getOrDefault(category.getName(), List.of()));
 
             // calculate the sum of all per-feedback penalties
             double categoryPenaltyPoints = categoryFeedback.size() * category.getPenalty();
@@ -1062,6 +1063,37 @@ public class ProgrammingExerciseGradingService {
         }
 
         return overallPenaltyPoints;
+    }
+
+    /**
+     * Checkstyle checks can report the same problem at the same token (e.g. WhitespaceAfterCheck and
+     * WhitespaceAroundCheck). Keep all diagnostics, but only charge once for an identical message and
+     * source position within a grading category. Incomplete positions cannot reliably identify an occurrence.
+     */
+    private static List<ScaFeedback> getScaFeedbackToPenalize(List<ScaFeedback> categoryFeedback) {
+        Set<CheckstyleIssueOccurrence> occurrences = new HashSet<>();
+        List<ScaFeedback> feedbackToPenalize = new ArrayList<>();
+        for (var feedback : categoryFeedback) {
+            if (feedback.getTool() != StaticCodeAnalysisTool.CHECKSTYLE || StringUtils.isBlank(feedback.getFilePath()) || feedback.getStartLine() == null
+                    || feedback.getStartLine() <= 0 || feedback.getStartColumn() == null || feedback.getStartColumn() <= 0) {
+                feedbackToPenalize.add(feedback);
+                continue;
+            }
+            // Messages are content-addressed. Their ids identify the text without initializing detached lazy references.
+            Long messageId = feedback.getMessage() == null ? null : feedback.getMessage().getId();
+            String messageText = messageId == null ? feedback.getMessageText() : null;
+            if ((messageId == null && StringUtils.isBlank(messageText)) || occurrences.add(new CheckstyleIssueOccurrence(feedback.getFilePath(), feedback.getStartLine(),
+                    feedback.getEndLine(), feedback.getStartColumn(), feedback.getEndColumn(), messageId, messageText))) {
+                feedbackToPenalize.add(feedback);
+            }
+            else {
+                feedback.setPenalty(0.0);
+            }
+        }
+        return feedbackToPenalize;
+    }
+
+    private record CheckstyleIssueOccurrence(String filePath, Integer startLine, Integer endLine, Integer startColumn, Integer endColumn, Long messageId, String message) {
     }
 
     /**

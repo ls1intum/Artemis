@@ -210,7 +210,9 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
 
         this.loadBuildJob();
         this.initWebsocketSubscription();
-        this.loadBuildAgents();
+        if (this.isAdministrationView()) {
+            this.loadBuildAgents();
+        }
 
         // Update running build duration every second
         this.durationInterval = setInterval(() => {
