@@ -14,6 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ClientErrorHandler } from 'app/core/error-reporting/client-error.handler';
 import { LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recovery.service';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
@@ -54,6 +55,7 @@ describe('AppComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
+                { provide: ClientErrorHandler, useValue: { reportIfPasskeyIsNotSupported: vi.fn() } },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ExamParticipationService, useValue: { examIsStarted$: of(false), testRunStarted$: of(false) } },
                 { provide: LtiService, useValue: { isShownViaLti$: of(false) } },
