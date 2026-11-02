@@ -332,6 +332,29 @@ describe('IrisDashboardComponent with generated transport', () => {
         }
     });
 
+    it('owns a separate config resource for each dashboard instance', async () => {
+        const firstFixture = fixture;
+        const first = start();
+        fixture = TestBed.createComponent(IrisDashboardComponent);
+        component = fixture.componentInstance;
+        const second = start();
+
+        firstFixture.destroy();
+        expect(first.requests.every((request) => request.cancelled)).toBe(true);
+        expect(first.configRequest.cancelled).toBe(true);
+        expect(second.configRequest.cancelled).toBe(false);
+        expect(second.requests.every((request) => !request.cancelled)).toBe(true);
+        expect(component.config()).toBeUndefined();
+
+        second.configRequest.flush(config);
+        respond(second.requests);
+        await fixture.whenStable();
+        expect(component.config()).toEqual(config);
+        expect(component.overview()).toEqual(overview);
+        TestBed.tick();
+        http.expectNone(baseUrl + 'config');
+    });
+
     it('cancels the four windowed reads and pending config resource on destruction', () => {
         const initial = start();
         fixture.destroy();
