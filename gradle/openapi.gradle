@@ -54,7 +54,6 @@
                 "-Dspringdoc.packages-to-scan=" + (openApiGroup
                     ? "de.tum.cit.aet.artemis"
                     : "de.tum.cit.aet.artemis.aiworker.web,de.tum.cit.aet.artemis.tutorialgroup.web,de.tum.cit.aet.artemis.hyperion.web,de.tum.cit.aet.artemis.calendar.web,de.tum.cit.aet.artemis.globalsearch.web,de.tum.cit.aet.artemis.quiz.web,de.tum.cit.aet.artemis.atlas.web"),
-                "-Dspringdoc.paths-to-match=/api/aiworker/**,/api/calendar/**,/api/global-search/**,/api/search/**,/api/hyperion/**,/api/quiz/**,/api/tutorialgroup/**,/api/atlas/standardized-competencies/{competencyId},/api/atlas/standardized-competencies/for-tree-view,/api/atlas/standardized-competencies/sources",
                 // Legacy URL aliases stay mapped in Java for old clients (canonical path first, legacy second), but are kept out
                 // of the specification: in the generated client each alias would become a name/name_ method pair.
                 "-Dspringdoc.paths-to-exclude=/api/quiz/quiz-exercises/*/start-batch,/api/tutorialgroup/courses/*/tutorial-groups-configuration,/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
@@ -77,6 +76,11 @@
                 "-Dspring.jpa.hibernate.ddl-auto=create",
                 "-Dspring.main.banner-mode=off"
             ]
+
+            // Limit the application client's Atlas slice without restricting the annotation-selected agent group.
+            if (!openApiGroup) {
+                jvmArgs.add("-Dspringdoc.paths-to-match=/api/aiworker/**,/api/calendar/**,/api/global-search/**,/api/search/**,/api/hyperion/**,/api/quiz/**,/api/tutorialgroup/**,/api/atlas/standardized-competencies/{competencyId},/api/atlas/standardized-competencies/for-tree-view,/api/atlas/standardized-competencies/sources")
+            }
 
             // TODO add package later add ${System.getProperty("springdoc.packages-to-scan")} package via cli property
             args.set([
