@@ -878,7 +878,7 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
     /**
      * Polls progress and questions until a progress response reports no running build and both the question list and the review queue
      * requested on it have arrived; a failed request leaves polling on, so the next tick asks again. A request to poll made while those
-     * are pending, such as a new build, keeps polling on.
+     * or the progress request are pending, such as a new build, keeps polling on, and a progress response requested before it is ignored.
      */
     private startPolling(courseId: number): void {
         this.pollGeneration++;
@@ -887,22 +887,26 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy {
         }
         this.pollingSubscription = interval(POLL_INTERVAL_MS)
             .pipe(
-                exhaustMap(() =>
-                    this.poolService.getProgress(courseId).pipe(
+                exhaustMap(() => {
+                    const generation = this.pollGeneration;
+                    return this.poolService.getProgress(courseId).pipe(
                         timeout(POLL_TIMEOUT_MS),
+                        map((progress) => ({ progress, generation })),
                         catchError(() => EMPTY),
-                    ),
-                ),
+                    );
+                }),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({
-                next: (progress) => {
+                next: ({ progress, generation }) => {
                     if (!this.isCurrent(courseId)) {
                         this.stopPolling();
                         return;
                     }
+                    if (generation !== this.pollGeneration) {
+                        return;
+                    }
                     this.applyProgress(progress);
-                    const generation = this.pollGeneration;
                     forkJoin([
                         this.succeeded(this.reloadNeedsReview(courseId, this.refreshSize(this.needsReviewQuestions().length))),
                         this.succeeded(this.reloadQuestions(courseId, this.refreshSize(this.questions().length))),

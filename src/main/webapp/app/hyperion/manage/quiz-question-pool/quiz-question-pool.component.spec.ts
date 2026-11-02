@@ -466,6 +466,28 @@ describe('QuizQuestionPoolComponent', () => {
         expect(progressSpy.mock.calls.length).toBe(progressCallsAtStart + 2);
     });
 
+    it('should ignore a progress response requested before another build started', () => {
+        vi.useFakeTimers();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'startBuild').mockReturnValue(of({ started: true, enqueued: 3 }));
+        const delayed = new Subject<PoolProgress>();
+        const progressSpy = vi.spyOn(poolService, 'getProgress').mockReturnValue(delayed.asObservable());
+        component.startBuild();
+        vi.advanceTimersByTime(3000);
+
+        component.startBuild();
+        delayed.next({ ...progress, running: false });
+        delayed.complete();
+
+        expect(component.isRunning()).toBe(false);
+        progressSpy.mockClear();
+        progressSpy.mockReturnValue(of({ ...progress, running: true }));
+        vi.advanceTimersByTime(3000);
+
+        expect(progressSpy).toHaveBeenCalledOnce();
+        expect(component.isRunning()).toBe(true);
+    });
+
     it('should keep polling for a build started while the final question list of the previous build is pending', () => {
         vi.useFakeTimers();
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
