@@ -137,7 +137,15 @@ public class AnswerMessageService extends PostingService {
         newAnswerMessage.setAuthor(author);
         // on creation of an answer message, we set the resolves_post field to false per default since this feature is not used for messages
         newAnswerMessage.setResolvesPost(false);
-        AnswerPost savedAnswerMessage = answerPostRepository.save(newAnswerMessage);
+        // Capture the same eligible audience before persisting. The new reply only adds its own author to the
+        // replier query, and that author is excluded from both unread counters and notifications.
+        var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
+        usersInvolved.add(post.getAuthor());
+
+        boolean visibleToStudents = !(conversation instanceof Channel channel) || channel.isVisibleToStudents();
+        var notificationRecipientsList = getNotificationRecipients(conversation).filter(recipient -> visibleToStudents || recipient.isAtLeastTutorInCourse()).toList();
+        var unreadRecipients = replyRecipients(usersInvolved, notificationRecipientsList, author.getId());
+        AnswerPost savedAnswerMessage = answerPostRepository.saveWithUnreadMessages(newAnswerMessage, unreadRecipients.stream().map(User::getId).collect(Collectors.toSet()));
         savedAnswerMessage.getPost().setConversation(conversation);
         setAuthorRoleForPosting(savedAnswerMessage, course);
 
@@ -145,12 +153,6 @@ public class AnswerMessageService extends PostingService {
                 post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(), newAnswerMessage.getCreationDate().toString(),
                 newAnswerMessage.getAuthor().getName(), newAnswerMessage.getAuthor().getId(), newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(),
                 conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId, newAnswerMessage.getAuthor().isBot());
-
-        var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
-        usersInvolved.add(post.getAuthor());
-
-        boolean visibleToStudents = !(conversation instanceof Channel channel) || channel.isVisibleToStudents();
-        var notificationRecipientsList = getNotificationRecipients(conversation).filter(recipient -> visibleToStudents || recipient.isAtLeastTutorInCourse()).toList();
 
         var explicitMentionRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(mentionedUsers, conversation)
                 .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), newAnswerMessage.getAuthor().getId())).toList();
@@ -168,7 +170,9 @@ public class AnswerMessageService extends PostingService {
 
         this.courseNotificationService.sendCourseNotification(newAnswerNotification, filteredUsersInvolved);
 
-        markReplyAsUnreadForThreadParticipants(course, conversation, usersInvolved, notificationRecipientsList, newAnswerMessage.getAuthor().getId());
+        if (!unreadRecipients.isEmpty()) {
+            conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.NEW_MESSAGE, conversation, unreadRecipients);
+        }
 
         var mentionCourseNotification = new NewMentionNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
                 newAnswerMessage.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(),
@@ -195,31 +199,18 @@ public class AnswerMessageService extends PostingService {
     }
 
     /**
-     * A reply is unread for the people in its thread: the author of the message and everyone who replied to it. The other
-     * members of the conversation did not take part in the discussion, so it would only add noise to their unread counter.
-     * <p>
-     * Like for a new message, the counter is raised here, in the request, rather than asynchronously: the read side resets it
-     * and nothing orders the two. The participants it was raised for are told on the conversation membership channel, so that
-     * the sidebar of their open clients shows it without reloading. Users who muted the conversation are left out of both.
-     * The counter is not lowered again when the reply is deleted, in contrast to a message: it cannot tell which replies a user
-     * has already seen, and a counter too low would hide that something unread is left. It is reset when the conversation is opened.
+     * Select the thread author and earlier repliers who can receive the reply, excluding its author and muted users.
+     * The caller persists their unread counters with the reply, then broadcasts the membership update after commit.
      *
-     * @param course                    the course of the conversation
-     * @param conversation              the conversation the reply was written in
-     * @param usersInvolved             the author of the message and the users who replied to it, which includes the author of the reply
-     * @param notificationRecipientList the members of the conversation with their mute state
-     * @param replyAuthorId             the id of the author of the reply, who has read it
+     * @param usersInvolved             the thread author and earlier repliers
+     * @param notificationRecipientList conversation members eligible to see the reply
+     * @param replyAuthorId             the author of the new reply
+     * @return recipients whose unread counters should be raised
      */
-    private void markReplyAsUnreadForThreadParticipants(Course course, Conversation conversation, Set<User> usersInvolved,
-            List<ConversationNotificationRecipientSummary> notificationRecipientList, Long replyAuthorId) {
+    private static Set<User> replyRecipients(Set<User> usersInvolved, List<ConversationNotificationRecipientSummary> notificationRecipientList, Long replyAuthorId) {
         var involvedUserIds = usersInvolved.stream().map(User::getId).collect(Collectors.toSet());
-        var recipients = notificationRecipientList.stream().filter(recipient -> involvedUserIds.contains(recipient.userId()) && recipient.userId() != replyAuthorId)
+        return notificationRecipientList.stream().filter(recipient -> involvedUserIds.contains(recipient.userId()) && recipient.userId() != replyAuthorId)
                 .filter(recipient -> !recipient.isConversationMuted()).map(ConversationNotificationRecipientSummary::toUser).collect(Collectors.toSet());
-        if (recipients.isEmpty()) {
-            return;
-        }
-        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipantsIn(conversation.getId(), recipients.stream().map(User::getId).collect(Collectors.toSet()));
-        conversationService.broadcastOnConversationMembershipChannel(course, CommunicationCrudAction.NEW_MESSAGE, conversation, recipients);
     }
 
     /**
