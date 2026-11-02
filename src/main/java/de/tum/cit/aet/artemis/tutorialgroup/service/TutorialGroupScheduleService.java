@@ -54,11 +54,16 @@ public class TutorialGroupScheduleService {
     }
 
     /**
-     * Create a new schedule for the given tutorial group and creates all corresponding sessions
+     * Saves the given schedule and brings its generated sessions in sync with it.
+     * <p>
+     * For a new schedule, all sessions are generated. For an existing one, generated sessions are matched to the current ones by start
+     * instant: a match keeps its id and recorded attendance while its end, location and free-period status follow the new schedule,
+     * starts that no longer occur are removed, and new starts are added. Sessions edited individually (detached from the schedule) are
+     * left untouched - neither duplicated nor removed.
      *
      * @param course                the course of the tutorial group
-     * @param tutorialGroup         the tutorial group for which the schedule should be created
-     * @param tutorialGroupSchedule the schedule to create
+     * @param tutorialGroup         the tutorial group the schedule belongs to
+     * @param tutorialGroupSchedule the schedule to save and generate or update the sessions for
      */
     public void saveScheduleAndGenerateScheduledSessions(Course course, TutorialGroup tutorialGroup, TutorialGroupSchedule tutorialGroupSchedule) {
         tutorialGroupSchedule.setTutorialGroup(tutorialGroup);
