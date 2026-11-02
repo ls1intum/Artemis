@@ -186,19 +186,17 @@ public class AdminCourseResource {
         CourseValidator.validateSemester(course);
         CourseValidator.validateTimeZone(course.getTimeZone());
 
-        Course createdCourse = courseRepository.saveWithDefaultConfigurations(course);
-
+        // Stored before the course, so a rejected icon leaves no course behind
         if (file != null) {
-            Path basePath = FilePathConverter.getCourseIconFilePath();
-            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.COURSE_ICON, false);
-            createdCourse.setCourseIcon(savePath.getFileName().toString());
-            createdCourse = courseRepository.save(createdCourse);
+            Path savePath = FileUtil.saveImageFile(file, FilePathConverter.getCourseIconFilePath(), FilePathType.COURSE_ICON);
+            course.setCourseIcon(savePath.getFileName().toString());
         }
+
+        Course createdCourse = courseRepository.saveWithDefaultConfigurations(course);
 
         channelService.createDefaultChannels(createdCourse);
 
-        final Course finalCourse = createdCourse;
-        searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(finalCourse)));
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(createdCourse)));
 
         return ResponseEntity.created(new URI("/api/admin/courses/" + createdCourse.getId())).body(DomainObjectDTO.of(createdCourse));
     }

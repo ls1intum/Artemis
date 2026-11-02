@@ -18,6 +18,7 @@ import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.mo
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSummary } from 'app/openapi/model/tutorial-group-summary';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -68,7 +69,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -681,17 +681,13 @@ describe('CourseOverviewComponent', () => {
     it('should have competencies and tutorial groups', () => {
         const getCourseStub = vi.spyOn(courseStorageService, 'getCourse');
 
-        const tutorialGroupsResponse: HttpResponse<TutorialGroup[]> = new HttpResponse({
-            body: [new TutorialGroup()],
-            status: 200,
-        });
-        const configurationResponse: HttpResponse<TutorialGroupConfigurationDTO> = new HttpResponse({
-            body: generateExampleTutorialGroupsConfigurationDTO({}),
+        const tutorialGroupsResponse: HttpResponse<TutorialGroupSummary[]> = new HttpResponse({
+            body: [{ id: 1 }],
             status: 200,
         });
 
         vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse.body!));
-        vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
+        vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(generateExampleTutorialGroupsConfigurationDTO({})));
 
         getCourseStub.mockReturnValue(course2);
         findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));

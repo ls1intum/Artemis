@@ -9,9 +9,7 @@
         [resizableConstraints]="resizableConstraints()"
     >
         @if (!isExpanded()) {
-            <div class="draggable-left">
-                <fa-icon [icon]="faGripLinesVertical" />
-            </div>
+            <div class="draggable-left panel-divider-x"></div>
         }
         <div class="card" data-testid="conversation-thread-card">
             <!-- header -->

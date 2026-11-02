@@ -18,6 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
+import de.tum.cit.aet.artemis.assessment.dto.score.OwnExerciseScoreDTO;
+import de.tum.cit.aet.artemis.assessment.dto.score.PeerExerciseAverageDTO;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreAverageDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSumDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -26,6 +29,33 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Lazy
 @Repository
 public interface StudentScoreRepository extends ArtemisJpaRepository<StudentScore, Long> {
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.score.OwnExerciseScoreDTO(s.exercise.id, s.lastRatedScore)
+            FROM StudentScore s
+            WHERE s.exercise.id IN :exerciseIds AND s.user.id = :studentId AND s.lastRatedResult IS NOT NULL AND s.lastRatedScore IS NOT NULL
+            """)
+    List<OwnExerciseScoreDTO> findOwnRatedScores(@Param("exerciseIds") Set<Long> exerciseIds, @Param("studentId") long studentId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreAverageDTO(s.user.id, SUM(s.lastRatedScore), COUNT(s.id))
+            FROM StudentScore s
+                JOIN s.user.courseRoles role
+            WHERE s.exercise.id IN :exerciseIds AND s.lastRatedResult IS NOT NULL AND s.lastRatedScore IS NOT NULL
+                AND role.course.id = :courseId AND role.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
+                AND s.user.deleted = FALSE
+            GROUP BY s.user.id
+            """)
+    List<StudentScoreAverageDTO> findStudentAveragesForComparison(@Param("courseId") long courseId, @Param("exerciseIds") Set<Long> exerciseIds);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.score.PeerExerciseAverageDTO(s.exercise.id, AVG(s.lastRatedScore), COUNT(s.id))
+            FROM StudentScore s
+            WHERE s.exercise.id IN :exerciseIds AND s.user.id IN :studentIds
+                AND s.lastRatedResult IS NOT NULL AND s.lastRatedScore IS NOT NULL
+            GROUP BY s.exercise.id
+            """)
+    List<PeerExerciseAverageDTO> findPeerExerciseAverages(@Param("exerciseIds") Set<Long> exerciseIds, @Param("studentIds") Set<Long> studentIds);
 
     @Transactional // ok because of delete
     @Modifying

@@ -1,12 +1,8 @@
 package de.tum.cit.aet.artemis.aiworker.config.telemetry;
 
-import static java.util.Map.entry;
-
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +16,12 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonRawValue;
+
 import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
 import tools.jackson.databind.json.JsonMapper;
 
 import io.micrometer.common.KeyValue;
@@ -99,99 +100,158 @@ public class ChatModelContentObservationFilter implements ObservationFilter {
         return chatContext;
     }
 
-    private List<Map<String, Object>> inputMessages(ChatModelObservationContext context) {
+    private List<GenAiMessage> inputMessages(ChatModelObservationContext context) {
         if (context.getRequest() == null || CollectionUtils.isEmpty(context.getRequest().getInstructions())) {
             return List.of();
         }
         return context.getRequest().getInstructions().stream().map(this::message).toList();
     }
 
-    private List<Map<String, Object>> outputMessages(ChatModelObservationContext context) {
+    private List<GenAiMessage> outputMessages(ChatModelObservationContext context) {
         if (context.getResponse() == null || CollectionUtils.isEmpty(context.getResponse().getResults())) {
             return List.of();
         }
         return context.getResponse().getResults().stream().filter(generation -> generation.getOutput() != null).map(this::outputMessage).toList();
     }
 
-    private List<Map<String, Object>> toolDefinitions(ChatModelObservationContext context) {
+    private List<GenAiToolDefinition> toolDefinitions(ChatModelObservationContext context) {
         if (context.getRequest() == null || !(context.getRequest().getOptions() instanceof ToolCallingChatOptions options) || CollectionUtils.isEmpty(options.getToolCallbacks())) {
             return List.of();
         }
         return options.getToolCallbacks().stream().map(this::toolDefinition).toList();
     }
 
-    private Map<String, Object> toolDefinition(ToolCallback callback) {
+    private GenAiToolDefinition toolDefinition(ToolCallback callback) {
         var definition = callback.getToolDefinition();
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("type", "function");
-        result.put("name", definition.name());
-        if (StringUtils.hasText(definition.description())) {
-            result.put("description", definition.description());
-        }
-        if (StringUtils.hasText(definition.inputSchema())) {
-            try {
-                result.put("parameters", objectMapper.readTree(definition.inputSchema()));
-            }
-            catch (JacksonException e) {
-                result.put("parameters", definition.inputSchema());
-            }
-        }
-        return result;
+        String description = StringUtils.hasText(definition.description()) ? definition.description() : null;
+        String parameters = StringUtils.hasText(definition.inputSchema()) ? embeddableJson(definition.inputSchema()) : null;
+        return new GenAiToolDefinition("function", definition.name(), description, parameters);
     }
 
-    private Map<String, Object> message(Message message) {
-        return Map.ofEntries(entry("role", message.getMessageType().getValue()), entry("parts", messageParts(message)));
+    private GenAiMessage message(Message message) {
+        return new GenAiMessage(message.getMessageType().getValue(), messageParts(message), null);
     }
 
-    private Map<String, Object> outputMessage(Generation generation) {
-        Map<String, Object> result = new LinkedHashMap<>(message(generation.getOutput()));
+    private GenAiMessage outputMessage(Generation generation) {
+        GenAiMessage message = message(generation.getOutput());
         String finishReason = generation.getMetadata().getFinishReason();
-        result.put("finish_reason", StringUtils.hasText(finishReason) ? finishReason : "unknown");
-        return result;
+        return new GenAiMessage(message.role(), message.parts(), StringUtils.hasText(finishReason) ? finishReason : "unknown");
     }
 
-    private List<Map<String, Object>> messageParts(Message message) {
-        List<Map<String, Object>> parts = new ArrayList<>();
+    private List<GenAiPart> messageParts(Message message) {
+        List<GenAiPart> parts = new ArrayList<>();
         if (message instanceof AssistantMessage assistantMessage && assistantMessage.getMetadata().get(REASONING_CONTENT) instanceof String reasoning
                 && StringUtils.hasText(reasoning)) {
-            parts.add(Map.of("type", "reasoning", "content", reasoning));
+            parts.add(new GenAiContentPart("reasoning", reasoning));
         }
         if (StringUtils.hasText(message.getText())) {
-            parts.add(Map.of("type", "text", "content", message.getText()));
+            parts.add(new GenAiContentPart("text", message.getText()));
         }
         if (message instanceof AssistantMessage assistantMessage) {
             assistantMessage.getToolCalls().stream().map(this::toolCallPart).forEach(parts::add);
         }
         if (message instanceof ToolResponseMessage toolResponseMessage) {
-            toolResponseMessage.getResponses().stream().map(response -> {
-                Map<String, Object> part = new LinkedHashMap<>();
-                part.put("type", "tool_call_response");
-                if (StringUtils.hasText(response.id())) {
-                    part.put("id", response.id());
-                }
-                part.put("response", response.responseData());
-                return part;
-            }).forEach(parts::add);
+            toolResponseMessage.getResponses().stream()
+                    .map(response -> new GenAiToolResponsePart("tool_call_response", StringUtils.hasText(response.id()) ? response.id() : null, response.responseData()))
+                    .forEach(parts::add);
         }
         return parts;
     }
 
-    private Map<String, Object> toolCallPart(AssistantMessage.ToolCall toolCall) {
-        Map<String, Object> part = new LinkedHashMap<>();
-        part.put("type", "tool_call");
-        if (StringUtils.hasText(toolCall.id())) {
-            part.put("id", toolCall.id());
+    private GenAiToolCallPart toolCallPart(AssistantMessage.ToolCall toolCall) {
+        String id = StringUtils.hasText(toolCall.id()) ? toolCall.id() : null;
+        String arguments = StringUtils.hasText(toolCall.arguments()) ? embeddableJson(toolCall.arguments()) : null;
+        return new GenAiToolCallPart("tool_call", id, toolCall.name(), arguments);
+    }
+
+    /**
+     * Turns text that is probably JSON into JSON text that can be embedded as a value of a span attribute. Text that is exactly one JSON value is embedded as that
+     * value, so a tool schema or the arguments of a tool call stay structured for the trace viewer; any other text is embedded as a JSON string.
+     *
+     * @param text the schema or the arguments as the model or the tool declared them
+     * @return JSON text of one valid JSON value
+     */
+    private String embeddableJson(String text) {
+        if (isSingleJsonValue(text)) {
+            return text;
         }
-        part.put("name", toolCall.name());
-        if (StringUtils.hasText(toolCall.arguments())) {
-            try {
-                part.put("arguments", objectMapper.readTree(toolCall.arguments()));
+        return objectMapper.writeValueAsString(text);
+    }
+
+    /**
+     * Checks that the text consists of exactly one JSON value, without building a tree of it.
+     *
+     * @param text the text to check
+     * @return whether the text is one complete JSON value with nothing after it
+     */
+    private boolean isSingleJsonValue(String text) {
+        try (JsonParser parser = objectMapper.createParser(text)) {
+            if (parser.nextToken() == null) {
+                return false;
             }
-            catch (JacksonException e) {
-                part.put("arguments", toolCall.arguments());
-            }
+            parser.skipChildren();
+            return parser.nextToken() == null;
         }
-        return part;
+        catch (JacksonException e) {
+            return false;
+        }
+    }
+
+    /**
+     * One message of the OpenTelemetry GenAI message attributes.
+     *
+     * @param role         the role of the message author
+     * @param parts        the content parts of the message in order
+     * @param finishReason why the model stopped, present on output messages only
+     */
+    private record GenAiMessage(String role, List<GenAiPart> parts, @JsonProperty("finish_reason") @JsonInclude(JsonInclude.Include.NON_EMPTY) String finishReason) {
+    }
+
+    /** A content part of a GenAI message. */
+    private interface GenAiPart {
+    }
+
+    /**
+     * A reasoning or text part of a GenAI message.
+     *
+     * @param type    {@code reasoning} or {@code text}
+     * @param content the text of the part
+     */
+    private record GenAiContentPart(String type, String content) implements GenAiPart {
+    }
+
+    /**
+     * A tool call the model issued.
+     *
+     * @param type      always {@code tool_call}
+     * @param id        the identifier of the call, absent when the provider sent none
+     * @param name      the name of the tool
+     * @param arguments the arguments of the call as JSON text, written into the attribute as the JSON value it contains
+     */
+    private record GenAiToolCallPart(String type, @JsonInclude(JsonInclude.Include.NON_EMPTY) String id, String name,
+            @JsonInclude(JsonInclude.Include.NON_EMPTY) @JsonRawValue String arguments) implements GenAiPart {
+    }
+
+    /**
+     * The result a tool returned for a tool call.
+     *
+     * @param type     always {@code tool_call_response}
+     * @param id       the identifier of the call it answers, absent when the provider sent none
+     * @param response the response of the tool
+     */
+    private record GenAiToolResponsePart(String type, @JsonInclude(JsonInclude.Include.NON_EMPTY) String id, String response) implements GenAiPart {
+    }
+
+    /**
+     * A tool definition in the OpenTelemetry GenAI tool definition attribute.
+     *
+     * @param type        always {@code function}
+     * @param name        the name of the tool
+     * @param description what the tool does, absent when the tool declares none
+     * @param parameters  the input schema of the tool as JSON text, written into the attribute as the JSON value it contains
+     */
+    private record GenAiToolDefinition(String type, String name, @JsonInclude(JsonInclude.Include.NON_EMPTY) String description,
+            @JsonInclude(JsonInclude.Include.NON_EMPTY) @JsonRawValue String parameters) {
     }
 
     /** The span identifier an operator sees in the trace viewer. */
@@ -200,7 +260,7 @@ public class ChatModelContentObservationFilter implements ObservationFilter {
         return StringUtils.hasText(contextualName) ? contextualName : String.valueOf(context.getName());
     }
 
-    private boolean addSerialized(ChatModelObservationContext context, String key, List<Map<String, Object>> messages) {
+    private boolean addSerialized(ChatModelObservationContext context, String key, List<?> messages) {
         if (messages.isEmpty()) {
             return true;
         }

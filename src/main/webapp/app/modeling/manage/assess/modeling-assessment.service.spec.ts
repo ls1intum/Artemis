@@ -484,4 +484,42 @@ describe('ModelingAssessmentService', () => {
             expect(result).toBe(true);
         });
     });
+    it.each(['owner', 'staff-preview'] as const)('selects result URL from explicit %s purpose', (purpose) => {
+        service.getAssessment(123, 456, purpose).subscribe((data) => expect(data.id).toBe(456));
+        const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toBe(`api/modeling/modeling-submissions/123/result${purpose === 'staff-preview' ? '/for-instructor' : ''}`);
+        expect(req.request.params.get('resultId')).toBe('456');
+        req.flush({ id: 456 });
+    });
+    it('submits the selected assessment with its note and feedback references', () => {
+        const feedbacks = [{ credits: 2, reference: 'class:node-1' }];
+        service.saveAssessment(7, feedbacks, 8, 'Reviewed', true).subscribe((result) => {
+            expect(result.feedbacks?.[0]).toMatchObject({ referenceType: 'class', referenceId: 'node-1', credits: 2 });
+        });
+        const req = httpMock.expectOne({ method: 'PUT', url: 'api/modeling/modeling-submissions/8/results/7/assessment?submit=true' });
+        expect(req.request.body).toEqual({ feedbacks, assessmentNote: 'Reviewed' });
+        req.flush({ id: 7, feedbacks });
+    });
+
+    it('cancels the selected correction result without a request body', () => {
+        let completed = false;
+        service.cancelAssessment(8, 7).subscribe(() => (completed = true));
+        const req = httpMock.expectOne({ method: 'PUT', url: 'api/modeling/modeling-submissions/8/cancel-assessment?resultId=7' });
+        expect(req.request.body).toBeNull();
+        req.flush(null);
+        expect(completed).toBe(true);
+    });
+
+    it('converts nested assessment dates after a complaint update', () => {
+        service.updateAssessmentAfterComplaint([], new ComplaintResponse(), 8).subscribe((response) => {
+            expect(response.body?.completionDate?.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+            expect(response.body?.submission?.submissionDate?.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+            expect(response.body?.submission?.participation?.initializationDate?.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+        });
+        httpMock.expectOne({ method: 'PUT', url: 'api/modeling/modeling-submissions/8/assessment-after-complaint' }).flush({
+            id: 7,
+            completionDate: '2026-10-25T08:00:00Z',
+            submission: { submissionDate: '2026-10-25T08:00:00Z', participation: { initializationDate: '2026-10-25T08:00:00Z' } },
+        });
+    });
 });

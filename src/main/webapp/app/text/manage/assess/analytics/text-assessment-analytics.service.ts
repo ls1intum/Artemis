@@ -7,7 +7,7 @@ import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Location } from '@angular/common';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 
 /**
  * A service used to manage sending TextAssessmentEvent's to the server

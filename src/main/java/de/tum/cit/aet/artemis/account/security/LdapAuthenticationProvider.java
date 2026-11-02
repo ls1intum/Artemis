@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
-import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
@@ -41,18 +40,15 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
 
     private final LdapUserService ldapUserService;
 
-    private final AuthorityService authorityService;
-
     private final UserCreationService userCreationService;
 
     private final SpringSecurityLdapTemplate ldapTemplate;
 
     private final UserRepository userRepository;
 
-    public LdapAuthenticationProvider(LdapUserService ldapUserService, AuthorityService authorityService, UserCreationService userCreationService,
-            SpringSecurityLdapTemplate ldapTemplate, UserRepository userRepository) {
+    public LdapAuthenticationProvider(LdapUserService ldapUserService, UserCreationService userCreationService, SpringSecurityLdapTemplate ldapTemplate,
+            UserRepository userRepository) {
         this.ldapUserService = ldapUserService;
-        this.authorityService = authorityService;
         this.userCreationService = userCreationService;
         this.ldapTemplate = ldapTemplate;
         this.userRepository = userRepository;
@@ -132,8 +128,6 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
     private User createUser(LdapUserDto ldapUserDto) {
         User newUser = userCreationService.createUser(ldapUserDto.getLogin(), null, ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(),
                 ldapUserDto.getRegistrationNumber(), null, "en", false);
-
-        newUser.setAuthorities(authorityService.buildAuthorities(newUser));
 
         // No activation handling here: userCreationService.createUser already creates an external user activated, because such a user has
         // no way to redeem an activation key. This used to re-activate the user to undo what the factory did unconditionally.

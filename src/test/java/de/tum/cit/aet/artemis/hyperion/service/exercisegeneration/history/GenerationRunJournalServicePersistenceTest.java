@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-@WithMockUser(username = "hypjournalinstructor1", roles = "INSTRUCTOR")
+@WithMockUser(username = "hypjournalinstructor1", roles = "USER")
 class GenerationRunJournalServicePersistenceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired

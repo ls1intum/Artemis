@@ -27,7 +27,7 @@
             [buttonLoading]="actions.isLoading()"
             [smallButton]="actions.smallButtons()"
             [hideLabelMobile]="false"
-            [overwriteDisabled]="actions.isBeforeStartDateAndStudent"
+            [forceDisabled]="actions.isBeforeStartDateAndStudent"
             (click)="actions.startExercise()"
         ></button>
     </span>

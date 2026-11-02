@@ -55,7 +55,7 @@ public class DifferentialVerifier {
 
     private static final Pattern URI_CREDENTIALS = Pattern.compile("(?i)(https?://)[^\\s/@]+@");
 
-    private static final Pattern AUTHORIZATION_CREDENTIALS = Pattern.compile("(?i)(authorization\\s*[:=]\\s*)(?:basic|bearer)?\\s*[^\\s,;]+");
+    private static final Pattern AUTHORIZATION_CREDENTIALS = Pattern.compile("(?i)(authorization\\s*+[:=]\\s*+)(?:(?:basic|bearer)\\s++)?[^\\s,;]++");
 
     private static final Pattern BEARER_CREDENTIALS = Pattern.compile("(?i)\\bbearer\\s+[^\\s,;]+");
 

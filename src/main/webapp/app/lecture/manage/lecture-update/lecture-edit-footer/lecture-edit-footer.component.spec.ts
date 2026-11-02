@@ -54,7 +54,7 @@ describe('LectureEditFooterComponent', () => {
         return element(testId).textContent?.trim() ?? '';
     }
 
-    function saveTooltip(): string | readonly string[] {
+    function saveTooltip(): ReturnType<TumAetUiTooltipDirective['content']> {
         return fixture.debugElement.query(By.css('[data-testid="lecture-edit-save"]')).injector.get(TumAetUiTooltipDirective).content();
     }
 

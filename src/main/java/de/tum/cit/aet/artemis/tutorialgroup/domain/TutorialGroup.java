@@ -98,6 +98,13 @@ public class TutorialGroup extends DomainObject {
     private Integer numberOfRegisteredUsers;
 
     /**
+     * This transient field is set to true when the group has reached its capacity. Unlike the exact registration count
+     * it stays visible to students, so they can filter the overview for groups that still have free spots.
+     */
+    @Transient
+    private Boolean capacityReached;
+
+    /**
      * This transient fields is set to the name of the teaching assistant of this tutorial group
      */
     @Transient
@@ -296,6 +303,16 @@ public class TutorialGroup extends DomainObject {
 
     @JsonIgnore(false)
     @JsonProperty
+    public Boolean getCapacityReached() {
+        return capacityReached;
+    }
+
+    public void setCapacityReached(Boolean capacityReached) {
+        this.capacityReached = capacityReached;
+    }
+
+    @JsonIgnore(false)
+    @JsonProperty
     public String getTeachingAssistantName() {
         return teachingAssistantName;
     }
@@ -389,6 +406,7 @@ public class TutorialGroup extends DomainObject {
         this.setTeachingAssistantId(null);
         this.setTeachingAssistantImageUrl(null);
         this.setCourseTitle(null);
+        // capacityReached stays: it is an aggregate (full or not), not the exact registration count, and students filter on it.
     }
 
     /**

@@ -147,7 +147,20 @@ public class RepositoryService {
             ProgrammingExerciseParticipation participation, @Nullable Set<String> selectedFilePaths) throws IOException {
         log.debug("Getting files {} at commit {} for participation {}", selectedFilePaths, commitId, participation.getId());
         var repoUri = repositoryType == RepositoryType.TESTS ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
-        try (Repository repository = bareGitRepositoryService.getBareRepository(repoUri, false)) {
+        return getFilesContentAtCommit(repoUri, commitId, selectedFilePaths);
+    }
+
+    /**
+     * Reads a commit from an already authorized repository, preserving the full and selected content limits.
+     *
+     * @param repositoryUri     the resolved repository URI
+     * @param commitId          the requested commit
+     * @param selectedFilePaths selected paths, or null for all text files
+     * @return text files at the requested commit
+     * @throws IOException if repository content cannot be read
+     */
+    public Map<String, String> getFilesContentAtCommit(LocalVCRepositoryUri repositoryUri, String commitId, @Nullable Set<String> selectedFilePaths) throws IOException {
+        try (Repository repository = bareGitRepositoryService.getBareRepository(repositoryUri, false)) {
             ObjectId commitObjectId = resolveCommit(repository, commitId);
             if (commitObjectId == null) {
                 return Map.of();

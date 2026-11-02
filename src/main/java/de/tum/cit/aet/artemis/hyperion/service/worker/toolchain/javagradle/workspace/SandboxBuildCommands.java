@@ -10,6 +10,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import tools.jackson.core.type.TypeReference;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
@@ -22,6 +26,8 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.Repos
  * Each invocation creates a fresh build tree and collects reports for the production Java parsers; shell output does not determine the verdict.
  */
 public class SandboxBuildCommands {
+
+    private static final YAMLMapper RECIPE_MAPPER = YAMLMapper.builder().build();
 
     private static final Pattern CLEAN_TASK = Pattern.compile("(?<![\\w-])clean(?![\\w-])\\s*");
 
@@ -71,13 +77,17 @@ public class SandboxBuildCommands {
 
     private static BuildRecipe loadRecipe(GenerationResources resources, String phasesFile) {
         try (var input = resources.getResource(Path.of(phasesFile)).getInputStream()) {
-            var phases = YAMLMapper.builder().build().readTree(input);
+            List<RecipePhase> phases = RECIPE_MAPPER.readValue(input, new TypeReference<List<RecipePhase>>() {
+            });
             List<String> scripts = new ArrayList<>();
             List<String> reports = new ArrayList<>();
-            for (var phase : phases) {
-                scripts.add(phase.required("script").asText());
-                for (var report : phase.path("resultPaths")) {
-                    reports.add(report.asText());
+            for (RecipePhase phase : phases) {
+                if (phase.script() == null) {
+                    throw new IllegalStateException("Canonical build recipe has a phase without a script: " + phasesFile);
+                }
+                scripts.add(phase.script());
+                if (phase.resultPaths() != null) {
+                    reports.addAll(phase.resultPaths());
                 }
             }
             if (scripts.isEmpty() || reports.isEmpty()) {
@@ -393,6 +403,17 @@ public class SandboxBuildCommands {
             }
         }
         return String.join(" -o ", tokens);
+    }
+
+    /**
+     * One phase of a canonical build recipe file; the other keys of a phase, such as its name, are not needed here.
+     *
+     * @param script      the shell script of the phase
+     * @param resultPaths the report globs the phase writes, absent for a phase that writes none
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record RecipePhase(String script, List<String> resultPaths) {
     }
 
     private record BuildRecipe(List<String> phases, List<String> reportGlobs, String assignmentDir, String testDir) {

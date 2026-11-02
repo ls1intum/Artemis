@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../communication.util';
 import {
     faAt,
@@ -21,19 +21,19 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { FileService } from 'app/foundation/service/file.service';
 
+/** Renders one reference (user, channel, post, attachment, ...) of a posting at the spot where the posting's Markdown placed it. */
 @Component({
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['../../communication.component.scss'],
-    imports: [RouterLink, FaIconComponent, MarkdownDirective, TranslateDirective],
+    imports: [RouterLink, FaIconComponent, TranslateDirective],
     providers: [DialogService],
 })
-export class PostingContentPartComponent implements OnInit {
+export class PostingContentPartComponent {
     private fileService = inject(FileService);
     private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
@@ -46,40 +46,6 @@ export class PostingContentPartComponent implements OnInit {
     readonly imageNotFound = signal(false);
     hasClickedUserReference = false;
 
-    // Only allow certain html tags and attributes
-
-    allowedHtmlTags: string[] = [
-        'a',
-        'b',
-        'br',
-        'blockquote',
-        'code',
-        'del',
-        'em',
-        'hr',
-        'h1',
-        'h2',
-        'h3',
-        'h4',
-        'h5',
-        'h6',
-        'i',
-        'ins',
-        'li',
-        'mark',
-        'p',
-        'pre',
-        'small',
-        's',
-        'span',
-        'strong',
-        'sub',
-        'sup',
-        'ul',
-        'ol',
-    ];
-    allowedHtmlAttributes: string[] = ['href'];
-
     // icons
     protected readonly faFile = faFile;
     protected readonly faBan = faBan;
@@ -88,26 +54,6 @@ export class PostingContentPartComponent implements OnInit {
     protected readonly faQuestion = faQuestion;
 
     protected readonly ReferenceType = ReferenceType;
-    readonly processedContentBeforeReference = signal<string>(undefined!);
-    readonly processedContentAfterReference = signal<string>(undefined!);
-
-    private initialized = false;
-
-    constructor() {
-        effect(() => {
-            this.postingContentPart();
-            untracked(() => {
-                if (this.initialized) {
-                    this.processContent();
-                }
-            });
-        });
-    }
-
-    ngOnInit() {
-        this.processContent();
-        this.initialized = true;
-    }
 
     /**
      * Opens an attachment with the given URL in a new window
@@ -120,23 +66,6 @@ export class PostingContentPartComponent implements OnInit {
 
     toggleImageNotFound(): void {
         this.imageNotFound.set(true);
-    }
-
-    /**
-     * Processes content before and after any reference (user/channel/etc.)
-     */
-    processContent() {
-        if (this.postingContentPart()?.contentBeforeReference) {
-            this.processedContentBeforeReference.set(this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || ''));
-        }
-
-        if (this.postingContentPart()?.contentAfterReference) {
-            this.processedContentAfterReference.set(this.normalizeSpacing(this.postingContentPart()?.contentAfterReference || ''));
-        }
-    }
-
-    normalizeSpacing(content: string): string {
-        return content.replace(/\n{3,}/g, '\n\n');
     }
 
     /**

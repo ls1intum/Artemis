@@ -6,15 +6,18 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
- * Unit tests for {@link Exercise#validateTitle()}, the shared title validation used by all exercise create/import and
- * edit flows (it is the exact point that rejected titles like "Lärche").
+ * Unit tests for {@link Exercise#validateTitle()}, title validation shared by exercise creation, import and editing.
  */
 class ExerciseTitleValidationTest {
 
@@ -35,16 +38,34 @@ class ExerciseTitleValidationTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "title<script>", "title$value", "title;drop", "100%done", "a/b", "a\\b", "a:b", "a.b", "title|pipe" })
+    @ValueSource(strings = { "W01E01 Strategy vs. bridge pattern", "Exercise 1.2", "3. Übung" })
+    void shouldAcceptPeriodsInNonProgrammingExerciseTitles(String title) {
+        for (Exercise exercise : new Exercise[] { new TextExercise(), new ModelingExercise(), new FileUploadExercise() }) {
+            exercise.setTitle(title);
+            assertThatCode(exercise::validateTitle).doesNotThrowAnyException();
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "W01E01 Strategy vs. bridge pattern", "title<script>", "title$value", "title;drop", "100%done", "a/b", "a\\b", "a:b", "a.b", "title|pipe" })
+    void shouldKeepProgrammingExerciseTitleRestrictions(String title) {
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setTitle(title);
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(exercise::validateTitle);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "title<script>", "title$value", "title;drop", "100%done", "a/b", "a\\b", "a:b", "title|pipe" })
     void shouldRejectTitlesWithDisallowedSymbols(String title) {
-        // Letters/marks/numbers, underscore, hyphen and whitespace are allowed; other symbols (which could break VCS,
-        // file paths, headers, or rendering) must still be rejected.
+        // Display titles also allow periods; unsupported symbols must still be rejected.
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseWithTitle(title).validateTitle());
     }
 
-    @Test
-    void shouldRejectTitleThatIsTooShort() {
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseWithTitle("ab").validateTitle());
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = { "", " ", "ab" })
+    void shouldRejectMissingOrShortTitle(String title) {
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> exerciseWithTitle(title).validateTitle());
     }
 
     @Test

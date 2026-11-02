@@ -18,24 +18,25 @@
         font-weight: 600;
     }
 
-    .list-group {
-        .list-group-item {
+    .exercise-options {
+        .exercise-option {
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: background-color 0.2s ease;
 
             &:hover:not(.active) {
                 background-color: var(--pdf-preview-date-box-title-background);
             }
 
-            &:not(.active) .text-muted {
-                color: var(--secondary) !important;
+            &.active {
+                background-color: var(--tumaet-ui-highlight-background);
+                color: var(--tumaet-ui-highlight-color);
+
+                .text-muted-color {
+                    color: inherit;
+                }
             }
 
-            &.active .text-muted {
-                color: var(--white) !important;
-            }
-
-            .form-check-input {
+            input {
                 cursor: pointer;
             }
         }

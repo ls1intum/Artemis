@@ -38,7 +38,7 @@
 // The divider under the header is an inset shadow rather than a border, so it takes no layout space and the bar
 // keeps the exact height `page-top-bar` pins it to (a border would add a pixel on top of it).
 .text-unit-fullscreen-header {
-    box-shadow: inset 0 -1px 0 var(--bs-border-color);
+    box-shadow: inset 0 -1px 0 var(--border-color);
 
     // The global heading rules are unlayered and therefore beat Tailwind utilities, so the title is sized here.
     h5 {

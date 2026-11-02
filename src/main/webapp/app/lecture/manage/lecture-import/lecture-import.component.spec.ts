@@ -1,98 +1,88 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FormsModule } from '@angular/forms';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
-import { Subject, of } from 'rxjs';
+import { LectureImportComponent } from './lecture-import.component';
 import { LecturePagingService } from 'app/lecture/manage/services/lecture-paging.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { of } from 'rxjs';
 
-describe('LectureImportComponent', () => {
+/** The picker works as embedded content; its host owns the dialog lifecycle. */
+describe('Lecture import picker', () => {
     let fixture: ComponentFixture<LectureImportComponent>;
-    let comp: LectureImportComponent;
-    let dialogRef: DynamicDialogRef;
-    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
-
-    const lecture: Lecture = {
-        title: 'Lecture title',
-        course: {
-            title: 'Course title',
-            semester: 'WS24',
-        },
-    };
+    let component: LectureImportComponent;
+    const lecture = { id: 7, title: 'Lecture <script>', course: { title: 'Course', semester: 'WS26' } } as Lecture;
+    const search = vi.fn(() => of({ resultsOnPage: [lecture], numberOfPages: 3 }));
 
     beforeEach(async () => {
-        dialogRefCloseSpy = vi.fn();
-        dialogRef = {
-            close: dialogRefCloseSpy,
-            onClose: new Subject<any>(),
-        } as unknown as DynamicDialogRef;
-
+        search.mockClear();
         await TestBed.configureTestingModule({
-            imports: [
-                FormsModule,
-                LectureImportComponent,
-                MockComponent(ButtonComponent),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
-                MockComponent(FaIconComponent),
-            ],
+            imports: [LectureImportComponent],
             providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: LecturePagingService, useValue: { search } },
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(LecturePagingService, {
-                    search: () => of({ resultsOnPage: [], numberOfPages: 0 }),
-                }),
-                provideHttpClient(),
-                provideHttpClientTesting(),
             ],
         }).compileComponents();
-
         fixture = TestBed.createComponent(LectureImportComponent);
-        comp = fixture.componentInstance;
+        component = fixture.componentInstance;
         await fixture.whenStable();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        fixture.detectChanges();
     });
 
-    afterEach(() => {
-        vi.restoreAllMocks();
-        // Complete the onClose subject to clean up subscriptions
-        (dialogRef.onClose as Subject<any>).complete();
+    afterEach(() => vi.restoreAllMocks());
+
+    it('loads the first page immediately and emits the selected lecture without a dialog provider', () => {
+        expect(search).toHaveBeenCalledWith(expect.objectContaining({ page: 1, pageSize: 10 }));
+        const selected = vi.fn();
+        component.selected.subscribe(selected);
+        const button = fixture.nativeElement.querySelector('[data-testid="import-lecture-7"]') as HTMLButtonElement;
+        button.click();
+        expect(selected).toHaveBeenCalledWith(lecture);
     });
 
-    it('should extract lecture properties', () => {
-        expect(comp.columns).toBeDefined();
-        // title, course title, semester
-        expect(comp.columns).toHaveLength(3);
-
-        const titleProperty = comp.columns[0];
-        expect(titleProperty.name).toBe('TITLE');
-        expect(titleProperty.getProperty(lecture)).toBe('Lecture title');
-
-        const courseTitleProperty = comp.columns[1];
-        expect(courseTitleProperty.name).toBe('COURSE_TITLE');
-        expect(courseTitleProperty.getProperty(lecture)).toBe('Course title');
-
-        const semesterProperty = comp.columns[2];
-        expect(semesterProperty.name).toBe('SEMESTER');
-        expect(semesterProperty.getProperty(lecture)).toBe('WS24');
+    it('highlights matching title text safely after searching', async () => {
+        const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+        input.value = '<script>';
+        input.dispatchEvent(new Event('input'));
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ searchTerm: '<script>' }));
+        expect(fixture.nativeElement.querySelector('mark')?.textContent).toBe('<script>');
+        expect(fixture.nativeElement.querySelector('script')).toBeNull();
     });
 
-    it('should close dialog when selecting a lecture', () => {
-        const selectedLecture = new Lecture();
-        selectedLecture.id = 1;
-        selectedLecture.title = 'Selected Lecture';
+    it('sorts search results in both directions through the column control', async () => {
+        const title = fixture.nativeElement.querySelectorAll('thead th')[1] as HTMLElement;
+        const sort = title.querySelector('button');
+        expect(sort).not.toBeNull();
+        sort!.click();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        await fixture.whenStable();
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ sortedColumn: 'TITLE', sortingOrder: 'ASCENDING' }));
+        expect(title.getAttribute('aria-sort')).toBe('ascending');
+        sort!.click();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        await fixture.whenStable();
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ sortedColumn: 'TITLE', sortingOrder: 'DESCENDING' }));
+        expect(title.getAttribute('aria-sort')).toBe('descending');
+    });
 
-        comp.selectImport(selectedLecture);
+    it('requests the chosen page using one-based paging', async () => {
+        component.onPageChange(2);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 }));
+    });
 
-        expect(dialogRefCloseSpy).toHaveBeenCalledWith(selectedLecture);
+    it('keeps page navigation without claiming an item count that the API does not provide', async () => {
+        const paginator = fixture.nativeElement.querySelector('nav') as HTMLElement;
+        expect(paginator.textContent).not.toContain('Showing');
+        const lastPage = paginator.querySelector('[aria-label="Last page"]') as HTMLButtonElement;
+        lastPage.click();
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        await fixture.whenStable();
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ page: 3 }));
+        expect(lastPage.disabled).toBe(true);
     });
 });

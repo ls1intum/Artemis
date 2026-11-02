@@ -44,7 +44,7 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendEmailToUserWhenServiceMethodIsInvoked() throws EntityNotFoundException {
         String username = TEST_PREFIX + "student1";
 
@@ -57,7 +57,7 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendEmailToUserWhenLogingInWithEmail() throws EntityNotFoundException {
         String username = TEST_PREFIX + "student1";
 
@@ -75,7 +75,7 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
      * triggers the login.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendTheLoginEmailOnTheCallingThread() {
         Thread testThread = Thread.currentThread();
         AtomicReference<Thread> sendingThread = new AtomicReference<>();
@@ -90,7 +90,7 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldHandleUserNotFoundGracefully() throws EntityNotFoundException {
         String username = "nonexistentuser";
         doNothing().when(javaMailSender).send(any(MimeMessage.class));

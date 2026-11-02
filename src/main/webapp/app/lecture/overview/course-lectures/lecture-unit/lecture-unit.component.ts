@@ -1,8 +1,8 @@
+import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, ElementRef, Injector, OnDestroy, afterNextRender, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { IconDefinition, faCheckCircle, faCircle, faDownload, faExpand, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
-import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -14,7 +14,17 @@ import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-de
 
 @Component({
     selector: 'jhi-lecture-unit-card',
-    imports: [FontAwesomeModule, NgbCollapseModule, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, CommonModule, NgbTooltipModule, CompetencyContributionComponent],
+    imports: [
+        TumAetUiTagComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        FontAwesomeModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        ArtemisDatePipe,
+        CommonModule,
+        CompetencyContributionComponent,
+    ],
     templateUrl: './lecture-unit.component.html',
     styleUrl: './lecture-unit.component.scss',
 })

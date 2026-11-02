@@ -102,7 +102,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpsert_isDispatchedWritesSyncStateAndRemovesOutboxRow() {
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
 
@@ -121,7 +121,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpsert_repeatedForUnchangedEntityKeepsTheSameContentHash() {
         // The operational stamps the write path adds (the outbox write id, and the stored copy of the hash itself)
         // must not feed the hash. If they did, every write would produce a new hash and a reconcile pass would see
@@ -142,7 +142,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteEntity_isDispatchedAndClearsSyncState() throws Exception {
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
         assertCourseExistsInWeaviate(weaviateService, course);
@@ -157,7 +157,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @ParameterizedTest
     @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReconcileDelete_forAnAbsentSource_removesTheIndexedRow(WeaviateOutboxOrigin origin) throws Exception {
         long absentCourseId = 9_991_000L + origin.ordinal();
         seedRow(weaviateService, COURSE_TYPE, absentCourseId, new CourseSearchableEntityDTO(absentCourseId, "orphan", "ORPHAN", null).toPropertyMap());
@@ -175,7 +175,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @ParameterizedTest
     @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testReconcileDeleteQueuedBeforeALaterLiveUpsert_keepsTheLaterLiveWrite(WeaviateOutboxOrigin origin) {
         // Whether a drain runs between the two enqueues or not, the later live write must win.
         WeaviateOutboxEntry queuedDelete = outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(COURSE_TYPE, course.getId(), origin));
@@ -193,7 +193,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDuplicateUpserts_areIdempotentYieldingASingleRow() {
         var dto = CourseSearchableEntityDTO.fromCourse(course);
         // Two identical enqueues produce two outbox rows; applying both must converge to one row (deterministic UUID replace).
@@ -208,7 +208,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testEnqueueInRolledBackTransaction_persistsNoOutboxRow() throws Exception {
         var dto = CourseSearchableEntityDTO.fromCourse(course);
         TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
@@ -226,7 +226,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteAllPostsForChannel_removesChannelPostsAndLeavesOthers() throws Exception {
         long courseId = 990100, channelId = 990101, otherChannelId = 990109, postId = 990102, answerPostId = 990103, otherPostId = 990108;
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, postId, new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content").toPropertyMap());
@@ -246,7 +246,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteAllPostsForCourse_removesCoursePostsAndAnswerPosts() throws Exception {
         long courseId = 990200, channelId = 990201, postId = 990202, answerPostId = 990203;
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, postId, new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content").toPropertyMap());
@@ -262,7 +262,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteAllAnswerPostsForPost_removesAnswerPostsLeavesThePost() throws Exception {
         long courseId = 990300, channelId = 990301, postId = 990302, answerPostId = 990303;
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, postId, new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content").toPropertyMap());
@@ -278,7 +278,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteAllForCourse_removesEveryRowAndLeavesOtherCourses() throws Exception {
         long courseId = 990400, otherCourseId = 990409, channelId = 990401, lectureId = 990404, postId = 990402, unitId = 990403, otherPostId = 990408;
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, postId, new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content").toPropertyMap());
@@ -298,7 +298,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteAllLectureUnitsForLecture_removesUnitsAndLeavesOthers() throws Exception {
         long courseId = 990500, lectureId = 990501, otherLectureId = 990509, unitId = 990502, otherUnitId = 990508;
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId,
@@ -315,7 +315,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testBulkDelete_removesOlderRowsButSparesRowsWrittenAfterTheDelete() throws Exception {
         long courseId = 990600, channelId = 990601, stalePostId = 990602, newerPostId = 990603;
         // A stale row (no source_seq) stands in for a write that predates the delete; the fence must remove it.
@@ -342,7 +342,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     // entity must never reach the other type's row that happens to share its numeric id.
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteEntity_lectureLeavesLectureUnitWithSameIdIntact() throws Exception {
         long courseId = 990700, sharedId = 990701;
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE, sharedId,
@@ -359,7 +359,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteEntity_postLeavesAnswerPostWithSameIdIntact() throws Exception {
         long courseId = 990800, channelId = 990801, sharedId = 990802;
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, sharedId, new PostSearchableEntityDTO(sharedId, courseId, channelId, "title", "content").toPropertyMap());
@@ -374,7 +374,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testUpsertOfRemovedEntity_convergesToDeleteThatLeavesLectureUnitWithSameIdIntact() throws Exception {
         // No lecture with this id exists in the database, so the dispatcher re-derives the upsert into a delete of the
         // lecture row. That delete must not take the lecture unit sharing the id with it.
@@ -392,7 +392,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testEnqueuedRow_isDueAtItsOwnEnqueueTimeIncludingFractionalSeconds() {
         // An hour ahead so the running dispatcher cannot drain the row while it is asserted on. The .6 s fraction is
         // what a column without fractional seconds rounds up to the next second on MySQL.

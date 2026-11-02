@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261024120000-01-backfill-hyperion-course-settings" author="reyers">
+        <comment>Every course owns one Hyperion settings row; courses created before the row existed receive the defaults, existing rows are kept.</comment>
+        <sql>INSERT INTO hyperion_course_settings (course_id, settings)
+            SELECT course.id, '{"poolGenerationEnabled":false,"questionsPerLectureUnit":12}' FROM course
+            WHERE NOT EXISTS (SELECT 1 FROM hyperion_course_settings settings WHERE settings.course_id = course.id);</sql>
+        <rollback><comment>Keep the rows: deleting them on rollback would discard settings changed since deployment.</comment></rollback>
+    </changeSet>
+</databaseChangeLog>

@@ -36,16 +36,22 @@ import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
+import de.tum.cit.aet.artemis.communication.dto.CreateAnnouncementDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
 import de.tum.cit.aet.artemis.communication.service.ForwardedMessageService;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
+import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -53,6 +59,8 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing Message Posts.
@@ -76,8 +84,12 @@ public class ConversationMessageResource {
 
     private final ForwardedMessageService forwardedMessageService;
 
+    private final ChannelService channelService;
+
     public ConversationMessageResource(ConversationMessagingService conversationMessagingService, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, ForwardedMessageService forwardedMessageService) {
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, ForwardedMessageService forwardedMessageService,
+            ChannelService channelService) {
+        this.channelService = channelService;
         this.conversationMessagingService = conversationMessagingService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -111,6 +123,29 @@ public class ConversationMessageResource {
 
         log.debug("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(PostResponseDTO.from(sendToUserPost));
+    }
+
+    /**
+     * POST /courses/{courseId}/announcements : Post an announcement to a course
+     *
+     * @param courseId     id of the course the announcement belongs to
+     * @param announcement the announcement to post
+     * @return ResponseEntity with status 201 (Created) containing the created announcement,
+     *         or with status 400 (Bad Request) if the course has no announcement channel to post to
+     */
+    @PostMapping("courses/{courseId}/announcements")
+    @EnforceAtLeastInstructorInCourse
+    @AllowedScopes(AgentScope.ANNOUNCEMENTS_POST)
+    @Operation(summary = "Post an announcement to a course", description = """
+            Posts a message to the course's announcement channel (the default one unless channelId is given). \
+            Students are notified immediately and the post is visible at once, so confirm the text with the \
+            instructor before calling this. Requires at least the instructor role in the course.""")
+    @ApiResponse(responseCode = "201", description = "The announcement was posted.")
+    @ApiResponse(responseCode = "400", description = "The channel is not an announcement channel of the course, or the course has no default announcement channel.")
+    public ResponseEntity<PostResponseDTO> createAnnouncement(@PathVariable long courseId, @Valid @RequestBody CreateAnnouncementDTO announcement) throws URISyntaxException {
+        long channelId = channelService.findAnnouncementChannelIdElseThrow(courseId, announcement.channelId());
+        var post = new CreatePostDTO(announcement.content(), announcement.title(), false, new CreatePostConversationDTO(channelId));
+        return createMessage(courseId, post);
     }
 
     /**

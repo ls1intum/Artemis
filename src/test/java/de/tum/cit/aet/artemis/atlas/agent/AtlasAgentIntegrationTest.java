@@ -84,14 +84,14 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testServiceAvailability() {
         boolean available = atlasAgentService.isAvailable();
         assertThat(available).isTrue();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testBasicEndToEndFlow() throws Exception {
         String competencyMessage = "Help me create competencies for a software engineering course covering OOP, design patterns, and testing";
         AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(competencyMessage);
@@ -105,7 +105,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDifferentCourseContexts() throws Exception {
         Course secondCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         String message = "Help with competencies for Computer Science basics";
@@ -121,7 +121,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDatabaseRelatedMessage() throws Exception {
         String message = "What competencies should I create for a database course?";
         AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
@@ -132,7 +132,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testExerciseMappingMessage() throws Exception {
         String message = "Help me map exercises to competencies";
         AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
@@ -143,7 +143,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testSpecificCompetencyListMessage() throws Exception {
         String message = "I want to create competencies for: SQL, NoSQL, Database Design, Query Optimization";
         AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
@@ -154,7 +154,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testBloomsTaxonomyMessage() throws Exception {
         String message = "Generate competencies based on Bloom's taxonomy for my machine learning course";
         AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
@@ -165,7 +165,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPrerequisiteRelationshipsMessage() throws Exception {
         String message = "Can you suggest prerequisite relationships between competencies?";
         AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
@@ -176,7 +176,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testAssessmentFocusedMessage() throws Exception {
         String message = "Help me create assessment-focused competencies for programming exercises";
         AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
@@ -187,7 +187,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testWebDevelopmentMessage() throws Exception {
         String message = "I'm designing a new course on web development. Can you help me create competencies?";
         AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
@@ -198,7 +198,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCourseContentMessage() throws Exception {
         String message = "The course covers HTML, CSS, JavaScript, React, Node.js, and databases.";
         AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
@@ -212,7 +212,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     class ToolIntegration {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldSetCompetenciesModifiedFlagWhenToolCalled() throws Exception {
             String competencyCreationMessage = "Create a competency called 'Object-Oriented Programming' with description 'Understanding OOP principles'";
 
@@ -223,7 +223,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldIndicateToolsAreAvailable() {
             boolean actualAvailability = atlasAgentService.isAvailable();
 
@@ -235,14 +235,14 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     class ConversationHistory {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnEmptyHistoryWhenNoMessages() throws Exception {
             request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/chat/history", course.getId())).andExpect(status().isOk()).andExpect(jsonPath("$").isArray())
                     .andExpect(jsonPath("$").isEmpty());
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnHistoryAfterAddingMessages() throws Exception {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
             String sessionId = "course_%d_user_%d".formatted(course.getId(), instructor.getId());
@@ -257,7 +257,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnMultipleMessagesInHistory() throws Exception {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
             String sessionId = "course_%d_user_%d".formatted(course.getId(), instructor.getId());
@@ -274,7 +274,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldExtractPreviewDataFromEmbeddedMessages() throws Exception {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
             String sessionId = "course_%d_user_%d".formatted(course.getId(), instructor.getId());
@@ -295,7 +295,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldHandleMessagesWithoutPreviewData() throws Exception {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
             String sessionId = "course_%d_user_%d".formatted(course.getId(), instructor.getId());
@@ -316,7 +316,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void shouldReturnForbiddenForTutorAccessingHistory() throws Exception {
             request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/chat/history", course.getId())).andExpect(status().isForbidden());
         }
@@ -326,7 +326,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     class StateManagement {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldTrackCompetencyModifiedState() {
             // Reset state before test
             AtlasAgentService.resetCompetencyModifiedFlag();
@@ -342,7 +342,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnTrueWhenCompetencyWasModified() {
             AtlasAgentService.resetCompetencyModifiedFlag();
             AtlasAgentService.markCompetencyModified();
@@ -353,7 +353,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldReturnFalseWhenCompetencyWasNotModified() {
             AtlasAgentService.resetCompetencyModifiedFlag();
 
@@ -377,7 +377,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void shouldReturnForbiddenForTutorAccessingChatEndpoint() throws Exception {
             AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO("Test message");
 
@@ -387,7 +387,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void shouldAllowInstructorAccessToChatEndpoint() throws Exception {
             AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO("Test message");
 
