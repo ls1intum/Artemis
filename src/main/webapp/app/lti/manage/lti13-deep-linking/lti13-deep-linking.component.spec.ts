@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Lti13DeepLinkingComponent } from 'app/lti/manage/lti13-deep-linking/lti13-deep-linking.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpClient, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { LtiApi } from 'app/openapi/api/lti-api';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -24,8 +25,8 @@ describe('Lti13DeepLinkingComponent', () => {
     let routeParamsSubject: Subject<{ courseId?: string }>;
     let activatedRouteMock: { params: Subject<{ courseId?: string }> };
 
-    let routerMock: { navigate: ReturnType<typeof vi.fn> };
-    let httpMock: { post: ReturnType<typeof vi.fn> };
+    let routerMock: { navigate: ReturnType<typeof vi.fn>; navigateByUrl: ReturnType<typeof vi.fn> };
+    let ltiApiMock: { lti13DeepLinking: ReturnType<typeof vi.fn> };
     let courseManagementServiceMock: { findWithExercisesAndLecturesAndCompetencies: ReturnType<typeof vi.fn> };
     let accountServiceMock: {
         identity: ReturnType<typeof vi.fn>;
@@ -44,8 +45,8 @@ describe('Lti13DeepLinkingComponent', () => {
     beforeEach(async () => {
         routeParamsSubject = new Subject<{ courseId?: string }>();
         activatedRouteMock = { params: routeParamsSubject };
-        routerMock = { navigate: vi.fn().mockReturnValue(Promise.resolve(true)) };
-        httpMock = { post: vi.fn() };
+        routerMock = { navigate: vi.fn().mockResolvedValue(true), navigateByUrl: vi.fn().mockResolvedValue(true) };
+        ltiApiMock = { lti13DeepLinking: vi.fn() };
         courseManagementServiceMock = { findWithExercisesAndLecturesAndCompetencies: vi.fn() };
         accountServiceMock = {
             identity: vi.fn().mockResolvedValue(undefined),
@@ -63,7 +64,7 @@ describe('Lti13DeepLinkingComponent', () => {
                 provideHttpClientTesting(),
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: Router, useValue: routerMock },
-                { provide: HttpClient, useValue: httpMock },
+                { provide: LtiApi, useValue: ltiApiMock },
                 { provide: CourseManagementService, useValue: courseManagementServiceMock },
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: SortService, useValue: sortServiceMock },
@@ -144,78 +145,60 @@ describe('Lti13DeepLinkingComponent', () => {
 
         component.sendDeepLinkRequest();
 
-        expect(httpMock.post).not.toHaveBeenCalled();
+        expect(ltiApiMock.lti13DeepLinking).not.toHaveBeenCalled();
     });
 
-    it('should set isDeepLinking to false if the response status is not 200', async () => {
+    it('should set isDeepLinking to false if the response has no target link', async () => {
         component.selectExercise(exercise1.id);
         component.selectExercise(exercise2.id);
         component.courseId = 123;
-        const nonSuccessResponse = new HttpResponse({
-            status: 400,
-            body: { message: 'Bad request' },
-        });
-        httpMock.post.mockReturnValue(of(nonSuccessResponse));
+        const nonSuccessResponse = {};
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of(nonSuccessResponse));
 
         component.sendDeepLinkRequest();
         await fixture.whenStable();
 
         expect(component.isLinking()).toBe(false);
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
-            observe: 'response',
-            params: new HttpParams()
-                .set('resourceType', DeepLinkingType.EXERCISE)
-                .set('ltiIdToken', '')
-                .set('clientRegistrationId', '')
-                .set('contentIds', Array.from(component.selectedExercises!).join(',')),
-        });
+        expect(ltiApiMock.lti13DeepLinking).toHaveBeenCalledWith(123, DeepLinkingType.EXERCISE, '', '', [1, 2]);
     });
 
     it('should set isLinking to false if there is an error during the HTTP request', async () => {
         component.selectExercise(exercise1.id);
         component.courseId = 123;
         const mockError = new Error('Network error');
-        httpMock.post.mockReturnValue(throwError(() => mockError));
+        ltiApiMock.lti13DeepLinking.mockReturnValue(throwError(() => mockError));
 
         component.sendDeepLinkRequest();
         await fixture.whenStable();
 
         expect(component.isLinking()).toBe(false);
 
-        const expectedParams = new HttpParams()
-            .set('resourceType', DeepLinkingType.EXERCISE)
-            .set('ltiIdToken', '')
-            .set('clientRegistrationId', '')
-            .set('contentIds', Array.from(component.selectedExercises!).join(','));
-
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
-            observe: 'response',
-            params: expectedParams,
-        });
+        expect(ltiApiMock.lti13DeepLinking).toHaveBeenCalledWith(123, DeepLinkingType.EXERCISE, '', '', [1]);
     });
 
     it('should send deep link request and navigate when exercise is selected', () => {
         component.selectExercise(exercise1.id);
         component.courseId = 123;
 
-        const mockResponse = new HttpResponse({
-            status: 200,
-            body: { targetLinkUri: 'http://example.com/deep_link' },
-        });
+        const mockResponse = { targetLinkUri: 'http://localhost:8090/lti/select-content?jwt=token&id=course' };
 
-        httpMock.post.mockReturnValue(of(mockResponse));
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of(mockResponse));
         component.sendDeepLinkRequest();
 
-        const expectedParams = new HttpParams()
-            .set('resourceType', DeepLinkingType.EXERCISE)
-            .set('ltiIdToken', '')
-            .set('clientRegistrationId', '')
-            .set('contentIds', Array.from(component.selectedExercises!).join(','));
+        expect(ltiApiMock.lti13DeepLinking).toHaveBeenCalledWith(123, DeepLinkingType.EXERCISE, '', '', [1]);
+        expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/lti/select-content?jwt=token&id=course', { replaceUrl: true });
+    });
 
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
-            observe: 'response',
-            params: expectedParams,
-        });
+    it.each(['javascript:alert(1)', 'https://example.com/other', 'https://user:pass@example.com/lti/select-content'])('rejects an unsafe deep-link target: %s', (targetLinkUri) => {
+        component.selectExercise(exercise1.id);
+        component.courseId = 123;
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of({ targetLinkUri }));
+
+        component.sendDeepLinkRequest();
+
+        expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
+        expect(component.isLinking()).toBe(false);
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.lti13.deepLinking.unknownError');
     });
 
     it('should retrieve course lectures on init when user is authenticated', async () => {
@@ -293,76 +276,39 @@ describe('Lti13DeepLinkingComponent', () => {
         component.enableCompetency();
         component.courseId = 123;
 
-        const mockResponse = new HttpResponse({
-            status: 200,
-            body: { targetLinkUri: 'http://example.com/deep_link' },
-        });
+        const mockResponse = { targetLinkUri: 'http://localhost:8090/lti/select-content?jwt=token&id=course' };
 
-        httpMock.post.mockReturnValue(of(mockResponse));
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of(mockResponse));
         component.sendDeepLinkRequest();
         await fixture.whenStable();
 
-        const expectedParams = new HttpParams()
-            .set('resourceType', DeepLinkingType.COMPETENCY)
-            .set('ltiIdToken', '')
-            .set('clientRegistrationId', '')
-            .set('contentIds', '')
-            .toString();
-
-        expect(httpMock.post).toHaveBeenCalledWith(
-            `api/lti/lti13/courses/${component.courseId}/deep-linking`,
-            null,
-            expect.objectContaining({
-                observe: 'response',
-                params: expect.objectContaining({
-                    toString: expect.any(Function),
-                }),
-            }),
-        );
-
-        expect(httpMock.post.mock.calls[0][2].params.toString()).toBe(expectedParams);
+        expect(ltiApiMock.lti13DeepLinking).toHaveBeenCalledWith(123, DeepLinkingType.COMPETENCY, '', '', undefined);
     });
 
     it('should send deep link request when learning path is selected', async () => {
         component.enableLearningPath();
         component.courseId = 123;
 
-        const mockResponse = new HttpResponse({
-            status: 200,
-            body: { targetLinkUri: 'http://example.com/deep_link' },
-        });
+        const mockResponse = { targetLinkUri: 'http://localhost:8090/lti/select-content?jwt=token&id=course' };
 
-        httpMock.post.mockReturnValue(of(mockResponse));
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of(mockResponse));
         component.sendDeepLinkRequest();
         await fixture.whenStable();
 
-        const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.LEARNING_PATH).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '');
-
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
-            observe: 'response',
-            params: expectedParams,
-        });
+        expect(ltiApiMock.lti13DeepLinking).toHaveBeenCalledWith(123, DeepLinkingType.LEARNING_PATH, '', '', undefined);
     });
 
     it('should send deep link request when IRIS is selected', async () => {
         component.enableIris();
         component.courseId = 123;
 
-        const mockResponse = new HttpResponse({
-            status: 200,
-            body: { targetLinkUri: 'http://example.com/deep_link' },
-        });
+        const mockResponse = { targetLinkUri: 'http://localhost:8090/lti/select-content?jwt=token&id=course' };
 
-        httpMock.post.mockReturnValue(of(mockResponse));
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of(mockResponse));
         component.sendDeepLinkRequest();
         await fixture.whenStable();
 
-        const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.IRIS).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '');
-
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
-            observe: 'response',
-            params: expectedParams,
-        });
+        expect(ltiApiMock.lti13DeepLinking).toHaveBeenCalledWith(123, DeepLinkingType.IRIS, '', '', undefined);
     });
 
     it('should send deep link request when lectures are selected', async () => {
@@ -373,21 +319,13 @@ describe('Lti13DeepLinkingComponent', () => {
         component.selectLecture(lecture2.id);
         component.courseId = 123;
 
-        const mockResponse = new HttpResponse({
-            status: 200,
-            body: { targetLinkUri: 'http://example.com/deep_link' },
-        });
+        const mockResponse = { targetLinkUri: 'http://localhost:8090/lti/select-content?jwt=token&id=course' };
 
-        httpMock.post.mockReturnValue(of(mockResponse));
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of(mockResponse));
         component.sendDeepLinkRequest();
         await fixture.whenStable();
 
-        const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.LECTURE).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '1,2');
-
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
-            observe: 'response',
-            params: expectedParams,
-        });
+        expect(ltiApiMock.lti13DeepLinking).toHaveBeenCalledWith(123, DeepLinkingType.LECTURE, '', '', [1, 2]);
     });
 
     it('should show an error when no content is selected', () => {
@@ -400,7 +338,7 @@ describe('Lti13DeepLinkingComponent', () => {
         component.sendDeepLinkRequest();
 
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.lti13.deepLinking.selectToLink');
-        expect(httpMock.post).not.toHaveBeenCalled();
+        expect(ltiApiMock.lti13DeepLinking).not.toHaveBeenCalled();
     });
 
     it('should sort exercises by title in ascending order', () => {
@@ -498,21 +436,13 @@ describe('Lti13DeepLinkingComponent', () => {
         component.selectExercise(exercise1.id);
         component.courseId = 123;
 
-        const mockResponse = new HttpResponse({
-            status: 200,
-            body: { targetLinkUri: 'http://example.com/deep_link' },
-        });
+        const mockResponse = { targetLinkUri: 'http://localhost:8090/lti/select-content?jwt=token&id=course' };
 
-        httpMock.post.mockReturnValue(of(mockResponse));
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of(mockResponse));
         component.sendDeepLinkRequest();
         await fixture.whenStable();
 
-        const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.GROUPED_EXERCISE).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '1');
-
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
-            observe: 'response',
-            params: expectedParams,
-        });
+        expect(ltiApiMock.lti13DeepLinking).toHaveBeenCalledWith(123, DeepLinkingType.GROUPED_EXERCISE, '', '', [1]);
     });
 
     it('should send grouped lecture deep link request when lecture grouping is active', async () => {
@@ -520,21 +450,13 @@ describe('Lti13DeepLinkingComponent', () => {
         component.selectLecture(1);
         component.courseId = 123;
 
-        const mockResponse = new HttpResponse({
-            status: 200,
-            body: { targetLinkUri: 'http://example.com/deep_link' },
-        });
+        const mockResponse = { targetLinkUri: 'http://localhost:8090/lti/select-content?jwt=token&id=course' };
 
-        httpMock.post.mockReturnValue(of(mockResponse));
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of(mockResponse));
         component.sendDeepLinkRequest();
         await fixture.whenStable();
 
-        const expectedParams = new HttpParams().set('resourceType', DeepLinkingType.GROUPED_LECTURE).set('ltiIdToken', '').set('clientRegistrationId', '').set('contentIds', '1');
-
-        expect(httpMock.post).toHaveBeenCalledWith(`api/lti/lti13/courses/${component.courseId}/deep-linking`, null, {
-            observe: 'response',
-            params: expectedParams,
-        });
+        expect(ltiApiMock.lti13DeepLinking).toHaveBeenCalledWith(123, DeepLinkingType.GROUPED_LECTURE, '', '', [1]);
     });
 
     it('should not select exercise with undefined id', () => {
