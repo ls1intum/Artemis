@@ -317,69 +317,75 @@ def server_arch():
     s.assembly([(dx, below_y), (dx, data_y + 36 + repo[3])], "Hibernate", (dx + 22, below_y - 22), anchor="start")
     dp_w, _ = s.size_comp(PROVIDER)
     px = ci_x + ci_w // 2
-    provider_x = px - dp_w // 2
+    provider_x = min(px - dp_w // 2, cont_x + cont_w - dp_w)
     s.comp(provider_x, below_y, PROVIDER)
     s.assembly([(px, below_y), (px, icl_y + 40 + vc_h)], "Distributed Data", (px + 22, below_y - 22), anchor="start")
-    agent_x = provider_x + dp_w + 116
     ba_w, _ = s.size_comp("Build Agent")
+    agent_x = provider_x - 120 - ba_w
     s.comp(agent_x, below_y, "Build Agent")
     mid = below_y + db_h // 2
-    s.assembly([(provider_x + dp_w, mid), (agent_x, mid)], "Distributed Data", ((provider_x + dp_w + agent_x) / 2 + 10, mid - 14))
-    s.frame("Server Architecture", max(cont_x + cont_w, agent_x + ba_w) + 24, below_y + 62 + 24)
+    s.assembly([(provider_x, mid), (agent_x + ba_w, mid)], "Distributed Data", ((agent_x + ba_w + provider_x) / 2 - 8, mid - 14))
+    s.frame("Server Architecture", cont_x + cont_w + 24, below_y + 62 + 24)
     return s
 
 
 # ====================================================================== deployment diagram
 def deployment():
-    s = Svg(1030, 640, "Artemis deployment overview (UML deployment diagram)",
-            "User devices reach the reverse proxy, which forwards to the core nodes running the Artemis server with LocalVC and LocalCI. "
+    s = Svg(0, 0, "Artemis deployment overview (UML deployment diagram)",
+            "User devices with a web browser, a Git client or a mobile app reach the reverse proxy, which forwards to the core nodes running the Artemis server with LocalVC and LocalCI. "
             "A broker node relays websocket messages, a distributed data server hosts Redis or Valkey, and a database server hosts PostgreSQL. "
             "Build agent nodes run the build jobs. They clone repositories from the Artemis server and share job state through the distributed data server.")
     d = Svg.DEPTH
-
-    # every box of the middle column has the width of the widest one, so that vertical connectors are straight
-    column_w = max(node_size("Distributed Data Server", ["Redis or Valkey"])[0], node_size("Core Node", ["Artemis Server"])[0], node_size("Build Agent Node", ["Artemis Build Agent"])[0])
+    node_h = 78
     row = 44  # between two rows of boxes, the length of a vertical connector
+
+    users = ["Web Browser", "Mobile App", "Git Client"]
+    core_w = max(node_size("Core Node", ["Artemis Server"])[0], node_size("Distributed Data Server", ["Redis or Valkey"])[0])
     broker_y = 56
-    core_y = broker_y + 78 + row + d
-    redis_y = core_y + 78 + row + d
-    agent_y = redis_y + 78 + row + d
+    core_y = broker_y + node_h + row + d
+    redis_y = core_y + node_h + row + d
     chain = core_y + 34  # the height of the horizontal connectors
 
-    ud = node_with(s, 30, chain - 90, "User Device", ["Web Browser", "Git Client"])
+    # the user device ends at the same height as the proxy and the core node
+    ud_h = node_size("User Device", users, len(users))[1]
+    ud = node_with(s, 30, core_y + node_h - ud_h, "User Device", users)
     proxy_w = node_size("Reverse Proxy", ["nginx"])[0]
     proxy_x = ud[0] + ud[2] + d + 66
-    col_x = proxy_x + proxy_w + d + 96
     node_with(s, proxy_x, core_y, "Reverse Proxy", ["nginx"], w=proxy_w)
     s.line([(ud[0] + ud[2] + d, chain), (proxy_x, chain)])
-    s.text((ud[0] + ud[2] + d + proxy_x) / 2, chain - 8, "«HTTPS»", 10)
-    s.line([(proxy_x + proxy_w + d, chain), (col_x, chain)])
-    s.text((proxy_x + proxy_w + d + col_x) / 2, chain - 8, "«HTTP, WebSocket»", 10)
+    s.text((ud[0] + ud[2] + d + proxy_x) / 2, chain - 8, "\u00abHTTPS\u00bb", 10)
 
-    node_with(s, col_x, core_y, "Core Node", ["Artemis Server"], w=column_w)
-    node_with(s, col_x, broker_y, "Broker Node", ["ActiveMQ"], w=column_w)
-    node_with(s, col_x, redis_y, "Distributed Data Server", ["Redis or Valkey"], w=column_w)
-    node_with(s, col_x, agent_y, "Build Agent Node", ["Artemis Build Agent"], w=column_w)
+    proxy_right = proxy_x + proxy_w + d
+    col_x = proxy_right + 160
+    s.line([(proxy_right, chain), (col_x, chain)])
+    s.text((proxy_right + col_x) / 2, chain - 8, "\u00abHTTP, WebSocket\u00bb", 10)
+    node_with(s, col_x, core_y, "Core Node", ["Artemis Server"], w=core_w)
+    node_with(s, col_x, broker_y, "Broker Node", ["ActiveMQ"], w=core_w)
+    node_with(s, col_x, redis_y, "Distributed Data Server", ["Redis or Valkey"], w=core_w)
 
-    vx = col_x + column_w // 2 + d // 2  # inside the width of the front and of the top face of every box
-    s.line([(vx, broker_y + 78), (vx, core_y - d)])
-    s.text(vx + 10, (broker_y + 78 + core_y - d) / 2 + 4, "«STOMP»", 10, anchor="start")
-    s.line([(vx, core_y + 78), (vx, redis_y - d)])
-    s.text(vx + 10, (core_y + 78 + redis_y - d) / 2 + 4, "«Redis»", 10, anchor="start")
-    s.line([(vx, redis_y + 78), (vx, agent_y - d)])
-    s.text(vx + 10, (redis_y + 78 + agent_y - d) / 2 + 4, "«Redis»", 10, anchor="start")
+    vx = col_x + core_w // 2 + d // 2  # inside the width of the front and of the top face of both boxes
+    s.line([(vx, broker_y + node_h), (vx, core_y - d)])
+    s.text(vx + 10, (broker_y + node_h + core_y - d) / 2 + 4, "\u00abSTOMP\u00bb", 10, anchor="start")
+    s.line([(vx, core_y + node_h), (vx, redis_y - d)])
+    s.text(vx + 10, (core_y + node_h + redis_y - d) / 2 + 4, "\u00abRedis\u00bb", 10, anchor="start")
 
-    right_x = col_x + column_w + d + 84
+    # the build agent node stands beside the distributed data server, below the reverse proxy
+    git_x = proxy_right + 60
+    agent_w = node_size("Build Agent Node", ["Artemis Build Agent"])[0]
+    agent_x = git_x + 25 - agent_w
+    node_with(s, agent_x, redis_y, "Build Agent Node", ["Artemis Build Agent"], w=agent_w)
+    mid = redis_y + 34
+    s.line([(agent_x + agent_w + d, mid), (col_x, mid)])
+    s.text((agent_x + agent_w + d + col_x) / 2, mid - 8, "\u00abRedis\u00bb", 10)
+    s.line([(col_x, core_y + 64), (git_x, core_y + 64), (git_x, redis_y - d)])
+    s.text(git_x + 8, (core_y + node_h + redis_y - d) / 2 + 4, "\u00abGit (HTTPS, SSH)\u00bb", 10, anchor="start")
+
+    right_x = col_x + core_w + d + 84
     db_w = node_size("Database Server", ["PostgreSQL"])[0]
     node_with(s, right_x, core_y, "Database Server", ["PostgreSQL"], w=db_w)
-    s.line([(col_x + column_w + d, chain), (right_x, chain)])
-    s.text((col_x + column_w + d + right_x) / 2, chain - 8, "«Hibernate»", 10)
-
-    # the build agents clone from the server: a connector that leaves at the side and returns at the side
-    bx = right_x - 42
-    s.line([(col_x + column_w + d, core_y + 62), (bx, core_y + 62), (bx, agent_y + 62), (col_x + column_w + d, agent_y + 62)])
-    s.text(bx + 8, (core_y + agent_y) / 2 + 80, "«Git (HTTPS, SSH)»", 10, anchor="start")
-    s.frame("Deployment Overview", max(right_x + db_w + d, bx + 8 + tw("«Git (HTTPS, SSH)»", 10)) + 24, agent_y + 78 + 24)
+    s.line([(col_x + core_w + d, chain), (right_x, chain)])
+    s.text((col_x + core_w + d + right_x) / 2, chain - 8, "\u00abHibernate\u00bb", 10)
+    s.frame("Deployment Overview", right_x + db_w + d + 24, redis_y + node_h + 24)
     return s
 
 
