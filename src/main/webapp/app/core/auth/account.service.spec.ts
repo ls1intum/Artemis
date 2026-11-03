@@ -384,6 +384,27 @@ describe('AccountService', () => {
         });
     });
 
+    describe('hasAdministratorAccess', () => {
+        it.each([
+            { authority: Authority.ADMIN, required: false, loggedInWithPasskey: false, passkeySuperAdminApproved: false, expected: true },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: false, passkeySuperAdminApproved: true, expected: false },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: false, expected: false },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: true },
+            { authority: Authority.SUPER_ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: true },
+            { authority: Authority.INSTRUCTOR, required: false, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: false },
+        ])('checks effective administrator rights for $authority (required=$required, passkey=$loggedInWithPasskey, approved=$passkeySuperAdminApproved)', (session) => {
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(session.required);
+            accountService.userIdentity.set({
+                id: 10,
+                authorities: [session.authority],
+                loggedInWithPasskey: session.loggedInWithPasskey,
+                passkeySuperAdminApproved: session.passkeySuperAdminApproved,
+            } as User);
+
+            expect(accountService.hasAdministratorAccess()).toBe(session.expected);
+        });
+    });
+
     describe('test isAtLeastTutorForExercise', () => {
         it('should return false if user is not tutor', () => {
             accountService.userIdentity.set(user2);

@@ -38,6 +38,7 @@ export interface IAccountService {
     authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: readonly Authority[]) => Promise<boolean>;
     hasAnyAuthorityDirect: (authorities: readonly Authority[]) => boolean;
+    hasAdministratorAccess: () => boolean;
     identity: (force?: boolean) => Promise<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
     isAtLeastTutorInCourseWithId: (courseId?: number) => boolean;
@@ -292,7 +293,7 @@ export class AccountService implements IAccountService {
      * Unlike {@link isAdmin}, the administrator authority alone is not enough while passkeys are required for administrator
      * features: until the administrator signs in with an approved passkey, the server does not grant the administrator rights.
      */
-    private hasAdministratorAccess(): boolean {
+    hasAdministratorAccess(): boolean {
         return this.isAdmin() && (!this.isPasskeyRequiredForAdministratorFeatures() || this.isUserLoggedInWithApprovedPasskey());
     }
 

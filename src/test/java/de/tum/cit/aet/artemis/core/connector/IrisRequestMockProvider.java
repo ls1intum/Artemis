@@ -454,6 +454,21 @@ public class IrisRequestMockProvider {
         mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withRawStatus(status.value()));
     }
 
+    /**
+     * Answers the global search request with an error whose body repeats the whole request, as a validation error that quotes its input does.
+     *
+     * @param status          the error status
+     * @param requestConsumer receives the request Artemis sent
+     */
+    public void mockGlobalSearchIrisAnswerErrorEchoingTheRequest(HttpStatus status, Consumer<PyrisGlobalSearchAnswerRequestDTO> requestConsumer) {
+        mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            String body = ((MockClientHttpRequest) request).getBodyAsString();
+            requestConsumer.accept(mapper.readValue(body, PyrisGlobalSearchAnswerRequestDTO.class));
+            return withRawStatus(status.value()).contentType(MediaType.APPLICATION_JSON).body("{\"detail\":\"invalid input: " + body.replace("\"", "'") + "\"}")
+                    .createResponse(request);
+        });
+    }
+
     private String write(Object responseBody) {
         try {
             return mapper.writeValueAsString(responseBody);

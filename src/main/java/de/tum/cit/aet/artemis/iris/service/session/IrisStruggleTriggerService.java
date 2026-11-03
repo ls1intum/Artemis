@@ -101,7 +101,7 @@ public class IrisStruggleTriggerService {
     }
 
     /**
-     * Trigger a proactive struggle intervention. Returns accepted with a job token, or rejected carrying whether
+     * Trigger a proactive struggle intervention. Returns accepted with a run id, or rejected carrying whether
      * proactive help is unavailable for this exercise or a run is already in flight. A spent Iris budget and an
      * active admission cooldown throw instead, and the endpoint answers 429. Only the heavy DTO build and the POST
      * run off the request thread.
@@ -115,7 +115,7 @@ public class IrisStruggleTriggerService {
      * @param requestToken     the scoped-cancel identity; null on older clients
      * @param proactivityMode  the presence level ({@code pull} | {@code push}); enforces Pull in the callback
      * @param user             the requesting student
-     * @return the trigger outcome (accepted + job token, or rejected with the unavailability flag for the 202)
+     * @return the trigger outcome (accepted + run id, or rejected with the unavailability flag for the 202)
      */
     public StruggleTriggerOutcome requestStruggleIntervention(long exerciseId, PyrisStruggleSignalDTO signal, Map<String, String> uncommittedFiles, @Nullable String intent,
             @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode, User user) {
@@ -131,26 +131,26 @@ public class IrisStruggleTriggerService {
             // told from one on the way out. The release sits in a finally because nothing observes this handler, so
             // a throw above would leave the slot reserved for the whole job timeout.
             try {
-                var reserved = pyrisJobService.getJob(p.jobToken());
+                var reserved = pyrisJobService.getJob(p.runId());
                 if (reserved instanceof StruggleInterventionJob struggleJob) {
                     emitTerminalCompletion(struggleJob);
                 }
             }
             finally {
-                pyrisJobService.releaseStruggleInFlightJob(p.jobToken(), p.userId(), p.exerciseId());
+                pyrisJobService.releaseStruggleInFlightJob(p.runId(), p.userId(), p.exerciseId());
             }
             return null;
         });
-        return new StruggleTriggerOutcome(true, false, p.jobToken());
+        return new StruggleTriggerOutcome(true, false, p.runId());
     }
 
     // Undo an admission whose run provably never reached Pyris. The in-flight marker goes first, because it is what a concurrent trigger
     // reads to decide it may wait for someone else's terminal frame. Each step is attempted whatever the other did and records rather
     // than throws its own failure, since the caller is unwinding an error that matters more. null on a deliberate bail, where a cleanup
     // failure is logged instead
-    private void undoAdmission(String jobToken, String cooldownToken, long userId, long exerciseId, @Nullable String intent, @Nullable RuntimeException carrier) {
+    private void undoAdmission(String runId, String cooldownToken, long userId, long exerciseId, @Nullable String intent, @Nullable RuntimeException carrier) {
         try {
-            pyrisJobService.releaseStruggleInFlightJob(jobToken, userId, exerciseId);
+            pyrisJobService.releaseStruggleInFlightJob(runId, userId, exerciseId);
         }
         catch (RuntimeException releaseFailure) {
             record(carrier, releaseFailure, "release the struggle in-flight slot", userId, exerciseId);
@@ -245,7 +245,7 @@ public class IrisStruggleTriggerService {
             log.info("Struggle intervention already in flight for user {} exercise {}, skipping", user.getId(), exerciseId);
             return TriggerPreparation.inFlight();
         }
-        String jobToken = tokenOpt.get();
+        String runId = tokenOpt.get();
         // Register before the dispatch, so no callback can arrive before the row exists and every later path can
         // lock a row that is already there. After the reservation, so rejected and in-flight triggers leave no rows.
         String registrableEpisodeId = StruggleEpisodeDTO.usableEpisodeId(episodeId);
@@ -254,12 +254,12 @@ public class IrisStruggleTriggerService {
                 irisProactiveEpisodeService.registerEpisode(user.getId(), exerciseId, registrableEpisodeId);
             }
             catch (RuntimeException exception) {
-                undoAdmission(jobToken, cooldownToken, user.getId(), exerciseId, intent, exception);
+                undoAdmission(runId, cooldownToken, user.getId(), exerciseId, intent, exception);
                 throw exception;
             }
         }
         return TriggerPreparation.triggered(new PreparedTrigger(course.getId(), exerciseId, user.getId(), settings.variant().jsonValue(), settings.supportLevel().jsonValue(),
-                jobToken, cooldownToken, intent, episode, confirmReason, requestToken, proactivityMode));
+                runId, cooldownToken, intent, episode, confirmReason, requestToken, proactivityMode));
     }
 
     /**
@@ -287,11 +287,11 @@ public class IrisStruggleTriggerService {
         if (!userAiPreferenceService.hasOptedIntoLlmUsage(user.getId())) {
             log.info("Struggle intervention skipped: user {} is no longer opted into LLM usage", p.userId());
             // Emit the completion before releasing, the same order as the dispatch-failure path above.
-            if (pyrisJobService.getJob(p.jobToken()) instanceof StruggleInterventionJob struggleJob) {
+            if (pyrisJobService.getJob(p.runId()) instanceof StruggleInterventionJob struggleJob) {
                 emitTerminalCompletion(struggleJob);
             }
             // Bailed before any egress, so the whole admission is undone.
-            undoAdmission(p.jobToken(), p.cooldownToken(), p.userId(), p.exerciseId(), p.intent(), null);
+            undoAdmission(p.runId(), p.cooldownToken(), p.userId(), p.exerciseId(), p.intent(), null);
             return;
         }
         var exercise = programmingExerciseRepository.findByIdElseThrow(p.exerciseId());
@@ -308,12 +308,12 @@ public class IrisStruggleTriggerService {
         // still POST the student's code and chat history, and the freed slot would let a second run start alongside
         // it. Under it, cancel either completes before the re-read, which then finds no job, or waits until the
         // request has gone out. The lock also covers the connector-failure cleanup that releases the slot.
-        pyrisJobService.runWithJobLock(p.jobToken(), () -> {
-            if (!(pyrisJobService.getJob(p.jobToken()) instanceof StruggleInterventionJob)) {
+        pyrisJobService.runWithJobLock(p.runId(), () -> {
+            if (!(pyrisJobService.getJob(p.runId()) instanceof StruggleInterventionJob)) {
                 log.info("Struggle intervention for user {} exercise {} was cancelled before dispatch, sending nothing", p.userId(), p.exerciseId());
                 return null;
             }
-            pyrisPipelineService.executeStruggleInterventionPipeline(p.variant(), p.supportLevel(), p.jobToken(), user, signal, exerciseDTO, submissionDTO, courseDTO, chatHistory,
+            pyrisPipelineService.executeStruggleInterventionPipeline(p.variant(), p.supportLevel(), p.runId(), user, signal, exerciseDTO, submissionDTO, courseDTO, chatHistory,
                     p.exerciseId(), p.intent(), p.episode(), p.proactivityMode());
             return null;
         });
@@ -372,7 +372,7 @@ public class IrisStruggleTriggerService {
     }
 
     /** Ids and immutable values only, so no entity crosses threads and the snapshot is safe for the async dispatch. */
-    public record PreparedTrigger(long courseId, long exerciseId, long userId, String variant, String supportLevel, String jobToken, String cooldownToken, @Nullable String intent,
+    public record PreparedTrigger(long courseId, long exerciseId, long userId, String variant, String supportLevel, String runId, String cooldownToken, @Nullable String intent,
             @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode) {
     }
 
@@ -403,7 +403,7 @@ public class IrisStruggleTriggerService {
         }
     }
 
-    /** Outcome surfaced to the REST layer: accepted (with job token) or rejected, unavailability carried for the 202. */
-    public record StruggleTriggerOutcome(boolean accepted, boolean courseDisabled, @Nullable String jobToken) {
+    /** Outcome surfaced to the REST layer: accepted (with run id) or rejected, unavailability carried for the 202. */
+    public record StruggleTriggerOutcome(boolean accepted, boolean courseDisabled, @Nullable String runId) {
     }
 }
