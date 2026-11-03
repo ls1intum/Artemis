@@ -83,7 +83,6 @@ artemis:
       completions-path: /api/chat/completions
       temperature: 0
       timeout-seconds: 90
-      max-retries: 3
 ```
 
 | Property | Required | Description |
@@ -95,11 +94,10 @@ artemis:
 | `artemis.deimos.llm.completions-path` | no | Must end with `/chat/completions`. Defaults to `/api/chat/completions`. |
 | `artemis.deimos.llm.temperature` | no | Sampling temperature. Defaults to `0`. |
 | `artemis.deimos.llm.timeout-seconds` | no | Per-request timeout. Defaults to `90`. |
-| `artemis.deimos.llm.max-retries` | no | Transport retries performed by the OpenAI SDK. Defaults to `3`. |
 | `artemis.deimos.executor.*` | no | Sizing of the dedicated batch executor. |
 
-If the module is enabled with a missing or invalid `base-url`, `model`, `completions-path`, `timeout-seconds`, or
-`max-retries`, Artemis refuses to start and reports which property is wrong. This is deliberate: a misconfigured
+If the module is enabled with a missing or invalid `base-url`, `model`, `completions-path` or
+`timeout-seconds`, Artemis refuses to start and reports which property is wrong. This is deliberate: a misconfigured
 endpoint would mean student code being sent somewhere you did not intend.
 
 ### Runtime feature toggle

@@ -390,7 +390,7 @@ default boolean isLocked() {
 The infrastructure already supports this:
 
 * `MailSendingService.sendEmail(...)` and `MailSendingService.buildAndSendAsync(...)` are annotated with `@Async` and are the **default** way to send email.
-* `MailSendingService.sendEmailSync(...)` and `MailSendingService.buildAndSendSync(...)` exist only for the rare case where a caller genuinely needs the send to complete before continuing (for example, integration tests that assert on a `MailpitClient` capture). Production code should not use them.
+* `MailSendingService.sendEmailSync(...)` and `MailSendingService.buildAndSendSync(...)` exist only for the rare case where a caller genuinely needs the send to complete before continuing (for example, integration tests that assert on the sent mail). Production code should not use them.
 
 ### Make the *enclosing* method `@Async`, not only the send
 

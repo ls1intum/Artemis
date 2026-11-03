@@ -202,7 +202,7 @@ It provides endpoints so users can interact with these data structures, such as 
 The CI Management has access to the database and the file system.
 
 The CI Management subsystem implements the `ContinuousIntegrationTriggerService` interface, the `LocalCITriggerService` which provides the `triggerBuild` method. This method gets called whenever a repository needs to be tested, i.e. after creating a programming exercise or when a student submits code.
-When the `triggerBuild` method is called, all information necessary to execute the build job is prepared and used to create a `BuildJobQueueItem` object. The object contains, among other things, repository URIs, the build configuration, a user-defined build script (prepared by the `LocalCIScriptService`) and a priority value (more details in the Priority Calculation section).
+When the `triggerBuild` method is called, all information necessary to execute the build job is prepared and used to create a `BuildJobQueueItem` object. The object contains, among other things, repository URIs, the build configuration, a user-defined build script (prepared by the `BuildScriptProviderService`) and a priority value (more details in the Priority Calculation section).
 The exercise due date is also taken into account. This object is then added to the job queue where it will be retrieved by a build agent to execute the build job. The following diagram shows the structure of the `BuildJobQueueItem`:
 
 <Image src={iclBuildJobItem} caption="BuildJobQueueItem" alt="BuildJobQueueItem" size={ImageSize.large} />
@@ -257,7 +257,7 @@ This ensures that build agents are accurately tracked, including their status, n
 The collected data is used to maintain an up-to-date view of the system.
 
 To improve the reliability of the system, the `BuildJobManagementService` implements a timeout mechanism.
-Administrators can configure a maximum amount of time that build jobs can run by setting the `artemis.continuous-integration.timeout-seconds` environment variable. The default value is 120 seconds.
+Administrators can configure a maximum amount of time that build jobs can run by setting `artemis.continuous-integration.build-timeout-seconds.max`. The default value is 240 seconds.
 If a build job times out, the `BuildJobManagementService` interrupts the build job.
 This is crucial to prevent jobs that require an abnormally high amount of time from clogging up the system and reducing overall system performance.
 
@@ -323,7 +323,7 @@ This approach ensures the efficient synchronization of build job processing.
 The CI Management also provides REST endpoints and supports WebSocket connections.
 These endpoints and real-time connections allow users to monitor and manage both queued and running jobs along with the build agents themselves,
 enhancing the system's operability and user interaction capabilities.
-Additionally, the `processingJobs`, `buildJobQueue` and `canceledBuildJobsTopic` are enhanced with Hazelcast `EntryListener`, `ItemListener` and `MessageListener`, enabling immediate detection of changes such as additions, removals, and updates.
+Additionally, the `processingJobs`, `buildJobQueue` and `canceledBuildJobsTopic` are observed with listeners of the distributed data provider, enabling immediate detection of changes such as additions, removals, and updates.
 As previously mentioned, most of the listeners are added in `LocalCIEventListenerService`.
 
 ### Build Job Cancellation
