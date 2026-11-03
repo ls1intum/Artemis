@@ -12,9 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -69,29 +66,33 @@ public class TutorialGroupScheduleService {
     public void saveScheduleAndGenerateScheduledSessions(Course course, TutorialGroup tutorialGroup, TutorialGroupSchedule tutorialGroupSchedule) {
         tutorialGroupSchedule.setTutorialGroup(tutorialGroup);
         boolean scheduleAlreadyExisted = tutorialGroupSchedule.getId() != null;
-        // Key by instant, not ZonedDateTime: a persisted start read back (in UTC) would not equal a freshly generated one in the
-        // course zone even for the same moment, so a ZonedDateTime key would never match and nothing would be preserved.
-        Map<Instant, TutorialGroupSession> existingSessionsByStart = scheduleAlreadyExisted ? tutorialGroupSessionRepository.findAllByScheduleId(tutorialGroupSchedule.getId())
-                .stream().collect(Collectors.toMap(session -> session.getStart().toInstant(), Function.identity(), (first, second) -> first)) : new HashMap<>();
+
+        // Individually edited sessions are detached from the schedule (schedule set to null) but keep their slot. A regenerated session
+        // that overlaps one of them is left to the edited session instead of being added as a duplicate.
+        List<TutorialGroupSession> detachedSessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId()).stream()
+                .filter(session -> session.getTutorialGroupSchedule() == null).toList();
+
+        // Key by instant, not ZonedDateTime: a persisted start read back (in UTC) would not equal a freshly generated one in the course
+        // zone even for the same moment, so a ZonedDateTime key would never match and nothing would be preserved. Keep the first session
+        // per start as the match and remove any surplus sessions that share a start.
+        Map<Instant, TutorialGroupSession> existingSessionsByStart = new HashMap<>();
+        List<TutorialGroupSession> sessionsToRemove = new ArrayList<>();
+        if (scheduleAlreadyExisted) {
+            for (TutorialGroupSession existingSession : tutorialGroupSessionRepository.findAllByScheduleId(tutorialGroupSchedule.getId())) {
+                if (existingSessionsByStart.putIfAbsent(existingSession.getStart().toInstant(), existingSession) != null) {
+                    sessionsToRemove.add(existingSession);
+                }
+            }
+        }
 
         TutorialGroupSchedule savedSchedule = tutorialGroupScheduleRepository.save(tutorialGroupSchedule);
         List<TutorialGroupSession> generatedSessions = generateSessionsForSchedule(course, savedSchedule);
-        if (!scheduleAlreadyExisted) {
-            tutorialGroupSessionRepository.saveAll(generatedSessions);
-            return;
-        }
-        // Individually edited sessions are detached from the schedule (schedule set to null) but keep their slot, so they are not in
-        // existingSessionsByStart. Collect their starts to leave such a slot to the edited session instead of duplicating it.
-        Set<Instant> detachedSessionStarts = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId()).stream()
-                .filter(session -> session.getTutorialGroupSchedule() == null).map(session -> session.getStart().toInstant()).collect(Collectors.toSet());
 
-        // The schedule changed: a regenerated session that starts at the same time as an existing one is the same session, so keep its
-        // id and recorded attendance and let its end and location follow the new schedule. Existing sessions whose start no longer
-        // occurs are removed.
+        // A regenerated session that starts at the same time as an existing one is the same session, so keep its id and recorded
+        // attendance and let its end and location follow the new schedule. Existing sessions whose start no longer occurs are removed.
         List<TutorialGroupSession> sessionsToPersist = new ArrayList<>();
         for (TutorialGroupSession generatedSession : generatedSessions) {
-            Instant generatedStart = generatedSession.getStart().toInstant();
-            TutorialGroupSession existingSession = existingSessionsByStart.remove(generatedStart);
+            TutorialGroupSession existingSession = existingSessionsByStart.remove(generatedSession.getStart().toInstant());
             if (existingSession != null) {
                 existingSession.setEnd(generatedSession.getEnd());
                 existingSession.setLocation(generatedSession.getLocation());
@@ -100,16 +101,27 @@ public class TutorialGroupScheduleService {
                 updateStatusAndFreePeriod(existingSession, Optional.ofNullable(generatedSession.getTutorialGroupFreePeriod()));
                 sessionsToPersist.add(existingSession);
             }
-            else if (!detachedSessionStarts.contains(generatedStart)) {
+            else if (detachedSessions.stream().noneMatch(detached -> overlaps(generatedSession, detached))) {
                 sessionsToPersist.add(generatedSession);
             }
         }
         // Save kept/new sessions before deleting obsolete ones, so an interruption leaves extra sessions, never missing ones.
         tutorialGroupSessionRepository.saveAll(sessionsToPersist);
-        List<TutorialGroupSession> sessionsToRemove = List.copyOf(existingSessionsByStart.values());
+        sessionsToRemove.addAll(existingSessionsByStart.values());
         if (!sessionsToRemove.isEmpty()) {
             tutorialGroupSessionRepository.deleteAll(sessionsToRemove);
         }
+    }
+
+    /**
+     * Whether two sessions overlap in time, so that only one of them should occupy the slot.
+     *
+     * @param first  the first session
+     * @param second the second session
+     * @return true if their intervals overlap
+     */
+    private static boolean overlaps(TutorialGroupSession first, TutorialGroupSession second) {
+        return first.getStart().isBefore(second.getEnd()) && second.getStart().isBefore(first.getEnd());
     }
 
     /**

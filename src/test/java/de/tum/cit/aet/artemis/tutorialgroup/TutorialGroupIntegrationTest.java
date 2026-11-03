@@ -688,6 +688,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             List<TutorialGroupSession> initialSessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId).stream()
                     .sorted(Comparator.comparing(TutorialGroupSession::getStart)).toList();
             assertThat(initialSessions).hasSize(4);
+            List<Long> initialSessionIds = initialSessions.stream().map(TutorialGroupSession::getId).toList();
             TutorialGroupSession firstSession = initialSessions.getFirst();
             firstSession.setAttendanceCount(7);
             tutorialGroupSessionRepository.saveAndFlush(firstSession);
@@ -701,6 +702,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             List<TutorialGroupSession> updatedSessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId).stream()
                     .sorted(Comparator.comparing(TutorialGroupSession::getStart)).toList();
             assertThat(updatedSessions).hasSize(5);
+            // Every session from the original schedule keeps its id; only the newly added week is new.
+            assertThat(updatedSessions).extracting(TutorialGroupSession::getId).containsAll(initialSessionIds);
             TutorialGroupSession preservedFirstSession = updatedSessions.getFirst();
             assertThat(preservedFirstSession.getId()).isEqualTo(firstSession.getId());
             assertThat(preservedFirstSession.getAttendanceCount()).isEqualTo(7);
