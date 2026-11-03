@@ -8,11 +8,12 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { GeneratedQuizQuestion } from './generated-quiz-question';
 
 /**
  * Response containing generated quiz questions
  */
 export interface QuizQuestionGenerationResponse {
     /** Generated quiz questions */
-    questions: Array<any>;
+    questions: Array<GeneratedQuizQuestion>;
 }

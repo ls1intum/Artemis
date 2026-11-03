@@ -164,8 +164,6 @@ artemis:
       generator-model:
       # Model (for Azure: deployment name) that judges generated questions; blank uses the default chat model configured below.
       judge-model:
-      question-types: single-choice,multiple-choice
-      difficulties: easy,medium,hard
       # Questions requested per generation call; a cell larger than this is filled in several calls.
       generation-batch-size: 8
       # A generation or filter claim older than this is treated as abandoned by a dead node and released at the next build.

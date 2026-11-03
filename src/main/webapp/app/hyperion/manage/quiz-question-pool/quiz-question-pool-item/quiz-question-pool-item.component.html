@@ -1,0 +1,102 @@
+@let view = item();
+@let question = view.question;
+<div
+    class="border-l-[3px] pl-3"
+    [class.border-l-state-success]="question.reviewState === 'APPROVED'"
+    [class.border-l-border]="question.reviewState !== 'APPROVED'"
+    [class.opacity-60]="question.reviewState === 'EXCLUDED' || question.decision?.accepted === false"
+    [attr.data-testid]="'pool-item-' + question.id"
+>
+    @if (showContext()) {
+        <p class="m-0 mb-1 text-sm text-muted-color" [attr.data-testid]="'pool-item-context-' + question.id">{{ question.competencyTitle }} · {{ question.lectureUnitName }}</p>
+    }
+    @if (question.question; as generated) {
+        <jhi-quiz-ai-generated-question-card [question]="generated" [questionIndex]="view.index" />
+    }
+    <div class="mt-2 flex flex-wrap items-center gap-2">
+        <span class="text-xs font-semibold uppercase text-muted-color" [jhiTranslate]="'artemisApp.hyperion.quizQuestionPool.list.difficulty.' + question.difficulty"></span>
+        @for (flagged of view.flaggedVerdicts; track flagged.verdict.mode) {
+            <tumaet-ui-tag [severity]="flagged.verdict.triggered ? 'danger' : 'warn'" size="sm" [attr.data-testid]="'pool-verdict-' + question.id + '-' + flagged.verdict.mode">
+                @if (flagged.verdict.triggered) {
+                    <fa-icon [icon]="faTriangleExclamation" class="me-1" />
+                    <span class="sr-only" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.triggered"></span>
+                }
+                <span [jhiTranslate]="flagged.labelKey"></span>
+                <span class="ms-1 font-normal">{{ flagged.percent }} %</span>
+            </tumaet-ui-tag>
+        }
+        <button tumAetUiButton type="button" severity="secondary" variant="text" size="small" class="ms-auto" (click)="toggleRationale.emit(question.id)">
+            <span [jhiTranslate]="view.expanded ? 'artemisApp.hyperion.quizQuestionPool.list.hideRationale' : 'artemisApp.hyperion.quizQuestionPool.list.showRationale'"></span>
+        </button>
+    </div>
+    @if (view.expanded && question.decision; as decision) {
+        <div class="mt-2 rounded-md border border-border p-3 text-sm" [attr.data-testid]="'pool-rationale-' + question.id">
+            <p class="m-0 font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.score" [translateValues]="{ score: view.scorePercent }"></p>
+            @if (decision.rationale) {
+                <p class="mt-1 mb-0">{{ decision.rationale }}</p>
+            }
+            <ul class="mt-2 mb-0 flex list-none flex-col gap-1 p-0">
+                @for (entry of view.verdicts; track entry.verdict.mode) {
+                    <li>
+                        <span class="font-semibold" [jhiTranslate]="entry.labelKey"></span>
+                        <span class="mx-1 text-muted-color">{{ entry.percent }} %</span>
+                        @if (entry.verdict.justification) {
+                            <span class="text-muted-color">{{ entry.verdict.justification }}</span>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+    <div class="mt-2 flex flex-wrap items-center gap-2">
+        <tumaet-ui-tag [severity]="view.reviewSeverity" [attr.data-testid]="'pool-review-state-' + question.id">
+            <span [jhiTranslate]="view.reviewLabelKey"></span>
+        </tumaet-ui-tag>
+        @if (canReview()) {
+            <button
+                tumAetUiButton
+                type="button"
+                size="small"
+                [severity]="question.reviewState === 'APPROVED' ? 'primary' : 'secondary'"
+                [variant]="question.reviewState === 'APPROVED' ? 'solid' : 'outlined'"
+                [disabled]="view.busy"
+                [attr.data-testid]="'pool-approve-' + question.id"
+                (click)="setReview('APPROVED')"
+            >
+                <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.approve"></span>
+            </button>
+            <button
+                tumAetUiButton
+                type="button"
+                size="small"
+                severity="secondary"
+                [variant]="question.reviewState === 'EXCLUDED' ? 'solid' : 'outlined'"
+                [disabled]="view.busy"
+                [attr.data-testid]="'pool-exclude-' + question.id"
+                (click)="setReview('EXCLUDED')"
+            >
+                <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.exclude"></span>
+            </button>
+        }
+        @if (canDelete()) {
+            <span
+                class="ms-auto inline-flex"
+                [tumAetUiTooltip]="deletionBlocked() ? ('artemisApp.hyperion.quizQuestionPool.list.deleteBlocked' | artemisTranslate) : ''"
+                tumAetUiTooltipPlacement="top"
+            >
+                <button
+                    tumAetUiButton
+                    type="button"
+                    size="small"
+                    severity="danger"
+                    variant="outlined"
+                    [disabled]="view.busy || deletionBlocked()"
+                    [attr.data-testid]="'pool-delete-' + question.id"
+                    (click)="delete.emit(question.id)"
+                >
+                    <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.delete"></span>
+                </button>
+            </span>
+        }
+    </div>
+</div>

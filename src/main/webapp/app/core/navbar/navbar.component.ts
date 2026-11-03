@@ -310,6 +310,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         teams: 'artemisApp.team.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         competency_management: 'artemisApp.competency.manage.title',
+        smart_quizzes: 'artemisApp.hyperion.quizQuestionPool.title',
         prerequisite_management: 'artemisApp.prerequisite.manage.title',
         learning_path_management: 'artemisApp.learningPath.manageLearningPaths.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
