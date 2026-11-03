@@ -544,7 +544,7 @@ describe('AccountService', () => {
         expect(accountService.isAdmin()).toBe(false);
         expect(accountService.isSuperAdmin()).toBe(false);
 
-        accountService.userIdentity.set({ id: 10, authorities: [Authority.TUTOR] } as User);
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: ['TEACHING_ASSISTANT'] }] } as User);
 
         expect(accountService.isAtLeastTutor()).toBe(true);
         expect(accountService.isAdmin()).toBe(false);
