@@ -7,6 +7,24 @@ import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor
 import { TranslateService } from '@ngx-translate/core';
 import { isInLinkOrCode } from 'app/editor/monaco-editor/model/actions/markdown-link-context';
 
+/** Punctuation that Markdown would read in a link destination: escapes, table cell borders, entities, code spans and math formulas. */
+const DESTINATION_ESCAPED_CHARACTERS = ['\\', '|', '&', '`', '$'];
+
+/**
+ * Writes a URL as a Markdown link destination that renders to the same address. The punctuation Markdown would read is escaped with a
+ * backslash, which CommonMark allows for any punctuation in a destination, and the parentheses that would end the link early are
+ * percent-encoded. Query separators such as `&` are kept.
+ * @param url The URL as copied.
+ * @return the destination to put between the parentheses of the link
+ */
+function toLinkDestination(url: string): string {
+    let destination = url;
+    for (const character of DESTINATION_ESCAPED_CHARACTERS) {
+        destination = destination.replaceAll(character, `\\${character}`);
+    }
+    return destination.replaceAll('(', '%28').replaceAll(')', '%29');
+}
+
 interface UrlArguments {
     text: string;
     url: string;
@@ -102,8 +120,7 @@ export class UrlAction extends TextStyleTextEditorAction {
             return false;
         }
         const label = selectedText.replace(/[\\[\]]/g, '\\$&');
-        // Keep the URL as copied; only escape the backslashes and encode the parentheses that would end the markdown link early.
-        const url = pastedText.trim().replaceAll('\\', '\\\\').replaceAll('(', '%28').replaceAll(')', '%29');
+        const url = toLinkDestination(pastedText.trim());
         const link = `[${label}](${url})`;
         this.replaceTextAtRange(editor, selection, link);
         editor.setPosition(start.withColumn(start.getColumn() + link.length));

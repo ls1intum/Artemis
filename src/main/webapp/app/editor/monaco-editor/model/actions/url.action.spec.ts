@@ -6,6 +6,7 @@ import { MonacoTextEditorAdapter } from 'app/editor/monaco-editor/model/actions/
 import * as monaco from 'monaco-editor';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import MarkdownIt from 'markdown-it';
 
 describe('UrlAction', () => {
     const action = new UrlAction();
@@ -109,6 +110,23 @@ describe('UrlAction', () => {
             expect(pasteHandler('https://example.org/?q=\\')).toBe(true);
 
             expect(editor.replaceTextAtRange).toHaveBeenCalledExactlyOnceWith(selection, '[docs](https://example.org/?q=\\\\)');
+        });
+
+        it.each([
+            { url: 'https://example.org/?q=a|b', destination: 'https://example.org/?q=a\\|b', href: 'https://example.org/?q=a%7Cb' },
+            { url: 'https://example.org/?q=&copy;', destination: 'https://example.org/?q=\\&copy;', href: 'https://example.org/?q=&amp;copy;' },
+            { url: 'https://example.org/?a=1&b=2', destination: 'https://example.org/?a=1\\&b=2', href: 'https://example.org/?a=1&amp;b=2' },
+            { url: 'https://example.org/$x$`y`', destination: 'https://example.org/\\$x\\$\\`y\\`', href: 'https://example.org/$x$%60y%60' },
+        ])('should write $url so that a table cell keeps one link to exactly that address', ({ url, destination, href }) => {
+            const row = '| docs | keep |';
+            const selection = selectOnLine('docs', ['| a | b |', '| - | - |', row], 3);
+
+            expect(pasteHandler(url)).toBe(true);
+
+            const link = `[docs](${destination})`;
+            expect(editor.replaceTextAtRange).toHaveBeenCalledExactlyOnceWith(selection, link);
+            const rendered = new MarkdownIt({ linkify: true }).render(['| a | b |', '| - | - |', row.replace('docs', link)].join('\n'));
+            expect(rendered).toContain(`<td><a href="${href}">docs</a></td>\n<td>keep</td>`);
         });
 
         it('should percent-encode parentheses in the pasted URL', () => {
@@ -230,6 +248,10 @@ describe('UrlAction', () => {
             { where: 'an HTML block of a block-level tag right after a paragraph', text: 'docs', lines: ['Intro', '<div class="note">', 'see the docs'], line: 3 },
             { where: 'an HTML comment', text: 'docs', lines: ['<!--', 'the docs', '-->'], line: 2 },
             { where: 'an HTML pre block inside a block quote', text: 'docs', lines: ['> <pre>', '> open docs', '> </pre>'], line: 2 },
+            { where: 'an inline math formula', text: 'x', lines: ['the area is $x^2$ here'] },
+            { where: 'an inline math formula with double dollar signs', text: 'docs', lines: ['see $$a + docs$$ here'] },
+            { where: 'a math block', text: 'docs', lines: ['$$', 'a + docs', '$$'], line: 2 },
+            { where: 'a bare web address that the preview links', text: 'docs', lines: ['see https://a.example/docs here'] },
             { where: 'an HTML pre block inside a list item', text: 'docs', lines: ['- <pre>', '  open docs', '  </pre>'], line: 2 },
             { where: 'an HTML pre block after an indented line inside it', text: 'docs', lines: ['<pre>', '', '    code', '', 'open docs', '</pre>'], line: 5 },
             { where: 'an HTML block that starts with a lone tag after a blank line', text: 'docs', lines: ['intro', '', '<span>', 'the docs'], line: 4 },
@@ -275,6 +297,9 @@ describe('UrlAction', () => {
             { after: 'inline HTML at the start of a paragraph', lines: ['<b>bold</b> and the docs'] },
             { after: 'an HTML pre block that is closed', lines: ['<pre>code</pre>', '', 'see the docs'] },
             { after: 'a list marker', lines: ['- see the docs'] },
+            { after: 'a lone dollar sign that opens no formula', lines: ['it costs 5$, see the docs'] },
+            { after: 'a bare web address before it', lines: ['https://a.example and the docs'] },
+            { after: 'a www address, which the preview does not link', lines: ['see www.example.org/the docs'] },
             { after: 'an HTML pre block inside a block quote that is closed', lines: ['> <pre>code</pre>', '>', '> see the docs'] },
             { after: 'a blank line, as an indented paragraph of a numbered list item', lines: ['1.  step', '', '    see the docs'] },
         ])('should handle the paste in text after $after', ({ lines }) => {

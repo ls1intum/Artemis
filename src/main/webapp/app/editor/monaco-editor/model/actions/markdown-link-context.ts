@@ -1,4 +1,5 @@
 import MarkdownIt, { type Token } from 'markdown-it';
+import MarkdownItKatex from '@vscode/markdown-it-katex';
 
 /** A source range that an inline rule consumed, relative to the text of the inline token it was parsed from. */
 interface InlineRange {
@@ -9,8 +10,11 @@ interface InlineRange {
     anchor?: 'open' | 'close';
 }
 
-/** Inline rules whose matches are code spans, links, images or autolinks. */
-const LINK_OR_CODE_RULES = ['backticks', 'link', 'image', 'autolink'];
+/** Inline rules whose matches are code spans, links, images, autolinks or math formulas. */
+const LINK_OR_CODE_RULES = ['backticks', 'link', 'image', 'autolink', 'math_inline', 'math_inline_block'];
+
+/** Block tokens in which no Markdown link is parsed: code, raw HTML and math formulas. */
+const NON_MARKDOWN_BLOCKS = ['fence', 'code_block', 'html_block_range', 'math_block'];
 
 /** Tags whose raw HTML block lasts until the matching closing tag; CommonMark's first kind of HTML block. */
 const RAW_TEXT_TAGS = ['pre', 'script', 'style', 'textarea'];
@@ -142,11 +146,12 @@ function readHtmlTag(source: string, start: number): { end: number; name: string
 }
 
 /**
- * A CommonMark parser, only used to find the links and code around a selection; its result is never rendered. Markdown-it reports source
- * lines for blocks but no columns for inline tokens, so the inline rules for links and code are wrapped to record the range of text each
- * match consumed. HTML stays disabled: an own rule only records where HTML tags are and keeps them as plain text.
+ * A CommonMark parser, only used to find the links and code around a selection; its result is never rendered. Like the preview, it links bare
+ * web addresses and parses math formulas. Markdown-it reports source lines for blocks but no columns for inline tokens, so the inline rules for
+ * links, code and math are wrapped to record the range of text each match consumed. HTML stays disabled: own rules only record where HTML
+ * tags and blocks are.
  */
-const markdownParser = MarkdownIt();
+const markdownParser = MarkdownIt({ linkify: true }).use(MarkdownItKatex);
 for (const name of LINK_OR_CODE_RULES) {
     const rule = markdownParser.inline.ruler.__rules__.find((candidate) => candidate.name === name)?.fn;
     if (rule) {
@@ -329,7 +334,7 @@ interface ContentSelection {
 
 /**
  * Checks whether a selection on one line lies where a pasted link would not work: inside or across an existing link (its label, or its
- * destination such as the placeholder the link button selects), an image, an autolink, an HTML tag or anchor, inline code, inside a fenced
+ * destination such as the placeholder the link button selects), an image, an autolink or bare web address, an HTML tag or anchor, inline code or a math formula, inside a fenced
  * or indented code block or a raw HTML block (also inside block quotes and lists), or anywhere outside paragraph, heading and table text, such as a reference definition or a
  * list marker. The unchanged document is parsed with the same CommonMark rules as the preview, so references and code spans over several
  * lines resolve as there.
@@ -344,7 +349,7 @@ export function isInLinkOrCode(lines: string[], lineIndex: number, startIndex: n
     const tokens = markdownParser.parse(lines.join('\n'), { inlineRanges });
     const coversLine = (map: [number, number] | null) => !!map && map[0] <= lineIndex && lineIndex < map[1];
 
-    if (tokens.some((token) => ['fence', 'code_block', 'html_block_range'].includes(token.type) && coversLine(token.map))) {
+    if (tokens.some((token) => NON_MARKDOWN_BLOCKS.includes(token.type) && coversLine(token.map))) {
         return true;
     }
     const selection = findContentSelection(tokens, lines[lineIndex] ?? '', lineIndex, startIndex, endIndex, coversLine);
@@ -352,10 +357,9 @@ export function isInLinkOrCode(lines: string[], lineIndex: number, startIndex: n
         // The selection is not inside the text of a paragraph, heading or table cell, so the paste is left to the editor.
         return true;
     }
-    const ranges = withAnchorLabels(
-        inlineRanges.filter((range) => range.source === selection.content),
-        selection.content.length,
-    );
+    // Bare web addresses, which the preview links, are found with the parser's own matcher; markdown-it links some of them after parsing.
+    const bareLinks = (markdownParser.linkify.match(selection.content) ?? []).map((match) => ({ source: selection.content, start: match.index, end: match.lastIndex }));
+    const ranges = withAnchorLabels([...inlineRanges.filter((range) => range.source === selection.content), ...bareLinks], selection.content.length);
     return ranges.some((range) => range.start < selection.end && selection.start < range.end);
 }
 
