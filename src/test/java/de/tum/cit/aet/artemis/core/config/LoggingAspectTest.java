@@ -110,6 +110,22 @@ class LoggingAspectTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
+    void metisFailuresAreLoggedWithTheirTypeOnly(boolean development) {
+        MockEnvironment environment = new MockEnvironment();
+        if (development) {
+            environment.setActiveProfiles("dev");
+        }
+        // The message and the cause can quote a student's code or answers, for instance when the model endpoint names the input it refused
+        String quotedCode = "int secretOfTheStudent = 42;";
+        new LoggingAspect(environment).logMetisFailure(joinPoint(), new IllegalStateException("The endpoint refused: " + quotedCode, new RuntimeException(quotedCode)));
+        assertThat(appender.list).singleElement().satisfies(event -> {
+            assertThat(event.getFormattedMessage()).isEqualTo("Exception in TestService.perform() (exception IllegalStateException)");
+            assertThat(event.getThrowableProxy()).isNull();
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     void aroundAdvicePreservesReturnValueAndOnlyLogsArgumentsWhenDebugEnabled(boolean debug) throws Throwable {
         logger.setLevel(debug ? Level.DEBUG : Level.INFO);
         var joinPoint = joinPoint();
