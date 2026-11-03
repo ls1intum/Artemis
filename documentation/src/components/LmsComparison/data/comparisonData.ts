@@ -173,7 +173,8 @@ export const featureCategories: FeatureCategory[] = [
             feature('online-ide', 'Online IDE with Run & Debug', [S, N, N, N, N, N], {
                 tooltip: 'Students write, run and debug code in the browser without setting up a local environment',
                 notes: {
-                    [PlatformId.Artemis]: 'Run and Debug work out of the box for C, Java, JavaScript and Rust exercises. Students can also work in their local IDE',
+                    [PlatformId.Artemis]:
+                        'Run and Debug launch configurations are preconfigured for C, Java, JavaScript and Rust exercises. Debug also needs a matching debug extension in the online IDE image, and C exercises must be built before debugging. Students can also work in their local IDE',
                 },
             }),
             feature('modeling', 'Modeling Exercises (UML)', [S, N, N, N, N, N], {
