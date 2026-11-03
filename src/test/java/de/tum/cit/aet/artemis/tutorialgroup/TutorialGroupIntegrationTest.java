@@ -788,6 +788,44 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "USER")
+        void updateSchedule_whenTwoSessionsShareAStart_keepsTheOneWithRecordedData() throws Exception {
+            TutorialGroupScheduleDTO initialSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_11_00, 1, FOURTH_AUGUST_MONDAY, "Room A");
+            CreateOrUpdateTutorialGroupRequestDTO createRequest = new CreateOrUpdateTutorialGroupRequestDTO("TG Duplicate", firstCourseTutor1.getId(), "English", false, "Garching",
+                    10, "info", initialSchedule);
+            Long tutorialGroupId = request.postWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", createRequest, Long.class, HttpStatus.OK);
+
+            List<TutorialGroupSession> initialSessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId).stream()
+                    .sorted(Comparator.comparing(TutorialGroupSession::getStart)).toList();
+            TutorialGroupSession sessionWithData = initialSessions.getFirst();
+            sessionWithData.setAttendanceCount(9);
+            tutorialGroupSessionRepository.saveAndFlush(sessionWithData);
+
+            // Simulate the surplus row that overlapping saves could create: a second session sharing the same start, but without any data.
+            TutorialGroupSession duplicate = new TutorialGroupSession();
+            duplicate.setTutorialGroup(sessionWithData.getTutorialGroup());
+            duplicate.setTutorialGroupSchedule(sessionWithData.getTutorialGroupSchedule());
+            duplicate.setStart(sessionWithData.getStart());
+            duplicate.setEnd(sessionWithData.getEnd());
+            duplicate.setLocation(sessionWithData.getLocation());
+            duplicate.setStatus(TutorialGroupSessionStatus.ACTIVE);
+            Long duplicateId = tutorialGroupSessionRepository.saveAndFlush(duplicate).getId();
+
+            // Any schedule change triggers regeneration; extend the period by a week.
+            TutorialGroupScheduleDTO extendedSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_11_00, 1, FIFTH_AUGUST_MONDAY, "Room A");
+            CreateOrUpdateTutorialGroupRequestDTO updateRequest = new CreateOrUpdateTutorialGroupRequestDTO("TG Duplicate", firstCourseTutor1.getId(), "English", false, "Garching",
+                    10, "info", extendedSchedule);
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, updateRequest, HttpStatus.NO_CONTENT);
+
+            // The duplicate without data is removed; the session that recorded attendance is kept.
+            List<TutorialGroupSession> sessionsAtSharedStart = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId).stream()
+                    .filter(session -> session.getStart().isEqual(sessionWithData.getStart())).toList();
+            assertThat(sessionsAtSharedStart).hasSize(1);
+            assertThat(sessionsAtSharedStart.getFirst().getAttendanceCount()).isEqualTo(9);
+            assertThat(tutorialGroupSessionRepository.findById(duplicateId)).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "USER")
         void updateSchedule_whenASessionNowOverlapsAFreePeriod_shouldCancelThatSession() throws Exception {
             // Schedule: Mondays 10:00-11:00. A free period sits at 12:00-13:00 on the first Monday, not overlapping the initial slot.
             TutorialGroupScheduleDTO initialSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_11_00, 1, FOURTH_AUGUST_MONDAY, "Room A");

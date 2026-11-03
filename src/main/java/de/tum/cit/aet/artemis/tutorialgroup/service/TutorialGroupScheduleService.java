@@ -78,14 +78,22 @@ public class TutorialGroupScheduleService {
                 .filter(session -> session.getTutorialGroupSchedule() == null).toList();
 
         // Key by instant, not ZonedDateTime: a persisted start read back (in UTC) would not equal a freshly generated one in the course
-        // zone even for the same moment, so a ZonedDateTime key would never match and nothing would be preserved. Keep the first session
-        // per start as the match and remove any surplus sessions that share a start.
+        // zone even for the same moment, so a ZonedDateTime key would never match and nothing would be preserved. If two sessions share a
+        // start (e.g. from overlapping saves), keep the one carrying recorded data as the match and remove the other.
         Map<Instant, TutorialGroupSession> existingSessionsByStart = new HashMap<>();
         List<TutorialGroupSession> sessionsToRemove = new ArrayList<>();
         if (scheduleAlreadyExisted) {
             for (TutorialGroupSession existingSession : tutorialGroupSessionRepository.findAllByScheduleId(tutorialGroupSchedule.getId())) {
-                if (existingSessionsByStart.putIfAbsent(existingSession.getStart().toInstant(), existingSession) != null) {
-                    sessionsToRemove.add(existingSession);
+                Instant start = existingSession.getStart().toInstant();
+                TutorialGroupSession alreadyKept = existingSessionsByStart.putIfAbsent(start, existingSession);
+                if (alreadyKept != null) {
+                    if (hasRecordedData(existingSession) && !hasRecordedData(alreadyKept)) {
+                        existingSessionsByStart.put(start, existingSession);
+                        sessionsToRemove.add(alreadyKept);
+                    }
+                    else {
+                        sessionsToRemove.add(existingSession);
+                    }
                 }
             }
         }
@@ -140,6 +148,16 @@ public class TutorialGroupScheduleService {
      */
     private static boolean overlaps(TutorialGroupSession first, TutorialGroupSession second) {
         return first.getStart().isBefore(second.getEnd()) && second.getStart().isBefore(first.getEnd());
+    }
+
+    /**
+     * Whether a session carries data worth keeping when two sessions share a start.
+     *
+     * @param session the session to check
+     * @return true if it has recorded attendance, a status explanation or a cancellation
+     */
+    private static boolean hasRecordedData(TutorialGroupSession session) {
+        return session.getAttendanceCount() != null || session.getStatusExplanation() != null || session.getStatus() == TutorialGroupSessionStatus.CANCELLED;
     }
 
     /**
