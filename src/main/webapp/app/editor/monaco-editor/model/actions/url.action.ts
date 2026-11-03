@@ -5,16 +5,57 @@ import { isHttpUrl, sanitizeStringForMarkdownEditor } from 'app/foundation/util/
 import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { TranslateService } from '@ngx-translate/core';
-import MarkdownIt, { type Token } from 'markdown-it';
+import MarkdownIt from 'markdown-it';
 
-/** A plain CommonMark parser, only used to find the links and code around a selection. */
-const markdownParser = MarkdownIt();
+/** A source range that an inline rule consumed, relative to the text of the inline token it was parsed from. */
+interface InlineRange {
+    source: string;
+    start: number;
+    end: number;
+}
 
-/** Marks both ends of the selection in the parsed copy of the document. A private use character, so real text never contains it. */
-const SELECTION_MARKER = '\uE000';
+/** Inline rules whose matches are code spans, links, images, autolinks or inline HTML. */
+const LINK_OR_CODE_RULES = ['backticks', 'link', 'image', 'autolink', 'html_inline'];
 
-/** The marker as it appears in a link destination, which the parser percent-encodes. */
-const ENCODED_SELECTION_MARKER = encodeURI(SELECTION_MARKER);
+/**
+ * A CommonMark parser, only used to find the links and code around a selection. Markdown-it reports source lines for blocks but no columns
+ * for inline tokens, so the inline rules for links and code are wrapped to record the range of text each match consumed.
+ */
+const markdownParser = MarkdownIt({ html: true });
+for (const name of LINK_OR_CODE_RULES) {
+    const rule = markdownParser.inline.ruler.__rules__.find((candidate) => candidate.name === name)?.fn;
+    if (rule) {
+        markdownParser.inline.ruler.at(name, (state, silent) => {
+            const start = state.pos;
+            const matched = rule(state, silent);
+            // the parser environment collects the ranges; see isInLinkOrCode
+            const inlineRanges = state.env.inlineRanges;
+            if (matched && !silent && Array.isArray(inlineRanges)) {
+                inlineRanges.push({ source: state.src, start, end: state.pos } satisfies InlineRange);
+            }
+            return matched;
+        });
+    }
+}
+
+/**
+ * Finds where a line of an inline token's text starts in its source line, such that the selection lies inside it. The text of a paragraph,
+ * heading or table cell is its source line without block markup such as indentation, list or quote markers. If the text occurs several
+ * times, as in identical table cells, any occurrence gives the same answer, since identical text is parsed identically.
+ * @param sourceLine The line of the document.
+ * @param contentLine The corresponding line of the inline token's text.
+ * @param startIndex The start of the selection in the source line.
+ * @param endIndex The end of the selection in the source line.
+ * @return the start of the content line in the source line, or undefined if no occurrence contains the selection
+ */
+function findContentStart(sourceLine: string, contentLine: string, startIndex: number, endIndex: number): number | undefined {
+    for (let start = sourceLine.indexOf(contentLine); start !== -1; start = sourceLine.indexOf(contentLine, start + 1)) {
+        if (start <= startIndex && endIndex <= start + contentLine.length) {
+            return start;
+        }
+    }
+    return undefined;
+}
 
 interface UrlArguments {
     text: string;
@@ -121,9 +162,9 @@ export class UrlAction extends TextStyleTextEditorAction {
 
     /**
      * Checks whether a selection on one line lies where a pasted link would not work: inside or across an existing link (its label, or its
-     * destination such as the placeholder the link button selects), inside or across inline code, or inside a fenced or indented code block.
-     * Both ends of the selection are marked with a sentinel character and the document is parsed as Markdown, so the same CommonMark rules
-     * as in the preview decide, including code spans with several backticks or over several lines.
+     * destination such as the placeholder the link button selects), an image, an autolink, inline code or inline HTML, inside a fenced or
+     * indented code block, or anywhere outside paragraph, heading and table text, such as a reference definition or a list marker.
+     * The unchanged document is parsed with the same CommonMark rules as the preview, so references and multiline code spans resolve as there.
      * @param editor The editor that contains the selection.
      * @param selection The selection, which starts and ends on the same line.
      */
@@ -132,34 +173,38 @@ export class UrlAction extends TextStyleTextEditorAction {
         const startIndex = selection.getStartPosition().getColumn() - 1;
         const endIndex = selection.getEndPosition().getColumn() - 1;
         const lines = Array.from({ length: this.getLineCount(editor) }, (_, index) => this.getLineText(editor, index + 1) ?? '');
-        const line = lines[lineIndex] ?? '';
-        lines[lineIndex] = line.slice(0, startIndex) + SELECTION_MARKER + line.slice(startIndex, endIndex) + SELECTION_MARKER + line.slice(endIndex);
+        const inlineRanges: InlineRange[] = [];
+        const tokens = markdownParser.parse(lines.join('\n'), { inlineRanges });
+        const coversLine = (map: [number, number] | null) => !!map && map[0] <= lineIndex && lineIndex < map[1];
 
-        let markersSeen = 0;
-        let linkDepth = 0;
-        const blocksLinks = (token: Token): boolean => {
-            const content = `${token.content} ${token.info} ${token.attrGet('href') ?? ''} ${token.attrGet('src') ?? ''}`;
-            const containsMarker = content.includes(SELECTION_MARKER) || content.includes(ENCODED_SELECTION_MARKER);
-            if (['code_inline', 'fence', 'code_block', 'image'].includes(token.type) && (containsMarker || markersSeen === 1)) {
-                return true;
+        if (tokens.some((token) => (token.type === 'fence' || token.type === 'code_block') && coversLine(token.map))) {
+            return true;
+        }
+        // Table cells carry no lines of their own, so an inline token without lines takes those of the block token before it, its row.
+        let blockMap: [number, number] | null = null;
+        for (const token of tokens) {
+            const map: [number, number] | null = token.map ?? blockMap;
+            blockMap = map;
+            if (token.type !== 'inline' || !map || !coversLine(map)) {
+                continue;
             }
-            if (token.type === 'link_open') {
-                linkDepth++;
-                return containsMarker || markersSeen === 1;
+            const contentLines = token.content.split('\n');
+            const contentLineIndex = lineIndex - map[0];
+            const contentLine = contentLines[contentLineIndex];
+            if (contentLine === undefined) {
+                // the underline of a heading, which belongs to the heading's lines but not to its text
+                continue;
             }
-            if (token.type === 'link_close') {
-                linkDepth--;
+            const lineOffset = contentLines.slice(0, contentLineIndex).reduce((offset, line) => offset + line.length + 1, 0);
+            const contentStart = findContentStart(lines[lineIndex], contentLine, startIndex, endIndex);
+            if (contentStart !== undefined) {
+                const start = lineOffset + startIndex - contentStart;
+                const end = lineOffset + endIndex - contentStart;
+                return inlineRanges.some((range) => range.source === token.content && range.start < end && start < range.end);
             }
-            if (token.type === 'text' || token.type === 'html_inline' || token.type === 'html_block') {
-                const count = token.content.split(SELECTION_MARKER).length - 1;
-                if (count > 0 && linkDepth > 0) {
-                    return true;
-                }
-                markersSeen += count;
-            }
-            return false;
-        };
-        return markdownParser.parse(lines.join('\n'), {}).some((token) => (token.children ?? [token]).some(blocksLinks));
+        }
+        // The selection is not inside the text of a paragraph, heading or table cell, so the paste is left to the editor.
+        return true;
     }
 
     /**

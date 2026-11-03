@@ -197,6 +197,15 @@ describe('UrlAction', () => {
             { where: 'the alt text of an image', text: 'docs', lines: ['see ![the docs](https://a.example/logo.png)'] },
             { where: 'an autolink', text: 'docs', lines: ['see <https://a.example/docs> here'] },
             { where: 'a selection that covers a whole link', text: 'the [tum](https://www.tum.de) site', lines: ['see the [tum](https://www.tum.de) site'] },
+            { where: 'a whole indented code line including its indentation', text: '    open docs', lines: ['    open docs'], startColumn: 1 },
+            { where: 'a shortcut reference link', text: 'docs', lines: ['See [docs]', '', '[docs]: https://a.example'] },
+            { where: 'a collapsed reference link', text: 'docs', lines: ['See [docs][]', '', '[docs]: https://a.example'] },
+            { where: 'the label of a full reference link', text: 'docs', lines: ['See [the docs][ref]', '', '[ref]: https://a.example'] },
+            { where: 'a link reference definition', text: 'docs', lines: ['See [docs]', '', '[docs]: https://a.example/docs'], line: 3 },
+            { where: 'a selection that includes a block quote marker', text: '> see', lines: ['> see the docs'], startColumn: 1 },
+            { where: 'the underline of a heading', text: '===', lines: ['Setup', '====='], line: 2, startColumn: 1 },
+            { where: 'inline HTML', text: 'docs', lines: ['see <a title="docs">here</a>'] },
+            { where: 'a link in a table cell', text: 'docs', lines: ['| a | b |', '| - | - |', '| x | [docs](https://a.example) |'], line: 3 },
             { where: 'a fenced code block', text: 'docs', lines: ['intro', '```', 'open docs', '```'], line: 3 },
             { where: 'the fence line of a code block', text: 'docs', lines: ['```docs'] },
             { where: 'a four-backtick block after a three-backtick line inside it', text: 'docs', lines: ['````', '```', 'open docs', '````'], line: 3 },
@@ -210,8 +219,8 @@ describe('UrlAction', () => {
             { where: 'an indented code block right after an underlined heading', text: 'docs', lines: ['Setup', '=====', '    open docs'], line: 3 },
             { where: 'a code block inside a list item', text: 'docs', lines: ['- step', '', '        open docs'], line: 3 },
             { where: 'a fenced code block inside a block quote', text: 'docs', lines: ['> ```', '> open docs'], line: 2 },
-        ])('should not handle the paste if the selection lies in $where', ({ text, lines, line }) => {
-            selectOnLine(text, lines, line);
+        ])('should not handle the paste if the selection lies in $where', ({ text, lines, line, startColumn }) => {
+            selectOnLine(text, lines, line, startColumn);
 
             expect(pasteHandler('https://b.example')).toBe(false);
             expect(editor.replaceTextAtRange).not.toHaveBeenCalled();
@@ -227,6 +236,10 @@ describe('UrlAction', () => {
             { after: 'a blank line, as an indented paragraph of a list item', lines: ['- step', '', '    see the docs'] },
             { after: 'a closed inline code span with two backticks on the same line', lines: ['Run ``code`` and see the docs'] },
             { after: 'a lone backtick that opens no code span', lines: ['it`s in the docs'] },
+            { after: 'brackets that are no link, because no reference is defined for them', lines: ['see [the docs] here'] },
+            { after: 'a block quote marker', lines: ['> see the docs'] },
+            { after: 'a heading marker', lines: ['## see the docs'] },
+            { after: 'a table cell border', lines: ['| a | b |', '| - | - |', '| x | see the docs |'] },
             { after: 'a blank line, as an indented paragraph of a numbered list item', lines: ['1.  step', '', '    see the docs'] },
         ])('should handle the paste in text after $after', ({ lines }) => {
             const selection = selectOnLine('docs', lines, lines.length);
