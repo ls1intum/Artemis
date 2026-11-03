@@ -34,6 +34,10 @@ export interface UsageSemester {
     irisMessages?: number;
     /** Tutorial groups, absent if tutorial groups are not enabled on this instance. */
     tutorialGroups?: number;
+    /** Real exams (no test exams, no titles starting with test or mock), absent if exams are not enabled on this instance. */
+    exams?: number;
+    /** Competencies without prerequisites, absent if the atlas module is not enabled on this instance. */
+    competencies?: number;
 }
 
 export interface PublicUsageStatistics {
