@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.UserCourseRoleDTO;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForRoleAssignmentDTO;
@@ -30,7 +29,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 /**
  * Covers what the admin user edit screen relies on: searching the courses to choose from and adding or removing a course role of a user through the course
- * membership endpoints, which keep the global authorities of the user in sync.
+ * membership endpoints, which leave the global authorities of the user untouched.
  */
 class AdminUserCourseRoleEditingIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -77,9 +76,8 @@ class AdminUserCourseRoleEditingIntegrationTest extends AbstractSpringIntegratio
         });
     }
 
-    private boolean hasInstructorAuthority(User user) {
-        return userTestRepository.findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(user.getId()).getAuthorities().stream().map(Authority::getName)
-                .anyMatch(Role.INSTRUCTOR.getAuthority()::equals);
+    private List<String> authoritiesOf(User user) {
+        return userTestRepository.findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(user.getId()).getAuthorities().stream().map(Authority::getName).toList();
     }
 
     @Test
@@ -160,7 +158,7 @@ class AdminUserCourseRoleEditingIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchCourses_nonAdmin_forbidden() throws Exception {
         userUtilService.addInstructor(TEST_PREFIX + "instructor1");
 
@@ -169,10 +167,11 @@ class AdminUserCourseRoleEditingIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void adminAddsAndRemovesCourseRoles_updatesCourseRolesAndAuthorities() throws Exception {
+    void adminAddsAndRemovesCourseRoles_updatesCourseRolesAndKeepsGlobalAuthorities() throws Exception {
         User user = userUtilService.createAndSaveUser(TEST_PREFIX + "member");
         Course course = addCourse(TEST_PREFIX + " Membership", TEST_PREFIX + "member");
         assertThat(courseRolesOf(user)).isEmpty();
+        List<String> authoritiesBefore = authoritiesOf(user);
 
         request.postWithoutLocation("/api/course/courses/" + course.getId() + "/students/" + user.getLogin(), null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/course/courses/" + course.getId() + "/instructors/" + user.getLogin(), null, HttpStatus.OK, null);
@@ -180,11 +179,12 @@ class AdminUserCourseRoleEditingIntegrationTest extends AbstractSpringIntegratio
         request.postWithoutLocation("/api/course/courses/" + course.getId() + "/instructors/" + user.getLogin(), null, HttpStatus.OK, null);
 
         assertThat(courseRolesOf(user)).extracting(UserCourseRoleDTO::role).containsExactlyInAnyOrder(CourseRole.STUDENT, CourseRole.INSTRUCTOR);
-        assertThat(hasInstructorAuthority(user)).isTrue();
+        // a course role is not a global authority
+        assertThat(authoritiesOf(user)).containsExactlyElementsOf(authoritiesBefore);
 
         request.delete("/api/course/courses/" + course.getId() + "/instructors/" + user.getLogin(), HttpStatus.OK);
 
         assertThat(courseRolesOf(user)).extracting(UserCourseRoleDTO::role).containsExactly(CourseRole.STUDENT);
-        assertThat(hasInstructorAuthority(user)).isFalse();
+        assertThat(authoritiesOf(user)).containsExactlyElementsOf(authoritiesBefore);
     }
 }

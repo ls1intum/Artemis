@@ -348,7 +348,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
             this.eventManager.destroy(this.eventSubscription);
         }
         this.eventSubscription = this.eventManager.subscribe('courseListModification', () => {
-            this.courseManagementService.find(courseId).subscribe((courseResponse) => {
+            this.courseManagementService.findForInstructor(courseId).subscribe((courseResponse) => {
                 this.course.set(courseResponse.body!);
                 this.getCourseDetailSections();
             });

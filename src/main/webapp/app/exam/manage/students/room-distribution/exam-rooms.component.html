@@ -4,36 +4,38 @@
         <div>
             <span jhiTranslate="artemisApp.examRooms.management.introText"></span>
         </div>
-        <div class="flex items-center gap-2">
-            <input
-                #roomDataFileSelect
-                id="roomDataFileSelect"
-                type="file"
-                [attr.aria-label]="'artemisApp.examRooms.management.uploadRoomData' | artemisTranslate"
-                class="hidden"
-                (change)="onFileSelectedAcceptZip($event)"
-                accept=".zip"
-            />
-            <button id="roomDataFileSelectButton" type="button" tumAetUiButton variant="outlined" (click)="roomDataFileSelect.click()">
-                @if (!hasSelectedFile()) {
-                    {{ 'artemisApp.examRooms.management.uploadRoomData' | artemisTranslate }}
-                } @else {
-                    {{ selectedFileName() }}
-                }
-            </button>
-            <button type="button" id="roomDataUpload" tumAetUiButton jhiTranslate="entity.action.save" (click)="upload()" [disabled]="!canUpload()"></button>
-        </div>
-        <div class="flex items-center gap-1">
-            <button
-                type="button"
-                id="roomDataDeleteOutdatedAndUnused"
-                tumAetUiButton
-                severity="warn"
-                jhiTranslate="artemisApp.examRooms.management.deleteExamRoomsSafe"
-                (click)="deleteOutdatedAndUnusedExamRooms()"
-            ></button>
-            <jhi-help-icon text="artemisApp.examRooms.management.deleteExamRoomsSafeTooltip" />
-        </div>
+        @if (isAdmin) {
+            <div class="flex items-center gap-2">
+                <input
+                    #roomDataFileSelect
+                    id="roomDataFileSelect"
+                    type="file"
+                    [attr.aria-label]="'artemisApp.examRooms.management.uploadRoomData' | artemisTranslate"
+                    class="hidden"
+                    (change)="onFileSelectedAcceptZip($event)"
+                    accept=".zip"
+                />
+                <button id="roomDataFileSelectButton" type="button" tumAetUiButton variant="outlined" (click)="roomDataFileSelect.click()">
+                    @if (!hasSelectedFile()) {
+                        {{ 'artemisApp.examRooms.management.uploadRoomData' | artemisTranslate }}
+                    } @else {
+                        {{ selectedFileName() }}
+                    }
+                </button>
+                <button type="button" id="roomDataUpload" tumAetUiButton jhiTranslate="entity.action.save" (click)="upload()" [disabled]="!canUpload()"></button>
+            </div>
+            <div class="flex items-center gap-1">
+                <button
+                    type="button"
+                    id="roomDataDeleteOutdatedAndUnused"
+                    tumAetUiButton
+                    severity="warn"
+                    jhiTranslate="artemisApp.examRooms.management.deleteExamRoomsSafe"
+                    (click)="deleteOutdatedAndUnusedExamRooms()"
+                ></button>
+                <jhi-help-icon text="artemisApp.examRooms.management.deleteExamRoomsSafeTooltip" />
+            </div>
+        }
 
         @if (isUploading()) {
             <div jhiTranslate="entity.action.saving"></div>

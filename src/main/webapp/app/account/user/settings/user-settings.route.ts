@@ -134,6 +134,11 @@ export const routes: Routes = [
                 redirectTo: 'credentials',
             },
             {
+                path: 'agent-access',
+                pathMatch: 'full',
+                redirectTo: 'credentials',
+            },
+            {
                 path: 'llm-usage',
                 pathMatch: 'full',
                 redirectTo: 'ai-experience',

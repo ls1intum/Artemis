@@ -5,7 +5,7 @@ import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { AlertError } from 'app/core/alert/alert-error.model';
 import { Subscription } from 'rxjs';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import type { HttpErrorEvent } from 'app/core/interceptor/errorhandler.interceptor';
 import dayjs from 'dayjs/esm';
@@ -215,7 +215,7 @@ export class AlertService {
             if (translationFound) {
                 alertInternal.message = translatedMessage;
             } else {
-                // Sent a sentry warning with the unknown translation key
+                // Report the unknown translation key
                 captureException(new Error('Unknown translation key: ' + translationKey));
 
                 // Fallback to displaying the translation key

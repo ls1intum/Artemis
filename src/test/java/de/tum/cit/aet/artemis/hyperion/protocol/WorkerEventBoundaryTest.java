@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerEventType;
 import de.tum.cit.aet.artemis.aiworker.dto.ExecutionAssignmentDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
@@ -30,6 +31,8 @@ class WorkerEventBoundaryTest {
     private static final ExecutionIdentity ID = new ExecutionIdentity("job", 7L, UUID.fromString("00000000-0000-0000-0000-000000000002"), "worker", INCARNATION);
 
     private final WorkerMessageCodec codec = new WorkerMessageCodec();
+
+    private final WorkerMessageCodecApi wireCodec = new WorkerMessageCodecApi();
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("invalidEvents")
@@ -81,12 +84,12 @@ class WorkerEventBoundaryTest {
         Event fixture = new Event();
         fixture.activity = new GenerationActivity("Generating tests", 1, 2, true, 3, 4, 5);
         WorkerEvent event = fixture.build().withProgress(new GenerationProgress("VERIFYING", null, null, null));
-        assertThat(codec.decodeEvent(codec.encode(event))).isEqualTo(event);
+        assertThat(codec.fromWire(wireCodec.decodeEvent(wireCodec.encode(codec.toWire(event))))).isEqualTo(event);
         var accounting = fixture.build().withProgress(new GenerationProgress(null, null, null, new ProviderUsageUpdate(ProviderUsageUpdate.Kind.TURN, 1, null)));
         WorkerEventDTO wire = codec.toWire(accounting);
         assertThat(wire.type()).isEqualTo(WorkerEventType.ACCOUNTING);
         assertThat(codec.fromWire(wire)).isEqualTo(accounting);
-        assertThat(codec.decodeEvent(codec.encode(fixture.build()))).isEqualTo(fixture.build());
+        assertThat(codec.fromWire(wireCodec.decodeEvent(wireCodec.encode(codec.toWire(fixture.build()))))).isEqualTo(fixture.build());
     }
 
     @ParameterizedTest
@@ -95,7 +98,7 @@ class WorkerEventBoundaryTest {
         var parameters = new GenerationParameters(null, 10, 100000, Duration.ofMinutes(5), 128000, null, null, null, null, null, true, "CONTINUOUS");
         var deadline = Instant.parse("2030-01-01T00:00:00Z");
         var assignment = new GenerationAssignment(ID, new ExerciseBrief("Title", "short", "de.example", null, "Generate", ExerciseBrief.Mode.GENERATE), parameters,
-                new WorkspaceSnapshot(List.of()), deadline, IMAGE, new GradingContext(false, java.util.Set.of()));
+                new WorkspaceSnapshot(List.of()), deadline, IMAGE, new GradingContext(false, java.util.Set.of(), java.util.Set.of()));
         var authorized = new ExecutionAssignmentDTO(WorkerMessageCodec.toWire(ID), WorkerMessageCodec.capability(GenerationToolchain.JAVA_GRADLE), deadline, IMAGE,
                 codec.encodePayload(assignment));
         var envelope = new ExecutionAssignmentDTO(
@@ -119,7 +122,11 @@ class WorkerEventBoundaryTest {
     void stopAuthoringUsesNeutralFinishCommandWithoutChangingItsAssignmentIdentity() {
         var command = new WorkerCommand(WorkerCommand.PROTOCOL_VERSION, WorkerCommand.Type.STOP_AUTHORING, ID, null);
         assertThat(codec.toWire(command).type().name()).isEqualTo("FINISH");
-        assertThat(codec.decodeCommand(codec.encode(command))).isEqualTo(command);
+        var decoded = wireCodec.decodeCommand(wireCodec.encode(codec.toWire(command)));
+        assertThat(decoded.type().name()).isEqualTo("FINISH");
+        assertThat(decoded.protocolVersion()).isEqualTo(command.protocolVersion());
+        assertThat(WorkerMessageCodec.fromWire(decoded.identity())).isEqualTo(command.identity());
+        assertThat(decoded.assignment()).isNull();
         assertThat(WorkerMessageCodec.fromWire(WorkerMessageCodec.toWire(ID))).isEqualTo(ID);
     }
 

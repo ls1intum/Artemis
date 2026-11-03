@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "managedUserVM": {
+            "email": "Email",
             "password": "Password"
         },
         "userManagement": {
@@ -111,17 +112,12 @@
                 "remove": {
                     "label": "Remove {{ role }} role in {{ course }}",
                     "header": "Remove course role",
-                    "message": "Remove the role {{ role }} of {{ login }} in the course {{ course }}? The user loses the access this role grants in the course, and the global roles of the user may change accordingly.",
+                    "message": "Remove the role {{ role }} of {{ login }} in the course {{ course }}? The user loses the access this role grants in the course.",
                     "accept": "Remove",
                     "success": "{{ login }} no longer has the role {{ role }} in {{ course }}."
                 },
-                "syncFailed": "The global roles could not be refreshed after the last change of the course roles. Saving is blocked until they are loaded.",
-                "syncRetry": "Load again",
                 "retry": "Try again",
-                "courseCount": "Courses: {{ count }}",
-                "globalRolesChanged": "The global roles of this user changed with the course roles.",
-                "globalRolesAdded": "Added:",
-                "globalRolesRemoved": "Removed:"
+                "courseCount": "Courses: {{ count }}"
             },
             "login": "Login",
             "firstName": "First name",
@@ -144,9 +140,6 @@
             "roles": {
                 "superAdmin": "Super Admin",
                 "admin": "Admin",
-                "instructor": "Instructor",
-                "editor": "Editor",
-                "tutor": "Tutor",
                 "user": "Student"
             },
             "langKey": "Language",

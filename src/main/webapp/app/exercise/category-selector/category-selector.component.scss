@@ -1,0 +1,12 @@
+:host {
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.category-name,
+.category-chip-remove {
+    border: 0;
+    background: transparent;
+    color: var(--tumaet-ui-primary-contrast-color);
+    cursor: pointer;
+}

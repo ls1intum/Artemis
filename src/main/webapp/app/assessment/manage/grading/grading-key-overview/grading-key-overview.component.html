@@ -1,17 +1,21 @@
-<div class="row justify-content-center">
-    <div class="col-6">
-        <h1 class="text-center mb-3">
+<div class="flex flex-wrap gap-y-2 justify-center">
+    <div class="grading-key-overview w-full min-w-0 xl:w-6/12">
+        <h1 class="text-center mb-4!">
             {{ (forBonus() ? 'artemisApp.gradingSystem.titleBonus' : isExam() ? 'artemisApp.gradingSystem.titleExam' : 'artemisApp.gradingSystem.titleCourse') | artemisTranslate }}
             {{ title }}
         </h1>
         @if (!isExam()) {
             <h6 jhiTranslate="artemisApp.gradingSystem.overview.info"></h6>
         }
-        <jhi-grade-key-table />
-        <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="faChevronLeft" />&nbsp;<span jhiTranslate="entity.action.back"></span></button>
-        <button type="button" id="exportToPDFButton" class="btn btn-primary" style="float: right" (click)="printPDF()">
-            <fa-icon [icon]="faPrint" />
-            <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
-        </button>
+        <jhi-grade-key-table [purpose]="purpose" />
+        <div class="mt-4! flex flex-wrap items-center justify-between gap-2 print:hidden">
+            <button type="button" (click)="previousState()" tumAetUiButton severity="secondary">
+                <fa-icon [icon]="faChevronLeft" />&nbsp;<span jhiTranslate="entity.action.back"></span>
+            </button>
+            <button type="button" id="exportToPDFButton" (click)="printPDF()" tumAetUiButton severity="primary">
+                <fa-icon [icon]="faPrint" />
+                <span jhiTranslate="artemisApp.exam.examSummary.exportPDF"></span>
+            </button>
+        </div>
     </div>
 </div>

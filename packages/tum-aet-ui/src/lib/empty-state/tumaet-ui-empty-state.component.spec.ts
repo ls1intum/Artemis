@@ -32,6 +32,13 @@ describe('TumAetUiEmptyStateComponent', () => {
         expect(iconContainer.query(By.css('svg'))).not.toBeNull();
     });
 
+    it('omits the decorative icon when no icon is supplied', () => {
+        fixture.componentRef.setInput('icon', undefined);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[aria-hidden="true"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('h2')?.textContent.trim()).toBe('No exercises yet');
+    });
+
     it('omits the description when it is empty', () => {
         fixture.componentRef.setInput('description', undefined);
         fixture.detectChanges();

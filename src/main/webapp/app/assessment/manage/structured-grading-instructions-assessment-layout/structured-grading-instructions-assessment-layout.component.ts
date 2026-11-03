@@ -1,3 +1,11 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiMessageComponent,
+    TumAetUiTableDirective,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Component, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
@@ -5,17 +13,15 @@ import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumAetUiCheckboxComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
-/** A criterion prepared for display: alphabetically sorted instructions plus its live "applied" counter. */
+/** A criterion prepared for display in instructor order, together with its live "applied" counter. */
 export interface SortedGradingCriterion {
     title: string;
     instructions: GradingInstruction[];
@@ -29,12 +35,15 @@ export interface SortedGradingCriterion {
         FaIconComponent,
         TranslateDirective,
         ExpandableSectionComponent,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
         HelpIconComponent,
         MarkdownDirective,
         TumAetUiCheckboxComponent,
         TumAetUiTagComponent,
         ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiTableDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
@@ -52,16 +61,13 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     readonly expandableSections = viewChildren(ExpandableSectionComponent);
 
     /**
-     * Criteria and their instructions in alphabetical order, so a tutor can find an instruction by its wording
-     * instead of by the (arbitrary) order in which the instructor happened to create them.
+     * Preserve the instructor's rubric order in the assessment editor.
      */
     readonly sortedCriteria = computed<SortedGradingCriterion[]>(() =>
-        [...(this.criteria() ?? [])]
-            .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
-            .map((criterion) => ({
-                title: criterion.title,
-                instructions: [...(criterion.structuredGradingInstructions ?? [])].sort((a, b) => (a.instructionDescription ?? '').localeCompare(b.instructionDescription ?? '')),
-            })),
+        (this.criteria() ?? []).map((criterion) => ({
+            title: criterion.title,
+            instructions: criterion.structuredGradingInstructions ?? [],
+        })),
     );
 
     readonly selectable = computed(() => !this.readonly() && this.selectionService.isSelectable());

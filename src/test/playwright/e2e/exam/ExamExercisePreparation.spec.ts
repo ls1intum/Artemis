@@ -57,7 +57,7 @@ test.describe('Exam exercise preparation', { tag: '@slow' }, () => {
         // Nothing is prepared yet: there is no status, and no participation exists.
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}/students`);
         expect(await status(page)).toBeNull();
-        expect(await exerciseAPIRequests.getExerciseParticipations(exercises[0].id!)).toHaveLength(0);
+        expect(await exerciseAPIRequests.getExerciseParticipations(exercises[0].id!, 'exam')).toHaveLength(0);
         let popover = await openStatusPopover(page);
         await expect(popover).toContainText('Not all exercises are prepared for all individual exams');
         await page.keyboard.press('Escape');
@@ -73,7 +73,7 @@ test.describe('Exam exercise preparation', { tag: '@slow' }, () => {
         expect(done.failed, 'no preparation failed').toBe(0);
         expect(done.participationCount, 'one participation per student and exercise').toBe(6);
         for (const exercise of exercises) {
-            expect((await exerciseAPIRequests.getExerciseParticipations(exercise.id!)).map((participation) => participation.studentLogin).sort()).toEqual(
+            expect((await exerciseAPIRequests.getExerciseParticipations(exercise.id!, 'exam')).map((participation) => participation.studentLogin).sort()).toEqual(
                 [studentOne, studentTwo, studentThree].map((student) => student.username).sort(),
             );
         }
@@ -101,7 +101,7 @@ test.describe('Exam exercise preparation', { tag: '@slow' }, () => {
         await expect.poll(async () => (await status(page))?.finished, { timeout: 60_000 }).toBe(4);
         expect((await status(page))!.failed).toBe(0);
         for (const exercise of exercises) {
-            expect(await exerciseAPIRequests.getExerciseParticipations(exercise.id!), 'one participation per student, none twice').toHaveLength(4);
+            expect(await exerciseAPIRequests.getExerciseParticipations(exercise.id!, 'exam'), 'one participation per student, none twice').toHaveLength(4);
         }
     });
 

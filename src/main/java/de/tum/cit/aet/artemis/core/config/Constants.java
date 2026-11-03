@@ -109,12 +109,11 @@ public final class Constants {
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
 
-    // Allowed characters for exercise titles: Unicode letters (\p{L}, e.g. umlauts like "Lärche"), combining marks
-    // (\p{M}, for decomposed accented characters), numbers (\p{N}), underscore, hyphen and whitespace. Titles are
-    // display-only and never used to derive VCS/CI artifacts (those come from the ASCII-validated short name), so
-    // allowing international letters here is safe. Previously this was ASCII-only, which rejected legitimate titles such
-    // as "Lärche" on edit while create/import accepted them.
+    // Keep existing programming exercise title restrictions separate from non-programming display titles.
     public static final Pattern TITLE_NAME_PATTERN = Pattern.compile("^[\\p{L}\\p{M}\\p{N}_\\-\\s]*");
+
+    // Non-programming exercise display titles additionally allow periods, e.g. "Strategy vs. bridge pattern".
+    public static final Pattern EXERCISE_DISPLAY_TITLE_PATTERN = Pattern.compile("^[\\p{L}\\p{M}\\p{N}_\\-\\s.]*");
 
     public static final String TUM_LDAP_MATRIKEL_NUMBER = "imMatrikelNr";
 
@@ -501,6 +500,9 @@ public final class Constants {
      */
     public static final String MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = "hyperion-exercise-generation";
 
+    /** The independent AI Worker coordinator module feature. */
+    public static final String MODULE_FEATURE_AIWORKER = "aiworker";
+
     /**
      * The name of the module feature used for Deimos malicious participation analysis functionality.
      */
@@ -583,6 +585,14 @@ public final class Constants {
     public static final String MODULE_FEATURE_GLOBAL_SEARCH = "globalsearch";
 
     /**
+     * The name of the module feature for agent access (personal access tokens). It is published to the client when
+     * {@link #AGENT_ACCESS_ENABLED_PROPERTY_NAME} is enabled, so the client can hide the token settings otherwise.
+     */
+    public static final String MODULE_FEATURE_AGENT_ACCESS = "agent-access";
+
+    public static final String AGENT_ACCESS_ENABLED_PROPERTY_NAME = "artemis.agent-access.enabled";
+
+    /**
      * The YAML property prefix consumed by {@code SAML2Properties} when SAML2 is enabled.
      */
     public static final String SAML2_PROPERTIES_PREFIX = "saml2";
@@ -613,6 +623,9 @@ public final class Constants {
      * The name of the property used to enable or disable whole-exercise generation.
      */
     public static final String HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME = "artemis.hyperion.exercise-generation.enabled";
+
+    /** The property that enables the AI Worker coordinator on a core node. */
+    public static final String AIWORKER_ENABLED_PROPERTY_NAME = "artemis.aiworker.enabled";
 
     /**
      * The name of the property used to enable or disable Iris / Pyris functionality.
@@ -786,6 +799,9 @@ public final class Constants {
     public static final String WEBAUTHN_CHALLENGE_COOKIE_NAME = "webauthn-challenge";
 
     public static final String BEARER_PREFIX = "Bearer ";
+
+    /** The start of every personal access token secret, which tells it apart from a JWT in an Authorization header. */
+    public static final String PERSONAL_ACCESS_TOKEN_PREFIX = "art_pat_";
 
     public static final String HAZELCAST = "Hazelcast";
 

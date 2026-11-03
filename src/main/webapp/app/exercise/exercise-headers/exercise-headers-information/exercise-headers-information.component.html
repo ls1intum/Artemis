@@ -6,12 +6,12 @@
     -->
     <div
         [attr.data-testid]="rootTestId()"
-        class="d-flex flex-row gap-2"
-        [class.align-self-stretch]="placement() === 'panel'"
+        class="flex flex-row gap-2"
+        [class.self-stretch]="placement() === 'panel'"
         [class.flex-wrap]="placement() === 'panel'"
-        [class.align-items-stretch]="placement() === 'panel'"
+        [class.items-stretch]="placement() === 'panel'"
         [class.overflow-auto]="placement() === 'panel'"
-        [class.align-items-center]="placement() === 'titleBar'"
+        [class.items-center]="placement() === 'titleBar'"
     >
         @for (informationBoxItem of informationBoxItems(); track $index) {
             @if (informationBoxItem.content.type === 'submissionStatus') {
@@ -22,13 +22,13 @@
                     [attr.tabindex]="historyClickable ? 0 : undefined"
                     [attr.aria-disabled]="!historyClickable"
                     [class.pe-auto]="historyClickable"
-                    [ngbTooltip]="historyClickable ? ('artemisApp.result.progressString.clickToSeeAllResults' | artemisTranslate) : ''"
+                    [tumAetUiTooltip]="historyClickable ? ('artemisApp.result.progressString.clickToSeeAllResults' | artemisTranslate) : ''"
                     (click)="historyClickable ? resultHistoryDropdown()?.toggleResultsPopover($event) : undefined"
                     (keydown.enter)="historyClickable ? resultHistoryDropdown()?.toggleResultsPopover($event) : undefined"
                     (keydown.space)="historyClickable ? resultHistoryDropdown()?.toggleResultsPopover($event) : undefined"
                 >
                     <jhi-information-box data-testid="exercise-status" [informationBoxData]="informationBoxItem" [layout]="boxLayout()">
-                        <span contentComponent class="d-flex align-items-center gap-1">
+                        <span contentComponent class="flex items-center gap-1">
                             <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -- This span only isolates the nested controls from the parent header action. -->
                             <span (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" (keydown.space)="$event.stopPropagation()">
                                 <!--
@@ -37,7 +37,7 @@
                                     "building" text line the same component renders without it.
                                 -->
                                 <jhi-submission-result-status
-                                    class="text-truncate result"
+                                    class="truncate result"
                                     [exercise]="informationBoxItem.content.value"
                                     [studentParticipation]="studentParticipation()"
                                     [result]="displayedResult()"
@@ -74,7 +74,7 @@
                                 contentComponent
                                 [exercise]="informationBoxItem.content.value"
                                 [showTags]="{ difficulty: false, notReleased: true, includedInScore: true }"
-                                [ngClass]="'badge-row d-inline-flex flex-wrap gap-1'"
+                                [ngClass]="'badge-row inline-flex flex-wrap gap-1'"
                                 [isSmall]="true"
                             />
                         }

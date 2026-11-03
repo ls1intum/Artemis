@@ -43,6 +43,12 @@
     </root>
     -->
 
+    <!-- Hands the warnings and errors of the server to the error analysis of the administration. It only counts them in memory. -->
+    <appender name="ERROR_ANALYSIS" class="de.tum.cit.aet.artemis.core.config.ErrorAnalysisAppender"/>
+    <root>
+        <appender-ref ref="ERROR_ANALYSIS"/>
+    </root>
+
     <logger name="de.tum.cit.aet.artemis" level="INFO"/>
     <logger name="tech.jhipster" level="WARN"/>
 

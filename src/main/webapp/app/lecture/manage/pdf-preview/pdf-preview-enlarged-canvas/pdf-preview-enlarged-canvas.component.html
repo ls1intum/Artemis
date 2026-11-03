@@ -1,19 +1,50 @@
 <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- Pointer clicks outside the canvas close the overlay; the close button is keyboard focusable. -->
 <div #enlargedContainer class="enlarged-container" (click)="closeIfOutside($event)">
     @if (isEnlargedCanvasLoading()) {
-        <div class="d-flex justify-content-center position-absolute">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden" jhiTranslate="loading"></span>
-            </div>
+        <div class="flex justify-center absolute">
+            <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
         </div>
     }
     <canvas #enlargedCanvas></canvas>
-    <button type="button" class="btn btn-close" (click)="closeEnlargedView($event)"></button>
+    <button
+        tumAetUiButton
+        severity="primary"
+        variant="solid"
+        size="default"
+        type="button"
+        class="close-preview-button"
+        [attr.aria-label]="'entity.action.close' | artemisTranslate"
+        (click)="closeEnlargedView($event)"
+    >
+        ×
+    </button>
     @if (currentPage() !== 1) {
-        <button type="button" class="btn btn-secondary nav-button left" (click)="handleNavigation('prev', $event)" aria-label="Previous page">←</button>
+        <button
+            tumAetUiButton
+            severity="secondary"
+            variant="solid"
+            size="default"
+            type="button"
+            class="nav-button left"
+            (click)="handleNavigation('prev', $event)"
+            aria-label="Previous page"
+        >
+            ←
+        </button>
     }
     @if (currentPage() !== totalPages()) {
-        <button type="button" class="btn btn-secondary nav-button right" (click)="handleNavigation('next', $event)" aria-label="Next page">→</button>
+        <button
+            tumAetUiButton
+            severity="secondary"
+            variant="solid"
+            size="default"
+            type="button"
+            class="nav-button right"
+            (click)="handleNavigation('next', $event)"
+            aria-label="Next page"
+        >
+            →
+        </button>
     }
     <div class="page-number-display">{{ currentPage() }}</div>
 </div>

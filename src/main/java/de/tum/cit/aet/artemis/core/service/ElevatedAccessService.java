@@ -14,14 +14,13 @@ import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.ElevationClaims;
 
 /**
  * Separates administrator account classification from the request-bound capability to exercise administrator access.
  * <p>
- * An administrator without an approved passkey keeps explicitly assigned normal roles, but must not receive the global
+ * An administrator without an approved passkey keeps the roles that the courses grant, but must not receive the global
  * administrator override. The decision has two halves: the session must prove the configured passkey requirement (see
  * {@link ElevationClaims}), and the account must still be an active administrator. Neither half throws, so list
  * endpoints can fall back to their role-filtered queries. Explicit administrator endpoints use
@@ -96,27 +95,5 @@ public class ElevatedAccessService {
             return false;
         }
         return userRepository.isAdmin(login);
-    }
-
-    /**
-     * Method-security gate for endpoints whose required role is not tied to a resource identifier. The explicit authorities are inspected without Spring's role hierarchy so an
-     * administrator authority alone cannot satisfy a teaching role. Resource-specific annotations use their authorization aspects instead.
-     *
-     * @param requiredRole required global role
-     * @return whether the caller has an explicitly assigned sufficient normal role or active administrator elevation
-     */
-    @CheckReturnValue
-    public boolean hasAtLeastRoleOrAdminAccess(Role requiredRole) {
-        return switch (requiredRole) {
-            case SUPER_ADMIN -> isAdminElevationActive() && isCurrentUserSuperAdministrator();
-            case ADMIN -> isAdminElevationActive();
-            case INSTRUCTOR -> SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.INSTRUCTOR.getAuthority()) || isAdminElevationActive();
-            case EDITOR -> SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.INSTRUCTOR.getAuthority(), Role.EDITOR.getAuthority()) || isAdminElevationActive();
-            case TEACHING_ASSISTANT ->
-                SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.INSTRUCTOR.getAuthority(), Role.EDITOR.getAuthority(), Role.TEACHING_ASSISTANT.getAuthority())
-                        || isAdminElevationActive();
-            case STUDENT -> SecurityUtils.isAuthenticated();
-            case ANONYMOUS -> true;
-        };
     }
 }

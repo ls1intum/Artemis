@@ -1,7 +1,8 @@
-import { Component, WritableSignal, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { MODULE_FEATURE_PASSKEY } from 'app/app.constants';
+import { MODULE_FEATURE_AGENT_ACCESS, MODULE_FEATURE_PASSKEY } from 'app/app.constants';
+import { AgentAccessSettingsComponent } from 'app/account/user/settings/credentials/agent-access-settings/agent-access-settings.component';
 import { CredentialRevocationSettingsComponent } from 'app/account/user/settings/credentials/credential-revocation-settings/credential-revocation-settings.component';
 import { PasskeySettingsComponent } from 'app/account/user/settings/credentials/passkey-settings/passkey-settings.component';
 import { SshUserSettingsComponent } from 'app/account/user/settings/credentials/ssh-settings/ssh-user-settings.component';
@@ -23,16 +24,19 @@ class MockVcsAccessTokensSettingsComponent {}
 @Component({ selector: 'jhi-vcs-access-token-overview', template: '' })
 class MockVcsAccessTokenOverviewComponent {}
 
+@Component({ selector: 'jhi-agent-access-settings', template: '' })
+class MockAgentAccessSettingsComponent {}
+
 @Component({ selector: 'jhi-credential-revocation-settings', template: '' })
 class MockCredentialRevocationSettingsComponent {}
 
 describe('CredentialsSettingsComponent', () => {
     let fixture: ComponentFixture<CredentialsSettingsComponent>;
-    let accountService: { isAtLeastTutor: WritableSignal<boolean> };
+    let accountService: { isAtLeastTutor: ReturnType<typeof vi.fn>; mayCreateAgentTokens: ReturnType<typeof vi.fn> };
     let profileService: { isModuleFeatureActive: ReturnType<typeof vi.fn> };
 
     beforeEach(async () => {
-        accountService = { isAtLeastTutor: signal(false) };
+        accountService = { isAtLeastTutor: vi.fn().mockReturnValue(false), mayCreateAgentTokens: vi.fn().mockReturnValue(false) };
         profileService = { isModuleFeatureActive: vi.fn().mockReturnValue(false) };
 
         await TestBed.configureTestingModule({
@@ -49,6 +53,7 @@ describe('CredentialsSettingsComponent', () => {
                         SshUserSettingsComponent,
                         VcsAccessTokensSettingsComponent,
                         VcsAccessTokenOverviewComponent,
+                        AgentAccessSettingsComponent,
                         CredentialRevocationSettingsComponent,
                     ],
                 },
@@ -58,6 +63,7 @@ describe('CredentialsSettingsComponent', () => {
                         MockSshUserSettingsComponent,
                         MockVcsAccessTokensSettingsComponent,
                         MockVcsAccessTokenOverviewComponent,
+                        MockAgentAccessSettingsComponent,
                         MockCredentialRevocationSettingsComponent,
                     ],
                 },
@@ -78,11 +84,12 @@ describe('CredentialsSettingsComponent', () => {
         expect(fixture.nativeElement.querySelector('jhi-credential-revocation-settings')).toBeTruthy();
     });
 
-    it('does not instantiate Passkeys or VCS Token when unavailable', () => {
+    it('does not instantiate Passkeys, VCS Token, or Agent Access when unavailable', () => {
         createComponent();
 
         expect(fixture.nativeElement.querySelector('jhi-passkey-settings')).toBeFalsy();
         expect(fixture.nativeElement.querySelector('jhi-vcs-access-tokens-settings')).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('jhi-agent-access-settings')).toBeFalsy();
     });
 
     it('renders Passkeys when the passkey module is available', () => {
@@ -94,10 +101,19 @@ describe('CredentialsSettingsComponent', () => {
     });
 
     it('renders VCS Token for tutors', () => {
-        accountService.isAtLeastTutor.set(true);
+        accountService.isAtLeastTutor.mockReturnValue(true);
 
         createComponent();
 
         expect(fixture.nativeElement.querySelector('jhi-vcs-access-tokens-settings')).toBeTruthy();
+    });
+
+    it('renders Agent Access when the module is enabled and the user may create agent tokens', () => {
+        profileService.isModuleFeatureActive.mockImplementation((feature) => feature === MODULE_FEATURE_AGENT_ACCESS);
+        accountService.mayCreateAgentTokens.mockReturnValue(true);
+
+        createComponent();
+
+        expect(fixture.nativeElement.querySelector('jhi-agent-access-settings')).toBeTruthy();
     });
 });

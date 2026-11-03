@@ -21,11 +21,20 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseLatestDueDateDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
 public interface ParticipationRepository extends ArtemisJpaRepository<Participation, Long> {
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseLatestDueDateDTO(p.exercise.id, MAX(p.individualDueDate))
+            FROM Participation p
+            WHERE p.exercise.id IN :exerciseIds AND p.individualDueDate IS NOT NULL
+            GROUP BY p.exercise.id
+            """)
+    List<ExerciseLatestDueDateDTO> findLatestIndividualDueDates(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Count the number of participations for a given set of exercises.

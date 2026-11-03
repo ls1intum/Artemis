@@ -16,7 +16,7 @@ export class CourseManagementResolve implements Resolve<Course> {
      */
     resolve(route: ActivatedRouteSnapshot): Observable<Course> {
         if (route.params['courseId']) {
-            return this.courseManagementService.find(route.params['courseId']).pipe(
+            return this.courseManagementService.findForManagement(route.params['courseId']).pipe(
                 filter((response: HttpResponse<Course>) => response.ok),
                 map((course: HttpResponse<Course>) => course.body!),
             );

@@ -622,4 +622,24 @@ public class ChannelService {
     public void createDefaultChannels(Course course) {
         Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(course, channelType));
     }
+
+    /**
+     * Finds the announcement channel an announcement should be posted to.
+     *
+     * @param courseId  the course the announcement belongs to
+     * @param channelId the requested announcement channel, or null for the course's default announcement channel
+     * @return the id of the announcement channel
+     * @throws BadRequestAlertException if the requested channel is not an announcement channel of the course, or the course has no
+     *                                      default announcement channel
+     */
+    public long findAnnouncementChannelIdElseThrow(long courseId, @Nullable Long channelId) {
+        List<Channel> announcementChannels = channelRepository.findChannelsByCourseId(courseId).stream().filter(Channel::getIsAnnouncementChannel).toList();
+        if (channelId != null) {
+            return announcementChannels.stream().filter(channel -> channelId.equals(channel.getId())).findFirst().map(Channel::getId)
+                    .orElseThrow(() -> new BadRequestAlertException("The channel is not an announcement channel of this course", CHANNEL_ENTITY_NAME, "notAnAnnouncementChannel"));
+        }
+        return announcementChannels.stream().filter(channel -> DefaultChannelType.ANNOUNCEMENT.getName().equals(channel.getName())).findFirst().map(Channel::getId)
+                .orElseThrow(() -> new BadRequestAlertException("The course has no default announcement channel, so a channelId is required", CHANNEL_ENTITY_NAME,
+                        "noDefaultAnnouncementChannel"));
+    }
 }

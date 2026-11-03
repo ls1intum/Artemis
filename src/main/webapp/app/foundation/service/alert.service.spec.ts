@@ -344,6 +344,29 @@ describe('Alert Service Test', () => {
     });
 
     it.each([
+        { language: 'en', users: englishUserManagement, errors: englishErrors, expected: 'Field Email must be a valid email address!' },
+        { language: 'de', users: germanUserManagement, errors: germanErrors, expected: 'Feld E-Mail muss eine gültige E-Mail-Adresse sein!' },
+    ])('should translate a managed user email validation error in $language', ({ language, users, errors, expected }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, users);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                error: { fieldErrors: [{ objectName: 'managedUserVM', field: 'email', message: 'Email' }] },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        const renderedMessage = document.createElement('div');
+        renderedMessage.innerHTML = service.get()[0].message ?? '';
+        expect(renderedMessage.textContent).toBe(expected);
+    });
+
+    it.each([
         { language: 'en', quizTranslations: enQuizSubmission, errors: englishErrors, expected: 'Field Short answer cannot be blank!' },
         { language: 'de', quizTranslations: deQuizSubmission, errors: germanErrors, expected: 'Feld Kurzantwort darf nicht leer sein!' },
     ])('should translate short-answer validation errors in $language', ({ language, quizTranslations, errors, expected }) => {

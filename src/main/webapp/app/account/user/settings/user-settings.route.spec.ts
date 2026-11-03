@@ -51,6 +51,7 @@ describe('user settings routes', () => {
             'ssh/view/:keyId': 'credentials/ssh/view/:keyId',
             'vcs-token': 'credentials',
             'access-tokens': 'credentials',
+            'agent-access': 'credentials',
             'llm-usage': 'ai-experience',
             'ide-preferences': 'exercises',
             'quiz-training': 'exercises',
