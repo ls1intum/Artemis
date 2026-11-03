@@ -34,7 +34,7 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'credentials/ssh/add',
+                path: 'credentials/add',
                 loadComponent: () =>
                     import('app/account/user/settings/ssh-settings/details/ssh-user-settings-key-details.component').then((m) => m.SshUserSettingsKeyDetailsComponent),
                 data: {
@@ -42,7 +42,7 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'credentials/ssh/fingerprints',
+                path: 'credentials/fingerprints',
                 loadComponent: () =>
                     import('app/account/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component').then((m) => m.SshUserSettingsFingerprintsComponent),
                 data: {
@@ -50,7 +50,7 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'credentials/ssh/view/:keyId',
+                path: 'credentials/view/:keyId',
                 loadComponent: () =>
                     import('app/account/user/settings/ssh-settings/details/ssh-user-settings-key-details.component').then((m) => m.SshUserSettingsKeyDetailsComponent),
                 data: {

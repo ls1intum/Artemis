@@ -14,9 +14,9 @@ describe('user settings V2 routes', () => {
             '',
             'profile',
             'credentials',
-            'credentials/ssh/add',
-            'credentials/ssh/fingerprints',
-            'credentials/ssh/view/:keyId',
+            'credentials/add',
+            'credentials/fingerprints',
+            'credentials/view/:keyId',
             'learning',
             'ai-experience',
             'exercises',
@@ -25,9 +25,9 @@ describe('user settings V2 routes', () => {
     });
 
     it('provides SSH detail pages with the existing SSH title', () => {
-        const sshRoutes = routes[0].children?.filter((route) => route.path?.startsWith('credentials/ssh/'));
+        const sshRoutes = routes[0].children?.filter((route) => route.path?.startsWith('credentials/') && route.path !== 'credentials');
 
-        expect(sshRoutes?.map((route) => route.path)).toEqual(['credentials/ssh/add', 'credentials/ssh/fingerprints', 'credentials/ssh/view/:keyId']);
+        expect(sshRoutes?.map((route) => route.path)).toEqual(['credentials/add', 'credentials/fingerprints', 'credentials/view/:keyId']);
         expect(sshRoutes?.every((route) => route.data?.pageTitle === 'artemisApp.userSettings.categories.SSH_SETTINGS')).toBe(true);
         expect(sshRoutes?.every((route) => route.loadComponent)).toBe(true);
     });
