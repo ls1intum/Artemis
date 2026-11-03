@@ -15,13 +15,16 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
 /**
- * Keeps the Metis entities free of JPA associations, from both sides.
+ * Keeps the Metis entities free of JPA associations, from both sides, and free of JSON serialization.
  * <p>
  * A Metis row names its parent, an exercise, a participation or a tutorial group, by id. A mapped association in either
  * direction would make the parent and the Metis row load together: an inverse one-to-one on the exercise cannot be lazy
  * without bytecode enhancement, so every load of an exercise would read metis_exercise_config, and a collection on the
  * parent is one more association every fetch has to leave out. {@code MetisLazyLoadingIntegrationTest} holds the runtime
  * side of the same statement, by reading the SQL that loading a parent or a Metis row executes.
+ * <p>
+ * The entities never leave the server as JSON: what the module sends or receives is a DTO. A Jackson annotation on an entity
+ * would suggest otherwise, so the entities carry none.
  */
 class MetisDomainArchitectureTest extends AbstractArchitectureTest {
 
@@ -43,6 +46,13 @@ class MetisDomainArchitectureTest extends AbstractArchitectureTest {
     void nothingOutsideMetisDependsOnItsEntities() {
         noClasses().that().resideOutsideOfPackage(METIS_PACKAGE).should().dependOnClassesThat().resideInAPackage(METIS_DOMAIN_PACKAGE)
                 .because("the parent entities must not grow an inverse mapping towards Metis; cross-module access goes through the api package once it exists")
+                .check(productionClasses);
+    }
+
+    @Test
+    void metisEntitiesAreNeverSerialized() {
+        noClasses().that().resideInAPackage(METIS_DOMAIN_PACKAGE).should().dependOnClassesThat().resideInAnyPackage("com.fasterxml.jackson..", "tools.jackson..")
+                .because("the entities never leave the server as JSON; what the module sends or receives is a DTO, which carries its own Jackson annotations")
                 .check(productionClasses);
     }
 }

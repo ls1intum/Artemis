@@ -12,9 +12,6 @@ import jakarta.validation.constraints.Min;
 
 import org.jspecify.annotations.Nullable;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
@@ -40,7 +37,6 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
  */
 @Entity
 @Table(name = "metis_exercise_config")
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MetisExerciseConfig {
 
     /** Lowest value of the five-step scales {@link #answerLength} and {@link #complexity}. */
@@ -223,7 +219,6 @@ public class MetisExerciseConfig {
      *
      * @return true for {@value #MIN_LIKERT_POINTS} or {@value #MAX_LIKERT_POINTS} points
      */
-    @JsonIgnore
     @AssertTrue(message = "A Likert scale has " + MIN_LIKERT_POINTS + " or " + MAX_LIKERT_POINTS + " points")
     public boolean isLikertScaleSupported() {
         return likertScalePoints == MIN_LIKERT_POINTS || likertScalePoints == MAX_LIKERT_POINTS;
