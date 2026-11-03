@@ -13,6 +13,18 @@
             "submissions": "Submissions",
             "exercises": "Exercises",
             "lectures": "Lectures",
+            "tutorialGroups": "Tutorial groups",
+            "exams": "Exams",
+            "competencies": "Competencies",
+            "builds": "Builds",
+            "averageBuildDuration": "Average build duration",
+            "communication": "Communication",
+            "communicationAndIris": "Communication and Iris",
+            "posts": "Posts",
+            "replies": "Replies",
+            "reactions": "Reactions",
+            "faqs": "FAQs",
+            "irisMessages": "Iris messages",
             "exercisesByType": "Exercises by type",
             "activeStudentsTrend": "Active students per semester",
             "exerciseTypes": {
@@ -27,6 +39,9 @@
                 "course": "A course counts if it is no test course, has at least 5 students and starts in the semester. Semesters with fewer than 3 such courses are not shown.",
                 "students": "Students are unique people enrolled as student in at least one counted course.",
                 "activeStudents": "Active students are counted students who made at least one submission in an exercise or exam of these courses.",
+                "activity": "Builds, posts, replies, reactions, published FAQs, Iris messages and tutorial groups are totals over the courses of the semester, whenever they happened, including what tutors, instructors and the system did. Posts include channels, group chats and direct messages. Builds are the finished ones, and the average build duration only uses the successful ones.",
+                "exams": "Exams are the real exams of the counted courses. Test exams, and exams whose title starts with \"test\" or \"mock\", are not counted. Competencies do not include prerequisites. The Exams card is only shown if the instance offers exams, and the Competencies card only if it offers competencies.",
+                "builds": "Builds are only shown if the instance builds with local CI. Build jobs are deleted after one year by default, so builds are only shown for semesters that started within that period.",
                 "privacy": "Only totals are shown, never single courses or people, and results based on too few courses are hidden. The numbers are refreshed about once per hour."
             }
         }
