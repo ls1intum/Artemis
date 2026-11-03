@@ -57,7 +57,7 @@
                 "tutorialGroups": "Tutorial groups of these courses, whenever they took place.",
                 "exercises": "Exercises of these courses, including exam exercises.",
                 "activeStudents": "Counted students who made at least one submission in an exercise or exam of these courses.",
-                "submissions": "Submissions of the counted students and their teams, whenever they were made.",
+                "submissions": "Submissions of the counted students and of all teams in these courses, whenever they were made.",
                 "builds": "Finished builds, whenever they ran. Only shown if the instance builds with local CI. Build jobs are deleted after one year by default, so builds are only shown for semesters that started within that period.",
                 "averageBuildDuration": "Average duration of the successful builds.",
                 "exams": "Real exams of these courses. Test exams, and exams whose title starts with \"test\" or \"mock\", are not counted. Only shown if the instance offers exams.",

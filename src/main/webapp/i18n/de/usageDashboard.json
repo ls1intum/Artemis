@@ -57,7 +57,7 @@
                 "tutorialGroups": "Übungsgruppen dieser Kurse, unabhängig davon, wann sie stattfanden.",
                 "exercises": "Aufgaben dieser Kurse, einschließlich der Klausuraufgaben.",
                 "activeStudents": "Gezählte Studierende, die mindestens eine Abgabe in einer Aufgabe oder Klausur dieser Kurse gemacht haben.",
-                "submissions": "Abgaben der gezählten Studierenden und ihrer Teams, unabhängig davon, wann sie gemacht wurden.",
+                "submissions": "Abgaben der gezählten Studierenden und aller Teams dieser Kurse, unabhängig davon, wann sie gemacht wurden.",
                 "builds": "Abgeschlossene Builds, unabhängig davon, wann sie liefen. Wird nur angezeigt, wenn die Instanz mit Local CI baut. Build-Jobs werden standardmäßig nach einem Jahr gelöscht, deshalb werden Builds nur für Semester angezeigt, die innerhalb dieser Zeit begonnen haben.",
                 "averageBuildDuration": "Durchschnittliche Dauer der erfolgreichen Builds.",
                 "exams": "Echte Klausuren dieser Kurse. Testklausuren und Klausuren, deren Titel mit \"test\" oder \"mock\" beginnt, werden nicht gezählt. Wird nur angezeigt, wenn die Instanz Klausuren anbietet.",
