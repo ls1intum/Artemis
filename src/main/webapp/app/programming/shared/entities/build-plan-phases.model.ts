@@ -95,6 +95,25 @@ export const BUILD_PHASE_RESERVED_NAMES = new Set(['main', 'final_force_run_post
 export const BUILD_CONTAINER_NAME_PATTERN = /^[A-Za-z_]\w*$/;
 export const DEFAULT_BUILD_CONTAINER_NAME = 'default';
 
+/**
+ * Whether a build plan has to show what only matters with several containers: their names, timeouts, repository scoping
+ * and Docker flags. A plan with one container hides them, as the settings of the exercise already cover it, unless the
+ * container has one of them set: a hidden setting would still take effect, and could still keep the plan from being saved.
+ *
+ * @param container      the container to show
+ * @param containerCount the number of containers of the build plan
+ * @returns whether the settings of the container are shown
+ */
+export function showsContainerSettings(container: BuildContainer, containerCount: number): boolean {
+    return (
+        containerCount > 1 ||
+        container.name !== DEFAULT_BUILD_CONTAINER_NAME ||
+        container.timeoutSeconds != undefined ||
+        container.repositories != undefined ||
+        container.dockerFlags != undefined
+    );
+}
+
 // the bounds the server applies in ProgrammingExerciseValidationService#validateDockerFlagValues, mirrored here so an
 // invalid value is caught inline instead of only by the save request
 export const MIN_DOCKER_CPU_COUNT = 1;

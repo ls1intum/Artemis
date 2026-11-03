@@ -71,6 +71,25 @@ describe('BuildContainersDetailsComponent', () => {
         expect(addPhaseButtons.every((button) => (button.nativeElement as HTMLButtonElement).hidden)).toBe(true);
     });
 
+    it('should show only the image and the phases of an only container without settings of its own', () => {
+        fixture.componentRef.setInput('containers', [{ name: 'default', phases: containers[1].phases }]);
+        fixture.detectChanges();
+
+        const card = getContainerCards()[0];
+        expect(card.query(By.css('.build-container-details-name'))).toBeNull();
+        expect(card.query(By.css('.build-container-details-repository'))).toBeNull();
+        expect(card.query(By.css('.build-container-details-image'))).not.toBeNull();
+    });
+
+    it('should show the settings of an only container that has some', () => {
+        fixture.componentRef.setInput('containers', [{ name: 'default', repositories: [{ type: 'TESTS' }], phases: containers[1].phases }]);
+        fixture.detectChanges();
+
+        const card = getContainerCards()[0];
+        expect(card.query(By.css('.build-container-details-name'))).not.toBeNull();
+        expect(card.query(By.css('.build-container-details-repository'))).not.toBeNull();
+    });
+
     it('should name the language default image for a container without an image of its own', () => {
         fixture.componentRef.setInput('defaultDockerImage', 'language-default:1');
         fixture.detectChanges();

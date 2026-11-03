@@ -17,6 +17,7 @@ import {
     MIN_DOCKER_MEMORY_MB,
     MIN_DOCKER_MEMORY_SWAP_MB,
     isDockerResourceLimitValid,
+    showsContainerSettings,
 } from 'app/programming/shared/entities/build-plan-phases.model';
 
 type EnvVars = { [key: string]: string };
@@ -50,6 +51,8 @@ export class BuildContainerEditorComponent {
     /** the names of the other containers of the build plan, used to detect duplicates */
     readonly otherContainerNames = input<string[]>([]);
     readonly canRemove = input(false);
+    /** the number of containers of the build plan, see {@link showsContainerSettings} */
+    readonly containerCount = input.required<number>();
     // the language default image, shown while the image field is empty
     readonly dockerImagePlaceholder = input<string>('');
     // the exercise timeout, shown as the placeholder of the container timeout: an empty field means the container uses it
@@ -70,6 +73,8 @@ export class BuildContainerEditorComponent {
      * provides the assignment repository and never checks out the template separately, so neither is a choice
      */
     protected readonly repositoryTypes: BuildContainerRepositoryType[] = ['SOLUTION', 'TESTS', 'AUXILIARY'];
+
+    readonly showsSettings = computed(() => showsContainerSettings(this.container(), this.containerCount()));
 
     readonly isNamePatternValid = computed(() => BUILD_CONTAINER_NAME_PATTERN.test(this.container().name));
 

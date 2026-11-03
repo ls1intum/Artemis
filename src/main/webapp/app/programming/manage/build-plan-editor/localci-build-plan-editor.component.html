@@ -40,8 +40,9 @@
     </div>
     <jhi-programming-exercise-build-configuration [programmingExercise]="programmingExercise()!" [timeout]="timeout()" (timeoutChange)="timeout.set($event)" />
 
-    <span class="inline-block" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.title"></span>
-    <jhi-help-icon text="artemisApp.programmingExercise.buildContainersEditor.help" />
+    @if (containers().length > 1) {
+        <span class="inline-block" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.title"></span>
+    }
     @for (container of containers(); track $index) {
         <jhi-build-container-editor
             [container]="container"
@@ -49,6 +50,7 @@
             (containerChange)="updateContainer($index, $event)"
             (remove)="removeContainer($index)"
             [canRemove]="containers().length > 1"
+            [containerCount]="containers().length"
             [otherContainerNames]="otherContainerNames($index)"
             [isExamMode]="isExamMode()"
             [dockerImagePlaceholder]="defaultDockerImage()"
@@ -62,6 +64,7 @@
     <tumaet-ui-button id="add_container_button" variant="outlined" [icon]="faPlus" (clicked)="addContainer()">
         <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.addContainer"></span>
     </tumaet-ui-button>
+    <jhi-help-icon text="artemisApp.programmingExercise.buildContainersEditor.help" />
     @if (!arePhaseNamesValid()) {
         <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames"></div>
     }

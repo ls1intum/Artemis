@@ -1,10 +1,12 @@
 @for (container of containers(); track container.name) {
     <div class="border rounded p-3 mb-3 build-container-details">
         <div class="flex flex-wrap gap-4 mb-2">
-            <div>
-                <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.containerName"></span>:
-                <code class="build-container-details-name">{{ container.name }}</code>
-            </div>
+            @if (showsSettings(container)) {
+                <div>
+                    <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.containerName"></span>:
+                    <code class="build-container-details-name">{{ container.name }}</code>
+                </div>
+            }
             <div>
                 <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>:
                 @if (container.dockerImage || defaultDockerImage(); as image) {
@@ -19,20 +21,22 @@
                     <span class="build-container-details-timeout">{{ container.timeoutSeconds }} s</span>
                 </div>
             }
-            <div>
-                <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.repositories"></span>:
-                @if (container.repositories) {
-                    @for (repository of container.repositories; track repository.type) {
-                        <span class="badge bg-secondary me-1 build-container-details-repository">
-                            {{ 'artemisApp.programmingExercise.buildContainersEditor.repositoryTypes.' + repository.type | artemisTranslate }}
-                        </span>
-                    } @empty {
-                        <span class="build-container-details-repository">&ndash;</span>
+            @if (showsSettings(container)) {
+                <div>
+                    <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.repositories"></span>:
+                    @if (container.repositories) {
+                        @for (repository of container.repositories; track repository.type) {
+                            <span class="badge bg-secondary me-1 build-container-details-repository">
+                                {{ 'artemisApp.programmingExercise.buildContainersEditor.repositoryTypes.' + repository.type | artemisTranslate }}
+                            </span>
+                        } @empty {
+                            <span class="build-container-details-repository">&ndash;</span>
+                        }
+                    } @else {
+                        <span class="build-container-details-repository" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.exerciseRepositories"></span>
                     }
-                } @else {
-                    <span class="build-container-details-repository" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.exerciseRepositories"></span>
-                }
-            </div>
+                </div>
+            }
             @if (container.dockerFlags; as dockerFlags) {
                 <div>
                     <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.dockerFlags"></span>:

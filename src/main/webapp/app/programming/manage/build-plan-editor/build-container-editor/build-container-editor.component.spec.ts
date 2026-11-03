@@ -50,6 +50,7 @@ describe('BuildContainerEditorComponent', () => {
         component = fixture.componentInstance;
         fixture.componentRef.setInput('container', { ...container, phases: [...container.phases] });
         fixture.componentRef.setInput('containerIndex', 0);
+        fixture.componentRef.setInput('containerCount', 2);
     });
 
     const getRemoveButton = () => fixture.debugElement.query(By.css('[data-testid="remove-container-button"]'));
@@ -232,12 +233,71 @@ describe('BuildContainerEditorComponent', () => {
     });
 });
 
+describe('BuildContainerEditorComponent as the only container of a build plan', () => {
+    let fixture: ComponentFixture<BuildContainerEditorComponent>;
+
+    const plainContainer: BuildContainer = {
+        name: 'default',
+        dockerImage: 'image-a:1',
+        phases: [{ name: 'test', script: 'echo test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [BuildContainerEditorComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .overrideComponent(BuildContainerEditorComponent, {
+                remove: { imports: [BuildPhasesEditorComponent] },
+                add: { imports: [MockComponent(BuildPhasesEditorComponent)] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(BuildContainerEditorComponent);
+        fixture.componentRef.setInput('containerIndex', 0);
+    });
+
+    const render = (rendered: BuildContainer, containerCount: number) => {
+        fixture.componentRef.setInput('container', rendered);
+        fixture.componentRef.setInput('containerCount', containerCount);
+        fixture.detectChanges();
+    };
+    const isShown = (id: string) => fixture.nativeElement.querySelector(`#${id}`) !== null;
+    const settingFields = ['field_container_name_0', 'field_container_timeout_0', 'field_container_scoped_0', 'field_container_docker_flags_0'];
+
+    it('should show only the image and the phases of a plain container', () => {
+        render(plainContainer, 1);
+
+        expect(settingFields.filter(isShown)).toEqual([]);
+        expect(isShown('field_container_image_0')).toBe(true);
+        expect(fixture.debugElement.query(By.directive(BuildPhasesEditorComponent))).not.toBeNull();
+    });
+
+    it('should show the settings once the build plan has a second container', () => {
+        render(plainContainer, 2);
+
+        expect(settingFields.every(isShown)).toBe(true);
+    });
+
+    it.each<[string, Partial<BuildContainer>]>([
+        ['a name of its own', { name: 'tests' }],
+        ['an invalid name', { name: '' }],
+        ['a timeout', { timeoutSeconds: 90 }],
+        ['scoped repositories', { repositories: [] }],
+        ['Docker flags', { dockerFlags: {} }],
+    ])('should not hide the settings of an only container with %s, which would still take effect', (_, setting) => {
+        render({ ...plainContainer, ...setting }, 1);
+
+        expect(settingFields.every(isShown)).toBe(true);
+    });
+});
+
 /** two containers on one page, as the build plan editor renders them */
 @Component({
     imports: [BuildContainerEditorComponent],
     template: `
         @for (container of containers; track $index) {
-            <jhi-build-container-editor [container]="container" [containerIndex]="$index" />
+            <jhi-build-container-editor [container]="container" [containerIndex]="$index" [containerCount]="containers.length" />
         }
     `,
 })
