@@ -48,12 +48,12 @@ Interfaces are drawn as ball-and-socket connectors: the ball is the provided int
 | Component | Responsibility | Interfaces |
 |-----------|----------------|------------|
 | Artemis Client | Presents all user interfaces and talks to the server. | Requires REST and WebSocket |
-| Artemis Server | Contains all feature modules, LocalVC and LocalCI. | Provides REST + WebSocket and Git (HTTPS, SSH); requires JDBC, Distributed Data, Authentication and Service APIs |
+| Artemis Server | Contains all feature modules, LocalVC and LocalCI. | Provides REST + WebSocket and Git (HTTPS, SSH); requires Hibernate (JDBC), Distributed Data, Authentication and Service APIs |
 | LocalVC | The integrated Git server. Stores the repositories on the file system and serves `fetch` and `push` over HTTPS and SSH. | Provides Git |
 | LocalCI | Keeps the queue of build jobs, receives the results of the build jobs, grades them and notifies the user. | Requires Distributed Data |
 | Build Agent | Takes build jobs from the queue, clones the repositories from LocalVC and runs each job in a Docker container. Can run inside a core node or as a separate node. | Requires Git and Distributed Data |
 | Distributed Data Provider | Holds the state that all nodes of an installation share, for example the build job queue. Hazelcast, Redis (or Valkey), or a local implementation for a single node. | Provides Distributed Data |
-| PostgreSQL | Persistent data. MySQL is still supported until Artemis 11, see the callout below. | Provides JDBC |
+| PostgreSQL | Persistent data, accessed with Hibernate. MySQL is still supported until Artemis 11, see the callout below. | Provides JDBC |
 | User Management | Optional external user management such as LDAP, SAML2 or OIDC. | Provides Authentication |
 | Optional Services | Iris, Athena, Hyperion, Weaviate and further services that extend the core. | Provide Service APIs |
 
@@ -88,17 +88,20 @@ It describes the intent behind the architecture. The decisions are not independe
 ## Deployment
 
 The following UML deployment diagram shows a typical deployment of an Artemis installation.
+A box with a shaded side is a node, a server or a device. The boxes inside it are the software that runs on it.
+The number of nodes depends on the installation: there are one or more core nodes, any number of build agent nodes, and the distributed data server and the broker node only exist when the installation needs them.
 Student, instructor and teaching assistant devices are all equipped equally with the Artemis client in the browser and a Git client.
 
-<Image src={deploymentOverview} caption="Typical Deployment (UML deployment diagram)" alt="UML deployment diagram of user devices, reverse proxy, core nodes, build agent nodes, database server, distributed data server, and broker node" size={ImageSize.large} />
+<Image src={deploymentOverview} caption="Deployment Overview (UML deployment diagram)" alt="UML deployment diagram of user devices, reverse proxy, core nodes, build agent nodes, database server, distributed data server, and broker node" size={ImageSize.large} />
 
+- **Reverse proxy.** nginx receives the HTTPS requests of the users and forwards HTTP and websocket requests to the core nodes.
 - **Core nodes** run the Artemis server artifact with LocalVC and LocalCI. They keep their state in the database, in the shared file system (the repositories) and in the distributed data provider, so a load balancer can distribute requests without sticky sessions, and a node can be added without downtime.
   Several small nodes usually beat one large one at the same cost, because they fail independently, see [Scaling](/admin/scaling).
 - **Exactly one core node has the `scheduling` profile.** The server runs scheduled tasks, for example to lock repositories on the due date or to clean up unused resources. They must not run on every node.
   This node also sends the startup [telemetry](/admin/telemetry).
 - **Build agent nodes** run the same artifact with the `buildagent` profile. They connect to the distributed data provider, clone repositories from LocalVC and run each build job in a Docker container.
   They can run on servers of the university or in a cloud, and are scaled independently of the core nodes. A core node can also build.
-- **Database server.** PostgreSQL. MySQL is still supported until Artemis 11.
+- **Database server.** PostgreSQL, which the core nodes access with Hibernate. MySQL is still supported until Artemis 11.
 - **Distributed data server.** Only needed with the Redis provider. Hazelcast runs embedded in the core and build agent nodes.
 - **Broker node.** Only needed with several core nodes, to relay websocket messages between them.
 
