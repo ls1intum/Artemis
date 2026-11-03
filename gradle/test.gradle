@@ -133,7 +133,21 @@ ext {
     includedModulesTag = System.getProperty("includeModules")
     includedModules = !includedModulesTag ? new String[]{} : includedModulesTag.split(",") as String[]
 
-    runAllTests = includedTags.size() == 0 && includedModules.size() == 0
+    includedTestClassesProperty = System.getProperty("artemis.test.classes")
+    includedTestClasses = includedTestClassesProperty == null ? [] : includedTestClassesProperty.split(",", -1).toList()
+    if (includedTestClassesProperty != null) {
+        if (includedTestClasses.isEmpty() || includedTestClasses.any { name ->
+            !(name ==~ /de\.tum\.cit\.aet\.artemis(?:\.[A-Za-z_][A-Za-z0-9_]*)+/) ||
+                !file("src/test/java/${name.replace('.', '/')}.java").isFile()
+        }) {
+            throw new GradleException("artemis.test.classes must contain existing exact server test class names (no wildcards or methods)")
+        }
+        if (includedTags.size() > 0 || includedModules.size() > 0 || System.getProperty("artemis.test.bucket")) {
+            throw new GradleException("artemis.test.classes cannot be combined with includeTags, includeModules or artemis.test.bucket")
+        }
+    }
+
+    runAllTests = includedTags.size() == 0 && includedModules.size() == 0 && includedTestClassesProperty == null
     // One shard of a full run: a JUnit tag expression naming the bucket(s) this invocation is responsible for.
     // Unlike includeTags it does not change what a full run means - the same suites and files are excluded - it only
     // narrows a full run to part of it, so that the shards of one build together cover exactly what one build covers.
@@ -145,18 +159,39 @@ ext {
 // Execute the test cases: ./gradlew test
 // Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
 // Execute tests only for specific modules: ./gradlew test -DincludeModules="atlas". Using this flag, "includeTags" will be ignored.
+// Execute an affected class plan: ./gradlew test -Dartemis.test.classes="de.tum.cit.aet.artemis.account.AccountIntegrationTest"
 // Execute one shard of a full run: ./gradlew test -Dartemis.test.bucket="BucketIndependent" (see .github/workflows/ci-test.yml)
 test {
-    if (runAllTests) {
-        // Default per-PR run: exclude long-running nightly suites. Opt in via -DincludeTags="nightly-lti".
+    if (runAllTests || includedModules.size() > 0 || includedTestClassesProperty != null) {
+        // Module selection narrows the ordinary suite; it must not opt into the
+        // long-running nightly/integration suites excluded by a full CI run.
         useJUnitPlatform() {
             excludeTags "nightly-lti"
+        }
+        exclude "**/*IT*", "**/*IntTest*"
+    }
+    if (runAllTests) {
+        useJUnitPlatform() {
             // Sharded run: the same full run, restricted to the buckets this shard owns.
             if (testBucket) {
                 includeTags testBucket
             }
         }
-        exclude "**/*IT*", "**/*IntTest*"
+    } else if (includedTestClassesProperty != null) {
+        useJUnitPlatform()
+        filter { testFilter ->
+            includedTestClasses.each { name ->
+                testFilter.includeTestsMatching(name)
+                testFilter.includeTestsMatching(name + '$*')
+            }
+            // The plan also inventories inherited architecture tags and source
+            // readers. Keep these global families even for hand-written plans.
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.*.architecture.*")
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.core.authorization.*")
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.core.service.featureusage.*")
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.core.service.distributed.*")
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.videosource.service.GocastLoggingSafetyTest")
+        }
     } else if (includedModules.size() == 0) {
         // not running all tests, but not module-specific ones -> use tags
         useJUnitPlatform() {
@@ -164,12 +199,15 @@ test {
         }
     } else {
         useJUnitPlatform()
-        // Always execute "shared"-folder when executing module-specifc tests
-        includedModules += "shared"
+        // Core checks scan controllers, feature usage and cache types across module boundaries.
+        // Architecture checks and Gocast's handler lookup also have no static import edge from a
+        // changed leaf controller. Keep the ordinary nightly/IT exclusions above.
         filter { testFilter ->
-            includedModules.each { val ->
+            (includedModules.toList() + ["shared", "core"]).unique().each { val ->
                 testFilter.includeTestsMatching("de.tum.cit.aet.artemis.$val.*")
             }
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.*.architecture.*")
+            testFilter.includeTestsMatching("de.tum.cit.aet.artemis.videosource.service.GocastLoggingSafetyTest")
         }
     }
     testClassesDirs = testing.suites.test.sources.output.classesDirs

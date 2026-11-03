@@ -7,7 +7,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
@@ -39,6 +38,7 @@ export interface IAccountService {
     authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: readonly Authority[]) => Promise<boolean>;
     hasAnyAuthorityDirect: (authorities: readonly Authority[]) => boolean;
+    hasAdministratorAccess: () => boolean;
     identity: (force?: boolean) => Promise<User | undefined>;
     isAtLeastTutorInCourse: (course: Course) => boolean;
     isAtLeastTutorInCourseWithId: (courseId?: number) => boolean;
@@ -152,9 +152,6 @@ export class AccountService implements IAccountService {
                     const user = response.body!;
                     if (user) {
                         this.userIdentity.set(user);
-
-                        // improved error tracking in sentry
-                        setUser({ username: user.login! });
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting
@@ -277,6 +274,14 @@ export class AccountService implements IAccountService {
     }
 
     /**
+     * Whether the user may create personal access tokens for agent access, as the server decides: an editor or instructor of at least one course who is not
+     * an administrator.
+     */
+    mayCreateAgentTokens(): boolean {
+        return !this.isAdmin() && this.hasAnyAuthorityDirect([Authority.INSTRUCTOR, Authority.EDITOR]);
+    }
+
+    /**
      * Whether administrators have to sign in with a passkey that a super administrator approved before they may use
      * administrator features.
      */
@@ -288,7 +293,7 @@ export class AccountService implements IAccountService {
      * Unlike {@link isAdmin}, the administrator authority alone is not enough while passkeys are required for administrator
      * features: until the administrator signs in with an approved passkey, the server does not grant the administrator rights.
      */
-    private hasAdministratorAccess(): boolean {
+    hasAdministratorAccess(): boolean {
         return this.isAdmin() && (!this.isPasskeyRequiredForAdministratorFeatures() || this.isUserLoggedInWithApprovedPasskey());
     }
 

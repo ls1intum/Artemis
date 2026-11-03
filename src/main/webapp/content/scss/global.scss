@@ -2047,3 +2047,40 @@ ngb-typeahead-window.dropdown-menu.show {
         }
     }
 }
+
+// Print the standalone grading key at full width in normal document flow.
+@media print {
+    body:has(jhi-grade-key-overview) {
+        min-width: 0 !important;
+
+        .sticky-top-navbar,
+        jhi-course-title-bar,
+        .layout-container > .sidebar,
+        jhi-page-ribbon,
+        jhi-footer {
+            display: none !important;
+        }
+
+        .page-wrapper,
+        .sidebar-wrapper,
+        .layout-container,
+        .layout-content,
+        .course-body-container,
+        .page-content-card {
+            display: block !important;
+            position: static !important;
+            width: auto !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .grading-key-overview {
+            width: 100% !important;
+            max-width: none !important;
+        }
+    }
+}

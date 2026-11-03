@@ -6,7 +6,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { Subject } from 'rxjs';
 
 describe('DeleteDialogDirective', () => {
@@ -20,7 +20,7 @@ describe('DeleteDialogDirective', () => {
     const mockDialogRef = {
         onClose: new Subject<void>(),
         close: vi.fn(),
-    } as unknown as DynamicDialogRef;
+    } as unknown as TumAetUiDialogRef;
 
     const mockDialogService = {
         open: vi.fn().mockReturnValue(mockDialogRef),
@@ -30,7 +30,7 @@ describe('DeleteDialogDirective', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useValue: mockDialogService },
+                { provide: TumAetUiDialogService, useValue: mockDialogService },
             ],
         });
         actionType = signal(ActionType.Delete);
@@ -61,11 +61,12 @@ describe('DeleteDialogDirective', () => {
 
         // Check that button was assigned with proper classes and type.
         const deleteButton = fixture.debugElement;
-        expect(deleteButton.nativeElement.matches('.btn.btn-danger.btn-sm.me-1')).toBe(true);
+        expect(deleteButton.nativeElement.tagName).toBe('BUTTON');
+        expect(deleteButton.nativeElement.getAttribute('aria-label')).toContain('entity.action.delete');
         expect(deleteButton.properties['type']).toBe('submit');
 
         // Check that delete text span was added to the DOM.
-        const deleteTextSpan = deleteButton.nativeElement.querySelector('.d-none.d-xl-inline');
+        const deleteTextSpan = deleteButton.nativeElement.querySelector('span');
         expect(deleteTextSpan).not.toBeNull();
         expect(deleteTextSpan.textContent).not.toBeNull();
 
@@ -76,14 +77,13 @@ describe('DeleteDialogDirective', () => {
         expect(directiveInstance.deleteConfirmationText()).toBe('text');
     });
 
-    it('should give the PrimeNG-styled (icon-only) button a translated aria-label and no Bootstrap span/classes', () => {
+    it('should give an icon-only caller a translated aria-label and no generated label or styles', () => {
         renderStyle.set(false);
         fixture.detectChanges();
 
         const button = fixture.nativeElement;
-        expect(button.querySelector('.d-none.d-xl-inline')).toBeNull();
-        expect(button.classList.contains('btn')).toBe(false);
-        expect(button.querySelector('.btn')).toBeNull();
+        expect(button.querySelector('span')).toBeNull();
+        expect(button.classList.contains('tumaet-ui-btn')).toBe(false);
 
         // The icon-only path has no visible text, so the directive must supply an accessible name.
         expect(button.getAttribute('aria-label')).toContain('entity.action.delete');

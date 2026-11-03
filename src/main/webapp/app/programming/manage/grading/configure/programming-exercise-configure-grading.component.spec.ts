@@ -56,7 +56,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
@@ -70,7 +70,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let route: ActivatedRoute;
     let gradingService: ProgrammingExerciseGradingService;
     let programmingExerciseService: ProgrammingExerciseService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
 
     let updateCategoriesStub: ReturnType<typeof vi.spyOn>;
     let resetCategoriesStub: ReturnType<typeof vi.spyOn>;
@@ -224,7 +224,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -240,7 +240,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const router = fixture.debugElement.injector.get(Router);
         programmingExerciseWebsocketService = fixture.debugElement.injector.get(ProgrammingExerciseWebsocketService);
         programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        dialogService = fixture.debugElement.injector.get(DialogService);
+        dialogService = fixture.debugElement.injector.get(TumAetUiDialogService);
 
         updateCategoriesStub = vi.spyOn(gradingService, 'updateCodeAnalysisCategories');
         resetCategoriesStub = vi.spyOn(gradingService, 'resetCategories');
@@ -400,12 +400,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     });
 
     it('should import a configuration from a different exercise', () => {
-        const onCloseSubject = new Subject<ProgrammingExercise | undefined>();
-        const mockDialogRef = {
-            onClose: onCloseSubject.asObservable(),
-            close: vi.fn(),
-        };
-        const dialogOpenSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as any);
+        const dialogRef = new TumAetUiDialogRef<ProgrammingExercise>(vi.fn(), vi.fn());
+        const dialogOpenSpy = vi.spyOn(dialogService, 'open').mockReturnValue(dialogRef);
 
         initGradingComponent({ tab: 'code-analysis' });
         fixture.changeDetectorRef.detectChanges();
@@ -421,7 +417,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(dialogConfig?.data?.programmingLanguage).toEqual(ProgrammingLanguage.JAVA);
 
         // Simulate dialog closing with a selected exercise
-        onCloseSubject.next({ id: 456 } as ProgrammingExercise);
+        dialogRef.close({ id: 456 } as ProgrammingExercise);
 
         expect(importCategoriesFromExerciseStub).toHaveBeenCalledOnce();
         expect(importCategoriesFromExerciseStub).toHaveBeenCalledWith(exercise.id, 456);

@@ -488,6 +488,8 @@ public class FileResource {
                 // External PDF links contribute no stored file and must not be marked complete by downloading the lecture's own PDFs.
                 .filter(unit -> unit.getAttachment().getStudentVersion() != null || unit.getAttachment().fileLocation().isPresent()).toList();
 
+        attachmentApi.ensureStudentVersionsAvailable(lectureAttachments);
+
         // Modified to use studentVersion if available
         List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> {
             Attachment attachment = unit.getAttachment();
@@ -649,6 +651,7 @@ public class FileResource {
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
+            api.ensureStudentVersionAvailable(attachmentVideoUnitId);
             return buildAttachmentFileResponse(storedFileLocationElseThrow(attachment), downloadFilename, AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
         }
 
@@ -726,7 +729,8 @@ public class FileResource {
         Path actualPath = path.resolve(filename);
         long lastModified = FileHttpRequestValidator.getLastModified(actualPath);
         if (lastModified >= 0 && FileHttpRequestValidator.isNotModified(requestHeaders, lastModified)) {
-            var response = ResponseEntity.status(HttpStatus.NOT_MODIFIED).lastModified(lastModified);
+            // The container sends no content type with a 304, but the security headers are chosen by it, and browsers copy them onto the cached file
+            var response = ResponseEntity.status(HttpStatus.NOT_MODIFIED).lastModified(lastModified).contentType(fileDownloadService.getMediaTypeFromFilename(filename));
             Optional<CacheControl> cacheControl = cachePolicy.cacheControl();
             if (cacheControl.isPresent()) {
                 response = response.cacheControl(cacheControl.orElseThrow()).varyBy(HttpHeaders.AUTHORIZATION, HttpHeaders.COOKIE);

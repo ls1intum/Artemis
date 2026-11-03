@@ -65,6 +65,7 @@ public class UserReferenceCleanupService {
         bindings.put(UserDeletionReferencePolicy.USER_AI_PREFERENCE, bind(account::countAiPreferences, account::deleteAiPreferences));
         bindings.put(UserDeletionReferencePolicy.RECOVERY_KEY, bind(account::countRecoveryKeys, account::deleteRecoveryKeys));
         bindings.put(UserDeletionReferencePolicy.PASSKEY, bind(account::countPasskeyCredentials, account::deletePasskeyCredentials));
+        bindings.put(UserDeletionReferencePolicy.AGENT_ACCESS_TOKEN, bind(account::countAgentAccessTokens, account::deleteAgentAccessTokens));
         bindings.put(UserDeletionReferencePolicy.AUTHORITY, bind(account::countAuthorities, account::deleteAuthorities));
         bindings.put(UserDeletionReferencePolicy.ORGANIZATION_MEMBERSHIP, bind(account::countOrganizationMemberships, account::deleteOrganizationMemberships));
 

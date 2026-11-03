@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -39,11 +40,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -64,10 +67,12 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -98,6 +103,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private LectureTestRepository lectureRepo;
 
     @Autowired
+    private SlideTestRepository slideRepository;
+
+    @Autowired
     private LectureUtilService lectureUtilService;
 
     @Autowired
@@ -121,6 +129,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void initTestCase() {
         irisRequestMockProvider.enableMockingOfRequests();
+        irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
+        }, ExpectedCount.manyTimes());
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
     }
@@ -337,6 +347,72 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.get("/api/core/files/users/" + user.getId() + "/profile-pictures/ProfilePicture_removed.jpeg", HttpStatus.NOT_FOUND, byte[].class);
     }
 
+    private static final String SCRIPTED_SVG = "<svg xmlns=\"http://www.w3.org/2000/svg\"><script>alert(document.domain)</script></svg>";
+
+    private static final byte[] PNG_IMAGE = { (byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n', 0, 0, 0, 13 };
+
+    private int uploadProfilePicture(MockMultipartFile file) throws Exception {
+        return mockMvc.perform(multipart(HttpMethod.PUT, "/api/account/profile-picture").file(file)).andReturn().getResponse().getStatus();
+    }
+
+    /**
+     * The declared content type and the filename both come from the client, so neither may turn a document with scripts into a stored profile picture.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { "picture.png", "picture.svg", "picture.html" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUploadProfilePictureRejectsScriptedDocumentDeclaredAsImage(String filename) throws Exception {
+        var file = new MockMultipartFile("file", filename, "image/png", SCRIPTED_SVG.getBytes(StandardCharsets.UTF_8));
+
+        assertThat(uploadProfilePicture(file)).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getImageUrl()).isNull();
+    }
+
+    /**
+     * The stored extension decides the content type the picture is served with, so it follows from the content and not from the uploaded filename.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUploadProfilePictureTakesExtensionFromContent() throws Exception {
+        var file = new MockMultipartFile("file", "picture.svg", "image/png", PNG_IMAGE);
+
+        assertThat(uploadProfilePicture(file)).isEqualTo(HttpStatus.OK.value());
+        assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getImageUrl()).endsWith(".png");
+    }
+
+    /**
+     * A file stored with an active content type, such as an SVG profile picture uploaded before uploads were checked, must render without scripts when opened directly. That
+     * holds for the REST endpoint and for the static handler that still serves the upload directory.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStoredScriptedSvgIsServedInSandbox() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        String filename = "ProfilePicture_" + TEST_PREFIX + ".svg";
+        FileUtils.writeByteArrayToFile(FilePathConverter.getProfilePictureFilePath().resolve(filename).toFile(), SCRIPTED_SVG.getBytes(StandardCharsets.UTF_8));
+        user.setImageUrl(filename);
+        userTestRepository.save(user);
+
+        for (String url : List.of("/api/core/files/users/" + user.getId() + "/profile-pictures/" + filename, "/user/profile-pictures/" + filename)) {
+            String policy = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(content().contentTypeCompatibleWith("image/svg+xml")).andReturn().getResponse()
+                    .getHeader("Content-Security-Policy");
+            assertThat(policy).as("policy of %s", url).contains("sandbox", "default-src 'none'").doesNotContain("unsafe-inline' 'unsafe-eval'");
+        }
+    }
+
+    /**
+     * Browsers refuse to show a PDF in a sandboxed document, so a PDF keeps the application-wide policy.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testPdfIsNotServedInSandbox() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        String policy = mockMvc.perform(get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf")).andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF)).andReturn().getResponse().getHeader("Content-Security-Policy");
+        assertThat(policy).doesNotContain("sandbox");
+    }
+
     /**
      * A post written before this release embeds everything after {@code attachments/} of the attachment link the server was serving at the time, and the client re-expands that
      * fragment against {@code api/core/files/attachments/}. Those posts are user-authored prose in the database that no migration reaches, so the singular spelling they carry
@@ -504,6 +580,30 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetLecturePdfAttachmentsMerged_HiddenSlidesWithoutStudentVersionReturnsNotFound() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+        AttachmentVideoUnit unit = lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance).map(AttachmentVideoUnit.class::cast)
+                .filter(lectureUnit -> lectureUnit.getAttachment().getLink().endsWith(".pdf")).findFirst().orElseThrow();
+        // The upload schedules slide splitting asynchronously. Create the relevant slide explicitly so this test does
+        // not depend on the background processor winning a race with the assertion.
+        Slide slide = new Slide();
+        slide.setAttachmentVideoUnit(unit);
+        slide.setSlideNumber(1);
+        slide.setSlideImagePath("attachments/attachment-unit/" + unit.getId() + "/slide/1.png");
+        slide.setHidden(ZonedDateTime.now().plusDays(1));
+        slideRepository.save(slide);
+        clearStoredStudentVersion(unit.getAttachment());
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        request.get("/api/core/files/attachments/lectures/" + lecture.getId() + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        lecture.getLectureUnits().stream().filter(AttachmentVideoUnit.class::isInstance)
+                .forEach(lectureUnit -> assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), student.getId())).isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetLecturePdfAttachmentsMerged_DoesNotCompleteExternalPdf() throws Exception {
         Lecture lecture = createLectureWithLectureUnits();
         var externalUnit = (AttachmentVideoUnit) lecture.getLectureUnits().get(2);
@@ -667,6 +767,15 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         lecture.setLectureUnits(attachmentVideoUnitRepo.findAllByLectureIdAndAttachmentType(lecture.getId(), AttachmentType.FILE).stream().map(unit -> (LectureUnit) unit)
                 .collect(Collectors.toCollection(ArrayList::new)));
 
+        if (expectedStatus == HttpStatus.CREATED) {
+            // Each PDF is split into slides asynchronously, and the student downloads stay closed until its slides are complete: 3 + 2 pages
+            List<Long> unitIds = lecture.getLectureUnits().stream().map(LectureUnit::getId).toList();
+            await().untilAsserted(() -> {
+                assertThat(unitIds.stream().mapToInt(id -> slideRepository.findAllByAttachmentVideoUnitId(id).size()).sum()).isEqualTo(5);
+                assertThat(slideRepository.findAttachmentVideoUnitIdsWithSlidesOfOtherRevision(unitIds)).isEmpty();
+            });
+        }
+
         return lecture;
     }
 
@@ -698,6 +807,24 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Long attachmentVideoUnitId = attachmentVideoUnit.getId();
 
         request.get("/api/core/files/courses/" + courseId + "/attachment-video-units/" + attachmentVideoUnitId, HttpStatus.OK, byte[].class);
+    }
+
+    /**
+     * The path names no file here, so a revalidation has to tell by its content type that it keeps the policy of a PDF: browsers copy the policy of a 304 onto the cached
+     * file, and a sandboxed PDF is not displayed.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testGetAttachmentVideoUnitPdfNotModifiedIsNotSandboxed() throws Exception {
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 0, true);
+        String url = "/api/core/files/courses/" + lecture.getCourse().getId() + "/attachment-video-units/" + attachmentVideoUnit.getId();
+
+        String lastModified = mockMvc.perform(get(url)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_PDF)).andReturn().getResponse()
+                .getHeader(HttpHeaders.LAST_MODIFIED);
+        String policy = mockMvc.perform(get(url).header(HttpHeaders.IF_MODIFIED_SINCE, lastModified)).andExpect(status().isNotModified()).andReturn().getResponse()
+                .getHeader("Content-Security-Policy");
+        assertThat(policy).doesNotContain("sandbox");
     }
 
     @Test
@@ -815,6 +942,76 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionFailsClosedWhileRegenerationIsPending() throws Exception {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithoutStudentVersion("unrestricted instructor content".getBytes());
+        saveSlide(attachmentVideoUnit, 1, ZonedDateTime.now().plusDays(1), false);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        mockMvc.perform(get(url)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionIgnoresHiddenSlidesOfReplacedFile() throws Exception {
+        byte[] content = "replacement without hidden slides".getBytes();
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithoutStudentVersion(content);
+        saveSlide(attachmentVideoUnit, 1, ZonedDateTime.now().plusDays(1), true);
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
+
+        assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(content);
+    }
+
+    /**
+     * After a failed editor split the previous slides are restored while the new file stays stored. Which pages of that file are hidden is then unknown, even when the
+     * restored slides hide nothing, so the full file must not be served.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionFailsClosedWhileTheSlidesBelongToAnotherFile() throws Exception {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithoutStudentVersion("new file with pages hidden by the instructor".getBytes());
+        saveSlide(attachmentVideoUnit, 1, null, false, -7, "slides-of-the-previous-file");
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        mockMvc.perform(get(url)).andExpect(status().isNotFound());
+        request.get("/api/core/files/attachments/lectures/" + attachmentVideoUnit.getLecture().getId() + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
+    }
+
+    private AttachmentVideoUnit createAttachmentVideoUnitWithoutStudentVersion(byte[] content) throws IOException {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(content);
+        clearStoredStudentVersion(attachmentVideoUnit.getAttachment());
+        return attachmentVideoUnit;
+    }
+
+    /**
+     * Removes the stored student version. The reference is not updatable through the entity, so it is cleared with the conditional statement the application uses.
+     */
+    private void clearStoredStudentVersion(Attachment attachment) {
+        String stored = attachmentRepo.findStudentVersionStateById(attachment.getId()).orElseThrow().studentVersion();
+        if (stored != null) {
+            assertThat(attachmentRepo.clearStudentVersionIfUnchanged(attachment.getId(), stored)).isEqualTo(1);
+        }
+        attachment.setStudentVersion(null);
+    }
+
+    private void saveSlide(AttachmentVideoUnit attachmentVideoUnit, int slideNumber, ZonedDateTime hidden, boolean superseded) {
+        saveSlide(attachmentVideoUnit, slideNumber, hidden, superseded, attachmentVideoUnit.getAttachment().getVersion(), attachmentVideoUnit.getAttachment().getSha256Hash());
+    }
+
+    private void saveSlide(AttachmentVideoUnit attachmentVideoUnit, int slideNumber, ZonedDateTime hidden, boolean superseded, Integer splitFromVersion, String splitFromHash) {
+        var slide = new Slide();
+        slide.setAttachmentRevision(splitFromVersion, splitFromHash);
+        slide.setAttachmentVideoUnit(attachmentVideoUnit);
+        slide.setSlideNumber(slideNumber);
+        slide.setSlideImagePath("attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/slide/" + slideNumber + ".png");
+        slide.setHidden(hidden);
+        slide.setSuperseded(superseded);
+        slideRepository.save(slide);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLectureAttachmentRangeRequest() throws Exception {
         byte[] dummyContent = "0123456789".getBytes();
         Attachment attachment = createLectureAttachmentWithStoredFile(dummyContent);
@@ -905,6 +1102,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         MvcResult notModifiedResponse = mockMvc.perform(get(url).header(HttpHeaders.IF_MODIFIED_SINCE, lastModified)).andExpect(status().isNotModified())
                 .andExpect(header().string(HttpHeaders.CACHE_CONTROL, expectedCacheControl)).andReturn();
         assertAuthenticationVaryHeader(notModifiedResponse);
+        // Browsers copy the policy of a 304 onto the cached file, and a sandboxed PDF is not displayed
+        assertThat(notModifiedResponse.getResponse().getHeader("Content-Security-Policy")).doesNotContain("sandbox");
         Mockito.verify(fileService, Mockito.never()).getFileForPath(storedAttachmentVideoUnitFile(attachmentVideoUnit.getId()));
     }
 

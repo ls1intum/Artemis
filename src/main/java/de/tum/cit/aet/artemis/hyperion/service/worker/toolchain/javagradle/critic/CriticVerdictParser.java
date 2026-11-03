@@ -16,7 +16,11 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import tools.jackson.databind.JsonNode;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
@@ -70,7 +74,36 @@ class CriticVerdictParser {
             @Nullable String evidenceQuote, @Nullable String ownerType) {
     }
 
-    private record ExampleCheckItem(@Nullable String claim, @Nullable JsonNode computedOutcome, @Nullable Boolean consistent, @Nullable String reason) {
+    private record ExampleCheckItem(@Nullable String claim, @Nullable @JsonDeserialize(using = ScalarTextDeserializer.class) String computedOutcome, @Nullable Boolean consistent,
+            @Nullable String reason) {
+    }
+
+    /**
+     * Reads the computed outcome of a worked example as text: a string as it is, a number or boolean as its JSON text, and an explicit {@code null} as the text {@code null}.
+     * An object or array reads as absent, which makes the verdict malformed like a missing outcome does. An absent key stays absent instead of reading as the text {@code null}.
+     */
+    static final class ScalarTextDeserializer extends ValueDeserializer<String> {
+
+        @Override
+        public String deserialize(JsonParser parser, DeserializationContext context) {
+            JsonToken token = parser.currentToken();
+            if (token == JsonToken.VALUE_STRING || token == JsonToken.VALUE_NUMBER_INT || token == JsonToken.VALUE_NUMBER_FLOAT || token == JsonToken.VALUE_TRUE
+                    || token == JsonToken.VALUE_FALSE) {
+                return parser.getString();
+            }
+            parser.skipChildren();
+            return null;
+        }
+
+        @Override
+        public String getNullValue(DeserializationContext context) {
+            return "null";
+        }
+
+        @Override
+        public String getAbsentValue(DeserializationContext context) {
+            return null;
+        }
     }
 
     private record ApiCheckItem(@Nullable String symbol, @Nullable Boolean discoverable, @Nullable String reason) {
@@ -185,7 +218,7 @@ class CriticVerdictParser {
                         continue;
                     }
                     findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, truncate(item.claim().strip()),
-                            "The worked example computes to \"" + truncate(scalarText(item.computedOutcome())) + "\": " + item.reason().strip()));
+                            "The worked example computes to \"" + truncate(item.computedOutcome()) + "\": " + item.reason().strip()));
                 }
             }
             for (ApiCheckItem item : parsed.apiChecks()) {
@@ -352,9 +385,8 @@ class CriticVerdictParser {
     }
 
     private static boolean malformedExampleChecks(List<ExampleCheckItem> items) {
-        return items.stream()
-                .anyMatch(item -> item == null || item.claim() == null || item.claim().isBlank() || item.computedOutcome() == null || !item.computedOutcome().isValueNode()
-                        || scalarText(item.computedOutcome()).isBlank() || item.consistent() == null || item.reason() == null || item.reason().isBlank());
+        return items.stream().anyMatch(item -> item == null || item.claim() == null || item.claim().isBlank() || item.computedOutcome() == null || item.computedOutcome().isBlank()
+                || item.consistent() == null || item.reason() == null || item.reason().isBlank());
     }
 
     private static boolean malformedApiChecks(List<ApiCheckItem> items) {
@@ -369,10 +401,6 @@ class CriticVerdictParser {
                                 || !Set.of("DIFFERENT_STUDENT_SEAM", "PROVIDED_SCAFFOLD_DEFECT").contains(item.blockingCause()) || item.evidenceQuote() == null
                                 || item.evidenceQuote().isBlank())
                         || item.reason() == null || item.reason().isBlank());
-    }
-
-    private static String scalarText(JsonNode node) {
-        return node.isTextual() ? node.textValue() : node.toString();
     }
 
     private static boolean malformedMutantChecks(List<MutantCheckItem> items) {

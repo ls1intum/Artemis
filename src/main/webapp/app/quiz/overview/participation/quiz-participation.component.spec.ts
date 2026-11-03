@@ -39,10 +39,10 @@ import { MultipleChoiceQuestionComponent } from '../../shared/questions/multiple
 import { ShortAnswerQuestion } from '../../shared/entities/short-answer-question.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
-vi.mock('@sentry/angular', () => ({
+vi.mock('app/core/error-reporting/capture-exception', () => ({
     captureException: vi.fn(),
 }));
 

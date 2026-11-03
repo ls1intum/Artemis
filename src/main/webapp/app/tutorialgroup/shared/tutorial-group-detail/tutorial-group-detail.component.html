@@ -72,8 +72,8 @@
         }
     </div>
     <hr />
-    <div class="card-row">
-        <section class="card narrow" aria-labelledby="tutor-card-title">
+    <div class="detail-panels">
+        <section class="detail-panel narrow" aria-labelledby="tutor-card-title">
             <h3 id="tutor-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.tutorCardTitle"></h3>
             <div class="tutor-card-content">
                 <jhi-profile-picture
@@ -87,7 +87,7 @@
                 <span aria-hidden="true">{{ tutorialGroup().tutorName }}</span>
             </div>
         </section>
-        <section class="card broad" aria-labelledby="general-info-card-title">
+        <section class="detail-panel broad" aria-labelledby="general-info-card-title">
             <h3 id="general-info-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.generalInfoCardTitle"></h3>
             <div class="info-card-content" role="list">
                 <div class="spacer"></div>
@@ -118,8 +118,8 @@
             </div>
         </section>
     </div>
-    <div class="card-row">
-        <section class="card narrow" aria-labelledby="attendance-card-title" data-testid="tutorial-group-attendance-card">
+    <div class="detail-panels">
+        <section class="detail-panel narrow" aria-labelledby="attendance-card-title" data-testid="tutorial-group-attendance-card">
             <h3 id="attendance-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.averageAttendanceCardTitle"></h3>
             @let attendanceLabel = attendanceChartLabel();
             @if (attendanceLabel) {
@@ -142,7 +142,7 @@
                 </div>
             }
         </section>
-        <section class="card broad" aria-labelledby="next-session-card-title">
+        <section class="detail-panel broad" aria-labelledby="next-session-card-title">
             <h3 id="next-session-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.nextSessionCardTitle"></h3>
             @let session = nextSession();
             @if (session) {
@@ -217,7 +217,7 @@
     @let sessions = tutorialGroupSessions();
     @if (sessions) {
         <div class="session-table-scroll">
-            <table>
+            <table tumAetUiTable>
                 <thead>
                     <tr>
                         <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.date"></th>
@@ -276,9 +276,9 @@
                                             severity="secondary"
                                             variant="text"
                                             type="button"
-                                            [pTooltip]="editSessionButtonTooltipLabel()"
+                                            [tumAetUiTooltip]="editSessionButtonTooltipLabel()"
                                             [attr.aria-label]="editSessionButtonTooltipLabel()"
-                                            tooltipPosition="left"
+                                            tumAetUiTooltipPlacement="left"
                                             data-testid="edit-session-button"
                                             (click)="openSessionModal(session.id)"
                                         >
@@ -291,9 +291,9 @@
                                                 severity="secondary"
                                                 variant="text"
                                                 type="button"
-                                                [pTooltip]="activateSessionButtonTooltipLabel()"
+                                                [tumAetUiTooltip]="activateSessionButtonTooltipLabel()"
                                                 [attr.aria-label]="activateSessionButtonTooltipLabel()"
-                                                tooltipPosition="left"
+                                                tumAetUiTooltipPlacement="left"
                                                 data-testid="activate-session-button"
                                                 (click)="activateTutorialGroupSession(session.id)"
                                             >
@@ -306,9 +306,9 @@
                                                 severity="secondary"
                                                 variant="text"
                                                 type="button"
-                                                [pTooltip]="cancelSessionButtonTooltipLabel()"
+                                                [tumAetUiTooltip]="cancelSessionButtonTooltipLabel()"
                                                 [attr.aria-label]="cancelSessionButtonTooltipLabel()"
-                                                tooltipPosition="left"
+                                                tumAetUiTooltipPlacement="left"
                                                 data-testid="cancel-session-button"
                                                 (click)="cancelTutorialGroupSession(session.id)"
                                             >
@@ -321,9 +321,9 @@
                                             severity="danger"
                                             variant="text"
                                             type="button"
-                                            [pTooltip]="deleteSessionButtonTooltipLabel()"
+                                            [tumAetUiTooltip]="deleteSessionButtonTooltipLabel()"
                                             [attr.aria-label]="deleteSessionButtonTooltipLabel()"
-                                            tooltipPosition="left"
+                                            tumAetUiTooltipPlacement="left"
                                             data-testid="delete-session-button"
                                             (click)="confirmSessionDeletion($event, session.id)"
                                         >
@@ -339,5 +339,5 @@
         </div>
     }
 </div>
-<p-confirmdialog />
+<tumaet-ui-confirm-dialog />
 <jhi-tutorial-session-create-or-edit-modal (onUpdate)="updateTutorialGroupSession($event)" (onCreate)="createTutorialGroupSession($event)" #sessionModal />

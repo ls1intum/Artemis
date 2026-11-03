@@ -22,7 +22,9 @@
             "expandMenu": "Expand menu (Ctrl + M)",
             "collapseMenu": "Collapse menu (Ctrl + M)",
             "enabled": "Enabled",
-            "disabled": "Disabled"
+            "disabled": "Disabled",
+            "resizePanels": "Resize panels",
+            "selectAllRows": "Select all rows"
         },
         "weekdays": {
             "monday": "Monday",
@@ -308,6 +310,7 @@
                     "metrics": "Metrics",
                     "statistics": "Statistics",
                     "featureUsage": "Feature Usage",
+                    "errorAnalysis": "Error Analysis",
                     "websocket": "Websocket",
                     "buildAgents": "Build Agents",
                     "buildQueue": "Build Overview",

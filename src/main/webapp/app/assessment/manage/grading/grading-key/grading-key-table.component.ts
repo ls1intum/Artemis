@@ -1,3 +1,4 @@
+import { TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { Component, OnInit, inject, input, model, signal } from '@angular/core';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -21,7 +22,7 @@ import { ScoresStorageService } from 'app/course/manage/course-scores/scores-sto
     selector: 'jhi-grade-key-table',
     templateUrl: './grading-key-table.component.html',
     styleUrls: ['../grading-key-overview/grading-key-overview.scss'],
-    imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent, TumAetUiTableDirective],
 })
 export class GradingKeyTableComponent implements OnInit {
     private route = inject(ActivatedRoute);

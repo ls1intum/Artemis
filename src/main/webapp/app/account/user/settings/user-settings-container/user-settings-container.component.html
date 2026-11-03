@@ -127,6 +127,18 @@
                         ></a>
                     </li>
                 }
+                @if (showAgentAccess()) {
+                    <li tumAetUiListItem>
+                        <a
+                            tumAetUiListItemAction
+                            routerLink="agent-access"
+                            routerLinkActive
+                            #agentAccessLink="routerLinkActive"
+                            [active]="agentAccessLink.isActive"
+                            jhiTranslate="artemisApp.userSettings.agentAccess.title"
+                        ></a>
+                    </li>
+                }
                 <li tumAetUiListItem>
                     <a
                         tumAetUiListItemAction

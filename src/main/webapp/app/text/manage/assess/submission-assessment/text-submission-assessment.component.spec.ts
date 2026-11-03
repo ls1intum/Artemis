@@ -531,6 +531,21 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id, component.result()?.id);
     });
 
+    it('keeps the assessment usable when cancellation is declined', async () => {
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
+        fixture.detectChanges();
+        await fixture.whenStable();
+        vi.spyOn(window, 'confirm').mockReturnValue(false);
+        const cancelSpy = vi.spyOn(textAssessmentService, 'cancelAssessment');
+        const navigateBackSpy = vi.spyOn(component, 'navigateBack');
+
+        component.cancel();
+
+        expect(component.cancelBusy()).toBe(false);
+        expect(cancelSpy).not.toHaveBeenCalled();
+        expect(navigateBackSpy).not.toHaveBeenCalled();
+    });
+
     it('should go to next submission', async () => {
         component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         const routerSpy = vi.spyOn(router, 'navigate');

@@ -1,3 +1,5 @@
+import { DialogService as LegacyDialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -9,7 +11,7 @@ import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -78,7 +80,9 @@ describe('ParticipationSubmissionComponent', () => {
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(ParticipationWebsocketService, { subscribeForLatestResultOfParticipation: () => new BehaviorSubject<Result | undefined>(undefined) }),
                 MockProvider(ProfileService, { isProfileActive: () => true }),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
+                // Trigger-build is a cross-module consumer that still uses the legacy dialog service.
+                MockProvider(LegacyDialogService),
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(SubmissionService),
                 MockProvider(ExerciseService),
@@ -146,7 +150,8 @@ describe('ParticipationSubmissionComponent', () => {
         function sortBy(headerKey: string) {
             const header = fixture.debugElement.queryAll(By.css('th')).find((element) => element.nativeElement.textContent.includes(headerKey));
             expect(header).toBeDefined();
-            header!.nativeElement.click();
+            const sortButton = header!.nativeElement.querySelector('button') as HTMLButtonElement | null;
+            (sortButton ?? header!.nativeElement).click();
             render();
         }
 

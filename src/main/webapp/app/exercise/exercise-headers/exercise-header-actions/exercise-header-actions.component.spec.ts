@@ -989,7 +989,7 @@ describe('ExerciseHeaderActionsComponent', () => {
             vi.spyOn(popover, 'isOpen').mockReturnValue(true);
             const closeSpy = vi.spyOn(popover, 'close').mockImplementation(() => {});
             const insidePopover = document.createElement('div');
-            insidePopover.className = 'popover';
+            insidePopover.setAttribute('role', 'dialog');
 
             fixture.componentInstance.onDocumentClick({ target: fixture.nativeElement } as unknown as MouseEvent);
             fixture.componentInstance.onDocumentClick({ target: insidePopover } as unknown as MouseEvent);

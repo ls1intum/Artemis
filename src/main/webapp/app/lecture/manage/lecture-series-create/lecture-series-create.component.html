@@ -6,7 +6,7 @@
                 {{ index + 1 }}
             </div>
             <!-- A datetime needs about 14rem; on a narrow screen the end picker wraps below the start picker instead of truncating the text. -->
-            <div class="flex min-w-0 flex-1 flex-wrap gap-4">
+            <div class="flex min-w-0 flex-1 flex-wrap gap-6!">
                 <tumaet-ui-date-picker
                     class="min-w-56 flex-1"
                     [inputId]="'start-date-' + (index + 1)"
@@ -27,8 +27,8 @@
             @if (initialLectures().length !== 1) {
                 <button
                     type="button"
-                    pButton
-                    outlined
+                    tumAetUiButton
+                    variant="outlined"
                     severity="secondary"
                     size="small"
                     class="initial-lecture-delete-button"
@@ -47,8 +47,8 @@
                 <div>
                     <button
                         type="button"
-                        pButton
-                        outlined
+                        tumAetUiButton
+                        variant="outlined"
                         severity="secondary"
                         size="small"
                         class="primary-on-hover"
@@ -75,19 +75,37 @@
     @let drafts = lectureDrafts();
     @if (drafts.length > 0) {
         <h3 jhiTranslate="artemisApp.lecture.createSeries.generatedLecturesHeading"></h3>
-        <div class="container w-100 px-0">
-            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+        <div class="w-full px-0">
+            <div class="grid grid-cols-1 gap-4! md:grid-cols-2 lg:grid-cols-3">
                 @for (draft of drafts; track draft.id; let index = $index) {
-                    <div class="col">
+                    <div class="min-w-0 flex-1">
                         <div class="draft-card">
                             <span class="enumerator primary" [ngClass]="{ edited: draft.state === LectureDraftState.EDITED }">
                                 {{ index + 1 }}
                             </span>
                             <span class="draft-title">{{ draft.dto.title }}</span>
-                            <button type="button" class="card-button primary-on-hover" (click)="draftEditModal.open(draft)" [attr.aria-label]="'Edit ' + draft.dto.title">
+                            <button
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="text"
+                                size="small"
+                                type="button"
+                                class="draft-action primary-on-hover"
+                                (click)="draftEditModal.open(draft)"
+                                [attr.aria-label]="'Edit ' + draft.dto.title"
+                            >
                                 <fa-icon [icon]="faPenToSquare" />
                             </button>
-                            <button type="button" class="card-button primary-on-hover" (click)="deleteLectureDraft(draft)" [attr.aria-label]="'Delete ' + draft.dto.title">
+                            <button
+                                tumAetUiButton
+                                severity="secondary"
+                                variant="text"
+                                size="small"
+                                type="button"
+                                class="draft-action primary-on-hover"
+                                (click)="deleteLectureDraft(draft)"
+                                [attr.aria-label]="'Delete ' + draft.dto.title"
+                            >
                                 <fa-icon [icon]="faXmark" />
                             </button>
                         </div>
@@ -97,14 +115,12 @@
         </div>
     }
     <div class="save-and-cancel-section">
-        <button type="button" pButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
-        <button type="button" pButton size="small" [disabled]="noDraftsGenerated()" (click)="save()" jhiTranslate="entity.action.save"></button>
+        <button type="button" tumAetUiButton severity="secondary" size="small" (click)="cancel()" jhiTranslate="entity.action.cancel"></button>
+        <button type="button" tumAetUiButton size="small" [disabled]="noDraftsGenerated()" (click)="save()" jhiTranslate="entity.action.save"></button>
     </div>
     @if (isLoading()) {
         <div class="loading-overlay">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden" jhiTranslate="loading"></span>
-            </div>
+            <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
         </div>
     }
 </div>

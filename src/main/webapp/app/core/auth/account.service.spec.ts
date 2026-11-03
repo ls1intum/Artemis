@@ -384,6 +384,27 @@ describe('AccountService', () => {
         });
     });
 
+    describe('hasAdministratorAccess', () => {
+        it.each([
+            { authority: Authority.ADMIN, required: false, loggedInWithPasskey: false, passkeySuperAdminApproved: false, expected: true },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: false, passkeySuperAdminApproved: true, expected: false },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: false, expected: false },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: true },
+            { authority: Authority.SUPER_ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: true },
+            { authority: Authority.INSTRUCTOR, required: false, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: false },
+        ])('checks effective administrator rights for $authority (required=$required, passkey=$loggedInWithPasskey, approved=$passkeySuperAdminApproved)', (session) => {
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(session.required);
+            accountService.userIdentity.set({
+                id: 10,
+                authorities: [session.authority],
+                loggedInWithPasskey: session.loggedInWithPasskey,
+                passkeySuperAdminApproved: session.passkeySuperAdminApproved,
+            } as User);
+
+            expect(accountService.hasAdministratorAccess()).toBe(session.expected);
+        });
+    });
+
     describe('test isAtLeastTutorForExercise', () => {
         it('should return false if user is not tutor', () => {
             accountService.userIdentity.set(user2);
@@ -612,6 +633,28 @@ describe('AccountService', () => {
             passkeyRequired = false;
             accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN] } as User);
             expect(accountService.hasEditorAccess()).toBe(true);
+        });
+    });
+
+    describe('test mayCreateAgentTokens', () => {
+        it('should deny a user who is not logged in', () => {
+            accountService.userIdentity.set(undefined);
+            expect(accountService.mayCreateAgentTokens()).toBe(false);
+        });
+
+        it.each([['STUDENT'], ['TEACHING_ASSISTANT']])('should deny a user with the course role %s', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
+            expect(accountService.mayCreateAgentTokens()).toBe(false);
+        });
+
+        it.each([['EDITOR'], ['INSTRUCTOR']])('should grant a user with the course role %s', (role) => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: [role] }] } as unknown as User);
+            expect(accountService.mayCreateAgentTokens()).toBe(true);
+        });
+
+        it('should deny an administrator even if they teach a course', () => {
+            accountService.userIdentity.set({ id: 1, authorities: [Authority.ADMIN], courseRoles: [{ courseId: 1, roles: ['INSTRUCTOR'] }] } as unknown as User);
+            expect(accountService.mayCreateAgentTokens()).toBe(false);
         });
     });
 
