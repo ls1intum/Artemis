@@ -481,8 +481,8 @@ class IrisChatSessionServiceStatusUpdateTest {
         var messageCaptor = ArgumentCaptor.forClass(IrisMessage.class);
         verify(irisMessageService).saveMessage(messageCaptor.capture(), eq(session), eq(IrisMessageSender.SUMMARY));
         var content = (IrisJsonMessageContent) messageCaptor.getValue().getContent().getFirst();
-        assertThat(content.getJsonNode().get("summary").asString()).isEqualTo("- the student asked about heaps");
-        assertThat(content.getJsonNode().get("coversThroughMessageId").asLong()).isEqualTo(41L);
+        assertThat(JsonObjectMapper.get().readTree(content.getContentAsString()).get("summary").asString()).isEqualTo("- the student asked about heaps");
+        assertThat(JsonObjectMapper.get().readTree(content.getContentAsString()).get("coversThroughMessageId").asLong()).isEqualTo(41L);
         verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
     }
 

@@ -1,10 +1,9 @@
+import { TumAetUiDialogService, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
-import { TooltipModule } from 'primeng/tooltip';
-import { TagModule } from 'primeng/tag';
-import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -43,12 +42,12 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
     templateUrl: './result.component.html',
     styleUrls: ['./result.component.scss'],
     imports: [
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
         ResultProgressBarComponent,
         FaIconComponent,
         TranslateDirective,
         NgClass,
-        TooltipModule,
-        TagModule,
         UpperCasePipe,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -58,7 +57,7 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 })
 export class ResultComponent {
     private translateService = inject(TranslateService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
     private resultService = inject(ResultService);
@@ -304,19 +303,13 @@ export class ResultComponent {
 
         this.dialogService.open(FeedbackComponent, {
             header: this.translateService.instant('artemisApp.result.detail.feedback'),
-            width: '80rem',
-            breakpoints: {
-                '1400px': '75vw',
-                '1200px': '85vw',
-                '992px': '95vw',
-            },
-            modal: true,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
             // Don't auto-focus the first focusable element on show: in a long feedback list it is often
             // a link below the fold, which the browser scrolls into view and makes the modal open scrolled down.
-            focusOnShow: false,
+            autoFocus: 'dialog',
             inputValues: {
                 exercise,
                 result,

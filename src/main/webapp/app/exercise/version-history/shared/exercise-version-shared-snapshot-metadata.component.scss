@@ -10,15 +10,15 @@
 }
 
 .markdown-block {
-    border: 1px solid var(--surface-border);
+    border: 1px solid var(--tumaet-ui-border-color);
     border-radius: 8px;
     padding: 0.65rem;
-    background: var(--surface-ground);
+    background: var(--tumaet-ui-control-background);
 }
 
 // ::ng-deep is required to override Angular-injected markdown-preview border styles
 :host ::ng-deep .markdown-preview.markdown-block {
-    border: 1px solid var(--surface-border) !important;
+    border: 1px solid var(--tumaet-ui-border-color) !important;
 }
 
 .markdown-block--problem {
@@ -29,8 +29,8 @@
 }
 
 .metadata-section--problem {
-    border: 1px solid var(--surface-border);
+    border: 1px solid var(--tumaet-ui-border-color);
     border-radius: 8px;
     padding: 0.75rem;
-    background: var(--surface-ground);
+    background: var(--tumaet-ui-control-background);
 }

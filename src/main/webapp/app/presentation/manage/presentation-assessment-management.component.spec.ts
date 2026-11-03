@@ -6,7 +6,7 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockComponent } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';
@@ -119,7 +119,7 @@ describe('PresentationAssessmentManagementComponent', () => {
                 provideRouter([]),
                 provideArtemisTumAetUiTranslator(),
                 { provide: TranslateService, useValue: translateService },
-                { provide: DialogService, useValue: dialogService },
+                { provide: TumAetUiDialogService, useValue: dialogService },
                 {
                     provide: ExerciseService,
                     useValue: { getTitlesForCourseForStaff: vi.fn().mockReturnValue(of([])) },

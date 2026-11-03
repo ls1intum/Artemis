@@ -28,7 +28,9 @@ import { TumAetUiTabsService, tabKey } from './tumaet-ui-tabs.service';
             </ng-template>
         </div>
     `,
+    styleUrl: './tumaet-ui-tab-panel.component.scss',
     host: {
+        '[class.tumaet-ui-tab-panel-fill]': 'fill()',
         class: 'tumaet-ui-tab-panel tumaet:block',
         '[hidden]': '!active()',
         '[attr.inert]': 'active() ? null : ""',
@@ -44,6 +46,8 @@ export class TumAetUiTabPanelComponent implements OnInit, OnDestroy {
     readonly value = input.required<number | string>();
     /** Keep inactive content in the DOM. */
     readonly preserveContent = input(false, { transform: booleanAttribute });
+    /** Fill a bounded parent's height, including the internal ARIA panel. The consumer retains scrolling policy. */
+    readonly fill = input(false, { transform: booleanAttribute });
 
     protected readonly key = computed(() => tabKey(this.value()));
     protected readonly active = computed(() => this.tabsService.active() === this.value());

@@ -1,3 +1,4 @@
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -13,7 +14,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason, getCourseId, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
@@ -30,7 +31,7 @@ import { firstValueFrom } from 'rxjs';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -67,7 +68,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
         FormStatusBarComponent,
         ExerciseTitleChannelNameComponent,
         HelpIconComponent,
-        CategorySelectorPrimengComponent,
+        CategorySelectorComponent,
         DifficultyPickerComponent,
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
@@ -87,7 +88,7 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {
     private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
-    private readonly modalService = inject(NgbModal);
+    private readonly modalService = inject(TumAetUiDialogService);
     private readonly popupService = inject(ExerciseUpdateWarningService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly courseService = inject(CourseManagementService);

@@ -740,6 +740,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         Result lockedResult = new Result();
         lockedResult.setAssessor(tutor);
         lockedResult.setScore(55D);
+        lockedResult.setCorrectionRound(1);
         lockedResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         lockedResult.setSubmission(textSubmission);
         lockedResult.setExerciseId(textExercise.getId());
@@ -762,10 +763,12 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         assertThat(lockedSubmissionDTO.participation().exercise().id()).isEqualTo(textExercise.getId());
         assertThat(lockedSubmissionDTO.participation().exercise().type()).isEqualTo(ExerciseType.TEXT);
         assertThat(lockedSubmissionDTO.participation().exercise().title()).isEqualTo(textExercise.getTitle());
+        assertThat(lockedSubmissionDTO.participation().exercise().exerciseGroup().id()).isEqualTo(exerciseGroup.getId());
         assertThat(lockedSubmissionDTO.participation().submissionCount()).isEqualTo(1);
         assertThat(lockedSubmissionDTO.results()).hasSize(1);
         LockedExamSubmissionDTO.LockedSubmissionResultDTO resultDTO = lockedSubmissionDTO.results().getFirst();
         assertThat(resultDTO.score()).isEqualTo(55D);
+        assertThat(resultDTO.correctionRound()).isEqualTo(1);
         // The assessment is still in progress, so no completion date has been set yet.
         assertThat(resultDTO.completionDate()).isNull();
     }

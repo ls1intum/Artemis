@@ -10,9 +10,10 @@
             [attr.aria-label]="'artemisApp.assessmentInstructions.instructions.resize' | artemisTranslate"
             [title]="'artemisApp.assessmentInstructions.instructions.resize' | artemisTranslate"
         ></div>
-        <div class="card">
+        <div class="panel-surface rounded-lg border border-border bg-surface-raised">
             <div
-                class="card-header text-white bg-primary"
+                data-testid="assessment-instructions-toggle"
+                class="feedback-panel-header border-b border-border bg-surface-hover px-6! py-4! text-(--tumaet-ui-primary-contrast-color) bg-(--tumaet-ui-primary-color)"
                 (click)="collapsed.set(!collapsed())"
                 [attr.aria-expanded]="!collapsed()"
                 #keyboardAction16
@@ -22,16 +23,16 @@
                 (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
                 (keyup.space)="$event.target === $event.currentTarget ? keyboardAction16.click() : undefined"
             >
-                <h3 class="card-title">
+                <h3 class="panel-title text-lg font-medium">
                     <fa-icon [icon]="farListAlt" />&nbsp;
                     <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></span>
                 </h3>
                 <fa-icon [icon]="faChevronRight" />
             </div>
-            <div class="wrapper-scroll-y scrollbar vh-100">
+            <div class="wrapper-scroll-y scrollbar h-screen">
                 <jhi-assessment-instructions
                     [readOnly]="readOnly()"
-                    class="card-body markdown-preview"
+                    class="feedback-panel-body p-6! markdown-preview"
                     [exercise]="exercise()"
                     [isAssessmentTraining]="isAssessmentTraining()"
                     [showAssessmentInstructions]="showAssessmentInstructions()"
@@ -41,7 +42,8 @@
     </div>
 } @else {
     <div
-        class="collapsed-instructions instructions-container text-white bg-primary"
+        data-testid="assessment-instructions-toggle"
+        class="collapsed-instructions instructions-container text-(--tumaet-ui-primary-contrast-color) bg-(--tumaet-ui-primary-color)"
         (click)="collapsed.set(!collapsed())"
         [attr.aria-expanded]="!collapsed()"
         #keyboardAction35

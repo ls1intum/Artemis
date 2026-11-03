@@ -383,8 +383,21 @@ public class ArtemisConfigHelper {
         if (isWeaviateEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_GLOBAL_SEARCH);
         }
+        if (isAgentAccessEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_AGENT_ACCESS);
+        }
 
         return enabledFeatures;
+    }
+
+    /**
+     * Check if agent access (personal access tokens and the endpoints built on them) is enabled. Off unless explicitly configured.
+     *
+     * @param environment the Spring environment
+     * @return true if {@code artemis.agent-access.enabled} is true on a node that serves the core application
+     */
+    public boolean isAgentAccessEnabled(Environment environment) {
+        return !isWorkerOnly(environment) && Boolean.TRUE.equals(environment.getProperty(Constants.AGENT_ACCESS_ENABLED_PROPERTY_NAME, Boolean.class));
     }
 
     private boolean isWorkerOnly(Environment environment) {

@@ -12,7 +12,7 @@
     background-color: var(--lecture-combined-view-surface);
     overflow: hidden;
 
-    // The main content renders either as a direct child (no sidebar) or inside a p-splitter panel (sidebar /
+    // The main content renders either as a direct child (no sidebar) or inside a splitter panel (sidebar /
     // horizontal split); the descendant selector covers both, so it stays stretched to fill its container.
     .main-content {
         flex: 1;
@@ -35,7 +35,7 @@
             position: relative;
             min-width: 120px;
 
-            // Fill the full height of the p-splitter panel (a flex column). Without flex/min-height the sidebar
+            // Fill the full height of the splitter panel (a flex column). Without flex/min-height the sidebar
             // shrinks to its content, so the embedded Iris chat collapsed and its absolutely-positioned disclaimer
             // overlapped the input. The sibling .main-content already does this; the old split.js row stretched it.
             flex: 1;
@@ -72,7 +72,7 @@
         padding: 0;
         border: none;
         background-color: transparent;
-        color: var(--bs-body-color);
+        color: var(--tumaet-ui-text-color);
         cursor: pointer;
         transition: opacity 0.2s ease;
         border-radius: 0.25rem;
@@ -81,11 +81,11 @@
         &:hover,
         &:active {
             opacity: 0.8;
-            background-color: var(--lecture-combined-view-hover, rgba(0, 0, 0, 0.05));
+            background-color: var(--tumaet-ui-hover-background);
         }
 
         &:focus-visible {
-            outline: 2px solid var(--bs-primary);
+            outline: 2px solid var(--tumaet-ui-focus-color);
             outline-offset: -2px;
         }
 
@@ -95,97 +95,10 @@
     }
 }
 
-// PrimeNG p-splitter styling: reproduce the previous split.js look (transparent gutter
-// with two small grip bars) and let panels fill the fullscreen container.
-// NOTE: this component uses ViewEncapsulation.None, so styles are global and `:host ::ng-deep` would
-// match nothing (no _nghost/_ngcontent attributes). Target the class directly so the gutter grip,
-// panel flex layout and gutter sizing actually apply.
 .fullscreen-splitter {
-    &.p-splitter {
-        flex: 1;
-        min-width: 0;
-        min-height: 0;
-
-        // Strip PrimeNG's default chrome so the splitter blends into the fullscreen surface (matches the old split.js layout).
-        border: 0 none;
-        background: transparent;
-        border-radius: 0;
-    }
-
-    .p-splitterpanel {
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-        min-height: 0;
-        overflow: hidden;
-    }
-
-    .p-splitter-gutter {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: transparent;
-        flex-shrink: 0;
-    }
-
-    // The gutter handle renders the two grip bars via ::before / ::after (was the old .split-gutter-handle).
-    .p-splitter-gutter-handle {
-        position: relative;
-        background: transparent;
-        border-radius: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 1px;
-
-        &::before,
-        &::after {
-            content: '';
-            display: block;
-            background: var(--bs-body-color);
-            border-radius: 1px;
-        }
-    }
-
-    // Horizontal layout (side-by-side) => vertical divider => col-resize and vertical grip bars.
-    &.p-splitter-horizontal {
-        > .p-splitter-gutter {
-            min-width: var(--spacing-divider);
-            cursor: col-resize;
-
-            > .p-splitter-gutter-handle {
-                flex-direction: row;
-                width: var(--spacing-divider);
-                height: 12px;
-
-                &::before,
-                &::after {
-                    width: 2px;
-                    height: 12px;
-                }
-            }
-        }
-    }
-
-    // Vertical layout (stacked) => horizontal divider => row-resize and horizontal grip bars.
-    &.p-splitter-vertical {
-        > .p-splitter-gutter {
-            min-height: var(--spacing-divider);
-            cursor: row-resize;
-
-            > .p-splitter-gutter-handle {
-                flex-direction: column;
-                width: 12px;
-                height: var(--spacing-divider);
-
-                &::before,
-                &::after {
-                    width: 12px;
-                    height: 2px;
-                }
-            }
-        }
-    }
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
 }
 
 body.lecture-combined-view-fullscreen-active {

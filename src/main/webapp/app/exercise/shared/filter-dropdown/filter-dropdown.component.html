@@ -1,57 +1,28 @@
-@if (groupedFilters()) {
-    <!-- Grouped mode -->
-    <p-select
-        size="small"
-        appendTo="self"
-        [overlayOptions]="overlayOptions"
-        [group]="true"
-        [options]="groupedFilters()!"
-        optionGroupLabel="labelKey"
-        optionGroupChildren="items"
-        [ngModel]="isFiltered() ? activeFilter() : null"
-        [showClear]="isFiltered()"
-        [placeholder]="filterLabelKey() | artemisTranslate"
-        (onChange)="filterChange.emit($event.value ?? allValue())"
-        [class]="isFiltered() ? 'filter-dropdown-active' : 'filter-dropdown-default'"
-        aria-label="Filter Dropdown"
-    >
-        <ng-template #selectedItem>
-            <div class="d-flex align-items-center">
-                <i class="pi pi-filter"></i>
-                <span class="ms-2">{{ filterLabelKey() | artemisTranslate }}: {{ translationPrefix() + activeFilter() | artemisTranslate }}</span>
-            </div>
-        </ng-template>
-        <ng-template #group let-group>
+<select
+    class="rounded-md border border-border bg-(--tumaet-ui-control-background) px-3 py-2 text-sm"
+    [ngModel]="activeFilter()"
+    (ngModelChange)="filterChange.emit($event ?? allValue())"
+    [attr.aria-label]="filterLabelKey() | artemisTranslate"
+    [class.text-state-success]="isFiltered()"
+>
+    <option [ngValue]="allValue()">{{ filterLabelKey() | artemisTranslate }}</option>
+    @if (groupedFilters(); as groups) {
+        @for (group of groups; track $index) {
             @if (group.labelKey) {
-                <span>{{ group.labelKey | artemisTranslate }}</span>
+                <optgroup [label]="group.labelKey | artemisTranslate">
+                    @for (filter of group.items; track filter) {
+                        <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
+                    }
+                </optgroup>
+            } @else {
+                @for (filter of group.items; track filter) {
+                    <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
+                }
             }
-        </ng-template>
-        <ng-template #item let-filter>
-            {{ translationPrefix() + filter | artemisTranslate }}
-        </ng-template>
-    </p-select>
-} @else {
-    <!-- Flat mode -->
-    <p-select
-        size="small"
-        appendTo="self"
-        [overlayOptions]="overlayOptions"
-        [options]="filters()"
-        [ngModel]="isFiltered() ? activeFilter() : null"
-        [showClear]="isFiltered()"
-        [placeholder]="filterLabelKey() | artemisTranslate"
-        (onChange)="filterChange.emit($event.value ?? allValue())"
-        [class]="isFiltered() ? 'filter-dropdown-active' : 'filter-dropdown-default'"
-        aria-label="Filter Dropdown"
-    >
-        <ng-template #selectedItem>
-            <div class="d-flex align-items-center">
-                <i class="pi pi-filter"></i>
-                <span class="ms-2">{{ filterLabelKey() | artemisTranslate }}: {{ translationPrefix() + activeFilter() | artemisTranslate }}</span>
-            </div>
-        </ng-template>
-        <ng-template #item let-filter>
-            {{ translationPrefix() + filter | artemisTranslate }}
-        </ng-template>
-    </p-select>
-}
+        }
+    } @else {
+        @for (filter of filters(); track filter) {
+            <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
+        }
+    }
+</select>

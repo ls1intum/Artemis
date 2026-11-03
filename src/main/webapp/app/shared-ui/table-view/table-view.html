@@ -1,168 +1,178 @@
-<div class="jhi-table-view-container" [class.jhi-scrollable]="resolvedOptions().scrollable">
-    <p-table
-        #dt
-        [stripedRows]="resolvedOptions().striped"
-        [columns]="cols()"
-        [value]="vals()"
-        [totalRecords]="effectiveTotalRows()"
-        [tableStyle]="resolvedOptions().tableStyle"
-        [paginator]="resolvedOptions().paginated"
-        [rows]="effectivePageSize()"
-        [rowsPerPageOptions]="resolvedOptions().pageSizeOptions"
-        [showCurrentPageReport]="resolvedOptions().showCurrentPageReport"
-        [currentPageReportTemplate]="'global.item-count' | artemisTranslate: { first: itemRangeBegin(), second: itemRangeEnd(), total: effectiveTotalRows() }"
-        (onPage)="pageChange($event)"
-        [loading]="loading()"
-        [selectionMode]="resolvedOptions().selectionMode"
-        [(selection)]="tableSelection"
-        [rowSelectable]="rowSelectable"
-        [dataKey]="resolvedOptions().dataKey"
-        (onRowSelect)="handleRowSelectChange()"
-        (onRowUnselect)="handleRowSelectChange()"
-        (onHeaderCheckboxToggle)="handleRowSelectChange()"
-        [lazy]="resolvedOptions().lazy"
-        (onLazyLoad)="handleLazyLoad($event)"
-        (onFilter)="onFilter($event)"
-        [scrollable]="resolvedOptions().scrollable"
-        [scrollHeight]="resolvedOptions().scrollHeight"
-        [globalFilterFields]="resolvedOptions().globalFilterFields"
-        [customSort]="hasCustomSort()"
-        (sortFunction)="onCustomSort($event)"
-        [sortField]="resolvedOptions().initialSortField"
-        [sortOrder]="resolvedOptions().initialSortOrder"
+<div class="jhi-table-view-container flex min-h-0 flex-col gap-3" [class.jhi-flex-scrollable]="isFlexScroll()" [attr.aria-busy]="loading()">
+    @if (showCaption()) {
+        <div class="flex shrink-0 flex-wrap items-center gap-2">
+            @if (resolvedOptions().showSearch) {
+                <jhi-search-filter class="min-w-48 grow" [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
+            }
+            @if (tableActions()) {
+                <ng-container [ngTemplateOutlet]="tableActions()!" />
+            }
+        </div>
+    }
+    <div
+        class="relative min-h-0 overflow-auto"
+        [class.flex-1]="isFlexScroll()"
+        data-testid="table-viewport"
+        [style.max-height]="resolvedOptions().scrollable && !isFlexScroll() ? resolvedOptions().scrollHeight : undefined"
     >
-        @if (showCaption()) {
-            <ng-template #caption>
-                <div class="flex items-center gap-2">
-                    @if (resolvedOptions().showSearch) {
-                        <div class="grow">
-                            <jhi-search-filter [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
-                        </div>
-                    }
-                    @if (tableActions()) {
-                        <ng-container [ngTemplateOutlet]="tableActions()!" />
-                    }
-                </div>
-            </ng-template>
+        @if (loading()) {
+            <div class="absolute inset-0 z-20 flex items-center justify-center bg-surface-raised/70">
+                <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
+            </div>
         }
-        <ng-template #header let-columns>
-            <!-- Nested here so p-sortIcon can inject Table from within p-table's context -->
-            <ng-template #colHeaderContent let-col="col">
-                <div class="flex justify-between items-center">
-                    <div>
-                        @if (col?.headerKey) {
-                            <span [jhiTranslate]="col.headerKey"></span>
-                        } @else {
-                            <span>{{ col?.header ?? '' }}</span>
-                        }
-                        @if (col?.headerIcon || col?.headerTooltip) {
-                            <i [class]="col.headerIcon ?? 'pi pi-question-circle'"></i>
-                        }
-                        @if (col?.sort && col?.field) {
-                            <p-sortIcon [field]="col.field" />
-                        }
-                    </div>
-                    @if (col?.filterType && col?.field) {
-                        <p-columnfilter [type]="col.filterType" [field]="col?.field" display="menu" class="ml-auto" />
-                    }
-                </div>
-            </ng-template>
-            <tr>
-                @if (resolvedOptions().selectionMode === 'multiple') {
-                    <th scope="col" style="width: 3rem">
-                        <p-tableHeaderCheckbox [disabled]="!hasSelectableRows()" />
-                    </th>
-                }
-                @for (col of columns; track col) {
-                    @if (col?.frozen) {
-                        <th
-                            scope="col"
-                            pFrozenColumn
-                            [alignFrozen]="col?.alignFrozen ?? 'left'"
-                            [pSortableColumn]="col?.sort ? col.field : undefined"
-                            [style]="{ 'min-width': col?.width ?? 'auto' }"
-                            [pTooltip]="col?.headerTooltip ? (col.headerTooltip | artemisTranslate) : undefined"
-                            tooltipPosition="top"
-                        >
-                            <ng-container [ngTemplateOutlet]="colHeaderContent" [ngTemplateOutletContext]="{ col }" />
-                        </th>
-                    } @else {
-                        <th
-                            scope="col"
-                            [pSortableColumn]="col?.sort ? col.field : undefined"
-                            [style]="{ 'min-width': col?.width ?? 'auto' }"
-                            [pTooltip]="col?.headerTooltip ? (col.headerTooltip | artemisTranslate) : undefined"
-                            tooltipPosition="top"
-                        >
-                            <ng-container [ngTemplateOutlet]="colHeaderContent" [ngTemplateOutletContext]="{ col }" />
+        <table
+            [attr.inert]="loading() ? '' : undefined"
+            tumAetUiTable
+            size="small"
+            [striped]="resolvedOptions().striped"
+            [scrollable]="resolvedOptions().scrollable"
+            [style]="resolvedOptions().tableStyle"
+        >
+            <thead>
+                <tr>
+                    @if (resolvedOptions().selectionMode === 'multiple') {
+                        <th scope="col" #selectionHeader class="w-12">
+                            <tumaet-ui-checkbox
+                                [ariaLabel]="'global.generic.selectAllRows' | artemisTranslate"
+                                [disabled]="!hasSelectableRows()"
+                                [checked]="allSelected()"
+                                [indeterminate]="someSelected()"
+                                (changed)="toggleAll($event.checked)"
+                            />
                         </th>
                     }
-                }
-                @if (rowActions()) {
-                    @if (resolvedOptions().rowActionsFrozen) {
-                        <th scope="col" pFrozenColumn alignFrozen="right"></th>
-                    } @else {
-                        <th scope="col"></th>
+                    @if (resolvedOptions().selectionMode === 'single') {
+                        <th scope="col" #selectionHeader></th>
                     }
-                }
-            </tr>
-        </ng-template>
-
-        <ng-template #body let-rowData let-columns="columns">
-            <!-- Nested here so any PrimeNG-injecting cell renderers have the correct context -->
-            <ng-template #cellContent let-col="col" let-colIndex="colIndex" let-rowParams="rowParams">
-                @if (col?.templateRef) {
-                    <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: rowParams?.[colIndex] }" />
-                } @else if (col?.cellRenderer) {
-                    <!-- ngComponentOutlet is used intentionally: @-syntax has no equivalent for dynamic component instantiation -->
-                    <ng-container *ngComponentOutlet="col.cellRenderer; inputs: { params: rowParams?.[colIndex] }" />
-                } @else {
-                    {{ rowParams?.[colIndex]?.value }}
-                }
-            </ng-template>
-            @let rowParams = renderedRows().get(rowData);
-            <tr
-                [class.jhi-row-disabled]="isRowDisabled()?.(rowData)"
-                [ngClass]="rowClass()?.(rowData)"
-                [pTooltip]="isRowDisabled()?.(rowData) ? disabledRowTooltip() : undefined"
-                tooltipPosition="top"
-            >
-                @if (resolvedOptions().selectionMode === 'multiple') {
-                    <td style="width: 3rem">
-                        <p-tableCheckbox [value]="rowData" [disabled]="isRowDisabled()?.(rowData)" />
-                    </td>
-                }
-                @for (col of columns; track col; let colIndex = $index) {
-                    @if (col?.frozen) {
-                        <td pFrozenColumn [alignFrozen]="col?.alignFrozen ?? 'left'" data-testid="table-cell" [attr.data-column]="col?.field">
-                            <ng-container [ngTemplateOutlet]="cellContent" [ngTemplateOutletContext]="{ col, colIndex, rowParams }" />
-                        </td>
-                    } @else {
-                        <td data-testid="table-cell" [attr.data-column]="col?.field">
-                            <ng-container [ngTemplateOutlet]="cellContent" [ngTemplateOutletContext]="{ col, colIndex, rowParams }" />
-                        </td>
+                    @for (col of cols(); track $index; let index = $index) {
+                        <th
+                            scope="col"
+                            #columnHeader
+                            [style.width]="col.width"
+                            [style.left]="frozenOffset(index, 'left')"
+                            [style.right]="frozenOffset(index, 'right')"
+                            [attr.aria-sort]="col.sort && col.field ? (sortField() === col.field ? (sortOrder() === 1 ? 'ascending' : 'descending') : 'none') : undefined"
+                            [class.jhi-frozen-left]="col.frozen && col.alignFrozen !== 'right'"
+                            [class.jhi-frozen-right]="col.frozen && col.alignFrozen === 'right'"
+                        >
+                            <div class="flex items-center gap-1">
+                                @if (col.sort && col.field) {
+                                    <button
+                                        type="button"
+                                        class="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-inherit"
+                                        (click)="sortColumn(col.field)"
+                                    >
+                                        <span>{{ col.headerKey ? (col.headerKey | artemisTranslate) : col.header }}</span>
+                                        <fa-icon [icon]="sortField() === col.field ? (sortOrder() === 1 ? faSortUp : faSortDown) : faSort" />
+                                    </button>
+                                } @else {
+                                    <span>{{ col.headerKey ? (col.headerKey | artemisTranslate) : col.header }}</span>
+                                }
+                                @if (col.headerIcon || col.headerTooltip) {
+                                    <span tabindex="0" [tumAetUiTooltip]="col.headerTooltip ? (col.headerTooltip | artemisTranslate) : undefined">
+                                        <fa-icon [icon]="col.headerIcon?.includes('hashtag') ? faHashtag : col.headerIcon?.includes('comment') ? faComment : faCircleQuestion" />
+                                    </span>
+                                }
+                            </div>
+                            @if (col.filterType && col.field) {
+                                @if (col.filterType === 'boolean') {
+                                    <select
+                                        tumAetUiInput
+                                        class="mt-1 w-full"
+                                        [attr.aria-label]="col.headerKey ? (col.headerKey | artemisTranslate) : col.header"
+                                        (change)="filterColumnInput(col.field, $event)"
+                                    >
+                                        <option value=""></option>
+                                        <option value="true">{{ 'global.generic.yes' | artemisTranslate }}</option>
+                                        <option value="false">{{ 'global.generic.no' | artemisTranslate }}</option>
+                                    </select>
+                                } @else {
+                                    <input
+                                        tumAetUiInput
+                                        class="mt-1 w-full"
+                                        [type]="col.filterType === 'numeric' ? 'number' : col.filterType === 'date' ? 'date' : 'text'"
+                                        [attr.aria-label]="col.headerKey ? (col.headerKey | artemisTranslate) : col.header"
+                                        (input)="filterColumnInput(col.field, $event)"
+                                    />
+                                }
+                            }
+                        </th>
                     }
-                }
-                @if (rowActions()) {
-                    @if (resolvedOptions().rowActionsFrozen) {
-                        <td class="text-end" pFrozenColumn alignFrozen="right">
-                            <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: rowData }" />
-                        </td>
-                    } @else {
-                        <td class="text-end">
-                            <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: rowData }" />
-                        </td>
+                    @if (rowActions()) {
+                        <th scope="col" #actionsHeader [class.jhi-frozen-right]="resolvedOptions().rowActionsFrozen"><span jhiTranslate="entity.actions"></span></th>
                     }
+                </tr>
+            </thead>
+            <tbody>
+                @for (row of visibleValues(); track $index) {
+                    <tr [ngClass]="rowClass()?.(row)" [attr.data-disabled]="isRowDisabled()?.(row) || undefined" [attr.data-selected]="selected(row) || undefined">
+                        @if (resolvedOptions().selectionMode === 'multiple') {
+                            <td [tumAetUiTooltip]="isRowDisabled()?.(row) ? disabledRowTooltip() : undefined">
+                                <tumaet-ui-checkbox
+                                    [ariaLabel]="'entity.action.select' | artemisTranslate"
+                                    [disabled]="!!isRowDisabled()?.(row)"
+                                    [checked]="selected(row)"
+                                    (changed)="toggleRow(row, $event.checked)"
+                                />
+                            </td>
+                        }
+                        @if (resolvedOptions().selectionMode === 'single') {
+                            <td>
+                                <tumaet-ui-radio-button
+                                    [name]="selectionName"
+                                    [ariaLabel]="'entity.action.select' | artemisTranslate"
+                                    [value]="row"
+                                    [ngModel]="tableSelection"
+                                    [disabled]="!!isRowDisabled()?.(row)"
+                                    (ngModelChange)="toggleRow(row, true)"
+                                />
+                            </td>
+                        }
+                        @for (col of cols(); track $index; let index = $index) {
+                            <td
+                                data-testid="table-cell"
+                                [attr.data-column]="col.field"
+                                [style.left]="frozenOffset(index, 'left')"
+                                [style.right]="frozenOffset(index, 'right')"
+                                [class.jhi-frozen-left]="col.frozen && col.alignFrozen !== 'right'"
+                                [class.jhi-frozen-right]="col.frozen && col.alignFrozen === 'right'"
+                            >
+                                @let params = renderedRows().get(row)![index];
+                                @if (col.templateRef) {
+                                    <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: params }" />
+                                } @else if (col.cellRenderer) {
+                                    <ng-container [ngComponentOutlet]="col.cellRenderer" [ngComponentOutletInputs]="{ params }" />
+                                } @else {
+                                    {{ params.value }}
+                                }
+                            </td>
+                        }
+                        @if (rowActions()) {
+                            <td [style.text-align]="resolvedOptions().rowActionsAlignment" [class.jhi-frozen-right]="resolvedOptions().rowActionsFrozen">
+                                <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: row }" />
+                            </td>
+                        }
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td [colSpan]="emptyMessageColSpan()" class="text-center text-text-secondary"><span [jhiTranslate]="resolvedOptions().emptyMessageTranslation"></span></td>
+                    </tr>
                 }
-            </tr>
-        </ng-template>
-
-        <ng-template #emptymessage>
-            <tr>
-                <td [colSpan]="emptyMessageColSpan()" class="text-secondary text-center">
-                    <span [jhiTranslate]="resolvedOptions().emptyMessageTranslation"></span>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+            </tbody>
+        </table>
+    </div>
+    @if (resolvedOptions().paginated) {
+        <tumaet-ui-paginator
+            class="shrink-0"
+            [totalRecords]="effectiveTotalRows()"
+            [page]="Math.floor(currentFirst() / effectivePageSize())"
+            [pageSize]="effectivePageSize()"
+            [pageSizeOptions]="resolvedOptions().pageSizeOptions ?? []"
+            [showRowsPerPage]="!!resolvedOptions().pageSizeOptions"
+            [showCurrentPageReport]="resolvedOptions().showCurrentPageReport"
+            [disabled]="loading()"
+            (pageChange)="goToPage($event)"
+            (pageSizeChange)="changePageSize($event)"
+        />
+    }
 </div>

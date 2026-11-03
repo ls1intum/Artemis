@@ -1,9 +1,9 @@
-<div class="col-12">
-    <div class="row table-responsive">
+<div class="w-full">
+    <div class="flex flex-wrap gap-y-2 overflow-x-auto">
         <div [hidden]="ratings().length !== 0">
             <span>{{ 'artemisApp.ratingList.noRatingToShow' | translate }}</span>
         </div>
-        <table class="table" [hidden]="ratings().length === 0">
+        <table class="w-full text-left" [hidden]="ratings().length === 0" tumAetUiTable>
             <thead>
                 <tr jhiSort [(predicate)]="ratingsSortingPredicate" [(ascending)]="ratingsReverseOrder" (sortChange)="sortRows()">
                     <th jhiSortBy="id">
@@ -47,7 +47,7 @@
                             <span>{{ rating.exerciseTitle }}</span>
                         </td>
                         <td>
-                            <fa-icon [icon]="getExerciseIcon(rating.exerciseType)" [ngbTooltip]="getExerciseTypeTooltip(rating.exerciseType) | translate" container="body" />
+                            <fa-icon [icon]="getExerciseIcon(rating.exerciseType)" [tumAetUiTooltip]="getExerciseTypeTooltip(rating.exerciseType) | translate" />
                         </td>
                         <td>
                             <span>{{ rating.assessorLogin ?? '-' }}</span>
@@ -64,7 +64,7 @@
                         <td class="text-center">
                             <!-- TODO: also support navigating into Athena assessments in the future -->
                             @if (rating.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
-                                <button type="button" class="btn btn-primary btn-sm" (click)="openResult(rating)">
+                                <button type="button" (click)="openResult(rating)" tumAetUiButton severity="primary" size="small">
                                     <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                     <span>{{ 'artemisApp.ratingList.openSubmission' | translate }}</span>
                                 </button>
@@ -75,8 +75,8 @@
             </tbody>
         </table>
         @if (totalElements() > pageSize) {
-            <div class="d-flex justify-content-center mt-3">
-                <p-paginator [first]="(page() - 1) * pageSize" [rows]="pageSize" [totalRecords]="totalElements()" (onPageChange)="onPageChange($event)" />
+            <div class="flex justify-center mt-4!">
+                <tumaet-ui-paginator [page]="page() - 1" [pageSize]="pageSize" [totalRecords]="totalElements()" [showRowsPerPage]="false" (pageChange)="onPageChange($event)" />
             </div>
         }
     </div>

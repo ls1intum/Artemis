@@ -2,7 +2,7 @@ import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'v
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/assessment/manage/grading/bonus/bonus.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { BonusService, EntityResponseType } from 'app/assessment/manage/grading/bonus/bonus.service';
@@ -17,7 +17,7 @@ import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-s
 import { HttpResponse } from '@angular/common/http';
 import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
@@ -258,7 +258,7 @@ describe('BonusComponent', () => {
             imports: [
                 FormsModule,
                 ReactiveFormsModule,
-                MockModule(NgbTooltipModule),
+                MockDirective(TumAetUiTooltipDirective),
                 BonusComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeHtmlPipe),

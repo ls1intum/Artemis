@@ -1,10 +1,17 @@
+import {
+    TumAetUiBarChartComponent,
+    TumAetUiBarChartConfig,
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiDialogRef,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+
 import { Component, DestroyRef, Injector, OnInit, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
+
 import { catchError, finalize, map, take } from 'rxjs/operators';
 import { EMPTY, of } from 'rxjs';
 import { BuildLogEntryArray, BuildLogType } from 'app/localci/shared/entities/build-log.model';
@@ -42,7 +49,6 @@ import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 const CODE_REFERENCE_CONTEXT_LINES = 2;
 const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
@@ -52,13 +58,13 @@ const MAX_DISPLAYED_CODE_REFERENCE_LINES = 50;
     selector: 'jhi-result-detail',
     templateUrl: './feedback.component.html',
     imports: [
+        TumAetUiButtonComponent,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
         TranslateDirective,
         FaIconComponent,
         TumAetUiBarChartComponent,
         TumAetUiButtonDirective,
-        TagModule,
-        ButtonModule,
-        TooltipModule,
         NgTemplateOutlet,
         FeedbackNodeComponent,
         UpperCasePipe,
@@ -75,7 +81,7 @@ export class FeedbackComponent implements OnInit {
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private injector = inject(Injector);
     private readonly destroyRef = inject(DestroyRef);
-    readonly dialogRef = inject(DynamicDialogRef, { optional: true });
+    readonly dialogRef = inject(TumAetUiDialogRef, { optional: true });
 
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
@@ -87,7 +93,7 @@ export class FeedbackComponent implements OnInit {
     private showTestDetails = false;
 
     // Read-only signal inputs. Supplied either via template bindings ([result], [participation], …) or, when the
-    // component is opened through DialogService, via `inputValues` — PrimeNG forwards those with componentRef.setInput,
+    // component is opened through TumAetUiDialogService, via `inputValues` — the dialog service applies those with setInputs,
     // so the same signal inputs serve both paths and no imperative "value + getter/setter" facade is needed.
     readonly result = input.required<Result>();
     readonly participation = input.required<Participation>();
@@ -168,7 +174,7 @@ export class FeedbackComponent implements OnInit {
      * When a result has feedbacks assigned to it, no server call will be executed.
      */
     ngOnInit(): void {
-        // Inputs are supplied via template bindings or, for the DialogService case, via `inputValues` (setInput),
+        // Inputs are supplied via template bindings or, for the TumAetUiDialogService case, via `inputValues` (setInput),
         // so they are already populated here regardless of how the component was opened.
         this.isLoading.set(true);
 

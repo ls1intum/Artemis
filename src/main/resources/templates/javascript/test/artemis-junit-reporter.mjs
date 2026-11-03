@@ -18,7 +18,7 @@ export default class ArtemisJUnitReporter {
         this.outputFile = options.outputFile ?? 'junit.xml';
     }
 
-    onTestRunEnd(testModules) {
+    onTestRunEnd(testModules, unhandledErrors = []) {
         const suites = [];
         for (const testModule of testModules) {
             const cases = [];
@@ -35,11 +35,28 @@ export default class ArtemisJUnitReporter {
                 }
                 cases.push({ xml: `<testcase classname="${escapeXml(name)}" name="${escapeXml(name)}" time="${seconds}">${body}</testcase>`, state: result.state });
             }
-            const count = (state) => cases.filter((testCase) => testCase.state === state).length;
-            suites.push(
-                `<testsuite name="${escapeXml(testModule.relativeModuleId ?? testModule.moduleId)}" tests="${cases.length}" failures="${count('failed')}" skipped="${count('skipped')}" errors="0">${cases.map((testCase) => testCase.xml).join('')}</testsuite>`,
-            );
+            // A file that cannot be collected (syntax error, failing import) has no tests, but must not look like a pass.
+            const moduleName = testModule.relativeModuleId ?? testModule.moduleId;
+            const moduleErrors = testModule.errors();
+            if (moduleErrors.length > 0) {
+                cases.push({ xml: errorCase(moduleName, moduleErrors), state: 'error' });
+            }
+            suites.push(suite(moduleName, cases));
+        }
+        if (unhandledErrors.length > 0) {
+            suites.push(suite('unhandled_errors', [{ xml: errorCase('unhandled_errors', unhandledErrors), state: 'error' }]));
         }
         writeFileSync(this.outputFile, `<?xml version="1.0" encoding="UTF-8"?>\n<testsuites>${suites.join('')}</testsuites>\n`);
     }
 }
+
+const errorCase = (name, errors) => {
+    const message = errors[0]?.message ?? 'Error';
+    const details = errors.map((error) => error.stack ?? error.message).join('\n');
+    return `<testcase classname="${escapeXml(name)}" name="${escapeXml(name)}" time="0.000"><error message="${escapeXml(message)}">${escapeXml(details)}</error></testcase>`;
+};
+
+const suite = (name, cases) => {
+    const count = (state) => cases.filter((testCase) => testCase.state === state).length;
+    return `<testsuite name="${escapeXml(name)}" tests="${cases.length}" failures="${count('failed')}" skipped="${count('skipped')}" errors="${count('error')}">${cases.map((testCase) => testCase.xml).join('')}</testsuite>`;
+};

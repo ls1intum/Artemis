@@ -140,6 +140,7 @@ const sidebars: SidebarsConfig = {
                 'integrations/lti-configuration',
                 'integrations/tum-live-course-connection',
                 'integrations/deimos',
+                'integrations/coding-agents',
             ],
         },
     ],

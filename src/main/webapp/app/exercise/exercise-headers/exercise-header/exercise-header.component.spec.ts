@@ -376,7 +376,7 @@ describe('ExerciseHeaderComponent', () => {
 
         // The bar itself is the title row now; there is no inner row element to reach for.
         const titleRow = fixture.debugElement.query(By.css('#exercise-header')).nativeElement as HTMLElement;
-        const sidebarToggle = titleRow.querySelector('.btn-sidebar-collapse');
+        const sidebarToggle = titleRow.querySelector('[data-testid="course-sidebar-toggle"]');
         const heading = titleRow.querySelector('h5');
 
         expect(sidebarToggle).not.toBeNull();
@@ -395,7 +395,7 @@ describe('ExerciseHeaderComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', false);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]'))).toBeNull();
     });
 
     it('should emit toggleSidebar when the sidebar collapse button is clicked', () => {
@@ -410,7 +410,7 @@ describe('ExerciseHeaderComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', true);
         fixture.detectChanges();
 
-        fixture.debugElement.query(By.css('.btn-sidebar-collapse')).triggerEventHandler('click');
+        fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).triggerEventHandler('click');
 
         expect(emitSpy).toHaveBeenCalledOnce();
     });
@@ -426,7 +426,7 @@ describe('ExerciseHeaderComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', true);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse')).classes['is-collapsed']).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).classes['is-collapsed']).toBeTruthy();
     });
 
     describe('live Athena completion', () => {

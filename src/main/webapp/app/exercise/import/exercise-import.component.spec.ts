@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { Subject, of, throwError } from 'rxjs';
 import { MockComponent } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -38,7 +38,7 @@ describe('ExerciseImportComponent', () => {
     let quizExercisePagingService: QuizExercisePagingService;
     let sortService: SortService;
     let injector: Injector;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
     let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
     let searchStub: ReturnType<typeof vi.spyOn>;
     let sortByPropertyStub: ReturnType<typeof vi.spyOn>;
@@ -51,11 +51,11 @@ describe('ExerciseImportComponent', () => {
         dialogRef = {
             close: dialogRefCloseSpy,
             onClose: new Subject<Exercise | undefined>(),
-        } as unknown as DynamicDialogRef;
+        } as unknown as TumAetUiDialogRef;
 
         await TestBed.configureTestingModule({
             providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: TumAetUiDialogRef, useValue: dialogRef },
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
@@ -449,7 +449,7 @@ describe('ExerciseImportComponent template', () => {
         dialogRefCloseSpy = vi.fn();
         await TestBed.configureTestingModule({
             providers: [
-                { provide: DynamicDialogRef, useValue: { close: dialogRefCloseSpy, onClose: new Subject<Exercise | undefined>() } },
+                { provide: TumAetUiDialogRef, useValue: { close: dialogRefCloseSpy, onClose: new Subject<Exercise | undefined>() } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
@@ -502,7 +502,7 @@ describe('ExerciseImportComponent template', () => {
         const previewElement = (testId: string): HTMLElement | null => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
 
         /** The list of the quiz exercises, which stays in the DOM while a quiz is previewed. */
-        const listElement = (): HTMLElement => fixture.nativeElement.querySelector('table').closest('.modal-body');
+        const listElement = (): HTMLElement => fixture.nativeElement.querySelector('[data-testid="exercise-import-list"]');
 
         const showRows = (rows: Exercise[]) => {
             // detect changes first so that ngOnInit runs (it resets the content), then populate the table
