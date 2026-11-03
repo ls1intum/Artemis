@@ -53,8 +53,8 @@ and no Jenkins user to maintain.
    - Overridden Jenkins templates under `src/main/resources/templates/jenkins`, and changes to the pipeline for network access.
      LocalCI uses the [build phases templates](/admin/production-setup/programming-exercise-adjustments) and the Docker flags of the exercise instead.
    - Custom Docker images used by Jenkins agents. LocalCI runs the Docker image configured for the exercise on the build agents. Such an image must be
-     available to the build agents in a registry, built for the architecture of the build agents (`artemis.continuous-integration.image-architecture`,
-     `amd64` by default), and contain all build dependencies. A Docker build agent needs the registry login of its host. The Kubernetes runner needs an
+     available to the build agents in a registry or loaded on each Docker build agent, built for the architecture of the build agents (`artemis.continuous-integration.image-architecture`,
+     `amd64` by default), and contain all build dependencies. A Docker build agent that runs in a container needs registry credentials that the container can read, because a login on the host does not reach the container by default. The Kubernetes runner needs an
      entry in `image-pull-secrets` for a private registry, see [build runners](/admin/production-setup/build-runners).
 4. **Choose the time.** Migrate between teaching periods, never during an exam or in the days before a deadline.
 5. **Take backups** of the Artemis database, the Artemis configuration and the LocalVC repository directory. Keep the Jenkins server

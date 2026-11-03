@@ -305,7 +305,7 @@ with `artemis.distributed-data.provider`:
 The integration employs various distributed data structures to streamline the processing of build jobs across the network.
 These structures include the `buildJobQueue`, an `IQueue` used for queuing all build jobs awaiting processing;
 the `processingJobs`, an `IMap` tracking build jobs currently under processing;
-and the `canceledBuildJobsTopic`, an `ITopic` utilized to signal build agents to cancel specific build jobs.
+and the `canceledBuildJobsTopic`, a `DistributedTopic` utilized to signal build agents to cancel specific build jobs.
 
 Here we can see an overview of all distributed data structures used in Local CI and their purpose (named after their Hazelcast types):
 
@@ -314,7 +314,7 @@ Here we can see an overview of all distributed data structures used in Local CI 
 | `buildJobQueue`            | `IQueue`   | Queue for all build jobs that are waiting to be processed.                      |
 | `processingJobs`           | `IMap`     | Map including all build jobs that are currently being processed.                |
 | `buildAgentInformation`    | `IMap`     | Map containing information on each build agent, such as its status and metrics. |
-| `canceledBuildsTopic`      | `ITopic`   | Topic to order build agents to cancel a specific build job.                     |
+| `canceledBuildJobsTopic`   | `ITopic`   | Topic to order build agents to cancel a specific build job.                     |
 | `buildJobResultQueue`      | `IQueue`   | Queue containing the results produced by the build job execution.               |
 | `dockerImageCleanupInfo`   | `IMap`     | Map containing information about the last date of use of Docker images.         |
 | `pauseBuildAgentTopic`     | `ITopic`   | Topic used to notify which build agent should be paused.                        |
@@ -354,7 +354,7 @@ The above Communication Diagram sets the stage for understanding the cancellatio
 Upon receiving a cancellation request through the `@DeleteMapping("build-jobs/{buildJobId}/cancel")` endpoint in either the `AdminBuildJobQueueResource` or `BuildJobQueueResource`,
 the `cancelBuildJob(String buildJobId)` method within the `SharedQueueManagementService` is activated.
 Initially, it checks whether the build job is queued but not yet in process. If so, it is simply removed from the `buildJobQueue`.
-The process becomes more complex for jobs already in process, involving the `canceledBuildJobsTopic` `ITopic`.
+The process becomes more complex for jobs already in process, involving the `canceledBuildJobsTopic` `DistributedTopic`.
 A cancellation message for the build job ID is broadcast to all build agents, with the `BuildJobManagementService` listening for these messages through a listener on the topic of the distributed data provider.
 Every build agent then checks its `runningFutures` map to see if it holds the specific build job future.
 Should a build agent currently process the specified job, it executes `cancelBuildJob(String buildJobId)` within the `BuildJobManagementService`.
