@@ -66,6 +66,22 @@ public interface PublicUsageStatisticsRepository extends ArtemisJpaRepository<Co
     Set<Long> findStudentIds(@Param("courseIds") Set<Long> courseIds);
 
     /**
+     * Counts every enrolment, so a student of several courses is counted once per course.
+     *
+     * @param courseIds the real courses
+     * @return the number of student enrolments in the courses, without deleted users and test users
+     */
+    @Query("""
+            SELECT COUNT(ucr.id)
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
+                AND ucr.user.deleted = FALSE
+                AND ucr.user.isTestUser = FALSE
+            """)
+    long countStudentEnrollments(@Param("courseIds") Set<Long> courseIds);
+
+    /**
      * @param courseIds the real courses
      * @return the ids of all exercises of the courses, including the exercises of their exams
      */

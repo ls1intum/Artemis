@@ -7,14 +7,21 @@
             "error": "The usage numbers could not be loaded. Please try again later.",
             "empty": "There are not enough courses yet to show usage numbers.",
             "semesterSelection": "Select a semester",
+            "sections": {
+                "courses": "Courses and students",
+                "exercises": "Exercises and submissions",
+                "exams": "Exams"
+            },
             "courses": "Courses",
             "students": "Students",
+            "enrollments": "Course enrollments",
             "activeStudents": "Active students",
             "submissions": "Submissions",
             "exercises": "Exercises",
             "lectures": "Lectures",
             "tutorialGroups": "Tutorial groups",
             "exams": "Exams",
+            "examRegistrations": "Exam registrations",
             "competencies": "Competencies",
             "builds": "Builds",
             "averageBuildDuration": "Average build duration",
@@ -37,10 +44,10 @@
             "definitions": {
                 "title": "How these numbers are counted",
                 "course": "A course counts if it is no test course, has at least 5 students and starts in the semester. Semesters with fewer than 3 such courses are not shown.",
-                "students": "Students are unique people enrolled as student in at least one counted course.",
+                "students": "Students are unique people enrolled as student in at least one counted course. Course enrollments are not unique: a student of three counted courses is counted three times.",
                 "activeStudents": "Active students are counted students who made at least one submission in an exercise or exam of these courses.",
                 "activity": "Builds, posts, replies, reactions, published FAQs, Iris messages and tutorial groups are totals over the courses of the semester, whenever they happened, including what tutors, instructors and the system did. Posts include channels, group chats and direct messages. Builds are the finished ones, and the average build duration only uses the successful ones.",
-                "exams": "Exams are the real exams of the counted courses. Test exams, and exams whose title starts with \"test\" or \"mock\", are not counted. Competencies do not include prerequisites. The Exams card is only shown if the instance offers exams, and the Competencies card only if it offers competencies.",
+                "exams": "Exams are the real exams of the counted courses. Test exams, and exams whose title starts with \"test\" or \"mock\", are not counted. Exam registrations are not unique: a student registered for three of these exams is counted three times. Competencies do not include prerequisites. The Exams section is only shown if the instance offers exams, and the Competencies card only if it offers competencies.",
                 "builds": "Builds are only shown if the instance builds with local CI. Build jobs are deleted after one year by default, so builds are only shown for semesters that started within that period.",
                 "privacy": "Only totals are shown, never single courses or people, and results based on too few courses are hidden. The numbers are refreshed about once per hour."
             }

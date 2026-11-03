@@ -229,6 +229,7 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
         userTestRepository.save(testUser);
 
         assertThat(publicUsageStatisticsRepository.findStudentIds(Set.of(course.getId()))).hasSize(MIN_STUDENTS - 1).doesNotContain(testUser.getId());
+        assertThat(publicUsageStatisticsRepository.countStudentEnrollments(Set.of(course.getId()))).isEqualTo(MIN_STUDENTS - 1);
         assertThat(realCourseIds()).doesNotContain(course.getId());
     }
 
@@ -242,6 +243,10 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
 
         assertThat(realCourseIds()).contains(first.getId(), second.getId());
         assertThat(publicUsageStatisticsRepository.findStudentIds(Set.of(first.getId(), second.getId()))).hasSize(MIN_STUDENTS);
+        // the enrolments are not unique: every student is enrolled once per course
+        assertThat(publicUsageStatisticsRepository.countStudentEnrollments(Set.of(first.getId()))).isEqualTo(MIN_STUDENTS);
+        assertThat(publicUsageStatisticsRepository.countStudentEnrollments(Set.of(first.getId(), second.getId()))).isEqualTo(2L * MIN_STUDENTS);
+        assertThat(publicUsageStatisticsRepository.countStudentEnrollments(Set.of(first.getId() + 100_000))).isZero();
     }
 
     @Test
@@ -382,10 +387,36 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
         assertThat(tutorialGroupUsageStatisticsApi.orElseThrow().countTutorialGroups(Set.of(otherCourse.getId()))).isZero();
     }
 
-    private void saveExam(Course course, String title, boolean testExam) {
+    private Exam saveExam(Course course, String title, boolean testExam) {
         Exam exam = testExam ? examUtilService.addTestExam(course) : examUtilService.addExam(course);
         exam.setTitle(title);
-        examRepository.save(exam);
+        return examRepository.save(exam);
+    }
+
+    @Test
+    void examRegistrations_areNotUniqueAndFollowTheDefinitionOfRealExams() {
+        Course course = createCourseStartingNow(TEST_PREFIX + "x", MIN_STUDENTS);
+        Course otherCourse = courseUtilService.createCourse();
+        otherCourse.setStartDate(ZonedDateTime.now());
+        courseUtilService.saveCourse(otherCourse);
+        // the same students register for several exams, and each registration counts
+        examUtilService.registerUsersForExamAndSaveExam(saveExam(course, "Final exam", false), TEST_PREFIX + "x", MIN_STUDENTS);
+        examUtilService.registerUsersForExamAndSaveExam(saveExam(course, "Retake", false), TEST_PREFIX + "x", 2);
+        examUtilService.registerUsersForExamAndSaveExam(saveExam(otherCourse, "Final exam", false), TEST_PREFIX + "x", 1);
+        // registrations for exams that are not real do not count
+        examUtilService.registerUsersForExamAndSaveExam(saveExam(course, "Mock exam", false), TEST_PREFIX + "x", MIN_STUDENTS);
+        examUtilService.registerUsersForExamAndSaveExam(saveExam(course, "Practice for students", true), TEST_PREFIX + "x", MIN_STUDENTS);
+
+        var api = examUsageStatisticsApi.orElseThrow();
+        assertThat(api.countRealExamRegistrations(Set.of(course.getId()))).isEqualTo(MIN_STUDENTS + 2);
+        assertThat(api.countRealExamRegistrations(Set.of(course.getId(), otherCourse.getId()))).isEqualTo(MIN_STUDENTS + 3);
+        assertThat(api.countRealExamRegistrations(Set.of(course.getId() + 100_000))).isZero();
+
+        User testUser = userTestRepository.findOneByLogin(TEST_PREFIX + "xstudent1").orElseThrow();
+        testUser.setTestUser(true);
+        userTestRepository.save(testUser);
+        // student 1 is registered for the final exam of the course, the retake and the final exam of the other course
+        assertThat(api.countRealExamRegistrations(Set.of(course.getId(), otherCourse.getId()))).isEqualTo(MIN_STUDENTS + 3 - 3);
     }
 
     @Test
@@ -462,6 +493,8 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
             Set<Long> realCourses = realCourseIds();
             // other tests of this class add real courses to the same semester, so the totals are compared with the module counts of all of them
             assertThat(semester.exams()).isEqualTo(examUsageStatisticsApi.orElseThrow().countRealExams(realCourses)).isGreaterThanOrEqualTo(6);
+            assertThat(semester.examRegistrations()).isEqualTo(examUsageStatisticsApi.orElseThrow().countRealExamRegistrations(realCourses));
+            assertThat(semester.enrollments()).isEqualTo(publicUsageStatisticsRepository.countStudentEnrollments(realCourses)).isGreaterThanOrEqualTo(3L * MIN_STUDENTS);
             assertThat(semester.competencies()).isEqualTo(competencyUsageStatisticsApi.orElseThrow().countCompetencies(realCourses)).isGreaterThanOrEqualTo(9);
             assertThat(semester.tutorialGroups()).isNotNull();
             assertThat(semester.courses()).isEqualTo(realCourses.size());

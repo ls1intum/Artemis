@@ -21,64 +21,91 @@
             }
         </nav>
 
-        <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="usage-cards">
-            <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-courses">
-                <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.courses"></span>
-                <span class="text-3xl font-bold">{{ semester.courses | number }}</span>
-            </div>
-            <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-students">
-                <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.students"></span>
-                <span class="text-3xl font-bold">{{ semester.students | number }}</span>
-            </div>
-            <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-active-students">
-                <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.activeStudents"></span>
-                <span class="text-3xl font-bold">{{ semester.activeStudents | number }}</span>
-            </div>
-            <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-submissions">
-                <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.submissions"></span>
-                <span class="text-3xl font-bold">{{ semester.submissions | number }}</span>
-            </div>
-            <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-exercises">
-                <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.exercises"></span>
-                <span class="text-3xl font-bold">{{ totalExercises() | number }}</span>
-            </div>
-            <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-lectures">
-                <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.lectures"></span>
-                <span class="text-3xl font-bold">{{ semester.lectures | number }}</span>
-            </div>
-            @if (semester.exams !== undefined) {
-                <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-exams">
-                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.exams"></span>
-                    <span class="text-3xl font-bold">{{ semester.exams | number }}</span>
+        <section class="flex flex-col gap-3" data-testid="usage-courses-section">
+            <h2 class="m-0 text-xl font-semibold">{{ 'artemisApp.usageDashboard.sections.courses' | artemisTranslate }}</h2>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-courses">
+                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.courses"></span>
+                    <span class="text-3xl font-bold">{{ semester.courses | number }}</span>
                 </div>
-            }
-            @if (semester.competencies !== undefined) {
-                <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-competencies">
-                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.competencies"></span>
-                    <span class="text-3xl font-bold">{{ semester.competencies | number }}</span>
+                <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-students">
+                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.students"></span>
+                    <span class="text-3xl font-bold">{{ semester.students | number }}</span>
                 </div>
-            }
-            @if (semester.tutorialGroups !== undefined) {
-                <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-tutorial-groups">
-                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.tutorialGroups"></span>
-                    <span class="text-3xl font-bold">{{ semester.tutorialGroups | number }}</span>
-                </div>
-            }
-            @if (semester.builds; as builds) {
-                @if (builds.count > 0) {
-                    <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-builds">
-                        <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.builds"></span>
-                        <span class="text-3xl font-bold">{{ builds.count | number }}</span>
+                @if (semester.enrollments !== undefined) {
+                    <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-enrollments">
+                        <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.enrollments"></span>
+                        <span class="text-3xl font-bold">{{ semester.enrollments | number }}</span>
                     </div>
                 }
-                @if (builds.averageDurationSeconds !== undefined) {
-                    <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-build-duration">
-                        <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.averageBuildDuration"></span>
-                        <span class="text-3xl font-bold">{{ builds.averageDurationSeconds | number: '1.0-0' }} s</span>
+                <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-lectures">
+                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.lectures"></span>
+                    <span class="text-3xl font-bold">{{ semester.lectures | number }}</span>
+                </div>
+                @if (semester.competencies !== undefined) {
+                    <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-competencies">
+                        <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.competencies"></span>
+                        <span class="text-3xl font-bold">{{ semester.competencies | number }}</span>
                     </div>
                 }
-            }
+                @if (semester.tutorialGroups !== undefined) {
+                    <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-tutorial-groups">
+                        <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.tutorialGroups"></span>
+                        <span class="text-3xl font-bold">{{ semester.tutorialGroups | number }}</span>
+                    </div>
+                }
+            </div>
         </section>
+
+        <section class="flex flex-col gap-3" data-testid="usage-exercises-section">
+            <h2 class="m-0 text-xl font-semibold">{{ 'artemisApp.usageDashboard.sections.exercises' | artemisTranslate }}</h2>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-exercises">
+                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.exercises"></span>
+                    <span class="text-3xl font-bold">{{ totalExercises() | number }}</span>
+                </div>
+                <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-active-students">
+                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.activeStudents"></span>
+                    <span class="text-3xl font-bold">{{ semester.activeStudents | number }}</span>
+                </div>
+                <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-submissions">
+                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.submissions"></span>
+                    <span class="text-3xl font-bold">{{ semester.submissions | number }}</span>
+                </div>
+                @if (semester.builds; as builds) {
+                    @if (builds.count > 0) {
+                        <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-builds">
+                            <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.builds"></span>
+                            <span class="text-3xl font-bold">{{ builds.count | number }}</span>
+                        </div>
+                    }
+                    @if (builds.averageDurationSeconds !== undefined) {
+                        <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-build-duration">
+                            <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.averageBuildDuration"></span>
+                            <span class="text-3xl font-bold">{{ builds.averageDurationSeconds | number: '1.0-0' }} s</span>
+                        </div>
+                    }
+                }
+            </div>
+        </section>
+
+        @if (semester.exams !== undefined) {
+            <section class="flex flex-col gap-3" data-testid="usage-exams-section">
+                <h2 class="m-0 text-xl font-semibold">{{ 'artemisApp.usageDashboard.sections.exams' | artemisTranslate }}</h2>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-exams">
+                        <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.exams"></span>
+                        <span class="text-3xl font-bold">{{ semester.exams | number }}</span>
+                    </div>
+                    @if (semester.examRegistrations !== undefined) {
+                        <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-exam-registrations">
+                            <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.examRegistrations"></span>
+                            <span class="text-3xl font-bold">{{ semester.examRegistrations | number }}</span>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
 
         @if (semester.communication; as communication) {
             <section class="flex flex-col gap-3" data-testid="usage-communication">
