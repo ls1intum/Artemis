@@ -8,8 +8,6 @@ import jakarta.persistence.Table;
 
 import org.jspecify.annotations.Nullable;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Parent;
 
@@ -246,7 +244,6 @@ public class MetisQuestion extends DomainObject {
      *
      * @return true when the question points at a main question
      */
-    @JsonIgnore
     public boolean isFollowUp() {
         return parentQuestionId != null;
     }
