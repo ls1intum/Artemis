@@ -14,21 +14,32 @@
             "maxPoints": "Max. points",
             "resultPoints": "Points",
             "resultPointsExceedMaxPoints": "Points must not exceed max. points.",
+            "presentationDetails": "Presentation details",
+            "pointsOf": "of",
+            "generalRemark": "General remark",
             "placeholder": {
                 "title": "e.g. System Architecture Review",
                 "maxPoints": "0",
                 "resultPoints": "0.0",
-                "description": "Add context or instructions for students."
+                "description": "Add context or instructions for students.",
+                "remark": "Add a remark",
+                "generalRemark": "Add overall feedback for the student."
             },
             "optional": "Optional",
             "pointsUnit": "points",
+            "result": {
+                "label": "Result",
+                "passed": "Passed",
+                "failed": "Failed"
+            },
             "validation": {
                 "maxPointsMin": "Please enter a value greater than 0.",
                 "resultPointsMin": "Points must be at least 0.",
                 "pointsMax": "Points must not exceed {{ max }}.",
                 "exerciseNotSelected": "Select an exercise from the list or clear the field.",
                 "meetingLinkInvalid": "Please enter a link that starts with http:// or https://.",
-                "gradingMethodRequired": "Please choose a grading method."
+                "gradingMethodRequired": "Please choose a grading method.",
+                "resultRequired": "A saved result can be changed but not removed."
             },
             "gradingMethod": {
                 "label": "Grading method",
@@ -155,6 +166,12 @@
                     "good": "Good",
                     "excellent": "Excellent"
                 },
+                "feedbackFor": "Feedback for {{ name }} (optional)",
+                "feedbackPlaceholder": "Explain why this rating was given.",
+                "notRated": "Not rated yet. Select one level.",
+                "overallResult": "Overall result",
+                "calculatedAutomatically": "Calculated automatically",
+                "remaining": "Criteria remaining: {{ count }}",
                 "emptyTitle": "Start building your rubric",
                 "empty": "Add criteria, give each a weight and choose its rating scale.",
                 "addFirstCriterion": "Add first criterion",

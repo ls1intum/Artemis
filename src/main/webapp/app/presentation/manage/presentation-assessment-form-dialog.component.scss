@@ -216,7 +216,7 @@
     gap: 0.5rem;
 
     jhi-points-input {
-        flex: 1;
+        width: 8rem;
     }
 
     span {
@@ -235,10 +235,8 @@
 }
 
 .presentation-assessment-configuration {
-    padding: 1.25rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
-    background: var(--hover-slightly-darker-body-bg);
+    display: flex;
+    justify-content: center;
     text-align: left;
 }
 

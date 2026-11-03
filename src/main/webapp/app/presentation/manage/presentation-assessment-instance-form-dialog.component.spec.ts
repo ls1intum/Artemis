@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
@@ -30,7 +32,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentInstanceFormDialogComponent],
-            providers: [{ provide: TranslateService, useValue: translateService }],
+            providers: [{ provide: TranslateService, useValue: translateService }, provideHttpClient(), provideHttpClientTesting()],
         })
             // The presenter selector searches students on the server and is tested on its own.
             .overrideComponent(PresentationAssessmentInstanceFormDialogComponent, {

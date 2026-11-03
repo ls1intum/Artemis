@@ -4,14 +4,158 @@
     gap: 1.5rem;
 }
 
+.instance-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
 .instance-fields {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
+    align-items: start;
+}
+
+// Location and meeting link belong to the mode, so they stay in its column
+.instance-location-field {
+    grid-column: 2;
+}
+
+.instance-optional {
+    margin-left: 0.25rem;
+    color: var(--text-body-secondary);
+}
+
+.instance-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-body-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+
+    &::before,
+    &::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border-color);
+    }
+}
+
+// The result takes little space, so the remark gets the rest of the row
+.instance-assessment-row {
+    display: grid;
+    grid-template-columns: 14rem minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.instance-assessment-row-pass-fail {
+    grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+}
+
+.instance-outcomes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.instance-outcome {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    // As high as the remark input next to it
+    min-height: 2.5rem;
+    padding: 0 0.75rem 0 0.375rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+
+    &:focus-within {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+    }
+}
+
+.instance-outcome-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.375rem;
+    background: color-mix(in srgb, var(--primary) 12%, var(--module-bg));
+    color: var(--primary);
+}
+
+.instance-outcome-failed .instance-outcome-icon {
+    background: color-mix(in srgb, var(--danger) 12%, var(--module-bg));
+    color: var(--danger);
+}
+
+.instance-outcome-radio {
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-left: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+}
+
+.instance-outcome-selected {
+    border-color: var(--primary);
+    box-shadow: inset 0 0 0 1px var(--primary);
+    background: color-mix(in srgb, var(--primary) 6%, var(--module-bg));
+
+    .instance-outcome-radio {
+        border: 5px solid var(--primary);
+    }
+}
+
+.instance-points {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    jhi-points-input {
+        width: 7rem;
+    }
+
+    > span {
+        color: var(--text-body-secondary);
+        white-space: nowrap;
+    }
+
+    strong {
+        color: var(--body-color);
+    }
+}
+
+.instance-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.instance-remaining {
+    color: var(--text-body-secondary);
+    font-size: 0.875rem;
 }
 
 @media (max-width: 40rem) {
-    .instance-fields {
+    .instance-fields,
+    .instance-assessment-row,
+    .instance-assessment-row-pass-fail {
         grid-template-columns: 1fr;
+    }
+
+    .instance-location-field {
+        grid-column: auto;
     }
 }

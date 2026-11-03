@@ -5,7 +5,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, merge } from 'rxjs';
 import { debounceTime, finalize, map, tap } from 'rxjs/operators';
 
-import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTableList, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTableCellsLarge, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import {
@@ -19,6 +19,7 @@ import {
     TumAetUiPaginatorComponent,
     TumAetUiSelectComponent,
     TumAetUiTableSortEvent,
+    TumAetUiTagComponent,
 } from '@tumaet/ui-angular';
 
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -52,6 +53,7 @@ import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CollapseState, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateService } from '@ngx-translate/core';
 import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
+import { GRADING_METHOD_ICONS } from 'app/presentation/shared/presentation-grading-method-icons';
 import {
     AssessmentStatusFilter,
     FilterOption,
@@ -60,7 +62,7 @@ import {
     PresentationTypeFilter,
     PresentationViewMode,
     createPresentationSidebarData,
-    hasResultPoints,
+    hasResult,
 } from 'app/presentation/manage/presentation-assessment-management.helper';
 
 const presentationSidebarCollapseStateRecord: Record<string, boolean> = { standalone: false, linkedToExercise: false };
@@ -87,7 +89,7 @@ function decorateStudentRow(row: PresentationStudentRow): PresentationStudentTab
         instance: row.instance,
         rowKey: studentRowKey(row),
         displayName: studentDisplayName(row),
-        assessed: hasResultPoints(row.instance.resultPoints),
+        assessed: hasResult(row.instance),
     };
 }
 
@@ -121,6 +123,7 @@ function positiveRouteId(value: string | null): number | undefined {
         TumAetUiMessageComponent,
         TumAetUiPaginatorComponent,
         TumAetUiSelectComponent,
+        TumAetUiTagComponent,
         SidebarComponent,
     ],
 })
@@ -145,7 +148,8 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     );
 
     protected readonly faPencilAlt = faPencilAlt;
-    protected readonly faTableList = faTableList;
+    protected readonly faTableCellsLarge = faTableCellsLarge;
+    protected readonly gradingMethodIcons = GRADING_METHOD_ICONS;
     protected readonly faPlus = faPlus;
     protected readonly faLink = faLink;
     protected readonly faUsers = faUsers;
@@ -382,7 +386,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     onStudentSort(event: TumAetUiTableSortEvent): void {
         const field = event.field;
-        if (field !== 'studentLogin' && field !== 'presentationTitle' && field !== 'presentationDate' && field !== 'resultPoints') {
+        if (field !== 'studentLogin' && field !== 'presentationTitle' && field !== 'presentationDate') {
             return;
         }
         this.studentSortField.set(field);

@@ -88,7 +88,7 @@ export interface PresentationAssessmentStudentRow {
 export interface PresentationAssessmentStudentRowsRequest {
     page: number;
     size: number;
-    sortField: 'studentLogin' | 'presentationTitle' | 'presentationDate' | 'resultPoints';
+    sortField: 'studentLogin' | 'presentationTitle' | 'presentationDate';
     direction: 'ASC' | 'DESC';
     assessmentId?: number;
     assessed?: boolean;

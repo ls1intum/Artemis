@@ -25,12 +25,7 @@
                 </td>
                 <td>
                     @if (row.assessed) {
-                        <tumaet-ui-tag
-                            severity="info"
-                            size="sm"
-                            [value]="row.instance.resultPoints + ' / ' + presentationAssessment().maxPoints"
-                            data-testid="instance-result-points"
-                        />
+                        <jhi-presentation-result-tag [instance]="row.instance" [presentationAssessment]="presentationAssessment()" />
                     } @else {
                         -
                     }

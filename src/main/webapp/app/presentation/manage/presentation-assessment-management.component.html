@@ -44,6 +44,25 @@
                                                 <span>{{ presentationAssessment.exerciseTitle }}</span>
                                             </a>
                                         }
+                                        @if (isAtLeastEditor() && presentationAssessment.gradingMethod === PresentationGradingMethod.RUBRIC) {
+                                            <tumaet-ui-button
+                                                size="small"
+                                                severity="secondary"
+                                                variant="outlined"
+                                                [icon]="faTableCellsLarge"
+                                                (clicked)="startEditRubric(presentationAssessment)"
+                                                data-testid="edit-rubric-button"
+                                            >
+                                                <span jhiTranslate="artemisApp.presentationAssessment.rubric.title"></span>
+                                            </tumaet-ui-button>
+                                        } @else if (presentationAssessment.gradingMethod; as gradingMethod) {
+                                            <tumaet-ui-tag size="sm" data-testid="presentation-grading-method-tag">
+                                                <span class="inline-flex items-center gap-1">
+                                                    <fa-icon [icon]="gradingMethodIcons[gradingMethod]" />
+                                                    <span [jhiTranslate]="'artemisApp.presentationAssessment.gradingMethod.' + gradingMethod"></span>
+                                                </span>
+                                            </tumaet-ui-tag>
+                                        }
                                         @if (isAtLeastEditor()) {
                                             <tumaet-ui-button
                                                 size="small"
@@ -55,18 +74,6 @@
                                             >
                                                 <span jhiTranslate="entity.action.edit"></span>
                                             </tumaet-ui-button>
-                                            @if (presentationAssessment.gradingMethod === PresentationGradingMethod.RUBRIC) {
-                                                <tumaet-ui-button
-                                                    size="small"
-                                                    severity="secondary"
-                                                    variant="outlined"
-                                                    [icon]="faTableList"
-                                                    (clicked)="startEditRubric(presentationAssessment)"
-                                                    data-testid="edit-rubric-button"
-                                                >
-                                                    <span jhiTranslate="artemisApp.presentationAssessment.rubric.title"></span>
-                                                </tumaet-ui-button>
-                                            }
                                         }
                                     </div>
                                 </header>
@@ -264,6 +271,7 @@
         @if (instanceDialogVisible() && dialogInstancePresentationAssessment(); as presentationAssessment) {
             <jhi-presentation-assessment-instance-form-dialog
                 [courseId]="courseId()"
+                [course]="course()"
                 [presentationAssessment]="presentationAssessment"
                 [instance]="dialogInstance()"
                 [initialAssignedStudents]="dialogAssignedStudents()"

@@ -1,0 +1,87 @@
+<div class="presentation-rubric-grading">
+    @for (criterion of criteria(); track criterion.id; let index = $index) {
+        @let rating = form().at(index);
+        <article class="presentation-rubric-grading-criterion" [formGroup]="rating" [attr.data-testid]="'rubric-grading-criterion-' + index">
+            <header class="presentation-rubric-grading-header">
+                <span class="presentation-rubric-grading-number" aria-hidden="true">{{ index + 1 }}</span>
+                <div class="presentation-rubric-grading-title">
+                    <h3 [id]="'rubric-grading-name-' + index">{{ criterion.name }}</h3>
+                    @if (criterion.description) {
+                        <p>{{ criterion.description }}</p>
+                    }
+                </div>
+                <div class="presentation-rubric-grading-weight">
+                    <small jhiTranslate="artemisApp.presentationAssessment.rubric.weight"></small>
+                    <strong>{{ criterion.weight }} %</strong>
+                </div>
+            </header>
+
+            <div class="presentation-rubric-grading-levels" role="radiogroup" [attr.aria-labelledby]="'rubric-grading-name-' + index">
+                @for (position of positionsHighestFirst(criterion); track position) {
+                    @let level = criterion.levels[position];
+                    <label
+                        class="presentation-rubric-grading-level"
+                        [class.presentation-rubric-grading-level-selected]="rating.controls.levelId.value === level.id"
+                        [attr.data-testid]="'rubric-grading-level-' + index + '-' + position"
+                    >
+                        <input
+                            class="sr-only"
+                            type="radio"
+                            [name]="'rubric-grading-level-' + index"
+                            [checked]="rating.controls.levelId.value === level.id"
+                            [disabled]="rating.disabled"
+                            (change)="selectLevel(rating, level.id)"
+                        />
+                        <span class="presentation-rubric-grading-level-text">
+                            <strong>{{ position + 1 }} – <span [jhiTranslate]="rubricLevelKey(criterion.scale, position)"></span></strong>
+                            @if (level.description) {
+                                <small>{{ level.description }}</small>
+                            }
+                        </span>
+                        <span class="presentation-rubric-grading-radio" aria-hidden="true"></span>
+                    </label>
+                }
+            </div>
+
+            @if (rating.controls.levelId.value !== null) {
+                <div class="presentation-rubric-grading-field">
+                    <label
+                        [for]="'rubric-grading-comment-' + index"
+                        jhiTranslate="artemisApp.presentationAssessment.rubric.feedbackFor"
+                        [translateValues]="{ name: criterion.name }"
+                    ></label>
+                    <textarea
+                        [id]="'rubric-grading-comment-' + index"
+                        tumAetUiTextarea
+                        class="w-full"
+                        rows="3"
+                        formControlName="comment"
+                        [placeholder]="'artemisApp.presentationAssessment.rubric.feedbackPlaceholder' | artemisTranslate"
+                        [attr.data-testid]="'rubric-grading-comment-' + index"
+                    ></textarea>
+                    @if (rating.controls.comment.hasError('maxlength')) {
+                        <tumaet-ui-message severity="error">
+                            <span jhiTranslate="artemisApp.presentationAssessment.remarkTooLong" [translateValues]="{ max: 1000 }"></span>
+                        </tumaet-ui-message>
+                    }
+                </div>
+            } @else {
+                <p class="presentation-rubric-grading-unrated" [attr.data-testid]="'rubric-grading-unrated-' + index">
+                    <fa-icon [icon]="faCircleInfo" />
+                    <span jhiTranslate="artemisApp.presentationAssessment.rubric.notRated"></span>
+                </p>
+            }
+        </article>
+    }
+
+    <div class="presentation-rubric-grading-remark">
+        <ng-content />
+    </div>
+
+    @let overall = overallResult();
+    <div class="presentation-rubric-grading-summary" data-testid="rubric-grading-overall">
+        <span jhiTranslate="artemisApp.presentationAssessment.rubric.overallResult"></span>
+        <strong>{{ overall === undefined ? '–' : overall + ' %' }}</strong>
+        <small jhiTranslate="artemisApp.presentationAssessment.rubric.calculatedAutomatically"></small>
+    </div>
+</div>

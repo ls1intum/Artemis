@@ -5,7 +5,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { Observable, startWith } from 'rxjs';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faArrowLeft, faArrowRight, faBan, faCheck, faHashtag, faSave, faTableCellsLarge, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faBan, faCheck, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import {
     TumAetUiAutoCompleteComponent,
     TumAetUiAutoCompleteSearchEvent,
@@ -24,6 +24,7 @@ import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { createRubricForm, notBlank, readRubricForm } from 'app/presentation/manage/presentation-rubric-form';
 import { PresentationRubricEditorComponent } from 'app/presentation/manage/presentation-rubric-editor.component';
+import { GRADING_METHOD_ICONS } from 'app/presentation/shared/presentation-grading-method-icons';
 
 export interface PresentationAssessmentFormDialogResult {
     presentationAssessment: PresentationAssessment;
@@ -36,11 +37,6 @@ const MAX_POINTS_UPPER_BOUND = 10000;
 const MIN_POINTS = 0.001;
 /** The autocomplete writes the typed text into the control; only a selected exercise (an object) or an empty field is a valid value. */
 const exerciseSelected: ValidatorFn = (control: AbstractControl): ValidationErrors | null => (typeof control.value === 'string' ? { exerciseNotSelected: true } : null);
-const GRADING_METHOD_ICONS: Record<PresentationGradingMethod, IconDefinition> = {
-    [PresentationGradingMethod.PASS_FAIL]: faCheck,
-    [PresentationGradingMethod.SCORE]: faHashtag,
-    [PresentationGradingMethod.RUBRIC]: faTableCellsLarge,
-};
 
 @Component({
     selector: 'jhi-presentation-assessment-form-dialog',

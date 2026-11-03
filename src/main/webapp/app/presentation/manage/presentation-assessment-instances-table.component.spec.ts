@@ -61,10 +61,10 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
 
     it('should show the result points against the maximum only for assessed rows', () => {
         render([createRow()]);
-        expect(query('[data-testid="instance-result-points"]')?.textContent).toContain('12 / 20');
+        expect(query('[data-testid="instance-result"]')?.textContent).toContain('12 / 20');
 
         render([createRow({ assessed: false, instance: { id: 10 } })]);
-        expect(query('[data-testid="instance-result-points"]')).toBeNull();
+        expect(query('[data-testid="instance-result"]')).toBeNull();
     });
 
     it('should offer the delete button only when deleting is allowed', () => {

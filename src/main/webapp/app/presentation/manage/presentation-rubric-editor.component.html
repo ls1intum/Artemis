@@ -8,7 +8,7 @@
             <div
                 class="presentation-rubric-total"
                 [class.presentation-rubric-total-valid]="totalWeight() === weightSum"
-                [class.presentation-rubric-total-invalid]="showErrors() && totalWeight() !== weightSum"
+                [class.presentation-rubric-total-invalid]="form().length > 0 && totalWeight() !== weightSum"
                 data-testid="rubric-total-weight"
             >
                 <small jhiTranslate="artemisApp.presentationAssessment.rubric.totalWeight"></small>
@@ -17,7 +17,7 @@
                     size="small"
                     [showValue]="false"
                     [value]="totalWeight()"
-                    [severity]="totalWeight() === weightSum ? 'success' : showErrors() ? 'danger' : 'primary'"
+                    [severity]="totalWeight() === weightSum ? 'success' : form().length > 0 ? 'danger' : 'primary'"
                     [ariaLabel]="'artemisApp.presentationAssessment.rubric.totalWeight' | artemisTranslate"
                 />
             </div>

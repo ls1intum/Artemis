@@ -1345,15 +1345,6 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(table.textContent).toContain('18');
     });
 
-    it('should reload the overview sorted by points when the points column is clicked', () => {
-        presentationAssessmentService.findStudentRows.mockClear();
-
-        (query('th[tumAetUiSortableColumn="resultPoints"] button') as HTMLButtonElement).click();
-        fixture.detectChanges();
-
-        expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(courseId, expect.objectContaining({ sortField: 'resultPoints', page: 0 }));
-    });
-
     it('should load the next page of the overview from the paginator', () => {
         // More rows than fit on one page (25), so the paginator offers a next page.
         presentationAssessmentService.findStudentRows.mockReturnValue(

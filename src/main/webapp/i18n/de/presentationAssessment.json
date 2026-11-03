@@ -14,21 +14,32 @@
             "maxPoints": "Max. Punkte",
             "resultPoints": "Punkte",
             "resultPointsExceedMaxPoints": "Punkte dürfen die maximalen Punkte nicht überschreiten.",
+            "presentationDetails": "Präsentationsdetails",
+            "pointsOf": "von",
+            "generalRemark": "Allgemeine Anmerkung",
             "placeholder": {
                 "title": "z. B. Review der Systemarchitektur",
                 "maxPoints": "0",
                 "resultPoints": "0.0",
-                "description": "Füge Kontext oder Hinweise für Studierende hinzu."
+                "description": "Füge Kontext oder Hinweise für Studierende hinzu.",
+                "remark": "Füge eine Anmerkung hinzu",
+                "generalRemark": "Füge eine Rückmeldung zur gesamten Präsentation hinzu."
             },
             "optional": "Optional",
             "pointsUnit": "Punkte",
+            "result": {
+                "label": "Ergebnis",
+                "passed": "Bestanden",
+                "failed": "Nicht bestanden"
+            },
             "validation": {
                 "maxPointsMin": "Bitte gib einen Wert größer als 0 ein.",
                 "resultPointsMin": "Punkte müssen mindestens 0 betragen.",
                 "pointsMax": "Punkte dürfen {{ max }} nicht überschreiten.",
                 "exerciseNotSelected": "Wähle eine Aufgabe aus der Liste aus oder leere das Feld.",
                 "meetingLinkInvalid": "Bitte gib einen Link ein, der mit http:// oder https:// beginnt.",
-                "gradingMethodRequired": "Bitte wähle eine Bewertungsmethode."
+                "gradingMethodRequired": "Bitte wähle eine Bewertungsmethode.",
+                "resultRequired": "Ein gespeichertes Ergebnis kann geändert, aber nicht entfernt werden."
             },
             "gradingMethod": {
                 "label": "Bewertungsmethode",
@@ -155,6 +166,12 @@
                     "good": "Gut",
                     "excellent": "Ausgezeichnet"
                 },
+                "feedbackFor": "Feedback zu {{ name }} (optional)",
+                "feedbackPlaceholder": "Begründe, warum du diese Stufe gewählt hast.",
+                "notRated": "Noch nicht bewertet. Wähle eine Stufe.",
+                "overallResult": "Gesamtergebnis",
+                "calculatedAutomatically": "Wird automatisch berechnet",
+                "remaining": "Offene Kriterien: {{ count }}",
                 "emptyTitle": "Beginne mit deiner Rubrik",
                 "empty": "Füge Kriterien hinzu, gewichte sie und wähle für jedes eine Bewertungsskala.",
                 "addFirstCriterion": "Erstes Kriterium hinzufügen",
