@@ -103,7 +103,7 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.next('');
     }
 
-    private refreshSshKeys() {
+    refreshSshKeys() {
         this.sshUserSettingsService
             .getSshPublicKeys()
             .pipe(

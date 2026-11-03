@@ -57,6 +57,7 @@ describe('CredentialRevocationSettingsComponent', () => {
     it('should clear the selection after a successful revocation', () => {
         vi.spyOn(credentialRevocationService, 'revokeCredentials').mockReturnValue(of(undefined));
         const successSpy = vi.spyOn(alertService, 'success');
+        const revokedSpy = vi.spyOn(component.credentialsRevoked, 'emit');
         component.revokePasskeys.set(true);
         component.revokeSshKeys.set(true);
         component.revokeVcsAccessTokens.set(true);
@@ -68,6 +69,7 @@ describe('CredentialRevocationSettingsComponent', () => {
         expect(component.revokeSshKeys()).toBe(false);
         expect(component.revokeVcsAccessTokens()).toBe(false);
         expect(component.isRevoking()).toBe(false);
+        expect(revokedSpy).toHaveBeenCalledExactlyOnceWith({ passkeys: true, sshKeys: true, vcsAccessTokens: true });
         expect(successSpy).toHaveBeenCalledWith('artemisApp.userSettings.credentialRevocation.success');
     });
 
@@ -87,6 +89,7 @@ describe('CredentialRevocationSettingsComponent', () => {
         const error = new HttpErrorResponse({ status: 400, statusText: 'Bad Request' });
         vi.spyOn(credentialRevocationService, 'revokeCredentials').mockReturnValue(throwError(() => error));
         const errorSpy = vi.spyOn(alertService, 'error').mockImplementation(() => undefined!);
+        const revokedSpy = vi.spyOn(component.credentialsRevoked, 'emit');
         component.revokeVcsAccessTokens.set(true);
         const dialogError = firstValueFromNext(component.dialogError$);
 
@@ -98,6 +101,7 @@ describe('CredentialRevocationSettingsComponent', () => {
         // Nothing was revoked, so the user's choice has to survive for them to retry.
         expect(component.revokeVcsAccessTokens()).toBe(true);
         expect(component.isRevoking()).toBe(false);
+        expect(revokedSpy).not.toHaveBeenCalled();
         expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.http.400');
     });
 

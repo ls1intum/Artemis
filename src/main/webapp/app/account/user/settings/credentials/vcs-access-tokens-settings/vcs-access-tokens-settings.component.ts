@@ -84,12 +84,7 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     deleteVcsAccessToken() {
         this.accountService.deleteUserVcsAccessToken().subscribe({
             next: () => {
-                const current = this.currentUser();
-                if (current) {
-                    current.vcsAccessTokenExpiryDate = undefined;
-                    current.vcsAccessToken = undefined;
-                    this.currentUser.set(current);
-                }
+                this.clearRevokedToken();
                 this.alertService.success('artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteSuccess');
             },
             error: () => {
@@ -97,6 +92,15 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
             },
         });
         this.dialogErrorSource.next('');
+    }
+
+    clearRevokedToken(): void {
+        const current = this.currentUser();
+        if (current) {
+            current.vcsAccessTokenExpiryDate = undefined;
+            current.vcsAccessToken = undefined;
+            this.currentUser.set(current);
+        }
     }
 
     addNewVcsAccessToken() {

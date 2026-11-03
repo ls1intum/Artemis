@@ -74,7 +74,7 @@ export class VcsAccessTokenOverviewComponent implements OnInit {
     /**
      * Loads the current user's VCS access tokens from the server and applies the current query (page, sort, search) to them.
      */
-    private loadTokens(): void {
+    loadTokens(): void {
         this.isLoading.set(true);
         this.service.getTokens().subscribe({
             next: (tokens) => {

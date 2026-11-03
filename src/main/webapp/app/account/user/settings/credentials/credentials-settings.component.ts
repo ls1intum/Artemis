@@ -1,4 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, viewChild } from '@angular/core';
+import { CredentialRevocationChoice } from 'app/account/password/password.service';
 import { MODULE_FEATURE_AGENT_ACCESS, MODULE_FEATURE_PASSKEY } from 'app/app.constants';
 import { AgentAccessSettingsComponent } from 'app/account/user/settings/credentials/agent-access-settings/agent-access-settings.component';
 import { CredentialRevocationSettingsComponent } from 'app/account/user/settings/credentials/credential-revocation-settings/credential-revocation-settings.component';
@@ -24,8 +25,25 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 export class CredentialsSettingsComponent {
     private readonly accountService = inject(AccountService);
     private readonly profileService = inject(ProfileService);
+    private readonly passkeySettings = viewChild(PasskeySettingsComponent);
+    private readonly sshSettings = viewChild(SshUserSettingsComponent);
+    private readonly vcsAccessTokenSettings = viewChild(VcsAccessTokensSettingsComponent);
+    private readonly vcsAccessTokenOverview = viewChild(VcsAccessTokenOverviewComponent);
 
     readonly isPasskeyAvailable = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
     readonly isVcsTokenAvailable = () => this.accountService.isAtLeastTutor();
     readonly isAgentAccessAvailable = () => this.profileService.isModuleFeatureActive(MODULE_FEATURE_AGENT_ACCESS) && this.accountService.mayCreateAgentTokens();
+
+    onCredentialsRevoked(choice: CredentialRevocationChoice): void {
+        if (choice.passkeys) {
+            void this.passkeySettings()?.updateRegisteredPasskeys();
+        }
+        if (choice.sshKeys) {
+            this.sshSettings()?.refreshSshKeys();
+        }
+        if (choice.vcsAccessTokens) {
+            this.vcsAccessTokenSettings()?.clearRevokedToken();
+            this.vcsAccessTokenOverview()?.loadTokens();
+        }
+    }
 }

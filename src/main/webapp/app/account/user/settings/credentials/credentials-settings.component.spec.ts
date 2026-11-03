@@ -116,4 +116,25 @@ describe('CredentialsSettingsComponent', () => {
 
         expect(fixture.nativeElement.querySelector('jhi-agent-access-settings')).toBeTruthy();
     });
+
+    it('refreshes only the credential lists affected by bulk revocation', () => {
+        createComponent();
+        const updateRegisteredPasskeys = vi.fn();
+        const refreshSshKeys = vi.fn();
+        const clearRevokedToken = vi.fn();
+        const loadTokens = vi.fn();
+        Object.defineProperties(fixture.componentInstance, {
+            passkeySettings: { value: () => ({ updateRegisteredPasskeys }) },
+            sshSettings: { value: () => ({ refreshSshKeys }) },
+            vcsAccessTokenSettings: { value: () => ({ clearRevokedToken }) },
+            vcsAccessTokenOverview: { value: () => ({ loadTokens }) },
+        });
+
+        fixture.componentInstance.onCredentialsRevoked({ passkeys: true, sshKeys: false, vcsAccessTokens: true });
+
+        expect(updateRegisteredPasskeys).toHaveBeenCalledOnce();
+        expect(refreshSshKeys).not.toHaveBeenCalled();
+        expect(clearRevokedToken).toHaveBeenCalledOnce();
+        expect(loadTokens).toHaveBeenCalledOnce();
+    });
 });

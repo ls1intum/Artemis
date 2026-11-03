@@ -1,4 +1,4 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TumAetUiButtonDirective, TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
 import { CredentialRevocationChoice } from 'app/account/password/password.service';
@@ -39,6 +39,7 @@ export class CredentialRevocationSettingsComponent implements OnDestroy {
     readonly revokeSshKeys = signal(false);
     readonly revokeVcsAccessTokens = signal(false);
     readonly isRevoking = signal(false);
+    readonly credentialsRevoked = output<CredentialRevocationChoice>();
 
     /** The server rejects a request that selects nothing, so the action stays disabled until something is selected. */
     readonly hasSelection = computed(() => this.revokePasskeys() || this.revokeSshKeys() || this.revokeVcsAccessTokens());
@@ -71,6 +72,7 @@ export class CredentialRevocationSettingsComponent implements OnDestroy {
                 this.revokePasskeys.set(false);
                 this.revokeSshKeys.set(false);
                 this.revokeVcsAccessTokens.set(false);
+                this.credentialsRevoked.emit(choice);
                 this.alertService.success('artemisApp.userSettings.credentialRevocation.success');
             },
             error: (error: HttpErrorResponse) => {
