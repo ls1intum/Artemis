@@ -164,7 +164,8 @@ describe('UsageDashboardComponent', () => {
             expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`), testId).toBeNull();
         }
         expect(text('usage-lectures')).toContain('80');
-        expect(instructors + tutors + lectureUnits + examParticipations).toBeGreaterThan(0);
+        // the removed fields are the ones of the fixture, so the response really lacks four numbers
+        expect([instructors, tutors, lectureUnits, examParticipations]).toEqual([21, 130, 640, 8900]);
     });
 
     it('hides the whole exam section if exams are not enabled', async () => {
