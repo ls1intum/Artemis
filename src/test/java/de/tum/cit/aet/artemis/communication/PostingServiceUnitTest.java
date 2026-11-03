@@ -18,9 +18,12 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -28,6 +31,8 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
@@ -47,6 +52,8 @@ class PostingServiceUnitTest {
     private AuthorizationCheckService authorizationCheckService;
 
     private Method parseUserMentions;
+
+    private Method ensureConversationBelongsToCourse;
 
     private AutoCloseable closeable;
 
@@ -69,6 +76,8 @@ class PostingServiceUnitTest {
 
         parseUserMentions = PostingService.class.getDeclaredMethod("parseUserMentions", Course.class, String.class);
         parseUserMentions.setAccessible(true);
+        ensureConversationBelongsToCourse = PostingService.class.getDeclaredMethod("ensureConversationBelongsToCourseElseThrow", Conversation.class, Long.class);
+        ensureConversationBelongsToCourse.setAccessible(true);
 
         testUser = new User();
         testUser.setId(1L);
@@ -110,6 +119,39 @@ class PostingServiceUnitTest {
         String content = "";
 
         parseUserMentions.invoke(postingService, course, content);
+    }
+
+    @Test
+    void shouldAcceptEqualCourseIdsWhenDifferentLongObjectsAreUsed() throws InvocationTargetException, IllegalAccessException {
+        Long storedCourseId = Long.valueOf(1000L);
+        Long requestedCourseId = Long.valueOf(1000L);
+        assertThat(storedCourseId).isNotSameAs(requestedCourseId);
+
+        Course course = new Course();
+        course.setId(storedCourseId);
+        Channel conversation = new Channel();
+        conversation.setId(2000L);
+        conversation.setCourse(course);
+
+        ensureConversationBelongsToCourse.invoke(postingService, conversation, requestedCourseId);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = { 999L, 2000L })
+    void shouldRejectDifferentCourseIdsWhenConversationIsChecked(long requestedCourseId) {
+        Course course = new Course();
+        course.setId(1000L);
+        Channel conversation = new Channel();
+        conversation.setId(2000L);
+        conversation.setCourse(course);
+
+        assertThatThrownBy(() -> ensureConversationBelongsToCourse.invoke(postingService, conversation, requestedCourseId)).isInstanceOfSatisfying(InvocationTargetException.class,
+                wrapped -> assertThat(wrapped.getCause()).isInstanceOfSatisfying(BadRequestAlertException.class, error -> {
+                    assertThat(error.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(error.getErrorKey()).isEqualTo("conversationCourseMismatch");
+                    assertThat(error.getEntityName()).isEqualTo("messages.post");
+                    assertThat(error.getMessage()).isEqualTo("The conversation does not belong to the specified course");
+                }));
     }
 
     @Test

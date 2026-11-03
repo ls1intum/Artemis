@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 import static de.tum.cit.aet.artemis.core.util.DateUtil.validateStrictDateSequence;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING;
 
@@ -172,6 +173,17 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
     private boolean releaseTestsWithExampleSolution = false;
+
+    /**
+     * Preserves the existing programming title validation on updates, matching creation and import.
+     */
+    @Override
+    public void validateTitle() {
+        super.validateTitle();
+        if (!TITLE_NAME_PATTERN.matcher(getTitle()).matches()) {
+            throw new BadRequestAlertException("The title is invalid.", "Exercise", "titlePatternInvalid");
+        }
+    }
 
     /**
      * Convenience getter. The actual URI is stored in the {@link TemplateProgrammingExerciseParticipation}

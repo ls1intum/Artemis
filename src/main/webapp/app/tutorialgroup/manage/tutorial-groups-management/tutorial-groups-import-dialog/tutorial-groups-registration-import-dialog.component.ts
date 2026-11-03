@@ -43,7 +43,7 @@ const POSSIBLE_CAMPUS_HEADERS = ['campus'];
 const POSSIBLE_CAPACITY_HEADERS = ['capacity'];
 const POSSIBLE_LANGUAGE_HEADERS = ['language', 'sprache'];
 const POSSIBLE_ADDITIONAL_INFO_HEADERS = ['additionalinformation'];
-const POSSIBLE_IS_ONLINE_HEADERS = ['isonline', 'ist Online'];
+const POSSIBLE_IS_ONLINE_HEADERS = ['isonline', 'istonline'];
 
 type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
 
