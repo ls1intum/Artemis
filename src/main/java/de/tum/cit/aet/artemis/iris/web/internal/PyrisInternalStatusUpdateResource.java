@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris.web.internal;
 
-import java.util.Objects;
-
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.context.annotation.Conditional;
@@ -44,8 +42,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
  * REST controller for providing Pyris access to Artemis internal data and status updates.
- * All endpoints in this controller use custom token based authentication.
- * See {@link PyrisJobService#getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest, Class)} for more information.
+ * All endpoints in this controller authenticate with the signed callback token of the run.
+ * See {@link PyrisJobService#getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest, String, Class)} for more information.
  */
 @Lazy
 @FeatureUsage(UserFeature.IRIS_CHAT)
@@ -69,22 +67,19 @@ public class PyrisInternalStatusUpdateResource {
     /**
      * POST internal/pipelines/chat/runs/:runId/status : Set the status of any Iris chat job (exercise, text exercise, course, or lecture)
      * <p>
-     * Uses custom token based authentication.
+     * Authenticated with the signed callback token of the run.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
      * @param request         the HTTP request
-     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
     @PostMapping("pipelines/chat/runs/{runId}/status")
     @Internal
     public ResponseEntity<Void> setStatusOfChatJob(@PathVariable String runId, @RequestBody PyrisChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, ChatJob.class);
-        if (!Objects.equals(job.jobId(), runId)) {
-            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
-        }
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, ChatJob.class);
 
         pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
 
@@ -96,22 +91,19 @@ public class PyrisInternalStatusUpdateResource {
      * timestamp in the combined view) and return synchronously whether it was carried out. The call blocks until the client acknowledges or a timeout elapses, so the Pyris agent
      * tool learns the real outcome before formulating its answer.
      * <p>
-     * Uses custom token based authentication.
+     * Authenticated with the signed callback token of the run.
      *
      * @param runId   the ID of the job
      * @param command the command to execute
      * @param request the HTTP request
-     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request header
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
      * @throws AccessForbiddenException if the token is invalid
      * @return the {@link PyrisCommandResultDTO} once the client responds or the wait times out
      */
     @PostMapping("pipelines/chat/runs/{runId}/command")
     @Internal
     public ResponseEntity<PyrisCommandResultDTO> executeChatCommand(@PathVariable String runId, @RequestBody PyrisCommandDTO command, HttpServletRequest request) {
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, ChatJob.class);
-        if (!Objects.equals(job.jobId(), runId)) {
-            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
-        }
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, ChatJob.class);
 
         return ResponseEntity.ok(irisCommandService.executeCommand(job, command, pyrisJobService.getChatJobClientId(job.jobId())));
     }
@@ -119,12 +111,12 @@ public class PyrisInternalStatusUpdateResource {
     /**
      * POST internal/pipelines/competency-extraction/runs/:runId/status : Send the competencies extracted from a course description in a status update
      * <p>
-     * Uses custom token based authentication.
+     * Authenticated with the signed callback token of the run.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
      * @param request         the HTTP request
-     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
@@ -133,10 +125,7 @@ public class PyrisInternalStatusUpdateResource {
     @Internal
     public ResponseEntity<Void> setCompetencyExtractionJobStatus(@PathVariable String runId, @RequestBody PyrisCompetencyStatusUpdateDTO statusUpdateDTO,
             HttpServletRequest request) {
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, CompetencyExtractionJob.class);
-        if (!Objects.equals(job.jobId(), runId)) {
-            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
-        }
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, CompetencyExtractionJob.class);
 
         pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
 
@@ -146,23 +135,20 @@ public class PyrisInternalStatusUpdateResource {
     /**
      * POST internal/pipelines/tutor-suggestion/runs/:runId/status : Send the tutor suggestion response in a status update
      * <p>
-     * Uses custom token based authentication.
+     * Authenticated with the signed callback token of the run.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
      * @param request         the HTTP request
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
-     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
      * @throws AccessForbiddenException if the token is invalid
      */
     @FeatureUsage(UserFeature.IRIS_TUTOR_SUGGESTIONS)
     @PostMapping("pipelines/tutor-suggestion/runs/{runId}/status")
     @Internal
     public ResponseEntity<Void> setTutorSuggestionJobStatus(@PathVariable String runId, @RequestBody TutorSuggestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, TutorSuggestionJob.class);
-        if (!Objects.equals(job.jobId(), runId)) {
-            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
-        }
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, TutorSuggestionJob.class);
 
         pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
 
@@ -172,12 +158,12 @@ public class PyrisInternalStatusUpdateResource {
     /**
      * POST internal/pipelines/autonomous-tutor/runs/:runId/status : Send the autonomous tutor response in a status update
      * <p>
-     * Uses custom token based authentication.
+     * Authenticated with the signed callback token of the run.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
      * @param request         the HTTP request
-     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
@@ -186,10 +172,7 @@ public class PyrisInternalStatusUpdateResource {
     @Internal
     public ResponseEntity<Void> setAutonomousTutorJobStatus(@PathVariable String runId, @RequestBody PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdateDTO,
             HttpServletRequest request) {
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, AutonomousTutorJob.class);
-        if (!Objects.equals(job.jobId(), runId)) {
-            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
-        }
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, AutonomousTutorJob.class);
 
         pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
 
@@ -199,13 +182,13 @@ public class PyrisInternalStatusUpdateResource {
     /**
      * POST internal/pipelines/struggle-intervention/runs/:runId/status : Send the struggle-intervention response in a status update
      * <p>
-     * Uses custom token based authentication.
+     * Authenticated with the signed callback token of the run.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
      * @param request         the HTTP request
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
-     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
      * @throws AccessForbiddenException if the token is invalid
      */
     @FeatureUsage(UserFeature.IRIS_STRUGGLE_INTERVENTION)
@@ -213,10 +196,7 @@ public class PyrisInternalStatusUpdateResource {
     @Internal
     public ResponseEntity<Void> setStruggleInterventionJobStatus(@PathVariable String runId, @RequestBody PyrisStruggleInterventionStatusUpdateDTO statusUpdateDTO,
             HttpServletRequest request) {
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, StruggleInterventionJob.class);
-        if (!Objects.equals(job.jobId(), runId)) {
-            throw new ConflictException("Run ID in URL does not match the authenticated job", "Job", "runIdMismatch");
-        }
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, StruggleInterventionJob.class);
         pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
         return ResponseEntity.ok().build();
     }
@@ -229,13 +209,13 @@ public class PyrisInternalStatusUpdateResource {
      * <li>Thinking – when the query is classified as a real question ({@code runState == RUNNING}).</li>
      * <li>Result – when the LLM pipeline finishes ({@code answer} is non-null or null for nav queries).</li>
      * </ol>
-     * Uses custom token-based authentication.
+     * Authenticated with the signed callback token of the run.
      *
-     * @param runId           the job token from the URL path
+     * @param runId           the run id from the URL path
      * @param statusUpdateDTO the status update payload
-     * @param request         the HTTP request (used for token authentication)
+     * @param request         the HTTP request (carries the callback token)
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
-     * @throws ConflictException        if the run ID in the URL does not match the token in the request header
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
      * @throws AccessForbiddenException if the token is invalid
      */
     @FeatureUsage(UserFeature.IRIS_SEARCH_ANSWER)
@@ -243,10 +223,7 @@ public class PyrisInternalStatusUpdateResource {
     @Internal
     public ResponseEntity<Void> setStatusOfGlobalSearchAnswerJob(@PathVariable String runId, @RequestBody PyrisGlobalSearchAnswerStatusUpdateDTO statusUpdateDTO,
             HttpServletRequest request) {
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, GlobalSearchAnswerJob.class);
-        if (!Objects.equals(job.jobId(), runId)) {
-            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
-        }
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, GlobalSearchAnswerJob.class);
 
         pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
 
@@ -260,17 +237,14 @@ public class PyrisInternalStatusUpdateResource {
      * @param statusUpdateDTO the status update
      * @param request         the HTTP request
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
-     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
      * @throws AccessForbiddenException if the token is invalid
      */
     @FeatureUsage(UserFeature.LECTURE_CONTENT_PROCESSING)
     @PostMapping("webhooks/ingestion/runs/{runId}/status")
     @Internal
     public ResponseEntity<Void> setStatusOfIngestionJob(@PathVariable String runId, @RequestBody PyrisLectureIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
-        PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, PyrisJob.class);
-        if (!job.jobId().equals(runId)) {
-            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
-        }
+        PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, PyrisJob.class);
         if (!(job instanceof LectureIngestionWebhookJob lectureIngestionWebhookJob)) {
             throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
         }
@@ -286,17 +260,14 @@ public class PyrisInternalStatusUpdateResource {
      * @param statusUpdateDTO the status update
      * @param request         the HTTP request
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
-     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws ConflictException        if the run ID in the URL is not the run the token was issued for
      * @throws AccessForbiddenException if the token is invalid
      */
     @FeatureUsage(UserFeature.IRIS_CONTENT_INGESTION)
     @PostMapping("webhooks/ingestion/faqs/runs/{runId}/status")
     @Internal
     public ResponseEntity<Void> setStatusOfFaqIngestionJob(@PathVariable String runId, @RequestBody PyrisFaqIngestionStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
-        PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, PyrisJob.class);
-        if (!job.jobId().equals(runId)) {
-            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
-        }
+        PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, runId, PyrisJob.class);
         if (!(job instanceof FaqIngestionWebhookJob faqIngestionWebhookJob)) {
             throw new ConflictException("Run ID is not an ingestion job", "Job", "invalidRunId");
         }

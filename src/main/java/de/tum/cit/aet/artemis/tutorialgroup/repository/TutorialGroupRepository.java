@@ -22,6 +22,12 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO;
 @Repository
 public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGroup, Long> {
 
+    /**
+     * @param courseIds the courses
+     * @return the number of tutorial groups of these courses
+     */
+    long countByCourseIdIn(Set<Long> courseIds);
+
     @Query("""
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup

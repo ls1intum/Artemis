@@ -150,8 +150,8 @@ export class ExerciseTableComponent {
                     cmp = (a.title ?? '').localeCompare(b.title ?? '');
                     break;
                 case 'dueDate': {
-                    const da = effectiveDate(a, this.effectiveGroupFor(a), 'dueDate');
-                    const db = effectiveDate(b, this.effectiveGroupFor(b), 'dueDate');
+                    const da = this.sortDate(a);
+                    const db = this.sortDate(b);
                     if (da === undefined || db === undefined) {
                         // Undated exercises sort last in both directions, so pre-negate to cancel the flip below
                         // (mirrors course-exercise-cards.ts).
@@ -305,6 +305,12 @@ export class ExerciseTableComponent {
      */
     private effectiveGroupFor(exercise: Exercise): CourseExerciseGroup | undefined {
         return this.group() ?? this.owningGroupForExercise(exercise);
+    }
+
+    /** Sorts the Dates column by due date, falling back to the effective start and release dates. */
+    private sortDate(exercise: Exercise): dayjs.Dayjs | undefined {
+        const group = this.effectiveGroupFor(exercise);
+        return effectiveDate(exercise, group, 'dueDate') ?? effectiveDate(exercise, group, 'startDate') ?? effectiveDate(exercise, group, 'releaseDate');
     }
 
     effectiveReleaseDate(exercise: Exercise) {

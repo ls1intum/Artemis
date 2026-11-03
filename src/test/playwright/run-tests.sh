@@ -9,6 +9,29 @@ TOTAL_SELECTED=0
 INFRASTRUCTURE_FAILED=false
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
+# Docker runs as root against the runner's bind-mounted checkout. Return only the output trees to
+# the checkout owner so the host can read/unlink reporter markers and clean the next checkout.
+# shellcheck disable=SC2329
+restore_output_ownership() {
+    local exit_code=$?
+    trap - EXIT
+    if [ "$(id -u)" -eq 0 ]; then
+        for output_dir in ./test-reports ./test-results; do
+            [ -d "$output_dir" ] || continue
+            if ! chown -R --no-dereference --reference="$SCRIPT_DIR" -- "$output_dir"; then
+                echo "ERROR: Could not restore runner ownership of $output_dir" >&2
+                # The host accepts only matching 0/1 verdicts. Cleanup failure is infrastructure
+                # failure even if assertions passed; successful cleanup preserves the original exit.
+                exit_code=2
+            fi
+        done
+    fi
+    exit "$exit_code"
+}
+trap restore_output_ownership EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
 # Clean up stale markers/logs from previous runs (self-hosted runners have persistent workspaces)
 mkdir -p ./test-reports
 rm -f ./test-reports/.reporter-failed ./test-reports/pw-output-*.log ./test-reports/e2e-counts.env \
