@@ -208,7 +208,7 @@ public class TutorialGroupsConfigurationResource {
             throw new BadRequestAlertException("Tutorial period start date must be before tutorial period end date.", ENTITY_NAME, "tutorialPeriodInvalidOrder");
         }
         if (tutorialGroupsConfigurationDTO.tutorialGroupFreePeriods() != null) {
-            for (TutorialGroupConfigurationDTO.TutorialGroupFreePeriodDTO freePeriod : tutorialGroupsConfigurationDTO.tutorialGroupFreePeriods()) {
+            for (TutorialGroupConfigurationDTO.TutorialGroupConfigurationFreePeriodDTO freePeriod : tutorialGroupsConfigurationDTO.tutorialGroupFreePeriods()) {
                 if (freePeriod.start() == null) {
                     throw new BadRequestAlertException("Tutorial group free period start date must be set.", TUTORIAL_FREE_PERIOD_ENTITY_NAME,
                             "tutorialFreePeriodStartDateMissing");

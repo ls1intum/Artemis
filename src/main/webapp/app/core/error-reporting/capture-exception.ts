@@ -1,7 +1,10 @@
 import { VERSION } from 'app/app.constants';
 
-/** How serious a reported error is. The server logs the report with the log level of the same name. */
-export type ErrorSeverity = 'INFO' | 'WARN' | 'ERROR';
+/**
+ * How serious a reported error is. The server logs the report as an info entry, a warning or an error, and counts it in the error analysis, which
+ * does not count `INFO`. `CRITICAL` is an error that stops the application from working at all, such as a client that cannot start.
+ */
+export type ErrorSeverity = 'INFO' | 'WARN' | 'ERROR' | 'CRITICAL';
 
 /**
  * Additional information that is reported together with an error.

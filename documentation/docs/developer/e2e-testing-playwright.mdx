@@ -707,6 +707,12 @@ data provider, so no Hazelcast instance is created. The suite runs once, not onc
 cleanup stops every container on its host. Locally, `run-e2e-tests-local-multinode.sh --middleware redis`
 (or the `-fast` variant) runs the same configuration; the default `hazelcast` middleware uses the embedded cluster.
 
+The isolated E2E stacks exempt their loopback and private Docker client addresses from server-side
+rate limits through `ARTEMIS_RATELIMITING_EXEMPTADDRESSES`. Parallel workers share an address and
+otherwise exhaust the authentication budget, causing HTTP 429 responses during fixture setup. The
+nginx exemption alone does not bypass the server's limiter. These settings belong only to test
+stacks; production deployments retain their configured rate limits.
+
 ### Selective test execution and `e2e-test-mapping.json`
 
 The `determine-tests` CI job reads `supporting_scripts/ci/E2E-tests/e2e-test-mapping.json` to decide which tests to include in Phase 1.
@@ -717,13 +723,13 @@ All spec paths are relative to `src/test/playwright/` (the Playwright test root)
 
 The mapping has five selection inputs:
 
-| Field | Purpose |
-| --- | --- |
-| `mappings.<module>.sourcePaths` | Production paths owned by an eligible module. |
-| `specModules` | Runtime module dependencies for every spec; a new unassigned spec forces a full run. |
-| `catalogModules` | Explicit module ownership for translation catalog filenames; global or unknown catalogs require full validation. |
-| `alwaysRunTests` | Authentication and health smoke specs included in every selection. |
-| `runAllTestsPatterns` / `ignoredPaths` | Global runtime inputs that require all tests, and known non-runtime inputs that do not expand the selection. |
+| Field                                  | Purpose                                                                                                          |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `mappings.<module>.sourcePaths`        | Production paths owned by an eligible module.                                                                    |
+| `specModules`                          | Runtime module dependencies for every spec; a new unassigned spec forces a full run.                             |
+| `catalogModules`                       | Explicit module ownership for translation catalog filenames; global or unknown catalogs require full validation. |
+| `alwaysRunTests`                       | Authentication and health smoke specs included in every selection.                                               |
+| `runAllTestsPatterns` / `ignoredPaths` | Global runtime inputs that require all tests, and known non-runtime inputs that do not expand the selection.     |
 
 Do not infer runtime ownership only from TypeScript type imports or a spec's folder. For example,
 `StudentCompetencyProgressView.spec.ts` consumes lecture and quiz behavior in addition to atlas behavior.

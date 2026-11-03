@@ -200,13 +200,17 @@ can run without it. Do not treat missing history as evidence of either flakiness
 failure", yet the log's `E2E counts:` line shows `0 failed`.
 
 **Tell.** `gh run view <run-id> --json jobs` shows the failing step is not the test step but
-`E2E Teardown`, and the log has `rm: cannot remove '...': Permission denied`. The Playwright
-container runs as root and creates the suite's `test-reports` folder during the run, so the runner
-user cannot delete files in it. Only the multi-node stack leaves files for the teardown to delete,
-because it runs two Playwright projects and merges their reports.
+`E2E Teardown`, and the log has `rm: cannot remove '...': Permission denied`. A later checkout can
+also fail with `EACCES` on the generated `.reporter-failed` marker in the Playwright report directory.
+The Playwright container runs as root against a bind-mounted checkout, so newly created report directories and
+nested artifacts can belong to root rather than the host runner user.
 
-**What to do.** Fix the file that is left behind, in `run-tests.sh`, not the teardown. Do not add
-`|| true` to the teardown: it would hide the next real teardown failure.
+**What to do.** Fix ownership at the producer, in `run-tests.sh`, not the teardown. Its exit trap
+restores `test-reports` and `test-results` to the script directory's owner when running as root,
+including after test failure or an INT/TERM signal. Reporter markers must remain available for
+`execute.sh` to read and remove. Successful restoration preserves the test exit code; failed
+restoration returns infrastructure exit code 2, which cannot match a healthy runner verdict.
+Do not add `|| true` to the teardown: it would hide the next real teardown failure.
 
 ## E2E spec flaky only on develop's multi-node stack
 
