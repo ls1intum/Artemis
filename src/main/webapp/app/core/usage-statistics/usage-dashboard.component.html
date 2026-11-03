@@ -46,7 +46,59 @@
                 <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.lectures"></span>
                 <span class="text-3xl font-bold">{{ semester.lectures | number }}</span>
             </div>
+            @if (semester.tutorialGroups !== undefined) {
+                <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-tutorial-groups">
+                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.tutorialGroups"></span>
+                    <span class="text-3xl font-bold">{{ semester.tutorialGroups | number }}</span>
+                </div>
+            }
+            @if (semester.builds; as builds) {
+                @if (builds.count > 0) {
+                    <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-builds">
+                        <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.builds"></span>
+                        <span class="text-3xl font-bold">{{ builds.count | number }}</span>
+                    </div>
+                }
+                @if (builds.averageDurationSeconds !== undefined) {
+                    <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-build-duration">
+                        <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.averageBuildDuration"></span>
+                        <span class="text-3xl font-bold">{{ builds.averageDurationSeconds | number: '1.0-0' }} s</span>
+                    </div>
+                }
+            }
         </section>
+
+        @if (semester.communication; as communication) {
+            <section class="flex flex-col gap-3" data-testid="usage-communication">
+                <h2 class="m-0 text-xl font-semibold">
+                    {{ (semester.irisMessages !== undefined ? 'artemisApp.usageDashboard.communicationAndIris' : 'artemisApp.usageDashboard.communication') | artemisTranslate }}
+                </h2>
+                <ul class="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 lg:grid-cols-5">
+                    <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" data-testid="usage-posts">
+                        <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.posts' | artemisTranslate }}</span>
+                        <span class="text-xl font-bold">{{ communication.posts | number }}</span>
+                    </li>
+                    <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" data-testid="usage-replies">
+                        <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.replies' | artemisTranslate }}</span>
+                        <span class="text-xl font-bold">{{ communication.replies | number }}</span>
+                    </li>
+                    <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" data-testid="usage-reactions">
+                        <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.reactions' | artemisTranslate }}</span>
+                        <span class="text-xl font-bold">{{ communication.reactions | number }}</span>
+                    </li>
+                    <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" data-testid="usage-faqs">
+                        <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.faqs' | artemisTranslate }}</span>
+                        <span class="text-xl font-bold">{{ communication.faqs | number }}</span>
+                    </li>
+                    @if (semester.irisMessages !== undefined) {
+                        <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" data-testid="usage-iris-messages">
+                            <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.irisMessages' | artemisTranslate }}</span>
+                            <span class="text-xl font-bold">{{ semester.irisMessages | number }}</span>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
 
         <section class="flex flex-col gap-3" data-testid="usage-exercise-types">
             <h2 class="m-0 text-xl font-semibold">{{ 'artemisApp.usageDashboard.exercisesByType' | artemisTranslate }}</h2>
@@ -80,6 +132,8 @@
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.course"></p>
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.students"></p>
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.activeStudents"></p>
+            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.activity"></p>
+            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.builds"></p>
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.privacy"></p>
         </section>
     } @else if (statistics()) {
