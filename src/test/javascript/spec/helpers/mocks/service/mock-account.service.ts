@@ -22,7 +22,7 @@ export class MockAccountService implements IAccountService {
     fetch = () => of({ body: { id: 99 } as User } as any);
     updateLanguage = (languageKey: string) => of({});
     getImageUrl = () => 'blob';
-    isAtLeastTutor = () => this.hasAnyAuthorityDirect([Authority.TUTOR]);
+    readonly isAtLeastTutor = signal(true);
     hasEditorAccess = () => this.hasAnyAuthorityDirect([Authority.EDITOR]);
     hasAdministratorAccess = () => this.isAdmin() && (!this.isPasskeyRequiredForAdministratorFeatures() || this.isUserLoggedInWithApprovedPasskey());
     mayCreateAgentTokens = () => this.hasAnyAuthorityDirect([Authority.EDITOR, Authority.INSTRUCTOR]);
