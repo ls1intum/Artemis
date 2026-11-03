@@ -53,6 +53,21 @@ public class MetisExerciseConfig {
     /** The larger of the two Likert scales the LLM may rate answers on, seven points. No scale between the two is supported. */
     public static final int MAX_LIKERT_POINTS = 7;
 
+    /** The fewest main questions a check asks: a check without one would have nothing to ask. */
+    public static final int MIN_MAIN_QUESTIONS = 1;
+
+    /** The most main questions a check asks. */
+    public static final int MAX_MAIN_QUESTIONS = 5;
+
+    /** The most follow-up questions one main question may get; zero switches follow-ups off. */
+    public static final int MAX_FOLLOW_UPS_PER_QUESTION = 3;
+
+    /** The shortest time limit a question may get, and so the lowest value of either bound of the configured range. */
+    public static final int MIN_TIME_LIMIT_SECONDS = 30;
+
+    /** The longest time limit a question may get, and so the highest value of either bound of the configured range. */
+    public static final int MAX_TIME_LIMIT_SECONDS = 3600;
+
     /**
      * The exercise this configuration belongs to, and at the same time the primary key of the row. A parent: the
      * configuration has no meaning without its exercise and cascades away with it.
@@ -77,18 +92,26 @@ public class MetisExerciseConfig {
     private ZonedDateTime windowEnd;
 
     /** How many main questions are generated per student. */
+    @Min(MIN_MAIN_QUESTIONS)
+    @Max(MAX_MAIN_QUESTIONS)
     @Column(name = "main_question_count", nullable = false)
     private int mainQuestionCount = 3;
 
     /** How many follow-up questions may be asked for one main question. */
+    @Min(0)
+    @Max(MAX_FOLLOW_UPS_PER_QUESTION)
     @Column(name = "max_follow_ups_per_question", nullable = false)
     private int maxFollowUpsPerQuestion = 2;
 
-    /** Lower bound of the per-question time limit; the LLM picks a limit inside [min, max]. */
+    /** Lower bound of the per-question time limit; the LLM picks a limit inside [min, max], which {@link #isTimeLimitRangeOrdered()} keeps non-empty. */
+    @Min(MIN_TIME_LIMIT_SECONDS)
+    @Max(MAX_TIME_LIMIT_SECONDS)
     @Column(name = "min_seconds_per_question", nullable = false)
     private int minSecondsPerQuestion = 60;
 
     /** Upper bound of the per-question time limit; the LLM picks a limit inside [min, max]. */
+    @Min(MIN_TIME_LIMIT_SECONDS)
+    @Max(MAX_TIME_LIMIT_SECONDS)
     @Column(name = "max_seconds_per_question", nullable = false)
     private int maxSecondsPerQuestion = 300;
 
@@ -111,7 +134,11 @@ public class MetisExerciseConfig {
     @Column(name = "likert_scale_points", nullable = false)
     private int likertScalePoints = MIN_LIKERT_POINTS;
 
-    /** A score at or below this value triggers a follow-up question. */
+    /**
+     * A score at or below this value triggers a follow-up question. It lies below the top of the scale, which
+     * {@link #isFollowUpThresholdBelowTheTopScore()} checks, so that the best answer never gets one.
+     */
+    @Min(1)
     @Column(name = "follow_up_threshold", nullable = false)
     private int followUpThreshold = 3;
 
@@ -178,6 +205,17 @@ public class MetisExerciseConfig {
         return minSecondsPerQuestion;
     }
 
+    /**
+     * Whether the range the LLM picks a time limit from is not empty. The database refuses an empty range as well, for the
+     * writes that do not pass through validation.
+     *
+     * @return true if the lower bound does not exceed the upper bound
+     */
+    @AssertTrue(message = "The shortest time limit of a question must not exceed the longest")
+    public boolean isTimeLimitRangeOrdered() {
+        return minSecondsPerQuestion <= maxSecondsPerQuestion;
+    }
+
     public void setMinSecondsPerQuestion(int minSecondsPerQuestion) {
         this.minSecondsPerQuestion = minSecondsPerQuestion;
     }
@@ -228,6 +266,17 @@ public class MetisExerciseConfig {
 
     public int getFollowUpThreshold() {
         return followUpThreshold;
+    }
+
+    /**
+     * Whether the follow-up threshold lies below the top of the Likert scale, so that a score above it exists and the best answer
+     * never gets a follow-up. The database refuses any other value as well, for the writes that do not pass through validation.
+     *
+     * @return true if the threshold is lower than the number of points of the scale
+     */
+    @AssertTrue(message = "The follow-up threshold must lie below the highest score of the scale")
+    public boolean isFollowUpThresholdBelowTheTopScore() {
+        return followUpThreshold < likertScalePoints;
     }
 
     public void setFollowUpThreshold(int followUpThreshold) {

@@ -5,6 +5,9 @@ import java.time.ZonedDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
 
 import org.jspecify.annotations.Nullable;
 
@@ -37,7 +40,12 @@ public class MetisQuestion extends DomainObject {
     @Parent
     private long checkId;
 
-    /** Display order inside the check; follow-ups get the next free number. Unique per check. */
+    /**
+     * Display order inside the check, from 1; follow-ups get the next free number. Unique per check. At most the largest value the
+     * tinyint column holds on MySQL, which the database checks on every engine.
+     */
+    @Min(1)
+    @Max(Byte.MAX_VALUE)
     @Column(name = "question_order", nullable = false)
     private int questionOrder;
 
@@ -59,6 +67,7 @@ public class MetisQuestion extends DomainObject {
 
     /** Added plus deleted lines of the focus file at generation time. Main questions only; null for follow-ups. */
     @Nullable
+    @PositiveOrZero
     @Column(name = "focus_file_changed_lines")
     private Integer focusFileChangedLines;
 
@@ -66,11 +75,21 @@ public class MetisQuestion extends DomainObject {
     @Column(name = "question_text", nullable = false)
     private String questionText;
 
-    /** Seconds the student has to answer once the question is shown. Chosen by the LLM, clamped to the configured range. */
+    /**
+     * Seconds the student has to answer once the question is shown. Chosen by the LLM, clamped to the configured range, so it lies
+     * inside the range any configuration allows, which the database checks as well.
+     */
+    @Min(MetisExerciseConfig.MIN_TIME_LIMIT_SECONDS)
+    @Max(MetisExerciseConfig.MAX_TIME_LIMIT_SECONDS)
     @Column(name = "time_limit_seconds", nullable = false)
     private int timeLimitSeconds;
 
-    /** How often an instructor had this question regenerated during review. */
+    /**
+     * How often an instructor had this question regenerated during review. At most the largest value the tinyint column holds on
+     * MySQL, which the database checks on every engine, so the code that regenerates a question has to cap it below that.
+     */
+    @PositiveOrZero
+    @Max(Byte.MAX_VALUE)
     @Column(name = "regeneration_count", nullable = false)
     private int regenerationCount = 0;
 
@@ -94,8 +113,14 @@ public class MetisQuestion extends DomainObject {
     @Column(name = "answered_at")
     private ZonedDateTime answeredAt;
 
-    /** The LLM's rating of the answer, from 1 to the configured number of Likert scale points; null until rated. */
+    /**
+     * The LLM's rating of the answer, from 1 to the configured number of Likert scale points; null until rated. The database
+     * checks the range of the larger scale, {@value MetisExerciseConfig#MAX_LIKERT_POINTS} points, since the scale of the
+     * exercise is a row of another table; the code that rates an answer keeps the score inside the scale of its exercise.
+     */
     @Nullable
+    @Min(1)
+    @Max(MetisExerciseConfig.MAX_LIKERT_POINTS)
     @Column(name = "llm_score")
     private Integer llmScore;
 
