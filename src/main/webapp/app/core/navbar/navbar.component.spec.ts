@@ -208,6 +208,12 @@ describe('NavbarComponent', () => {
         const titleElement = fixture.debugElement.query(By.css('#test-course-title'));
         expect(titleElement).toBeTruthy();
         expect(titleElement.nativeElement.textContent).toBe('Course1');
+        expect(component.navigationContextIndicatorData()).toEqual({
+            type: 'course',
+            routerLink: ['/courses', 1],
+            title: 'Course1',
+            imagePath: 'path/to/icon.png',
+        });
         expect(fixture.nativeElement.querySelector('jhi-image')).not.toBeNull();
     });
 
@@ -218,6 +224,28 @@ describe('NavbarComponent', () => {
 
         expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
         expect(fixture.nativeElement.querySelector('.course-circle')?.textContent.trim()).toBe('C');
+    });
+
+    it.each([
+        ['/admin/user-management', 'administration', '/admin', 'global.menu.admin.main'],
+        ['/user-settings/credentials', 'userSettings', '/user-settings', 'artemisApp.userSettings.userSettings'],
+    ] as const)('should display the navbar context without an image on %s', (url, type, routerLink, translationKey) => {
+        router.setUrl(url);
+
+        fixture.detectChanges();
+
+        expect(component.navigationContextIndicatorData()).toEqual({ type, routerLink, translationKey });
+        expect(fixture.nativeElement.querySelector('#test-navbar-context-title')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
+    });
+
+    it('should not display a navbar context outside administration and user settings', () => {
+        router.setUrl('/courses');
+
+        fixture.detectChanges();
+
+        expect(component.navigationContextIndicatorData()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('#test-navbar-context-title')).toBeNull();
     });
 
     it('should link the current course to the management overview when in a management route', () => {
