@@ -206,6 +206,17 @@ describe('UrlAction', () => {
             { where: 'the underline of a heading', text: '===', lines: ['Setup', '====='], line: 2, startColumn: 1 },
             { where: 'inline HTML', text: 'docs', lines: ['see <a title="docs">here</a>'] },
             { where: 'a link in a table cell', text: 'docs', lines: ['| a | b |', '| - | - |', '| x | [docs](https://a.example) |'], line: 3 },
+            {
+                where: 'a link cell after a plain cell with the same text',
+                text: 'docs',
+                lines: ['| a | b |', '| - | - |', '| docs | [docs](https://a.example) |'],
+                line: 3,
+                startColumn: 11,
+            },
+            { where: 'a code cell after a plain cell with the same text', text: 'docs', lines: ['| a | b |', '| - | - |', '| docs | `docs` |'], line: 3, startColumn: 11 },
+            { where: 'the label of an HTML anchor', text: 'docs', lines: ['See <a href="https://a.example">docs</a>'] },
+            { where: 'the label of an HTML anchor that is not closed', text: 'docs', lines: ['See <a href="https://a.example">the docs'] },
+            { where: 'a paragraph that starts with an HTML tag', text: 'docs', lines: ['<div>see the docs</div>'] },
             { where: 'a fenced code block', text: 'docs', lines: ['intro', '```', 'open docs', '```'], line: 3 },
             { where: 'the fence line of a code block', text: 'docs', lines: ['```docs'] },
             { where: 'a four-backtick block after a three-backtick line inside it', text: 'docs', lines: ['````', '```', 'open docs', '````'], line: 3 },
@@ -240,6 +251,9 @@ describe('UrlAction', () => {
             { after: 'a block quote marker', lines: ['> see the docs'] },
             { after: 'a heading marker', lines: ['## see the docs'] },
             { after: 'a table cell border', lines: ['| a | b |', '| - | - |', '| x | see the docs |'] },
+            { after: 'nothing, in a plain cell before a link cell with the same text', lines: ['| a | b |', '| - | - |', '| see the docs | [docs](https://a.example) |'] },
+            { after: 'an HTML tag that is no anchor', lines: ['see <b>the</b> docs'] },
+            { after: 'a less-than sign that starts no tag', lines: ['if a < b, see the docs'] },
             { after: 'a blank line, as an indented paragraph of a numbered list item', lines: ['1.  step', '', '    see the docs'] },
         ])('should handle the paste in text after $after', ({ lines }) => {
             const selection = selectOnLine('docs', lines, lines.length);
