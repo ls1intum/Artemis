@@ -102,12 +102,26 @@ public class LoggingAspect {
     }
 
     /**
+     * Metis, the comprehension check, works on the students' own code and on their answers in nearly all of its beans: the diff returns the changed files of a
+     * student's repository, the prompts carry them to a language model, the student check and the rating take the answers, and the dashboard, the review and
+     * the export return questions and answers together, as do the repositories that read and write them. At debug level this aspect would write every
+     * student's solution and answers into the log, so the module is excluded as a whole. Its failures are still logged, with the failing method and the type
+     * of the exception only: a message or a cause can quote the code or the answers as well, for instance when the model endpoint names the input it refused
+     * or the database the values of a row it refused. The beans of other modules that it calls are logged as well, so it hands them neither code nor answers:
+     * the token usage tracker, for instance, gets the response of the model without its text.
+     */
+    @Pointcut("!within(de.tum.cit.aet.artemis.metis..*)")
+    public void notAMetisBean() {
+        // Method is empty as this is just a Pointcut, the implementations are in the advices.
+    }
+
+    /**
      * Advice that logs methods throwing exceptions.
      *
      * @param joinPoint join point for advice.
      * @param e         exception.
      */
-    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut() && notAMailHandlingBean()", throwing = "e")
+    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut() && notAMailHandlingBean() && notAMetisBean()", throwing = "e")
     public void logAfterThrowing(JoinPoint joinPoint, Throwable e) {
         if (AbstractVersionControlService.isReadFullyShortReadOfBlockException(e)) {
             // ignore
@@ -153,13 +167,24 @@ public class LoggingAspect {
     }
 
     /**
+     * Keeps the failing Metis operation and the exception type visible without the exception's message and cause, which can quote a student's code or answers.
+     *
+     * @param joinPoint the failing Metis operation
+     * @param e         the exception, whose message and cause must not be logged
+     */
+    @AfterThrowing(pointcut = "applicationPackagePointcut() && springBeanPointcut() && !notAMetisBean()", throwing = "e")
+    public void logMetisFailure(JoinPoint joinPoint, Throwable e) {
+        log.error("Exception in {}.{}() (exception {})", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(), e.getClass().getSimpleName());
+    }
+
+    /**
      * Advice that logs when a method is entered and exited.
      *
      * @param joinPoint join point for advice.
      * @return result.
      * @throws Throwable throws {@link IllegalArgumentException}.
      */
-    @Around("applicationPackagePointcut() && springBeanPointcut() && notACredentialHandlingBean() && notAMailHandlingBean()")
+    @Around("applicationPackagePointcut() && springBeanPointcut() && notACredentialHandlingBean() && notAMailHandlingBean() && notAMetisBean()")
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
         if (log.isDebugEnabled()) {
             log.debug("Enter: {}.{}() with argument[s] = {}", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(),
