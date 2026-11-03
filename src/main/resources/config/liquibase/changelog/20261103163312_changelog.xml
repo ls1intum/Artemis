@@ -21,7 +21,9 @@
                             in the schema and needs no additional unique index (the shape of user_vcs_access_token).
                             Nothing on the exercise points back, so a configuration cannot outlive its exercise.
     metis_group_window      one row per (exercise, tutorial group) whose answering window differs from the default
-                            in the configuration.
+                            in the configuration. The schema cannot check that the group belongs to the course of
+                            the exercise, since neither table holds that course; the code that writes a window has
+                            to check it.
     metis_check             one row per student participation: the state of that student's check, the commit the
                             questions were generated from, and when it was generated, started and completed.
     metis_question          one row per question, main or follow-up, together with the student's answer and the
