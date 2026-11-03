@@ -179,10 +179,10 @@ def top_level():
             "The Artemis client and the Android and iOS apps use the REST and WebSocket interface of the core modules in the Artemis server. Git clients and build agents use the Git interface of LocalVC. "
             "The server requires a database, user management and optional AI services. LocalCI requires the distributed data provider, which the build agents require as well.")
 
-    pad = 44  # between the inner components and the border of the server, clear of the interface balls
+    pad = 40  # between the inner components and the border of the server, clear of the interface balls
     core_w, core_h = s.size_comp("Core Modules", ["exercise, exam, assessment, ..."])
-    vc_w, vc_h = s.size_comp("LocalVC", ["Git server (HTTPS, SSH)"])
-    ci_w, ci_h = s.size_comp("LocalCI", ["build queue and results"])
+    vc_w, vc_h = s.size_comp("LocalVC", ["Git server"])
+    ci_w, ci_h = s.size_comp("LocalCI", ["build queue"])
     inner_w = max(core_w, vc_w + 30 + ci_w)
     client_w, client_h = s.size_comp("Artemis Client", ["Angular single-page app"])
     app_h = s.size_comp("Android App")[1]
@@ -190,16 +190,16 @@ def top_level():
     # the mobile apps sit above the client, so the container starts lower
     core_y = 54 + 2 * (app_h + 16) + client_h // 2 - core_h // 2
     cont_y = core_y - 52
-    cont_x = 30 + client_w + 190
+    cont_x = 30 + client_w + 160
     cx = cont_x + pad
-    row2_y = core_y + core_h + 46
-    cont_h = row2_y + vc_h + 30 - cont_y
+    row2_y = core_y + core_h + 38
+    cont_h = row2_y + vc_h + 26 - cont_y
     cont_w = inner_w + 2 * pad
     s.cont(cont_x, cont_y, cont_w, cont_h, "Artemis Server", "Spring Boot, Java 25")
     s.comp(cx, core_y, "Core Modules", ["exercise, exam, assessment, ..."], w=inner_w)
-    s.comp(cx, row2_y, "LocalVC", ["Git server (HTTPS, SSH)"], w=vc_w)
+    s.comp(cx, row2_y, "LocalVC", ["Git server"], w=vc_w)
     ci_x = cx + inner_w - ci_w
-    s.comp(ci_x, row2_y, "LocalCI", ["build queue and results"], w=ci_w)
+    s.comp(ci_x, row2_y, "LocalCI", ["build queue"], w=ci_w)
     s.dependency([(cx + vc_w // 2, core_y + core_h), (cx + vc_w // 2, row2_y)])
     s.dependency([(ci_x + ci_w // 2, core_y + core_h), (ci_x + ci_w // 2, row2_y)])
 
@@ -211,7 +211,7 @@ def top_level():
     android_y = ios_y - 16 - app_h
     s.comp(30, ios_y, "iOS App", w=client_w)
     s.comp(30, android_y, "Android App", w=client_w)
-    bus_x = cont_x - 56
+    bus_x = cont_x - 50
     s.line([(30 + client_w, android_y + app_h // 2), (bus_x, android_y + app_h // 2), (bus_x, core_mid)])
     s.line([(30 + client_w, ios_y + app_h // 2), (bus_x, ios_y + app_h // 2)])
     s.p.append(f'<circle cx="{bus_x}" cy="{core_mid}" r="3" fill="{INK}"/>')
@@ -221,31 +221,31 @@ def top_level():
     s.assembly([(cx, vc_mid), (30 + client_w, vc_mid)], "Git (HTTPS, SSH)", ((30 + client_w + cont_x) / 2, vc_mid - 14), stub=pad + 10)
 
     # what the server requires, one box per interface at the height of its connector
-    right_x = cont_x + cont_w + 150
+    right_x = cont_x + cont_w + 125
     right = [("PostgreSQL", ["relational database"], "Hibernate (JDBC)"),
              ("User Management", ["LDAP, SAML2, OIDC"], "Authentication"),
              ("Optional AI Services", ["Iris, Athena, Hyperion, Weaviate"], "Service APIs")]
     right_w = max(s.size_comp(n, sub)[0] for n, sub, _ in right)
     for i, (name, sub, iface) in enumerate(right):
-        y = cont_y + 55 + i * 80
+        y = cont_y + 52 + i * 76
         s.comp(right_x, y - 31, name, sub, w=right_w)
         s.assembly([(right_x, y), (cont_x + cont_w, y)], iface, ((right_x + cont_x + cont_w) / 2, y - 14))
 
     # build agent and distributed data provider below the server. The provider lies under LocalCI, the agent under LocalVC
-    below_y = cont_y + cont_h + 70
+    below_y = cont_y + cont_h + 58
     ba_w, ba_h = s.size_comp("Build Agent", ["runs build jobs in Docker"])
     dp_w, dp_h = s.size_comp(PROVIDER, ["Hazelcast, Redis or Local"])
     px = ci_x + ci_w // 2
-    provider_x = px - 40
-    agent_x = provider_x - 130 - ba_w
+    provider_x = px - 24
+    agent_x = provider_x - 106 - ba_w
     s.comp(agent_x, below_y, "Build Agent", ["runs build jobs in Docker"])
     s.comp(provider_x, below_y, PROVIDER, ["Hazelcast, Redis or Local"])
     vx = cx + vc_w // 2 - 10
-    s.assembly([(vx, cont_y + cont_h - 30), (vx, below_y)], "Git (HTTPS, SSH)", (vx + 22, below_y - 26), stub=44, anchor="start")
-    s.assembly([(px, below_y), (px, cont_y + cont_h - 30)], "Distributed Data", (px + 22, below_y - 26), anchor="start")
+    s.assembly([(vx, cont_y + cont_h - 26), (vx, below_y)], "Git (HTTPS, SSH)", (vx + 22, below_y - 22), stub=40, anchor="start")
+    s.assembly([(px, below_y), (px, cont_y + cont_h - 26)], "Distributed Data", (px + 22, below_y - 22), anchor="start")
     mid = below_y + ba_h // 2
     s.assembly([(provider_x, mid), (agent_x + ba_w, mid)], "Distributed Data", ((agent_x + ba_w + provider_x) / 2 - 10, mid - 14))
-    s.frame("Top-Level Design", max(right_x + right_w, provider_x + dp_w) + 30, below_y + max(ba_h, dp_h) + 30)
+    s.frame("Top-Level Design", max(right_x + right_w, provider_x + dp_w) + 24, below_y + max(ba_h, dp_h) + 24)
     return s
 
 
@@ -254,7 +254,7 @@ def server_arch():
     s = Svg(1100, 760, "Artemis server architecture (UML component diagram)",
             "The server has a web layer, an application layer and a data layer. The application layer consists of the feature modules and the integrated code lifecycle with LocalVC and LocalCI. "
             "The data layer accesses the database. LocalCI shares state with build agents through the distributed data provider.")
-    gap, margin, pad = 30, 24, 30
+    gap, margin, pad = 24, 18, 22
     rest_w, rest_h = s.size_comp("REST Resources")
     ws_w, _ = s.size_comp("WebSocket Topics")
     fm_sub = ["exercise, programming, exam, assessment,", "course, communication, lecture, ..."]
@@ -264,15 +264,15 @@ def server_arch():
     ci_w, _ = s.size_comp("LocalCI", ["build queue"])
     icl_w = margin + vc_w + gap + ci_w + margin
     icl_h = 20 + 20 + vc_h + 16
-    layer_w = margin + fm_w + 70 + icl_w + margin
+    layer_w = margin + fm_w + 52 + icl_w + margin
 
-    cont_x, cont_y = 60, 150
+    cont_x, cont_y = 30, 136
     lx = cont_x + pad
     web_y = cont_y + 50
     web_h = 20 + 16 + rest_h + 16
-    app_y = web_y + web_h + 14
+    app_y = web_y + web_h + 10
     app_h = 20 + 16 + max(fm_h, icl_h) + 16
-    data_y = app_y + app_h + 14
+    data_y = app_y + app_h + 10
     data_h = 20 + 16 + s.size_comp("Repositories")[1] + 16
     cont_h = data_y + data_h + pad - cont_y
     cont_w = layer_w + 2 * pad
@@ -286,7 +286,7 @@ def server_arch():
     s.package(lx, app_y, layer_w, app_h, "Application Layer", "layer", tab_right=True)
     fm_y = app_y + 36 + (max(fm_h, icl_h) - fm_h) // 2
     s.comp(fx, fm_y, "Feature Modules", fm_sub, w=fm_w)
-    icl_x = fx + fm_w + 70
+    icl_x = fx + fm_w + 52
     icl_y = app_y + 36 + (max(fm_h, icl_h) - icl_h) // 2
     s.package(icl_x, icl_y, icl_w, icl_h, "Integrated Code Lifecycle", "subsystem")
     s.comp(icl_x + margin, icl_y + 40, "LocalVC", ["Git server"], w=vc_w)
@@ -310,22 +310,22 @@ def server_arch():
     s.assembly([(mid_x, web_y + 20), (mid_x, 50 + cl_h)], "REST + WebSocket", (mid_x + 22, 50 + cl_h + 34), stub=web_y - cont_y + 32, anchor="start")
 
     # below the server
-    below_y = cont_y + cont_h + 70
+    below_y = cont_y + cont_h + 56
     db_w, db_h = s.size_comp("Database")
     s.comp(fx + fm_w // 2 - db_w // 2, below_y, "Database")
     dx = fx + fm_w // 2
-    s.assembly([(dx, below_y), (dx, data_y + 36 + repo[3])], "Hibernate", (dx + 22, below_y - 26), anchor="start")
+    s.assembly([(dx, below_y), (dx, data_y + 36 + repo[3])], "Hibernate", (dx + 22, below_y - 22), anchor="start")
     dp_w, _ = s.size_comp(PROVIDER)
     px = ci_x + ci_w // 2
     provider_x = px - dp_w // 2
     s.comp(provider_x, below_y, PROVIDER)
-    s.assembly([(px, below_y), (px, icl_y + 40 + vc_h)], "Distributed Data", (px + 22, below_y - 26), anchor="start")
-    agent_x = provider_x + dp_w + 130
+    s.assembly([(px, below_y), (px, icl_y + 40 + vc_h)], "Distributed Data", (px + 22, below_y - 22), anchor="start")
+    agent_x = provider_x + dp_w + 116
     ba_w, _ = s.size_comp("Build Agent")
     s.comp(agent_x, below_y, "Build Agent")
     mid = below_y + db_h // 2
     s.assembly([(provider_x + dp_w, mid), (agent_x, mid)], "Distributed Data", ((provider_x + dp_w + agent_x) / 2 + 10, mid - 14))
-    s.frame("Server Architecture", max(cont_x + cont_w, agent_x + ba_w) + 40, below_y + db_h + 30)
+    s.frame("Server Architecture", max(cont_x + cont_w, agent_x + ba_w) + 24, below_y + 62 + 24)
     return s
 
 
@@ -339,17 +339,17 @@ def deployment():
 
     # every box of the middle column has the width of the widest one, so that vertical connectors are straight
     column_w = max(node_size("Distributed Data Server", ["Redis or Valkey"])[0], node_size("Core Node", ["Artemis Server"])[0], node_size("Build Agent Node", ["Artemis Build Agent"])[0])
-    row = 60  # between two rows of boxes, the length of a vertical connector
-    broker_y = 64
+    row = 44  # between two rows of boxes, the length of a vertical connector
+    broker_y = 56
     core_y = broker_y + 78 + row + d
     redis_y = core_y + 78 + row + d
     agent_y = redis_y + 78 + row + d
-    col_x = 520
     chain = core_y + 34  # the height of the horizontal connectors
 
     ud = node_with(s, 30, chain - 90, "User Device", ["Web Browser", "Git Client"])
     proxy_w = node_size("Reverse Proxy", ["nginx"])[0]
-    proxy_x = ud[0] + ud[2] + d + 80
+    proxy_x = ud[0] + ud[2] + d + 66
+    col_x = proxy_x + proxy_w + d + 96
     node_with(s, proxy_x, core_y, "Reverse Proxy", ["nginx"], w=proxy_w)
     s.line([(ud[0] + ud[2] + d, chain), (proxy_x, chain)])
     s.text((ud[0] + ud[2] + d + proxy_x) / 2, chain - 8, "«HTTPS»", 10)
@@ -369,17 +369,17 @@ def deployment():
     s.line([(vx, redis_y + 78), (vx, agent_y - d)])
     s.text(vx + 10, (redis_y + 78 + agent_y - d) / 2 + 4, "«Redis»", 10, anchor="start")
 
-    right_x = col_x + column_w + d + 100
+    right_x = col_x + column_w + d + 84
     db_w = node_size("Database Server", ["PostgreSQL"])[0]
     node_with(s, right_x, core_y, "Database Server", ["PostgreSQL"], w=db_w)
     s.line([(col_x + column_w + d, chain), (right_x, chain)])
     s.text((col_x + column_w + d + right_x) / 2, chain - 8, "«Hibernate»", 10)
 
     # the build agents clone from the server: a connector that leaves at the side and returns at the side
-    bx = right_x - 50
+    bx = right_x - 42
     s.line([(col_x + column_w + d, core_y + 62), (bx, core_y + 62), (bx, agent_y + 62), (col_x + column_w + d, agent_y + 62)])
     s.text(bx + 8, (core_y + agent_y) / 2 + 80, "«Git (HTTPS, SSH)»", 10, anchor="start")
-    s.frame("Deployment Overview", max(right_x + db_w + d, bx + 8 + tw("«Git (HTTPS, SSH)»", 10)) + 30, agent_y + 78 + 30)
+    s.frame("Deployment Overview", max(right_x + db_w + d, bx + 8 + tw("«Git (HTTPS, SSH)»", 10)) + 24, agent_y + 78 + 24)
     return s
 
 
