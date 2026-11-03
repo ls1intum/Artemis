@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-09
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -230,13 +230,14 @@ artemis:
       generation-batch-size: 8 # questions requested per generation call
       stale-claim-minutes: 30 # a claim older than this counts as abandoned by a dead node and is released at the next build
       max-material-characters: 60000 # characters of a lecture unit's text that a generation prompt receives at most
-      schedule-cron: "0 0 2 * * *" # when the pools of courses that enabled overnight generation are built, on the node with the scheduling profile
+      schedule-cron: "0 0 0 * * *" # when the overnight run over the courses that enabled overnight generation starts, on the node with the scheduling profile
+      schedule-window-hours: 7 # how long the overnight run lasts at most (1-23); a build still running at the end stops after its current unit of work
       build-lease-minutes: 10 # a build that stops renewing its lease for this long counts as dead and frees the course for the next build; keep it longer than the longest model call
 ```
 
 Both models must be reachable through the configured Spring AI endpoint. On Azure OpenAI / Microsoft Foundry a model name is the deployment name. Every generation and filter call is recorded in the LLM token usage tracking, so add the two models to `artemis.llm.model-costs` if you want their cost reported.
 
-Overnight generation runs only for courses whose instructors enabled it on the pool page, and only while the course has not ended. The scheduler builds one course after another on the node that carries the `scheduling` profile, so set `schedule-cron` to a quiet hour and expect the run to take a few minutes per course with new or changed lecture material. One build per course runs at a time across the cluster.
+Overnight generation runs only for courses whose instructors enabled it on the pool page, and only while the course has not ended. The run starts at `schedule-cron` (default midnight) on the node that carries the `scheduling` profile and builds one course after another on the pool's own build executor, so manual builds keep a thread of their own. It ends after `schedule-window-hours` (default 7, so at seven in the morning): it then starts no further course, and the build still running stops after its current unit of work and keeps its remaining questions for the next night. Courses whose last completed build is oldest come first, and courses that never completed a build before them, so a course the window cut off continues early the next night. Expect a few minutes per course with new or changed lecture material; filling the pools of many courses for the first time can take several nights. One build per course runs at a time across the cluster.
 
 ## Verifying the integration
 

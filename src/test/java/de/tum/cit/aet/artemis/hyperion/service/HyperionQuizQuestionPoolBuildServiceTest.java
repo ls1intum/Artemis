@@ -300,6 +300,43 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     }
 
     @Test
+    void build_stopsAtItsDeadlineAndKeepsThePendingItems() {
+        HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
+        Course course = new Course();
+        course.setId(5L);
+        when(courseRepository.findByIdElseThrow(5L)).thenReturn(course);
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.of());
+        when(settingsService.getSettings(5L)).thenReturn(HyperionCourseSettings.defaultSettings());
+        String leaseToken = service.tryStart(5L);
+
+        HyperionQuizQuestionPoolBuildService.BuildOutcome outcome = service.build(5L, null, leaseToken, ZonedDateTime.now().minusMinutes(1));
+
+        assertThat(outcome.stoppedAtDeadline()).isTrue();
+        verify(itemRepository, never()).deleteAllByCourseIdAndState(anyLong(), any());
+        verify(itemRepository, never()).findAllByCourseIdAndState(anyLong(), any(), any());
+        verify(chatModel, never()).call(any(Prompt.class));
+    }
+
+    @Test
+    void buildAndRelease_recordsThatTheBuildStoppedAtItsDeadline() {
+        HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
+        Course course = new Course();
+        course.setId(5L);
+        when(courseRepository.findByIdElseThrow(5L)).thenReturn(course);
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.of());
+        when(settingsService.getSettings(5L)).thenReturn(HyperionCourseSettings.defaultSettings());
+        QuizQuestionPoolBuild build = new QuizQuestionPoolBuild();
+        build.setId(3L);
+        when(buildRepository.findById(3L)).thenReturn(Optional.of(build));
+        String leaseToken = service.tryStart(5L);
+
+        service.buildAndRelease(5L, null, 3L, leaseToken, ZonedDateTime.now().minusMinutes(1));
+
+        assertThat(build.getFailure()).isEqualTo(HyperionQuizQuestionPoolBuildService.STOPPED_AT_DEADLINE);
+        assertThat(service.isRunning(5L)).isFalse();
+    }
+
+    @Test
     void build_ignoresACancelRequestLeftForAnEarlierBuildOfTheCourse() {
         HyperionQuizQuestionPoolBuildService service = serviceWithChatClient();
         Course course = new Course();

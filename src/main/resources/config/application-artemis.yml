@@ -173,8 +173,10 @@ artemis:
       stale-claim-minutes: 30
       # Characters of a lecture unit's text (slide PDF, transcript or text unit) that a generation prompt receives at most.
       max-material-characters: 60000
-      # When the pools of the courses that enabled overnight generation are built; a Spring cron expression on the node with the scheduling profile.
-      schedule-cron: "0 0 2 * * *"
+      # When the overnight run over the courses that enabled overnight generation starts; a Spring cron expression on the node with the scheduling profile.
+      schedule-cron: "0 0 0 * * *"
+      # How long the overnight run lasts at most (1-23); afterwards it starts no further course and the running build stops after its current unit of work.
+      schedule-window-hours: 7
       # How long a running build holds its course's lease without a heartbeat before another node may build the course.
       build-lease-minutes: 10
   aiworker:

@@ -143,6 +143,8 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private static final int MAX_FAILURE_LENGTH = 500;
 
+    static final String STOPPED_AT_DEADLINE = "The overnight window ended; the next scheduled build continues";
+
     @Nullable
     private final ChatClient chatClient;
 
@@ -226,16 +228,17 @@ public class HyperionQuizQuestionPoolBuildService {
     /**
      * What one build did, counted over its own work.
      *
-     * @param generated items that received a question
-     * @param judged    items that received a verdict
-     * @param accepted  judged items the filter accepted
-     * @param rejected  judged items the filter rejected
-     * @param failed    items that ended in a failed state
+     * @param generated         items that received a question
+     * @param judged            items that received a verdict
+     * @param accepted          judged items the filter accepted
+     * @param rejected          judged items the filter rejected
+     * @param failed            items that ended in a failed state
+     * @param stoppedAtDeadline whether the build stopped at its deadline with work left
      */
-    public record BuildOutcome(int generated, int judged, int accepted, int rejected, int failed) {
+    public record BuildOutcome(int generated, int judged, int accepted, int rejected, int failed, boolean stoppedAtDeadline) {
 
         static BuildOutcome none() {
-            return new BuildOutcome(0, 0, 0, 0, 0);
+            return new BuildOutcome(0, 0, 0, 0, 0, false);
         }
     }
 
@@ -252,8 +255,8 @@ public class HyperionQuizQuestionPoolBuildService {
 
         private int failed;
 
-        private BuildOutcome toOutcome() {
-            return new BuildOutcome(generated, judged, accepted, rejected, failed);
+        private BuildOutcome toOutcome(boolean stoppedAtDeadline) {
+            return new BuildOutcome(generated, judged, accepted, rejected, failed, stoppedAtDeadline);
         }
     }
 
@@ -653,6 +656,20 @@ public class HyperionQuizQuestionPoolBuildService {
      * @param leaseToken the token {@link #tryStart} returned
      */
     public void buildAndRelease(long courseId, @Nullable Long userId, long buildId, String leaseToken) {
+        buildAndRelease(courseId, userId, buildId, leaseToken, null);
+    }
+
+    /**
+     * Runs {@link #buildAndRelease(long, Long, long, String)} with a deadline. A build that reaches the deadline with work left stops after
+     * its current unit of work, keeps its remaining items for the next build and records that it stopped as its failure.
+     *
+     * @param courseId   the course whose pool to build
+     * @param userId     the user the token usage is attributed to; may be {@code null}
+     * @param buildId    the build record that receives the outcome
+     * @param leaseToken the token {@link #tryStart} returned
+     * @param deadline   the time after which the build starts no further unit of work; {@code null} for none
+     */
+    public void buildAndRelease(long courseId, @Nullable Long userId, long buildId, String leaseToken, @Nullable ZonedDateTime deadline) {
         if (!renewLease(courseId, leaseToken) && !acquireLease(courseId, leaseToken)) {
             log.warn("Quiz question pool build of course [{}] is dropped: its lease expired while it waited and another build holds the course", courseId);
             recordFinish(buildId, BuildOutcome.none(), "Dropped: the lease expired while the build waited and another build holds the course");
@@ -661,7 +678,10 @@ public class HyperionQuizQuestionPoolBuildService {
         BuildOutcome outcome = BuildOutcome.none();
         String failure = null;
         try {
-            outcome = build(courseId, userId, leaseToken);
+            outcome = build(courseId, userId, leaseToken, deadline);
+            if (outcome.stoppedAtDeadline()) {
+                failure = STOPPED_AT_DEADLINE;
+            }
         }
         catch (Exception e) {
             log.error("Quiz question pool build of course [{}] failed", courseId, e);
@@ -686,6 +706,20 @@ public class HyperionQuizQuestionPoolBuildService {
      * @return what the build did
      */
     public BuildOutcome build(long courseId, @Nullable Long userId, String leaseToken) {
+        return build(courseId, userId, leaseToken, null);
+    }
+
+    /**
+     * Runs {@link #build(long, Long, String)} until the pool is complete or the deadline has passed. A build that reaches the deadline
+     * ends after its current unit of work and keeps the items it has not worked on.
+     *
+     * @param courseId   the course whose pool to build
+     * @param userId     the user the token usage is attributed to; may be {@code null}
+     * @param leaseToken the lease the build runs under
+     * @param deadline   the time after which the build starts no further unit of work; {@code null} for none
+     * @return what the build did
+     */
+    public BuildOutcome build(long courseId, @Nullable Long userId, String leaseToken, @Nullable ZonedDateTime deadline) {
         if (chatClient == null) {
             throw new InternalServerErrorAlertException("AI chat client is not configured", "QuizQuestionPool", "QuizQuestionPool.chatClientNotConfigured");
         }
@@ -705,9 +739,14 @@ public class HyperionQuizQuestionPoolBuildService {
         int completed = 0;
         boolean leaseHeld = true;
         boolean cancelled = false;
+        boolean deadlineReached = false;
         while (leaseHeld) {
             if (isCancelRequested(leaseToken)) {
                 cancelled = true;
+                break;
+            }
+            if (deadline != null && !ZonedDateTime.now().isBefore(deadline)) {
+                deadlineReached = true;
                 break;
             }
             Optional<QuizQuestionPoolItem> toJudge = claimNext(courseId, QuizQuestionPoolItemState.GENERATED, QuizQuestionPoolItemState.FILTERING);
@@ -730,13 +769,16 @@ public class HyperionQuizQuestionPoolBuildService {
             log.info("Quiz question pool build of course [{}] was cancelled after {} units of work; {} items that were not generated yet are dropped", courseId, completed,
                     dropped);
         }
+        else if (deadlineReached) {
+            log.info("Quiz question pool build of course [{}] stops at its deadline after {} units of work; the remaining items wait for the next build", courseId, completed);
+        }
         else if (!leaseHeld) {
             log.warn("Quiz question pool build of course [{}] stops after {} units of work: its lease expired and another build took over the course", courseId, completed);
         }
         else {
             log.info("Quiz question pool build of course [{}] finished after {} units of work", courseId, completed);
         }
-        return counters.toOutcome();
+        return counters.toOutcome(deadlineReached);
     }
 
     private Optional<QuizQuestionPoolItem> claimNext(long courseId, QuizQuestionPoolItemState from, QuizQuestionPoolItemState to) {
