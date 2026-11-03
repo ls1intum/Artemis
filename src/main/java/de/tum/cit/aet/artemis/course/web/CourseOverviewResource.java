@@ -172,6 +172,8 @@ public class CourseOverviewResource {
         }
         long userId = userRepository.getUserIdElseThrow();
         long notificationCount = userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, courseId);
+        log.debug("User {} has unseen notifications in course {}: {}", userId, courseId,
+                userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, courseId) > 0);
         CourseForOverviewDTO overview = courseRepository.findForOverview(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
         return ResponseEntity.ok(overview.withNotificationCount(notificationCount));
     }
@@ -236,7 +238,7 @@ public class CourseOverviewResource {
     public ResponseEntity<CourseAvailableTabsDTO> getCourseAvailableTabs(@PathVariable long courseId) {
         log.debug("REST request to get the available course tabs for course {}", courseId);
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = courseRepository.findWithEagerExercisesAndLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
         // Refused the same way as for-overview, which the container requests in parallel. A plain access error here
         // would surface as a danger toast next to that request's silent one and bury the enrollment offer, so a user
         // following a shared link to a course they may still join would see "not authorized" and an empty page.
