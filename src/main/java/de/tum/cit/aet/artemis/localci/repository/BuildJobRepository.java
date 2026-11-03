@@ -61,21 +61,20 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<Long> findResultIdsOfBuildGroup(@Param("buildGroupId") String buildGroupId, Pageable pageable);
 
     /**
-     * Finds the build groups whose aggregated result is still in progress and that no job will complete any more: each of
-     * their jobs has finished, or is missing and not retried any more because it ran out of retries or
-     * {@link #findMissingJobsToRetryInTimeRange} no longer finds it. Only automatic results count: once merged into a
-     * tutor's assessment, the jobs link to it, and a draft has no completion date either.
+     * Finds the candidates for closing a build group: its aggregated result is still in progress and none of its jobs is
+     * queued or building. A job may still be missing; whether it will be retried is decided when the group is closed, see
+     * LocalCIResultProcessingService#finalizeCompletedBuildGroups. Only automatic results count: once merged into a tutor's
+     * assessment, the jobs link to it, and a draft has no completion date either. The oldest groups come first: they have
+     * left the retry window, so groups still waiting for a retry do not keep them out of the page.
      *
-     * @param finishedStatuses        the statuses in which a job counts as finished
-     * @param submittedSince          only groups submitted at or after this date
-     * @param completedBefore         only groups with a linked job that finished before this date
-     * @param maxMissingJobRetries    the number of retries after which a missing job is not retried again
-     * @param missingJobsRetriedSince the start of the retry window: a missing job submitted before it is not retried
-     * @param pageable                limits the number of groups
-     * @return the ids of the build groups whose aggregated result has no completion date and that no job will complete
+     * @param finishedStatuses the statuses in which a job counts as finished
+     * @param submittedSince   only groups submitted at or after this date
+     * @param completedBefore  only groups with a linked job that finished before this date
+     * @param pageable         limits the number of groups
+     * @return the ids of the build groups, oldest first
      */
     @Query("""
-            SELECT DISTINCT b.buildGroupId
+            SELECT b.buildGroupId
             FROM BuildJob b
             WHERE b.buildGroupId IS NOT NULL
                 AND b.result IS NOT NULL
@@ -88,22 +87,40 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                     FROM BuildJob o
                     WHERE o.buildGroupId = b.buildGroupId
                         AND o.buildStatus NOT IN :finishedStatuses
-                        AND (o.buildStatus <> de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.MISSING
-                            OR (o.retryCount < :maxMissingJobRetries
-                                AND o.buildSubmissionDate >= :missingJobsRetriedSince
-                                AND NOT EXISTS (
-                                    SELECT later
-                                    FROM BuildJob later
-                                    WHERE later.participationId = o.participationId
-                                        AND later.buildSubmissionDate > o.buildSubmissionDate))))
+                        AND o.buildStatus <> de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.MISSING)
+            GROUP BY b.buildGroupId
+            ORDER BY MIN(b.buildSubmissionDate) ASC
             """)
-    List<String> findCompletedBuildGroupsWithResultInProgress(@Param("finishedStatuses") Collection<BuildStatus> finishedStatuses,
-            @Param("submittedSince") ZonedDateTime submittedSince, @Param("completedBefore") ZonedDateTime completedBefore, @Param("maxMissingJobRetries") int maxMissingJobRetries,
-            @Param("missingJobsRetriedSince") ZonedDateTime missingJobsRetriedSince, Pageable pageable);
+    List<String> findBuildGroupsWithResultInProgressAndNoRunningJob(@Param("finishedStatuses") Collection<BuildStatus> finishedStatuses,
+            @Param("submittedSince") ZonedDateTime submittedSince, @Param("completedBefore") ZonedDateTime completedBefore, Pageable pageable);
+
+    /**
+     * Finds the exercise of a build group, which all of its jobs share.
+     *
+     * @param buildGroupId the id of the build group
+     * @return the id of the exercise, or null if no job of the group names one
+     */
+    @Query("""
+            SELECT MIN(b.exerciseId)
+            FROM BuildJob b
+            WHERE b.buildGroupId = :buildGroupId
+            """)
+    @Nullable
+    Long findExerciseIdOfBuildGroup(@Param("buildGroupId") String buildGroupId);
+
+    /**
+     * Checks whether a job of the participation was submitted after the given date, in which case
+     * {@link #findMissingJobsToRetryInTimeRange} does not retry an older missing job any more.
+     *
+     * @param participationId the id of the participation
+     * @param submittedAfter  only jobs submitted after this date
+     * @return true if such a job exists
+     */
+    boolean existsByParticipationIdAndBuildSubmissionDateAfter(long participationId, ZonedDateTime submittedAfter);
 
     /**
      * Checks whether a job of the build group links to an automatic result that is still in progress, see
-     * {@link #findCompletedBuildGroupsWithResultInProgress}.
+     * {@link #findBuildGroupsWithResultInProgressAndNoRunningJob}.
      *
      * @param buildGroupId the id of the build group
      * @return true if a job of the group links to an automatic result without a completion date

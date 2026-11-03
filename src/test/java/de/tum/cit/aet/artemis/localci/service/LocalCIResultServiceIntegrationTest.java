@@ -778,6 +778,30 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         return new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(passingJob), null, null, false, 0);
     }
 
+    /** The oldest groups come first and a group with a running job is no candidate, so waiting for a retry cannot starve a group that can be closed. */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTheCandidatesOfTheSweepAreTheGroupsWithoutARunningJobOldestFirst() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        participation.setProgrammingExercise(programmingExercise);
+        String commitHash = "0000000000000000000000000000000000000023";
+        submissionOf(participation, commitHash);
+        ZonedDateTime now = ZonedDateTime.now();
+        Result newerResult = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
+        saveGroupJob("candidate-newer-0", "candidate-newer", participation, commitHash, BuildStatus.SUCCESSFUL, newerResult, false, now.minusMinutes(10), 0);
+        saveGroupJob("candidate-newer-1", "candidate-newer", participation, commitHash, BuildStatus.MISSING, null, false, now.minusMinutes(10), 0);
+        Result olderResult = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
+        saveGroupJob("candidate-older-0", "candidate-older", participation, commitHash, BuildStatus.SUCCESSFUL, olderResult, false, now.minusMinutes(20), 0);
+        Result runningResult = programmingExerciseGradingService.appendContainerResult(participation, okResult(commitHash), false, "container_a", null).result();
+        saveGroupJob("candidate-running-0", "candidate-running", participation, commitHash, BuildStatus.SUCCESSFUL, runningResult, false, now.minusMinutes(30), 0);
+        saveGroupJob("candidate-running-1", "candidate-running", participation, commitHash, BuildStatus.BUILDING, null, false, now.minusMinutes(30), 0);
+
+        List<String> candidates = buildJobRepository.findBuildGroupsWithResultInProgressAndNoRunningJob(LocalCIResultProcessingService.FINISHED_BUILD_STATUSES, now.minusHours(1),
+                now, PageRequest.of(0, 50));
+
+        assertThat(candidates).containsSubsequence("candidate-older", "candidate-newer").doesNotContain("candidate-running");
+    }
+
     /** The sweep neither finalizes nor deletes the result of a group whose missing job is still to be retried. */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

@@ -893,8 +893,9 @@ class LocalCIResultProcessingServiceTest {
     }
 
     private void withBuildGroupFoundByTheSweep() {
-        when(buildJobRepository.findCompletedBuildGroupsWithResultInProgress(any(), any(ZonedDateTime.class), any(ZonedDateTime.class), eq(3), any(ZonedDateTime.class),
-                any(Pageable.class))).thenReturn(List.of("group-1"));
+        when(buildJobRepository.findBuildGroupsWithResultInProgressAndNoRunningJob(any(), any(ZonedDateTime.class), any(ZonedDateTime.class), any(Pageable.class)))
+                .thenReturn(List.of("group-1"));
+        lenient().when(buildJobRepository.findExerciseIdOfBuildGroup("group-1")).thenReturn(EXERCISE_ID);
     }
 
     private void withACompleteGroupInProgress(BuildJobQueueItem anyJobOfTheGroup, ZonedDateTime completionDate) {
@@ -1013,13 +1014,25 @@ class LocalCIResultProcessingServiceTest {
         verify(aggregationLocks).unlock("group-1");
     }
 
+    /** A missing job the retry will still pick up keeps its group open: the retry builds the commit again. */
+    @Test
+    void theSweepLeavesAGroupOpenWhoseMissingJobIsStillRetried() {
+        List<BuildJob> jobs = withAGroupThatLostAContainer(ZonedDateTime.now().minusMinutes(5));
+        BuildJob missingJob = jobs.getLast();
+        missingJob.setRetryCount(2);
+        missingJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+
+        assertThat(sweep()).isZero();
+
+        assertThat(missingJob.getBuildStatus()).as("the job is not closed as lost").isEqualTo(BuildStatus.MISSING);
+        verify(programmingExerciseGradingService, never()).finalizeContainerResult(anyLong(), any(), anyBoolean(), anyBoolean(), any(), any());
+        verify(aggregationLocks).unlock("group-1");
+    }
+
     /** The sweep takes the exercise's result-processing admission, so it writes no result while the exercise is being deleted. */
     @Test
     void theSweepLeavesAGroupWhoseExerciseIsBeingDeletedForTheNextSweep() {
         withBuildGroupFoundByTheSweep();
-        Result aggregate = new Result();
-        aggregate.setId(7L);
-        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(new BuildJob(containerJob("group-1", 1, "container_a"), BuildStatus.SUCCESSFUL, aggregate)));
         when(programmingExerciseDeletionService.tryAdmitResultProcessing(EXERCISE_ID)).thenReturn(Optional.empty());
 
         assertThat(sweep()).isZero();
@@ -1115,6 +1128,7 @@ class LocalCIResultProcessingServiceTest {
         finishedJob.setBuildCompletionDate(completionDate);
         BuildJob missingJob = new BuildJob(containerJob("group-1", 2, "container_b"), BuildStatus.MISSING, null);
         missingJob.setBuildCompletionDate(null);
+        missingJob.setRetryCount(3);
         List<BuildJob> jobs = List.of(finishedJob, missingJob);
         when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(jobs);
         return jobs;
@@ -1263,7 +1277,6 @@ class LocalCIResultProcessingServiceTest {
     void theSweepLeavesAGroupAloneThatItsLastContainerFinalizedMeanwhile() {
         // the last container finalized the group between the sweep's query and its lock
         withBuildGroupFoundByTheSweep();
-        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenReturn(List.of(new BuildJob(containerJob("group-1", 1, "container_a"), BuildStatus.SUCCESSFUL, null)));
         when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
         when(buildJobRepository.existsResultInProgressOfBuildGroup("group-1")).thenReturn(false);
 

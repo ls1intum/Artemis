@@ -401,12 +401,12 @@ public class LocalCIResultProcessingService {
      */
     public int finalizeCompletedBuildGroups(int maxMissingJobRetries, ZonedDateTime missingJobsRetriedSince) {
         ZonedDateTime now = ZonedDateTime.now();
-        List<String> buildGroupIds = buildJobRepository.findCompletedBuildGroupsWithResultInProgress(FINISHED_BUILD_STATUSES, now.minus(SWEEP_LOOKBACK),
-                now.minus(COMPLETED_GROUP_GRACE_PERIOD), maxMissingJobRetries, missingJobsRetriedSince, PageRequest.of(0, COMPLETED_GROUPS_PER_SWEEP));
+        List<String> buildGroupIds = buildJobRepository.findBuildGroupsWithResultInProgressAndNoRunningJob(FINISHED_BUILD_STATUSES, now.minus(SWEEP_LOOKBACK),
+                now.minus(COMPLETED_GROUP_GRACE_PERIOD), PageRequest.of(0, COMPLETED_GROUPS_PER_SWEEP));
         int finalizedGroups = 0;
         for (String buildGroupId : buildGroupIds) {
             try {
-                if (finalizeCompletedBuildGroupIfAdmitted(buildGroupId)) {
+                if (finalizeCompletedBuildGroupIfAdmitted(buildGroupId, maxMissingJobRetries, missingJobsRetriedSince)) {
                     finalizedGroups++;
                 }
             }
@@ -422,8 +422,8 @@ public class LocalCIResultProcessingService {
      * also takes before a group's lock, so the sweep does not write a result while the exercise is being deleted. A group
      * that is not admitted now is left for the next sweep.
      */
-    private boolean finalizeCompletedBuildGroupIfAdmitted(String buildGroupId) {
-        Long exerciseId = buildJobRepository.findAllByBuildGroupId(buildGroupId).stream().map(BuildJob::getExerciseId).filter(Objects::nonNull).findFirst().orElse(null);
+    private boolean finalizeCompletedBuildGroupIfAdmitted(String buildGroupId, int maxMissingJobRetries, ZonedDateTime missingJobsRetriedSince) {
+        Long exerciseId = buildJobRepository.findExerciseIdOfBuildGroup(buildGroupId);
         if (exerciseId == null) {
             return false;
         }
@@ -433,11 +433,11 @@ public class LocalCIResultProcessingService {
             return false;
         }
         try (var permit = admission.get()) {
-            return finalizeCompletedBuildGroup(buildGroupId);
+            return finalizeCompletedBuildGroup(buildGroupId, maxMissingJobRetries, missingJobsRetriedSince);
         }
     }
 
-    private boolean finalizeCompletedBuildGroup(String buildGroupId) {
+    private boolean finalizeCompletedBuildGroup(String buildGroupId, int maxMissingJobRetries, ZonedDateTime missingJobsRetriedSince) {
         DistributedMap<String, Boolean> aggregationLocks = distributedDataAccessService.getResultAggregationLockMap();
         aggregationLocks.lock(buildGroupId);
         try {
@@ -455,9 +455,13 @@ public class LocalCIResultProcessingService {
                 log.info("Not closing build group {}: a job of the group is queued or building again", buildGroupId);
                 return false;
             }
+            if (jobs.stream().anyMatch(job -> isMissingJobStillRetried(job, maxMissingJobRetries, missingJobsRetriedSince))) {
+                log.debug("Not closing build group {}: a missing job of the group is still retried", buildGroupId);
+                return false;
+            }
             // All jobs of a group share the participation and the push, so any one of them describes the build.
             BuildJob buildJob = jobs.getFirst();
-            // A job that is still missing is one the query found to be retried no more, so its container is lost.
+            // A job that is still missing is not retried any more, so its container is lost.
             List<BuildJob> lostJobs = jobs.stream().filter(job -> job.getBuildStatus() == BuildStatus.MISSING).toList();
             if (!lostJobs.isEmpty() && isReplacedByLaterBuildOfSameCommit(buildJob)) {
                 closeLostJobs(lostJobs, BuildStatus.CANCELLED);
@@ -511,6 +515,17 @@ public class LocalCIResultProcessingService {
      * Marks the lost jobs as finished, so that a result one of them still reports is not merged, and as failed to build,
      * since they never reported.
      */
+    /**
+     * Whether LocalCIMissingJobService will still retry a job: it is missing, has retries left, lies within the retry window
+     * and no newer job of its participation exists, as BuildJobRepository#findMissingJobsToRetryInTimeRange selects them.
+     */
+    private boolean isMissingJobStillRetried(BuildJob job, int maxMissingJobRetries, ZonedDateTime missingJobsRetriedSince) {
+        ZonedDateTime submissionDate = job.getBuildSubmissionDate();
+        return job.getBuildStatus() == BuildStatus.MISSING && job.getRetryCount() < maxMissingJobRetries && submissionDate != null
+                && !submissionDate.isBefore(missingJobsRetriedSince)
+                && !buildJobRepository.existsByParticipationIdAndBuildSubmissionDateAfter(job.getParticipationId(), submissionDate);
+    }
+
     private void closeLostJobs(List<BuildJob> lostJobs, BuildStatus status) {
         if (lostJobs.isEmpty()) {
             return;
