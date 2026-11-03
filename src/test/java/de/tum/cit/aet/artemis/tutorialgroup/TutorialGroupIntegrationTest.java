@@ -748,6 +748,46 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "USER")
+        void updateSchedule_whenExtendingEndIntoAnIndividualSession_isRejectedAndKeepsBothSessions() throws Exception {
+            // Schedule: Mondays 10:00-11:00 over four weeks.
+            TutorialGroupScheduleDTO initialSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_11_00, 1, FOURTH_AUGUST_MONDAY, "Room A");
+            CreateOrUpdateTutorialGroupRequestDTO createRequest = new CreateOrUpdateTutorialGroupRequestDTO("TG Overlap", firstCourseTutor1.getId(), "English", false, "Garching",
+                    10, "info", initialSchedule);
+            Long tutorialGroupId = request.postWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", createRequest, Long.class, HttpStatus.OK);
+
+            List<TutorialGroupSession> initialSessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId).stream()
+                    .sorted(Comparator.comparing(TutorialGroupSession::getStart)).toList();
+            assertThat(initialSessions).hasSize(4);
+            TutorialGroupSession firstScheduledSession = initialSessions.getFirst();
+
+            // An individual (detached) session sits from 12:00-13:00 on the first Monday, so it does not yet overlap the 10:00-11:00 slot.
+            TutorialGroupSession individualSession = new TutorialGroupSession();
+            individualSession.setTutorialGroup(firstScheduledSession.getTutorialGroup());
+            individualSession.setStart(firstScheduledSession.getStart().plusHours(2));
+            individualSession.setEnd(firstScheduledSession.getStart().plusHours(3));
+            individualSession.setLocation("Room B");
+            individualSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
+            individualSession.setAttendanceCount(5);
+            individualSession = tutorialGroupSessionRepository.saveAndFlush(individualSession);
+            Long individualSessionId = individualSession.getId();
+
+            // Extending the session end to 13:00 would grow the first Monday's retained session into the individual session.
+            TutorialGroupScheduleDTO extendedSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_13_00, 1, FOURTH_AUGUST_MONDAY, "Room A");
+            CreateOrUpdateTutorialGroupRequestDTO updateRequest = new CreateOrUpdateTutorialGroupRequestDTO("TG Overlap", firstCourseTutor1.getId(), "English", false, "Garching",
+                    10, "info", extendedSchedule);
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, updateRequest, HttpStatus.BAD_REQUEST);
+
+            // The change is rejected: the scheduled session keeps its 11:00 end and the individual session keeps its attendance, detached.
+            TutorialGroupSession reloadedScheduled = tutorialGroupSessionRepository.findByIdElseThrow(firstScheduledSession.getId());
+            assertThat(reloadedScheduled.getEnd()).isEqualTo(firstScheduledSession.getEnd());
+            TutorialGroupSession reloadedIndividual = tutorialGroupSessionRepository.findByIdElseThrow(individualSessionId);
+            assertThat(reloadedIndividual.getAttendanceCount()).isEqualTo(5);
+            assertThat(reloadedIndividual.getTutorialGroupSchedule()).isNull();
+            assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId)).hasSize(5);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "USER")
         void updateSchedule_whenASessionNowOverlapsAFreePeriod_shouldCancelThatSession() throws Exception {
             // Schedule: Mondays 10:00-11:00. A free period sits at 12:00-13:00 on the first Monday, not overlapping the initial slot.
             TutorialGroupScheduleDTO initialSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_11_00, 1, FOURTH_AUGUST_MONDAY, "Room A");

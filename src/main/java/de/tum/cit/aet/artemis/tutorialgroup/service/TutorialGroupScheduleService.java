@@ -9,9 +9,11 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -25,6 +27,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.exception.SessionOverlapsWithSessionException;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
@@ -57,11 +60,13 @@ public class TutorialGroupScheduleService {
      * instant: a match keeps its id and recorded attendance while its end and location follow the new schedule, and its free-period status
      * is recomputed from the new interval - except a manual cancellation, which is kept with no free-period association. Starts that no
      * longer occur are removed, and new starts are added. Sessions edited individually (detached from the schedule) are left untouched -
-     * neither duplicated nor removed.
+     * neither duplicated nor removed. A schedule change that would extend a retained session into an individually edited session is
+     * rejected before anything is persisted, so no overlapping sessions are created.
      *
      * @param course                the course of the tutorial group
      * @param tutorialGroup         the tutorial group the schedule belongs to
      * @param tutorialGroupSchedule the schedule to save and generate or update the sessions for
+     * @throws SessionOverlapsWithSessionException if applying the schedule would make a retained session overlap an individually edited session
      */
     public void saveScheduleAndGenerateScheduledSessions(Course course, TutorialGroup tutorialGroup, TutorialGroupSchedule tutorialGroupSchedule) {
         tutorialGroupSchedule.setTutorialGroup(tutorialGroup);
@@ -85,8 +90,21 @@ public class TutorialGroupScheduleService {
             }
         }
 
-        TutorialGroupSchedule savedSchedule = tutorialGroupScheduleRepository.save(tutorialGroupSchedule);
-        List<TutorialGroupSession> generatedSessions = generateSessionsForSchedule(course, savedSchedule);
+        List<TutorialGroupSession> generatedSessions = generateSessionsForSchedule(course, tutorialGroupSchedule);
+
+        // Reject before persisting: extending a retained session into an individually edited session would create an overlap the
+        // single-session endpoint forbids. Nothing is saved yet, so both sessions and their recorded attendance stay intact.
+        Set<TutorialGroupSession> overlappingIndividualSessions = new HashSet<>();
+        for (TutorialGroupSession generatedSession : generatedSessions) {
+            if (existingSessionsByStart.containsKey(generatedSession.getStart().toInstant())) {
+                detachedSessions.stream().filter(detached -> overlaps(generatedSession, detached)).forEach(overlappingIndividualSessions::add);
+            }
+        }
+        if (!overlappingIndividualSessions.isEmpty()) {
+            throw new SessionOverlapsWithSessionException(overlappingIndividualSessions, ZoneId.of(course.getTimeZone()));
+        }
+
+        tutorialGroupScheduleRepository.save(tutorialGroupSchedule);
 
         // A regenerated session that starts at the same time as an existing one is the same session, so keep its id and recorded
         // attendance and let its end and location follow the new schedule. Existing sessions whose start no longer occurs are removed.
