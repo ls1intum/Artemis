@@ -1149,7 +1149,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @ParameterizedTest
     @NullSource
     @ValueSource(strings = "Corrected Iris answer")
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldPreserveAnswerAndErrorWhenVerificationUsesAnotherCourse(String editedContent) throws Exception {
         Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
         Channel channel = conversationUtilService.createCourseWideChannel(otherCourse, "verify-course-guard");
