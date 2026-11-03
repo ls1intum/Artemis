@@ -114,7 +114,7 @@
 
 <ng-template #actionsTemplate let-dto>
     <!-- Ordered by how often they are needed: assessing and opening the code first, destructive actions last -->
-    <div class="flex items-center gap-1">
+    <div class="flex items-center justify-end gap-1">
         @if (exercise()!.isAtLeastInstructor) {
             <jhi-manage-assessment-buttons [course]="course()!" [exercise]="exercise()!" [participation]="toParticipation(dto)" [isLoading]="isLoading()" (refresh)="refresh()" />
             @if (exercise()!.type === ExerciseType.PROGRAMMING) {
