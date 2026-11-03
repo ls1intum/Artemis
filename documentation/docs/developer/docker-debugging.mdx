@@ -59,12 +59,14 @@ docker compose -f <docker compose file name> up -d
 If the server fails to start with Liquibase errors, you can run the following command to reset the database:
 
 <Callout variant={CalloutVariant.danger}>
-    This command **deletes all data** in the `artemis` database by dropping it. Make sure you have a backup if you need to preserve existing data.
+    This command **deletes all data** in the `Artemis` database by dropping it. Make sure you have a backup if you need to preserve existing data.
 </Callout>
 
 ```bash
-docker exec -i artemis-mysql mysql -u root -p'' -e "DROP DATABASE artemis;"
+docker exec -i artemis-postgres psql -U Artemis -d postgres -c 'DROP DATABASE "Artemis";'
 ```
+
+For a MySQL setup (deprecated, removed in Artemis 11), use `docker exec -i artemis-mysql mysql -u root -p'' -e "DROP DATABASE Artemis;"` instead.
 
 Afterward, you can start the server again with the same command as under
 [Start the Docker Compose File](#start-the-docker-compose-file).

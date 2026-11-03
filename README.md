@@ -175,7 +175,7 @@ The following command automates deployment to a test server:
 | Directory | Contents |
 | --- | --- |
 | `src/` | Application sources, resources, and tests |
-| `packages/` | Shared packages, including TUM UI |
+| `packages/` | Shared packages, including TUM AET UI |
 | `config/` | Quality-tool settings, client configs, dependency patches, and the OpenAPI specification |
 | `deployment/` | Docker Compose setups, Helm charts, deployment CLI, and Kubernetes runners |
 | `supporting_scripts/` | Developer tooling, CI helpers, client prebuild, and local E2E runners |

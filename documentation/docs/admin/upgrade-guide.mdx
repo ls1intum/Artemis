@@ -255,12 +255,12 @@ From version 10.0 on, the same events live in `security_audit_event`, with their
 If the audit log does not reach back far enough, build the list from the identity provider instead, and still match on `login`: export the accounts the identity provider manages, apply your configured `saml2.username-pattern` to each one to get the login Artemis would have stored, lowercase the result, and match `jhi_user.login` against that list.
 
 <Callout variant={CalloutVariant.warning}>
-  Do not fall back to matching on `email`. Artemis identifies a SAML2 user by the login that `saml2.username-pattern` produces and never by email, and `jhi_user.email` is not unique: an address stored on an older release can be shared between accounts or recycled from a former owner, so an email match can select more than one row, or the wrong one. Clearing the internal flag on the wrong row changes that account's authentication route and locks its owner out of the password form, the password reset function, and password-based Git access. Where the identity provider gives you nothing but an email address, leave that account out of the update and confirm its identity in **Administration → User management** first. See [User Email Uniqueness](./user-email-uniqueness) for finding and resolving the duplicates an instance already has, and point `saml2.username-pattern` at a stable, globally unique identity provider attribute so that the login remains a reliable key.
+  Do not fall back to matching on `email`. Artemis identifies a SAML2 user by the login that `saml2.username-pattern` produces and never by email, and `jhi_user.email` is not unique: an address stored on an older release can be shared between accounts or recycled from a former owner, so an email match can select more than one row, or the wrong one. Clearing the internal flag on the wrong row changes that account's authentication route and locks its owner out of the password form, the password reset function, and password-based Git access. Where the identity provider gives you nothing but an email address, leave that account out of the update and confirm its identity in **Administration → Account → Users** first. See [User Email Uniqueness](./user-email-uniqueness) for finding and resolving the duplicates an instance already has, and point `saml2.username-pattern` at a stable, globally unique identity provider attribute so that the login remains a reliable key.
 </Callout>
 
 #### Clearing the Flag
 
-**For a few accounts**, open **Administration → User management**, edit the user, and clear the **Internal** checkbox.
+**For a few accounts**, open **Administration → Account → Users**, edit the user, and clear the **Internal** checkbox.
 
 **For many accounts**, update `jhi_user.is_internal` directly. Confirm that the `SELECT` above returns what you expect and that you have a backup, then run the update in a transaction:
 
