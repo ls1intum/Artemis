@@ -4,7 +4,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentFormDialogComponent, PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
-import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessment, PresentationGradingMethod } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
@@ -22,6 +22,7 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         id: 42,
         title: 'Final presentation',
         description: 'Final project presentation',
+        gradingMethod: PresentationGradingMethod.SCORE,
         maxPoints: 20,
         courseId,
     };

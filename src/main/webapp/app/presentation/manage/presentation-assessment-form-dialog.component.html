@@ -1,13 +1,17 @@
-<form [formGroup]="editForm" (ngSubmit)="save()" novalidate class="presentation-assessment-dialog-form">
-    <div class="presentation-assessment-form-grid">
-        <div class="presentation-assessment-field presentation-assessment-title-field">
-            <label for="presentation-assessment-title" jhiTranslate="artemisApp.presentationAssessment.title"></label>
+<form [formGroup]="editForm" (ngSubmit)="isEdit() || isLastStep() ? save() : continue()" novalidate class="presentation-assessment-dialog-form">
+    <ng-template #detailFields>
+        <div class="presentation-assessment-field">
+            <label for="presentation-assessment-title">
+                <span jhiTranslate="artemisApp.presentationAssessment.title"></span>
+                <span class="text-state-danger" aria-hidden="true"> *</span>
+            </label>
             <input
                 id="presentation-assessment-title"
                 tumAetUiInput
                 class="w-full"
                 type="text"
                 formControlName="title"
+                required
                 [placeholder]="'artemisApp.presentationAssessment.placeholder.title' | artemisTranslate"
             />
             @if (editForm.controls.title.invalid && editForm.controls.title.touched) {
@@ -18,32 +22,10 @@
         </div>
 
         <div class="presentation-assessment-field">
-            <label for="presentation-assessment-max-points" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></label>
-            <jhi-points-input
-                inputId="presentation-assessment-max-points"
-                fluid
-                [min]="minPoints"
-                [max]="maxPointsUpperBound"
-                [step]="0.001"
-                formControlName="maxPoints"
-                [placeholder]="'artemisApp.presentationAssessment.placeholder.maxPoints' | artemisTranslate"
-            />
-            @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
-                <tumaet-ui-message severity="error" data-testid="presentation-max-points-error">
-                    <span
-                        [jhiTranslate]="
-                            editForm.controls.maxPoints.hasError('max')
-                                ? 'artemisApp.presentationAssessment.validation.pointsMax'
-                                : 'artemisApp.presentationAssessment.validation.maxPointsMin'
-                        "
-                        [translateValues]="{ max: maxPointsUpperBound }"
-                    ></span>
-                </tumaet-ui-message>
-            }
-        </div>
-
-        <div class="presentation-assessment-field presentation-assessment-exercise-field">
-            <label for="presentation-assessment-exercise" jhiTranslate="artemisApp.presentationAssessment.exercise"></label>
+            <label for="presentation-assessment-exercise">
+                <span jhiTranslate="artemisApp.presentationAssessment.exercise"></span>
+                <small class="presentation-assessment-optional" jhiTranslate="artemisApp.presentationAssessment.optional"></small>
+            </label>
             <tumaet-ui-autocomplete
                 inputId="presentation-assessment-exercise"
                 class="w-full"
@@ -73,10 +55,131 @@
                 [placeholder]="'artemisApp.presentationAssessment.placeholder.description' | artemisTranslate"
             ></textarea>
         </div>
-    </div>
+    </ng-template>
+
+    <ng-template #maxPointsField>
+        <div class="presentation-assessment-field">
+            <label for="presentation-assessment-max-points">
+                <span jhiTranslate="artemisApp.presentationAssessment.maxPoints"></span>
+                <span class="text-state-danger" aria-hidden="true"> *</span>
+            </label>
+            <div class="presentation-assessment-points">
+                <jhi-points-input
+                    inputId="presentation-assessment-max-points"
+                    fluid
+                    [min]="minPoints"
+                    [max]="maxPointsUpperBound"
+                    [step]="0.001"
+                    formControlName="maxPoints"
+                    [placeholder]="'artemisApp.presentationAssessment.placeholder.maxPoints' | artemisTranslate"
+                />
+                <span jhiTranslate="artemisApp.presentationAssessment.pointsUnit"></span>
+            </div>
+            @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
+                <tumaet-ui-message severity="error" data-testid="presentation-max-points-error">
+                    <span
+                        [jhiTranslate]="
+                            editForm.controls.maxPoints.hasError('max')
+                                ? 'artemisApp.presentationAssessment.validation.pointsMax'
+                                : 'artemisApp.presentationAssessment.validation.maxPointsMin'
+                        "
+                        [translateValues]="{ max: maxPointsUpperBound }"
+                    ></span>
+                </tumaet-ui-message>
+            }
+        </div>
+    </ng-template>
+
+    @if (isEdit()) {
+        <div class="presentation-assessment-form-grid">
+            <ng-container [ngTemplateOutlet]="detailFields" />
+            <div class="presentation-assessment-field" data-testid="presentation-grading-method">
+                <span jhiTranslate="artemisApp.presentationAssessment.gradingMethod.label"></span>
+                <strong [jhiTranslate]="'artemisApp.presentationAssessment.gradingMethod.' + presentationAssessment()?.gradingMethod"></strong>
+            </div>
+            @if (presentationAssessment()?.gradingMethod === PresentationGradingMethod.SCORE) {
+                <ng-container [ngTemplateOutlet]="maxPointsField" />
+            }
+        </div>
+    } @else {
+        <ol class="presentation-assessment-steps" data-testid="presentation-steps">
+            @for (candidate of steps(); track candidate; let index = $index) {
+                <li
+                    class="presentation-assessment-step"
+                    [class.presentation-assessment-step-current]="candidate === step()"
+                    [class.presentation-assessment-step-complete]="isStepComplete(candidate)"
+                    [attr.aria-current]="candidate === step() ? 'step' : null"
+                >
+                    <span class="presentation-assessment-step-marker" aria-hidden="true">
+                        @if (isStepComplete(candidate)) {
+                            <fa-icon [icon]="faCheck" />
+                        } @else {
+                            {{ index + 1 }}
+                        }
+                    </span>
+                    <span class="presentation-assessment-step-text">
+                        <small jhiTranslate="artemisApp.presentationAssessment.step.number" [translateValues]="{ number: index + 1 }"></small>
+                        <strong [jhiTranslate]="'artemisApp.presentationAssessment.step.' + candidate"></strong>
+                    </span>
+                </li>
+            }
+        </ol>
+
+        @switch (step()) {
+            @case ('details') {
+                <div class="presentation-assessment-form-grid">
+                    <ng-container [ngTemplateOutlet]="detailFields" />
+                </div>
+            }
+            @case ('method') {
+                <fieldset class="presentation-assessment-methods">
+                    <legend class="presentation-assessment-section-heading">
+                        <h3 jhiTranslate="artemisApp.presentationAssessment.gradingMethod.question"></h3>
+                        <p jhiTranslate="artemisApp.presentationAssessment.gradingMethod.hint"></p>
+                    </legend>
+                    @for (method of gradingMethods; track method) {
+                        <label
+                            class="presentation-assessment-method"
+                            [class.presentation-assessment-method-selected]="selectedGradingMethod() === method"
+                            [attr.data-testid]="'grading-method-' + method"
+                        >
+                            <input class="sr-only" type="radio" formControlName="gradingMethod" [value]="method" />
+                            <span class="presentation-assessment-method-radio" aria-hidden="true"></span>
+                            <span class="presentation-assessment-method-icon" aria-hidden="true">
+                                <fa-icon [icon]="gradingMethodIcons[method]" />
+                            </span>
+                            <strong [jhiTranslate]="'artemisApp.presentationAssessment.gradingMethod.' + method"></strong>
+                            <small [jhiTranslate]="'artemisApp.presentationAssessment.gradingMethod.description.' + method"></small>
+                        </label>
+                    }
+                </fieldset>
+                @if (editForm.controls.gradingMethod.invalid && editForm.controls.gradingMethod.touched) {
+                    <tumaet-ui-message severity="error" data-testid="presentation-grading-method-error">
+                        <span jhiTranslate="artemisApp.presentationAssessment.validation.gradingMethodRequired"></span>
+                    </tumaet-ui-message>
+                }
+            }
+            @case ('configuration') {
+                @if (selectedGradingMethod() === PresentationGradingMethod.RUBRIC) {
+                    <jhi-presentation-rubric-editor [form]="rubricForm" [showErrors]="showRubricErrors()" />
+                } @else {
+                    <section class="presentation-assessment-score">
+                        <div class="presentation-assessment-section-heading">
+                            <h3 jhiTranslate="artemisApp.presentationAssessment.scoreConfiguration.title"></h3>
+                            <p jhiTranslate="artemisApp.presentationAssessment.scoreConfiguration.hint"></p>
+                        </div>
+                        <div class="presentation-assessment-configuration">
+                            <ng-container [ngTemplateOutlet]="maxPointsField" />
+                        </div>
+                    </section>
+                }
+            }
+            @default {}
+        }
+    }
 
     <div class="presentation-assessment-actions">
-        @if (presentationAssessment()?.id && canDelete()) {
+        @if (isEdit() && canDelete()) {
             <button
                 tumAetUiButton
                 data-testid="delete-presentation-button"
@@ -96,15 +199,32 @@
                 <span jhiTranslate="entity.action.delete"></span>
             </button>
         }
+        @if (!isEdit() && step() !== 'details') {
+            <tumaet-ui-button severity="secondary" variant="text" type="button" data-testid="back-presentation-button" [disabled]="isSaving()" (clicked)="back()">
+                <fa-icon [icon]="faArrowLeft" />
+                <span jhiTranslate="entity.action.back"></span>
+            </tumaet-ui-button>
+        }
         <div class="presentation-assessment-actions-main flex gap-2">
             <tumaet-ui-button severity="secondary" type="button" (clicked)="cancel()">
                 <fa-icon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>
             </tumaet-ui-button>
-            <tumaet-ui-button type="submit" data-testid="save-presentation-button" [disabled]="isSaving() || editForm.invalid">
-                <fa-icon [icon]="faSave" />
-                <span jhiTranslate="entity.action.save"></span>
-            </tumaet-ui-button>
+            @if (isEdit() || isLastStep()) {
+                <tumaet-ui-button type="submit" data-testid="save-presentation-button" [disabled]="isSaving() || editForm.invalid">
+                    <fa-icon [icon]="faSave" />
+                    <span jhiTranslate="entity.action.save"></span>
+                </tumaet-ui-button>
+            } @else {
+                <tumaet-ui-button
+                    type="submit"
+                    data-testid="continue-presentation-button"
+                    [disabled]="step() === 'details' ? editForm.controls.title.invalid : editForm.controls.gradingMethod.invalid"
+                >
+                    <span jhiTranslate="entity.action.continue"></span>
+                    <fa-icon [icon]="faArrowRight" />
+                </tumaet-ui-button>
+            }
         </div>
     </div>
 </form>

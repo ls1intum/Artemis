@@ -6,7 +6,7 @@
 
 .presentation-assessment-form-grid {
     display: grid;
-    grid-template-columns: minmax(14rem, 1.4fr) minmax(8rem, 0.8fr);
+    grid-template-columns: minmax(14rem, 1.4fr) minmax(12rem, 1fr);
     gap: 1rem;
     align-items: start;
 }
@@ -16,6 +16,11 @@
     flex-direction: column;
     gap: 0.5rem;
     min-width: 0;
+}
+
+.presentation-assessment-optional {
+    margin-left: 0.25rem;
+    color: var(--text-body-secondary);
 }
 
 .presentation-assessment-description-field {
@@ -28,28 +33,228 @@
     }
 }
 
-.presentation-assessment-exercise-field {
-    grid-column: 1 / -1;
-}
-
 .presentation-assessment-actions {
     display: flex;
     gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
 }
 
 .presentation-assessment-actions-main {
     margin-left: auto;
 }
 
+.presentation-assessment-steps {
+    display: flex;
+    gap: 1rem;
+    margin: 0;
+    padding: 1rem 1.25rem;
+    list-style: none;
+    background: var(--hover-slightly-darker-body-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    color: var(--text-body-secondary);
+}
+
+.presentation-assessment-step {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+
+    // The line that connects a step to the next one
+    &:not(:last-child)::after {
+        content: '';
+        flex: 1;
+        min-width: 1rem;
+        height: 1px;
+        background: var(--border-color);
+    }
+}
+
+.presentation-assessment-step-marker {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background: var(--module-bg);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.presentation-assessment-step-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    small {
+        font-size: 0.6875rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    strong {
+        white-space: nowrap;
+    }
+}
+
+.presentation-assessment-step-current {
+    color: var(--body-color);
+
+    .presentation-assessment-step-marker {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: var(--module-bg);
+    }
+}
+
+.presentation-assessment-step-complete .presentation-assessment-step-marker {
+    border-color: color-mix(in srgb, var(--primary) 30%, var(--module-bg));
+    background: color-mix(in srgb, var(--primary) 12%, var(--module-bg));
+    color: var(--primary);
+}
+
+.presentation-assessment-section-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    h3 {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+
+    p {
+        margin: 0;
+        color: var(--text-body-secondary);
+        font-size: 0.875rem;
+    }
+}
+
+.presentation-assessment-methods {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+
+    legend {
+        grid-column: 1 / -1;
+        float: left;
+        width: 100%;
+        margin-bottom: 0.5rem;
+        padding: 0;
+        // The global legend style is meant for form titles; this one holds a heading of its own
+        font-size: inherit;
+    }
+}
+
+.presentation-assessment-method {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 11.5rem;
+    padding: 1.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--module-bg);
+    cursor: pointer;
+
+    small {
+        color: var(--text-body-secondary);
+    }
+
+    &:focus-within {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+    }
+}
+
+.presentation-assessment-method-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.625rem;
+    height: 2.625rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--primary) 12%, var(--module-bg));
+    color: var(--primary);
+}
+
+.presentation-assessment-method-radio {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+}
+
+.presentation-assessment-method-selected {
+    border-color: var(--primary);
+    box-shadow: inset 0 0 0 1px var(--primary);
+    background: color-mix(in srgb, var(--primary) 6%, var(--module-bg));
+
+    .presentation-assessment-method-radio {
+        border: 5px solid var(--primary);
+    }
+}
+
+.presentation-assessment-points {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    jhi-points-input {
+        flex: 1;
+    }
+
+    span {
+        color: var(--text-body-secondary);
+    }
+}
+
+.presentation-assessment-score {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 35rem;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.presentation-assessment-configuration {
+    padding: 1.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--hover-slightly-darker-body-bg);
+    text-align: left;
+}
+
 @media (max-width: 40rem) {
+    .presentation-assessment-methods,
     .presentation-assessment-form-grid {
         grid-template-columns: 1fr;
     }
 
-    .presentation-assessment-title-field,
-    .presentation-assessment-exercise-field,
-    .presentation-assessment-description-field {
-        grid-column: 1 / -1;
+    .presentation-assessment-method {
+        min-height: 0;
+    }
+
+    // Only the current step keeps its text, so that the steps fit next to each other
+    .presentation-assessment-step:not(.presentation-assessment-step-current) .presentation-assessment-step-text {
+        display: none;
     }
 
     .presentation-assessment-actions {
