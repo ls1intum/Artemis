@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupScheduleDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.exception.SessionOverlapsWithSessionException;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
@@ -51,6 +52,47 @@ public class TutorialGroupScheduleService {
         this.tutorialGroupScheduleRepository = tutorialGroupScheduleRepository;
         this.tutorialGroupFreePeriodService = tutorialGroupFreePeriodService;
         this.tutorialGroupRepository = tutorialGroupRepository;
+    }
+
+    /**
+     * Rejects a schedule update that would make a retained session overlap an individually edited session. Read-only: it persists nothing,
+     * so a caller can validate before performing its own writes and side effects.
+     *
+     * @param course         the course of the tutorial group
+     * @param tutorialGroup  the tutorial group whose schedule is being updated
+     * @param newScheduleDTO the requested schedule, or null if the schedule is being removed
+     * @throws SessionOverlapsWithSessionException if applying the schedule would make a retained session overlap an individual session
+     */
+    public void validateScheduleUpdateDoesNotOverlapIndividualSessions(Course course, TutorialGroup tutorialGroup, TutorialGroupScheduleDTO newScheduleDTO) {
+        if (newScheduleDTO == null) {
+            return;
+        }
+        TutorialGroupSchedule oldSchedule = tutorialGroupScheduleRepository.findByTutorialGroup_Id(tutorialGroup.getId()).orElse(null);
+        if (oldSchedule == null) {
+            return;
+        }
+        TutorialGroupSchedule newSchedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(newScheduleDTO);
+        if (oldSchedule.sameSchedule(newSchedule) || oldSchedule.onlyLocationChanged(newSchedule)) {
+            return;
+        }
+        Set<Instant> retainedStarts = new HashSet<>();
+        for (TutorialGroupSession session : tutorialGroupSessionRepository.findAllByScheduleId(oldSchedule.getId())) {
+            retainedStarts.add(session.getStart().toInstant());
+        }
+        List<TutorialGroupSession> detachedSessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId()).stream()
+                .filter(session -> session.getTutorialGroupSchedule() == null).toList();
+        if (retainedStarts.isEmpty() || detachedSessions.isEmpty()) {
+            return;
+        }
+        Set<TutorialGroupSession> overlappingIndividualSessions = new HashSet<>();
+        for (TutorialGroupSession generatedSession : generateSessionsForSchedule(course, newSchedule)) {
+            if (retainedStarts.contains(generatedSession.getStart().toInstant())) {
+                detachedSessions.stream().filter(detached -> overlaps(generatedSession, detached)).forEach(overlappingIndividualSessions::add);
+            }
+        }
+        if (!overlappingIndividualSessions.isEmpty()) {
+            throw new SessionOverlapsWithSessionException(overlappingIndividualSessions, ZoneId.of(course.getTimeZone()));
+        }
     }
 
     /**

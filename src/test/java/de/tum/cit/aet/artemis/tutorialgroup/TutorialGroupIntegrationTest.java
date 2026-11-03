@@ -771,19 +771,22 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             individualSession = tutorialGroupSessionRepository.saveAndFlush(individualSession);
             Long individualSessionId = individualSession.getId();
 
-            // Extending the session end to 13:00 would grow the first Monday's retained session into the individual session.
+            // Rename the group and reassign the tutor in the same request that extends the session end into the individual session.
             TutorialGroupScheduleDTO extendedSchedule = new TutorialGroupScheduleDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_13_00, 1, FOURTH_AUGUST_MONDAY, "Room A");
-            CreateOrUpdateTutorialGroupRequestDTO updateRequest = new CreateOrUpdateTutorialGroupRequestDTO("TG Overlap", firstCourseTutor1.getId(), "English", false, "Garching",
-                    10, "info", extendedSchedule);
+            CreateOrUpdateTutorialGroupRequestDTO updateRequest = new CreateOrUpdateTutorialGroupRequestDTO("TG Overlap Renamed", firstCourseTutor2.getId(), "English", false,
+                    "Garching", 10, "info", extendedSchedule);
             request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, updateRequest, HttpStatus.BAD_REQUEST);
 
-            // The change is rejected: the scheduled session keeps its 11:00 end and the individual session keeps its attendance, detached.
+            // The whole request is rejected before any write: both sessions keep their data and the group keeps its title and tutor.
             TutorialGroupSession reloadedScheduled = tutorialGroupSessionRepository.findByIdElseThrow(firstScheduledSession.getId());
             assertThat(reloadedScheduled.getEnd()).isEqualTo(firstScheduledSession.getEnd());
             TutorialGroupSession reloadedIndividual = tutorialGroupSessionRepository.findByIdElseThrow(individualSessionId);
             assertThat(reloadedIndividual.getAttendanceCount()).isEqualTo(5);
             assertThat(reloadedIndividual.getTutorialGroupSchedule()).isNull();
             assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId)).hasSize(5);
+            TutorialGroup reloadedGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
+            assertThat(reloadedGroup.getTitle()).isEqualTo("TG Overlap");
+            assertThat(reloadedGroup.getTeachingAssistant()).isEqualTo(firstCourseTutor1);
         }
 
         @Test
