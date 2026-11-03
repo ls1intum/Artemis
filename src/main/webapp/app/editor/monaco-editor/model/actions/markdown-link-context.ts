@@ -199,14 +199,12 @@ function withAnchorLabels(ranges: InlineRange[], sourceLength: number): InlineRa
 }
 
 /**
- * Returns how a raw HTML block that starts on the given line ends, following CommonMark's seven kinds of HTML block, or undefined if none starts.
- * @param line The line, at most three spaces indented.
- * @param interruptsParagraph Whether the line follows paragraph text, which only the first six kinds may interrupt.
- * @return a check whether a line ends the block (the start line included), or undefined
+ * Recognizes the start of a raw HTML block, following CommonMark's seven kinds of HTML block.
+ * @param text The line without its indentation and container markers, such as block quote or list markers.
+ * @return how the block ends (a check that includes the start line) and whether it may interrupt a paragraph, or undefined if none starts
  */
-function htmlBlockEnd(line: string, interruptsParagraph: boolean): ((candidate: string) => boolean) | undefined {
-    const text = line.trimStart();
-    if (line.length - text.length > 3 || !text.startsWith('<')) {
+function htmlBlockKind(text: string): { endsOn: (candidate: string) => boolean; canInterruptParagraph: boolean } | undefined {
+    if (!text.startsWith('<')) {
         return undefined;
     }
     const lower = text.toLowerCase();
@@ -218,61 +216,71 @@ function htmlBlockEnd(line: string, interruptsParagraph: boolean): ((candidate: 
     const name = isAsciiLetter(text[closing ? 2 : 1]) ? lower.slice(closing ? 2 : 1, nameEnd) : '';
     const afterName = text[nameEnd];
     const nameEndsCleanly = afterName === undefined || afterName === ' ' || afterName === '\t' || afterName === '>' || text.startsWith('/>', nameEnd);
+    const endsWith = (terminator: string) => ({ endsOn: (candidate: string) => candidate.toLowerCase().includes(terminator), canInterruptParagraph: true });
     if (!closing && RAW_TEXT_TAGS.includes(name) && afterName !== '/' && nameEndsCleanly) {
-        return (candidate) => RAW_TEXT_TAGS.some((rawTag) => candidate.toLowerCase().includes(`</${rawTag}>`));
+        return { endsOn: (candidate) => RAW_TEXT_TAGS.some((rawTag) => candidate.toLowerCase().includes(`</${rawTag}>`)), canInterruptParagraph: true };
     }
     if (lower.startsWith('<!--')) {
-        return (candidate) => candidate.includes('-->');
+        return endsWith('-->');
     }
     if (lower.startsWith('<?')) {
-        return (candidate) => candidate.includes('?>');
+        return endsWith('?>');
     }
     if (lower.startsWith('<![cdata[')) {
-        return (candidate) => candidate.includes(']]>');
+        return endsWith(']]>');
     }
     if (lower.startsWith('<!') && isAsciiLetter(text[2])) {
-        return (candidate) => candidate.includes('>');
+        return endsWith('>');
     }
     const untilBlankLine = (candidate: string) => !candidate.trim();
     if (BLOCK_TAGS.has(name) && nameEndsCleanly) {
-        return untilBlankLine;
+        return { endsOn: untilBlankLine, canInterruptParagraph: true };
     }
     const tag = readHtmlTag(text, 0);
-    if (!interruptsParagraph && tag && !RAW_TEXT_TAGS.includes(name) && !text.slice(tag.end).trim()) {
-        return untilBlankLine;
+    if (tag && !RAW_TEXT_TAGS.includes(name) && !text.slice(tag.end).trim()) {
+        return { endsOn: untilBlankLine, canInterruptParagraph: false };
     }
     return undefined;
 }
 
 /**
- * Finds the lines that belong to raw HTML blocks, in which Markdown is not parsed wherever HTML is rendered.
- * @param lines The lines of the document.
- * @param codeLines The lines inside fenced or indented code blocks, which cannot start an HTML block.
- * @return the indices of the lines inside HTML blocks
+ * Records raw HTML blocks as `html_block_range` tokens with their source lines, in place of markdown-it's own HTML block rule, which stays
+ * disabled. Running as a block rule, it sees each line without its block quote and list markers, and it consumes the block up to its own
+ * end, so lines inside it never become code blocks or paragraphs. Mirrors the structure of markdown-it's `html_block` rule.
  */
-function findHtmlBlockLines(lines: string[], codeLines: Set<number>): Set<number> {
-    const htmlLines = new Set<number>();
-    let blockEnds: ((candidate: string) => boolean) | undefined;
-    let afterParagraphText = false;
-    lines.forEach((line, index) => {
-        if (codeLines.has(index)) {
-            blockEnds = undefined;
-            afterParagraphText = false;
-            return;
+markdownParser.block.ruler.before(
+    'html_block',
+    'html_block_range',
+    (state, startLine, endLine, silent) => {
+        if (state.sCount[startLine] - state.blkIndent >= 4) {
+            return false;
         }
-        blockEnds ??= htmlBlockEnd(line, afterParagraphText);
-        if (blockEnds) {
-            htmlLines.add(index);
-            if (blockEnds(line)) {
-                blockEnds = undefined;
+        const lineText = (line: number) => state.src.slice(state.bMarks[line] + state.tShift[line], state.eMarks[line]);
+        const kind = htmlBlockKind(lineText(startLine));
+        if (!kind) {
+            return false;
+        }
+        if (silent) {
+            // asked whether the block may interrupt a paragraph
+            return kind.canInterruptParagraph;
+        }
+        let nextLine = startLine + 1;
+        if (!kind.endsOn(lineText(startLine))) {
+            for (; nextLine < endLine && state.sCount[nextLine] >= state.blkIndent; nextLine++) {
+                const text = lineText(nextLine);
+                if (kind.endsOn(text)) {
+                    // a blank line ends a block without belonging to it
+                    nextLine += text.trim() ? 1 : 0;
+                    break;
+                }
             }
-            afterParagraphText = false;
-            return;
         }
-        afterParagraphText = !!line.trim();
-    });
-    return htmlLines;
-}
+        state.line = nextLine;
+        state.push('html_block_range', '', 0).map = [startLine, nextLine];
+        return true;
+    },
+    { alt: ['paragraph', 'reference', 'blockquote'] },
+);
 
 /**
  * Splits a table row into the source columns of its cells, like markdown-it: cells are separated by pipes that are not escaped with a
@@ -322,7 +330,7 @@ interface ContentSelection {
 /**
  * Checks whether a selection on one line lies where a pasted link would not work: inside or across an existing link (its label, or its
  * destination such as the placeholder the link button selects), an image, an autolink, an HTML tag or anchor, inline code, inside a fenced
- * or indented code block or a raw HTML block, or anywhere outside paragraph, heading and table text, such as a reference definition or a
+ * or indented code block or a raw HTML block (also inside block quotes and lists), or anywhere outside paragraph, heading and table text, such as a reference definition or a
  * list marker. The unchanged document is parsed with the same CommonMark rules as the preview, so references and code spans over several
  * lines resolve as there.
  * @param lines The lines of the document.
@@ -336,15 +344,7 @@ export function isInLinkOrCode(lines: string[], lineIndex: number, startIndex: n
     const tokens = markdownParser.parse(lines.join('\n'), { inlineRanges });
     const coversLine = (map: [number, number] | null) => !!map && map[0] <= lineIndex && lineIndex < map[1];
 
-    const codeLines = new Set<number>();
-    for (const token of tokens) {
-        if ((token.type === 'fence' || token.type === 'code_block') && token.map) {
-            for (let line = token.map[0]; line < token.map[1]; line++) {
-                codeLines.add(line);
-            }
-        }
-    }
-    if (codeLines.has(lineIndex) || findHtmlBlockLines(lines, codeLines).has(lineIndex)) {
+    if (tokens.some((token) => ['fence', 'code_block', 'html_block_range'].includes(token.type) && coversLine(token.map))) {
         return true;
     }
     const selection = findContentSelection(tokens, lines[lineIndex] ?? '', lineIndex, startIndex, endIndex, coversLine);
