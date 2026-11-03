@@ -10,8 +10,7 @@ describe('user settings routes', () => {
         expect(root.path).toBe('user-settings');
         expect(root.data?.usesModuleBackground).toBe(false);
         expect(root.children?.find((route) => route.path === '')?.redirectTo).toBe('profile');
-        expect(root.children?.map((route) => route.path)).toEqual([
-            '',
+        expect(root.children?.filter((route) => route.loadComponent).map((route) => route.path)).toEqual([
             'profile',
             'credentials',
             'credentials/ssh/add',
@@ -21,7 +20,6 @@ describe('user settings routes', () => {
             'ai-experience',
             'exercises',
         ]);
-        expect(root.children?.filter((route) => route.path).every((route) => route.loadComponent)).toBe(true);
     });
 
     it('provides SSH detail pages with the existing SSH title', () => {
@@ -37,5 +35,26 @@ describe('user settings routes', () => {
 
         expect(children?.find((route) => route.path === 'learning')?.canActivate).toEqual([learnerProfileGuard]);
         expect(children?.find((route) => route.path === 'ai-experience')?.canActivate).toEqual([DataGuard]);
+    });
+
+    it('redirects former leaf routes to their canonical grouped pages', () => {
+        const redirects = Object.fromEntries(routes[0].children?.filter((route) => route.path && route.redirectTo).map((route) => [route.path, route.redirectTo]) ?? []);
+
+        expect(redirects).toEqual({
+            account: 'profile',
+            notifications: 'profile',
+            science: 'profile',
+            passkeys: 'credentials',
+            ssh: 'credentials',
+            'ssh/add': 'credentials/ssh/add',
+            'ssh/fingerprints': 'credentials/ssh/fingerprints',
+            'ssh/view/:keyId': 'credentials/ssh/view/:keyId',
+            'vcs-token': 'credentials',
+            'access-tokens': 'credentials',
+            'llm-usage': 'ai-experience',
+            'ide-preferences': 'exercises',
+            'quiz-training': 'exercises',
+        });
+        expect(routes[0].children?.filter((route) => route.redirectTo).every((route) => route.pathMatch === 'full')).toBe(true);
     });
 });

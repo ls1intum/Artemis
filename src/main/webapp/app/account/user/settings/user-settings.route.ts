@@ -83,6 +83,71 @@ export const routes: Routes = [
                     pageTitle: 'artemisApp.userSettings.navigation.exercises',
                 },
             },
+            {
+                path: 'account',
+                pathMatch: 'full',
+                redirectTo: 'profile',
+            },
+            {
+                path: 'notifications',
+                pathMatch: 'full',
+                redirectTo: 'profile',
+            },
+            {
+                path: 'science',
+                pathMatch: 'full',
+                redirectTo: 'profile',
+            },
+            {
+                path: 'passkeys',
+                pathMatch: 'full',
+                redirectTo: 'credentials',
+            },
+            {
+                path: 'ssh',
+                pathMatch: 'full',
+                redirectTo: 'credentials',
+            },
+            {
+                path: 'ssh/add',
+                pathMatch: 'full',
+                redirectTo: 'credentials/ssh/add',
+            },
+            {
+                path: 'ssh/fingerprints',
+                pathMatch: 'full',
+                redirectTo: 'credentials/ssh/fingerprints',
+            },
+            {
+                path: 'ssh/view/:keyId',
+                pathMatch: 'full',
+                redirectTo: 'credentials/ssh/view/:keyId',
+            },
+            {
+                path: 'vcs-token',
+                pathMatch: 'full',
+                redirectTo: 'credentials',
+            },
+            {
+                path: 'access-tokens',
+                pathMatch: 'full',
+                redirectTo: 'credentials',
+            },
+            {
+                path: 'llm-usage',
+                pathMatch: 'full',
+                redirectTo: 'ai-experience',
+            },
+            {
+                path: 'ide-preferences',
+                pathMatch: 'full',
+                redirectTo: 'exercises',
+            },
+            {
+                path: 'quiz-training',
+                pathMatch: 'full',
+                redirectTo: 'exercises',
+            },
         ],
     },
 ];
