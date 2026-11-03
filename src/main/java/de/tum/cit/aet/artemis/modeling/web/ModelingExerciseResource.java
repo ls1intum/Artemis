@@ -236,6 +236,7 @@ public class ModelingExerciseResource {
         if (modelingExercise.getTitle() == null) {
             throw new BadRequestAlertException("A new modeling exercise needs a title", ENTITY_NAME, "missingtitle");
         }
+        modelingExercise.validateTitle();
         // validates general settings: points, dates
         modelingExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup

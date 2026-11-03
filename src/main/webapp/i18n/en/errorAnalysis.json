@@ -1,0 +1,39 @@
+{
+    "artemisApp": {
+        "errorAnalysis": {
+            "title": "Error analysis",
+            "note": "Errors that are alike are one row. The counts cover all core nodes and are computed again every time you open this page.",
+            "empty": "No errors in this time span with these filters.",
+            "summary": "Groups: {{ groups }}, errors: {{ errors }}",
+            "pagination": "Pages of the error groups",
+            "loadError": "The error analysis could not be loaded.",
+            "span": {
+                "label": "Time span",
+                "RELEASE": "Since current release",
+                "DAY": "Last day",
+                "WEEK": "Last week",
+                "MONTH": "Last month"
+            },
+            "location": {
+                "label": "Location",
+                "ALL": "All",
+                "SERVER": "Server",
+                "CLIENT": "Client"
+            },
+            "severity": {
+                "label": "Minimum severity",
+                "WARN": "Warning",
+                "ERROR": "Error",
+                "CRITICAL": "Critical"
+            },
+            "column": {
+                "severity": "Severity",
+                "location": "Location",
+                "message": "Error",
+                "count": "Count",
+                "firstSeen": "First seen",
+                "lastSeen": "Last seen"
+            }
+        }
+    }
+}

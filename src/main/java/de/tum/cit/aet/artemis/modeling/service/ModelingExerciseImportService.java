@@ -116,6 +116,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         log.debug("Copying the modeling exercise basis from {}", sourceExercise);
         prepareNewExerciseForImport(newExercise);
         super.copyExerciseBasis(newExercise, sourceExercise, gradingInstructionCopyTracker);
+        newExercise.validateTitle();
 
         // Prefer the caller's edited value (standalone import form), fall back to the source content.
         newExercise.setDiagramType(firstNonNull(newExercise.getDiagramType(), sourceExercise.getDiagramType()));

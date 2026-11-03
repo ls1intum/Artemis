@@ -365,7 +365,10 @@ export class ExerciseAPIRequests {
      * @param exerciseId - The ID of the text exercise to be deleted.
      */
     async deleteTextExercise(exerciseId: number) {
-        await this.page.request.delete(`${TEXT_EXERCISE_BASE}/${exerciseId}`);
+        const response = await this.page.request.delete(`${TEXT_EXERCISE_BASE}/${exerciseId}`);
+        if (!response.ok()) {
+            throw new Error(`Failed to delete text exercise ${exerciseId}: ${response.status()}`);
+        }
     }
 
     /**
@@ -778,7 +781,10 @@ export class ExerciseAPIRequests {
      * @param exerciseId - The ID of the quiz exercise to be deleted.
      */
     async deleteQuizExercise(exerciseId: number) {
-        await this.page.request.delete(`${QUIZ_EXERCISE_BASE}/${exerciseId}`);
+        const response = await this.page.request.delete(`${QUIZ_EXERCISE_BASE}/${exerciseId}`);
+        if (!response.ok()) {
+            throw new Error(`Failed to delete quiz exercise ${exerciseId}: ${response.status()}`);
+        }
     }
 
     /**

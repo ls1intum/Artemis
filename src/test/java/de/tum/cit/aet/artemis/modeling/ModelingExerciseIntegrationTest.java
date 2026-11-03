@@ -554,6 +554,24 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(imported.getAssessmentDueDate()).as("cleared assessment due date should stay cleared").isNull();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "ab", "Strategy/bridge" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createModelingExerciseWithInvalidTitleIsRejected(String title) throws Exception {
+        classExercise.setId(null);
+        classExercise.setTitle(title);
+        request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(classExercise), ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ab", "Strategy/bridge" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importModelingExerciseWithInvalidTitleIsRejected(String title) throws Exception {
+        classExercise.setTitle(title);
+        request.postWithResponseBody("/api/modeling/modeling-exercises/import?sourceExerciseId=" + classExercise.getId(), ImportModelingExerciseDTO.of(classExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importModelingExerciseFromCourseToCourse() throws Exception {
