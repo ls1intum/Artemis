@@ -130,16 +130,15 @@ submission subclasses, etc.)
 
 The following UML component diagram shows the structure of the Artemis server.
 It is a layered architecture whose application layer is divided into feature modules.
-Elements with a dashed border and the stereotype `deprecated` (the `jenkins` module and MySQL) are removed in Artemis 11.
 
 <Image src={serverArchitecture} caption="Server Architecture (UML component diagram)" alt="UML component diagram of the web layer, application layer and data layer of the Artemis server" size={ImageSize.large} />
 
 - The **web layer** exposes the server to the client. REST resources check the role of the user, and websocket topics are declared in code and sent through one messaging service.
-- The **application layer** holds the logic. It is divided into feature modules such as `exercise`, `programming`, `exam`, `assessment`, `communication` and `lecture`, and into the Integrated Code Lifecycle with the modules `localvc` and `localci`. The `jenkins` module is the deprecated alternative to `localci`.
+- The **application layer** holds the logic. It is divided into feature modules such as `exercise`, `programming`, `exam`, `assessment`, `communication` and `lecture`, and into the Integrated Code Lifecycle with the modules `localvc` and `localci`.
 - The **data layer** consists of Spring Data repositories. Transactions are declared in the repositories only, so that a service or a controller never decides about a transaction boundary.
 
 Dependencies point downwards: resources use the application layer, which uses the repositories.
-The application layer reaches the database (JDBC) and the shared state of the installation (Distributed Data) through the data layer and the distributed data provider.
+The application layer reaches the database and the shared state of the installation (Distributed Data) through the data layer and the distributed data provider.
 
 **Rationale.** The layers separate what changes at a different pace: the REST API, the domain logic and the persistence.
 The feature modules keep a change local to one feature, since another module reaches a module only through its `api` package, and never through its repositories.
