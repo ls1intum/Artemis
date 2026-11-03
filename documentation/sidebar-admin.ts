@@ -36,6 +36,7 @@ const sidebars: SidebarsConfig = {
         'user-email-uniqueness',
         'email-delivery',
         'jenkins-localvc',
+        'jenkins-to-localci-migration',
         'saml2-login-registration',
         'oidc-login-registration',
         'upgrade-guide',

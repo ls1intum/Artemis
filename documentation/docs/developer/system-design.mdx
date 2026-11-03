@@ -8,10 +8,10 @@ import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
 
-import topLevelDesign from './assets/system-design/TopLevelDesign.png';
+import topLevelDesign from './assets/system-design/TopLevelDesign.svg';
 import deploymentOverview from './assets/system-design/DeploymentOverview.svg';
 import dataModel from './assets/system-design/DataModel.svg';
-import serverArchitecture from './assets/system-design/ServerArchitecture.png';
+import serverArchitecture from './assets/system-design/ServerArchitecture.svg';
 import iclDeployment from './assets/system-design/integrated-code-lifecycle/Integrated_Code_Lifecycle_Deployment.svg';
 import iclVCSubsystem from './assets/system-design/integrated-code-lifecycle/Integrated_Code_Lifecycle_Subsystem_VC.png';
 import iclCISubsystem from './assets/system-design/integrated-code-lifecycle/Integrated_Code_Lifecycle_Subsystem_CI.svg';
@@ -25,11 +25,30 @@ import iclCancellationComm from './assets/system-design/integrated-code-lifecycl
 
 The following diagram shows the top-level design of Artemis which is decomposed into an application client
 (running as Angular web app in the browser) and an application server (based on Spring Boot).
-For programming exercises, the application server connects to a version control system (VCS) and
-a continuous integration system (CIS).
-Authentication is handled by an external user management system (UMS).
+For programming exercises, the application server contains its own version control system (**LocalVC**, an integrated Git server
+reachable over HTTPS and SSH) and its own continuous integration system (**LocalCI**).
+LocalCI keeps a queue of build jobs. Build agents take jobs from this queue and run them in Docker containers.
+Build agents can run inside the application server or as separate nodes, and are scaled by adding nodes.
+Together, LocalVC and LocalCI form the [Integrated Code Lifecycle](#integrated-code-lifecycle), and no external VCS or CIS is required.
+Nodes of one installation share state (the build queue, caches, the websocket relay and the node registry) through a distributed data provider, which is Hazelcast, Redis,
+or a local implementation for a single node.
+Data is stored in a relational database, which is PostgreSQL.
+Authentication can be delegated to an external user management system (UMS), for example LDAP, SAML2 or OIDC.
+Optional services such as Iris, Athena, Hyperion, Weaviate and Theia extend the core application.
 
 <Image src={topLevelDesign} caption="Top-Level Design" alt="Top-Level Design" size={ImageSize.large} />
+
+<Callout variant={CalloutVariant.warning}>
+
+    **Planned removals in Artemis 11 (March 2027).**
+    Jenkins, the only remaining external CI system, is deprecated and will be removed in Artemis 11.
+    MySQL support will be removed in Artemis 11 as well, which leaves PostgreSQL as the only database.
+    The red, dashed elements in the diagrams of this page are the parts that will disappear.
+    See [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11) for the timeline, and the guides
+    [Jenkins to LocalCI](/admin/jenkins-to-localci-migration) and
+    [MySQL to PostgreSQL](/admin/database-tips#migrating-mysql-data-to-postgresql) for the migration steps.
+
+</Callout>
 
 ## Deployment
 
@@ -37,23 +56,29 @@ The following UML deployment diagram shows a typical deployment of Artemis appli
 Student, Instructor and Teaching Assistant (TA) computers are all equipped equally with the Artemis application client
 being displayed in the browser.
 
-The Continuous Integration Server typically delegates the build jobs to local build agents within
-the university infrastructure or to remote build agents, e.g. hosted in the Amazon Cloud (AWS).
+The Artemis core nodes include LocalVC and LocalCI.
+Exactly one core node is the scheduling node, which runs the scheduled jobs and sends the startup [telemetry](/admin/telemetry).
+Further core nodes can be added for load without downtime.
+Build agents run in separate nodes, for example on servers within the university infrastructure or in a cloud, and
+connect to the core nodes through the distributed data provider.
+They clone the repositories from LocalVC and run the build jobs in Docker containers.
+Jenkins is an optional, deprecated alternative to LocalCI.
 
 <Image src={deploymentOverview} caption="Deployment Overview" alt="Deployment Overview" size={ImageSize.large} />
 
 ## Data Model
 
-The Artemis application server uses the following (simplified) data model in the MySQL database.
+The Artemis application server uses the following (simplified) data model in its relational database (PostgreSQL).
 It supports multiple courses with multiple exercises.
 Each student in the participating student group can participate in the exercise by clicking
 the **Start Exercise** button.
-Then a repository and a build plan for the student (User) will be created and configured.
+Then a repository for the student (User) will be created and configured.
+With the deprecated Jenkins integration, Artemis additionally creates a build plan for each student.
 The initialization state helps to track the progress of this complex operation and allows recovering from errors.
 A student can submit multiple solutions by committing and pushing the source code changes to a given example code
 into the version control system or using the user interface.
-The continuous integration server automatically tests each submission, and notifies the Artemis application server,
-when a new result exists.
+LocalCI automatically tests each submission and hands the result to the application server for grading.
+(An external CI system such as Jenkins notifies the application server when a new result exists.)
 In addition, teaching assistants can assess student solutions and "manually" create results.
 
 <Image src={dataModel} caption="Data Model" alt="Data Model" size={ImageSize.large} />
@@ -68,21 +93,26 @@ submission subclasses, etc.)
 
 ## Server Architecture
 
-The following UML component diagram shows more details of the Artemis application server architecture and its
-REST interfaces to the application client.
+The following diagram shows more details of the Artemis application server architecture.
+The server is organized in feature modules (for example `programming`, `exam`, `communication`, `localvc` and `localci`).
+Inside each module, REST resources and websocket handlers form the web layer, services form the application layer,
+and Spring Data repositories form the data layer. Transactions belong to the repositories.
+Modules reach each other through module APIs, which the architecture tests enforce.
+The `localvc` and `localci` modules implement version control and continuous integration; the `jenkins` module is the deprecated alternative to `localci`.
 
 <Image src={serverArchitecture} caption="Server Architecture" alt="Server Architecture" size={ImageSize.large} />
 
 ## Integrated Code Lifecycle
 
-Artemis supports an integrated version control system (VCS) and continuous integration system (CIS).
-If you use Integrated Code Lifecycle, the architecture differs from the architecture with external VC and CI systems.
+The Integrated Code Lifecycle is the default and recommended way to run programming exercises.
+It consists of the integrated version control system (LocalVC) and the integrated continuous integration system (LocalCI).
+The only external CI system that Artemis still supports is Jenkins (combined with LocalVC), which is deprecated and removed in Artemis 11.
 An exemplary deployment with Integrated Code Lifecycle (without using an external user management system), consisting of one main application server and three build agent servers, looks like this:
 
 <Image src={iclDeployment} caption="Integrated Code Lifecycle Deployment" alt="Integrated Code Lifecycle Deployment" size={ImageSize.large} />
 
 Employing the Integrated Code Lifecycle, administrators and developers can set the Artemis application up without the need for dedicated VCS and CIS installations.
-This new architecture simplifies the setup process, reduces dependencies on external systems, and streamlines maintenance for both developers and administrators.
+This architecture simplifies the setup process, reduces dependencies on external systems, and streamlines maintenance for both developers and administrators.
 Developers have fewer applications to run in parallel, which translates into decreased system requirements.
 See [Integrated Code Lifecycle Setup Description](setup#set-up-artemis) on how to set up a single-node environment for developing purposes.
 
@@ -123,7 +153,7 @@ The following diagram shows an overview of the components in the CI Management s
 
 <Image src={iclCIMSubsystem} caption="CI Management Subsystem" alt="CI Management Subsystem" size={ImageSize.large} />
 
-The CI Management prepares information for build jobs and add them to the distributed Hazelcast queue. It has complete access to the distributed data structures related to the CI system.
+The CI Management prepares information for build jobs and add them to the distributed build job queue, which lives in the distributed data provider (Hazelcast, Redis or local). It has complete access to the distributed data structures related to the CI system.
 It provides endpoints so users can interact with these data structures, such as viewing and cancelling build jobs. It also receives the build job results, grades them, and notifies the user.
 The CI Management has access to the database and the file system.
 
@@ -207,14 +237,32 @@ The ephemeral nature of Docker containers allows the `BuildJobExecutionService` 
 Finally, when the build ran through successfully, the `SharedQueueProcessingService` puts the build result into the result queue so it can then be processed by the CI Management.
 If there were any errors, the `BuildJobManagementService` stops the Docker container and `SharedQueueProcessingService` relays the exception message to the CI Management via the result queue.
 
-### Hazelcast Distributed Data Structures
+### Distributed Data Structures
 
-The integration employs various Hazelcast distributed data structures to streamline the processing of build jobs across the network.
+Local CI keeps the build job queue, the running jobs and the build agent information in shared data structures that all core nodes and build agents access.
+Artemis does not use Hazelcast or Redis directly. It accesses them through the `DistributedDataProvider` abstraction, and the provider is selected
+with `artemis.distributed-data.provider`:
+
+| Provider | Use | Notes |
+|----------|-----|-------|
+| `Hazelcast` | Single or multiple nodes | The default. Artemis nodes form a Hazelcast cluster and discover each other through the service registry. Data is kept in memory and is lost when the cluster stops. |
+| `Redis` | Single or multiple nodes | Uses Redis or Valkey as an external store. Needs no service registry. Data persists across restarts, so the stored schema is versioned, see [Distributed Data with Redis or Valkey](/admin/production-setup/distributed-data). |
+| `Local` | A single node only | Keeps the data in the memory of the node. |
+
+<Callout variant={CalloutVariant.info}>
+
+    The maintainers are considering to deprecate the Hazelcast provider. No decision has been made yet.
+    Code outside the provider implementations must not depend on Hazelcast, so that the provider can be replaced.
+    The structures below use the Hazelcast type names; the Redis provider implements the same structures with versioned keys (`artemis:v1:*`).
+
+</Callout>
+
+The integration employs various distributed data structures to streamline the processing of build jobs across the network.
 These structures include the `buildJobQueue`, an `IQueue` used for queuing all build jobs awaiting processing;
 the `processingJobs`, an `IMap` tracking build jobs currently under processing;
 and the `canceledBuildJobsTopic`, an `ITopic` utilized to signal build agents to cancel specific build jobs.
 
-Here we can see an overview of all Hazelcast data structures used in Local CI and their purpose:
+Here we can see an overview of all distributed data structures used in Local CI and their purpose (named after their Hazelcast types):
 
 | Name                       | Type       | Description                                                                     |
 |----------------------------|------------|---------------------------------------------------------------------------------|
