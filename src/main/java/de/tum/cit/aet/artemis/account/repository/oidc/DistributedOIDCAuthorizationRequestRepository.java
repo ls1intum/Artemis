@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.account.repository.oidc;
 
 import java.time.Duration;
-import java.util.Arrays;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
@@ -12,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
@@ -24,6 +22,7 @@ import org.springframework.web.util.WebUtils;
 
 import de.tum.cit.aet.artemis.account.config.OIDCConstants;
 import de.tum.cit.aet.artemis.account.config.OIDCEnabled;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
@@ -53,8 +52,6 @@ public class DistributedOIDCAuthorizationRequestRepository implements Authorizat
 
     private static final Logger log = LoggerFactory.getLogger(DistributedOIDCAuthorizationRequestRepository.class);
 
-    private static final String DEVELOPMENT_PROFILE = "dev";
-
     private static final String MAP_NAME = "oidcAuthorizationRequests";
 
     /**
@@ -69,13 +66,13 @@ public class DistributedOIDCAuthorizationRequestRepository implements Authorizat
 
     private final DistributedDataProvider distributedDataProvider;
 
-    private final Environment environment;
+    private final JWTCookieService jwtCookieService;
 
     private DistributedMap<String, OAuth2AuthorizationRequest> authorizationRequests;
 
-    public DistributedOIDCAuthorizationRequestRepository(DistributedDataProvider distributedDataProvider, Environment environment) {
+    public DistributedOIDCAuthorizationRequestRepository(DistributedDataProvider distributedDataProvider, JWTCookieService jwtCookieService) {
         this.distributedDataProvider = distributedDataProvider;
-        this.environment = environment;
+        this.jwtCookieService = jwtCookieService;
     }
 
     /**
@@ -108,10 +105,12 @@ public class DistributedOIDCAuthorizationRequestRepository implements Authorizat
     @Override
     public OAuth2AuthorizationRequest removeAuthorizationRequest(HttpServletRequest request, HttpServletResponse response) {
         String state = boundState(request);
-        OAuth2AuthorizationRequest authorizationRequest = state == null ? null : authorizationRequests.remove(state);
-        if (WebUtils.getCookie(request, OIDCConstants.OIDC_STATE_COOKIE_NAME) != null) {
-            response.addHeader(HttpHeaders.SET_COOKIE, buildStateCookie("", Duration.ZERO).toString());
+        if (state == null) {
+            // The cookie may belong to a newer login of this browser, whose callback still has to find it
+            return null;
         }
+        OAuth2AuthorizationRequest authorizationRequest = authorizationRequests.remove(state);
+        response.addHeader(HttpHeaders.SET_COOKIE, buildStateCookie("", Duration.ZERO).toString());
         if (authorizationRequest != null) {
             request.setAttribute(OIDCConstants.OIDC_AUTHORIZATION_REQUEST_ATTRIBUTE, authorizationRequest);
         }
@@ -135,8 +134,9 @@ public class DistributedOIDCAuthorizationRequestRepository implements Authorizat
     }
 
     private ResponseCookie buildStateCookie(String value, Duration maxAge) {
-        boolean isSecure = !Arrays.asList(environment.getActiveProfiles()).contains(DEVELOPMENT_PROFILE);
+        // Follows the JWT cookie, so that jhipster.security.authentication.jwt.cookie-secure also allows OIDC logins over plain HTTP
         // Lax, not Strict: the callback is a top-level navigation coming from the identity provider, which is another site
-        return ResponseCookie.from(OIDCConstants.OIDC_STATE_COOKIE_NAME, value).httpOnly(true).sameSite("Lax").secure(isSecure).path(STATE_COOKIE_PATH).maxAge(maxAge).build();
+        return ResponseCookie.from(OIDCConstants.OIDC_STATE_COOKIE_NAME, value).httpOnly(true).sameSite("Lax").secure(jwtCookieService.isSecureCookie()).path(STATE_COOKIE_PATH)
+                .maxAge(maxAge).build();
     }
 }

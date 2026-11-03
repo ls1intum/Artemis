@@ -12,6 +12,7 @@ import jakarta.servlet.http.Cookie;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
@@ -21,6 +22,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.config.OIDCConstants;
 import de.tum.cit.aet.artemis.account.repository.oidc.DistributedOIDCAuthorizationRequestRepository;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**
@@ -37,6 +42,15 @@ class OIDCAuthorizationRequestIntegrationTest extends AbstractSpringIntegrationL
     @Autowired
     private DistributedOIDCAuthorizationRequestRepository authorizationRequestRepository;
 
+    @Autowired
+    private JWTCookieService jwtCookieService;
+
+    @Autowired
+    private DistributedDataProvider distributedDataProvider;
+
+    @Autowired
+    private TokenProvider tokenProvider;
+
     @Test
     void testCallbackWithoutTheSessionOfTheStartingNodeFindsTheAuthorizationRequest() throws Exception {
         MvcResult start = startLogin();
@@ -48,6 +62,7 @@ class OIDCAuthorizationRequestIntegrationTest extends AbstractSpringIntegrationL
         assertThat(stateCookie).isNotNull();
         assertThat(stateCookie.getValue()).isEqualTo(state);
         assertThat(stateCookie.isHttpOnly()).isTrue();
+        assertThat(stateCookie.getSecure()).isEqualTo(jwtCookieService.isSecureCookie());
 
         MockHttpServletRequest callback = callback(state, stateCookie);
         OAuth2AuthorizationRequest authorizationRequest = authorizationRequestRepository.removeAuthorizationRequest(callback, new MockHttpServletResponse());
@@ -83,6 +98,43 @@ class OIDCAuthorizationRequestIntegrationTest extends AbstractSpringIntegrationL
 
         // The rejected attempts must not have used up the request of the browser that started the login
         assertThat(authorizationRequestRepository.loadAuthorizationRequest(callback(state, new Cookie(OIDCConstants.OIDC_STATE_COOKIE_NAME, state)))).isNotNull();
+    }
+
+    @Test
+    void testCallbackOfAnOlderLoginKeepsTheStateCookieOfTheNewerLogin() throws Exception {
+        // The browser starts login A and then login B, which replaces the state cookie, and the callback of A arrives first
+        String stateOfA = stateOf(startLogin());
+        MvcResult startOfB = startLogin();
+        String stateOfB = stateOf(startOfB);
+        Cookie stateCookieOfB = startOfB.getResponse().getCookie(OIDCConstants.OIDC_STATE_COOKIE_NAME);
+
+        MockHttpServletResponse responseToA = new MockHttpServletResponse();
+        assertThat(authorizationRequestRepository.removeAuthorizationRequest(callback(stateOfA, stateCookieOfB), responseToA)).isNull();
+        assertThat(responseToA.getCookie(OIDCConstants.OIDC_STATE_COOKIE_NAME)).isNull();
+
+        // The callback of B must still succeed with the cookie the browser kept
+        assertThat(authorizationRequestRepository.removeAuthorizationRequest(callback(stateOfB, stateCookieOfB), new MockHttpServletResponse())).isNotNull();
+    }
+
+    @Test
+    void testStateCookieFollowsTheConfiguredCookieSecurity() {
+        // A deployment reached over plain HTTP outside the development profile disables secure cookies explicitly
+        ArtemisProperties properties = new ArtemisProperties();
+        properties.getSecurity().getAuthentication().getJwt().setCookieSecure(false);
+        MockEnvironment environment = new MockEnvironment();
+        environment.setActiveProfiles("prod");
+        JWTCookieService insecureCookieService = new JWTCookieService(tokenProvider, environment, properties, 2592000);
+        var repository = new DistributedOIDCAuthorizationRequestRepository(distributedDataProvider, insecureCookieService);
+        repository.init();
+
+        OAuth2AuthorizationRequest authorizationRequest = OAuth2AuthorizationRequest.authorizationCode().authorizationUri("http://mock-auth/authorize").clientId("artemis")
+                .state("plain-http-state").build();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        repository.saveAuthorizationRequest(authorizationRequest, new MockHttpServletRequest(), response);
+
+        Cookie stateCookie = response.getCookie(OIDCConstants.OIDC_STATE_COOKIE_NAME);
+        assertThat(stateCookie).isNotNull();
+        assertThat(stateCookie.getSecure()).isFalse();
     }
 
     @Test
