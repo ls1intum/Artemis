@@ -1,4 +1,4 @@
-<div class="border rounded p-3 mb-3">
+<div class="border rounded p-3 mb-3" data-testid="build-container-editor">
     <div class="flex items-end gap-3 mb-2">
         @if (showsSettings()) {
             <div class="grow">
@@ -10,6 +10,7 @@
                     type="text"
                     class="form-control"
                     [id]="'field_container_name_' + containerIndex()"
+                    data-testid="container-name-input"
                     [ngModel]="container().name"
                     (ngModelChange)="setName($event)"
                     [name]="'containerName_' + containerIndex()"
@@ -25,6 +26,7 @@
                 type="text"
                 class="form-control"
                 [id]="'field_container_image_' + containerIndex()"
+                data-testid="container-image-input"
                 [ngModel]="container().dockerImage ?? ''"
                 [placeholder]="dockerImagePlaceholder()"
                 (ngModelChange)="setDockerImage($event)"
@@ -41,6 +43,7 @@
                     type="number"
                     class="form-control"
                     [id]="'field_container_timeout_' + containerIndex()"
+                    data-testid="container-timeout-input"
                     [ngModel]="container().timeoutSeconds ?? ''"
                     [placeholder]="timeoutPlaceholder() ?? ''"
                     [min]="timeoutMinValue() ?? 1"
@@ -81,6 +84,7 @@
                     class="form-check-input"
                     type="checkbox"
                     [id]="'field_container_scoped_' + containerIndex()"
+                    data-testid="container-scoping-checkbox"
                     [ngModel]="scopesRepositories()"
                     (ngModelChange)="toggleRepositoryScoping($event)"
                     [name]="'containerScoped_' + containerIndex()"
@@ -117,6 +121,7 @@
                     class="form-check-input"
                     type="checkbox"
                     [id]="'field_container_docker_flags_' + containerIndex()"
+                    data-testid="container-docker-flags-checkbox"
                     [ngModel]="overridesDockerFlags()"
                     (ngModelChange)="toggleDockerFlags($event)"
                     [name]="'containerDockerFlags_' + containerIndex()"

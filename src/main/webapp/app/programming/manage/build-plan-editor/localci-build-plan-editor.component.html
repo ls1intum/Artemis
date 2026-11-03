@@ -28,6 +28,7 @@
         }
         <tumaet-ui-button
             id="submit_button"
+            data-testid="submit-build-plan-button"
             severity="success"
             class="ms-auto"
             [icon]="farPlayCircle"
@@ -61,7 +62,7 @@
             [customNetworks]="containerNetworks()"
         />
     }
-    <tumaet-ui-button id="add_container_button" variant="outlined" [icon]="faPlus" (clicked)="addContainer()">
+    <tumaet-ui-button id="add_container_button" data-testid="add-container-button" variant="outlined" [icon]="faPlus" (clicked)="addContainer()">
         <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.addContainer"></span>
     </tumaet-ui-button>
     <jhi-help-icon text="artemisApp.programmingExercise.buildContainersEditor.help" />

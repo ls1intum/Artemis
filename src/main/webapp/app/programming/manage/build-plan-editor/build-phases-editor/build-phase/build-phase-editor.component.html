@@ -63,6 +63,7 @@
                 <label [for]="idPrefix() + 'phase-name-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.phaseName"></label>
                 <input
                     [id]="idPrefix() + 'phase-name-input-' + index()"
+                    data-testid="phase-name-input"
                     pInputText
                     pSize="small"
                     [ngModel]="phase().name"
