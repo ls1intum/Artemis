@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } from '@angular/core';
 import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HyperionEmptyComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-empty.component';
 import { HyperionMarkdownComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-markdown.component';
 import { artifactFiles } from 'app/hyperion/exercise-generation/artifacts/hyperion-artifact-file';
@@ -15,6 +16,7 @@ import { ExerciseGenerationFileChange } from 'app/hyperion/exercise-generation/h
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
+        ArtemisTranslatePipe,
         HyperionEmptyComponent,
         HyperionMarkdownComponent,
         HyperionFileChangeListComponent,

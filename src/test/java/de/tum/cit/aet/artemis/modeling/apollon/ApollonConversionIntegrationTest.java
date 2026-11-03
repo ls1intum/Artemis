@@ -37,7 +37,7 @@ class ApollonConversionIntegrationTest extends AbstractSpringIntegrationIndepend
      * Returns the pdf of the model in the request body
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testConvertingModel() throws Exception {
 
         String mockPdf = "This is my pdf file";

@@ -77,6 +77,22 @@ describe('GradingInstructionsDetailsComponent', () => {
         gradingCriterionWithoutId = { title: 'testCriteria', structuredGradingInstructions: [gradingInstructionWithoutId] };
     });
 
+    it('associates criterion and instruction labels with their rendered text controls', async () => {
+        exercise.gradingCriteria = [gradingCriterion, gradingCriterionWithoutId];
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const prefixes = ['criterionTitle-', 'instruction-grading-scale-', 'instruction-usage-count-', 'instruction-description-', 'instruction-feedback-'];
+        const labels = (Array.from(fixture.nativeElement.querySelectorAll('label[for]')) as HTMLLabelElement[]).filter((label) =>
+            prefixes.some((prefix) => label.htmlFor.startsWith(prefix)),
+        );
+        expect(labels).toHaveLength(10);
+        for (const label of labels) {
+            const control = label.parentElement!.querySelector('input, textarea');
+            expect(control).not.toBeNull();
+            expect(label.control).toBe(control);
+        }
+    });
+
     it.each([false, true])('disables delete keyboard actions when read-only (feedback used: %s)', (feedbackUsed) => {
         exercise.gradingCriteria = [gradingCriterion];
         exercise.gradingInstructionFeedbackUsed = feedbackUsed;

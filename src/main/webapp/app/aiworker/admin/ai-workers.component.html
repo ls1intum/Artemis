@@ -58,7 +58,12 @@
                             @if (row.capacityKnown) {
                                 {{ worker.availableSlots }} / {{ worker.capacity }}
                             } @else {
-                                <span [tumAetUiTooltip]="'artemisApp.aiworker.unknownCapacity' | artemisTranslate" tabindex="0">—</span>
+                                <span
+                                    role="img"
+                                    [attr.aria-label]="'artemisApp.aiworker.unknownCapacity' | artemisTranslate"
+                                    [tumAetUiTooltip]="'artemisApp.aiworker.unknownCapacity' | artemisTranslate"
+                                    >—</span
+                                >
                             }
                         </td>
                         <td>{{ (worker.lastHeartbeat | date: 'medium') ?? '—' }}</td>

@@ -132,7 +132,10 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
         doAnswer(invocation -> {
             markerSeen.set(programmingExerciseDeletionService.isBeingDeleted(exerciseId));
             distributedDataAccessService.getDistributedBuildResultQueue().add(new ResultQueueItem(buildResult(), templateBuildJob(buildJobId), List.of(), null));
-            localCIResultProcessingService.processResultAsync();
+            processQueuedResults();
+            // Keep deletion's permits held until this result, rather than an older queued result, has been denied admission.
+            await().atMost(Duration.ofSeconds(30)).until(() -> distributedDataAccessService.getDistributedDeferredBuildResultQueue().getAll().stream()
+                    .anyMatch(item -> item.buildJobQueueItem().id().equals(buildJobId)));
             return invocation.callRealMethod();
         }).when(repositoryVcsAccessTokenService).deleteByExerciseId(exerciseId);
 
@@ -147,6 +150,7 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
         assertThat(markerSeen).as("the marker is set while the deletion runs").isTrue();
         verify(programmingExerciseGradingService, never()).processNewProgrammingExerciseResult(
                 argThat(participation -> participation != null && participation.getId().equals(templateParticipationId)), any(BuildResult.class), anyBoolean());
+        assertThat(buildJobRepository.findByBuildJobId(buildJobId).orElseThrow().getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
         assertThat(programmingExerciseRepository.findById(exerciseId)).isEmpty();
         assertThat(resultRepository.existsByExerciseId(exerciseId)).isFalse();
     }
@@ -199,6 +203,7 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
                 allowPersistence.countDown();
                 deletion.get(30, TimeUnit.SECONDS);
                 assertThat(deletionLockSeen).isTrue();
+                assertThat(buildJobRepository.findByBuildJobId(buildJobId).orElseThrow().getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL);
                 assertThat(programmingExerciseRepository.findById(exerciseId)).isEmpty();
                 assertThat(resultRepository.existsByExerciseId(exerciseId)).isFalse();
             }
@@ -211,6 +216,12 @@ class ProgrammingExerciseDeletionBuildResultRaceIntegrationTest extends Abstract
                 });
             }
         }
+    }
+
+    private void processQueuedResults() {
+        // Earlier tests can enqueue results before the lazy consumer registers its listener. One new-item event only consumes one of those old results.
+        // Invoke the real bounded sweep without registering its recurring @Scheduled task in the shared context.
+        new LocalCIResultListenerService(distributedDataAccessService, localCIResultProcessingService).processQueuedResults();
     }
 
     /**

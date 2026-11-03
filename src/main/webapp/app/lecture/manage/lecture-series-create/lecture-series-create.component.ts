@@ -1,10 +1,9 @@
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Component, Signal, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPenToSquare, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
-import { ButtonModule } from 'primeng/button';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { LectureSeriesDraftEditModalComponent } from 'app/lecture/manage/lecture-series-edit-modal/lecture-series-draft-edit-modal.component';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -55,7 +54,16 @@ export enum LectureDraftState {
  */
 @Component({
     selector: 'jhi-lecture-series-create',
-    imports: [NgClass, TranslateDirective, TumAetUiDatePickerComponent, ButtonModule, ConfirmDialogModule, FaIconComponent, LectureSeriesDraftEditModalComponent],
+    imports: [
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiProgressSpinnerComponent,
+        NgClass,
+        TranslateDirective,
+        TumAetUiDatePickerComponent,
+        FaIconComponent,
+        LectureSeriesDraftEditModalComponent,
+    ],
     templateUrl: './lecture-series-create.component.html',
     styleUrl: './lecture-series-create.component.scss',
 })

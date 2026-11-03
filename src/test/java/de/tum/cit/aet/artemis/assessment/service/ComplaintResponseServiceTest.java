@@ -109,7 +109,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentB
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testIsUserAuthorizedToRespondToComplaintForInstructor() {
         Result textExerciseResult = this.participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         this.complaintUtilService.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
@@ -119,7 +119,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentB
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testIsUserAuthorizedToRespondToComplaintForStudent() {
         Result textExerciseResult = this.participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         this.complaintUtilService.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
@@ -129,7 +129,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentB
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testIsUserAuthorizedToRespondToComplaintForTeamOwner() {
         Result textExerciseResult = this.participationUtilService.createParticipationSubmissionAndResult(teamTextExercise.getId(), team, 0d, 0d, 10, true);
         this.complaintUtilService.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
@@ -139,7 +139,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentB
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testIsUserAuthorizedToRespondToComplaintForNotTeamOwner() {
         Result textExerciseResult = this.participationUtilService.createParticipationSubmissionAndResult(teamTextExercise.getId(), team, 0d, 0d, 10, true);
         this.complaintUtilService.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
@@ -149,7 +149,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentB
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testIsUserAuthorizedToRespondToComplaintForNoComplaintType() {
         Result textExerciseResult = this.participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         Submission submission = textExerciseResult.getSubmission();
@@ -164,7 +164,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentB
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testIsUserAuthorizedToRespondToComplaintForComplaints() {
         Result textExerciseResult = this.participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         Submission submission = textExerciseResult.getSubmission();
@@ -179,7 +179,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentB
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testIsUserAuthorizedToRespondToComplaintForComplaintsWithAutomaticAssessment() {
         Result textExerciseResult = this.participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         this.complaintUtilService.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
@@ -190,7 +190,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentB
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testIsUserAuthorizedToRespondToComplaintForFeedbackRequest() {
         Result textExerciseResult = this.participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         Submission submission = textExerciseResult.getSubmission();
@@ -205,7 +205,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentB
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testIsUserAuthorizedToRespondToComplaintForFeedbackRequestWithAutomaticAssessment() {
         Result textExerciseResult = this.participationUtilService.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         this.complaintUtilService.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.MORE_FEEDBACK);

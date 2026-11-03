@@ -8,7 +8,13 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(discriminatorProperty = "type", discriminatorMapping = { @DiscriminatorMapping(value = "multiple-choice", schema = MultipleChoiceQuestionCreateDTO.class),
+        @DiscriminatorMapping(value = "drag-and-drop", schema = DragAndDropQuestionCreateDTO.class),
+        @DiscriminatorMapping(value = "short-answer", schema = ShortAnswerQuestionCreateDTO.class) }, oneOf = { MultipleChoiceQuestionCreateDTO.class,
+                DragAndDropQuestionCreateDTO.class, ShortAnswerQuestionCreateDTO.class })
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestionCreateDTO.class, name = "multiple-choice"),
         @JsonSubTypes.Type(value = DragAndDropQuestionCreateDTO.class, name = "drag-and-drop"),

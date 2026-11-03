@@ -5,6 +5,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Locale;
@@ -168,6 +169,21 @@ public class GenerationWorkspace {
         @Override
         public byte[] content() {
             return content.clone();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof BinarySeedFile file && Arrays.equals(content, file.content);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(content);
+        }
+
+        @Override
+        public String toString() {
+            return "BinarySeedFile[" + content.length + " bytes]";
         }
     }
 

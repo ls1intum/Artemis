@@ -76,6 +76,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'forms-select-button--docs';
         case 'forms-toggle-switch':
             return 'forms-toggle-switch--docs';
+        case 'layout-splitter':
+            return 'layout-splitter--docs';
         case 'navigation-menu':
             return 'navigation-menu--docs';
         case 'navigation-tabs':
@@ -86,6 +88,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'overlays-dialog--docs';
         case 'overlays-popover':
             return 'overlays-popover--docs';
+        case 'overlays-programmatic-dialog':
+            return 'overlays-programmatic-dialog--docs';
         case 'overlays-tooltip':
             return 'overlays-tooltip--docs';
         default:

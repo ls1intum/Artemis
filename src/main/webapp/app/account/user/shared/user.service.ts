@@ -10,14 +10,15 @@ export class UserService {
     private http = inject(HttpClient);
 
     public resourceUrl = 'api/account/users';
+    public adminResourceUrl = 'api/account/admin/users';
 
     /**
-     * Search for a user on the server by login or name.
+     * Search for a user on the server by login or name. Only administrators may search all users.
      * @param loginOrName The login or name to search for.
      * @return Observable<HttpResponse<User[]>> with the list of found users as body.
      */
     search(loginOrName: string): Observable<HttpResponse<User[]>> {
-        return this.http.get<User[]>(`${this.resourceUrl}/search?loginOrName=${loginOrName}`, { observe: 'response' });
+        return this.http.get<User[]>(`${this.adminResourceUrl}/search?loginOrName=${loginOrName}`, { observe: 'response' });
     }
 
     /**

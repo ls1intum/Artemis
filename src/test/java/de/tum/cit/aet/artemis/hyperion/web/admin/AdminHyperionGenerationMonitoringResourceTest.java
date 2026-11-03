@@ -60,7 +60,7 @@ class AdminHyperionGenerationMonitoringResourceTest extends AbstractSpringIntegr
     }
 
     @Test
-    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor", roles = "USER")
     void nonAdminsCannotInspectOrCancelOtherRuns() throws Exception {
         request.performMvcRequest(get("/api/hyperion/admin/generations")).andExpect(status().isForbidden());
         request.performMvcRequest(delete("/api/hyperion/admin/exercises/42/generations/job").param("reason", "Stop")).andExpect(status().isForbidden());

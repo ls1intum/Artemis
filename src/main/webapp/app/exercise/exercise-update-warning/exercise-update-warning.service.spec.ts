@@ -1,10 +1,13 @@
+import { ApplicationRef } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { TestBed } from '@angular/core/testing';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
-import { Component } from '@angular/core';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -25,6 +28,12 @@ describe('Exercise Update Warning Service', () => {
     let backupExercise: Exercise;
 
     beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
         updateWarningService = TestBed.inject(ExerciseUpdateWarningService);
 
         loadExerciseSpy = vi.spyOn(updateWarningService, 'loadExercise');
@@ -175,7 +184,36 @@ describe('Exercise Update Warning Service', () => {
 
         expect(loadExerciseSpy).toHaveBeenCalledTimes(1);
         expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
-        expect(openSpy).toHaveBeenCalledWith(ExerciseUpdateWarningComponent as Component);
+        expect(openSpy).toHaveBeenCalledWith(ExerciseUpdateWarningComponent);
         expect(openSpy).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('Exercise update warning dialog integration', () => {
+    beforeEach(() => {
+        TestBed.configureTestingModule({ providers: [{ provide: TranslateService, useClass: MockTranslateService }] });
+    });
+
+    afterEach(() => TestBed.inject(TumAetUiDialogService).closeAll());
+
+    it('renders the warning in a named dialog and cancels a pending save on Escape', async () => {
+        const service = TestBed.inject(ExerciseUpdateWarningService);
+        service.creditChanged = true;
+        const ref = service.open(ExerciseUpdateWarningComponent);
+        const canceledSpy = vi.spyOn(ref.componentInstance.canceled, 'next');
+        const app = TestBed.inject(ApplicationRef);
+        app.tick();
+        await app.whenStable();
+        app.tick();
+
+        const dialog = document.querySelector('[role="dialog"]');
+        expect(dialog?.getAttribute('aria-label')).toBe('artemisApp.exercise.update.warning.warning');
+        expect(dialog?.textContent).toContain('artemisApp.exercise.update.warning.creditChanged');
+        dialog?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        await app.whenStable();
+        app.tick();
+
+        expect(canceledSpy).toHaveBeenCalledOnce();
+        expect(TestBed.inject(TumAetUiDialogService).hasOpenDialogs()).toBe(false);
     });
 });

@@ -27,7 +27,7 @@
 
     @if (checks().length) {
         <div class="mt-3" data-testid="hyperion-run-outcome-checks">
-            <h3 class="hyperion-outcome-checks-title" jhiTranslate="artemisApp.hyperion.generation.verdict.title"></h3>
+            <h3 class="hyperion-outcome-checks-title">{{ 'artemisApp.hyperion.generation.verdict.title' | artemisTranslate }}</h3>
             <ul class="m-0 flex list-none flex-col gap-1 p-0">
                 @for (check of checks(); track check.labelKey) {
                     <li class="flex items-center gap-2 text-sm">

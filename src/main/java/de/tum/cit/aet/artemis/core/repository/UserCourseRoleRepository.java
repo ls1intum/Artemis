@@ -65,6 +65,16 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
             """)
     List<UserCourseRoleDTO> findCourseRoleDTOsByUser_Id(@Param("userId") Long userId);
 
+    /**
+     * Whether the user holds any of the given roles in at least one course.
+     *
+     * @param userId the id of the user
+     * @param roles  the roles to look for
+     * @return {@code true} if the user holds one of the roles in some course
+     */
+    @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.role IN :roles)")
+    boolean existsByUser_IdAndRoleIn(@Param("userId") Long userId, @Param("roles") Collection<CourseRole> roles);
+
     @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role = :role)")
     boolean existsByUser_IdAndCourse_IdAndRole(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("role") CourseRole role);
 
@@ -80,22 +90,8 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
     @Query("SELECT ucr.user.id FROM UserCourseRole ucr WHERE ucr.course.id = :courseId AND ucr.role = :role AND ucr.user.id IN :userIds")
     Set<Long> findUserIdsByCourse_IdAndRoleAndUser_IdIn(@Param("courseId") Long courseId, @Param("role") CourseRole role, @Param("userIds") Collection<Long> userIds);
 
-    /**
-     * Returns which of the given users hold the given role in any course, in a single query. Used to batch-rebuild
-     * global authorities for many users at once instead of one query per user.
-     *
-     * @param userIds the candidate user ids
-     * @param role    the role to check for
-     * @return the subset of userIds that hold the role in at least one course
-     */
-    @Query("SELECT DISTINCT ucr.user.id FROM UserCourseRole ucr WHERE ucr.user.id IN :userIds AND ucr.role = :role")
-    Set<Long> findUserIdsByUser_IdInAndRole(@Param("userIds") Collection<Long> userIds, @Param("role") CourseRole role);
-
     @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN :roles)")
     boolean existsByUser_IdAndCourse_IdAndRoleIn(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("roles") Collection<CourseRole> roles);
-
-    @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.role IN :roles)")
-    boolean existsByUser_IdAndRoleIn(@Param("userId") Long userId, @Param("roles") Collection<CourseRole> roles);
 
     @Transactional
     @Modifying

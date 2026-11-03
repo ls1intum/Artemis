@@ -3,15 +3,24 @@ import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { HIGH_COMPETENCY_LINK_WEIGHT, MEDIUM_COMPETENCY_LINK_WEIGHT } from 'app/atlas/shared/entities/competency.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ProgressBar } from 'primeng/progressbar';
+import { TumAetUiCardComponent, TumAetUiProgressBarComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-competency-contribution-card',
-    imports: [DecimalPipe, FaIconComponent, FaLayersComponent, NgbTooltipModule, TranslateDirective, ArtemisTranslatePipe, RouterLink, ProgressBar],
+    imports: [
+        DecimalPipe,
+        FaIconComponent,
+        FaLayersComponent,
+        TumAetUiTooltipDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        RouterLink,
+        TumAetUiCardComponent,
+        TumAetUiProgressBarComponent,
+    ],
     templateUrl: './competency-contribution-card.component.html',
 })
 export class CompetencyContributionCardComponent {

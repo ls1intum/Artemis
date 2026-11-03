@@ -4,6 +4,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -64,9 +65,8 @@ final class AuthoringStageCapture {
     @Nullable
     private final String baselineProblemStatement;
 
-    /** Written by the generation thread at a stage boundary and read by it again on the failure paths; volatile so a read on any other thread still sees the latest. */
-    @Nullable
-    private volatile CapturedWorkspace latestStageSnapshot;
+    /** Written by the generation thread at a stage boundary and read by it again on the failure paths; atomic so a read on any other thread still sees the latest. */
+    private final AtomicReference<CapturedWorkspace> latestStageSnapshot = new AtomicReference<>();
 
     AuthoringStageCapture(GenerationOrchestrator service, GenerationWorkspace workspace, InteractiveSandbox sandbox, String sessionId, SandboxSessionLifecycle lifecycle,
             GenerationWorkspace.WorkspaceSeed workspaceSeed, Map<String, String> placeholderReplacements, Map<RepositoryRole, Map<String, String>> baselineRepositoryFiles,
@@ -89,7 +89,7 @@ final class AuthoringStageCapture {
     /** The last authoring-stage boundary snapshot, or {@code null} when no stage has completed with anything in it yet. Package-private for tests. */
     @Nullable
     CapturedWorkspace latestStageSnapshot() {
-        return latestStageSnapshot;
+        return latestStageSnapshot.get();
     }
 
     /**
@@ -111,7 +111,7 @@ final class AuthoringStageCapture {
             if (!hasProducedArtifacts(files, statement, specDocument, testPlanJson)) {
                 return;
             }
-            latestStageSnapshot = new CapturedWorkspace(files, statement, specDocument, testPlanJson, stage);
+            latestStageSnapshot.set(new CapturedWorkspace(files, statement, specDocument, testPlanJson, stage));
             log.debug("Snapshotted {} repository/repositories at the end of authoring stage {} for session {}", files.size(), stage, sessionId);
         }
         catch (RuntimeException e) {
@@ -162,7 +162,7 @@ final class AuthoringStageCapture {
             // The session is already gone, so every copy-out below would fail. Skipping them is the point: issuing them would only add "Could not extract … files" warnings to
             // the log and still return nothing.
             log.info("Sandbox session {} was destroyed before its work could be copied out; falling back to the last authoring-stage snapshot", sessionId);
-            return latestStageSnapshot;
+            return latestStageSnapshot.get();
         }
         try {
             try {
@@ -183,7 +183,7 @@ final class AuthoringStageCapture {
             String specDocument = GenerationOrchestrator.readSpecDocument(sandbox, sessionId);
             String testPlanJson = GenerationOrchestrator.readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
             if (!hasProducedArtifacts(files, statement, specDocument, testPlanJson)) {
-                return latestStageSnapshot;
+                return latestStageSnapshot.get();
             }
             return new CapturedWorkspace(files, statement, specDocument, testPlanJson, null);
         }

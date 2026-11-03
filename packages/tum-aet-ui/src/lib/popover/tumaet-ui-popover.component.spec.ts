@@ -169,6 +169,18 @@ describe('TumAetUiPopoverComponent', () => {
         expect(panel?.getAttribute('aria-modal')).toBe('true');
     });
 
+    it('removes the default content padding when configured', () => {
+        component.open(origin);
+        fixture.detectChanges();
+        const panel = document.querySelector('.tumaet-ui-popover-panel');
+        expect(panel?.classList.contains('tumaet:p-3')).toBe(true);
+
+        fixture.componentRef.setInput('padding', 'none');
+        fixture.detectChanges();
+
+        expect(panel?.classList.contains('tumaet:p-3')).toBe(false);
+    });
+
     it('renders a pointer-capturing backdrop and closes on backdrop click', () => {
         component.open(origin);
         fixture.detectChanges();

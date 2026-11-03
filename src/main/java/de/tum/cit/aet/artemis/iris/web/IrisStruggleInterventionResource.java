@@ -85,7 +85,7 @@ public class IrisStruggleInterventionResource {
         userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var outcome = struggleTriggerService.requestStruggleIntervention(exerciseId, requestDTO.struggleSignal(), requestDTO.uncommittedFiles(), requestDTO.intent(),
                 requestDTO.episode(), requestDTO.confirmReason(), requestDTO.requestToken(), requestDTO.proactivityMode(), user);
-        return ResponseEntity.accepted().body(new StruggleInterventionAcceptedDTO(outcome.accepted(), outcome.courseDisabled(), exerciseId, outcome.jobToken()));
+        return ResponseEntity.accepted().body(new StruggleInterventionAcceptedDTO(outcome.accepted(), outcome.courseDisabled(), exerciseId, outcome.runId()));
     }
 
     /**

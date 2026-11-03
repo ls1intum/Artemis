@@ -8,8 +8,17 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.exc.MismatchedInputException;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -54,6 +63,70 @@ public record GeneratedTestPlan(List<Entry> tests) {
     private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
     /**
+     * The file as the agent wrote it, before any of it is checked: the rejection messages name the offending entry, so a value of the wrong shape must not fail while it is
+     * read. The values are therefore read as they come, as a string, a number, a boolean, a list or a map, and checked afterwards.
+     *
+     * @param tests the entries
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record RawPlan(@Nullable List<RawEntry> tests) {
+    }
+
+    /**
+     * One entry of the file as the agent wrote it.
+     *
+     * @param name           the test name
+     * @param seam           the seam ID
+     * @param purpose        the purpose of the check
+     * @param seamWeightTier the seam importance tier
+     * @param weight         the old name of the seam importance tier
+     * @param visibility     the visibility of the test
+     * @param riskPartitions the risk partition IDs
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record RawEntry(@Nullable Object name, @Nullable Object seam, @Nullable @JsonDeserialize(using = PresentValueDeserializer.class) Object purpose,
+            @Nullable @JsonDeserialize(using = PresentValueDeserializer.class) Object seamWeightTier, @Nullable Object weight, @Nullable Object visibility,
+            @Nullable @JsonDeserialize(using = PresentValueDeserializer.class) Object riskPartitions) {
+    }
+
+    private enum ExplicitNull {
+        VALUE
+    }
+
+    /** Keeps an explicitly unusable value distinct from an omitted optional field until entry validation can name it. */
+    static final class PresentValueDeserializer extends ValueDeserializer<Object> {
+
+        @Override
+        public Object deserialize(JsonParser parser, DeserializationContext context) {
+            return context.readValue(parser, Object.class);
+        }
+
+        @Override
+        public Object getNullValue(DeserializationContext context) {
+            return ExplicitNull.VALUE;
+        }
+
+        @Override
+        @Nullable
+        public Object getAbsentValue(DeserializationContext context) {
+            return null;
+        }
+    }
+
+    /**
+     * The text of a string, a number or a boolean, and the empty text for anything else.
+     */
+    private static String text(@Nullable Object value) {
+        return value instanceof String || value instanceof Number || value instanceof Boolean ? value.toString() : "";
+    }
+
+    private static String stripped(@Nullable Object value) {
+        return text(value).strip();
+    }
+
+    /**
      * Parses and validates the plan.
      *
      * @param json the raw {@code test-plan.json} content
@@ -61,51 +134,55 @@ public record GeneratedTestPlan(List<Entry> tests) {
      * @throws IllegalArgumentException with an actionable, agent-readable message when the JSON is malformed or an entry violates the schema
      */
     public static GeneratedTestPlan parse(String json) {
-        JsonNode root;
+        RawPlan rawPlan;
         try {
-            root = MAPPER.readTree(json);
+            rawPlan = MAPPER.readValue(json, RawPlan.class);
+        }
+        catch (MismatchedInputException e) {
+            // Well-formed JSON of another shape, or no content at all, has no usable tests and is answered with the expected shape below.
+            rawPlan = null;
         }
         catch (JacksonException e) {
             throw new IllegalArgumentException("test-plan.json is not valid JSON: " + e.getOriginalMessage());
         }
-        JsonNode testsNode = root == null ? null : root.get("tests");
-        if (testsNode == null || !testsNode.isArray() || testsNode.isEmpty()) {
+        List<RawEntry> rawEntries = rawPlan == null ? null : rawPlan.tests();
+        if (rawEntries == null || rawEntries.isEmpty()) {
             throw new IllegalArgumentException("test-plan.json must be {\"tests\":[{\"name\":...,\"seamWeightTier\":1..3,\"visibility\":\"ALWAYS\"|\"AFTER_DUE_DATE\","
                     + "\"riskPartitions\":[\"S1.P1\"]}]} with at least one entry.");
         }
         List<Entry> entries = new ArrayList<>();
-        for (JsonNode testNode : testsNode) {
-            String name = testNode.path("name").asString("").strip();
+        for (RawEntry rawEntry : rawEntries) {
+            String name = rawEntry == null ? "" : stripped(rawEntry.name());
             if (name.isBlank()) {
                 throw new IllegalArgumentException("Every test-plan.json entry needs a non-empty \"name\" (the exact test name verify reports).");
             }
             Purpose purpose;
             try {
-                purpose = Purpose.valueOf(testNode.has("purpose") ? testNode.path("purpose").asString("") : "ASSESSMENT");
+                purpose = Purpose.valueOf(rawEntry.purpose() == null ? "ASSESSMENT" : text(rawEntry.purpose()));
             }
             catch (IllegalArgumentException exception) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' needs purpose ASSESSMENT or PRESERVATION.");
             }
-            String seam = testNode.path("seam").asString("").strip();
+            String seam = stripped(rawEntry.seam());
             if (!seam.isEmpty() && !SEAM_ID.matcher(seam).matches()) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' has seam '" + seam + "'; use a stable SPEC seam ID such as \"S1\".");
             }
             // "weight" is accepted as a read-only alias, but never echoed back: the field carries a seam tier, not the per-case weight persistence derives from it.
-            JsonNode tierNode = testNode.has("seamWeightTier") ? testNode.get("seamWeightTier") : testNode.get("weight");
-            if (tierNode == null || !tierNode.isNumber()) {
+            Object tierField = rawEntry.seamWeightTier() != null ? rawEntry.seamWeightTier() : rawEntry.weight();
+            if (!(tierField instanceof Number tierNumber)) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' needs a numeric \"seamWeightTier\" between " + (int) MIN_SEAM_WEIGHT_TIER + " and "
                         + (int) MAX_SEAM_WEIGHT_TIER + " (core seams weigh more than supporting or edge seams).");
             }
-            double tier = tierNode.asDouble();
+            double tier = tierNumber.doubleValue();
             if (!Double.isFinite(tier) || (purpose == Purpose.ASSESSMENT && (tier < MIN_SEAM_WEIGHT_TIER || tier > MAX_SEAM_WEIGHT_TIER))) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' has seamWeightTier " + tier + "; tiers must be between " + (int) MIN_SEAM_WEIGHT_TIER
                         + " and " + (int) MAX_SEAM_WEIGHT_TIER + ".");
             }
-            String visibility = testNode.path("visibility").asString("").strip();
+            String visibility = stripped(rawEntry.visibility());
             if (!"ALWAYS".equals(visibility) && !"AFTER_DUE_DATE".equals(visibility)) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' has visibility '" + visibility + "'; use \"ALWAYS\" or \"AFTER_DUE_DATE\".");
             }
-            List<String> riskPartitions = parseRiskPartitions(testNode, name, seam);
+            List<String> riskPartitions = parseRiskPartitions(rawEntry, name, seam);
             if (purpose == Purpose.PRESERVATION && (tier != 0 || !"ALWAYS".equals(visibility) || !seam.isEmpty() || !riskPartitions.isEmpty())) {
                 throw new IllegalArgumentException("test-plan.json preservation check '" + name
                         + "' must have seamWeightTier 0, visibility ALWAYS, and no seam or riskPartitions: supplied behavior earns no credit and cannot evidence student work.");
@@ -120,17 +197,26 @@ public record GeneratedTestPlan(List<Entry> tests) {
         return new GeneratedTestPlan(List.copyOf(entries));
     }
 
-    private static List<String> parseRiskPartitions(JsonNode testNode, String name, String seam) {
-        JsonNode partitionsNode = testNode.get("riskPartitions");
-        if (partitionsNode == null) {
+    /**
+     * Reads and validates the risk partitions of one entry.
+     *
+     * @param rawEntry the entry as written in the file
+     * @param name     the name of the entry, used in the rejection messages
+     * @param seam     the validated seam of the entry, possibly empty
+     * @return the risk partitions, empty when the entry has none
+     * @throws IllegalArgumentException when the partitions are not an array of well-formed IDs of the entry's own seam, or when one is listed twice
+     */
+    private static List<String> parseRiskPartitions(RawEntry rawEntry, String name, String seam) {
+        Object partitionsField = rawEntry.riskPartitions();
+        if (partitionsField == null) {
             return List.of();
         }
-        if (!partitionsNode.isArray()) {
+        if (!(partitionsField instanceof List<?> partitionFields)) {
             throw new IllegalArgumentException("test-plan.json entry '" + name + "' needs \"riskPartitions\" as an array of stable SPEC IDs such as [\"S1.P1\"].");
         }
         List<String> partitions = new ArrayList<>();
-        for (JsonNode partitionNode : partitionsNode) {
-            String partition = partitionNode.isString() ? partitionNode.asString().strip() : "";
+        for (Object partitionField : partitionFields) {
+            String partition = partitionField instanceof String partitionText ? partitionText.strip() : "";
             if (!PARTITION_ID.matcher(partition).matches()) {
                 throw new IllegalArgumentException("test-plan.json entry '" + name + "' has invalid risk partition '" + partition + "'; use stable SPEC IDs such as \"S1.P1\".");
             }

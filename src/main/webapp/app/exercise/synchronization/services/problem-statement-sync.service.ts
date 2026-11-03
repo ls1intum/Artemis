@@ -127,7 +127,7 @@ export class ProblemStatementSyncService {
         this.isolateCanonicalBase = isolateCanonicalBase;
         this.localLeaderTimestamp = Date.now();
         this.activeLeaderTimestamp = this.localLeaderTimestamp;
-        this.fallbackInitialContent = this.isolateCanonicalBase ? (initialContent ?? '').replace(/\r\n/g, '\n') : (initialContent ?? '');
+        this.fallbackInitialContent = this.isolateCanonicalBase ? (initialContent ?? '').replaceAll('\r\n', '\n') : (initialContent ?? '');
         this.awaitingInitialSync = true;
         this.incomingMessageSubscription = this.syncService.subscribeToUpdates().subscribe((message) => this.handleRemoteMessage(message));
         this.initializeYjsDocument();
@@ -140,7 +140,7 @@ export class ProblemStatementSyncService {
         if (!this.isolateCanonicalBase || exerciseId !== this.exerciseId || (expectedDoc && expectedDoc !== this.yDoc) || this.awaitingInitialSync || !this.yDoc) {
             return;
         }
-        this.canonicalMetadata().set('content', (canonicalContent ?? '').replace(/\r\n/g, '\n'));
+        this.canonicalMetadata().set('content', (canonicalContent ?? '').replaceAll('\r\n', '\n'));
     }
 
     private canonicalMetadata(): Y.Map<string> {

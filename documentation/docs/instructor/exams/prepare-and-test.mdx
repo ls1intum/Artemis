@@ -15,6 +15,7 @@ import createTestRunPopup from './assets/create_test_run.png';
 import testRunConduction from './assets/test_run_conduction.png';
 import examChecklist from './assets/exam_checklist.png';
 import examChecklistOverview from './assets/exam_checklist_overview.png';
+import contextualRoomOverview from './assets/contextual-room-overview.jpg';
 
 Between building an exam and running it there are three things to get right: the students who may sit it, the
 individual exam each of them receives, and a rehearsal to confirm the whole thing works. All of it happens on the
@@ -49,6 +50,10 @@ in the database and still counts in exports.
 The **Logistics** menu covers what an on-site exam needs beyond a list of names. **Distribute students** assigns
 rooms and seats. **Upload images** takes a PDF of participant photographs, and **Verify attendance** shows who has
 started the exam in Artemis but not yet checked in with a supervisor.
+
+In **Distribute students**, open **Exam Room Management** to view the available rooms and their capacities. This link keeps the current course and exam context, so an Instructor in that course can view the overview without administrator privileges. Uploading room data and deleting outdated rooms remain administrator operations.
+
+<Image src={contextualRoomOverview} alt="Exam room overview listing Friedrich L. Bauer Hörsaal with its building and default and maximum capacities" size={ImageSize.large} caption="The room overview available to the course Instructor from the exam’s room-distribution dialog." />
 
 <Callout variant={CalloutVariant.info}>
 

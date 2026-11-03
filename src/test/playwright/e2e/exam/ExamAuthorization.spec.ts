@@ -48,6 +48,8 @@ test.describe('Exam authorization', { tag: '@slow' }, () => {
         const group = { title: 'Forbidden group', isMandatory: true, exam: { id: exam.id } };
         calls = {
             instructorOnly: [
+                { method: 'get', path: `${examBase}/statistics/for-instructor` },
+                { method: 'get', path: `${examBase}/student-exams/${ownStudentExamId}/conduction/for-instructor` },
                 { method: 'post', path: `${base}/exams`, data: examBody },
                 { method: 'put', path: `${base}/exams`, data: exam },
                 { method: 'patch', path: `${examBase}/working-time`, data: 60 },

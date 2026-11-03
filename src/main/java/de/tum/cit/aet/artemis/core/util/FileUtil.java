@@ -122,6 +122,10 @@ public class FileUtil {
     static final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
             "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
 
+    private static final byte[] PNG_SIGNATURE = { (byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n' };
+
+    private static final byte[] JPEG_SIGNATURE = { (byte) 0xFF, (byte) 0xD8, (byte) 0xFF };
+
     private static final String MARKDOWN_FILE_SUBPATH = "markdown/";
 
     /**
@@ -211,6 +215,53 @@ public class FileUtil {
         String generatedFilename = generateFilename(generateTargetFilenameBase(filePathType), sanitizedFilename, keepFilename);
         Path savePath = basePath.resolve(generatedFilename);
         return saveFile(file, savePath);
+    }
+
+    /**
+     * Saves a PNG or JPEG image under a generated filename whose extension follows from the image's content.
+     * <p>
+     * The declared content type and the original filename both come from the client, and the extension decides the content type the file is served with later. Trusting
+     * either lets an SVG or HTML document with scripts be stored as a picture, so only the leading bytes of the content count here.
+     *
+     * @param file         the image to save
+     * @param basePath     the base path to save the image to
+     * @param filePathType the type of the file path
+     * @return the path where the image was saved
+     * @throws BadRequestAlertException if the content is neither a PNG nor a JPEG image
+     */
+    @NonNull
+    public static Path saveImageFile(MultipartFile file, Path basePath, FilePathType filePathType) {
+        String extension = detectRasterImageExtension(file).orElseThrow(() -> new BadRequestAlertException("The file is not a PNG or JPEG image.", "file", null, true));
+        String generatedFilename = generateFilename(generateTargetFilenameBase(filePathType), "image." + extension, false);
+        return saveFile(file, basePath.resolve(generatedFilename));
+    }
+
+    /**
+     * Determines from its leading bytes whether a file is a PNG or a JPEG image.
+     *
+     * @param file the uploaded file
+     * @return {@code png} or {@code jpg}, or empty if the content is neither
+     */
+    private static Optional<String> detectRasterImageExtension(MultipartFile file) {
+        byte[] header;
+        try (var inputStream = file.getInputStream()) {
+            header = inputStream.readNBytes(PNG_SIGNATURE.length);
+        }
+        catch (IOException e) {
+            log.error("Could not read uploaded file {}", file.getOriginalFilename(), e);
+            throw new InternalServerErrorException("Could not read file");
+        }
+        if (startsWith(header, PNG_SIGNATURE)) {
+            return Optional.of("png");
+        }
+        if (startsWith(header, JPEG_SIGNATURE)) {
+            return Optional.of("jpg");
+        }
+        return Optional.empty();
+    }
+
+    private static boolean startsWith(byte[] content, byte[] prefix) {
+        return content.length >= prefix.length && Arrays.equals(content, 0, prefix.length, prefix, 0, prefix.length);
     }
 
     /**
