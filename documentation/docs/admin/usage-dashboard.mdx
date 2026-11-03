@@ -34,7 +34,10 @@ there are never too many at once:
 | **Courses and students** | **Courses** | The courses of the semester that qualify, see [What counts](#what-counts) |
 | | **Students** | Unique people enrolled as students in these courses |
 | | **Course enrollments** | All student enrollments, not unique: a student of three courses counts three times |
+| | **Instructors** | Unique people with the instructor role in these courses |
+| | **Tutors** | Unique people with the tutor or editor role in these courses. Someone who is also an instructor in another course is counted in both numbers |
 | | **Lectures** | Lectures, without tutorial lectures |
+| | **Lecture units** | Text, video, attachment, online and exercise units of these lectures |
 | | **Competencies** | Competencies of these courses, without prerequisites |
 | | **Tutorial groups** | Tutorial groups of these courses |
 | **Exercises and submissions** | **Exercises** | All exercises, including exam exercises, and a split by type below |
@@ -43,6 +46,7 @@ there are never too many at once:
 | | **Builds** and **Average build duration** | Finished builds and the average duration of the successful ones |
 | **Exams** | **Exams** | Real exams of these courses. Test exams and exams whose title starts with "test" or "mock", in any letter case, are not counted |
 | | **Exam registrations** | Registrations of students for these exams, not unique: a student registered for three exams counts three times |
+| | **Exam participations** | Student exams that were started, not unique: a student who took three exams counts three times. Test runs of instructors are not counted |
 
 Below the three sections, the page shows the communication (**Posts**, **Replies**, **Reactions**, **FAQs**) and the
 **Iris messages**, which are messages that users sent to Iris plus the answers of Iris.
@@ -66,7 +70,10 @@ January counts for the course that started in October.
   October to March, a summer semester from April to September.
 * A course is **real** if it is not a test course and has at least five students. Deleted users and test users never
   count as students.
-* Deleted users and test users are not counted in **Course enrollments** and **Exam registrations** either.
+* Deleted users and test users are not counted in **Course enrollments**, **Instructors**, **Tutors**, **Exam registrations**
+  and **Exam participations** either.
+* **Exam registrations** only need a registration, **Exam participations** need that the student started the exam. The
+  difference is the number of students who were registered and did not show up.
 * A semester with fewer than three real courses is not shown at all, because its numbers would describe one course.
 * A student is **active** if they made at least one submission themselves. Submissions that instructors or the system
   create on behalf of a student do not count.

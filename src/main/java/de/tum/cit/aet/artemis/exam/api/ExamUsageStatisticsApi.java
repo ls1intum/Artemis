@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 
 /**
  * Exposes aggregated exam numbers to callers outside the exam module, namely the public usage dashboard.
@@ -23,9 +24,20 @@ public class ExamUsageStatisticsApi extends AbstractExamApi {
 
     private final ExamUserRepository examUserRepository;
 
-    public ExamUsageStatisticsApi(ExamRepository examRepository, ExamUserRepository examUserRepository) {
+    private final StudentExamRepository studentExamRepository;
+
+    public ExamUsageStatisticsApi(ExamRepository examRepository, ExamUserRepository examUserRepository, StudentExamRepository studentExamRepository) {
         this.examRepository = examRepository;
         this.examUserRepository = examUserRepository;
+        this.studentExamRepository = studentExamRepository;
+    }
+
+    /**
+     * @param courseIds the courses
+     * @return the number of students who started a real exam of these courses, not unique: a student who took several exams is counted once per exam
+     */
+    public long countRealExamParticipations(Set<Long> courseIds) {
+        return studentExamRepository.countParticipationsInRealExamsInCourses(courseIds);
     }
 
     /**

@@ -38,10 +38,28 @@
                         <span class="text-3xl font-bold">{{ semester.enrollments | number }}</span>
                     </div>
                 }
+                @if (semester.instructors !== undefined) {
+                    <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-instructors">
+                        <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'instructors' }" />
+                        <span class="text-3xl font-bold">{{ semester.instructors | number }}</span>
+                    </div>
+                }
+                @if (semester.tutors !== undefined) {
+                    <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-tutors">
+                        <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'tutors' }" />
+                        <span class="text-3xl font-bold">{{ semester.tutors | number }}</span>
+                    </div>
+                }
                 <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-lectures">
                     <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'lectures' }" />
                     <span class="text-3xl font-bold">{{ semester.lectures | number }}</span>
                 </div>
+                @if (semester.lectureUnits !== undefined) {
+                    <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-lecture-units">
+                        <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'lectureUnits' }" />
+                        <span class="text-3xl font-bold">{{ semester.lectureUnits | number }}</span>
+                    </div>
+                }
                 @if (semester.competencies !== undefined) {
                     <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-competencies">
                         <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'competencies' }" />
@@ -103,6 +121,12 @@
                             <span class="text-3xl font-bold">{{ semester.examRegistrations | number }}</span>
                         </div>
                     }
+                    @if (semester.examParticipations !== undefined) {
+                        <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-exam-participations">
+                            <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'examParticipations' }" />
+                            <span class="text-3xl font-bold">{{ semester.examParticipations | number }}</span>
+                        </div>
+                    }
                 </div>
             </section>
         }
@@ -117,24 +141,24 @@
                 </div>
                 <ul class="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 lg:grid-cols-5">
                     <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" data-testid="usage-posts">
-                        <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.posts' | artemisTranslate }}</span>
+                        <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'posts' }" />
                         <span class="text-xl font-bold">{{ communication.posts | number }}</span>
                     </li>
                     <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" data-testid="usage-replies">
-                        <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.replies' | artemisTranslate }}</span>
+                        <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'replies' }" />
                         <span class="text-xl font-bold">{{ communication.replies | number }}</span>
                     </li>
                     <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" data-testid="usage-reactions">
-                        <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.reactions' | artemisTranslate }}</span>
+                        <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'reactions' }" />
                         <span class="text-xl font-bold">{{ communication.reactions | number }}</span>
                     </li>
                     <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" data-testid="usage-faqs">
-                        <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.faqs' | artemisTranslate }}</span>
+                        <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'faqs' }" />
                         <span class="text-xl font-bold">{{ communication.faqs | number }}</span>
                     </li>
                     @if (semester.irisMessages !== undefined) {
                         <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" data-testid="usage-iris-messages">
-                            <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.irisMessages' | artemisTranslate }}</span>
+                            <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'irisMessages' }" />
                             <span class="text-xl font-bold">{{ semester.irisMessages | number }}</span>
                         </li>
                     }
