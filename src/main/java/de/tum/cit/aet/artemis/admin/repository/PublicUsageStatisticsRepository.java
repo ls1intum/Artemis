@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.admin.dto.BuildUsageDTO;
 import de.tum.cit.aet.artemis.admin.dto.StudentSubmissionCountDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -120,4 +121,93 @@ public interface PublicUsageStatisticsRepository extends ArtemisJpaRepository<Co
             GROUP BY TYPE(e)
             """)
     Set<ExerciseTypeMetricsEntry> countExercisesByType(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * Summarizes the finished build jobs of the courses in one pass over the build jobs. Jobs that are still queued or building, were cancelled or are
+     * recorded as missing are not builds that ran. A missing job that is retried is recorded as a new job, so counting it as well would count the build twice.
+     * The average duration only uses the successful jobs.
+     *
+     * @param courseIds the real courses
+     * @return the number of finished build jobs and the average duration in seconds of the successful ones, which is null without such jobs
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.admin.dto.BuildUsageDTO(
+                COUNT(b.id),
+                AVG(CASE WHEN b.buildStatus = de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL
+                        AND b.buildStartDate IS NOT NULL
+                        AND b.buildCompletionDate IS NOT NULL
+                    THEN (b.buildCompletionDate - b.buildStartDate) BY SECOND
+                    END)
+            )
+            FROM BuildJob b
+            WHERE b.courseId IN :courseIds
+                AND b.buildStatus IN (
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.FAILED,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.ERROR,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.TIMEOUT)
+            """)
+    BuildUsageDTO summarizeFinishedBuildJobs(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * Counts the posts in channels, group chats and direct messages of the courses. Posts that belong to a plagiarism case instead of a conversation are not counted.
+     *
+     * @param courseIds the real courses
+     * @return the number of posts
+     */
+    @Query("""
+            SELECT COUNT(p.id)
+            FROM Post p
+            WHERE p.conversation.course.id IN :courseIds
+            """)
+    long countPosts(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * Replies that Iris drafted and no tutor has verified yet are not visible to students and therefore not counted.
+     *
+     * @param courseIds the real courses
+     * @return the number of visible replies to the posts that {@link #countPosts} counts
+     */
+    @Query("""
+            SELECT COUNT(a.id)
+            FROM AnswerPost a
+            WHERE a.post.conversation.course.id IN :courseIds
+                AND a.verified = TRUE
+            """)
+    long countAnswerPosts(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * @param courseIds the real courses
+     * @return the number of reactions to the posts that {@link #countPosts} counts
+     */
+    @Query("""
+            SELECT COUNT(r.id)
+            FROM Reaction r
+            WHERE r.post.conversation.course.id IN :courseIds
+            """)
+    long countReactionsOnPosts(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * @param courseIds the real courses
+     * @return the number of reactions to the replies that {@link #countAnswerPosts} counts
+     */
+    @Query("""
+            SELECT COUNT(r.id)
+            FROM Reaction r
+            WHERE r.answerPost.post.conversation.course.id IN :courseIds
+                AND r.answerPost.verified = TRUE
+            """)
+    long countReactionsOnAnswerPosts(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * @param courseIds the real courses
+     * @return the number of accepted, i.e. published, FAQs of these courses
+     */
+    @Query("""
+            SELECT COUNT(f.id)
+            FROM Faq f
+            WHERE f.course.id IN :courseIds
+                AND f.faqState = de.tum.cit.aet.artemis.communication.domain.FaqState.ACCEPTED
+            """)
+    long countAcceptedFaqs(@Param("courseIds") Set<Long> courseIds);
 }
