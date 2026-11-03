@@ -103,6 +103,7 @@ CLASS_ALLOWLIST: dict[str, str] = {
     "PostDeleteEventListener": "a Hibernate type that the page names",
     "ExampleParticipationService": "an illustrative name in a guideline, not a real class",
     "EntryListener": "a Hazelcast type that the page names to explain what the distributed data provider replaces",
+    "TransactionSynchronizationManager": "a Spring type that the pages name to explain what a transaction boundary is needed for",
 }
 
 # Names of settings that are not Artemis server properties although they start with the same word.
@@ -238,10 +239,11 @@ def normalize(key: str) -> str:
     return re.sub(r"[-_]", "", key).lower()
 
 
-def flatten_yaml(lines):
-    """Yields the dotted key of every mapping entry of a YAML document. Enough YAML for configuration files."""
+def flatten_yaml_with_lines(lines):
+    """Yields (index of the line, dotted key) for every mapping entry of a YAML document. Enough YAML for configuration files.
+    A dotted key such as `deimos.llm.model:` and a quoted key are one entry each, at their own line."""
     stack: list[tuple[int, str]] = []
-    for line in lines:
+    for number, line in enumerate(lines):
         if not line.strip() or line.lstrip().startswith("#") or line.strip() == "---":
             continue
         m = re.match(r"""^(\s*)([A-Za-z0-9_.\-\[\]"'/]+):(?:\s|$)""", line)
@@ -251,22 +253,177 @@ def flatten_yaml(lines):
         while stack and stack[-1][0] >= indent:
             stack.pop()
         stack.append((indent, m.group(2).strip("\"'")))
-        yield ".".join(k for _, k in stack)
+        yield number, ".".join(k for _, k in stack)
+
+
+def flatten_yaml(lines):
+    for _, key in flatten_yaml_with_lines(lines):
+        yield key
+
+
+# ---------------------------------------------------------------------------------------------
+# a small reader of Java declarations: classes, their methods and the fields that Spring binds
+# ---------------------------------------------------------------------------------------------
+
+DECLARATION = re.compile(r"\b(?:class|interface|enum|record|type)\s+([A-Z][A-Za-z0-9_]*)")
+JAVA_IMPORT = re.compile(r"^import\s+(?:static\s+)?[\w.]*\.([A-Z]\w*);", re.M)
+TS_IMPORT = re.compile(r"^import\s+(?:type\s+)?\{([^}]*)\}\s+from", re.M)
+KEYWORDS = {"if", "for", "while", "switch", "catch", "return", "new", "throw", "else", "synchronized", "assert", "try", "yield", "do", "case", "var", "function"}
+MODIFIERS = r"(?:(?:public|protected|private|static|final|abstract|default|synchronized|native|transient|volatile)\s+)*"
+ANNOTATIONS = r"(?:@\w+(?:\([^)]*\))?\s+)*"
+JAVA_METHOD = re.compile(r"^\s*" + ANNOTATIONS + MODIFIERS + r"(?:<[^>]+>\s+)?([\w<>\[\],.? ]+?)\s+(\w+)\s*\(", re.M)
+JAVA_FIELD = re.compile(r"^\s*" + ANNOTATIONS + r"((?:(?:private|protected|public|final|transient|volatile)\s+)*)([\w<>\[\],.? ]+?)\s+(\w+)\s*(?:=[^;]*)?;\s*$")
+TS_METHOD = re.compile(r"^\s*(?:(?:public|private|protected|static|async|override|readonly|get|set)\s+)*(\w+)\s*(?:<[^>]*>)?\s*\(", re.M)
+SIMPLE_TYPES = {"String", "Integer", "Long", "Boolean", "Double", "Float", "Short", "Byte", "Character", "Duration", "Period", "URI", "URL", "Path", "File", "Pattern", "Object",
+                "BigDecimal", "BigInteger", "Instant", "LocalDate", "LocalDateTime", "ZonedDateTime", "DataSize", "Locale", "Charset", "UUID", "Class", "Resource", "InetAddress", "Date"}
+
+
+def strip_comments(text: str) -> str:
+    """Removes comments, so that a name that survives only in a comment does not count as declared."""
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    return re.sub(r"(?m)(?<![:\"'\w])//.*$", "", text)
+
+
+def declared_classes(text: str, suffix: str) -> set[str]:
+    """The classes, interfaces, enums, records and types that a source file declares, and the classes that it imports."""
+    if suffix not in (".java", ".ts", ".kts", ".py"):
+        return set()
+    code = strip_comments(text) if suffix != ".py" else text
+    names = set(DECLARATION.findall(code))
+    names.update(JAVA_IMPORT.findall(code))
+    for group in TS_IMPORT.findall(code):
+        names.update(part.split(" as ")[-1].strip() for part in group.split(",") if part.strip())
+    return names
+
+
+def matching_end(text: str, start: int, opening: str, closing: str) -> int:
+    """The index after the bracket that closes the one at `start`, skipping string and character literals."""
+    depth, i = 0, start
+    while i < len(text):
+        c = text[i]
+        if text.startswith('"""', i):
+            i = text.find('"""', i + 3)
+            if i < 0:
+                return len(text)
+            i += 3
+            continue
+        if c in "\"'":
+            j = i + 1
+            while j < len(text) and text[j] != c:
+                j += 2 if text[j] == "\\" else 1
+            i = j + 1
+            continue
+        if c == opening:
+            depth += 1
+        elif c == closing:
+            depth -= 1
+            if depth == 0:
+                return i + 1
+        i += 1
+    return len(text)
+
+
+def split_top_level(text: str) -> list[str]:
+    """Splits at the commas that are not inside <>, () or []."""
+    parts, depth, current = [], 0, []
+    for c in text:
+        if c in "<([":
+            depth += 1
+        elif c in ">)]":
+            depth -= 1
+        if c == "," and depth == 0:
+            parts.append("".join(current))
+            current = []
+        else:
+            current.append(c)
+    parts.append("".join(current))
+    return [p.strip() for p in parts if p.strip()]
+
+
+def class_declaration(text: str, name: str):
+    """(record components, body) of the class, interface, enum or record `name` in the text, or None. Comments are removed."""
+    code = strip_comments(text)
+    m = re.search(r"\b(class|interface|enum|record)\s+%s\b" % re.escape(name), code)
+    if not m:
+        return None
+    i = m.end()
+    components = ""
+    if m.group(1) == "record":
+        generics = re.match(r"\s*<[^>]*>", code[i:])
+        i += generics.end() if generics else 0
+        open_at = code.find("(", i)
+        end = matching_end(code, open_at, "(", ")")
+        components = code[open_at + 1:end - 1]
+        i = end
+    brace = code.find("{", i)
+    if brace < 0:
+        return components, ""
+    end = matching_end(code, brace, "{", "}")
+    return components, code[brace + 1:end - 1]
+
+
+def declared_methods(declaration) -> set[str]:
+    """The methods that a class declares, and the accessors of the components of a record. Calls of other classes do not count."""
+    components, body = declaration
+    names = {c.split()[-1] for c in split_top_level(components)}
+    for m in JAVA_METHOD.finditer(body):
+        if (m.group(1).split() or [""])[0] not in KEYWORDS:
+            names.add(m.group(2))
+    return names
+
+
+def declared_members(declaration) -> list[tuple[str, str]]:
+    """(name, type) of the components of a record and of the instance fields of a class, which Spring can bind."""
+    components, body = declaration
+    members = []
+    for component in split_top_level(components):
+        component = re.sub(r"@\w+(?:\([^)]*\))?\s*", "", component).strip()
+        if " " in component:
+            kind, _, name = component.rpartition(" ")
+            members.append((name, kind.strip()))
+    depth = 0
+    for line in body.splitlines():
+        if depth == 0:
+            m = JAVA_FIELD.match(line)
+            if m and "static" not in m.group(1) and (m.group(2).split() or [""])[0] not in KEYWORDS:
+                members.append((m.group(3), m.group(2).strip()))
+        depth += line.count("{") - line.count("}")
+    return members
+
+
+def bound_type(type_name: str):
+    """What a field type means for binding: ('map', None), or ('type', the class that holds the values)."""
+    t = re.sub(r"\s+", "", type_name)
+    if t.startswith(("Map<", "Properties")):
+        return "map", None
+    m = re.match(r"(?:Optional|List|Set|Collection|ArrayList|Iterable)<(.+)>$", t)
+    if m:
+        return bound_type(m.group(1))
+    t = t.rstrip("[]")
+    return "type", t.split(".")[-1].split("<")[0]
+
+
+# ---------------------------------------------------------------------------------------------
+# the index of the source
+# ---------------------------------------------------------------------------------------------
 
 
 class SourceIndex:
-    """What the source knows: identifiers, the file of each class, configuration keys and interface texts."""
+    """What the source knows: declared classes, their methods, configuration keys and interface texts."""
 
-    def __init__(self) -> None:
-        self.tokens: set[str] = set()
+    def __init__(self, scan: bool = True) -> None:
+        self.classes: set[str] = set()  # declared or imported, never named in a comment only
         self.files_by_stem: dict[str, list[Path]] = {}
-        self.keys: set[str] = set()  # normalized dotted configuration keys
+        self.keys: set[str] = set()  # normalized dotted configuration keys, including the paths that Spring binds
         self.flat_keys: set[str] = set()  # the same without dots, for environment variables
+        self.open_prefixes: set[str] = set()  # below these, the administrator chooses the keys: a map
         self.environment_names: set[str] = set()  # ARTEMIS_* names that occur anywhere, for example as ${ARTEMIS_X:default}
-        self.bound_prefixes: dict[str, set[str]] = {}  # @ConfigurationProperties prefix -> identifiers of its classes
         self.labels: set[str] = set()
-        self._scan_source()
-        self._scan_labels()
+        self._bound: list[tuple[str, str, int]] = []  # (text of a source file, prefix, end of the annotation prefix) of @ConfigurationProperties
+        if scan:
+            self._scan_source()
+            self._scan_binding()
+            self._scan_labels()
 
     def _add_key(self, key: str) -> None:
         normalized = normalize(key)
@@ -288,7 +445,7 @@ class SourceIndex:
                     except OSError:
                         continue
                     self.files_by_stem.setdefault(path.stem, []).append(path)
-                    self.tokens.update(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", text))
+                    self.classes.update(declared_classes(text, path.suffix))
                     self.environment_names.update(re.findall(r"ARTEMIS_[A-Z0-9_]+", text))
                     self._scan_configuration(path, text)
 
@@ -304,10 +461,49 @@ class SourceIndex:
             # string literals such as "${artemis.deimos.llm.temperature:0}" or Integer.getInteger("artemis.test.wave-size")
             for m in re.finditer(r"artemis(?:\.[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)+", text):
                 self._add_key(m.group(0))
-        if path.suffix == ".java":
-            m = re.search(r"""@ConfigurationProperties\(\s*(?:prefix\s*=\s*)?"([^"]+)\"""", text)
-            if m:
-                self.bound_prefixes.setdefault(normalize(m.group(1)), set()).update(normalize(t) for t in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", text))
+        if path.suffix == ".java" and "@ConfigurationProperties" in text:
+            for m in re.finditer(r"""@ConfigurationProperties\(\s*(?:(?:prefix|value)\s*=\s*)?"([^"]+)\"""", text):
+                self._bound.append((text, m.group(1), m.end()))
+
+    def _scan_binding(self) -> None:
+        for text, prefix, after in self._bound:
+            self.add_binding(text, prefix, after)
+
+    def add_binding(self, text: str, prefix: str, after: int = 0) -> None:
+        """Adds the complete paths that Spring binds below a prefix: the fields of the annotated class and, recursively, of the
+        classes of its fields. A class that cannot be read leaves its prefix open instead of rejecting valid keys."""
+        m = re.match(r"[^)]*\)(?:\s*@\w+(?:\([^)]*\))?)*\s*(?:(?:public|final|abstract)\s+)*(?:class|record)\s+(\w+)", text[after:], re.S)
+        if not m:
+            self.open_prefixes.add(normalize(prefix))  # an annotated factory method, for example
+            return
+        self._add_members(prefix, m.group(1), text, set())
+
+    def _declaration(self, name: str, here: str):
+        declaration = class_declaration(here, name)
+        if declaration:
+            return declaration, here
+        for path in self.files_by_stem.get(name, []):
+            if path.suffix == ".java":
+                other = path.read_text(encoding="utf-8", errors="ignore")
+                declaration = class_declaration(other, name)
+                if declaration:
+                    return declaration, other
+        return None, here
+
+    def _add_members(self, path: str, class_name: str, here: str, seen: set[str]) -> None:
+        declaration, text = self._declaration(class_name, here)
+        members = declared_members(declaration) if declaration else []
+        if not members:
+            self.open_prefixes.add(normalize(path))
+            return
+        for name, type_name in members:
+            member = f"{path}.{name}"
+            self._add_key(member)
+            kind, target = bound_type(type_name)
+            if kind == "map":
+                self.open_prefixes.add(normalize(member))
+            elif target not in SIMPLE_TYPES and target not in seen and target[:1].isupper() and self._declaration(target, text)[0]:
+                self._add_members(member, target, text, seen | {class_name})
 
     def _scan_labels(self) -> None:
         def walk(value) -> None:
@@ -326,30 +522,34 @@ class SourceIndex:
 
     # -- queries
     def knows_class(self, name: str) -> bool:
-        return name in self.tokens
+        return name in self.classes
 
     def class_has_method(self, name: str, method: str) -> bool:
-        files = self.files_by_stem.get(name)
+        files = [f for f in self.files_by_stem.get(name, []) if f.suffix in (".java", ".ts")]
         if not files:
             return True  # a class without a file of its own, for example a nested class: only the name can be checked
-        return any(re.search(r"\b%s\b" % re.escape(method), f.read_text(encoding="utf-8", errors="ignore")) for f in files)
+        for f in files:
+            text = f.read_text(encoding="utf-8", errors="ignore")
+            if f.suffix == ".ts":
+                if any(m.group(1) == method for m in TS_METHOD.finditer(strip_comments(text))):
+                    return True
+                continue
+            declaration = class_declaration(text, name)
+            if declaration is None or method in declared_methods(declaration):
+                return True
+        return False
 
     def knows_property(self, key: str) -> bool:
         k = normalize(key)
         if k in self.keys or any(x.startswith(k + ".") for x in self.keys):
             return True
-        for prefix, tokens in self.bound_prefixes.items():
-            if k == prefix or k.startswith(prefix + "."):
-                rest = k[len(prefix):].strip(".")
-                if all(segment in tokens for segment in rest.split(".") if segment):
-                    return True
-        return False
+        return any(k == o or k.startswith(o + ".") for o in self.open_prefixes)
 
     def knows_environment_variable(self, name: str) -> bool:
         if name in self.environment_names:
             return True
         flat = normalize(name)  # relaxed binding: a property can be set as an environment variable without a mention
-        return any(x.startswith(flat) for x in self.flat_keys)
+        return flat in self.flat_keys or any(flat.startswith(o.replace(".", "")) for o in self.open_prefixes)
 
     def knows_label(self, label: str) -> bool:
         return label.lower().rstrip(":") in self.labels
@@ -396,20 +596,10 @@ def unknown_configuration(page: Path, text: str, index: SourceIndex) -> list[str
             elif ENVIRONMENT_VARIABLE.match(candidate) and not index.knows_environment_variable(candidate):
                 problems.append(f"{rel(page)}:{number}: environment variable `{candidate}` does not match any property")
     for start, block in yaml_blocks(text):
-        for offset, key in _yaml_keys_with_lines(block):
+        for offset, key in flatten_yaml_with_lines(block):
             if key.startswith("artemis.") and not allowed_property(key) and not index.knows_property(key):
                 problems.append(f"{rel(page)}:{start + offset}: property `{key}` in the YAML example is not defined in the configuration or the source")
     return problems
-
-
-def _yaml_keys_with_lines(block: list[str]):
-    keys = list(flatten_yaml(block))
-    # flatten_yaml skips blank and comment lines, so pair the keys with their lines again
-    index = 0
-    for offset, line in enumerate(block):
-        if index < len(keys) and re.match(r"""^\s*%s:(?:\s|$)""" % re.escape(keys[index].split(".")[-1]), line):
-            yield offset, keys[index]
-            index += 1
 
 
 def unknown_labels(page: Path, text: str, index: SourceIndex) -> list[str]:
@@ -464,8 +654,9 @@ def self_test() -> None:
     assert PATH.match("src/main/resources/config/application.yml") and not PATH.match("src/main/${x}/y")
 
     index = source_index()
-    found = unknown_classes(REPO_ROOT / page, "`NoSuchThingService` and `PerNodeCacheEvictionService.evictEverywhere()` and `PerNodeCacheEvictionService.noSuchMethod()`\n", index)
-    assert len(found) == 2 and "NoSuchThingService" in found[0] and "noSuchMethod" in found[1], found
+    found = unknown_classes(REPO_ROOT / page, "`NoSuchThingService` and `PerNodeCacheEvictionService.evictEverywhere()` and `PerNodeCacheEvictionService.noSuchMethod()` and `PerNodeCacheEvictionService.getCache()`\n", index)
+    # getCache is only called by the service, on the cache manager, so it is not a method of the service
+    assert len(found) == 3 and "NoSuchThingService" in found[0] and "noSuchMethod" in found[1] and "getCache" in found[2], found
     assert not unknown_classes(REPO_ROOT / page, "`PerNodeCacheEvictionService` `Course` `artemis.yml`\n", index), "known names must pass"
 
     found = unknown_configuration(REPO_ROOT / page, "`artemis.no-such.property` `ARTEMIS_NOSUCH_PROPERTY` `artemis.deimos.llm.timeout-seconds` `artemis.example.com`\n"
@@ -475,6 +666,27 @@ def self_test() -> None:
 
     found = unknown_labels(REPO_ROOT / "documentation/docs/instructor/x.mdx", "Click **No Such Button** and then **Save**; the **Bold Word** is not a label. Open **Course Management → No Such Page**.\n", index)
     assert len(found) == 2 and "No Such Button" in found[0] and "No Such Page" in found[1], found
+    # a name that survives only in a comment is not a class, and a name that is only called is not a method
+    assert declared_classes("// the removed OldThingService\n/* OldThingService */\nclass Real {}\nimport a.b.Imported;\n", ".java") == {"Real", "Imported"}
+    java = "class S {\n  private final CacheManager cacheManager;\n  public void evictEverywhere(String a) {\n    var c = cacheManager.getCache(a);\n  }\n}\n"
+    methods = declared_methods(class_declaration(java, "S"))
+    assert "evictEverywhere" in methods and "getCache" not in methods, methods
+    assert "name" in declared_methods(class_declaration("record R(String name, int size) {}", "R"))
+
+    # a dotted and a quoted YAML key keep their own line, and the keys after them are not lost
+    block = ["artemis:", "    deimos.llm.no-such-key: 1", "    'deimos':", "        llm:", "            temperature: 0"]
+    assert list(flatten_yaml_with_lines(block)) == [(0, "artemis"), (1, "artemis.deimos.llm.no-such-key"), (2, "artemis.deimos"), (3, "artemis.deimos.llm"), (4, "artemis.deimos.llm.temperature")]
+
+    # an environment variable has to name a whole key, and a bound path has to be complete
+    empty = SourceIndex(scan=False)
+    empty._add_key("artemis.continuous-integration.build-timeout-seconds.max")
+    assert empty.knows_environment_variable("ARTEMIS_CONTINUOUSINTEGRATION_BUILDTIMEOUTSECONDS_MAX")
+    assert not empty.knows_environment_variable("ARTEMIS_CONTINUOUSINTEGRATION_BUILDTIMEOUTSECONDS_MA")
+    bound = '@ConfigurationProperties(prefix = "artemis.feature-usage")\npublic record FeatureUsageProperties(boolean enabled, Digest digest, Map<String, Cost> costs) {\n    public record Digest(List<String> recipients, int minimumSessions) {}\n    public record Cost(double input) {}\n}\n'
+    empty.add_binding(bound, "artemis.feature-usage", bound.index('")') + 1)
+    assert empty.knows_property("artemis.feature-usage.digest.recipients") and empty.knows_property("artemis.feature-usage.costs.any-model.input")
+    assert not empty.knows_property("artemis.feature-usage.recipients")
+    assert empty.knows_environment_variable("ARTEMIS_FEATUREUSAGE_DIGEST_MINIMUMSESSIONS")
     print("Self-test passed.")
 
 

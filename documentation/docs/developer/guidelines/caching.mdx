@@ -75,7 +75,6 @@ Spring's caching abstraction backed by the distributed data provider is permitte
 * `linkPreview` — Open Graph / OEmbed previews for posts in the communication module.
 * `plantUmlPng`, `plantUmlSvg` — rendered PlantUML diagrams.
 * `userCourseNotificationSettingPreset` and `userCourseNotificationSettingSpecification` — per-user/per-course notification settings, keyed by `setting_preset_<userId>_<courseId>` / `setting_specifications_<userId>_<courseId>`. Read once per recipient while a notification is filtered, which is what makes them worth caching. The values are the preset id and a record of the channel flags, never the settings entities.
-* `courseNotification` (the constant `CourseNotificationCacheService.USER_COURSE_NOTIFICATION_CACHE`) — per-user/per-course notification counts and previews.
 * `savedPosts` — saved-post lookups, keyed by `saved_post_count_<userId>` / `saved_post_type_<type>_<userId>` / `saved_post_status_<status>_<userId>`. The values are a count, a list of ids, and a list of `SavedPostDTO`.
 
 `RoutingCacheManager` decides where each of these lives, by name, so the choice is made in one place and cannot drift as caches are added:
@@ -127,7 +126,7 @@ Multi-node correctness is not optional. If you cannot articulate, in code review
 The L2 ban does **not** apply to:
 
 * **Local in-memory caches inside a single bean** for ephemeral per-node state (e.g. `HyperionPromptTemplateService`, `HyperionChecklistService`, `RateLimitService`, `BuildScriptProviderService`). These are single-node and do not have multi-node coherence concerns. They are typically `ConcurrentHashMap` instances populated lazily and either never invalidated or invalidated explicitly by their owner.
-* **Hazelcast distributed objects (`IMap`, `ISet`, `ICountDownLatch`) used for cross-node coordination** (`CourseNotificationCacheService`, `AtlasAgentSessionCacheService`, `PlagiarismCacheService`, rate-limit buckets via Bucket4j-Hazelcast). These are not "caches" in the Hibernate L2 sense; they are explicit distributed data structures with explicit semantics.
+* **Hazelcast distributed objects (`IMap`, `ISet`, `ICountDownLatch`) used for cross-node coordination** (`AtlasAgentSessionCacheService`, `PlagiarismCacheService`, rate-limit buckets via Bucket4j-Hazelcast). These are not "caches" in the Hibernate L2 sense; they are explicit distributed data structures with explicit semantics.
 * **Spring `@Cacheable`** as documented above.
 
 The rule is specifically about Hibernate's *entity / association* second-level cache.
