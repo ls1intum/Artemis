@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.metis.service;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -43,8 +44,10 @@ import de.tum.cit.aet.artemis.metis.config.MetisProperties;
  * then stored unrated at once and rated later by the backfill. Every response is recorded for token tracking, billed to
  * the attribution of the call.
  * <p>
- * The service never logs or keeps prompt content. Integration tests replace it with a mock, which makes it the test seam
- * of the module.
+ * The service never logs or keeps prompt content, also not when the endpoint quotes it in an error: a failed call keeps only
+ * the types of its exceptions and the status code, and the warning in which Spring AI quotes the prompt of an answer without
+ * choices is dropped by {@link de.tum.cit.aet.artemis.core.config.SpringAiPromptLogFilter}. Integration tests replace the
+ * service with a mock, which makes it the test seam of the module.
  */
 @Conditional(MetisEnabled.class)
 @Lazy
@@ -206,7 +209,7 @@ public class MetisLlmService {
             permits.release();
         }
         // Every response counts, including one whose text turns out to be unusable: its tokens were spent all the same
-        llmTokenUsageService.trackChatResponseTokenUsage(response, LLMServiceType.METIS, pipeline.pipelineId(),
+        llmTokenUsageService.trackChatResponseTokenUsage(withoutGenerations(response), LLMServiceType.METIS, pipeline.pipelineId(),
                 builder -> builder.withCourse(attribution.courseId()).withExercise(attribution.exerciseId()).withUser(attribution.userId()));
         String text = LLMTokenUsageService.extractResponseText(response);
         if (response == null || text == null || text.isBlank()) {
@@ -284,9 +287,47 @@ public class MetisLlmService {
                     recordInteractiveAnswer();
                 }
             }
-            log.debug("Metis LLM call {} ({}) failed as {}", pipeline.pipelineId(), mode, kind, e);
-            throw new MetisLlmException(kind, "The Metis LLM call " + pipeline.pipelineId() + " failed: " + e.getMessage(), e);
+            // Neither the message nor the cause goes on: either can quote the prompt, and the exception may be logged on its way up
+            String failure = describe(e);
+            log.debug("Metis LLM call {} ({}) failed as {}: {}", pipeline.pipelineId(), mode, kind, failure);
+            throw new MetisLlmException(kind, "The Metis LLM call " + pipeline.pipelineId() + " failed: " + failure);
         }
+    }
+
+    /**
+     * Describes the failure of a call without any of its messages: the types along its cause chain, with the status code the endpoint answered with. A message
+     * can quote the prompt, and with it the student's code or answers, for instance when the endpoint names the input it refused.
+     *
+     * @param failure what the call threw
+     * @return the types of the failure and its causes, outermost first
+     */
+    static String describe(Throwable failure) {
+        StringBuilder description = new StringBuilder();
+        Throwable current = failure;
+        for (int depth = 0; current != null && depth < MAX_CAUSE_DEPTH; depth++) {
+            if (depth > 0) {
+                description.append(", caused by ");
+            }
+            description.append(current.getClass().getSimpleName());
+            if (current instanceof OpenAIServiceException serviceException) {
+                description.append(" (status ").append(serviceException.statusCode()).append(')');
+            }
+            current = current.getCause();
+        }
+        return description.toString();
+    }
+
+    /**
+     * The response as the token usage tracker gets it: with its metadata, which holds the model and the token counts the tracker reads, but without its
+     * generations. They hold the generated questions and the ratings, which quote the code and the answers of the student, and the tracker is a bean outside
+     * this module, whose arguments {@code LoggingAspect} writes to the debug log.
+     *
+     * @param response the response of the endpoint, if it sent one
+     * @return the response without its generations, or {@code null} without a response
+     */
+    @Nullable
+    private static ChatResponse withoutGenerations(@Nullable ChatResponse response) {
+        return response == null ? null : new ChatResponse(List.of(), response.getMetadata());
     }
 
     private String reportedModel(ChatResponse response) {

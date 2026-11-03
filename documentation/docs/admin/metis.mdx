@@ -212,8 +212,11 @@ the exercise information above, the old question, the student's other questions 
 
 No call contains names, logins, e-mail addresses or registration numbers. The code goes out as the student wrote it,
 comments included, so anything a student writes into their code, such as an author line with their name, reaches the
-endpoint. Metis never writes prompts, code, answers or ratings to the server log; only the method logging of the
-`dev` profile, which a production server does not run, prints the arguments of every service call.
+endpoint. Metis does not write prompts, code, answers or ratings to the server log: the method logging of the `dev`
+profile, which prints the arguments of every other service call, leaves out the beans of Metis and logs only the type
+of an exception one of them throws, and a failed call to the model is logged with the types of its exceptions and the
+status code of the endpoint, never with their messages. The warning in which Spring AI would quote the whole prompt, for
+an answer without choices, is filtered out of the log.
 
 Use HTTPS for an endpoint on another host, since every call carries student code or answers. Ollama serves plain
 HTTP without authentication, so put a reverse proxy that terminates TLS in front of it, or keep it on the same host
@@ -403,11 +406,14 @@ The log of the scheduling node tells why:
   background rating failed because the endpoint was unreachable, overloaded, failed with a server error or did not
   answer in time. An authentication error (401, 403) and a model that the endpoint reports as not found (404) count as
   an unavailable endpoint too, because they concern every check, not one. The circuit breaker pauses generation and
-  the background rating for 60 seconds, doubles the pause with every further failure up to 15 minutes, and closes as
-  soon as the model answers again, with a generation or with a background rating
+  the background rating for 60 seconds, doubles the pause with every further failure up to 15 minutes, and closes with
+  the next generation that stores questions or the next rating that the model writes in the background
   (`The Metis LLM endpoint answers again; the circuit breaker is closed`). An answer that the background rating stores
-  without the model, because it is empty or was rated meanwhile, does not close it. Set
-  `logging.level.de.tum.cit.aet.artemis.metis: DEBUG` to see the reason of every failed call.
+  without the model, because it is empty or was rated meanwhile, an output that cannot be used and a refused request do
+  not close it. Set
+  `logging.level.de.tum.cit.aet.artemis.metis: DEBUG` to see why each call failed: the types of the exceptions and the
+  HTTP status code of the endpoint. Their messages are never logged, since an endpoint may quote the prompt in an
+  error.
 - Nothing at all: check that the node with the `core` and `scheduling` profiles has the module enabled and that
   `generation.scheduler-enabled` is not `false`.
 

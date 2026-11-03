@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -146,12 +147,31 @@ class MetisLlmServiceTest {
 
         llmService.complete(Pipeline.ANSWER_RATING, Mode.INTERACTIVE, "system", "user", ATTRIBUTION);
 
+        ArgumentCaptor<ChatResponse> tracked = ArgumentCaptor.forClass(ChatResponse.class);
         ArgumentCaptor<Function<LLMTokenUsageService.LLMTokenUsageBuilder, LLMTokenUsageService.LLMTokenUsageBuilder>> builder = ArgumentCaptor.captor();
-        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(response), eq(LLMServiceType.METIS), eq("METIS_ANSWER_RATING"), builder.capture());
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(tracked.capture(), eq(LLMServiceType.METIS), eq("METIS_ANSWER_RATING"), builder.capture());
+        assertThat(tracked.getValue().getMetadata()).isSameAs(response.getMetadata());
         LLMTokenUsageService.LLMTokenUsageBuilder trace = builder.getValue().apply(new LLMTokenUsageService.LLMTokenUsageBuilder());
         assertThat(trace.getCourseID()).contains(11L);
         assertThat(trace.getExerciseID()).contains(22L);
         assertThat(trace.getUserID()).contains(33L);
+    }
+
+    @Test
+    void shouldGiveTheTokenTrackerTheUsageButNotTheTextThatQuotesTheStudent() {
+        String rating = "{\"score\":2,\"rationale\":\"The answer says that swap(a[i], a[j]) sorts the array\"}";
+        when(interactiveModel.call(any(Prompt.class))).thenReturn(response(rating, "model"));
+
+        assertThat(llmService.complete(Pipeline.ANSWER_RATING, Mode.INTERACTIVE, "system", "user", ATTRIBUTION).text()).isEqualTo(rating);
+
+        // The tracker is a bean of another module, which LoggingAspect logs with its arguments at debug level
+        ArgumentCaptor<ChatResponse> tracked = ArgumentCaptor.forClass(ChatResponse.class);
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(tracked.capture(), eq(LLMServiceType.METIS), eq("METIS_ANSWER_RATING"), any());
+        assertThat(tracked.getValue().getResults()).isEmpty();
+        assertThat(tracked.getValue().toString()).doesNotContain("swap(a[i], a[j])");
+        assertThat(tracked.getValue().getMetadata().getModel()).isEqualTo("model");
+        assertThat(tracked.getValue().getMetadata().getUsage().getPromptTokens()).isEqualTo(10);
+        assertThat(tracked.getValue().getMetadata().getUsage().getCompletionTokens()).isEqualTo(20);
     }
 
     @Test
@@ -167,7 +187,8 @@ class MetisLlmServiceTest {
         when(batchModel.call(any(Prompt.class))).thenReturn(response);
 
         assertKind(() -> llmService.complete(Pipeline.QUESTION_GENERATION, Mode.BATCH, "system", "user", ATTRIBUTION), MetisLlmException.Kind.INVALID_OUTPUT);
-        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(response), eq(LLMServiceType.METIS), eq("METIS_QUESTION_GENERATION"), any());
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(argThat(tracked -> tracked.getMetadata() == response.getMetadata()), eq(LLMServiceType.METIS),
+                eq("METIS_QUESTION_GENERATION"), any());
     }
 
     @Test
@@ -195,7 +216,8 @@ class MetisLlmServiceTest {
 
         Throwable failure = catchThrowable(() -> llmService.complete(Pipeline.QUESTION_GENERATION, Mode.BATCH, "system", "user", ATTRIBUTION));
 
-        assertThat(failure).isInstanceOf(MetisLlmException.class).hasRootCause(tooLarge);
+        // Only the type and the status code go on, since the message of the endpoint can quote the prompt (MetisLlmServiceLoggingTest)
+        assertThat(failure).isInstanceOf(MetisLlmException.class).hasNoCause().hasMessageEndingWith("failed: UnexpectedStatusCodeException (status 413)");
         assertThat(((MetisLlmException) failure).getKind()).isEqualTo(MetisLlmException.Kind.REJECTED);
         verifyNoInteractions(llmTokenUsageService);
     }
