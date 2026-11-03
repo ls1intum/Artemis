@@ -138,6 +138,24 @@ describe('UsageDashboardComponent', () => {
         expect(text('usage-communication')).not.toContain('communicationAndIris');
     });
 
+    it('hides the exam card if the exam module is not enabled and still shows the competencies', async () => {
+        const { exams: _exams, ...withoutExams } = statistics.semesters[0];
+        httpMock.expectOne('api/core/public/usage-statistics').flush({ generatedAt: statistics.generatedAt, semesters: [withoutExams] });
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="usage-exams"]')).toBeNull();
+        expect(text('usage-competencies')).toContain('410');
+    });
+
+    it('shows zero exams if the exam module is enabled but no real exam exists', async () => {
+        const { competencies: _competencies, ...withoutCompetencies } = { ...statistics.semesters[0], exams: 0 };
+        httpMock.expectOne('api/core/public/usage-statistics').flush({ generatedAt: statistics.generatedAt, semesters: [withoutCompetencies] });
+        await fixture.whenStable();
+
+        expect(text('usage-exams')).toContain('0');
+        expect(fixture.nativeElement.querySelector('[data-testid="usage-competencies"]')).toBeNull();
+    });
+
     it('shows the number of builds without an average duration if no build was successful', async () => {
         const noSuccess = { ...statistics.semesters[0], builds: { count: 7 } };
         httpMock.expectOne('api/core/public/usage-statistics').flush({ generatedAt: statistics.generatedAt, semesters: [noSuccess] });

@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.within;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -428,6 +430,45 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
 
         assertThat(statistics).isNotNull();
         assertThat(statistics.generatedAt()).isNotNull();
+    }
+
+    @Test
+    void publicEndpoint_publishesExamsAndCompetenciesOfTheCurrentSemester() throws Exception {
+        // the same students are enrolled in all three courses, because adding users with another prefix removes the enrolments of the first
+        List<Course> courses = new ArrayList<>(List.of(createCourseStartingNow(TEST_PREFIX + "v", MIN_STUDENTS)));
+        for (int i = 0; i < 2; i++) {
+            Course course = courseUtilService.createCourse();
+            course.setStartDate(ZonedDateTime.now());
+            courseUtilService.saveCourse(course);
+            userUtilService.enrollPrefixedUsersInCourse(course, TEST_PREFIX + "v");
+            courses.add(course);
+        }
+        for (Course course : courses) {
+            saveExam(course, "Final exam", false);
+            saveExam(course, "Retake", false);
+            saveExam(course, "Mock exam", false);
+            competencyUtilService.createCompetency(course, "first");
+            competencyUtilService.createCompetency(course, "second");
+            competencyUtilService.createCompetency(course, "third");
+        }
+        var cache = cacheManager.getCache(PublicUsageStatisticsService.CACHE_NAME);
+        assertThat(cache).isNotNull();
+        cache.clear();
+
+        try {
+            var statistics = request.get("/api/core/public/usage-statistics", HttpStatus.OK, PublicUsageStatisticsDTO.class);
+
+            var semester = statistics.semesters().stream().filter(candidate -> candidate.label().equals(currentSemester.label())).findFirst().orElseThrow();
+            Set<Long> realCourses = realCourseIds();
+            // other tests of this class add real courses to the same semester, so the totals are compared with the module counts of all of them
+            assertThat(semester.exams()).isEqualTo(examUsageStatisticsApi.orElseThrow().countRealExams(realCourses)).isGreaterThanOrEqualTo(6);
+            assertThat(semester.competencies()).isEqualTo(competencyUsageStatisticsApi.orElseThrow().countCompetencies(realCourses)).isGreaterThanOrEqualTo(9);
+            assertThat(semester.tutorialGroups()).isNotNull();
+            assertThat(semester.courses()).isEqualTo(realCourses.size());
+        }
+        finally {
+            cache.clear();
+        }
     }
 
     @Test

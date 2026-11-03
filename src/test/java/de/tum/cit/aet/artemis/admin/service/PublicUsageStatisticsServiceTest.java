@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
@@ -94,6 +95,41 @@ class PublicUsageStatisticsServiceTest {
         assertThat(semester.tutorialGroups()).isEqualTo(9);
         assertThat(semester.exams()).isEqualTo(7);
         assertThat(semester.competencies()).isEqualTo(21);
+    }
+
+    @Test
+    void eachModuleIsOmittedOnItsOwn_whileTheOtherOneIsStillPublished() {
+        givenOnlyTheNewestSemesterHasData();
+        when(repository.countSubmissionsByStudent(any())).thenReturn(List.of());
+        var examApi = mock(ExamUsageStatisticsApi.class);
+        var competencyApi = mock(CompetencyUsageStatisticsApi.class);
+        when(examApi.countRealExams(THREE_COURSES)).thenReturn(0L);
+        when(competencyApi.countCompetencies(THREE_COURSES)).thenReturn(5L);
+
+        service = new PublicUsageStatisticsService(repository, profileService, Optional.empty(), Optional.empty(), Optional.of(examApi), Optional.empty(),
+                BUILD_JOB_RETENTION_DAYS);
+        var onlyExams = service.getUsageStatistics().semesters().getFirst();
+        // a module that is enabled without data publishes a real zero, not an absent value
+        assertThat(onlyExams.exams()).isZero();
+        assertThat(onlyExams.competencies()).isNull();
+
+        givenOnlyTheNewestSemesterHasData();
+        service = new PublicUsageStatisticsService(repository, profileService, Optional.empty(), Optional.empty(), Optional.empty(), Optional.of(competencyApi),
+                BUILD_JOB_RETENTION_DAYS);
+        var onlyCompetencies = service.getUsageStatistics().semesters().getFirst();
+        assertThat(onlyCompetencies.exams()).isNull();
+        assertThat(onlyCompetencies.competencies()).isEqualTo(5);
+    }
+
+    @Test
+    void semesterBelowTheCourseThreshold_doesNotAskTheModulesForNumbers() {
+        var examApi = mock(ExamUsageStatisticsApi.class);
+        var competencyApi = mock(CompetencyUsageStatisticsApi.class);
+        service = new PublicUsageStatisticsService(repository, profileService, Optional.empty(), Optional.empty(), Optional.of(examApi), Optional.of(competencyApi),
+                BUILD_JOB_RETENTION_DAYS);
+
+        assertThat(service.getUsageStatistics().semesters()).isEmpty();
+        verifyNoInteractions(examApi, competencyApi);
     }
 
     @Test
