@@ -21,12 +21,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.mail.internet.MimeMessage;
 
+import org.aopalliance.intercept.MethodInterceptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -36,6 +40,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.springframework.aop.framework.Advised;
+import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -815,6 +821,40 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isZero();
         assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student1)).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void messageIsNotVisibleBeforeUnreadCounterIsPersisted() throws Exception {
+        Post post = createPostWithOneToOneChat(TEST_PREFIX);
+        var inspectedSave = new AtomicBoolean();
+        var visibleBeforeIncrement = new AtomicBoolean();
+        var repositoryProxy = (Advised) conversationMessageRepository;
+        var observer = new DefaultPointcutAdvisor((MethodInterceptor) invocation -> {
+            Object result = invocation.proceed();
+            if (invocation.getMethod().getName().equals("save") && result instanceof Post saved && saved.getConversation().getId().equals(post.getConversation().getId())) {
+                // A separate connection must not see the posting before its unread increment can commit.
+                visibleBeforeIncrement.set(CompletableFuture.supplyAsync(() -> conversationMessageRepository.existsById(saved.getId())).get(10, TimeUnit.SECONDS));
+                inspectedSave.set(true);
+            }
+            return result;
+        });
+        repositoryProxy.addAdvisor(0, observer);
+        PostResponseDTO created;
+        try {
+            created = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages",
+                    new CreatePostDTO(post.getContent(), "", false, new CreatePostConversationDTO(post.getConversation().getId())), PostResponseDTO.class, HttpStatus.CREATED);
+        }
+        finally {
+            repositoryProxy.removeAdvisor(observer);
+        }
+
+        assertThat(inspectedSave).isTrue();
+        assertThat(visibleBeforeIncrement).as("a message and its unread counter must become visible together").isFalse();
+        var recipient = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        assertThat(getUnreadMessagesCount(created.conversation().id(), recipient)).isEqualTo(1);
+        conversationParticipantRepository.updateLastRead(recipient.getId(), created.conversation().id(), ZonedDateTime.now());
+        assertThat(getUnreadMessagesCount(created.conversation().id(), recipient)).isZero();
     }
 
     @Test

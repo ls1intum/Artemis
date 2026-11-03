@@ -1119,6 +1119,25 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "ab", "Strategy/bridge" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createFileUploadExerciseWithInvalidTitleIsRejected(String title) throws Exception {
+        fileUploadExercise.setId(null);
+        fileUploadExercise.setTitle(title);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ab", "Strategy/bridge" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importFileUploadExerciseWithInvalidTitleIsRejected(String title) throws Exception {
+        fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        fileUploadExercise.setTitle(title);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + fileUploadExercise.getId(), inputDTO(fileUploadExercise),
+                FileUploadExerciseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importFileUploadExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
