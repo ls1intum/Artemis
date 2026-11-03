@@ -432,6 +432,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.score IS NOT NULL
                 AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
+                AND NOT (TYPE(e) = ProgrammingExercise AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
@@ -447,6 +448,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.score IS NOT NULL
                 AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
+                AND NOT (TYPE(e) = ProgrammingExercise AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);

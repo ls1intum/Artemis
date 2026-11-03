@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.participation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
@@ -12,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -65,6 +68,9 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
 
     @Autowired
     private ResultGradeRepository resultGradeRepository;
+
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
 
     private ZonedDateTime now;
 
@@ -140,6 +146,33 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusMinutes(10), savedSubmission, true, true, 0.0);
 
         assertThat(resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId())).get().extracting(Result::getId).isEqualTo(buildResult.getId());
+    }
+
+    /**
+     * The same for the last score behind competency progress: a rebuild of the same commit raises 0% to 100%, and a later AI feedback
+     * copies the 0% of the first build. As the newest result, it would otherwise reset the last score to 0.
+     */
+    @Test
+    void shouldNotUseARequestedAiFeedbackOfAProgrammingExerciseAsLastScore() {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise exercise = (ProgrammingExercise) course.getExercises().iterator().next();
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        var submission = new ProgrammingSubmission();
+        submission.setSubmissionDate(now.minusHours(1));
+        submission.setSubmitted(true);
+        var savedSubmission = participationUtilService.addSubmission(participation, submission);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusMinutes(40), savedSubmission, true, true, 0.0);
+        Result rebuildResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, now.minusMinutes(30), savedSubmission, true, true, 100.0);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, now.minusMinutes(10), savedSubmission, true, true, 0.0);
+
+        participantScoreScheduleService.scheduleTask(exercise.getId(), participation.getParticipant().getId(), null);
+        participantScoreScheduleService.executeScheduledTasks();
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(participantScoreRepository.findAllByExercise(exercise)).singleElement().satisfies(score -> {
+            assertThat(score.getLastResult()).isNotNull().extracting(Result::getId).isEqualTo(rebuildResult.getId());
+            assertThat(score.getLastScore()).isEqualTo(100.0);
+            assertThat(score.getLastRatedScore()).isEqualTo(100.0);
+        }));
+        await().atMost(Duration.ofSeconds(5)).until(participantScoreScheduleService::isIdle);
     }
 
     /**
