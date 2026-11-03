@@ -234,6 +234,74 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         expect(container.querySelectorAll('.pdf-canvas-container canvas')).toHaveLength(3);
     });
 
+    it('should preserve newer thumbnails when an older engine request resolves late', async () => {
+        await setPages();
+        const pending = Promise.withResolvers<typeof engineService.engine>();
+        engineService.getEngine.mockReturnValueOnce(pending.promise);
+        const olderRender = component.renderPages();
+
+        await setPages();
+        const currentCanvas = component.pdfContainer().nativeElement.querySelector('#pdf-page-slide1 canvas');
+        expect(currentCanvas).not.toBeNull();
+        pending.resolve(engineService.engine);
+        await olderRender;
+
+        expect(component.pdfContainer().nativeElement.querySelector('#pdf-page-slide1 canvas')).toBe(currentCanvas);
+        expect([...component.loadedPages()].sort()).toEqual([1, 2, 3]);
+    });
+
+    it('should discard an older render when pages change while a thumbnail is pending', async () => {
+        await setPages();
+        const task = engineService.engine.renderPageRaw();
+        const pending = Promise.withResolvers<Awaited<ReturnType<typeof task.toPromise>>>();
+        engineService.engine.renderPageRaw.mockReturnValueOnce({ ...task, toPromise: () => pending.promise });
+        const olderRender = component.renderPages();
+        await vi.waitFor(() => expect(engineService.engine.renderPageRaw).toHaveBeenCalledTimes(5));
+
+        // Keep the slide identities but replace the source pages, as when the input is refreshed.
+        await setPages(makePages().map((page) => ({ ...page, sourceIndex: 2 - page.sourceIndex })));
+        pending.resolve(await task.toPromise());
+        await olderRender;
+
+        for (const slideId of ['slide1', 'slide2', 'slide3']) {
+            expect(component.pdfContainer().nativeElement.querySelectorAll(`#pdf-page-${slideId} canvas`)).toHaveLength(1);
+        }
+        expect([...component.loadedPages()].sort()).toEqual([1, 2, 3]);
+    });
+
+    it('should ignore a failed render that was superseded by a newer page list', async () => {
+        await setPages();
+        const task = engineService.engine.renderPageRaw();
+        const pending = Promise.withResolvers<Awaited<ReturnType<typeof task.toPromise>>>();
+        engineService.engine.renderPageRaw.mockReturnValueOnce({ ...task, toPromise: () => pending.promise });
+        const olderRender = component.renderPages();
+        await vi.waitFor(() => expect(engineService.engine.renderPageRaw).toHaveBeenCalledTimes(5));
+
+        await setPages();
+        pending.reject(new Error('stale document closed'));
+        await olderRender;
+
+        expect(alertServiceMock.addAlert).not.toHaveBeenCalled();
+        expect(component.pdfContainer().nativeElement.querySelectorAll('canvas')).toHaveLength(3);
+    });
+
+    it('should stop rendering when the preview is destroyed with a thumbnail pending', async () => {
+        await setPages();
+        const task = engineService.engine.renderPageRaw();
+        const pending = Promise.withResolvers<Awaited<ReturnType<typeof task.toPromise>>>();
+        engineService.engine.renderPageRaw.mockReturnValueOnce({ ...task, toPromise: () => pending.promise });
+        const olderRender = component.renderPages();
+        await vi.waitFor(() => expect(engineService.engine.renderPageRaw).toHaveBeenCalledTimes(5));
+        const container = component.pdfContainer().nativeElement;
+
+        fixture.destroy();
+        pending.resolve(await task.toPromise());
+        await olderRender;
+
+        expect(container.querySelectorAll('canvas')).toHaveLength(0);
+        expect(alertServiceMock.addAlert).not.toHaveBeenCalled();
+    });
+
     it('should scroll to the bottom after rendering when appending a file', async () => {
         fixture.componentRef.setInput('isAppendingFile', true);
         fixture.detectChanges();

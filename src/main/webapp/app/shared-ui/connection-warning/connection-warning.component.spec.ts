@@ -72,6 +72,99 @@ describe('ConnectionWarning', () => {
         expect(warningDiv.classes['disconnected']).not.toBeTruthy();
     });
 
+    it('should keep a dismissed warning closed during the same disconnection', () => {
+        fixture.detectChanges();
+        subject.next(new ConnectionState(false, true));
+        vi.advanceTimersByTime(300);
+        fixture.detectChanges();
+        expect(component.popover.isOpen()).toBe(true);
+
+        component.popover.close();
+        vi.advanceTimersByTime(300);
+        subject.next(new ConnectionState(false, true));
+        subject.next(new ConnectionState(false, true));
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+
+        expect(component.disconnected()).toBe(true);
+        expect(component.popover.isOpen()).toBe(false);
+
+        // The indicator still lets the user inspect the warning manually.
+        const warning = fixture.nativeElement.querySelector('[role="button"]') as HTMLElement;
+        warning.click();
+        fixture.detectChanges();
+        expect(component.popover.isOpen()).toBe(true);
+    });
+
+    it('should not reopen after manually opening and dismissing a pending warning', () => {
+        fixture.detectChanges();
+        subject.next(new ConnectionState(false, true));
+        const warning = fixture.nativeElement.querySelector('[role="button"]') as HTMLElement;
+
+        warning.click();
+        vi.advanceTimersByTime(100);
+        fixture.detectChanges();
+        expect(component.popover.isOpen()).toBe(true);
+        warning.click();
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+
+        expect(component.disconnected()).toBe(true);
+        expect(component.popover.isOpen()).toBe(false);
+    });
+
+    it('should warn again when the connection drops after a recovery', () => {
+        fixture.detectChanges();
+        subject.next(new ConnectionState(false, true));
+        vi.advanceTimersByTime(300);
+        fixture.detectChanges();
+        component.popover.close();
+        vi.advanceTimersByTime(300);
+
+        subject.next(new ConnectionState(true, true));
+        subject.next(new ConnectionState(false, true));
+        vi.advanceTimersByTime(300);
+        fixture.detectChanges();
+
+        expect(component.disconnected()).toBe(true);
+        expect(component.popover.isOpen()).toBe(true);
+    });
+
+    it('should cancel the pending warning when reconnecting before it opens', () => {
+        fixture.detectChanges();
+        subject.next(new ConnectionState(false, true));
+        vi.advanceTimersByTime(100);
+        subject.next(new ConnectionState(false, true));
+        subject.next(new ConnectionState(true, true));
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+
+        expect(component.disconnected()).toBe(false);
+        expect(component.popover.isOpen()).toBe(false);
+    });
+
+    it('should clear the pending warning when destroyed', () => {
+        fixture.detectChanges();
+        subject.next(new ConnectionState(false, true));
+        const timeout = component.openTimeout;
+        const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+
+        fixture.destroy();
+
+        expect(clearTimeoutSpy).toHaveBeenCalledWith(timeout);
+    });
+
+    it('should not warn before the first successful connection', () => {
+        subject.next(new ConnectionState(false, false));
+        fixture.detectChanges();
+        subject.next(new ConnectionState(false, false));
+        vi.advanceTimersByTime(1000);
+        fixture.detectChanges();
+
+        expect(component.disconnected()).toBe(false);
+        expect(component.popover.isOpen()).toBe(false);
+    });
+
     it('should expose the popover state after keyboard toggles', () => {
         fixture.detectChanges();
         const warning = fixture.nativeElement.querySelector('.connection-warning') as HTMLElement;
