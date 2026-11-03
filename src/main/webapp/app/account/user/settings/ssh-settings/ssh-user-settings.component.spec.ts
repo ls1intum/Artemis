@@ -176,5 +176,17 @@ describe('SshUserSettingsComponent', () => {
 
             expect(sshServiceMock.deleteSshPublicKey).toHaveBeenCalledWith(mockedUserSshKeys[0].id);
         });
+
+        it('links to the canonical SSH detail routes', () => {
+            const fingerprintsLink = templateFixture.nativeElement.querySelector('a[href$="/fingerprints"]') as HTMLAnchorElement;
+            const addLink = templateFixture.nativeElement.querySelector('[data-testid="addNewSshKeyButton"]') as HTMLAnchorElement;
+
+            expect(fingerprintsLink.getAttribute('href')).toBe('/user-settings/credentials/ssh/fingerprints');
+            expect(addLink.getAttribute('href')).toBe('/user-settings/credentials/ssh/add');
+
+            openRowMenu();
+            const viewLink = menuItem('viewExistingSshKey') as HTMLAnchorElement;
+            expect(viewLink.getAttribute('href')).toBe('/user-settings/credentials/ssh/view/3');
+        });
     });
 });

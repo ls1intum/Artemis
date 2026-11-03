@@ -6,11 +6,11 @@ import { ScienceSettingsComponent } from 'app/account/user/settings/science-sett
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Component({
-    selector: 'jhi-profile-settings-v2',
-    templateUrl: './profile-settings-v2.component.html',
+    selector: 'jhi-profile-settings',
+    templateUrl: './profile-settings.component.html',
     imports: [AccountInformationComponent, GlobalNotificationsSettingsComponent, ScienceSettingsComponent],
 })
-export class ProfileSettingsV2Component {
+export class ProfileSettingsComponent {
     private readonly profileService = inject(ProfileService);
 
     readonly isDataSharingAvailable = isAtlasModuleActive(this.profileService);

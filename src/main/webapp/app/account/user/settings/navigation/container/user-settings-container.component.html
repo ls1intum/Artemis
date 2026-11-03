@@ -1,10 +1,10 @@
-<div class="user-settings-layout flex w-full items-stretch overflow-x-hidden pt-(--spacing-divider) pr-divider" data-testid="user-settings-v2-layout">
+<div class="user-settings-layout flex w-full items-stretch overflow-x-hidden pt-(--spacing-divider) pr-divider" data-testid="user-settings-layout">
     <aside
         class="module-bg sticky top-0 h-full flex-none overflow-x-hidden overflow-y-auto rounded-lg transition-[width] duration-200 ease-in-out max-[960px]:w-(--sidebar-nav-width-collapsed) print:hidden"
         [class]="isSidebarCollapsed() ? 'w-(--sidebar-nav-width-collapsed)' : 'w-(--sidebar-nav-width)'"
-        data-testid="user-settings-v2-sidebar-column"
+        data-testid="user-settings-sidebar-column"
     >
-        <jhi-user-settings-v2-sidebar
+        <jhi-user-settings-sidebar
             [isCollapsed]="isSidebarCollapsed()"
             [isLearningAvailable]="isLearningAvailable()"
             [isAiExperienceAvailable]="isAiExperienceAvailable()"
@@ -12,9 +12,9 @@
         />
     </aside>
 
-    <div class="ms-divider flex min-w-0 flex-auto flex-col overflow-hidden print:ms-0 print:w-full" data-testid="user-settings-v2-content-column">
-        <jhi-user-settings-v2-title-bar [pageTitle]="pageTitle()" />
-        <main class="module-bg min-h-0 flex-1 overflow-y-auto rounded-lg p-4!" data-testid="user-settings-v2-content">
+    <div class="ms-divider flex min-w-0 flex-auto flex-col overflow-hidden print:ms-0 print:w-full" data-testid="user-settings-content-column">
+        <jhi-user-settings-title-bar [pageTitle]="pageTitle()" />
+        <main class="module-bg min-h-0 flex-1 overflow-y-auto rounded-lg p-4!" data-testid="user-settings-content">
             <router-outlet (activate)="updatePageTitle()" />
         </main>
     </div>

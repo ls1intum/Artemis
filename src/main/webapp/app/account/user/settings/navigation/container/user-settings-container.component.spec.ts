@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { provideRouter } from '@angular/router';
-import { UserSettingsV2ContainerComponent } from './user-settings-v2-container.component';
+import { UserSettingsContainerComponent } from './user-settings-container.component';
 import { DataGuard } from 'app/account/user/settings/data-guard.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 
-describe('UserSettingsV2ContainerComponent', () => {
-    let fixture: ComponentFixture<UserSettingsV2ContainerComponent>;
-    let component: UserSettingsV2ContainerComponent;
+describe('UserSettingsContainerComponent', () => {
+    let fixture: ComponentFixture<UserSettingsContainerComponent>;
+    let component: UserSettingsContainerComponent;
     let profileService: { isModuleFeatureActive: ReturnType<typeof vi.fn> };
     let dataGuard: { isUsingLLM: ReturnType<typeof vi.fn> };
 
@@ -17,13 +17,13 @@ describe('UserSettingsV2ContainerComponent', () => {
         dataGuard = { isUsingLLM: vi.fn().mockReturnValue(false) };
 
         await TestBed.configureTestingModule({
-            imports: [UserSettingsV2ContainerComponent],
+            imports: [UserSettingsContainerComponent],
             providers: [provideRouter([]), { provide: ProfileService, useValue: profileService }, { provide: DataGuard, useValue: dataGuard }],
         })
-            .overrideTemplate(UserSettingsV2ContainerComponent, '')
+            .overrideTemplate(UserSettingsContainerComponent, '')
             .compileComponents();
 
-        fixture = TestBed.createComponent(UserSettingsV2ContainerComponent);
+        fixture = TestBed.createComponent(UserSettingsContainerComponent);
         component = fixture.componentInstance;
     });
 

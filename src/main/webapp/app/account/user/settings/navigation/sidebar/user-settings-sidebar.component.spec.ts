@@ -4,15 +4,15 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { UserSettingsV2SidebarComponent } from './user-settings-v2-sidebar.component';
+import { UserSettingsSidebarComponent } from './user-settings-sidebar.component';
 import { LayoutService } from 'app/foundation/breakpoints/layout.service';
 
-describe('UserSettingsV2SidebarComponent', () => {
-    let fixture: ComponentFixture<UserSettingsV2SidebarComponent>;
+describe('UserSettingsSidebarComponent', () => {
+    let fixture: ComponentFixture<UserSettingsSidebarComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [UserSettingsV2SidebarComponent],
+            imports: [UserSettingsSidebarComponent],
             providers: [
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -26,7 +26,7 @@ describe('UserSettingsV2SidebarComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(UserSettingsV2SidebarComponent);
+        fixture = TestBed.createComponent(UserSettingsSidebarComponent);
     });
 
     it('shows only the three navigation entries that always have content by default', () => {
@@ -34,9 +34,9 @@ describe('UserSettingsV2SidebarComponent', () => {
 
         const links = fixture.nativeElement.querySelectorAll('nav a');
         expect(Array.from(links, (link: HTMLAnchorElement) => link.getAttribute('href'))).toEqual([
-            '/user-settings-v2/profile',
-            '/user-settings-v2/credentials',
-            '/user-settings-v2/exercises',
+            '/user-settings/profile',
+            '/user-settings/credentials',
+            '/user-settings/exercises',
         ]);
     });
 
@@ -47,11 +47,11 @@ describe('UserSettingsV2SidebarComponent', () => {
 
         const links = fixture.nativeElement.querySelectorAll('nav a');
         expect(Array.from(links, (link: HTMLAnchorElement) => link.getAttribute('href'))).toEqual([
-            '/user-settings-v2/profile',
-            '/user-settings-v2/credentials',
-            '/user-settings-v2/learning',
-            '/user-settings-v2/ai-experience',
-            '/user-settings-v2/exercises',
+            '/user-settings/profile',
+            '/user-settings/credentials',
+            '/user-settings/learning',
+            '/user-settings/ai-experience',
+            '/user-settings/exercises',
         ]);
     });
 
@@ -60,7 +60,7 @@ describe('UserSettingsV2SidebarComponent', () => {
         fixture.componentInstance.toggleCollapseState.subscribe(toggleSpy);
         fixture.detectChanges();
 
-        fixture.nativeElement.querySelector('[data-testid="user-settings-v2-sidebar-collapse"]').click();
+        fixture.nativeElement.querySelector('[data-testid="user-settings-sidebar-collapse"]').click();
 
         expect(toggleSpy).toHaveBeenCalledOnce();
     });

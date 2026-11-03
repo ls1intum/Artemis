@@ -15,12 +15,12 @@ interface UserSettingsNavigationItem {
 }
 
 @Component({
-    selector: 'jhi-user-settings-v2-sidebar',
-    templateUrl: './user-settings-v2-sidebar.component.html',
+    selector: 'jhi-user-settings-sidebar',
+    templateUrl: './user-settings-sidebar.component.html',
     imports: [FaIconComponent, RouterLink, RouterLinkActive, TumAetUiTooltipDirective, ArtemisTranslatePipe],
     host: { class: 'flex h-full flex-col bg-[var(--module-bg)]' },
 })
-export class UserSettingsV2SidebarComponent {
+export class UserSettingsSidebarComponent {
     private readonly layoutService = inject(LayoutService);
 
     protected readonly faChevronRight = faChevronRight;
@@ -41,12 +41,12 @@ export class UserSettingsV2SidebarComponent {
     private computeNavigationItems(): UserSettingsNavigationItem[] {
         const items: UserSettingsNavigationItem[] = [
             {
-                routerLink: '/user-settings-v2/profile',
+                routerLink: '/user-settings/profile',
                 icon: faUser,
                 translation: 'artemisApp.userSettings.navigation.profile',
             },
             {
-                routerLink: '/user-settings-v2/credentials',
+                routerLink: '/user-settings/credentials',
                 icon: faKey,
                 translation: 'artemisApp.userSettings.navigation.credentials',
             },
@@ -54,7 +54,7 @@ export class UserSettingsV2SidebarComponent {
 
         if (this.isLearningAvailable()) {
             items.push({
-                routerLink: '/user-settings-v2/learning',
+                routerLink: '/user-settings/learning',
                 icon: faBookOpen,
                 translation: 'artemisApp.userSettings.navigation.learning',
             });
@@ -62,14 +62,14 @@ export class UserSettingsV2SidebarComponent {
 
         if (this.isAiExperienceAvailable()) {
             items.push({
-                routerLink: '/user-settings-v2/ai-experience',
+                routerLink: '/user-settings/ai-experience',
                 icon: faWandMagicSparkles,
                 translation: 'artemisApp.userSettings.aiExperience',
             });
         }
 
         items.push({
-            routerLink: '/user-settings-v2/exercises',
+            routerLink: '/user-settings/exercises',
             icon: faCode,
             translation: 'artemisApp.userSettings.navigation.exercises',
         });

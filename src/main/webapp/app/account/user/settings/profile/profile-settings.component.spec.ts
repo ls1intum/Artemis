@@ -6,7 +6,7 @@ import { AccountInformationComponent } from 'app/account/user/settings/account-i
 import { GlobalNotificationsSettingsComponent } from 'app/account/user/settings/global-notifications-settings/global-notifications-settings.component';
 import { ScienceSettingsComponent } from 'app/account/user/settings/science-settings/science-settings.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ProfileSettingsV2Component } from './profile-settings-v2.component';
+import { ProfileSettingsComponent } from './profile-settings.component';
 
 @Component({ selector: 'jhi-account-information', template: '' })
 class MockAccountInformationComponent {}
@@ -17,18 +17,18 @@ class MockGlobalNotificationsSettingsComponent {}
 @Component({ selector: 'jhi-science-settings', template: '' })
 class MockScienceSettingsComponent {}
 
-describe('ProfileSettingsV2Component', () => {
-    let fixture: ComponentFixture<ProfileSettingsV2Component>;
+describe('ProfileSettingsComponent', () => {
+    let fixture: ComponentFixture<ProfileSettingsComponent>;
     let profileService: { isModuleFeatureActive: ReturnType<typeof vi.fn> };
 
     beforeEach(async () => {
         profileService = { isModuleFeatureActive: vi.fn().mockReturnValue(false) };
 
         await TestBed.configureTestingModule({
-            imports: [ProfileSettingsV2Component],
+            imports: [ProfileSettingsComponent],
             providers: [{ provide: ProfileService, useValue: profileService }],
         })
-            .overrideComponent(ProfileSettingsV2Component, {
+            .overrideComponent(ProfileSettingsComponent, {
                 remove: { imports: [AccountInformationComponent, GlobalNotificationsSettingsComponent, ScienceSettingsComponent] },
                 add: { imports: [MockAccountInformationComponent, MockGlobalNotificationsSettingsComponent, MockScienceSettingsComponent] },
             })
@@ -36,7 +36,7 @@ describe('ProfileSettingsV2Component', () => {
     });
 
     const createComponent = (): void => {
-        fixture = TestBed.createComponent(ProfileSettingsV2Component);
+        fixture = TestBed.createComponent(ProfileSettingsComponent);
         fixture.detectChanges();
     };
 

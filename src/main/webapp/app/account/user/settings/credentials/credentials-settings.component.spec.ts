@@ -9,7 +9,7 @@ import { VcsAccessTokenOverviewComponent } from 'app/account/user/settings/vcs-a
 import { VcsAccessTokensSettingsComponent } from 'app/account/user/settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { CredentialsSettingsV2Component } from './credentials-settings-v2.component';
+import { CredentialsSettingsComponent } from './credentials-settings.component';
 
 @Component({ selector: 'jhi-passkey-settings', template: '' })
 class MockPasskeySettingsComponent {}
@@ -26,8 +26,8 @@ class MockVcsAccessTokenOverviewComponent {}
 @Component({ selector: 'jhi-credential-revocation-settings', template: '' })
 class MockCredentialRevocationSettingsComponent {}
 
-describe('CredentialsSettingsV2Component', () => {
-    let fixture: ComponentFixture<CredentialsSettingsV2Component>;
+describe('CredentialsSettingsComponent', () => {
+    let fixture: ComponentFixture<CredentialsSettingsComponent>;
     let accountService: { isAtLeastTutor: WritableSignal<boolean> };
     let profileService: { isModuleFeatureActive: ReturnType<typeof vi.fn> };
 
@@ -36,13 +36,13 @@ describe('CredentialsSettingsV2Component', () => {
         profileService = { isModuleFeatureActive: vi.fn().mockReturnValue(false) };
 
         await TestBed.configureTestingModule({
-            imports: [CredentialsSettingsV2Component],
+            imports: [CredentialsSettingsComponent],
             providers: [
                 { provide: AccountService, useValue: accountService },
                 { provide: ProfileService, useValue: profileService },
             ],
         })
-            .overrideComponent(CredentialsSettingsV2Component, {
+            .overrideComponent(CredentialsSettingsComponent, {
                 remove: {
                     imports: [
                         PasskeySettingsComponent,
@@ -66,7 +66,7 @@ describe('CredentialsSettingsV2Component', () => {
     });
 
     const createComponent = (): void => {
-        fixture = TestBed.createComponent(CredentialsSettingsV2Component);
+        fixture = TestBed.createComponent(CredentialsSettingsComponent);
         fixture.detectChanges();
     };
 

@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { SshUserSettingsFingerprintsComponent } from 'app/account/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component';
 import { SshUserSettingsFingerprintsService } from 'app/account/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
 
@@ -28,6 +28,7 @@ describe('SshUserSettingsFingerprintsComponent', () => {
             providers: [
                 { provide: SshUserSettingsFingerprintsService, useValue: fingerPintsServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideRouter([]),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         }).compileComponents();
@@ -48,5 +49,12 @@ describe('SshUserSettingsFingerprintsComponent', () => {
         await fixture.whenStable();
 
         expect(fingerPintsServiceMock.getSshFingerprints).toHaveBeenCalled();
+    });
+
+    it('links back to the Credentials page', () => {
+        fixture.detectChanges();
+
+        const backLink = fixture.nativeElement.querySelector('a[href="/user-settings/credentials"]');
+        expect(backLink).not.toBeNull();
     });
 });

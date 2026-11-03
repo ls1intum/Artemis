@@ -134,7 +134,7 @@ describe('CodeButtonComponent', () => {
         await component['initializeCodeButtonComponent']();
         component.onClick();
         fixture.detectChanges();
-        expect(component.sshSettingsUrl).toBe(`${window.location.origin}/user-settings/ssh`);
+        expect(component.sshSettingsUrl).toBe(`${window.location.origin}/user-settings/credentials`);
         expect(component.sshTemplateUrl).toBe(info.sshCloneURLTemplate);
         expect(component.versionControlUrl).toBe(info.versionControlUrl);
         expect(getCachedSshKeysSpy).toHaveBeenCalled();

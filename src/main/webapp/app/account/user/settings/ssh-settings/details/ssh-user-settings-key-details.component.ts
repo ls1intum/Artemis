@@ -157,7 +157,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     }
 
     goBack() {
-        void this.router.navigate(['/user-settings/ssh']);
+        void this.router.navigate(['/user-settings/credentials']);
     }
 
     /**

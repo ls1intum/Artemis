@@ -44,7 +44,7 @@
                                     </button>
                                     <ng-template #keyMenu>
                                         <tumaet-ui-menu>
-                                            <a tumAetUiMenuItem [routerLink]="['view', key.id]">
+                                            <a tumAetUiMenuItem [routerLink]="['/user-settings/credentials/ssh/view', key.id]">
                                                 <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.viewExistingSshKey"></span>
                                             </a>
                                             <!-- The confirmation is opened from the component, not from a
@@ -62,8 +62,8 @@
                     </tbody>
                 </table>
                 <div class="flex items-center justify-between">
-                    <a [routerLink]="['fingerprints']" jhiTranslate="artemisApp.userSettings.sshSettingsPage.fingerprints"></a>
-                    <a tumAetUiButton size="small" data-testid="addNewSshKeyButton" [routerLink]="['add']">
+                    <a [routerLink]="['/user-settings/credentials/ssh/fingerprints']" jhiTranslate="artemisApp.userSettings.sshSettingsPage.fingerprints"></a>
+                    <a tumAetUiButton size="small" data-testid="addNewSshKeyButton" [routerLink]="['/user-settings/credentials/ssh/add']">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></span>
                     </a>
@@ -75,7 +75,7 @@
 
         @if (keyCount() === 0) {
             <li tumAetUiListItem>
-                <a tumAetUiButton class="self-start" size="small" data-testid="addNewSshKeyButton" [routerLink]="['add']">
+                <a tumAetUiButton class="self-start" size="small" data-testid="addNewSshKeyButton" [routerLink]="['/user-settings/credentials/ssh/add']">
                     <fa-icon [icon]="faPlus" />
                     <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></span>
                 </a>

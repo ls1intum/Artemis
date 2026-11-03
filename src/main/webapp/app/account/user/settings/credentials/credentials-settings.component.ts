@@ -9,11 +9,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Component({
-    selector: 'jhi-credentials-settings-v2',
-    templateUrl: './credentials-settings-v2.component.html',
+    selector: 'jhi-credentials-settings',
+    templateUrl: './credentials-settings.component.html',
     imports: [PasskeySettingsComponent, SshUserSettingsComponent, VcsAccessTokensSettingsComponent, VcsAccessTokenOverviewComponent, CredentialRevocationSettingsComponent],
 })
-export class CredentialsSettingsV2Component {
+export class CredentialsSettingsComponent {
     private readonly accountService = inject(AccountService);
     private readonly profileService = inject(ProfileService);
 

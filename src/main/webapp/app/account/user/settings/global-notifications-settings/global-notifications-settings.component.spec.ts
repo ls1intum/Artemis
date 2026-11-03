@@ -128,17 +128,17 @@ describe('GlobalNotificationsSettingsComponent', () => {
 
             const passkeyLink = links.find((link) => link.type === GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED);
             expect(passkeyLink).toBeDefined();
-            expect(passkeyLink?.routerLink).toEqual(['/user-settings', 'passkeys']);
+            expect(passkeyLink?.routerLink).toEqual(['/user-settings', 'credentials']);
             expect(passkeyLink?.translationKey).toBe('artemisApp.userSettings.globalNotificationSettings.viewPasskeySettings');
 
             const vcsTokenLink = links.find((link) => link.type === GLOBAL_NOTIFICATION_TYPES.VCS_TOKEN_EXPIRED);
             expect(vcsTokenLink).toBeDefined();
-            expect(vcsTokenLink?.routerLink).toEqual(['/user-settings', 'vcs-token']);
+            expect(vcsTokenLink?.routerLink).toEqual(['/user-settings', 'credentials']);
             expect(vcsTokenLink?.translationKey).toBe('artemisApp.userSettings.globalNotificationSettings.viewVcsTokenSettings');
 
             const sshKeyLink = links.find((link) => link.type === GLOBAL_NOTIFICATION_TYPES.SSH_KEY_EXPIRED);
             expect(sshKeyLink).toBeDefined();
-            expect(sshKeyLink?.routerLink).toEqual(['/user-settings', 'ssh']);
+            expect(sshKeyLink?.routerLink).toEqual(['/user-settings', 'credentials']);
             expect(sshKeyLink?.translationKey).toBe('artemisApp.userSettings.globalNotificationSettings.viewSshKeySettings');
         });
 

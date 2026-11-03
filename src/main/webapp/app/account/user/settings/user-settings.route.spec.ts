@@ -1,22 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { routes } from './user-settings-v2.route';
+import { routes } from './user-settings.route';
 import { DataGuard } from 'app/account/user/settings/data-guard.service';
 import { learnerProfileGuard } from 'app/account/user/settings/learner-profile/learner-profile.guard';
 
-describe('user settings V2 routes', () => {
-    it('provides the parallel settings route tree with Profile as its default', () => {
+describe('user settings routes', () => {
+    it('provides the canonical settings route tree with Profile as its default', () => {
         const root = routes[0];
 
-        expect(root.path).toBe('user-settings-v2');
+        expect(root.path).toBe('user-settings');
         expect(root.data?.usesModuleBackground).toBe(false);
         expect(root.children?.find((route) => route.path === '')?.redirectTo).toBe('profile');
         expect(root.children?.map((route) => route.path)).toEqual([
             '',
             'profile',
             'credentials',
-            'credentials/add',
-            'credentials/fingerprints',
-            'credentials/view/:keyId',
+            'credentials/ssh/add',
+            'credentials/ssh/fingerprints',
+            'credentials/ssh/view/:keyId',
             'learning',
             'ai-experience',
             'exercises',
@@ -25,9 +25,9 @@ describe('user settings V2 routes', () => {
     });
 
     it('provides SSH detail pages with the existing SSH title', () => {
-        const sshRoutes = routes[0].children?.filter((route) => route.path?.startsWith('credentials/') && route.path !== 'credentials');
+        const sshRoutes = routes[0].children?.filter((route) => route.path?.startsWith('credentials/ssh/'));
 
-        expect(sshRoutes?.map((route) => route.path)).toEqual(['credentials/add', 'credentials/fingerprints', 'credentials/view/:keyId']);
+        expect(sshRoutes?.map((route) => route.path)).toEqual(['credentials/ssh/add', 'credentials/ssh/fingerprints', 'credentials/ssh/view/:keyId']);
         expect(sshRoutes?.every((route) => route.data?.pageTitle === 'artemisApp.userSettings.categories.SSH_SETTINGS')).toBe(true);
         expect(sshRoutes?.every((route) => route.loadComponent)).toBe(true);
     });

@@ -2,17 +2,17 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterOutlet } from '@angular/router';
 import { DataGuard } from 'app/account/user/settings/data-guard.service';
 import { learnerProfileAvailable } from 'app/account/user/settings/learner-profile/learner-profile-availability';
-import { UserSettingsV2SidebarComponent } from 'app/account/user/settings-v2/navigation/sidebar/user-settings-v2-sidebar.component';
-import { UserSettingsV2TitleBarComponent } from 'app/account/user/settings-v2/navigation/title-bar/user-settings-v2-title-bar.component';
+import { UserSettingsSidebarComponent } from 'app/account/user/settings/navigation/sidebar/user-settings-sidebar.component';
+import { UserSettingsTitleBarComponent } from 'app/account/user/settings/navigation/title-bar/user-settings-title-bar.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Component({
-    selector: 'jhi-user-settings-v2-container',
-    templateUrl: './user-settings-v2-container.component.html',
-    styleUrl: './user-settings-v2-container.component.scss',
-    imports: [RouterOutlet, UserSettingsV2SidebarComponent, UserSettingsV2TitleBarComponent],
+    selector: 'jhi-user-settings-container',
+    templateUrl: './user-settings-container.component.html',
+    styleUrl: './user-settings-container.component.scss',
+    imports: [RouterOutlet, UserSettingsSidebarComponent, UserSettingsTitleBarComponent],
 })
-export class UserSettingsV2ContainerComponent implements OnInit {
+export class UserSettingsContainerComponent implements OnInit {
     private readonly dataGuard = inject(DataGuard);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly profileService = inject(ProfileService);

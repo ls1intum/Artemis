@@ -4,7 +4,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { learnerProfileAvailable } from 'app/account/user/settings/learner-profile/learner-profile-availability';
 
 /**
- * Guards the "/user-settings/profile" route. The learner profile is served by a module that can be disabled, and a
+ * Guards the "/user-settings/learning" route. The learner profile is served by a module that can be disabled, and a
  * disabled module means the page's requests answer 404 and the page reports the failures as errors. See
  * {@link learnerProfileAvailable} for which module backs the page.
  *

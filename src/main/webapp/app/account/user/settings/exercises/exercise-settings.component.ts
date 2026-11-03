@@ -3,8 +3,8 @@ import { IdeSettingsComponent } from 'app/account/user/settings/ide-preferences/
 import { QuizTrainingSettingsComponent } from 'app/account/user/settings/quiz-training-settings/quiz-training-settings.component';
 
 @Component({
-    selector: 'jhi-exercise-settings-v2',
-    templateUrl: './exercise-settings-v2.component.html',
+    selector: 'jhi-exercise-settings',
+    templateUrl: './exercise-settings.component.html',
     imports: [IdeSettingsComponent, QuizTrainingSettingsComponent],
 })
-export class ExerciseSettingsV2Component {}
+export class ExerciseSettingsComponent {}

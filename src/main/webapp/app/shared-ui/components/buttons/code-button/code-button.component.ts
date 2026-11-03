@@ -651,7 +651,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     private configureTooltips() {
-        this.sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
+        this.sshSettingsUrl = `${window.location.origin}/user-settings/credentials`;
         this.sshKeyMissingTip.set(this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl));
         this.sshKeysExpiredTip.set(this.formatTip('artemisApp.exerciseActions.sshKeyExpiredTip', this.sshSettingsUrl));
     }

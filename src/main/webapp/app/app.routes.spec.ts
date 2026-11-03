@@ -18,12 +18,15 @@ describe('app.routes', () => {
         });
     });
 
-    describe('parallel user settings layout', () => {
-        it('loads the V2 routes without changing the existing settings route', () => {
+    describe('user settings layout', () => {
+        it('loads only the redesigned settings routes', () => {
             const settingsRoutes = routes.filter((route) => route.path === '' && route.loadChildren);
 
-            expect(settingsRoutes.some((route) => route.loadChildren?.toString().includes('user-settings.route'))).toBe(true);
-            expect(settingsRoutes.some((route) => route.loadChildren?.toString().includes('user-settings-v2.route'))).toBe(true);
+            const userSettingsRoutes = settingsRoutes.filter((route) => route.loadChildren?.toString().includes('app/account/user/settings'));
+
+            expect(userSettingsRoutes).toHaveLength(1);
+            expect(userSettingsRoutes[0].loadChildren?.toString()).toContain('app/account/user/settings/user-settings.route');
+            expect(userSettingsRoutes[0].loadChildren?.toString()).not.toContain('settings-v2');
         });
     });
 

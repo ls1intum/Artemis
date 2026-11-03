@@ -52,17 +52,17 @@ export class GlobalNotificationsSettingsComponent implements OnInit, OnDestroy {
     public readonly notificationTypeLinks: NotificationTypeLink[] = [
         {
             type: GLOBAL_NOTIFICATION_TYPES.NEW_PASSKEY_ADDED,
-            routerLink: ['/user-settings', 'passkeys'],
+            routerLink: ['/user-settings', 'credentials'],
             translationKey: 'artemisApp.userSettings.globalNotificationSettings.viewPasskeySettings',
         },
         {
             type: GLOBAL_NOTIFICATION_TYPES.VCS_TOKEN_EXPIRED,
-            routerLink: ['/user-settings', 'vcs-token'],
+            routerLink: ['/user-settings', 'credentials'],
             translationKey: 'artemisApp.userSettings.globalNotificationSettings.viewVcsTokenSettings',
         },
         {
             type: GLOBAL_NOTIFICATION_TYPES.SSH_KEY_EXPIRED,
-            routerLink: ['/user-settings', 'ssh'],
+            routerLink: ['/user-settings', 'credentials'],
             translationKey: 'artemisApp.userSettings.globalNotificationSettings.viewSshKeySettings',
         },
     ];

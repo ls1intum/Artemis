@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { IdeSettingsComponent } from 'app/account/user/settings/ide-preferences/ide-settings.component';
 import { QuizTrainingSettingsComponent } from 'app/account/user/settings/quiz-training-settings/quiz-training-settings.component';
-import { ExerciseSettingsV2Component } from './exercise-settings-v2.component';
+import { ExerciseSettingsComponent } from './exercise-settings.component';
 
 @Component({ selector: 'jhi-ide-preferences', template: '' })
 class MockIdeSettingsComponent {}
@@ -11,20 +11,20 @@ class MockIdeSettingsComponent {}
 @Component({ selector: 'jhi-quiz-training-settings', template: '' })
 class MockQuizTrainingSettingsComponent {}
 
-describe('ExerciseSettingsV2Component', () => {
-    let fixture: ComponentFixture<ExerciseSettingsV2Component>;
+describe('ExerciseSettingsComponent', () => {
+    let fixture: ComponentFixture<ExerciseSettingsComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ExerciseSettingsV2Component],
+            imports: [ExerciseSettingsComponent],
         })
-            .overrideComponent(ExerciseSettingsV2Component, {
+            .overrideComponent(ExerciseSettingsComponent, {
                 remove: { imports: [IdeSettingsComponent, QuizTrainingSettingsComponent] },
                 add: { imports: [MockIdeSettingsComponent, MockQuizTrainingSettingsComponent] },
             })
             .compileComponents();
 
-        fixture = TestBed.createComponent(ExerciseSettingsV2Component);
+        fixture = TestBed.createComponent(ExerciseSettingsComponent);
         fixture.detectChanges();
     });
 

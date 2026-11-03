@@ -87,7 +87,7 @@ describe('SshUserSettingsComponent', () => {
         expect(comp.isExpiryDateValid()).toBe(true);
         comp.saveSshKey();
         expect(alertServiceMock.success).toHaveBeenCalled();
-        expect(router.navigate).toHaveBeenCalledWith(['/user-settings/ssh']);
+        expect(router.navigate).toHaveBeenCalledWith(['/user-settings/credentials']);
     });
 
     it('should initialize view for adding new keys and fail saving key', () => {
@@ -272,7 +272,7 @@ describe('SshUserSettingsComponent', () => {
         expect(comp.isLoading()).toBe(false);
         expect(comp.displayedSshKey).toEqual(mockKey);
         comp.goBack();
-        expect(router.navigate).toHaveBeenCalledWith(['/user-settings/ssh']);
+        expect(router.navigate).toHaveBeenCalledWith(['/user-settings/credentials']);
     });
 
     it('should detect Windows', () => {

@@ -267,7 +267,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         );
         expect(startSpan).toBeTruthy();
 
-        const link = fixture.nativeElement.querySelector('a[routerLink="/user-settings/passkeys"]');
+        const link = fixture.nativeElement.querySelector('a[routerLink="/user-settings/credentials"]');
         expect(link).toBeTruthy();
 
         const linkSpan = link.querySelector('span[jhiTranslate="global.menu.admin.passkeyApprovalInstructions.link"]');

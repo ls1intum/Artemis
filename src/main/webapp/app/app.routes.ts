@@ -57,13 +57,6 @@ const routes: Routes = [
         },
     },
     {
-        path: '',
-        loadChildren: () => import('app/account/user/settings-v2/user-settings-v2.route').then((m) => m.routes),
-        data: {
-            usesModuleBackground: false,
-        },
-    },
-    {
         path: 'admin',
         data: {
             authorities: IS_AT_LEAST_ADMIN,
