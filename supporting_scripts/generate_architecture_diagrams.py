@@ -185,11 +185,12 @@ def top_level():
     ci_w, ci_h = s.size_comp("LocalCI", ["build queue"])
     inner_w = max(core_w, vc_w + 30 + ci_w)
     client_w, client_h = s.size_comp("Artemis Client", ["Angular single-page app"])
-    app_h = s.size_comp("Android App")[1]
+    mobile_w, mobile_h = s.size_comp("Mobile Apps", ["Android and iOS"])
 
-    # the mobile apps sit above the client, so the container starts lower
-    core_y = 54 + 2 * (app_h + 16) + client_h // 2 - core_h // 2
-    cont_y = core_y - 52
+    # the mobile apps sit above the server and use their own interface, so the container starts lower
+    mobile_y = 48
+    cont_y = mobile_y + mobile_h + 52
+    core_y = cont_y + 52
     cont_x = 30 + client_w + 160
     cx = cont_x + pad
     row2_y = core_y + core_h + 38
@@ -207,15 +208,12 @@ def top_level():
     core_mid, vc_mid = core_y + core_h // 2, row2_y + vc_h // 2
     client_y = core_mid - client_h // 2
     s.comp(30, client_y, "Artemis Client", ["Angular single-page app"])
-    ios_y = client_y - 16 - app_h
-    android_y = ios_y - 16 - app_h
-    s.comp(30, ios_y, "iOS App", w=client_w)
-    s.comp(30, android_y, "Android App", w=client_w)
-    bus_x = cont_x - 50
-    s.line([(30 + client_w, android_y + app_h // 2), (bus_x, android_y + app_h // 2), (bus_x, core_mid)])
-    s.line([(30 + client_w, ios_y + app_h // 2), (bus_x, ios_y + app_h // 2)])
-    s.p.append(f'<circle cx="{bus_x}" cy="{core_mid}" r="3" fill="{INK}"/>')
-    s.assembly([(cx, core_mid), (30 + client_w, core_mid)], "REST + WebSocket", (30 + client_w + 67, core_mid - 14), stub=pad + 10)
+    # the mobile apps require the interface through the top edge of the core modules, to the right of the title of the server
+    mobile_x_line = cont_x + 272
+    s.comp(mobile_x_line - mobile_w // 2, mobile_y, "Mobile Apps", ["Android and iOS"])
+    s.assembly([(mobile_x_line, core_y), (mobile_x_line, mobile_y + mobile_h)], "REST + WebSocket", (mobile_x_line + 22, cont_y - 16),
+               stub=core_y - cont_y + 14, anchor="start")
+    s.assembly([(cx, core_mid), (30 + client_w, core_mid)], "REST + WebSocket", ((30 + client_w + cont_x) / 2, core_mid - 14), stub=pad + 10)
     gc_h = s.size_comp("Git Client", ["IDE or command line"])[1]
     s.comp(30, vc_mid - gc_h // 2, "Git Client", ["IDE or command line"], w=client_w)
     s.assembly([(cx, vc_mid), (30 + client_w, vc_mid)], "Git (HTTPS, SSH)", ((30 + client_w + cont_x) / 2, vc_mid - 14), stub=pad + 10)
