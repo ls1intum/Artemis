@@ -272,7 +272,7 @@ KEYWORDS = {"if", "for", "while", "switch", "catch", "return", "new", "throw", "
 MODIFIERS = r"(?:(?:public|protected|private|static|final|abstract|default|synchronized|native|transient|volatile)\s+)*"
 ANNOTATIONS = r"(?:@\w+(?:\([^)]*\))?\s+)*"
 JAVA_METHOD = re.compile(r"^\s*" + ANNOTATIONS + MODIFIERS + r"(?:<[^>]+>\s+)?([\w<>\[\],.? ]+?)\s+(\w+)\s*\(", re.M)
-JAVA_FIELD = re.compile(r"^\s*" + ANNOTATIONS + r"((?:(?:private|protected|public|final|transient|volatile)\s+)*)([\w<>\[\],.? ]+?)\s+(\w+)\s*(?:=[^;]*)?;\s*$")
+JAVA_FIELD = re.compile(r"^\s*" + ANNOTATIONS + r"((?:(?:private|protected|public|static|final|transient|volatile)\s+)*)([\w<>\[\],.? ]+?)\s+(\w+)\s*(?:=[^;]*)?;\s*$")
 TS_METHOD = re.compile(r"^\s*(?:(?:public|private|protected|static|async|override|readonly|get|set)\s+)*(\w+)\s*(?:<[^>]*>)?\s*\(", re.M)
 SIMPLE_TYPES = {"String", "Integer", "Long", "Boolean", "Double", "Float", "Short", "Byte", "Character", "Duration", "Period", "URI", "URL", "Path", "File", "Pattern", "Object",
                 "BigDecimal", "BigInteger", "Instant", "LocalDate", "LocalDateTime", "ZonedDateTime", "DataSize", "Locale", "Charset", "UUID", "Class", "Resource", "InetAddress", "Date"}
@@ -362,12 +362,23 @@ def class_declaration(text: str, name: str):
     return components, code[brace + 1:end - 1]
 
 
+def own_lines(body: str):
+    """Yields the lines of a class body that belong to the class itself: not the lines of a nested class, of a method or of an initializer."""
+    depth = 0
+    for line in body.splitlines():
+        if depth == 0:
+            yield line
+        code = re.sub(r"\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])'", "", line)
+        depth += code.count("{") - code.count("}")
+
+
 def declared_methods(declaration) -> set[str]:
-    """The methods that a class declares, and the accessors of the components of a record. Calls of other classes do not count."""
+    """The methods that a class declares itself, and the accessors of the components of a record. Calls and the methods of a nested class do not count."""
     components, body = declaration
     names = {c.split()[-1] for c in split_top_level(components)}
-    for m in JAVA_METHOD.finditer(body):
-        if (m.group(1).split() or [""])[0] not in KEYWORDS:
+    for line in own_lines(body):
+        m = JAVA_METHOD.match(line)
+        if m and (m.group(1).split() or [""])[0] not in KEYWORDS:
             names.add(m.group(2))
     return names
 
@@ -381,13 +392,10 @@ def declared_members(declaration) -> list[tuple[str, str]]:
         if " " in component:
             kind, _, name = component.rpartition(" ")
             members.append((name, kind.strip()))
-    depth = 0
-    for line in body.splitlines():
-        if depth == 0:
-            m = JAVA_FIELD.match(line)
-            if m and "static" not in m.group(1) and (m.group(2).split() or [""])[0] not in KEYWORDS:
-                members.append((m.group(3), m.group(2).strip()))
-        depth += line.count("{") - line.count("}")
+    for line in own_lines(body):
+        m = JAVA_FIELD.match(line)
+        if m and "static" not in m.group(1).split() and (m.group(2).split() or [""])[0] not in KEYWORDS:
+            members.append((m.group(3), m.group(2).strip()))
     return members
 
 
@@ -672,6 +680,10 @@ def self_test() -> None:
     methods = declared_methods(class_declaration(java, "S"))
     assert "evictEverywhere" in methods and "getCache" not in methods, methods
     assert "name" in declared_methods(class_declaration("record R(String name, int size) {}", "R"))
+    nested = "class ArtemisProperties {\n  private final Mail mail;\n  public Mail getMail() { return mail; }\n  public static class Mail {\n    public String getBaseUrl() { return \"x\"; }\n  }\n}\n"
+    outer = declared_methods(class_declaration(nested, "ArtemisProperties"))
+    assert "getMail" in outer and "getBaseUrl" not in outer, outer
+    assert "getBaseUrl" in declared_methods(class_declaration(nested, "Mail"))
 
     # a dotted and a quoted YAML key keep their own line, and the keys after them are not lost
     block = ["artemis:", "    deimos.llm.no-such-key: 1", "    'deimos':", "        llm:", "            temperature: 0"]
@@ -687,6 +699,14 @@ def self_test() -> None:
     assert empty.knows_property("artemis.feature-usage.digest.recipients") and empty.knows_property("artemis.feature-usage.costs.any-model.input")
     assert not empty.knows_property("artemis.feature-usage.recipients")
     assert empty.knows_environment_variable("ARTEMIS_FEATUREUSAGE_DIGEST_MINIMUMSESSIONS")
+
+    # a static constant is not bound, whatever its modifiers are
+    weaviate = '@ConfigurationProperties(prefix = "artemis.weaviate")\npublic class WeaviateProperties {\n    public static final String DEFAULT_HTTP_PORT = "8080";\n    private static int counter;\n    private int httpPort;\n}\n'
+    constants = SourceIndex(scan=False)
+    constants.add_binding(weaviate, "artemis.weaviate", weaviate.index('")') + 1)
+    assert constants.knows_property("artemis.weaviate.http-port") and constants.knows_environment_variable("ARTEMIS_WEAVIATE_HTTPPORT")
+    assert not constants.knows_property("artemis.weaviate.default-http-port") and not constants.knows_environment_variable("ARTEMIS_WEAVIATE_DEFAULTHTTPPORT")
+    assert not constants.knows_property("artemis.weaviate.counter")
     print("Self-test passed.")
 
 
