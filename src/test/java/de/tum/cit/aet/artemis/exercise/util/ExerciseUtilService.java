@@ -33,12 +33,14 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseDefaultConfigurationsRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
@@ -82,6 +84,9 @@ public class ExerciseUtilService {
 
     @Autowired
     private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
+    @Autowired
+    private ExerciseDefaultConfigurationsRepository exerciseDefaultConfigurationsRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepo;
@@ -539,7 +544,10 @@ public class ExerciseUtilService {
 
     /**
      * Asserts that an exercise created or imported through the application owns its permanent configuration rows: one team
-     * assignment configuration and one plagiarism detection configuration, whatever its type and mode.
+     * assignment configuration and one plagiarism detection configuration, whatever its type and mode, and for a programming
+     * exercise one Metis configuration, which no other type owns. The Metis row is read through the exercise module, whose
+     * statement exists whether or not the Metis module is enabled, so the assertion holds in every test context; its primary key
+     * is the exercise id, so a row that exists is the only one.
      *
      * @param exerciseId the id of the created or imported exercise
      */
@@ -547,6 +555,9 @@ public class ExerciseUtilService {
         assertThat(teamAssignmentConfigRepository.findAllByExerciseIdIn(List.of(exerciseId))).as("team assignment configuration rows of exercise " + exerciseId).hasSize(1);
         assertThat(plagiarismDetectionConfigRepository.findAllByExerciseIdIn(List.of(exerciseId))).as("plagiarism detection configuration rows of exercise " + exerciseId)
                 .hasSize(1);
+        boolean programmingExercise = exerciseTestRepository.findByIdElseThrow(exerciseId).getExerciseType() == ExerciseType.PROGRAMMING;
+        assertThat(exerciseDefaultConfigurationsRepository.hasMetisExerciseConfig(exerciseId)).as("whether exercise " + exerciseId + " owns a Metis configuration row")
+                .isEqualTo(programmingExercise);
     }
 
     /**
