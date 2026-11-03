@@ -17,6 +17,12 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
  * <p>
  * One row per (exercise, tutorial group) pair, which the schema keeps unique. Both keys are parents: the window has no
  * meaning without its configuration or without its group and cascades away with either.
+ *
+ * <p>
+ * The schema does not tie the two keys together: it cannot check that the tutorial group belongs to the course of the
+ * exercise, since neither table holds that course (a programming exercise reaches it directly or through its exam). The code
+ * that writes a window has to check it before the insert. A tutorial group and a programming exercise keep their course once
+ * they are created, so a window that was checked when it was written stays valid.
  */
 @Entity
 @Table(name = "metis_group_window")
