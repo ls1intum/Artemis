@@ -14,8 +14,9 @@ import de.tum.cit.aet.artemis.metis.domain.MetisExerciseConfig;
  * <p>
  * Every programming exercise owns exactly one row, also while this module is disabled and this repository does not exist:
  * the row is inserted by the exercise module when the exercise is stored ({@code ExerciseDefaultConfigurationsRepository}),
- * and the next update of the exercise adds it if a creation that failed half-way left it out. Settings are changed in that
- * row in place, never by inserting or deleting one, and switching Metis on or off only changes its enabled flag.
+ * and nothing in the exercise module touches it afterwards. A row that a creation which failed half-way left out reads as the
+ * defaults, and this module inserts it before it first writes one. Settings are changed in that row in place, never by
+ * inserting or deleting one, and switching Metis on or off only changes its enabled flag.
  */
 @Conditional(MetisEnabled.class)
 @Lazy

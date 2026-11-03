@@ -28,6 +28,11 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
  * Today this is the configuration of Metis, the comprehension check, which every programming exercise owns. The rows every
  * server has, the team assignment and the plagiarism detection configuration, are written through their own repositories.
  * <p>
+ * The rows are written once, when the exercise is stored, and the exercise module never touches them afterwards: it has no use
+ * for them, so neither an update of the exercise nor any other of its paths pays a statement for a module the server may not
+ * use. An exercise whose creation failed between storing it and inserting its row is left to the module that owns the row,
+ * which reads a missing row as the defaults and adds it before it first writes one.
+ * <p>
  * Each statement is a plain, single read or write: no transaction spans them and no lock is held across them. The bound
  * {@link Exercise} type is just the subject the statements share; the inherited CRUD operations are unused.
  */
@@ -38,13 +43,14 @@ public interface ExerciseDefaultConfigurationsRepository extends ArtemisJpaRepos
 
     /**
      * Inserts the module configuration rows a stored exercise is missing, which for a programming exercise is its Metis
-     * configuration. A newly stored exercise gets its rows this way, and since the update of a programming exercise makes the
-     * same call, an exercise whose creation failed half-way gets the rows that creation left out when it is next updated. For
-     * an exercise that has all its rows this is one unlocked read per row and nothing else.
+     * configuration. Every path that stores a new exercise makes this call once, right after the first save; for a programming
+     * exercise that is one unlocked read and one insert.
      * <p>
-     * It takes no lock and needs no transaction: a missing row is found by a plain read and added by a plain insert. If two
-     * calls add the same row at the same moment, its key lets one insert win and the other finds the row already there. A row
-     * that exists is never replaced, so the settings it holds survive any number of calls.
+     * The read keeps the call idempotent without a refused statement: {@code ExerciseConfigurationService.initialize} promises
+     * that a path which ran it already is not an error, and test fixtures call it again on exercises they store a second time.
+     * It takes no lock and needs no transaction: a missing row is found by a plain read and added by a plain insert. If two calls
+     * add the same row at the same moment, its key lets one insert win and the other finds the row already there. A row that
+     * exists is never replaced, so the settings it holds survive any number of calls.
      *
      * @param exercise the stored exercise
      */
