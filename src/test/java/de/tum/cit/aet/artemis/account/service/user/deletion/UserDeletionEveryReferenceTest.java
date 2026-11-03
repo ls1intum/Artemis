@@ -124,6 +124,34 @@ class UserDeletionEveryReferenceTest extends AbstractSpringIntegrationIndependen
                 .as("the deleted individual grade no longer prevents lowering the maximum points").isEqualTo(4.0);
     }
 
+    @Test
+    void presentationCleanupDeletesTheRubricRatingsOfTheUsersInstancesOnly() {
+        long[] instanceIds = transactionTemplate.execute(status -> {
+            long assessmentId = insert("presentation_assessment", values("title", "Rubric cleanup", "grading_method", "RUBRIC", "course_id", course.getId()));
+            long criterionId = insert("presentation_rubric_criterion",
+                    values("presentation_assessment_id", assessmentId, "position", 0, "name", "Content", "weight", 100, "scale", "THREE_POINT"));
+            insert("presentation_rubric_level", values("criterion_id", criterionId, "position", 0));
+            insert("presentation_rubric_level", values("criterion_id", criterionId, "position", 1));
+            long levelId = insert("presentation_rubric_level", values("criterion_id", criterionId, "position", 2));
+            Timestamp presentationDate = Timestamp.from(Instant.parse("2026-01-15T12:00:00Z"));
+            long targetInstanceId = insert("presentation_assessment_instance", values("presentation_assessment_id", assessmentId, "student_id", target.getId(), "presentation_date",
+                    presentationDate, "language", "en", "presentation_mode", "IN_PERSON", "rubric_score", 100));
+            long bystanderInstanceId = insert("presentation_assessment_instance", values("presentation_assessment_id", assessmentId, "student_id", bystander.getId(),
+                    "presentation_date", presentationDate, "language", "en", "presentation_mode", "IN_PERSON", "rubric_score", 100));
+            insert("presentation_rubric_rating", values("instance_id", targetInstanceId, "criterion_id", criterionId, "level_id", levelId, "comment", "Personal feedback"));
+            insert("presentation_rubric_rating", values("instance_id", bystanderInstanceId, "criterion_id", criterionId, "level_id", levelId));
+            return new long[] { targetInstanceId, bystanderInstanceId, criterionId };
+        });
+
+        userReferenceCleanupService.resolve(UserDeletionReferencePolicy.PRESENTATION_ASSESSMENT_INSTANCE, target.getId());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM presentation_rubric_rating WHERE instance_id = ?", Long.class, instanceIds[0]))
+                .as("the ratings and comments of the deleted account's presentation are removed with it").isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM presentation_rubric_rating WHERE instance_id = ?", Long.class, instanceIds[1])).isEqualTo(1L);
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM presentation_rubric_level WHERE criterion_id = ?", Long.class, instanceIds[2]))
+                .as("the rubric of the presentation stays").isEqualTo(3L);
+    }
+
     private Map<UserDeletionReferencePolicy, Long> counts(User user) {
         Map<UserDeletionReferencePolicy, Long> counts = new LinkedHashMap<>();
         for (UserDeletionReferencePolicy policy : UserDeletionReferencePolicy.values()) {
