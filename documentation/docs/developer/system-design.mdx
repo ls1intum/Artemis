@@ -41,7 +41,6 @@ The rationale given below for each design decision refers back to them.
 The following UML component diagram shows the top-level design of Artemis.
 Artemis is decomposed into an application client (an Angular single-page application in the browser) and an application server (one Spring Boot application).
 Interfaces are drawn as ball-and-socket connectors: the ball is the provided interface, the socket is the required interface.
-Components with a dashed border and the stereotype `deprecated` are removed in Artemis 11.
 
 <Image src={topLevelDesign} caption="Top-Level Design (UML component diagram)" alt="UML component diagram of the Artemis client, server, build agents and the systems around them" size={ImageSize.large} />
 
@@ -56,7 +55,6 @@ Components with a dashed border and the stereotype `deprecated` are removed in A
 | PostgreSQL | Persistent data. | Provides JDBC |
 | User Management | Optional external user management such as LDAP, SAML2 or OIDC. | Provides Authentication |
 | Optional Services | Iris, Athena, Hyperion, Weaviate and further services that extend the core. | Provide Service APIs |
-| Jenkins, MySQL | Deprecated alternatives to LocalCI and PostgreSQL. | Provide Jenkins REST API and JDBC |
 
 <Callout variant={CalloutVariant.warning}>
 
@@ -91,7 +89,7 @@ It describes the intent behind the architecture. The decisions are not independe
 The following UML deployment diagram shows a typical deployment of an Artemis installation.
 Student, instructor and teaching assistant devices are all equipped equally with the Artemis client in the browser and a Git client.
 
-<Image src={deploymentOverview} caption="Typical Deployment (UML deployment diagram)" alt="UML deployment diagram of user devices, reverse proxy, core nodes, build agent nodes, database server, distributed data server, broker node and Jenkins" size={ImageSize.large} />
+<Image src={deploymentOverview} caption="Typical Deployment (UML deployment diagram)" alt="UML deployment diagram of user devices, reverse proxy, core nodes, build agent nodes, database server, distributed data server, and broker node" size={ImageSize.large} />
 
 - **Core nodes** run the Artemis server artifact with LocalVC and LocalCI. They keep their state in the database, in the shared file system (the repositories) and in the distributed data provider, so a load balancer can distribute requests without sticky sessions, and a node can be added without downtime.
   Several small nodes usually beat one large one at the same cost, because they fail independently, see [Scaling](/admin/scaling).
@@ -99,10 +97,9 @@ Student, instructor and teaching assistant devices are all equipped equally with
   This node also sends the startup [telemetry](/admin/telemetry).
 - **Build agent nodes** run the same artifact with the `buildagent` profile. They connect to the distributed data provider, clone repositories from LocalVC and run each build job in a Docker container.
   They can run on servers of the university or in a cloud, and are scaled independently of the core nodes. A core node can also build.
-- **Database server.** PostgreSQL. MySQL is deprecated.
+- **Database server.** PostgreSQL.
 - **Distributed data server.** Only needed with the Redis provider. Hazelcast runs embedded in the core and build agent nodes.
 - **Broker node.** Only needed with several core nodes, to relay websocket messages between them.
-- **Jenkins server.** An optional, deprecated alternative to the build agents. It builds with its own pipelines and reports results back to the server.
 
 ## Data Model
 
@@ -133,6 +130,7 @@ submission subclasses, etc.)
 
 The following UML component diagram shows the structure of the Artemis server.
 It is a layered architecture whose application layer is divided into feature modules.
+Elements with a dashed border and the stereotype `deprecated` (the `jenkins` module and MySQL) are removed in Artemis 11.
 
 <Image src={serverArchitecture} caption="Server Architecture (UML component diagram)" alt="UML component diagram of the web layer, application layer and data layer of the Artemis server" size={ImageSize.large} />
 
