@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.admin.dto.CommunicationUsageDTO;
 import de.tum.cit.aet.artemis.admin.dto.StudentSubmissionCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.UsageSemesterDTO;
 import de.tum.cit.aet.artemis.admin.repository.PublicUsageStatisticsRepository;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.iris.api.IrisUsageStatisticsApi;
@@ -44,13 +45,17 @@ class PublicUsageStatisticsServiceTest {
 
     private PublicUsageStatisticsRepository repository;
 
+    private ProfileService profileService;
+
     private PublicUsageStatisticsService service;
 
     @BeforeEach
     void setUp() {
         repository = mock(PublicUsageStatisticsRepository.class);
         when(repository.findRealCourseIds(any(ZonedDateTime.class), any(ZonedDateTime.class), anyLong())).thenReturn(Set.of());
-        service = new PublicUsageStatisticsService(repository, Optional.empty(), Optional.empty(), BUILD_JOB_RETENTION_DAYS);
+        profileService = mock(ProfileService.class);
+        when(profileService.isLocalCIActive()).thenReturn(true);
+        service = new PublicUsageStatisticsService(repository, profileService, Optional.empty(), Optional.empty(), BUILD_JOB_RETENTION_DAYS);
     }
 
     @Test
@@ -72,7 +77,7 @@ class PublicUsageStatisticsServiceTest {
         var tutorialGroupApi = mock(TutorialGroupUsageStatisticsApi.class);
         when(irisApi.countMessagesInCourses(THREE_COURSES)).thenReturn(120L);
         when(tutorialGroupApi.countTutorialGroups(THREE_COURSES)).thenReturn(9L);
-        service = new PublicUsageStatisticsService(repository, Optional.of(irisApi), Optional.of(tutorialGroupApi), BUILD_JOB_RETENTION_DAYS);
+        service = new PublicUsageStatisticsService(repository, profileService, Optional.of(irisApi), Optional.of(tutorialGroupApi), BUILD_JOB_RETENTION_DAYS);
 
         var semester = service.getUsageStatistics().semesters().getFirst();
 
@@ -112,7 +117,21 @@ class PublicUsageStatisticsServiceTest {
         when(repository.countSubmissionsByStudent(any())).thenReturn(List.of());
         when(repository.summarizeFinishedBuildJobs(THREE_COURSES)).thenReturn(new BuildUsageDTO(100, 42.5));
         // a retention period of zero days deletes every build job that is older than now, so no semester has all of its builds
-        service = new PublicUsageStatisticsService(repository, Optional.empty(), Optional.empty(), 0);
+        service = new PublicUsageStatisticsService(repository, profileService, Optional.empty(), Optional.empty(), 0);
+
+        var semester = service.getUsageStatistics().semesters().getFirst();
+
+        assertThat(semester.builds()).isNull();
+        assertThat(semester.communication()).isNotNull();
+        verify(repository, never()).summarizeFinishedBuildJobs(any());
+    }
+
+    @Test
+    void withoutLocalCi_noBuildNumbersArePublishedBecauseOnlyLocalCiRecordsBuildJobs() {
+        givenOnlyTheNewestSemesterHasData();
+        when(repository.countSubmissionsByStudent(any())).thenReturn(List.of());
+        when(repository.summarizeFinishedBuildJobs(THREE_COURSES)).thenReturn(new BuildUsageDTO(100, 42.5));
+        when(profileService.isLocalCIActive()).thenReturn(false);
 
         var semester = service.getUsageStatistics().semesters().getFirst();
 

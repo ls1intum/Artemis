@@ -1,0 +1,112 @@
+---
+id: usage-dashboard
+title: Public Usage Dashboard
+sidebar_label: Usage Dashboard
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import usageOverviewImg from './assets/usage-dashboard/overview.png';
+import usageOlderSemesterImg from './assets/usage-dashboard/older-semester.png';
+import usageDarkGermanImg from './assets/usage-dashboard/dark-german.png';
+
+Every Artemis instance publishes an anonymous summary of how much it is used. The page answers the questions that
+universities, funding bodies and the open-source community ask most often: how many courses, students and submissions
+does Artemis serve, and how much of the rest of the platform, such as builds, communication and Iris, is in use.
+
+Open the page at `/usage` on your instance, for example `https://artemis.example.org/usage`. It needs no login and is
+not linked from the navigation, so link to it from your own website or the course catalogue if you want visitors to find
+it.
+
+<Image src={usageOverviewImg} alt="Usage dashboard showing the numbers of the current semester" size={ImageSize.large}
+       caption="The usage dashboard shows the numbers of one semester and lets visitors switch between the last four" />
+
+## What the page shows
+
+The page shows the last four semesters. A visitor picks a semester and sees:
+
+| Number | What it counts |
+|--------|----------------|
+| **Courses** | The courses of the semester that qualify, see [What counts](#what-counts) |
+| **Students** | Unique people enrolled as students in these courses |
+| **Active students** | Students with at least one submission in these courses |
+| **Submissions** | All submissions of those students, and of student teams |
+| **Exercises** | All exercises, including exam exercises, and a split by type |
+| **Lectures** | Lectures, without tutorial lectures |
+| **Tutorial groups** | Tutorial groups of these courses |
+| **Builds** and **Average build duration** | Finished builds and the average duration of the successful ones |
+| **Posts**, **Replies**, **Reactions**, **FAQs** | The communication in these courses |
+| **Iris messages** | Messages that users sent to Iris plus the answers of Iris |
+
+A bar chart compares the **Active students** of all semesters, and a section at the bottom explains how the numbers are
+counted, in the language of the visitor (English or German) and in the light or dark theme.
+
+<Image src={usageDarkGermanImg} alt="Usage dashboard in German with the dark theme" size={ImageSize.large}
+       caption="The page follows the language and the theme of the visitor" />
+
+## What counts
+
+All numbers are totals over the real courses of a semester. They are counted whenever they happened, so a build in
+January counts for the course that started in October.
+
+* A **semester** is derived from the start date of a course, in the time zone of the server. A winter semester runs from
+  October to March, a summer semester from April to September.
+* A course is **real** if it is not a test course and has at least five students. Deleted users and test users never
+  count as students.
+* A semester with fewer than three real courses is not shown at all, because its numbers would describe one course.
+* A student is **active** if they made at least one submission themselves. Submissions that instructors or the system
+  create on behalf of a student do not count.
+* **Posts** are all posts in channels, group chats and direct messages of the courses, but only as a number. Posts of
+  plagiarism cases are not counted. **Replies** that Iris drafted and no tutor has verified yet are not visible to
+  students and are not counted either.
+* **FAQs** are the published (accepted) FAQs.
+* Staff and the system are part of the numbers: instructors write posts, and template and solution repositories are built.
+
+<Callout variant={CalloutVariant.info}>
+
+  The page never shows a single course, a person or any content. It publishes totals only, and a semester without
+  enough courses disappears.
+
+</Callout>
+
+## Builds
+
+Builds are only published if the instance builds with the integrated code lifecycle (local CI), because only local CI
+records build jobs. On an instance that builds with Jenkins, the build cards are missing.
+
+Local CI deletes build jobs after a retention period, 365 days by default, which an operator sets with
+`artemis.continuous-integration.build-job.retention-period`. The builds of a semester that started before that period
+are incomplete, so the page does not publish them instead of showing a number that looks too small. Today this means
+that the two oldest semesters show no builds.
+
+<Image src={usageOlderSemesterImg} alt="Usage dashboard of an older semester without build numbers" size={ImageSize.large}
+       caption="An older semester without build numbers, because the build jobs of that time have been deleted" />
+
+## Optional modules
+
+The cards of an optional module only appear if the module is enabled. Without Iris there are no **Iris messages** and
+the heading reads **Communication**; without tutorial groups there is no **Tutorial groups** card. A disabled module is
+omitted instead of shown as zero.
+
+## Freshness and load
+
+The numbers are computed on the server at most once per hour for the whole cluster and cached, because the calculation
+scans the submissions of two years. The first request after the cache expired therefore takes longer than the others.
+The response may also be cached by browsers and proxies for up to ten minutes. A visitor sees numbers that are at most
+about an hour and ten minutes old.
+
+The page is served by the public endpoint `GET /api/core/public/usage-statistics`. It returns the same totals as JSON, so
+that other sites can show them as well.
+
+<Callout variant={CalloutVariant.warning}>
+
+  There is no setting to switch the page off, and the published numbers are not rounded. If you must not publish exact
+  numbers, block the path `/usage` and the endpoint in your reverse proxy.
+
+</Callout>
+
+For the cache and the rules behind it, see the [caching guideline](/developer/guidelines/caching). The related
+[Feature Usage](/admin/feature-usage) page is for administrators and shows which features are used, not how large the
+instance is.

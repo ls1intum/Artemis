@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.admin.dto.PublicUsageStatisticsDTO;
 import de.tum.cit.aet.artemis.admin.dto.StudentSubmissionCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.UsageSemesterDTO;
 import de.tum.cit.aet.artemis.admin.repository.PublicUsageStatisticsRepository;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.iris.api.IrisUsageStatisticsApi;
@@ -77,6 +78,8 @@ public class PublicUsageStatisticsService {
 
     private final PublicUsageStatisticsRepository publicUsageStatisticsRepository;
 
+    private final ProfileService profileService;
+
     private final Optional<IrisUsageStatisticsApi> irisUsageStatisticsApi;
 
     private final Optional<TutorialGroupUsageStatisticsApi> tutorialGroupUsageStatisticsApi;
@@ -84,12 +87,14 @@ public class PublicUsageStatisticsService {
     private final int buildJobRetentionDays;
 
     /**
+     * @param profileService        tells whether builds run on local CI, the only build system that records build jobs
      * @param buildJobRetentionDays the number of days after which build jobs are deleted. Builds of a semester that starts earlier are incomplete and are not published.
      */
-    public PublicUsageStatisticsService(PublicUsageStatisticsRepository publicUsageStatisticsRepository, Optional<IrisUsageStatisticsApi> irisUsageStatisticsApi,
-            Optional<TutorialGroupUsageStatisticsApi> tutorialGroupUsageStatisticsApi,
+    public PublicUsageStatisticsService(PublicUsageStatisticsRepository publicUsageStatisticsRepository, ProfileService profileService,
+            Optional<IrisUsageStatisticsApi> irisUsageStatisticsApi, Optional<TutorialGroupUsageStatisticsApi> tutorialGroupUsageStatisticsApi,
             @Value("${artemis.continuous-integration.build-job.retention-period:365}") int buildJobRetentionDays) {
         this.publicUsageStatisticsRepository = publicUsageStatisticsRepository;
+        this.profileService = profileService;
         this.irisUsageStatisticsApi = irisUsageStatisticsApi;
         this.tutorialGroupUsageStatisticsApi = tutorialGroupUsageStatisticsApi;
         this.buildJobRetentionDays = buildJobRetentionDays;
@@ -135,10 +140,15 @@ public class PublicUsageStatisticsService {
     /**
      * Build jobs are deleted after the retention period, so the builds of a semester that started before it are incomplete. Showing them would make
      * the builds of older semesters look smaller than they were, which is why they are not published at all.
+     * <p>
+     * Only local CI records build jobs, so an instance that builds with Jenkins publishes no build numbers instead of a misleading zero.
      *
-     * @return the build numbers, null if the semester started before the retention period of build jobs
+     * @return the build numbers, null if builds do not run on local CI or the semester started before the retention period of build jobs
      */
     private BuildUsageDTO buildUsage(Set<Long> courseIds, UsageSemester semester, ZoneId zone, Instant now) {
+        if (!profileService.isLocalCIActive()) {
+            return null;
+        }
         boolean allBuildJobsStillExist = !semester.start(zone).toInstant().isBefore(now.minus(Duration.ofDays(buildJobRetentionDays)));
         return allBuildJobsStillExist ? publicUsageStatisticsRepository.summarizeFinishedBuildJobs(courseIds) : null;
     }

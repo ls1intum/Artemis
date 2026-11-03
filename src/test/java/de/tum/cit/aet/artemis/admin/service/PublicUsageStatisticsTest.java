@@ -241,8 +241,9 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
         BuildJob buildJob = new BuildJob();
         buildJob.setCourseId(course.getId());
         buildJob.setBuildStatus(status);
-        buildJob.setBuildStartDate(ZonedDateTime.now().minusSeconds(durationSeconds));
-        buildJob.setBuildCompletionDate(ZonedDateTime.now());
+        ZonedDateTime completion = ZonedDateTime.parse("2025-01-15T12:00:00Z");
+        buildJob.setBuildStartDate(completion.minusSeconds(durationSeconds));
+        buildJob.setBuildCompletionDate(completion);
         buildJobRepository.save(buildJob);
     }
 
