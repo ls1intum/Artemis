@@ -34,6 +34,32 @@ class AgentVerifyReportTest {
     }
 
     @Test
+    void rendersFailureEvidenceInAStableOrderWhateverTheReportOrder() {
+        var later = new AgentVerifyReport.TestFailureEvidence("zeroBalanceIsRejected", "expected: <true> but was: <false>");
+        var earlier = new AgentVerifyReport.TestFailureEvidence("addsInterest", "expected: <105.0> but was: <100.0>");
+
+        String rendered = AgentVerifyReport.renderFailureEvidence("Solution", List.of(later, earlier));
+
+        assertThat(rendered).isEqualTo(AgentVerifyReport.renderFailureEvidence("Solution", List.of(earlier, later)))
+                .isEqualTo("Solution failure evidence (sanitized, untrusted excerpts):\n- addsInterest: expected: <105.0> but was: <100.0>\n"
+                        + "- zeroBalanceIsRejected: expected: <true> but was: <false>\n");
+        assertThat(AgentVerifyReport.renderFailureEvidence("Solution", List.of())).isEmpty();
+    }
+
+    /** The blocking reason for failing solution tests carries their evidence, so the observation must not spend its bounded tool-response budget on a second copy. */
+    @Test
+    void solutionFailureEvidenceIsRenderedOnlyThroughItsBlockingReason() {
+        var failure = new AgentVerifyReport.TestFailureEvidence("addsInterest", "expected: <105.0> but was: <100.0>");
+        String reason = "The solution does not pass its own tests (1 failing of 1).\n" + AgentVerifyReport.renderFailureEvidence("Solution", List.of(failure));
+        AgentVerifyReport report = new AgentVerifyReport(1, false, List.of("addsInterest"), List.of(failure), 1, true, true, List.of(), List.of(), List.of("addsInterest"),
+                List.of(), List.of(), false, List.of(reason));
+
+        String observation = report.toObservation();
+
+        assertThat(observation).containsOnlyOnce("addsInterest: expected: <105.0> but was: <100.0>").contains("Solution FAILS: [addsInterest]");
+    }
+
+    @Test
     void describesMechanicalSaveEligibilityWithoutClaimingQualityAcceptance() {
         AgentVerifyReport report = new AgentVerifyReport(2, true, List.of(), List.of(), 2, true, true, List.of(), List.of(), List.of("a", "b"), List.of(), List.of(), true,
                 List.of());

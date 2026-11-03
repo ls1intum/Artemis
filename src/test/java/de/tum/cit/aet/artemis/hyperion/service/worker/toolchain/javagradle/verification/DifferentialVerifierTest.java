@@ -1012,6 +1012,64 @@ class DifferentialVerifierTest {
         assertThat(result.reasons()).anyMatch(r -> r.contains("does not pass its own tests"));
     }
 
+    /**
+     * Each repair attempt is a fresh agent session that sees only this report, so the authoritative reason must name every failing test with its message, in a stable order,
+     * including the server-seeded structural lane's messages.
+     */
+    @Test
+    void authoritativeSolutionFailureCarriesEachFailingTestAndItsMessage() {
+        String structuralName = "testClass[Calculator]";
+        BuildReportSpec solution = BuildReportSpec.withJunitXml("""
+                <testsuite name="GeneratedSuite">
+                  <testcase name="sortsUnsortedArray"><failure message="expected: &lt;[1, 2, 9]&gt; but was: &lt;[9, 1, 2]&gt;"/></testcase>
+                  <testcase name="sortsArrayWithDuplicates"/>
+                </testsuite>
+                """, 1);
+        BuildReportSpec structuralSolution = BuildReportSpec.withJunitXml("""
+                <testsuite name="ClassTest">
+                  <testcase name="testClass[Calculator]"><failure message="Missing generic API contract: superclass:Enum"/></testcase>
+                </testsuite>
+                """, 1);
+        List<String> behaviorNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        ScriptedSandbox sandbox = new ScriptedSandbox(solution, resultWithFails(1, behaviorNames, behaviorNames),
+                PROBLEM_STATEMENT_WITH_TASK + "\n[task][Create Calculator](" + structuralName + ")\nCreate the Calculator type.")
+                .withStructuralReports(structuralSolution, BuildReportSpec.of(List.of(structuralName), List.of(structuralName), 1));
+
+        VerificationResult result = newVerifier().verify(sandbox, "s", input(),
+                new VerificationRequest(harness(), harness(), Map.of(), Map.of(), Set.of(), structuralTests(Set.of(structuralName)), Set.of()), NO_RESTORE);
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).filteredOn(reason -> reason.contains("does not pass its own tests")).singleElement().asString()
+                .contains("2 failing of 3", "Solution failure evidence")
+                .containsSubsequence("- sortsUnsortedArray: expected: <[1, 2, 9]> but was: <[9, 1, 2]>", "- testClass[Calculator]: Missing generic API contract: superclass:Enum")
+                .doesNotContain("sortsArrayWithDuplicates:");
+        assertThat(result.report()).contains("Missing generic API contract: superclass:Enum");
+    }
+
+    @Test
+    void aTemplateThatDoesNotCompileReportsItsBuildOutput() {
+        VerificationResult result = verifyGenerate(newVerifier(),
+                new ScriptedSandbox(result(2, 0, 0, 0), result(0, 0, 0, 1), PROBLEM_STATEMENT_WITH_TASK, "Sorter.java:7: error: cannot find symbol Comparator"), input());
+
+        assertThat(result.reasons()).filteredOn(reason -> reason.contains("The template does not compile")).singleElement().asString()
+                .contains("Build output: (bounded, sanitized, untrusted)", "Sorter.java:7: error: cannot find symbol Comparator");
+    }
+
+    @Test
+    void aStructuralLaneThatRunsNoTestsReportsItsBuildOutput() {
+        String structuralName = "testClass[Calculator]";
+        List<String> behaviorNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, behaviorNames, List.of()), resultWithFails(1, behaviorNames, behaviorNames),
+                PROBLEM_STATEMENT_WITH_TASK + "\n[task][Create Calculator](" + structuralName + ")\nCreate the Calculator type.", "ClassTest.java:3: error: package does not exist")
+                .withStructuralReports(BuildReportSpec.of(List.of(), List.of(), 1), BuildReportSpec.of(List.of(structuralName), List.of(structuralName), 1));
+
+        VerificationResult result = newVerifier().verify(sandbox, "s", input(),
+                new VerificationRequest(harness(), harness(), Map.of(), Map.of(), Set.of(), structuralTests(Set.of(structuralName)), Set.of()), NO_RESTORE);
+
+        assertThat(result.reasons()).filteredOn(reason -> reason.contains("trusted structural solution lane")).singleElement().asString()
+                .contains("The solution ran no tests in this lane.", "ClassTest.java:3: error: package does not exist");
+    }
+
     /** The post-loop reason had the same defect as the in-loop observation: "0 failing of 2" reads as a contradiction and names nothing to repair. */
     @Test
     void shouldNameTheBuildRatherThanTheTestsWhenNoTestFailed() {

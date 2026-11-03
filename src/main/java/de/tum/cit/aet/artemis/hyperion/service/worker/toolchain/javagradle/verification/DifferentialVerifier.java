@@ -620,27 +620,29 @@ public class DifferentialVerifier {
     private static boolean checkSolutionPasses(BuildSummary solution, List<String> reasons) {
         boolean solutionPassed = !solution.timedOut() && solution.exitCode() == 0 && solution.tests() > 0 && solution.failures() == 0;
         if (solution.timedOut()) {
-            reasons.add("The solution build timed out. The solution must compile and pass every test within the time limit." + solutionBuildEvidence(solution));
+            reasons.add("The solution build timed out. The solution must compile and pass every test within the time limit." + buildEvidence(solution));
         }
         else if (solution.tests() == 0) {
             reasons.add("No tests were detected when building against the solution. The exercise must contain at least one meaningful test, and the solution must compile so the "
-                    + "tests can run." + solutionBuildEvidence(solution));
+                    + "tests can run." + buildEvidence(solution));
         }
         else if (!solutionPassed && solution.failures() == 0) {
             // Reporting "0 failing of N" here read as a contradiction and named no test to repair. The build broke for a reason the test reports do not carry, so say that and
             // hand over the build output instead.
             reasons.add("The solution build did not succeed even though all " + solution.tests() + " of its tests passed, so the failure is outside the tests — a compile error "
-                    + "in code the tests do not reach, a build-script or dependency fault, or a crash after the tests ran." + solutionBuildEvidence(solution));
+                    + "in code the tests do not reach, a build-script or dependency fault, or a crash after the tests ran." + buildEvidence(solution));
         }
         else if (!solutionPassed) {
-            reasons.add(
-                    "The solution does not pass its own tests (" + solution.failures() + " failing of " + solution.tests() + "). The solution must compile and pass every test.");
+            // The counts alone gave a fresh repair session nothing to act on, so the reason carries each failing test and its failure message.
+            reasons.add("The solution does not pass its own tests (" + solution.failures() + " failing of " + solution.tests()
+                    + "). The solution must compile and pass every test.\n" + AgentVerifyReport.renderFailureEvidence("Solution", solution.failureEvidence()).stripTrailing());
         }
         return solutionPassed;
     }
 
-    private static String solutionBuildEvidence(BuildSummary solution) {
-        return "\nBuild output: (bounded, sanitized, untrusted)\n" + (solution.buildDiagnostic().isBlank() ? "not captured." : solution.buildDiagnostic());
+    /** The bounded build output of a build whose test reports cannot explain its failure, such as one that did not compile. */
+    static String buildEvidence(BuildSummary build) {
+        return "\nBuild output: (bounded, sanitized, untrusted)\n" + (build.buildDiagnostic().isBlank() ? "not captured." : build.buildDiagnostic());
     }
 
     private static boolean checkNoDuplicateTestNames(BuildSummary solution, List<String> reasons) {
@@ -672,7 +674,7 @@ public class DifferentialVerifier {
         }
         if (template.tests() == 0) {
             reasons.add("The template does not compile (the tests never ran). The template must compile and only fail because the student's work is missing — use placeholder "
-                    + "method bodies (returning null, 0, false) with the same signatures as the solution.");
+                    + "method bodies (returning null, 0, false) with the same signatures as the solution." + buildEvidence(template));
             return false;
         }
         if (solution.tests() > 0 && template.tests() != solution.tests()) {

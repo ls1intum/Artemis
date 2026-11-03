@@ -37,7 +37,8 @@ final class ProvenanceSeparatedBuilds {
             sound = false;
         }
         if (!solutionBehaviorNames.equals(templateBehaviorNames) || behavioralSolution.tests() != behavioralTemplate.tests()) {
-            reasons.add("The source-isolated behavioral lane ran different tests for solution and template. Both assignments must execute the same behavioral test set.");
+            reasons.add("The source-isolated behavioral lane ran different tests for solution and template. Both assignments must execute the same behavioral test set."
+                    + noTestsEvidence("solution", behavioralSolution) + noTestsEvidence("template", behavioralTemplate));
             sound = false;
         }
         if (expected.isEmpty()) {
@@ -54,14 +55,21 @@ final class ProvenanceSeparatedBuilds {
         Set<String> solutionStructuralNames = normalizedNames(structuralSolution);
         Set<String> templateStructuralNames = normalizedNames(structuralTemplate);
         if (!solutionStructuralNames.equals(expected) || structuralSolution.tests() != expected.size()) {
-            reasons.add("The trusted structural solution lane did not report exactly the server-seeded checks. Expected " + expected + " but got " + solutionStructuralNames + ".");
+            reasons.add("The trusted structural solution lane did not report exactly the server-seeded checks. Expected " + expected + " but got " + solutionStructuralNames + "."
+                    + noTestsEvidence("solution", structuralSolution));
             sound = false;
         }
         if (!templateStructuralNames.equals(expected) || structuralTemplate.tests() != expected.size()) {
-            reasons.add("The trusted structural template lane did not report exactly the server-seeded checks. Expected " + expected + " but got " + templateStructuralNames + ".");
+            reasons.add("The trusted structural template lane did not report exactly the server-seeded checks. Expected " + expected + " but got " + templateStructuralNames + "."
+                    + noTestsEvidence("template", structuralTemplate));
             sound = false;
         }
         return sound;
+    }
+
+    /** A lane that ran no test did not compile or crashed before its runner, so only its build output can say why. */
+    private static String noTestsEvidence(String assignment, BuildSummary lane) {
+        return lane.tests() > 0 ? "" : "\nThe " + assignment + " ran no tests in this lane." + DifferentialVerifier.buildEvidence(lane);
     }
 
     private static Set<String> normalizedNames(BuildSummary summary) {

@@ -17,6 +17,12 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.criti
  */
 final class RepairPromptComposer {
 
+    /**
+     * Ceiling for the verification report quoted into a repair prompt. The report carries bounded failure evidence and build output per lane, so this only guards against many
+     * such reasons adding up; the next attempt can still run {@code verify} for the complete picture.
+     */
+    static final int MAX_VERIFICATION_REPORT_CHARS = 16_000;
+
     private final int maxGenerationAttempts;
 
     private final Mode mode;
@@ -91,10 +97,19 @@ final class RepairPromptComposer {
                 : "\n\nThis rejection followed a " + precedingRepair.surface().name().toLowerCase(Locale.ROOT)
                         + " quality repair. Before changing production code, audit the new assertion against the frozen contract. If the assertion invents behavior the contract "
                         + "does not require, fix or remove the unsupported assertion first. " + precedingRepair.guidance();
-        return attemptFraming(completedAttempt) + "Your previous attempt was rejected by the differential verifier:\n" + verificationReport
+        return attemptFraming(completedAttempt) + "Your previous attempt was rejected by the differential verifier:\n" + boundedVerificationReport(verificationReport)
                 + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, call the structured `verify` tool, then submit when it reports "
                 + "MECHANICAL PRECHECK: PASS. If a reason names a forbidden, duplicate, or abandoned path, delete it; replacing it with a "
                 + "placeholder does not remove the violation. Make the smallest coherent repair, leave unrelated files unchanged, and preserve the source requirements below.\n\n"
                 + authoringBrief + GenerationReviewSupport.specContractSection(specSnapshot) + semanticCorrectionGuidance + specFidelityCritic.renderForRetryPrompt(report);
+    }
+
+    static String boundedVerificationReport(String verificationReport) {
+        if (verificationReport.length() <= MAX_VERIFICATION_REPORT_CHARS) {
+            return verificationReport;
+        }
+        String marker = "\n[... " + (verificationReport.length() - MAX_VERIFICATION_REPORT_CHARS)
+                + " more characters of the report omitted; call `verify` for the complete report]";
+        return verificationReport.substring(0, MAX_VERIFICATION_REPORT_CHARS) + marker;
     }
 }
