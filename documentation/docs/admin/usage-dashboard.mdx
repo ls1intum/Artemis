@@ -11,6 +11,7 @@ import Image, {ImageSize} from "../../src/components/Image/Image";
 import usageOverviewImg from './assets/usage-dashboard/overview.png';
 import usageOlderSemesterImg from './assets/usage-dashboard/older-semester.png';
 import usageDarkGermanImg from './assets/usage-dashboard/dark-german.png';
+import usageTooltipImg from './assets/usage-dashboard/tooltip.png';
 
 Every Artemis instance publishes an anonymous summary of how much it is used. The page answers the questions that
 universities, funding bodies and the open-source community ask most often: how many courses, students and submissions
@@ -46,8 +47,12 @@ there are never too many at once:
 Below the three sections, the page shows the communication (**Posts**, **Replies**, **Reactions**, **FAQs**) and the
 **Iris messages**, which are messages that users sent to Iris plus the answers of Iris.
 
-A bar chart compares the **Active students** of all semesters, and a section at the bottom explains how the numbers are
-counted, in the language of the visitor (English or German) and in the light or dark theme.
+A bar chart compares the **Active students** of all semesters. Next to the heading of each number, an info icon opens a
+tooltip with a short statement on what the number counts. The page uses the language (English or German) and the light
+or dark theme of the visitor.
+
+<Image src={usageTooltipImg} alt="Tooltip next to the heading of the course enrollments" size={ImageSize.large}
+       caption="The tooltip next to a heading says what the number counts" />
 
 <Image src={usageDarkGermanImg} alt="Usage dashboard in German with the dark theme" size={ImageSize.large}
        caption="The page follows the language and the theme of the visitor" />

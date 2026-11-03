@@ -99,6 +99,36 @@ describe('UsageDashboardComponent', () => {
         expect(text('usage-exam-registrations')).toContain('9,600');
     });
 
+    it('explains every number in a tooltip button next to its heading instead of a block of definitions', async () => {
+        httpMock.expectOne('api/core/public/usage-statistics').flush(statistics);
+        await fixture.whenStable();
+
+        const cards: Record<string, string> = {
+            'usage-courses': 'courses',
+            'usage-students': 'students',
+            'usage-enrollments': 'enrollments',
+            'usage-lectures': 'lectures',
+            'usage-competencies': 'competencies',
+            'usage-tutorial-groups': 'tutorialGroups',
+            'usage-exercises': 'exercises',
+            'usage-active-students': 'activeStudents',
+            'usage-submissions': 'submissions',
+            'usage-builds': 'builds',
+            'usage-build-duration': 'averageBuildDuration',
+            'usage-exams': 'exams',
+            'usage-exam-registrations': 'examRegistrations',
+        };
+        for (const [card, key] of Object.entries(cards)) {
+            const hint = fixture.nativeElement.querySelector(`[data-testid="${card}"] [data-testid="usage-hint-${key}"]`);
+            expect(hint, card).not.toBeNull();
+            expect(hint.getAttribute('aria-label'), card).toBeTruthy();
+            expect(enUsageDashboard.artemisApp.usageDashboard.hints[key as keyof typeof enUsageDashboard.artemisApp.usageDashboard.hints], key).toBeTruthy();
+        }
+        expect(fixture.nativeElement.querySelector('[data-testid="usage-communication"] [data-testid="usage-hint-communication"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="usage-definitions"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="usage-footer"]')).not.toBeNull();
+    });
+
     it('hides the whole exam section if exams are not enabled', async () => {
         const { exams: _exams, examRegistrations: _registrations, ...withoutExams } = statistics.semesters[0];
         httpMock.expectOne('api/core/public/usage-statistics').flush({ generatedAt: statistics.generatedAt, semesters: [withoutExams] });

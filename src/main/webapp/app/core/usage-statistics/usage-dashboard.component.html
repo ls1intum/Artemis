@@ -25,32 +25,32 @@
             <h2 class="m-0 text-xl font-semibold">{{ 'artemisApp.usageDashboard.sections.courses' | artemisTranslate }}</h2>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-courses">
-                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.courses"></span>
+                    <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'courses' }" />
                     <span class="text-3xl font-bold">{{ semester.courses | number }}</span>
                 </div>
                 <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-students">
-                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.students"></span>
+                    <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'students' }" />
                     <span class="text-3xl font-bold">{{ semester.students | number }}</span>
                 </div>
                 @if (semester.enrollments !== undefined) {
                     <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-enrollments">
-                        <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.enrollments"></span>
+                        <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'enrollments' }" />
                         <span class="text-3xl font-bold">{{ semester.enrollments | number }}</span>
                     </div>
                 }
                 <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-lectures">
-                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.lectures"></span>
+                    <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'lectures' }" />
                     <span class="text-3xl font-bold">{{ semester.lectures | number }}</span>
                 </div>
                 @if (semester.competencies !== undefined) {
                     <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-competencies">
-                        <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.competencies"></span>
+                        <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'competencies' }" />
                         <span class="text-3xl font-bold">{{ semester.competencies | number }}</span>
                     </div>
                 }
                 @if (semester.tutorialGroups !== undefined) {
                     <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-tutorial-groups">
-                        <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.tutorialGroups"></span>
+                        <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'tutorialGroups' }" />
                         <span class="text-3xl font-bold">{{ semester.tutorialGroups | number }}</span>
                     </div>
                 }
@@ -61,27 +61,27 @@
             <h2 class="m-0 text-xl font-semibold">{{ 'artemisApp.usageDashboard.sections.exercises' | artemisTranslate }}</h2>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-exercises">
-                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.exercises"></span>
+                    <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'exercises' }" />
                     <span class="text-3xl font-bold">{{ totalExercises() | number }}</span>
                 </div>
                 <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-active-students">
-                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.activeStudents"></span>
+                    <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'activeStudents' }" />
                     <span class="text-3xl font-bold">{{ semester.activeStudents | number }}</span>
                 </div>
                 <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-submissions">
-                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.submissions"></span>
+                    <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'submissions' }" />
                     <span class="text-3xl font-bold">{{ semester.submissions | number }}</span>
                 </div>
                 @if (semester.builds; as builds) {
                     @if (builds.count > 0) {
                         <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-builds">
-                            <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.builds"></span>
+                            <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'builds' }" />
                             <span class="text-3xl font-bold">{{ builds.count | number }}</span>
                         </div>
                     }
                     @if (builds.averageDurationSeconds !== undefined) {
                         <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-build-duration">
-                            <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.averageBuildDuration"></span>
+                            <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'averageBuildDuration' }" />
                             <span class="text-3xl font-bold">{{ builds.averageDurationSeconds | number: '1.0-0' }} s</span>
                         </div>
                     }
@@ -94,12 +94,12 @@
                 <h2 class="m-0 text-xl font-semibold">{{ 'artemisApp.usageDashboard.sections.exams' | artemisTranslate }}</h2>
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-exams">
-                        <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.exams"></span>
+                        <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'exams' }" />
                         <span class="text-3xl font-bold">{{ semester.exams | number }}</span>
                     </div>
                     @if (semester.examRegistrations !== undefined) {
                         <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-exam-registrations">
-                            <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.examRegistrations"></span>
+                            <ng-container [ngTemplateOutlet]="label" [ngTemplateOutletContext]="{ key: 'examRegistrations' }" />
                             <span class="text-3xl font-bold">{{ semester.examRegistrations | number }}</span>
                         </div>
                     }
@@ -109,9 +109,12 @@
 
         @if (semester.communication; as communication) {
             <section class="flex flex-col gap-3" data-testid="usage-communication">
-                <h2 class="m-0 text-xl font-semibold">
-                    {{ (semester.irisMessages !== undefined ? 'artemisApp.usageDashboard.communicationAndIris' : 'artemisApp.usageDashboard.communication') | artemisTranslate }}
-                </h2>
+                @let communicationTitle =
+                    (semester.irisMessages !== undefined ? 'artemisApp.usageDashboard.communicationAndIris' : 'artemisApp.usageDashboard.communication') | artemisTranslate;
+                <div class="flex items-center gap-2">
+                    <h2 class="m-0 text-xl font-semibold">{{ communicationTitle }}</h2>
+                    <ng-container [ngTemplateOutlet]="hint" [ngTemplateOutletContext]="{ key: 'communication', name: communicationTitle }" />
+                </div>
                 <ul class="m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 lg:grid-cols-5">
                     <li class="flex flex-col rounded-lg border border-border bg-surface-raised p-3" data-testid="usage-posts">
                         <span class="text-sm text-text-secondary">{{ 'artemisApp.usageDashboard.posts' | artemisTranslate }}</span>
@@ -166,19 +169,32 @@
             </ul>
         </section>
 
-        <section class="flex flex-col gap-2 text-sm text-text-secondary" data-testid="usage-definitions">
-            <h2 class="m-0 text-base font-semibold">{{ 'artemisApp.usageDashboard.definitions.title' | artemisTranslate }}</h2>
-            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.course"></p>
-            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.students"></p>
-            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.activeStudents"></p>
-            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.activity"></p>
-            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.exams"></p>
-            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.builds"></p>
-            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.privacy"></p>
-        </section>
+        <p class="m-0 text-sm text-text-secondary" data-testid="usage-footer" jhiTranslate="artemisApp.usageDashboard.footer"></p>
     } @else if (statistics()) {
         <output class="block text-text-secondary" data-testid="usage-empty">{{ 'artemisApp.usageDashboard.empty' | artemisTranslate }}</output>
     } @else {
         <output class="block text-text-secondary" data-testid="usage-loading">{{ 'artemisApp.usageDashboard.loading' | artemisTranslate }}</output>
     }
 </div>
+
+<!-- The heading of a number: its name and a button that explains in a tooltip what the number counts. -->
+<ng-template #label let-key="key">
+    @let name = 'artemisApp.usageDashboard.' + key | artemisTranslate;
+    <span class="flex items-center gap-1 text-sm text-text-secondary">
+        {{ name }}
+        <ng-container [ngTemplateOutlet]="hint" [ngTemplateOutletContext]="{ key: key, name: name }" />
+    </span>
+</ng-template>
+
+<ng-template #hint let-key="key" let-name="name">
+    @let text = 'artemisApp.usageDashboard.hints.' + key | artemisTranslate;
+    <button
+        type="button"
+        class="inline-flex cursor-help items-center border-0 bg-transparent p-0 text-text-secondary"
+        [attr.aria-label]="'artemisApp.usageDashboard.hintsLabel' | artemisTranslate: { name: name }"
+        [tumAetUiTooltip]="text"
+        [attr.data-testid]="'usage-hint-' + key"
+    >
+        <fa-icon [icon]="faCircleInfo" />
+    </button>
+</ng-template>
