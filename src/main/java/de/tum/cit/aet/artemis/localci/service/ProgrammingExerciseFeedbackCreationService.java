@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -267,7 +268,8 @@ public class ProgrammingExerciseFeedbackCreationService {
      */
     public Optional<TestCaseFeedback> createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful, final ProgrammingExercise exercise,
             Set<ProgrammingExerciseTestCase> activeTestCases) {
-        var testCase = activeTestCases.stream().filter(test -> testName.equals(test.getTestName())).findAny();
+        String storedTestName = ProgrammingExerciseTestCase.normalizeTestName(testName);
+        var testCase = activeTestCases.stream().filter(test -> storedTestName.equalsIgnoreCase(test.getTestName())).findAny();
         if (testCase.isEmpty()) {
             // This feedback was created by a test which is not known to Artemis (not part of the solution result), e.g. a test invented by a student.
             log.debug("Ignoring feedback of unknown test case {} for exercise {}", testName, exercise.getId());
@@ -408,13 +410,12 @@ public class ProgrammingExerciseFeedbackCreationService {
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::isSameTestCase))
                 .collect(Collectors.toSet());
         // Get test cases where the activate state has changed (re-added or removed tests).
-        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks);
+        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks,
+                exercise.getProgrammingLanguage());
 
         Set<ProgrammingExerciseTestCase> testCasesToSave = new HashSet<>();
         testCasesToSave.addAll(newTestCases);
         testCasesToSave.addAll(testCasesWithUpdatedActivation);
-
-        setTestCaseType(testCasesToSave, exercise.getProgrammingLanguage());
 
         // Ensure no duplicate TestCase is present: TestCases have to have a unique name per exercise.
         // Just using the uniqueness property of the set is not enough, as the equals/hash functions
@@ -436,18 +437,21 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     private Set<ProgrammingExerciseTestCase> getTestCasesWithUpdatedActivation(Set<ProgrammingExerciseTestCase> existingTestCases,
-            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks) {
-        // We compare the new generated test cases from feedback with the existing test cases from the database
-        return existingTestCases.stream().filter(existing -> {
-            Optional<ProgrammingExerciseTestCase> matchingTestCase = testCasesFromFeedbacks.stream().filter(existing::isSameTestCase).findFirst();
-            // Either the test case was active and is not part of the feedback anymore
-            boolean existingTestCaseRemoved = matchingTestCase.isEmpty() && existing.isActive();
-            // OR was not active before and is now part of the feedback again.
-            boolean inactiveTestReactivated = matchingTestCase.isPresent() && !existing.isActive();
-            return existingTestCaseRemoved || inactiveTestReactivated;
-        }).map(existing -> existing.clone().active(!existing.isActive())).collect(Collectors.toSet());
-        // If an existing test gets reactivated, we reuse its grading settings (weight, visibility, etc.).
-        // The user should not need to enter these settings again.
+            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks, ProgrammingLanguage programmingLanguage) {
+        Map<String, ProgrammingExerciseTestCaseType> reportedTypes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        testCasesFromFeedbacks.forEach(testCase -> reportedTypes.put(testCase.getTestName(), testCase.getType()));
+        // Reuse the grading settings (weight, visibility, etc.) when an inactive test reappears.
+        return existingTestCases.stream().filter(existing -> reportedTypes.containsKey(existing.getTestName()) != existing.isActive()).map(existing -> {
+            var updated = existing.clone().active(!existing.isActive());
+            // clone() does not copy the type. A disappearing test keeps its type, and a reappearing one uses
+            // the classification of its original CI name rather than the shortened database name.
+            updated.setType(reportedTypes.getOrDefault(existing.getTestName(), existing.getType()));
+            if (!updated.isActive() && updated.getType() == ProgrammingExerciseTestCaseType.DEFAULT) {
+                // Legacy short names may not have been classified yet; known structural types must survive shortening.
+                setTestCaseType(Set.of(updated), programmingLanguage);
+            }
+            return updated;
+        }).collect(Collectors.toSet());
     }
 
     /**
@@ -482,11 +486,15 @@ public class ProgrammingExerciseFeedbackCreationService {
     private Set<ProgrammingExerciseTestCase> getTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise) {
         Visibility defaultVisibility = exercise.getDefaultTestCaseVisibility();
 
-        return buildResult.jobs().stream().flatMap(job -> Stream.concat(job.failedTests().stream(), job.successfulTests().stream()))
+        Set<ProgrammingExerciseTestCase> testCases = buildResult.jobs().stream().flatMap(job -> Stream.concat(job.failedTests().stream(), job.successfulTests().stream()))
                 // we use default values for weight, bonus multiplier and bonus points
                 .map(testCase -> new ProgrammingExerciseTestCase().testName(testCase.name()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
                         .visibility(defaultVisibility))
                 .collect(Collectors.toSet());
+        // Structural Java names end in ']'; shortening them before classification would lose that information.
+        setTestCaseType(testCases, exercise.getProgrammingLanguage());
+        testCases.forEach(testCase -> testCase.setTestName(ProgrammingExerciseTestCase.normalizeTestName(testCase.getTestName())));
+        return testCases;
     }
 
     /**

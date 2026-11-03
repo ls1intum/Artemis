@@ -27,8 +27,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
 import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.assessment.repository.LtiResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultGradeRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
@@ -101,7 +101,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private ParticipantScoreRepository participantScoreRepository;
 
     @Autowired
-    private LtiResultRepository ltiResultRepository;
+    private ResultGradeRepository resultGradeRepository;
 
     @Autowired
     private ResultService resultService;
@@ -214,7 +214,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         preliminary.setCompletionDate(ZonedDateTime.now().plusMinutes(5));
         preliminary = resultRepository.save(preliminary);
 
-        assertThat(ltiResultRepository.findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId())).get().extracting(Result::getId).isEqualTo(official.getId());
+        assertThat(resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId())).get().extracting(Result::getId).isEqualTo(official.getId());
         var exerciseId = participation.getExercise().getId();
         if (team) {
             assertThat(resultRepository.getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(exerciseId, participation.getTeam().orElseThrow().getId()))
@@ -237,7 +237,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         official.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         resultRepository.save(official);
-        assertThat(ltiResultRepository.findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId())).isEmpty();
+        assertThat(resultGradeRepository.findLatestGradeRelevantResultWithCompletionDate(participation.getId())).isEmpty();
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -246,7 +246,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
@@ -258,7 +258,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteParticipation_asInstructorOfCourse_shouldDeleteParticipation() throws Exception {
         // The exercise must have a short name because otherwise the corresponding audit event is too long for the database
         textExerciseUtilService.renameTextExercise(textExercise, "1");
@@ -282,7 +282,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deleteExercise_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
         request.delete("/api/text/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
         assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
@@ -299,7 +299,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getCourseScores_asInstructorOfCourse_shouldReturnCourseScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/assessment/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(4);
@@ -311,7 +311,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getCourseScores_asInstructorOfCourseWithGradedPresentations_shouldReturnCourseScores() throws Exception {
         GradingScale gradingScale = GradingScaleFactory.generateGradingScaleForCourse(exam.getCourse(), 2, 20.0);
         gradingScaleRepository.save(gradingScale);
@@ -332,7 +332,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getExamScores_asInstructorOfCourse_shouldReturnExamScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/assessment/exams/" + idOfExam + "/exam-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(1);
@@ -344,7 +344,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getGradeScoresForCourse() throws Exception {
         // we only consider participations that have no due date or where the due date has passed
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
@@ -423,7 +423,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
      * neither when the result is created, nor by the cron job, nor when it is deleted.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void practiceResultOfStudentOnTeamExercise_isNotScheduledForParticipantScores() {
         Exercise teamExercise = exerciseRepository.findById(idOfTeamTextExercise).orElseThrow();
         var teamScoresBefore = participantScoreRepository.findAllByExercise(teamExercise);
@@ -467,7 +467,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
      * schedules the score update itself and has to apply the same rule.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deletePracticeResultOfStudentOnTeamExerciseThroughTheService_isNotScheduledForParticipantScores() {
         Exercise teamExercise = exerciseRepository.findById(idOfTeamTextExercise).orElseThrow();
         var teamScoresBefore = participantScoreRepository.findAllByExercise(teamExercise);
@@ -491,7 +491,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void practiceResultOfStudentOnIndividualExercise_isStillScheduledForParticipantScores() {
         Exercise individualExercise = exerciseRepository.findById(idOfIndividualTextExercise).orElseThrow();
         StudentParticipation practiceParticipation = participationUtilService.createAndSaveParticipationForExercise(individualExercise, TEST_PREFIX + "student2");
@@ -505,7 +505,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getGradeScoresForCourse_excludesTutorsEditorsAndInstructors() throws Exception {
         User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
         User tutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
@@ -527,7 +527,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "USER")
     void getAllParticipationsForCourse_noInstructorInCourse() throws Exception {
         request.get("/api/assessment/courses/" + course.getId() + "/grade-scores", HttpStatus.FORBIDDEN, CourseGradeInformationDTO.class);
     }

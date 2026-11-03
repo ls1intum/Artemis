@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 
-vi.mock('@sentry/angular', async (importOriginal) => ({
-    ...(await importOriginal<typeof import('@sentry/angular')>()),
+vi.mock('app/core/error-reporting/capture-exception', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('app/core/error-reporting/capture-exception')>()),
     captureException: vi.fn(),
 }));
 
@@ -18,6 +18,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { BuildJobDetail } from 'app/localci/shared/entities/build-job.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('BuildJobDetailComponent', () => {
     let component: BuildJobDetailComponent;
@@ -64,7 +66,7 @@ describe('BuildJobDetailComponent', () => {
     const mockRoute = {
         snapshot: {
             paramMap: {
-                get: (key: string) => {
+                get: (key: string): string | null => {
                     if (key === 'jobId') return 'test-job-1';
                     if (key === 'courseId') return null;
                     return null;
@@ -78,6 +80,7 @@ describe('BuildJobDetailComponent', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: mockRoute },
+                { provide: AccountService, useClass: MockAccountService },
                 {
                     provide: BuildOverviewService,
                     useValue: {
@@ -127,6 +130,7 @@ describe('BuildJobDetailComponent', () => {
         expect(buildQueueService.getBuildJobById).toHaveBeenCalledWith('test-job-1');
         expect(component.buildJob()).toEqual(mockRunningJob);
         expect(component.isLoading()).toBe(false);
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).toHaveBeenCalledOnce();
     });
 
     it('should subscribe to websocket topic for admin view', () => {
@@ -134,22 +138,70 @@ describe('BuildJobDetailComponent', () => {
         expect(websocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-job/test-job-1');
     });
 
-    it('should handle course view with route params', () => {
-        // Note: Cannot override provider after TestBed instantiation.
-        // Testing the logic by directly calling methods with course context
-        vi.mocked(buildQueueService.getBuildJobByIdForCourse).mockReturnValue(of(mockRunningJob));
+    it.each(['course', 'administration'])('should retain agent name mapping for approved administrators in the %s view', (view) => {
+        vi.spyOn(mockRoute.snapshot.paramMap, 'get').mockImplementation((key) => (key === 'courseId' ? (view === 'course' ? '123' : null) : 'test-job-1'));
+        const accountService = TestBed.inject(AccountService);
+        vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(true);
+        vi.mocked(buildQueueService.getBuildJobByIdForCourse).mockReturnValue(of(mockFinishedJob));
+        vi.mocked(buildQueueService.getBuildJobById).mockReturnValue(of(mockFinishedJob));
+        vi.mocked(TestBed.inject(BuildAgentsService).getBuildAgentSummary).mockReturnValue(
+            of([{ buildAgent: { name: 'agent1', displayName: 'Agent 1', memberAddress: 'agent1' } }]),
+        );
+
         fixture.detectChanges();
 
-        // Verify admin topic is used for admin view
-        expect(websocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-job/test-job-1');
+        expect(component.isAdministrationView()).toBe(view === 'administration');
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).toHaveBeenCalledOnce();
+        expect(component.getBuildAgentName()).toBe('Agent 1');
+        expect(component.getBuildAgentLinkName()).toBe('agent1');
     });
 
-    it('should handle missing job ID gracefully', () => {
-        // Test the component with existing route
+    it('should skip the agent summary for course instructors', () => {
+        vi.spyOn(mockRoute.snapshot.paramMap, 'get').mockImplementation((key) => (key === 'courseId' ? '123' : 'test-job-1'));
+        vi.spyOn(TestBed.inject(AccountService), 'isAdmin').mockReturnValue(false);
+
         fixture.detectChanges();
 
-        // The component loads because we have a valid job ID in the mock route
-        expect(component.buildJob()).toBeTruthy();
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).not.toHaveBeenCalled();
+        expect(component.buildJob()).toEqual(mockRunningJob);
+    });
+
+    it.each(['course', 'administration'])('should skip the agent summary for an unapproved administrator in the %s view', (view) => {
+        vi.spyOn(mockRoute.snapshot.paramMap, 'get').mockImplementation((key) => (key === 'courseId' ? (view === 'course' ? '123' : null) : 'test-job-1'));
+        const accountService = TestBed.inject(AccountService);
+        vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(true);
+        vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
+
+        fixture.detectChanges();
+
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).not.toHaveBeenCalled();
+        expect(component.buildJob()).toEqual(mockRunningJob);
+    });
+
+    it('should reject an invalid course route before requesting build or administrator data', () => {
+        vi.spyOn(mockRoute.snapshot.paramMap, 'get').mockImplementation((key) => (key === 'courseId' ? 'invalid' : 'test-job-1'));
+
+        fixture.detectChanges();
+
+        expect(component.notFound()).toBe(true);
+        expect(component.isLoading()).toBe(false);
+        expect(buildQueueService.getBuildJobById).not.toHaveBeenCalled();
+        expect(buildQueueService.getBuildJobByIdForCourse).not.toHaveBeenCalled();
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).not.toHaveBeenCalled();
+        expect(websocketService.subscribe).not.toHaveBeenCalled();
+    });
+
+    it('should reject a missing job ID before requesting build or administrator data', () => {
+        vi.spyOn(mockRoute.snapshot.paramMap, 'get').mockReturnValue(null);
+
+        fixture.detectChanges();
+
+        expect(component.notFound()).toBe(true);
+        expect(component.isLoading()).toBe(false);
+        expect(buildQueueService.getBuildJobById).not.toHaveBeenCalled();
+        expect(buildQueueService.getBuildJobByIdForCourse).not.toHaveBeenCalled();
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).not.toHaveBeenCalled();
+        expect(websocketService.subscribe).not.toHaveBeenCalled();
     });
 
     it('should set notFound on 404 error', () => {
@@ -522,6 +574,7 @@ describe('BuildJobDetailComponent', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: courseRoute },
+                { provide: AccountService, useValue: { hasAdministratorAccess: () => false } },
                 {
                     provide: BuildOverviewService,
                     useValue: {
@@ -562,5 +615,7 @@ describe('BuildJobDetailComponent', () => {
         expect(courseBuildQueueService.getBuildJobByIdForCourse).toHaveBeenCalledWith(123, 'test-job-1');
         expect(courseWebsocketService.subscribe).toHaveBeenCalledWith('/topic/courses/123/build-job/test-job-1');
         expect(courseComponent.isAdministrationView()).toBe(false);
+        expect(TestBed.inject(BuildAgentsService).getBuildAgentSummary).not.toHaveBeenCalled();
+        expect(courseComponent.buildJob()).toEqual(mockRunningJob);
     });
 });

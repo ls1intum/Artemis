@@ -4,11 +4,10 @@ import { InitializationState, Participation } from 'app/exercise/shared/entities
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Observable, from, of } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import type { ExerciseServicable, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
-import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -40,7 +39,7 @@ function isStrictlyBeforeIfBothDefined(previousDate: dayjs.Dayjs | undefined, la
 
 export class SaveExerciseCommand<T extends Exercise> {
     constructor(
-        private modalService: NgbModal,
+        private modalService: TumAetUiDialogService,
         private popupService: ExerciseUpdateWarningService,
         private exerciseService: ExerciseServicable<T>,
         private backupExercise: T,
@@ -79,18 +78,12 @@ export class SaveExerciseCommand<T extends Exercise> {
 
         const popupRefObs = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise, isExamMode));
 
-        if (this.modalService.hasOpenModals()) {
-            const confirmedCase = popupRefObs.pipe(
-                mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).confirmed.pipe(map((): SaveStep => [false, prepareRequestOptions()]))),
-            );
+        if (this.modalService.hasOpenDialogs()) {
+            const confirmedCase = popupRefObs.pipe(mergeMap((ref) => ref.componentInstance.confirmed.pipe(map((): SaveStep => [false, prepareRequestOptions()]))));
             const reEvaluatedCase = popupRefObs.pipe(
-                mergeMap((ref) =>
-                    (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(
-                        map((): SaveStep => [true, { deleteFeedback: ref.componentInstance.deleteFeedback() }]),
-                    ),
-                ),
+                mergeMap((ref) => ref.componentInstance.reEvaluated.pipe(map((): SaveStep => [true, { deleteFeedback: ref.componentInstance.deleteFeedback() }]))),
             );
-            const canceledCase = popupRefObs.pipe(mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).canceled));
+            const canceledCase = popupRefObs.pipe(mergeMap((ref) => ref.componentInstance.canceled));
 
             saveObservable = confirmedCase.pipe(mergeWith(reEvaluatedCase), takeUntil(canceledCase));
         }

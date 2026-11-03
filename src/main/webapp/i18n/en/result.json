@@ -93,6 +93,9 @@
             "preliminaryTooltipSemiAutomatic": "Your result is not final yet, because more tests will be executed after the due date or a manual assessment will be done.",
             "preliminaryTooltipAthena": "This is an AI grading. The actual result may differ",
             "codeIssuesTooltip": "The automatic code analysis generated some warnings for your code.",
+            "detailsLoadingFailed": "Feedback details could not be loaded.",
+            "buildLogsLoading": "Loading build logs…",
+            "buildLogsLoadingFailed": "Build logs could not be loaded.",
             "noResultDetails": "No result details available.",
             "onlyCompilationTested": "Your code compiled successfully. There are currently no tests visible.",
             "chart": {

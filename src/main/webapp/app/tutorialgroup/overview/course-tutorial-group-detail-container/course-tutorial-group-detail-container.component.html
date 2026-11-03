@@ -3,7 +3,7 @@
     @let courseIdToPass = courseId();
     @let isMessagingEnabledToPass = isMessagingEnabled();
     @if (courseIdToPass && tutorialGroupToPass && isMessagingEnabledToPass !== undefined) {
-        <div class="p-3 scrollable-content">
+        <div class="p-4! scrollable-content">
             <jhi-tutorial-group-detail
                 [tutorialGroup]="tutorialGroupToPass"
                 [courseId]="courseIdToPass"

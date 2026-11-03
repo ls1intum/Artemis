@@ -6,7 +6,7 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 
 import { LANGUAGES } from './language.constants';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 
 @Service()
@@ -43,7 +43,7 @@ export class JhiLanguageHelper {
      * Update the window title using a value from the following order:
      * 1. The function's titleKey parameter
      * 2. The return value of {@link getPageTitle}, extracting it from the router state or a fallback value
-     * If the translation doesn't exist, a Sentry exception is thrown.
+     * If the translation doesn't exist, an error is reported.
      */
     updateTitle(titleKey?: string) {
         if (!titleKey) {

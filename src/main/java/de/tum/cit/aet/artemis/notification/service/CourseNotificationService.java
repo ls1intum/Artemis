@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -86,8 +87,18 @@ public class CourseNotificationService {
      * @param recipients         list of recipients. Will be filtered by user settings.
      */
     public void sendCourseNotification(CourseNotification courseNotification, List<User> recipients) {
+        sendCourseNotificationToRecipients(courseNotification, recipients.stream().map(CourseNotificationRecipientDTO::from).toList());
+    }
+
+    /**
+     * Sends a notification using projected recipient delivery fields, without loading user entities.
+     *
+     * @param courseNotification the notification to send
+     * @param recipients         recipient delivery fields, filtered by their notification preferences
+     */
+    public void sendCourseNotificationToRecipients(CourseNotification courseNotification, List<CourseNotificationRecipientDTO> recipients) {
         var supportedChannels = courseNotification.getSupportedChannels();
-        var setOfNotifiedUsers = new HashSet<User>();
+        var notifiedUserIds = new HashSet<Long>();
 
         var courseNotificationEntityId = createCourseNotification(courseNotification);
 
@@ -96,21 +107,31 @@ public class CourseNotificationService {
         // Read every recipient's settings once rather than per recipient per channel: the filter below runs for each
         // supported channel, and asking per user made a course-wide announcement cost a lookup per student per channel.
         var recipientSettings = courseNotificationSettingService.loadSettingsFor(courseNotification.courseId, recipients);
-
+        var recipientsByChannel = new LinkedHashMap<NotificationChannelOption, List<CourseNotificationRecipientDTO>>();
         for (var supportedChannel : supportedChannels) {
-            var service = serviceMap.get(supportedChannel);
-            if (service == null) {
+            if (!serviceMap.containsKey(supportedChannel)) {
                 continue;
             }
             var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel, recipientSettings);
-            var recipientDTOs = filteredRecipients.stream().map(CourseNotificationRecipientDTO::from).toList();
+            recipientsByChannel.put(supportedChannel, filteredRecipients);
+            filteredRecipients.forEach(recipient -> notifiedUserIds.add(recipient.id()));
+        }
+
+        // A client can mark a websocket notification as seen as soon as delivery starts. Commit its status first,
+        // otherwise that update affects no row and the later insert makes the notification unseen again.
+        userCourseNotificationStatusService.batchCreateStatusForUserIds(notifiedUserIds, courseNotificationEntityId, courseNotification.courseId);
+
+        for (var channelRecipients : recipientsByChannel.entrySet()) {
+            var supportedChannel = channelRecipients.getKey();
+            var service = serviceMap.get(supportedChannel);
+            var filteredRecipients = channelRecipients.getValue();
             // One count per notification that actually reached somebody on this channel, which is what answers whether a
             // channel is worth maintaining. Sends that every recipient has switched off are not usage.
             boolean anybodyToDeliverTo = !filteredRecipients.isEmpty();
             String feature = "course-notification/" + supportedChannel.name().toLowerCase(Locale.ROOT);
             long startNanos = System.nanoTime();
             try {
-                var delivery = service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), recipientDTOs);
+                var delivery = service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), filteredRecipients);
                 if (anybodyToDeliverTo) {
                     // Recorded when the channel finishes, not when it is handed the work. Two of the three channels are
                     // @Async, so at this point nothing has been delivered yet and a failure inside them could never
@@ -131,12 +152,7 @@ public class CourseNotificationService {
                 }
                 throw e;
             }
-
-            // We keep track of the notified users so that we only create notification status entries for them
-            setOfNotifiedUsers.addAll(filteredRecipients);
         }
-
-        userCourseNotificationStatusService.batchCreateStatusForUsers(setOfNotifiedUsers, courseNotificationEntityId, courseNotification.courseId);
     }
 
     private void recordChannelUsage(String feature, boolean failed, long durationMs) {

@@ -261,29 +261,29 @@ public class ExamService {
      * @return true if the student should see the result, false otherwise
      */
     public static boolean shouldStudentSeeResult(StudentExam studentExam, StudentParticipation participation) {
-        return (studentExam.getExam().isStarted() && !studentExam.isEnded() && participation instanceof ProgrammingExerciseStudentParticipation)
+        return (studentExam.getExam().isStarted() && Boolean.FALSE.equals(studentExam.isEnded()) && participation instanceof ProgrammingExerciseStudentParticipation)
                 || studentExam.areResultsPublishedYet();
     }
 
     /**
      * Helper method which attaches the result to its participation's latest submission.
      * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
-     * We also attach the result if the results are already published for the exam.
+     * We also attach the result if the results are already published for the exam or this is a genuine test run.
      * If no suitable Result is found for StudentParticipation, an empty Result set is assigned to prevent LazyInitializationException on future reads.
      * See {@link StudentExam#areResultsPublishedYet}
      *
-     * @param studentExam         the given studentExam
-     * @param participation       the given participation of the student
-     * @param isAtLeastInstructor flag for instructor access privileges
+     * @param studentExam   the given studentExam
+     * @param participation the given participation of the student
+     * @param audience      the fixed projection selected by the read operation
      */
-    private static void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {
+    private static void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, ExamReadAudience audience) {
         // Only set the result during the exam for programming exercises (for direct automatic feedback) or after publishing the results
         boolean isStudentAllowedToSeeResult = shouldStudentSeeResult(studentExam, participation);
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
         if (latestSubmission.isPresent()) {
             var lastSubmission = latestSubmission.get();
-            if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
+            if (isStudentAllowedToSeeResult || studentExam.isTestRun() || audience == ExamReadAudience.INSTRUCTOR) {
                 Result latestResult = lastSubmission.getLatestCompletedResult();
                 if (latestResult != null) {
                     latestResult.setSubmission(lastSubmission);
@@ -514,14 +514,14 @@ public class ExamService {
         }
 
         // Adding registered student information to DTO
-        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(examId);
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(examId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(examId);
         List<Long> studentIds = studentExams.stream().map(studentExam -> studentExam.getUser().getId()).toList();
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, studentIds);
 
         Map<Long, List<StudentParticipation>> participationsByStudentId = new HashMap<>();
 
-        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestRun() && !se.isTestExam()).toList();
+        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestExam()).toList();
 
         if (!regularStudentExams.isEmpty()) {
             var regularStudentIds = regularStudentExams.stream().map(se -> se.getUser().getId()).toList();
@@ -535,12 +535,12 @@ public class ExamService {
         var studentResults = new ArrayList<ExamScoresDTO.StudentResultDTO>();
         var gradesByUser = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::userId, Collectors.toSet()));
 
-        // Resolve the participations of every student exam first. A test run and a test exam load theirs individually,
+        // Resolve the participations of every student exam first. A test exam loads its participations individually,
         // and they have to be part of the preload below as much as the regular ones.
         Map<Long, List<StudentParticipation>> participationsByStudentExamId = new LinkedHashMap<>();
         for (StudentExam studentExam : studentExams) {
             List<StudentParticipation> participations;
-            if (studentExam.isTestRun() || studentExam.isTestExam()) {
+            if (studentExam.isTestExam()) {
                 participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
             }
             else {
@@ -706,6 +706,22 @@ public class ExamService {
      * @return the student exam result with points and grade
      */
     public StudentExamWithGradeDTO getStudentExamGradesForSummary(User targetUser, StudentExam studentExam, boolean accessingUserIsAtLeastInstructor) {
+        ExamReadAudience audience = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), targetUser) ? ExamReadAudience.INSTRUCTOR
+                : ExamReadAudience.STUDENT;
+        return getStudentExamGradesForSummary(studentExam, accessingUserIsAtLeastInstructor, audience);
+    }
+
+    /**
+     * Returns the authenticated owner's grades with the fixed student projection and publication policy.
+     *
+     * @param studentExam the persisted attempt whose ownership and path have been checked
+     * @return the owner's result, points and grade
+     */
+    public StudentExamWithGradeDTO getStudentExamGradesForOwnerSummary(StudentExam studentExam) {
+        return getStudentExamGradesForSummary(studentExam, false, ExamReadAudience.STUDENT);
+    }
+
+    private StudentExamWithGradeDTO getStudentExamGradesForSummary(StudentExam studentExam, boolean accessingUserIsAtLeastInstructor, ExamReadAudience audience) {
         loadQuizExercisesForStudentExam(studentExam);
         boolean accessToSummaryAlwaysAllowed = studentExam.isTestRun() || accessingUserIsAtLeastInstructor;
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
@@ -717,9 +733,10 @@ public class ExamService {
         }
 
         // fetch participations, submissions and results and connect them to the studentExam
-        fetchParticipationsSubmissionsAndResultsForExam(studentExam, targetUser);
+        fetchParticipationsSubmissionsAndResultsForExam(studentExam, audience);
 
-        List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).toList();
+        List<StudentParticipation> participations = studentExam.getExercises().stream().filter(Objects::nonNull).flatMap(exercise -> exercise.getStudentParticipations().stream())
+                .toList();
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
         Set<ExamGradeScoreDTO> examGrades;
@@ -743,7 +760,9 @@ public class ExamService {
         loadQuizExercisesForStudentExam(studentExam);
 
         // fetch participations, submissions and results and connect them to the studentExam
-        fetchParticipationsSubmissionsAndResultsForExam(studentExam, studentExam.getUser());
+        fetchParticipationsSubmissionsAndResultsForExam(studentExam,
+                authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), studentExam.getUser()) ? ExamReadAudience.INSTRUCTOR
+                        : ExamReadAudience.STUDENT);
 
         List<StudentParticipation> participations = studentExam.getExercises().stream().filter(Objects::nonNull).flatMap(exercise -> exercise.getStudentParticipations().stream())
                 .toList();
@@ -792,9 +811,9 @@ public class ExamService {
      * For all exercises from the student exam, fetch participation, submissions & result for the current user.
      *
      * @param studentExam the student exam in question
-     * @param currentUser logged-in user with groups and authorities
+     * @param audience    the fixed projection selected by the read operation
      */
-    public void fetchParticipationsSubmissionsAndResultsForExam(StudentExam studentExam, User currentUser) {
+    public void fetchParticipationsSubmissionsAndResultsForExam(StudentExam studentExam, ExamReadAudience audience) {
 
         // 1st: fetch participations, with latest submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
         var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
@@ -802,13 +821,11 @@ public class ExamService {
         // 2nd: fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
-        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
-
         // 3rd: connect & filter the exercises and student participations including the latest submission and results where necessary, connect all relevant associations
         for (Exercise exercise : studentExam.getExercises()) {
             // exercises can be null if multiple student exams exist for the same student/exam combination
             if (exercise != null) {
-                filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);
+                filterParticipationForExercise(studentExam, exercise, participations, audience);
             }
         }
     }
@@ -816,15 +833,15 @@ public class ExamService {
     /**
      * Finds the participation in participations that belongs to the given exercise and filters all unnecessary and sensitive information.
      * This ensures all relevant associations are available.
-     * Handles setting the participation results using {@link #setResultIfNecessary(StudentExam, StudentParticipation, boolean)}.
+     * Handles setting the participation results using {@link #setResultIfNecessary(StudentExam, StudentParticipation, ExamReadAudience)}.
      * Filters sensitive information using {@link Exercise#filterSensitiveInformation()} and {@link QuizSubmission#filterForExam(boolean, boolean)} for quiz exercises.
      *
-     * @param studentExam         the given student exam
-     * @param exercise            the exercise for which the user participation should be filtered
-     * @param participations      the set of participations with eagerly loaded latest submission and result, wherein to search for the relevant participation
-     * @param isAtLeastInstructor flag for instructor access privileges
+     * @param studentExam    the given student exam
+     * @param exercise       the exercise for which the user participation should be filtered
+     * @param participations the set of participations with eagerly loaded latest submission and result, wherein to search for the relevant participation
+     * @param audience       the fixed projection selected by the read operation
      */
-    public void filterParticipationForExercise(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
+    public void filterParticipationForExercise(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, ExamReadAudience audience) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
 
@@ -833,7 +850,7 @@ public class ExamService {
             exercise.filterSensitiveInformation();
         }
 
-        if (!isAtLeastInstructor) {
+        if (audience == ExamReadAudience.STUDENT) {
             // If the exerciseGroup (and the exam) will be filtered out, move example solution publication date to the exercise to preserve this information.
             exercise.setExampleSolutionPublicationDate(exercise.getExerciseGroup().getExam().getExampleSolutionPublicationDate());
             exercise.getExerciseGroup().setExercises(null);
@@ -858,11 +875,11 @@ public class ExamService {
             if (optionalLatestSubmission.isPresent()) {
                 Submission latestSubmission = optionalLatestSubmission.get();
                 latestSubmission.setParticipation(null);
-                setResultIfNecessary(studentExam, participation, isAtLeastInstructor);
+                setResultIfNecessary(studentExam, participation, audience);
 
                 if (exercise instanceof QuizExercise && latestSubmission instanceof QuizSubmission quizSubmission) {
                     // filter quiz solutions when the publishing result date is not set (or when set before the publish result date)
-                    quizSubmission.filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
+                    quizSubmission.filterForExam(studentExam.shouldRevealQuizSolutions(), audience == ExamReadAudience.INSTRUCTOR);
                 }
             }
             // add participation into an array
@@ -938,7 +955,9 @@ public class ExamService {
             if (latestSubmission != null) {
                 relevantResult = latestSubmission.getLatestCompletedResult();
             }
-            double resultScore = (relevantResult != null && relevantResult.getScore() != null) ? relevantResult.getScore() : 0.0;
+            // Instructor quiz results can have a score before their completion timestamp is set. Use the same
+            // authoritative grade for the percentage and points instead of displaying 0% beside earned points.
+            double resultScore = studentExam.isTestRun() ? examGrade.score() : (relevantResult != null && relevantResult.getScore() != null) ? relevantResult.getScore() : 0.0;
             exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                     new ExamScoresDTO.ExerciseResultDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
         }
@@ -1290,11 +1309,13 @@ public class ExamService {
                 }
             }
 
-            // get number of successfully initialized participations for current exercise and exam
-            numberOfInitializedParticipationsByExercise
-                    .add(studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exercise.getId(), exam.getId()));
-            if (log.isDebugEnabled()) {
-                log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            if (isInstructor) {
+                // get number of successfully initialized participations for current exercise and exam
+                numberOfInitializedParticipationsByExercise
+                        .add(studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exercise.getId(), exam.getId()));
+                if (log.isDebugEnabled()) {
+                    log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+                }
             }
             if (!(exercise instanceof QuizExercise || AssessmentType.AUTOMATIC == exercise.getAssessmentType())) {
                 numberOfParticipationsForAssessmentGeneratedByExercise.add(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exercise.getId()));

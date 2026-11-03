@@ -69,7 +69,7 @@ public class SubmissionFilterService {
     }
 
     private boolean isProgrammingSubmissionRelevantForCourseDashboard(ProgrammingSubmission programmingSubmission, boolean ignoreAssessmentDueDate) {
-        Result latestResult = programmingSubmission.getLatestResult();
+        Result latestResult = programmingSubmission.getLatestGradingResult();
         Participation participation = programmingSubmission.getParticipation();
         Exercise exercise = participation.getExercise();
 
@@ -96,7 +96,8 @@ public class SubmissionFilterService {
          * (this already creates an empty manual result which is neither rated nor complete), but we should still show the student the latest
          * automatically determined score.
          */
-        var latestAutomaticResult = programmingSubmission.getAutomaticResults().stream().filter(Result::isRated).max(Comparator.comparing(Result::getId));
+        var latestAutomaticResult = programmingSubmission.getAutomaticResults().stream().filter(Result::isRated)
+                .filter(result -> !result.isAthenaBased() || Boolean.TRUE.equals(result.isSuccessful())).max(Comparator.comparing(Result::getId));
         if (latestAutomaticResult.isPresent()) {
             programmingSubmission.setResults(Set.of(latestAutomaticResult.get()));
             return true;
@@ -106,7 +107,7 @@ public class SubmissionFilterService {
 
     private boolean isNonProgrammingSubmissionRelevantForCourseDashboard(Submission submission, boolean ignoreAssessmentDueDate) {
         Exercise exercise = submission.getParticipation().getExercise();
-        Result result = submission.getLatestResult();
+        Result result = submission.getLatestGradingResult();
         boolean isAssessmentPeriodOverOrIgnored = ignoreAssessmentDueDate || ExerciseDateService.isAfterAssessmentDueDate(exercise);
         return result != null && result.isRated() && isAssessmentPeriodOverOrIgnored;
     }
@@ -134,7 +135,7 @@ public class SubmissionFilterService {
             return false;
         }
         else {
-            Result result = quizSubmission.getLatestResult();
+            Result result = quizSubmission.getLatestGradingResult();
             return result != null && result.isRated() && result.isAssessmentComplete();
         }
     }

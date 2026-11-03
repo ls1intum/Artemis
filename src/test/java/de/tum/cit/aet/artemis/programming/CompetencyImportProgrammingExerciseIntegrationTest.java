@@ -70,7 +70,7 @@ class CompetencyImportProgrammingExerciseIntegrationTest extends AbstractProgram
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importingATeamProgrammingExerciseKeepsItsTeamAndPlagiarismSettings() throws Exception {
         ProgrammingExercise source = programmingExerciseUtilService.addProgrammingExerciseToCourse(sourceCourse);
         source.setMode(ExerciseMode.TEAM);
@@ -106,7 +106,7 @@ class CompetencyImportProgrammingExerciseIntegrationTest extends AbstractProgram
      * target course at all.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importingAGroupedProgrammingExerciseLeavesTheCopyOutOfTheGroup() throws Exception {
         ProgrammingExercise source = programmingExerciseUtilService.addProgrammingExerciseToCourse(sourceCourse);
         ExerciseVariantGroupDTO group = request.postWithResponseBody("/api/exercise/courses/" + sourceCourse.getId() + "/exercise-variant-groups",

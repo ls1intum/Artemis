@@ -1,3 +1,5 @@
+import { TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Component, computed, input } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -6,8 +8,7 @@ import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feed
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MessageModule } from 'primeng/message';
-import { TooltipModule } from 'primeng/tooltip';
+
 import { FeedbackCollapseComponent } from '../collapse/feedback-collapse.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -18,7 +19,7 @@ import hljs from 'app/foundation/util/highlight-languages.util';
     selector: 'jhi-feedback-node',
     templateUrl: './feedback-node.component.html',
     styleUrls: ['./feedback-node.scss'],
-    imports: [TumAetUiTagComponent, FaIconComponent, MessageModule, TooltipModule, FeedbackCollapseComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumAetUiTagComponent, TumAetUiTooltipDirective, TumAetUiMessageComponent, FaIconComponent, FeedbackCollapseComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackNodeComponent {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
@@ -50,7 +51,7 @@ export class FeedbackNodeComponent {
 
     /**
      * Maps the legacy Bootstrap alert color of a feedback item (`success` / `info` / `warning` / `danger`)
-     * to the corresponding PrimeNG message severity used by `p-message`.
+     * to the corresponding TUM AET UI message severity.
      */
     messageSeverity(color: string | undefined): 'success' | 'info' | 'warn' | 'error' | 'secondary' {
         switch (color) {

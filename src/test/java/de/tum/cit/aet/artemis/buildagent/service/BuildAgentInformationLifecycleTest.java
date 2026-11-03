@@ -2,18 +2,27 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -87,6 +96,63 @@ class BuildAgentInformationLifecycleTest {
         verify(configuration, never()).setDockerAvailable(anyBoolean());
         service.updateBuildRunnerStatus();
         assertThat(agents.get("agent")).isSameAs(updated);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "IDLE, 2, SELF_PAUSED, 5", "IDLE, 2, PAUSED, 2", "SELF_PAUSED, 5, IDLE, 0" })
+    void runnerRefreshCannotOverwriteAConcurrentStateTransition(BuildAgentStatus initialStatus, int initialFailures, BuildAgentStatus targetStatus, int targetFailures)
+            throws Exception {
+        var guardedAgents = spy(agents);
+        var keyLock = new ReentrantLock();
+        var snapshotRead = new CountDownLatch(1);
+        var publishRefresh = new CountDownLatch(1);
+        var refreshThread = new AtomicReference<Thread>();
+        when(distributed.getDistributedBuildAgentInformation()).thenReturn(guardedAgents);
+        // Expose the key lock's queued state so the interleaving needs no timing-based sleeps.
+        doAnswer(invocation -> {
+            keyLock.lock();
+            return null;
+        }).when(guardedAgents).lock("agent");
+        doAnswer(invocation -> {
+            keyLock.unlock();
+            return null;
+        }).when(guardedAgents).unlock("agent");
+        service.updateLocalBuildAgentInformation(initialStatus != BuildAgentStatus.IDLE, initialStatus == BuildAgentStatus.SELF_PAUSED, initialFailures);
+        when(runner.status()).thenReturn(BuildRunnerStatus.available("v1"));
+        doAnswer(invocation -> {
+            var snapshot = invocation.callRealMethod();
+            if (Thread.currentThread() == refreshThread.get()) {
+                snapshotRead.countDown();
+                assertThat(publishRefresh.await(10, TimeUnit.SECONDS)).isTrue();
+            }
+            return snapshot;
+        }).when(guardedAgents).get("agent");
+
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            try {
+                var refresh = executor.submit(() -> {
+                    refreshThread.set(Thread.currentThread());
+                    service.updateBuildRunnerStatus();
+                });
+                assertThat(snapshotRead.await(10, TimeUnit.SECONDS)).isTrue();
+                var transition = executor.submit(
+                        () -> service.updateLocalBuildAgentInformation(targetStatus != BuildAgentStatus.IDLE, targetStatus == BuildAgentStatus.SELF_PAUSED, targetFailures));
+                // A state change can finish between the old refresh's read and write. With the fix it waits
+                // for the atomic refresh, then publishes the newer state and failure count.
+                await().atMost(10, TimeUnit.SECONDS).until(() -> transition.isDone() || keyLock.hasQueuedThreads());
+                publishRefresh.countDown();
+                refresh.get(10, TimeUnit.SECONDS);
+                transition.get(10, TimeUnit.SECONDS);
+            }
+            finally {
+                publishRefresh.countDown();
+            }
+        }
+
+        var updated = agents.get("agent");
+        assertThat(updated.status()).isEqualTo(targetStatus);
+        assertThat(updated.buildAgentDetails().consecutiveBuildFailures()).isEqualTo(targetFailures);
+        assertThat(updated.buildAgentDetails().buildRunnerVersion()).isEqualTo("v1");
     }
 
     @Test

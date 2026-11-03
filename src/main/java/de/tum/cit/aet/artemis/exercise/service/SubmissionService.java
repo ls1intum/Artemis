@@ -896,17 +896,17 @@ public class SubmissionService {
     /**
      * This method gets all complaints of an exercise and returns them together with their corresponding submission in a DTO
      *
-     * @param exerciseId          the exerciseId of the exercise of which the complaints are fetched
-     * @param isAtLeastInstructor if the user is an instructor
+     * @param exerciseId      the exerciseId of the exercise of which the complaints are fetched
+     * @param instructorQueue whether the endpoint selects the instructor queue
      * @return a list of DTOs containing a complaint and its submission
      */
-    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, boolean isAtLeastInstructor) {
+    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, boolean instructorQueue) {
         // get all complaints which belong to the exercise
         List<Complaint> complaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
 
-        if (!isAtLeastInstructor) {
-            complaints = complaints.stream().filter(complaint -> !userRepository.getUser().equals(complaint.getResult().getAssessor())).toList();
-        }
+        User caller = userRepository.getUser();
+        complaints = complaints.stream().filter(complaint -> complaint.getStudent() == null || !complaint.getStudent().equals(complaint.getResult().getAssessor()))
+                .filter(complaint -> instructorQueue || !caller.equals(complaint.getResult().getAssessor())).toList();
 
         return getSubmissionsWithComplaintsFromComplaints(complaints);
     }

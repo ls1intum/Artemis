@@ -1,3 +1,4 @@
+import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -56,7 +57,7 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -71,9 +72,9 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { Select } from 'primeng/select';
-import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
-import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
-import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { QuizAiGenerationService } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.service';
+import { QuizAiGenerationModalComponent } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
+import { GeneratedQuestion, GeneratedQuestionType } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
@@ -96,7 +97,7 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
         FormsModule,
         ExerciseTitleChannelNameComponent,
         HelpIconComponent,
-        CategorySelectorPrimengComponent,
+        CategorySelectorComponent,
         CompetencySelectionComponent,
         QuizQuestionListEditComponent,
         NgbTooltip,
@@ -318,7 +319,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
         /** Query the courseService for the participationId given by the params */
         if (this.courseId()) {
-            this.courseService.find(this.courseId()!).subscribe((response: HttpResponse<Course>) => {
+            this.courseService.findForManagement(this.courseId()!).subscribe((response: HttpResponse<Course>) => {
                 this.course = response.body!;
                 // Load exerciseGroup and set exam mode
                 if (this.isExamMode()) {
@@ -349,8 +350,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             });
         }
         if (quizId) {
-            this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
-                const quiz = response.body!;
+            (isExamExerciseRoute(this.route.snapshot) ? this.quizExerciseService.findForExam(quizId) : this.quizExerciseService.find(quizId)).subscribe((quiz) => {
                 quiz.quizQuestions ??= [];
                 this.quizExercise.set(quiz);
                 this.init();
@@ -724,18 +724,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.isSaving.set(true);
         this.quizQuestionListEditComponent().parseAllQuestions();
         if (this.quizExercise().id !== undefined) {
-            const requestOptions: { notificationText?: string } = {};
-            if (this.notificationText) {
-                requestOptions.notificationText = this.notificationText;
-            }
-            this.quizExerciseService.update(this.quizExercise().id!, this.quizExercise(), files, requestOptions).subscribe({
-                next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
+            this.quizExerciseService.update(this.quizExercise().id!, this.quizExercise(), files, this.notificationText || undefined).subscribe({
+                next: (updatedQuizExercise) => {
                     this.notificationText = undefined;
-                    if (quizExerciseResponse.body) {
-                        this.onSaveSuccess(quizExerciseResponse.body, false);
-                    } else {
-                        this.onSaveError();
-                    }
+                    this.onSaveSuccess(updatedQuizExercise, false);
                 },
                 error: (error) => this.onSaveError(error),
             });
@@ -748,13 +740,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 }
             }
             this.quizExerciseService.create(this.quizExercise(), files).subscribe({
-                next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
-                    if (quizExerciseResponse.body) {
-                        this.onSaveSuccess(quizExerciseResponse.body, true);
-                    } else {
-                        this.onSaveError();
-                    }
-                },
+                next: (createdQuizExercise) => this.onSaveSuccess(createdQuizExercise, true),
                 error: (error) => this.onSaveError(error),
             });
         }

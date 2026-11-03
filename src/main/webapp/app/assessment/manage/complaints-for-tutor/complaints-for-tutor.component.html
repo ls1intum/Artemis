@@ -1,8 +1,6 @@
 @if (isLoading()) {
-    <div class="d-flex justify-content-center">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden" jhiTranslate="loading"></span>
-        </div>
+    <div class="flex justify-center">
+        <tumaet-ui-progress-spinner class="h-6 w-6" [ariaLabel]="'loading' | artemisTranslate" />
     </div>
 }
 @if (!isLoading() && complaint()) {
@@ -12,18 +10,19 @@
     ></h3>
 }
 @if (!isLoading() && complaint()) {
-    <div class="col-12 mt-2" [class.px-0]="zeroIndent()">
+    <div class="w-full mt-2" [class.px-0]="zeroIndent()">
         @if (handled()) {
-            <div
-                class="alert alert-info"
-                [jhiTranslate]="
-                    complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.alreadyHandled' : 'artemisApp.complaint.complaintAlreadyHandled'
-                "
-            ></div>
+            <tumaet-ui-message severity="info"
+                ><span
+                    [jhiTranslate]="
+                        complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.alreadyHandled' : 'artemisApp.complaint.complaintAlreadyHandled'
+                    "
+                ></span
+            ></tumaet-ui-message>
         }
         <div class="mt-4! mb-4!">
             @if (showLockDuration()) {
-                <div id="lockDuration" class="alert alert-info">
+                <tumaet-ui-message id="lockDuration" severity="info">
                     @if (lockedByCurrentUser()) {
                         {{ 'artemisApp.locks.lockInformationYou' | artemisTranslate: { endDate: this.complaintResponse.lockEndDate | artemisDate } }}
                     } @else {
@@ -32,20 +31,20 @@
                                 | artemisTranslate: { user: this.complaintResponse?.reviewer?.login, endDate: this.complaintResponse.lockEndDate | artemisDate }
                         }}
                     }
-                </div>
+                </tumaet-ui-message>
             }
             @if (lockedByCurrentUser()) {
-                <button type="button" id="lockButton" class="btn btn-secondary" (click)="removeLock()" jhiTranslate="artemisApp.locks.removeButton"></button>
+                <button type="button" id="lockButton" (click)="removeLock()" jhiTranslate="artemisApp.locks.removeButton" tumAetUiButton severity="secondary"></button>
             }
         </div>
-        <div class="row">
-            <div class="col-12 col-md-6">
+        <div class="flex flex-wrap gap-y-2">
+            <div class="w-full md:w-6/12">
                 <h4 class="mb-2! text-base! leading-tight! font-semibold!">
                     <span [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.title' : 'artemisApp.complaint.title'"></span>
                     @if (handled()) {
                         <small>
                             @if (complaint()?.accepted) {
-                                <span class="badge bg-success">
+                                <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-state-success text-(--tumaet-ui-state-success-contrast)">
                                     &nbsp;{{
                                         complaint().complaintType === ComplaintType.MORE_FEEDBACK
                                             ? ('artemisApp.moreFeedback.accepted' | artemisTranslate)
@@ -54,7 +53,9 @@
                                 </span>
                             }
                             @if (!complaint()?.accepted) {
-                                <span class="badge bg-danger"> &nbsp;{{ 'artemisApp.complaint.rejected' | artemisTranslate }}&nbsp; </span>
+                                <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-semibold bg-state-danger text-(--tumaet-ui-state-danger-contrast)">
+                                    &nbsp;{{ 'artemisApp.complaint.rejected' | artemisTranslate }}&nbsp;
+                                </span>
                             }
                         </small>
                     }
@@ -62,74 +63,82 @@
                 <textarea
                     [attr.aria-label]="'artemisApp.complaint.title' | artemisTranslate"
                     id="complaintTextArea"
-                    class="col-12 px-1"
+                    class="w-full px-1"
                     rows="4"
                     [(ngModel)]="complaintText"
                     [readonly]="true"
                     [disabled]="true"
+                    tumAetUiInput
                 ></textarea>
             </div>
             @if (handled() || isAllowedToRespond) {
-                <div class="col-12 col-md-6">
+                <div class="w-full md:w-6/12">
                     <h4
                         class="mb-2! text-base! leading-tight! font-semibold!"
                         [jhiTranslate]="complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedbackResponse.title' : 'artemisApp.complaintResponse.title'"
                     ></h4>
-                    <div class="d-flex flex-column">
+                    <div class="flex flex-col">
                         <textarea
                             [attr.aria-label]="
                                 (complaint().complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedbackResponse.title' : 'artemisApp.complaintResponse.title')
                                     | artemisTranslate
                             "
                             id="responseTextArea"
-                            class="col-12 px-1"
+                            class="w-full px-1"
                             rows="4"
                             [maxlength]="maxComplaintResponseTextLimit()"
                             [(ngModel)]="complaintResponse.responseText"
                             [readonly]="handled() || isLockedForLoggedInUser()"
                             [disabled]="handled() || isLockedForLoggedInUser()"
                             ondrop="return false;"
+                            tumAetUiInput
                         >
                         </textarea>
                         <jhi-textarea-counter [maxLength]="maxComplaintResponseTextLimit()" [content]="complaintResponse.responseText" [visible]="!handled()" />
                     </div>
                     @if (!handled() && complaint().complaintType === ComplaintType.COMPLAINT) {
-                        <div class="d-flex flex-wrap gap-1 justify-content-between mt-1">
+                        <div class="flex flex-wrap gap-1 justify-between mt-1">
                             <button
                                 id="acceptComplaintButton"
                                 type="button"
-                                class="btn btn-success btn-block"
+                                class="w-full"
                                 (click)="respondToComplaint(true)"
                                 [disabled]="isLockedForLoggedInUser() || complaintResponseTextLength() > maxComplaintResponseTextLimit()"
                                 title="{{ 'artemisApp.complaintResponse.updateAssessmentTooltip' | artemisTranslate }}"
+                                tumAetUiButton
+                                severity="success"
                             >
                                 {{ 'artemisApp.complaintResponse.updateAssessment' | artemisTranslate }}
                             </button>
                             <button
                                 id="rejectComplaintButton"
                                 type="button"
-                                class="btn btn-danger btn-block"
+                                class="w-full"
                                 (click)="respondToComplaint(false)"
                                 [disabled]="isLockedForLoggedInUser() || complaintResponseTextLength() > maxComplaintResponseTextLimit()"
                                 title="{{ 'artemisApp.complaintResponse.rejectComplaintTooltip' | artemisTranslate }}"
+                                tumAetUiButton
+                                severity="danger"
                             >
                                 {{ 'artemisApp.complaintResponse.rejectComplaint' | artemisTranslate }}
                             </button>
                             <!-- empty div to create additional spacing after the last button, but only for sm or up -->
-                            <div class="d-none d-sm-block"></div>
+                            <div class="hidden sm:block"></div>
                         </div>
                     }
                     @if (!complaint().accepted && complaint().complaintType === ComplaintType.MORE_FEEDBACK) {
-                        <div class="row justify-content-end mt-4!">
-                            <div class="col-12">
+                        <div class="flex flex-wrap gap-y-2 justify-end mt-4!">
+                            <div class="w-full">
                                 <button
                                     id="respondToMoreFeedbackButton"
                                     type="button"
-                                    class="btn btn-success btn-block"
+                                    class="w-full"
                                     [disabled]="isLockedForLoggedInUser()"
                                     (click)="respondToComplaint(true)"
                                     title="{{ 'artemisApp.moreFeedbackResponse.sendResponseTooltip' | artemisTranslate }}"
                                     jhiTranslate="artemisApp.moreFeedbackResponse.provideFeedback"
+                                    tumAetUiButton
+                                    severity="success"
                                 ></button>
                             </div>
                         </div>

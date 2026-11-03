@@ -130,6 +130,8 @@
             class="markdown-editor markdown-editor-wrapper flex-col border border-[var(--border-color)]"
             data-testid="markdown-editor"
             [ngClass]="{ flex: inEditMode(), hidden: !inEditMode() }"
+            (dragover)="enableFileUpload() ? $event.preventDefault() : undefined"
+            (drop)="onFileDrop($event)"
         >
             @if (mode() === 'diff') {
                 @if (renderSideBySide()) {
@@ -163,7 +165,6 @@
                 (contentHeightChanged)="onContentHeightChanged($event)"
                 (diffChanged)="onDiffChanged($event)"
                 (diffOriginalPaneLayoutChanged)="onDiffOriginalPaneLayoutChanged($event)"
-                (drop)="onFileDrop($event)"
                 (onBlurEditor)="onBlurEditor.emit()"
             />
             @if (enableFileUpload()) {

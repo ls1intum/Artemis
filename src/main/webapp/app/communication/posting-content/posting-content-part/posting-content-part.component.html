@@ -1,13 +1,3 @@
-@if (postingContentPart()?.contentBeforeReference) {
-    <span
-        class="markdown-preview"
-        [jhiMarkdown]="processedContentBeforeReference()"
-        [markdownPosting]="true"
-        [markdownContentBeforeReference]="true"
-        [markdownAllowedTags]="allowedHtmlTags"
-        [markdownAllowedAttributes]="allowedHtmlAttributes"
-    ></span>
-}
 @if (postingContentPart()?.linkToReference) {
     <a class="reference" [routerLink]="postingContentPart()?.linkToReference" [queryParams]="postingContentPart()?.queryParams">
         <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart()?.referenceType!)" />{{ postingContentPart()?.referenceStr }}
@@ -125,16 +115,4 @@
             </div>
         }
     </div>
-}
-
-@if (postingContentPart()?.contentAfterReference) {
-    <span
-        class="markdown-preview"
-        style="white-space: pre-wrap"
-        [jhiMarkdown]="processedContentAfterReference()"
-        [markdownPosting]="true"
-        [markdownContentBeforeReference]="false"
-        [markdownAllowedTags]="allowedHtmlTags"
-        [markdownAllowedAttributes]="allowedHtmlAttributes"
-    ></span>
 }

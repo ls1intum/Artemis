@@ -53,13 +53,39 @@ test.describe('Exam complaint about an automatic result', { tag: '@slow' }, () =
         await examManagement.openAssessmentDashboard(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
         await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
         await exerciseAssessment.clickHaveReadInstructionsButton();
+        // Preserve the first state-changing lock GET in Node before the browser can evict its body.
+        // Re-reading the endpoint could create a result and hide the missing-result regression below.
+        let originalLockBody: { results?: unknown[] } | undefined;
+        let originalLockStatus: number | undefined;
+        let lockForwards = 0;
+        await page.route(
+            '**/api/programming/programming-submissions/*/lock*',
+            async (route) => {
+                try {
+                    expect(route.request().method()).toBe('GET');
+                    lockForwards++;
+                    const response = await route.fetch({ maxRedirects: 0 });
+                    const body = await response.body();
+                    originalLockStatus = response.status();
+                    originalLockBody = JSON.parse(body.toString('utf-8')) as { results?: unknown[] };
+                    await route.fulfill({ response, body });
+                } catch (error) {
+                    // Dispatch may already have changed the lock/result; never continue or replay it.
+                    await route.abort('failed').catch(() => {});
+                    throw error;
+                }
+            },
+            { times: 1 },
+        );
         const lockResponsePromise = page.waitForResponse((response) => /\/programming-submissions\/\d+\/lock/.test(response.url()));
         await exerciseAssessment.clickEvaluateComplaint();
 
         // The submission comes with the result the complaint is about
         const lockResponse = await lockResponsePromise;
         expect(lockResponse.status()).toBe(200);
-        expect((await lockResponse.json()).results).toHaveLength(1);
+        expect(lockForwards).toBe(1);
+        expect(originalLockStatus).toBe(200);
+        expect(originalLockBody?.results).toHaveLength(1);
 
         // The assessment page is complete: the code editor, and the complaint form to answer the complaint with
         await expect(page.locator('[data-testid="programming-toolbar"]')).toBeVisible();

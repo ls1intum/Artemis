@@ -5,7 +5,7 @@ import { curveBundle, line } from 'd3-shape';
 import { layout as dagreLayout } from '@dagrejs/dagre';
 import { DagGraphComponent } from 'app/atlas/shared/dag-graph/dag-graph.component';
 import { DagGraphEdge, DagGraphNode, GraphPosition } from 'app/atlas/shared/dag-graph/dag-graph.model';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 
 // Wrap the real dagre layout so a single test can force it to throw and exercise the empty-graph
 // fallback; by default it delegates to the real implementation, so all other tests are unaffected.
@@ -14,9 +14,9 @@ vi.mock('@dagrejs/dagre', async (importOriginal) => {
     return { ...actual, layout: vi.fn(actual.layout) };
 });
 
-// Mock only Sentry's captureException so the layout-failure fallback can be asserted without a real capture.
-vi.mock('@sentry/angular', async (importOriginal) => {
-    const actual = (await importOriginal()) as typeof import('@sentry/angular');
+// Mock only captureException so the layout-failure fallback can be asserted without a real capture.
+vi.mock('app/core/error-reporting/capture-exception', async (importOriginal) => {
+    const actual = (await importOriginal()) as typeof import('app/core/error-reporting/capture-exception');
     return { ...actual, captureException: vi.fn() };
 });
 

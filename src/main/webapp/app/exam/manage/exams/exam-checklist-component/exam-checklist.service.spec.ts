@@ -1,3 +1,5 @@
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -37,9 +39,10 @@ describe('ExamChecklistService', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            providers: [MockProvider(ExamManagementService)],
+            providers: [MockProvider(ExamManagementService), { provide: AccountService, useClass: MockAccountService }],
         }).compileComponents();
 
+        vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(false);
         service = TestBed.inject(ExamChecklistService);
         examManagementService = TestBed.inject(ExamManagementService);
     });
@@ -78,6 +81,14 @@ describe('ExamChecklistService', () => {
         expect(result).toBe(true);
     });
 
+    it('should choose instructor statistics using known numeric course membership', () => {
+        const access = vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(true);
+        const stats = vi.spyOn(examManagementService, 'getExamStatistics').mockReturnValue(of(new HttpResponse({ body: examChecklist })));
+        service.getExamStatistics(exam).subscribe();
+        expect(access).toHaveBeenCalledWith(2);
+        expect(stats).toHaveBeenCalledWith(2, 1, 'instructor');
+    });
+
     it('should return exam statistics correctly', () => {
         const getExamStatisticsStub = vi.spyOn(examManagementService, 'getExamStatistics').mockReturnValue(of({ body: examChecklist } as HttpResponse<ExamChecklist>));
 
@@ -87,7 +98,7 @@ describe('ExamChecklistService', () => {
             .subscribe((checklist) => expect(checklist).toEqual(examChecklist));
 
         expect(getExamStatisticsStub).toHaveBeenCalledOnce();
-        expect(getExamStatisticsStub).toHaveBeenCalledWith(2, 1);
+        expect(getExamStatisticsStub).toHaveBeenCalledWith(2, 1, 'tutor');
     });
 
     describe('test checkTotalPointsMandatory', () => {

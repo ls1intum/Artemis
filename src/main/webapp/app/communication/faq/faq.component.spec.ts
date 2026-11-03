@@ -77,6 +77,7 @@ describe('FaqComponent', () => {
                 },
 
                 MockProvider(FaqService, {
+                    findAllForManagement: vi.fn(() => of(new HttpResponse({ body: [faq1, faq2, faq3] }))),
                     findAllByCourseId: () => {
                         return of(
                             new HttpResponse({
@@ -88,7 +89,8 @@ describe('FaqComponent', () => {
                     delete: () => {
                         return of(new HttpResponse<void>({ status: 200 }));
                     },
-                    findAllCategoriesByCourseId: () => {
+                    findAllCategoriesByCourseId: () => of(new HttpResponse({ body: [] })),
+                    findAllCategoriesForManagement: () => {
                         return of(
                             new HttpResponse({
                                 body: [],
@@ -117,8 +119,17 @@ describe('FaqComponent', () => {
         sortService = TestBed.inject(SortService);
     });
 
+    it.each([true, false])('chooses the FAQ audience from known course membership: staff=%s', (staff) => {
+        vi.spyOn(TestBed.inject(AccountService), 'isAtLeastTutorInCourse').mockReturnValue(staff);
+        const student = vi.spyOn(faqService, 'findAllByCourseId');
+        const management = vi.spyOn(faqService, 'findAllForManagement').mockReturnValue(of(new HttpResponse({ body: [faq1] })));
+        faqComponent.ngOnInit();
+        expect(staff ? management : student).toHaveBeenCalledExactlyOnceWith(courseId);
+        expect(staff ? student : management).not.toHaveBeenCalled();
+    });
+
     it('should fetch faqs when initialized', () => {
-        const findAllSpy = vi.spyOn(faqService, 'findAllByCourseId');
+        const findAllSpy = vi.spyOn(faqService, 'findAllForManagement');
 
         faqComponentFixture.detectChanges();
         expect(findAllSpy).toHaveBeenCalledExactlyOnceWith(1);
@@ -128,7 +139,7 @@ describe('FaqComponent', () => {
 
     it('should catch error if loading fails', () => {
         const error = { status: 404 };
-        const findSpy = vi.spyOn(faqService, 'findAllByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        const findSpy = vi.spyOn(faqService, 'findAllForManagement').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         expect(findSpy).toHaveBeenCalled();
         expect(faqComponent.faqs).toBeUndefined();
@@ -165,7 +176,7 @@ describe('FaqComponent', () => {
     });
 
     it('should refresh the filtered faqs immediately after deletion', () => {
-        vi.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(NEVER);
+        vi.spyOn(faqService, 'findAllCategoriesForManagement').mockReturnValue(NEVER);
         faqComponentFixture.detectChanges();
         faqComponent.filteredFaqs.set([faq1, faq2, faq3]);
 
@@ -177,7 +188,7 @@ describe('FaqComponent', () => {
     it('should catch error if no categories are found', () => {
         alertServiceStub = vi.spyOn(alertService, 'error');
         const error = { status: 404 };
-        vi.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        vi.spyOn(faqService, 'findAllCategoriesForManagement').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         expect(alertServiceStub).toHaveBeenCalledOnce();
     });
@@ -262,11 +273,11 @@ describe('FaqComponent', () => {
 
     it('reloads FAQs and categories after import', () => {
         faqComponentFixture.detectChanges();
-        const faqsSpy = vi.spyOn(faqService, 'findAllByCourseId');
-        const categoriesSpy = vi.spyOn(faqService, 'findAllCategoriesByCourseId');
+        const faqsSpy = vi.spyOn(faqService, 'findAllForManagement').mockClear();
+        const categoriesSpy = vi.spyOn(faqService, 'findAllCategoriesForManagement');
         faqComponent.onFaqsImported(2);
         expect(faqsSpy).toHaveBeenCalledExactlyOnceWith(1);
-        expect(categoriesSpy).toHaveBeenCalledExactlyOnceWith(1);
+        expect(categoriesSpy).toHaveBeenCalledExactlyOnceWith(1, undefined);
         expect(faqComponent.faqs).toHaveLength(3);
     });
 
@@ -280,8 +291,8 @@ describe('FaqComponent', () => {
         expect(faqComponent.filteredFaqs()).toEqual([faq2]);
         const faqsResponse = new Subject<HttpResponse<Faq[]>>();
         const categoriesResponse = new Subject<HttpResponse<string[]>>();
-        vi.spyOn(faqService, 'findAllByCourseId').mockReturnValue(faqsResponse);
-        vi.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(categoriesResponse);
+        vi.spyOn(faqService, 'findAllForManagement').mockReturnValue(faqsResponse);
+        vi.spyOn(faqService, 'findAllCategoriesForManagement').mockReturnValue(categoriesResponse);
 
         faqComponent.onFaqsImported(1);
         const reloadFaqs = () => faqsResponse.next(new HttpResponse({ body: [faq1, faq2, faq3] }));

@@ -47,10 +47,10 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -149,11 +149,10 @@ public class ResultResource {
      */
     @FeatureUsage(UserFeature.EXERCISE_SCORES)
     @GetMapping("exercises/{exerciseId}/results-with-points-per-criterion")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<ResultWithPointsPerGradingCriterionDTO>> getResultsForExerciseWithPointsPerCriterion(@PathVariable Long exerciseId,
             @RequestParam(defaultValue = "true") boolean withSubmissions) {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         final Set<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultsAndParticipant(exerciseId, false);
 
@@ -206,7 +205,8 @@ public class ResultResource {
      */
     @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("participations/{participationId}/results/build-job-ids")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Map<Long, String>> getBuildJobIdsForResultsOfParticipation(@PathVariable long participationId) {
         log.debug("REST request to get build job ids for results of participation : {}", participationId);
         var participation = participationRepository.findByIdElseThrow(participationId);
@@ -261,12 +261,11 @@ public class ResultResource {
      */
     @FeatureUsage(UserFeature.EXERCISE_SCORES)
     @PostMapping("exercises/{exerciseId}/external-submission-results")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<ResultDTO> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin,
             @RequestBody ExternalSubmissionResultDTO resultDTO) throws URISyntaxException {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         if (!exercise.isExamExercise()) {
             if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {

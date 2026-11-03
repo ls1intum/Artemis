@@ -16,7 +16,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
@@ -70,7 +70,7 @@ export class ResultService implements IResultService {
     /**
      * Generates the result string for the given exercise and result.
      * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
-     * If the result or the exercise is undefined the error is forwarded to sentry and an empty string is returned.
+     * If the result or the exercise is undefined the error is reported and an empty string is returned.
      *
      * A missing `participation` is NOT an error: example submissions own a result without belonging to a
      * participation. Only the programming branch reads the participation, and it degrades gracefully without one.

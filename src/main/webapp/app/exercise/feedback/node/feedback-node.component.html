@@ -1,12 +1,11 @@
 @if (feedbackItem()) {
-    <p-message
+    <tumaet-ui-message
         class="feedback-item mb-2 block"
         [class.border-s-2]="feedbackItem()!.isAiFeedback && !!feedbackItem()!.feedbackReference.severity"
         [class.border-state-danger]="feedbackItem()!.isAiFeedback && feedbackItem()!.feedbackReference.severity === 'high'"
         [class.border-state-warning]="feedbackItem()!.isAiFeedback && feedbackItem()!.feedbackReference.severity === 'medium'"
         [class.border-state-info]="feedbackItem()!.isAiFeedback && feedbackItem()!.feedbackReference.severity === 'low'"
         [severity]="feedbackItem()!.isAiFeedback ? 'secondary' : messageSeverity(feedbackItem()!.color)"
-        [pt]="{ content: { class: 'w-full' }, text: { class: 'w-full' } }"
     >
         <div class="w-full">
             <div class="flex justify-between gap-8">
@@ -32,7 +31,7 @@
                     <span class="feedback-item__credits font-bold">
                         {{ roundValueSpecifiedByCourseSettings(feedbackItem()!.credits, course()) }}P
                         @if (feedbackItem()!.type === 'Subsequent') {
-                            <fa-icon [icon]="faExclamationTriangle" [pTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
+                            <fa-icon [icon]="faExclamationTriangle" [tumAetUiTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
                         }
                     </span>
                 }
@@ -60,7 +59,7 @@
                 <p class="mb-0!" jhiTranslate="artemisApp.result.noFeedback"></p>
             }
         </div>
-    </p-message>
+    </tumaet-ui-message>
 }
 @if (feedbackItemGroup()) {
     <div class="feedback-item-group">

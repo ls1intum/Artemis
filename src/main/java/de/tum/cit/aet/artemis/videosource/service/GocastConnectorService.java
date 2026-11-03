@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.videosource.service;
 
 import java.net.URI;
 import java.util.Base64;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -133,6 +135,42 @@ public class GocastConnectorService {
         });
     }
 
+    /**
+     * Reads the signed combined playlist of one lecture of the course behind the exact saved grant. GoCast refuses lectures outside that course, private and
+     * deleted ones with 404.
+     *
+     * @param grantId  the GoCast grant identifier
+     * @param streamId the GoCast lecture identifier
+     * @return the playlist URL, valid for seven hours, or empty while the lecture has no recording. A bearer credential: never log it.
+     */
+    public Optional<String> getRecordingPlaylist(long grantId, long streamId) {
+        requireId(grantId, "grantId");
+        requireId(streamId, "streamId");
+        WireRecording response = execute("Could not read the TUM.Live recording",
+                () -> restClient.get().uri("/integration/grants/{grantId}/recordings/{streamId}", grantId, streamId).retrieve().body(WireRecording.class));
+        if (response == null) {
+            throw invalidResponse("TUM.Live recording data is invalid");
+        }
+        if (!StringUtils.hasText(response.playlistUrl())) {
+            return Optional.empty();
+        }
+        if (!isHttpUrl(response.playlistUrl())) {
+            throw invalidResponse("TUM.Live recording data is invalid");
+        }
+        return Optional.of(response.playlistUrl());
+    }
+
+    private static boolean isHttpUrl(String value) {
+        try {
+            URI uri = URI.create(value);
+            String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase(Locale.ROOT);
+            return ("https".equals(scheme) || "http".equals(scheme)) && uri.getHost() != null && uri.getUserInfo() == null;
+        }
+        catch (IllegalArgumentException exception) {
+            return false;
+        }
+    }
+
     private static <T> T execute(String message, Supplier<T> operation) {
         try {
             return operation.get();
@@ -225,5 +263,14 @@ public class GocastConnectorService {
     }
 
     public record GrantDetails(long courseId, String courseSlug, String courseName, String courseVisibility) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record WireRecording(String playlistUrl) {
+
+        @Override
+        public String toString() {
+            return "WireRecording[playlistUrl=[REDACTED]]";
+        }
     }
 }

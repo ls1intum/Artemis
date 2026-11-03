@@ -2,11 +2,8 @@ package de.tum.cit.aet.artemis.exercise.web;
 
 import java.util.List;
 
-import org.springframework.http.ResponseEntity;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -43,50 +40,35 @@ public abstract class AbstractSubmissionResource {
     }
 
     /**
-     * Get all the submissions for an exercise. It is possible to filter, to receive only the ones that have already been submitted, or only the ones assessed by the tutor who is
-     * doing the call. In case of exam exercise, it filters out all test run submissions.
+     * Loads submissions for a list endpoint, excluding exam test runs and course Athena results for the self selection.
+     * Endpoint annotations enforce access; the endpoint's DTO projection determines participant visibility.
      *
-     * @param exerciseId      the id of the exercise
-     * @param submittedOnly   if only submitted submissions should be returned
-     * @param assessedByTutor if the submission was assessed by calling tutor
-     * @return the ResponseEntity with status 200 (OK) and the list of submissions in body
+     * @param exerciseId      the exercise to load submissions for
+     * @param submittedOnly   whether to select only submitted submissions in the all-submissions selection
+     * @param assessedByMe    whether to select only the current user's assessments
+     * @param correctionRound the correction round for the self selection
+     * @return the submissions for the requested selection
      */
-    protected ResponseEntity<List<Submission>> getAllSubmissions(Long exerciseId, boolean submittedOnly, boolean assessedByTutor, int correctionRound) {
-        User user = userRepository.getUserWithAuthorities();
+    protected List<Submission> getSubmissionsForList(Long exerciseId, boolean submittedOnly, boolean assessedByMe, int correctionRound) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-
-        if (assessedByTutor) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
-        }
-        else {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
-        }
-
         final boolean examMode = exercise.isExamExercise();
         List<Submission> submissions;
-        if (assessedByTutor) {
+        if (assessedByMe) {
+            User user = userRepository.getUserWithAuthorities();
             submissions = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(exerciseId, user, examMode, correctionRound);
         }
         else {
             submissions = submissionService.getAllSubmissionsForExercise(exerciseId, submittedOnly, examMode);
         }
 
-        // tutors should not see information about the student of a submission
-        if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
-            submissions.forEach(submission -> submissionService.hideDetails(submission, user));
-        }
-
-        // remove unnecessary data from the REST response
         submissions.forEach(submission -> {
-            if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+            if (submission.getParticipation() != null) {
                 submission.getParticipation().setExercise(null);
             }
-            // Important for exercises with Athena results
-            if (assessedByTutor && !examMode) {
+            if (assessedByMe && !examMode) {
                 submission.setResults(submission.getNonAthenaResults());
             }
         });
-
-        return ResponseEntity.ok().body(submissions);
+        return submissions;
     }
 }

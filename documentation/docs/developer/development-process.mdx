@@ -139,8 +139,9 @@ Before requesting review, go through every item in the author **Checklist**:
 - Check completed, applicable tasks with `- [x]` only after actually doing the work.
 - Delete tasks that do not apply, along with sections that become empty. For example, remove client tasks
   and UI screenshots for a documentation-only change. Explain an omission if its applicability is unclear.
-- Keep unfinished, applicable tasks unchecked and keep the PR in draft until they are completed.
-  Do not delete an applicable task merely to make the checklist appear complete.
+- Keep unfinished, applicable tasks unchecked, including CI and validation that will finish during review.
+  Do not delete an applicable task merely to make the checklist appear complete. Draft status depends on
+  whether the implementation is finished, not on whether every validation task is complete.
 
 The **Review Progress** checklist tracks work performed during review. Keep applicable code review, manual
 test, exam mode and performance items unchecked until those reviews or tests have actually happened.
@@ -160,10 +161,30 @@ milestone explicit; do not silently leave it unset or guess a release.
 GitHub's draft state and the repository labels serve different purposes. Marking a draft **Ready for review**
 changes its state; the **ready for review** label makes it discoverable in the team's review queue.
 
+Use drafts only for unfinished implementations. Open a completed implementation as a non-draft PR, or
+mark it **Ready for review** as soon as the implementation is finished. Draft PRs keep relevant style,
+lint, architecture and type checks, including test TypeScript compilation in **Quality / Client Compilation**.
+They also keep the WAR and draft test-server image builds. Server, client and AI worker sandbox tests,
+E2E, CodeQL and automated review bots are deferred. Integration-test feedback arrives after leaving draft
+or requesting a manual full CI run, so waiting for those results before leaving draft prevents normal
+validation from starting. Pending or failing CI, outstanding reviews and test-server validation do not
+by themselves require draft status. Record that work honestly in the checklist and complete it before merge.
+
+A successful draft CI run reports **Draft checks passed (tests deferred)**. It does not publish the
+required **All required CI Passed** check for an untested revision. Marking the PR **Ready for review**
+starts normal CI even when the commit has not changed. Ready PRs run the relevant suites with conservative
+affected selection and full-suite fallbacks; wait for the required checks before merging. Relevant ready PRs also require Sonar's new-code quality
+gate; affected runs provide measured coverage without rerunning complete suites. Fork PRs require
+a maintainer-reviewed exact-source analysis before the secretless gate can pass. See the
+[Sonar workflow policy](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/README.md#the-code-quality-analyses). To request
+full validation while a PR is still in draft, run **CI** manually on its branch with
+**Bypass change detection and run every job** enabled. Manual runs use full suites when selected on draft
+branches too; without the bypass, area filtering can skip an irrelevant Test stage.
+
 | Stage | Author's action |
 | --- | --- |
-| Implementation or validation is incomplete | Keep the PR in draft and remove **ready for review** and **ready to merge**. |
-| Ready for reviewers | Complete the author checklist, clean up the description, set the milestone and pass required checks available in draft. Mark the PR **Ready for review**, verify **ready for review** is present, and follow any checks triggered by that transition. |
+| Implementation is unfinished | Keep the PR in draft and remove **ready for review** and **ready to merge**. |
+| Implementation is complete | Prepare the description, record completed and pending validation, and set the milestone. Open a non-draft PR or mark it **Ready for review**, verify **ready for review** is present, and follow CI and automated reviews while they run. |
 | Ready for maintainer merge | Verify at least four reviewer approvals, including required maintainer reviews, all remaining tasks checked, all review threads resolved, passing required checks, no merge conflicts and the correct milestone. Replace **ready for review** with **ready to merge**. |
 
 The ready-for-review workflow adds **ready for review** when a draft transitions to ready. If the PR was
@@ -174,8 +195,8 @@ remove the label and explain what remains. Fix the reported issues before re-add
 not verify approvals, CI results or the milestone; the author still verifies every merge requirement.
 
 Keep labels accurate after each update. Remove **ready to merge** whenever a merge requirement no longer
-holds. Use **ready for review** while awaiting further review, or return to draft and remove both labels
-if the PR needs more work before review can continue. A maintainer performs the final merge.
+holds. Keep **ready for review** while CI, validation or reviews are pending. Return to draft and remove
+both labels only when the implementation becomes unfinished again. A maintainer performs the final merge.
 
 ### Steps to Create and Merge a Pull Request
 
@@ -188,17 +209,20 @@ if the PR needs more work before review can continue. A maintainer performs the 
 
 #### Begin Implementation (For Developers Only)
 
-- [Open a draft pull request.](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request) This allows for code related questions and discussions.
+- If you open a pull request while the implementation is unfinished, use a
+  [draft pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request)
+  for early questions and discussion.
 
 #### Complete Implementation (For Developers Only)
 
-- Complete the author checklist and prepare the description, milestone and labels according to
-  [Pull Request Readiness](#pull-request-readiness). Applicable review tasks stay open until review.
+- Record completed author tasks and prepare the description, milestone and labels according to
+  [Pull Request Readiness](#pull-request-readiness). Pending validation and review tasks stay open until verified.
 - Add or update the "Steps for Testing" in the description of your pull request.
 - Make sure that the changes in the pull request are only the ones necessary.
 - Make sure that the PR is up-to-date with develop.
-- Make sure all required checks available in draft pass; follow additional checks triggered when the PR becomes ready.
-- Mark the pull request as [ready for review.](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request)
+- Open the completed implementation as a non-draft PR, or mark the pull request as
+  [ready for review](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request)
+  immediately. Follow the full CI run and automated reviews; do not wait for them before leaving draft.
 
 #### Review Process
 
@@ -227,9 +251,10 @@ if the PR needs more work before review can continue. A maintainer performs the 
 
 - Use the pull request to discuss comments or ask questions.
 - Update your code where necessary.
-- Remove **ready to merge** when revisions invalidate merge readiness. Revert to draft and remove
-  **ready for review** if the changes will take a while during which review is not needed/possible.
-- Set back to ready for review afterwards and verify the **ready for review** label is present.
+- Remove **ready to merge** when revisions invalidate merge readiness. Return to draft and remove
+  **ready for review** only while the implementation is unfinished again.
+- Once the implementation is complete, mark it ready for review immediately and verify the
+  **ready for review** label is present, even if CI or other validation is still pending.
 - After making revisions, re-request reviews through GitHub initially. If you receive no response, then follow up with a targeted message on Slack to the relevant reviewers.
 - Comment on "inline comments" (e.g. "Done").
 - Once all changes are made, ensure that the feature-specific maintainer reviews and approves the changes.

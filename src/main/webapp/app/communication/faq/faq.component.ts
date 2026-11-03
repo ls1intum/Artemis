@@ -70,6 +70,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     readonly courseId = signal<number>(undefined!);
     readonly hasCategories = signal(false);
     readonly isAtLeastInstructor = signal(false);
+    private managementAudience = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -98,8 +99,6 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
-        this.loadAll();
-        this.loadCourseFaqCategories(this.courseId());
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
             this.refreshFaqList(searchTerm);
         });
@@ -108,6 +107,9 @@ export class FaqComponent implements OnInit, OnDestroy {
             if (course) {
                 this.course = course;
                 this.isAtLeastInstructor.set(this.accountService.isAtLeastInstructorInCourse(course));
+                this.managementAudience = this.accountService.isAtLeastTutorInCourse(course);
+                this.loadAll();
+                this.loadCourseFaqCategories(this.courseId());
             }
         });
     }
@@ -162,19 +164,17 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     /** Reloads the course FAQs while preserving the active search, category filters, and sort order. */
     private loadAll() {
-        this.faqService
-            .findAllByCourseId(this.courseId())
-            .pipe(map((res: HttpResponse<Faq[]>) => res.body ?? []))
-            .subscribe({
-                next: (res: Faq[]) => {
-                    this.faqs = res;
-                    this.hasFaqs.set(res.length > 0);
-                    this.refreshFaqList(this.searchInput.getValue());
-                    this.sortRows();
-                    this.loaded.set(true);
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+        const request = this.managementAudience ? this.faqService.findAllForManagement(this.courseId()) : this.faqService.findAllByCourseId(this.courseId());
+        request.pipe(map((res: HttpResponse<Faq[]>) => res.body ?? [])).subscribe({
+            next: (res: Faq[]) => {
+                this.faqs = res;
+                this.hasFaqs.set(res.length > 0);
+                this.refreshFaqList(this.searchInput.getValue());
+                this.sortRows();
+                this.loaded.set(true);
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 
     /**
@@ -182,7 +182,7 @@ export class FaqComponent implements OnInit, OnDestroy {
      * @param courseId course whose FAQ categories should be loaded
      */
     private loadCourseFaqCategories(courseId: number) {
-        loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
+        loadCourseFaqCategories(courseId, this.alertService, this.faqService, undefined, this.managementAudience ? 'management' : 'student').subscribe((existingCategories) => {
             this.existingCategories.set(existingCategories);
             this.hasCategories.set(existingCategories.length > 0);
             this.checkAppliedFilter(this.activeFilters(), this.existingCategories());

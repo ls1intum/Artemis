@@ -165,7 +165,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createFileUploadSubmissionAndCalculateScore() {
         FileUploadExercise exercise = createFileuploadExerciseWithSGI(course1);
         Submission submissionWithoutResult = new FileUploadSubmission();
@@ -187,7 +187,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createTextExerciseSubmissionAndCalculateScore() {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
@@ -209,7 +209,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void createModelingExerciseSubmissionAndCalculateScore() {
         ModelingExercise exercise = createModelingExerciseWithSGI(course1);
         Submission submissionWithoutResult = new ModelingSubmission();
@@ -232,7 +232,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRatedAfterSubmitResultWithDueDateEqualsSubmissionDateOfResult(boolean isDueDateIndividual) {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
@@ -270,7 +270,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testNotRatedAfterSubmitResultWithDueDateBeforeSubmissionDateOfResult() {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
@@ -292,7 +292,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRatedAfterSubmitResultWithDueDateBeforeSubmissionDateOfResult() {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
@@ -314,7 +314,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testIsAllowedToCreateOrOverrideResult_withExamDueDateNotPassed() {
         ZonedDateTime visibleDate = ZonedDateTime.now().minusHours(2);
         ZonedDateTime startDate = ZonedDateTime.now().minusHours(1);
@@ -329,7 +329,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testIsAllowedToCreateOrOverrideResult_withExamPublishResultDatePassed() {
         ZonedDateTime visibleDate = ZonedDateTime.now().minusHours(3);
         ZonedDateTime startDate = ZonedDateTime.now().minusHours(2);
@@ -349,7 +349,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
      * course can assess the practice work like any other.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testIsAllowedToCreateOrOverrideResult_practiceParticipationOfTeamExercise() {
         TextExercise teamExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, course1);
         teamExercise.setMode(ExerciseMode.TEAM);
@@ -383,7 +383,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
      */
     @ParameterizedTest(name = "{0} is allowed: {1}")
     @CsvSource({ "tutor1,true", "tutor2,false" })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testIsAllowedToCreateOrOverrideResult_teamParticipation_onlyTheTeamTutorIsAllowed(String tutor, boolean expected) {
         TextExercise teamExercise = teamExercise();
         Team team = new Team();
@@ -401,7 +401,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
      * A team without a tutor has nobody who may assess its participation.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testIsAllowedToCreateOrOverrideResult_teamParticipationWithoutTeamTutor_isNotAllowed() {
         TextExercise teamExercise = teamExercise();
         StudentParticipation teamParticipation = new StudentParticipation();
@@ -420,7 +420,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
      */
     @ParameterizedTest(name = "assessor {0}, requested by tutor1: {1}")
     @CsvSource({ "tutor1,true", "tutor2,false", "none,true" })
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testIsAllowedToCreateOrOverrideResult_practiceParticipationOfTeamExercise_followsTheIndividualRule(String assessor, boolean expected) {
         TextExercise teamExercise = teamExercise();
         StudentParticipation practiceParticipation = practiceParticipationOfStudent1(teamExercise);
@@ -436,7 +436,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testIsAllowedToCreateOrOverrideResult_practiceParticipationOfTeamExercise_instructorMayAlwaysOverride() {
         TextExercise teamExercise = teamExercise();
         StudentParticipation practiceParticipation = practiceParticipationOfStudent1(teamExercise);

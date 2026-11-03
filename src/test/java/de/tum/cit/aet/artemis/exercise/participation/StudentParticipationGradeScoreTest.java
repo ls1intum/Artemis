@@ -158,12 +158,12 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
         if (teamExercise) {
             assertThat(studentParticipationRepository.findTeamGradesByCourseId(course.getId())).isEmpty();
             assertThat(studentParticipationRepository.findTeamGradesByCourseIdAndStudentId(Set.of(course.getId()), student.getId())).isEmpty();
-            assertThat(studentParticipationRepository.findTeamGradesForCourseOverview(Set.of(exercise.getId()), student.getId())).isEmpty();
+            assertThat(studentParticipationRepository.findTeamGradesForCourseOverview(Set.of(exercise.getId()), student.getId(), now)).isEmpty();
         }
         else {
             assertThat(studentParticipationRepository.findIndividualGradesByCourseId(course.getId())).isEmpty();
             assertThat(studentParticipationRepository.findIndividualGradesByCourseIdAndStudentId(Set.of(course.getId()), student.getId())).isEmpty();
-            assertThat(studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), student.getId())).isEmpty();
+            assertThat(studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), student.getId(), now)).isEmpty();
         }
     }
 
@@ -200,8 +200,10 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
                 : studentParticipationRepository.findIndividualGradesByCourseId(course.getId());
         var studentGrades = teamExercise ? studentParticipationRepository.findTeamGradesByCourseIdAndStudentId(Set.of(course.getId()), studentId)
                 : studentParticipationRepository.findIndividualGradesByCourseIdAndStudentId(Set.of(course.getId()), studentId);
-        var overviewGrades = teamExercise ? studentParticipationRepository.findTeamGradesForCourseOverview(Set.of(exercise.getId()), studentId)
-                : studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), studentId);
+        // The overview publishes manual grades only after the assessment due date.
+        var calculationTime = exercise.getAssessmentDueDate() == null ? now : exercise.getAssessmentDueDate().plusSeconds(1);
+        var overviewGrades = teamExercise ? studentParticipationRepository.findTeamGradesForCourseOverview(Set.of(exercise.getId()), studentId, calculationTime)
+                : studentParticipationRepository.findIndividualGradesForCourseOverview(Set.of(exercise.getId()), studentId, calculationTime);
         assertThat(courseGrades).extracting(CourseGradeScoreDTO::score).containsExactly(80.0);
         assertThat(studentGrades).extracting(CourseGradeScoreDTO::score).containsExactly(80.0);
         assertThat(overviewGrades).extracting(CourseGradeScoreDTO::score).containsExactly(80.0);

@@ -13,15 +13,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.util.ArtemisApp;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -29,6 +29,9 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqContentDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqOptionDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMcqQuestionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
@@ -291,7 +294,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             return;
         }
         var message = new IrisMessage();
-        message.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(compaction)));
+        message.addContent(IrisJsonMessageContent.of(compaction));
         irisMessageService.saveMessage(message, session, IrisMessageSender.SUMMARY);
     }
 
@@ -393,17 +396,13 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
         // Case 1: entire string is valid MCQ JSON
         if (trimmed.startsWith("{")) {
-            try {
-                JsonNode jsonNode = objectMapper.readTree(trimmed);
-                if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asString())) {
-                    if (isValidMcqNode(jsonNode)) {
-                        return List.of(new IrisJsonMessageContent(jsonNode));
-                    }
-                    return List.of(new IrisTextMessageContent(MALFORMED_MCQ_ERROR_MESSAGE));
-                }
+            // Anything that is not an MCQ, including JSON that is invalid as a whole, falls through to the mixed content scan below
+            McqCheck check = checkMcq(trimmed);
+            if (check == McqCheck.VALID) {
+                return List.of(IrisJsonMessageContent.ofJson(trimmed));
             }
-            catch (JacksonException e) {
-                // Not valid JSON as a whole, try mixed content below
+            if (check == McqCheck.MALFORMED) {
+                return List.of(new IrisTextMessageContent(MALFORMED_MCQ_ERROR_MESSAGE));
             }
         }
 
@@ -425,30 +424,26 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
                 continue;
             }
 
-            try {
-                JsonNode jsonNode = objectMapper.readTree(jsonCandidate);
-                if (!jsonNode.has("type") || !MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asString())) {
-                    continue;
-                }
-                if (!isValidMcqNode(jsonNode)) {
-                    return List.of(new IrisTextMessageContent(MALFORMED_MCQ_ERROR_MESSAGE));
-                }
-
-                // Add text before this JSON block
-                if (jsonStart > lastEnd) {
-                    String textBefore = trimmed.substring(lastEnd, jsonStart).strip();
-                    if (!textBefore.isEmpty()) {
-                        contents.add(new IrisTextMessageContent(textBefore));
-                    }
-                }
-
-                contents.add(new IrisJsonMessageContent(jsonNode));
-                lastEnd = jsonStart + jsonCandidate.length();
-                foundMcq = true;
+            // A candidate that is invalid JSON or no MCQ is skipped
+            McqCheck check = checkMcq(jsonCandidate);
+            if (check == McqCheck.NOT_MCQ) {
+                continue;
             }
-            catch (JacksonException e) {
-                // Invalid JSON, skip this match
+            if (check == McqCheck.MALFORMED) {
+                return List.of(new IrisTextMessageContent(MALFORMED_MCQ_ERROR_MESSAGE));
             }
+
+            // Add text before this JSON block
+            if (jsonStart > lastEnd) {
+                String textBefore = trimmed.substring(lastEnd, jsonStart).strip();
+                if (!textBefore.isEmpty()) {
+                    contents.add(new IrisTextMessageContent(textBefore));
+                }
+            }
+
+            contents.add(IrisJsonMessageContent.ofJson(jsonCandidate));
+            lastEnd = jsonStart + jsonCandidate.length();
+            foundMcq = true;
         }
 
         if (foundMcq) {
@@ -510,66 +505,80 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
     }
 
     /**
-     * Validates that a JSON node has the required MCQ shape expected by the client:
+     * Classifies a JSON text as a valid MCQ, a malformed MCQ or not an MCQ.
+     * <p>
+     * Text that is not valid JSON, is not a JSON object or whose type is not an MCQ type is not an MCQ. Of a JSON object with an MCQ type, the content must have the shape
+     * the client expects, otherwise it is malformed.
+     *
+     * @param json the JSON text to classify
+     * @return the classification of the text
+     */
+    private McqCheck checkMcq(String json) {
+        String type;
+        try {
+            type = objectMapper.readValue(json, McqTypeProbe.class).type();
+        }
+        catch (JacksonException e) {
+            return McqCheck.NOT_MCQ;
+        }
+        if (type == null || !MCQ_CONTENT_TYPES.contains(type)) {
+            return McqCheck.NOT_MCQ;
+        }
+        try {
+            return isValidMcq(objectMapper.readValue(json, IrisMcqContentDTO.class)) ? McqCheck.VALID : McqCheck.MALFORMED;
+        }
+        catch (JacksonException e) {
+            // a value of the wrong JSON type, e.g. a number as the question or a string as the correct flag
+            return McqCheck.MALFORMED;
+        }
+    }
+
+    /**
+     * Validates that MCQ content has the required MCQ shape expected by the client:
      * a non-empty "question" string, an "options" array with at least two entries
      * (each having a "text" string and a "correct" boolean) where exactly one option
      * is marked correct, and an "explanation" string.
      *
-     * @param node the JSON node to validate
-     * @return true if the node represents a valid MCQ
+     * @param content the MCQ content to validate
+     * @return true if the content represents a valid MCQ
      */
-    private boolean isValidMcqNode(JsonNode node) {
-        String type = node.has("type") ? node.get("type").asString() : "";
-
-        if ("mcq-set".equals(type)) {
-            JsonNode questions = node.get("questions");
-            if (questions == null || !questions.isArray() || questions.isEmpty()) {
+    private static boolean isValidMcq(IrisMcqContentDTO content) {
+        if ("mcq-set".equals(content.type())) {
+            List<IrisMcqQuestionDTO> questions = content.questions();
+            if (questions == null || questions.isEmpty()) {
                 return false;
             }
-            for (JsonNode q : questions) {
-                if (!isValidSingleMcqNode(q)) {
-                    return false;
-                }
-            }
-            return true;
+            return questions.stream().allMatch(question -> question != null && isValidSingleMcq(question.question(), question.options(), question.explanation()));
         }
 
         // Single MCQ ("mcq" type or fallback)
-        return isValidSingleMcqNode(node);
+        return isValidSingleMcq(content.question(), content.options(), content.explanation());
     }
 
     /**
-     * Validates that a JSON node has the required single MCQ shape: a non-empty "question" string,
+     * Validates that the parts of a single MCQ question have the required shape: a non-empty "question" string,
      * an "options" array with at least two entries (each having a "text" string and a "correct" boolean)
      * where exactly one option is marked correct, and an "explanation" string.
      *
-     * @param node the JSON node to validate
-     * @return true if the node represents a valid single MCQ question
+     * @param question    the question text
+     * @param options     the answer options
+     * @param explanation the explanation text
+     * @return true if the parts represent a valid single MCQ question
      */
-    private boolean isValidSingleMcqNode(JsonNode node) {
-        JsonNode question = node.get("question");
-        if (question == null || !question.isString() || question.asString().isBlank()) {
+    private static boolean isValidSingleMcq(@Nullable String question, @Nullable List<IrisMcqOptionDTO> options, @Nullable String explanation) {
+        if (question == null || question.isBlank()) {
             return false;
         }
 
-        JsonNode options = node.get("options");
-        if (options == null || !options.isArray() || options.size() < 2) {
+        if (options == null || options.size() < 2) {
             return false;
         }
         int correctCount = 0;
-        for (JsonNode option : options) {
-            if (!option.isObject()) {
+        for (IrisMcqOptionDTO option : options) {
+            if (option == null || option.text() == null || option.text().isBlank() || option.correct() == null) {
                 return false;
             }
-            JsonNode text = option.get("text");
-            JsonNode correct = option.get("correct");
-            if (text == null || !text.isString() || text.asString().isBlank()) {
-                return false;
-            }
-            if (correct == null || !correct.isBoolean()) {
-                return false;
-            }
-            if (correct.asBoolean()) {
+            if (option.correct()) {
                 correctCount++;
             }
         }
@@ -577,12 +586,23 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             return false;
         }
 
-        JsonNode explanation = node.get("explanation");
-        if (explanation == null || !explanation.isString() || explanation.asString().isBlank()) {
-            return false;
-        }
+        return explanation != null && !explanation.isBlank();
+    }
 
-        return true;
+    /**
+     * The outcome of checking a JSON text for being an MCQ.
+     */
+    private enum McqCheck {
+        NOT_MCQ, MALFORMED, VALID
+    }
+
+    /**
+     * Reads only the type of a JSON object, to tell MCQ content from any other JSON.
+     *
+     * @param type the type of the object
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record McqTypeProbe(@Nullable String type) {
     }
 
     Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

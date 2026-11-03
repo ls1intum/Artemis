@@ -1,8 +1,9 @@
+import { TumAetUiDialogService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+
 import { provideTranslateService } from '@ngx-translate/core';
 
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
@@ -22,7 +23,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -41,12 +42,12 @@ describe('ExerciseHeadersInformationComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ExerciseHeadersInformationComponent, NgbTooltipModule],
+            imports: [ExerciseHeadersInformationComponent, TumAetUiTooltipDirective],
             providers: [
                 MockProvider(ExerciseService),
                 MockProvider(ComplaintService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideTranslateService(),
