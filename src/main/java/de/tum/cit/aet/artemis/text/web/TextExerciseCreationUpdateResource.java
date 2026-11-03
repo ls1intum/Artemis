@@ -184,6 +184,7 @@ public class TextExerciseCreationUpdateResource {
         if (textExercise.getTitle() == null) {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
+        textExercise.validateTitle();
         // validates general settings: points, dates
         textExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
