@@ -56,6 +56,8 @@ public class PyrisWebhookService {
 
     private final PyrisJobService pyrisJobService;
 
+    private final PyrisCallbackTokenService callbackTokenService;
+
     private final IrisSettingsService irisSettingsService;
 
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
@@ -67,11 +69,12 @@ public class PyrisWebhookService {
     @Value("${server.url}")
     private String artemisBaseUrl;
 
-    public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
-            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi,
-            VideoSourceResolverService videoSourceResolver) {
+    public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisCallbackTokenService callbackTokenService,
+            IrisSettingsService irisSettingsService, Optional<LectureRepositoryApi> lectureRepositoryApi,
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, VideoSourceResolverService videoSourceResolver) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
+        this.callbackTokenService = callbackTokenService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
@@ -191,7 +194,7 @@ public class PyrisWebhookService {
      * delete the lectures from the vector database on pyris
      *
      * @param attachmentVideoUnits The attachmentVideoUnit that got Updated / erased
-     * @return jobToken if the job was created
+     * @return the run id if the job was created
      */
     public String deleteLectureFromPyrisDB(List<AttachmentVideoUnit> attachmentVideoUnits) {
         List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentVideoUnits = new ArrayList<>();
@@ -240,18 +243,23 @@ public class PyrisWebhookService {
      * executes executeLectureWebhook add or delete lectures from to the vector database on pyris
      *
      * @param toUpdateAttachmentVideoUnits The attachmentVideoUnit that are goin to be deleted
-     * @return jobToken if the job was created
+     * @return the run id of the job
      */
     private String executeLectureDeletionWebhook(List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentVideoUnits) {
-        String jobToken = pyrisJobService.addLectureIngestionWebhookJob(0, 0, 0);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default", IrisSupportLevel.MODERATE.jsonValue());
+        String runId = pyrisJobService.addLectureIngestionWebhookJob(0, 0, 0);
+        PyrisPipelineExecutionSettingsDTO settingsDTO = settingsFor(runId, "default", IrisSupportLevel.MODERATE.jsonValue());
         PyrisWebhookLectureDeletionExecutionDTO executionDTO = new PyrisWebhookLectureDeletionExecutionDTO(toUpdateAttachmentVideoUnits, settingsDTO);
         pyrisConnectorService.executeLectureDeletionWebhook(executionDTO);
-        return jobToken;
+        return runId;
+    }
+
+    // Settings for a run registered moments ago, with the token its callbacks authenticate with.
+    private PyrisPipelineExecutionSettingsDTO settingsFor(String runId, String variant, String supportLevel) {
+        return new PyrisPipelineExecutionSettingsDTO(runId, callbackTokenService.issue(pyrisJobService.getJob(runId)), null, artemisBaseUrl, variant, supportLevel);
     }
 
     /**
-     * Prepare a lecture ingestion job for a pulling Pyris worker: register the job token and assemble the
+     * Prepare a lecture ingestion job for a pulling Pyris worker: register the job and assemble the
      * execution payload, which the worker claim returns to Pyris.
      *
      * @param attachmentVideoUnit     the attachment video unit to ingest
@@ -272,32 +280,31 @@ public class PyrisWebhookService {
     }
 
     /**
-     * Release a job token registered by {@link #prepareLectureUnitIngestion} whose claim lapsed before it
-     * could be activated: the worker never received it, so nothing will use the token, and leaving it in
+     * Release a job registered by {@link #prepareLectureUnitIngestion} whose claim lapsed before it
+     * could be activated: the worker never received it, so nothing will report on it, and leaving it in
      * the job map would just hold an unusable entry until {@code ingestionJobTimeout} expires.
      *
-     * @param jobToken the token to release, from {@link PyrisPreparedLectureIngestionJobDTO#jobToken()}
+     * @param runId the run to release, from {@link PyrisPreparedLectureIngestionJobDTO#runId()}
      */
-    public void revokePreparedIngestionJob(String jobToken) {
-        pyrisJobService.removeJobByToken(jobToken);
+    public void revokePreparedIngestionJob(String runId) {
+        pyrisJobService.removeJobByRunId(runId);
     }
 
     private PyrisPreparedLectureIngestionJobDTO prepareLectureAdditionJob(PyrisLectureUnitWebhookDTO toUpdateAttachmentVideoUnit, Course course) {
-        String jobToken = pyrisJobService.addLectureIngestionWebhookJob(toUpdateAttachmentVideoUnit.courseId(), toUpdateAttachmentVideoUnit.lectureId(),
+        String runId = pyrisJobService.addLectureIngestionWebhookJob(toUpdateAttachmentVideoUnit.courseId(), toUpdateAttachmentVideoUnit.lectureId(),
                 toUpdateAttachmentVideoUnit.lectureUnitId());
         try {
             var settings = irisSettingsService.getSettingsForCourse(course);
-            PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, settings.variant().jsonValue(),
-                    settings.supportLevel().jsonValue());
+            PyrisPipelineExecutionSettingsDTO settingsDTO = settingsFor(runId, settings.variant().jsonValue(), settings.supportLevel().jsonValue());
             PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentVideoUnit,
                     toUpdateAttachmentVideoUnit.lectureUnitId(), settingsDTO);
-            return new PyrisPreparedLectureIngestionJobDTO(jobToken, executionDTO);
+            return new PyrisPreparedLectureIngestionJobDTO(runId, executionDTO);
         }
         catch (RuntimeException e) {
-            // Everything above the token registration can throw without having created anything else
-            // to clean up (course settings resolution, DTO assembly); only the token needs releasing,
+            // Everything after the job registration can throw without having created anything else
+            // to clean up (course settings resolution, token issuing, DTO assembly); only the job needs releasing,
             // or it would sit unusable in the job map until ingestionJobTimeout expires on its own.
-            pyrisJobService.removeJobByToken(jobToken);
+            pyrisJobService.removeJobByRunId(runId);
             throw e;
         }
     }
@@ -306,7 +313,7 @@ public class PyrisWebhookService {
      * adds the faq to Pyris.
      *
      * @param faq The faq that will be added to pyris
-     * @return jobToken if the job was created else null
+     * @return the run id if the job was created else null
      */
     public String addFaq(Faq faq) {
         if (irisSettingsService.isEnabledForCourse(faq.getCourse())) {
@@ -320,16 +327,16 @@ public class PyrisWebhookService {
      * executes the faq addition webhook to add faq to the vector database on pyris
      *
      * @param toUpdateFaq The faq that got Updated as webhook DTO
-     * @return jobToken if the job was created else null
+     * @return the run id of the job
      */
 
     private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq) {
-        String jobToken = pyrisJobService.addFaqIngestionWebhookJob(toUpdateFaq.courseId(), toUpdateFaq.faqId());
+        String runId = pyrisJobService.addFaqIngestionWebhookJob(toUpdateFaq.courseId(), toUpdateFaq.faqId());
         // FAQ ingestion has its own pipeline, which supports only the default variant. The course variant selects the chat pipeline.
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default", IrisSupportLevel.MODERATE.jsonValue());
+        PyrisPipelineExecutionSettingsDTO settingsDTO = settingsFor(runId, "default", IrisSupportLevel.MODERATE.jsonValue());
         PyrisWebhookFaqIngestionExecutionDTO executionDTO = new PyrisWebhookFaqIngestionExecutionDTO(toUpdateFaq, settingsDTO);
         pyrisConnectorService.executeFaqAdditionWebhook(toUpdateFaq, executionDTO);
-        return jobToken;
+        return runId;
 
     }
 
@@ -338,7 +345,7 @@ public class PyrisWebhookService {
      *
      * @param faqId    the FAQ to delete
      * @param courseId its course
-     * @return jobToken of the deletion job
+     * @return the run id of the deletion job
      */
     public String deleteFaq(long faqId, long courseId) {
         return executeFaqDeletionWebhook(new PyrisFaqWebhookDTO(faqId, null, null, courseId, null, null, null));
@@ -348,14 +355,14 @@ public class PyrisWebhookService {
      * executes the faq deletion webhook to delete faq from the vector database on pyris
      *
      * @param toUpdateFaqs The faq that got Updated as webhook DTO
-     * @return jobToken if the job was created else null
+     * @return the run id of the job
      */
     private String executeFaqDeletionWebhook(PyrisFaqWebhookDTO toUpdateFaqs) {
-        String jobToken = pyrisJobService.addFaqIngestionWebhookJob(0, 0);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default", IrisSupportLevel.MODERATE.jsonValue());
+        String runId = pyrisJobService.addFaqIngestionWebhookJob(0, 0);
+        PyrisPipelineExecutionSettingsDTO settingsDTO = settingsFor(runId, "default", IrisSupportLevel.MODERATE.jsonValue());
         PyrisWebhookFaqDeletionExecutionDTO executionDTO = new PyrisWebhookFaqDeletionExecutionDTO(toUpdateFaqs, settingsDTO);
         pyrisConnectorService.executeFaqDeletionWebhook(executionDTO);
-        return jobToken;
+        return runId;
     }
 
     public IngestionState getFaqIngestionState(long courseId, long faqId) {

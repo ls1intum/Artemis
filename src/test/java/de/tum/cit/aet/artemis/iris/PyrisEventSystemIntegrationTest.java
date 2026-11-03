@@ -315,7 +315,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         Result result = createFailingSubmission(studentParticipation);
         AtomicReference<String> jobToken = new AtomicReference<>();
         irisRequestMockProvider.mockBuildFailedRunResponse(dto -> {
-            jobToken.set(dto.settings().authenticationToken());
+            jobToken.set(dto.settings().runId());
             pipelineDone.set(true);
         });
 
