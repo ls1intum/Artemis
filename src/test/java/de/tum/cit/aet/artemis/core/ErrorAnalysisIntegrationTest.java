@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -12,8 +13,11 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -24,8 +28,12 @@ import de.tum.cit.aet.artemis.core.domain.ErrorLocation;
 import de.tum.cit.aet.artemis.core.domain.ErrorSeverity;
 import de.tum.cit.aet.artemis.core.dto.ErrorAnalysisPageDTO;
 import de.tum.cit.aet.artemis.core.dto.ErrorGroupDTO;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorAnalysisService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+// The tests empty the shared analysis, which would take the groups from under a test that runs at the same time.
+@Execution(ExecutionMode.SAME_THREAD)
 class ErrorAnalysisIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "erroranalysis";
@@ -37,16 +45,37 @@ class ErrorAnalysisIntegrationTest extends AbstractSpringIntegrationIndependentT
     /** The analysis is shared by every test of the JVM, so each test marks its messages to find them again. Letters only, digits are replaced by placeholders. */
     private String marker;
 
+    @Autowired
+    private ErrorAnalysisService errorAnalysisService;
+
+    @Autowired
+    private DistributedDataProvider distributedDataProvider;
+
     /** The release that the server runs, which the clients of this test report. */
     @Value("${artemis.version}")
     private String artemisVersion;
 
     @BeforeEach
     void setUp() {
+        emptyTheSharedAnalysis();
         marker = "analysistest" + ThreadLocalRandom.current().ints(16, 'a', 'z' + 1).collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append);
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         // the admin endpoints resolve the authenticated login against the database
         userUtilService.addAdmin(TEST_PREFIX);
+    }
+
+    /**
+     * The analysis keeps at most 1,000 groups for the whole cluster and forgets a group that a client reported first, so that a client cannot push
+     * the errors of the server out. Every error that the server logs in any test of the JVM is a group of the server, so after a long run the
+     * analysis can be full of them. The next flush then writes the report of this test and forgets it again at once, and the test finds nothing.
+     * Starting from an empty analysis leaves room for the reports of the test. What other tests report at the same time cannot fill the room again
+     * before the test has read its result.
+     */
+    private void emptyTheSharedAnalysis() {
+        // what the node still holds in memory is handed over first, so that it cannot be written after the maps are emptied
+        errorAnalysisService.flush();
+        distributedDataProvider.getExpiringMap("error-analysis-groups", Duration.ofDays(31)).clear();
+        distributedDataProvider.getExpiringMap("error-analysis-counts", Duration.ofDays(31)).clear();
     }
 
     private void report(String severity, String message) throws Exception {
