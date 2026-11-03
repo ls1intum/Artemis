@@ -177,7 +177,7 @@ jobs:
             fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
             const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
             const latest = data.artifacts
-              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'feature/development/query-demo')
+              .filter((a) => !a.expired && a.workflow_run && a.id === 13185960699)
               .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
             if (!latest) {
               core.info('No develop baseline available yet; the report will not classify findings as new.');
@@ -433,7 +433,7 @@ jobs:
             fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
             const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
             const latest = data.artifacts
-              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'feature/development/query-demo')
+              .filter((a) => !a.expired && a.workflow_run && a.id === 13185960699)
               .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
             if (!latest) {
               core.info('No develop baseline available yet; the report will not classify findings as new.');
@@ -669,7 +669,7 @@ jobs:
             fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
             const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
             const latest = data.artifacts
-              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'feature/development/query-demo')
+              .filter((a) => !a.expired && a.workflow_run && a.id === 13185960699)
               .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
             if (!latest) {
               core.info('No develop baseline available yet; the report will not classify findings as new.');
