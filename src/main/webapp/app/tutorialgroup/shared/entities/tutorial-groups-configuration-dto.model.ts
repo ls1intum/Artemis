@@ -1,28 +1,9 @@
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
-import { TutorialGroupFreePeriodDTO, fromTutorialGroupFreePeriodDTO, toTutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
-import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { fromTutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
+import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { TutorialGroupConfiguration } from 'app/openapi/model/tutorial-group-configuration';
 
-export interface TutorialGroupConfigurationDTO {
-    id?: number;
-    tutorialPeriodStartInclusive?: string;
-    tutorialPeriodEndInclusive?: string;
-    useTutorialGroupChannels?: boolean;
-    usePublicTutorialGroupChannels?: boolean;
-    tutorialGroupFreePeriods?: TutorialGroupFreePeriodDTO[];
-}
-
-export function tutorialGroupConfigurationDtoFromEntity(entity: TutorialGroupsConfiguration): TutorialGroupConfigurationDTO {
-    return {
-        id: entity.id,
-        tutorialPeriodStartInclusive: convertDateFromClient(entity.tutorialPeriodStartInclusive),
-        tutorialPeriodEndInclusive: convertDateFromClient(entity.tutorialPeriodEndInclusive),
-        useTutorialGroupChannels: entity.useTutorialGroupChannels,
-        usePublicTutorialGroupChannels: entity.usePublicTutorialGroupChannels,
-        tutorialGroupFreePeriods: (entity.tutorialGroupFreePeriods ?? []).map(toTutorialGroupFreePeriodDTO),
-    };
-}
-
-export function tutorialGroupsConfigurationEntityFromDto(dto: TutorialGroupConfigurationDTO): TutorialGroupsConfiguration {
+export function tutorialGroupsConfigurationEntityFromDto(dto: TutorialGroupConfiguration): TutorialGroupsConfiguration {
     const entity = new TutorialGroupsConfiguration();
     entity.id = dto.id;
 
