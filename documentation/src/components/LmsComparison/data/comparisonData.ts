@@ -36,7 +36,8 @@ export const highlightCards: HighlightCardData[] = [
     {
         icon: faRobot,
         title: 'AI-Supported Learning',
-        description: 'Iris, an AI tutor, guides students with hints instead of answers, and Athena suggests feedback for tutors to review. Both are optional.',
+        description:
+            'Iris, an AI tutor, guides students with hints instead of answers. A global search answers questions with cited sources. Atlas builds competencies, Hyperion drafts verified exercises, and Athena suggests feedback for tutors to review. All of it is optional.',
         borderColor: '#0065BD',
     },
     {
@@ -98,15 +99,30 @@ export const featureCategories: FeatureCategory[] = [
         features: [
             feature('ai-tutor', 'AI Virtual Tutor', [S, N, N, N, N, N], {
                 tooltip: 'AI assistant that guides students through exercises and answers questions based on course content',
+                notes: {
+                    [PlatformId.Artemis]: 'Iris cites slides and video timestamps, offers hints before a student asks, and notifies students of answers they missed',
+                },
+            }),
+            feature('ai-search', 'Global Search That Answers Questions', [S, N, N, N, N, N], {
+                tooltip: 'One search across course content that returns a streamed answer with sources, not only a list of hits',
+                notes: {
+                    [PlatformId.Artemis]:
+                        'Searches courses, lectures, slides, video transcripts, exercises, exams, FAQs and posts, and names the sources of each statement. Needs Weaviate and an embedding model, off by default',
+                },
             }),
             feature('ai-grading', 'AI-Assisted Grading & Feedback', [S, N, P, P, N, N], {
                 notes: {
+                    [PlatformId.Artemis]: 'Athena suggests feedback for tutors to review. Students can request AI feedback from their local IDE too',
                     [PlatformId.Moodle]: 'Via third-party plugins',
                     [PlatformId.Blackboard]: 'Limited AI features in Ultra',
                 },
             }),
             feature('ai-exercise-gen', 'AI Exercise Generation', [S, N, N, N, N, N], {
                 tooltip: 'AI-assisted creation of exercises including problem statements and test cases',
+                notes: {
+                    [PlatformId.Artemis]:
+                        'Hyperion drafts programming exercises (problem statement, template, solution, tests) and builds them like a student submission before saving. It can also draft variants of an exercise or quiz and assessment criteria',
+                },
             }),
             feature('adaptive-learning', 'Adaptive Learning Paths', [S, P, N, P, N, N], {
                 notes: {
@@ -121,6 +137,13 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.Blackboard]: 'Goals and standards alignment',
                     [PlatformId.ILIAS]: 'Competence management',
                     [PlatformId.OpenOlat]: 'Competency frameworks with curriculum mapping',
+                },
+            }),
+            feature('ai-competencies', 'Automatic Competency Generation', [S, N, N, N, N, N], {
+                tooltip: 'AI proposes competencies and their relations and links exercises and lecture units to them',
+                notes: {
+                    [PlatformId.Artemis]:
+                        'The Atlas agent proposes competencies and relations for approval, and can update links automatically when exercises and lecture units change, with a report afterwards. Opt-in per course',
                 },
             }),
             feature('constructive-alignment', 'Constructive Alignment', [S, P, P, P, P, P], {
@@ -145,6 +168,12 @@ export const featureCategories: FeatureCategory[] = [
                 tooltip: 'Students write code that is automatically compiled, tested, and graded',
                 notes: {
                     [PlatformId.Moodle]: 'CodeRunner plugin',
+                },
+            }),
+            feature('online-ide', 'Online IDE with Run & Debug', [S, N, N, N, N, N], {
+                tooltip: 'Students write, run and debug code in the browser without setting up a local environment',
+                notes: {
+                    [PlatformId.Artemis]: 'Run and Debug work out of the box for C, Java, JavaScript and Rust exercises. Students can also work in their local IDE',
                 },
             }),
             feature('modeling', 'Modeling Exercises (UML)', [S, N, N, N, N, N], {
@@ -193,6 +222,18 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.Moodle]: 'Blind marking for assignments',
                     [PlatformId.Blackboard]: 'Anonymous grading option',
                     [PlatformId.OpenOlat]: 'Anonymous grading option',
+                },
+            }),
+            feature('presentations', 'Presentation Assessment', [S, P, P, P, P, P], {
+                tooltip: 'Course staff grade student presentations and count them towards a bonus or grade',
+                notes: {
+                    [PlatformId.Artemis]:
+                        'Grading of presentations in the assessment UI, with presentation mode in the grading scheme. Enabled by an administrator through a feature toggle',
+                    [PlatformId.Canvas]: 'Generic assignment with rubric, no presentation workflow',
+                    [PlatformId.Moodle]: 'Offline assignment with rubric or marking guide',
+                    [PlatformId.Blackboard]: 'Generic assignment with rubric',
+                    [PlatformId.ILIAS]: 'Manual grading in exercise or course assessment',
+                    [PlatformId.OpenOlat]: 'Assessment tool for manual course element grading',
                 },
             }),
             feature('assessment-training', 'Assessment Training', [S, N, N, N, N, N], {
@@ -289,6 +330,7 @@ export const featureCategories: FeatureCategory[] = [
             feature('grading', 'Grading & Grade Export', [S, S, S, S, S, S]),
             feature('analytics', 'Learning Analytics Dashboard', [S, P, P, S, P, P], {
                 notes: {
+                    [PlatformId.Artemis]: 'Course statistics with peer comparison and competency and learning material progress',
                     [PlatformId.Canvas]: 'Basic analytics, advanced via paid add-on',
                     [PlatformId.Moodle]: 'Analytics via plugins',
                     [PlatformId.Blackboard]: 'Anthology Illuminate for institutional analytics',
@@ -333,6 +375,7 @@ export const featureCategories: FeatureCategory[] = [
             feature('video-transcription', 'Automatic Video Transcription', [S, P, P, S, N, P], {
                 tooltip: 'Automatically generate captions and transcripts for lecture videos',
                 notes: {
+                    [PlatformId.Artemis]: 'Lecture videos are transcribed in the background. Recordings of TUM.Live courses, also connected ones, play and transcribe in Artemis',
                     [PlatformId.Canvas]: 'Via third-party integrations (e.g., 3Play Media)',
                     [PlatformId.Moodle]: 'Via plugins or external tools',
                     [PlatformId.Blackboard]: 'Ally auto-generates alternative formats including captions',
@@ -377,6 +420,15 @@ export const featureCategories: FeatureCategory[] = [
                     [PlatformId.Blackboard]: 'Building Blocks and LTI partners',
                     [PlatformId.ILIAS]: 'Community plugin repository',
                     [PlatformId.OpenOlat]: 'Limited extension ecosystem',
+                },
+            }),
+            feature('agent-interface', 'MCP Interface for AI Agents', [S, P, P, N, N, N], {
+                tooltip: 'Instructors let an AI agent do routine course work through the Model Context Protocol, with limited, revocable credentials',
+                notes: {
+                    [PlatformId.Artemis]:
+                        'Built-in MCP server and agent skills. Instructors create scoped personal access tokens. The agent can do no more than its owner and drafts stay unpublished. Off by default',
+                    [PlatformId.Canvas]: 'Community MCP servers over the REST API; no confirmed official server',
+                    [PlatformId.Moodle]: 'Community MCP servers over the web service API',
                 },
             }),
             feature('video-conferencing', 'Built-in Video Conferencing', [N, P, P, S, P, P], {
@@ -437,7 +489,7 @@ export const featureCategories: FeatureCategory[] = [
         features: [
             feature('self-hosted', 'Self-Hosted Deployment', [S, N, S, N, S, S], {
                 notes: {
-                    [PlatformId.Artemis]: 'Self-hosted only; there is no vendor-operated Artemis service',
+                    [PlatformId.Artemis]: 'Self-hosted only; there is no vendor-operated Artemis service. Build jobs can run in Docker or on Kubernetes',
                     [PlatformId.Canvas]: 'SaaS only (Instructure-hosted)',
                     [PlatformId.Blackboard]: 'SaaS only (Anthology-hosted)',
                 },
@@ -452,10 +504,17 @@ export const featureCategories: FeatureCategory[] = [
                 },
             }),
             feature('open-source', 'Open-Source License', [S, N, S, N, S, S]),
-            feature('sso', 'SSO / SAML / LDAP', [S, S, S, S, S, S]),
+            feature('sso', 'SSO / SAML / OIDC / LDAP', [S, S, S, S, S, S], {
+                notes: {
+                    [PlatformId.Artemis]: 'SAML2, OpenID Connect and LDAP. OIDC provisions accounts on first login and can sync the matriculation number',
+                },
+            }),
             feature('lti', 'LTI Integration', [S, S, S, S, S, S]),
             feature('passkey', 'Passkey / WebAuthn Support', [S, N, N, N, N, N], {
                 tooltip: 'Phishing-resistant authentication using FIDO2/WebAuthn passkeys',
+                notes: {
+                    [PlatformId.Artemis]: 'Administrators can be required to use an approved passkey',
+                },
             }),
         ],
     },
