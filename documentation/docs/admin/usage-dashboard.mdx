@@ -81,6 +81,10 @@ Local CI deletes build jobs after a retention period, 365 days by default, which
 are incomplete, so the page does not publish them instead of showing a number that looks too small. Today this means
 that the two oldest semesters show no builds.
 
+Artemis does not record when local CI was switched on. If an instance moved from Jenkins to local CI during a semester,
+the builds of that semester only cover the part after the switch, and the page shows them as if they were complete.
+Read the builds of the semester of the switch with that in mind.
+
 <Image src={usageOlderSemesterImg} alt="Usage dashboard of an older semester without build numbers" size={ImageSize.large}
        caption="An older semester without build numbers, because the build jobs of that time have been deleted" />
 
