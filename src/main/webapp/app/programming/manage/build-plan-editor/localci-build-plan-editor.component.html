@@ -40,7 +40,7 @@
     </div>
     <jhi-programming-exercise-build-configuration [programmingExercise]="programmingExercise()!" [timeout]="timeout()" (timeoutChange)="timeout.set($event)" />
 
-    <label jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.title"></label>
+    <span class="inline-block" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.title"></span>
     <jhi-help-icon text="artemisApp.programmingExercise.buildContainersEditor.help" />
     @for (container of containers(); track $index) {
         <jhi-build-container-editor
