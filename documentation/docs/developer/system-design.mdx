@@ -40,14 +40,15 @@ The rationale given below for each design decision refers back to them.
 ## Top-Level Design
 
 The following UML component diagram shows the top-level design of Artemis.
-Artemis is decomposed into an application client (an Angular single-page application in the browser) and an application server (one Spring Boot application).
+Artemis is decomposed into application clients (an Angular single-page application in the browser, and the Android and iOS apps) and an application server (one Spring Boot application).
 Interfaces are drawn as ball-and-socket connectors: the ball is the provided interface, the socket is the required interface.
 
-<Image src={topLevelDesign} caption="Top-Level Design (UML component diagram)" alt="UML component diagram of the Artemis client, server, build agents and the systems around them" size={ImageSize.large} />
+<Image src={topLevelDesign} caption="Top-Level Design (UML component diagram)" alt="UML component diagram of the Artemis web client, Android and iOS apps, server, build agents and the systems around them" size={ImageSize.large} />
 
 | Component | Responsibility | Interfaces |
 |-----------|----------------|------------|
 | Artemis Client | Presents all user interfaces and talks to the server. | Requires REST and WebSocket |
+| Android App, iOS App | The mobile apps for students, see [Mobile applications](/student/getting-started/mobile-applications). They use the same server interface as the web client. | Require REST and WebSocket |
 | Artemis Server | Contains all feature modules, LocalVC and LocalCI. | Provides REST + WebSocket and Git (HTTPS, SSH); requires Hibernate (JDBC), Distributed Data, Authentication and Service APIs |
 | LocalVC | The integrated Git server. Stores the repositories on the file system and serves `fetch` and `push` over HTTPS and SSH. | Provides Git |
 | LocalCI | Keeps the queue of build jobs, receives the results of the build jobs, grades them and notifies the user. | Requires Distributed Data |
@@ -55,7 +56,7 @@ Interfaces are drawn as ball-and-socket connectors: the ball is the provided int
 | Distributed Data Provider | Holds the state that all nodes of an installation share, for example the build job queue. Hazelcast, Redis (or Valkey), or a local implementation for a single node. | Provides Distributed Data |
 | PostgreSQL | Persistent data, accessed with Hibernate. MySQL is still supported until Artemis 11, see the callout below. | Provides JDBC |
 | User Management | Optional external user management such as LDAP, SAML2 or OIDC. | Provides Authentication |
-| Optional Services | Iris, Athena, Hyperion, Weaviate and further services that extend the core. | Provide Service APIs |
+| Optional AI Services | Iris, Athena, Hyperion, Weaviate and further services that extend the core. | Provide Service APIs |
 
 <Callout variant={CalloutVariant.warning}>
 

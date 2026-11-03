@@ -27,6 +27,7 @@ INK = "#000000"
 FONT = "Helvetica, Arial, sans-serif"
 TOP_FACE = "#f4f4f4"
 SIDE_FACE = "#dedede"
+PROVIDER = "Distributed\nData Provider"
 
 
 def tw(text, size=12, bold=False):
@@ -73,20 +74,24 @@ class Svg:
 
     @staticmethod
     def size_comp(name, sub=None):
+        """The size of a component. A name may span lines, separated by a newline."""
+        names = name.split("\n")
         lines = [sub] if isinstance(sub, str) else (sub or [])
-        w = max(tw(name, 13, True) + 12 + 44, *(tw(line, 11) + 24 for line in lines)) if lines else tw(name, 13, True) + 12 + 44
-        h = 46 + (6 + 14 * len(lines) if lines else 0)
+        w = max([tw(names[0], 13, True) + 12 + 44] + [tw(n, 13, True) + 24 for n in names[1:]] + [tw(line, 11) + 24 for line in lines])
+        h = 46 + 16 * (len(names) - 1) + (6 + 14 * len(lines) if lines else 0)
         return round(w), h
 
     def comp(self, x, y, name, sub=None, w=None, h=None):
         """A component, as small as its text unless a size is given. Returns (x, y, w, h)."""
         sw_, sh_ = self.size_comp(name, sub)
         w, h = w or sw_, h or sh_
+        names = name.split("\n")
         self.rect(x, y, w, h)
         self.icon(x, y, w)
-        self.text(x + 12, y + 26, name, 13, "700", "start")
+        for i, n in enumerate(names):
+            self.text(x + 12, y + 26 + 16 * i, n, 13, "700", "start")
         for i, line in enumerate([sub] if isinstance(sub, str) else (sub or [])):
-            self.text(x + 12, y + 45 + i * 14, line, 11, anchor="start")
+            self.text(x + 12, y + 45 + 16 * (len(names) - 1) + i * 14, line, 11, anchor="start")
         return x, y, w, h
 
     def cont(self, x, y, w, h, name, sub=None):
@@ -170,20 +175,23 @@ def node_with(s, x, y, name, nested, w=None):
 
 # ====================================================================== component diagram: top-level
 def top_level():
-    s = Svg(1150, 480, "Artemis top-level design (UML component diagram)",
-            "The Artemis client uses the REST and WebSocket interface of the core modules in the Artemis server. Git clients and build agents use the Git interface of LocalVC. "
-            "The server requires a database, user management and optional services. LocalCI requires the distributed data provider, which the build agents require as well.")
+    s = Svg(0, 0, "Artemis top-level design (UML component diagram)",
+            "The Artemis client and the Android and iOS apps use the REST and WebSocket interface of the core modules in the Artemis server. Git clients and build agents use the Git interface of LocalVC. "
+            "The server requires a database, user management and optional AI services. LocalCI requires the distributed data provider, which the build agents require as well.")
+
     pad = 44  # between the inner components and the border of the server, clear of the interface balls
     core_w, core_h = s.size_comp("Core Modules", ["exercise, exam, assessment, ..."])
     vc_w, vc_h = s.size_comp("LocalVC", ["Git server (HTTPS, SSH)"])
     ci_w, ci_h = s.size_comp("LocalCI", ["build queue and results"])
     inner_w = max(core_w, vc_w + 30 + ci_w)
     client_w, client_h = s.size_comp("Artemis Client", ["Angular single-page app"])
+    app_h = s.size_comp("Android App")[1]
 
-    cont_x = 30 + client_w + 150
-    cont_y = 64
+    # the mobile apps sit above the client, so the container starts lower
+    core_y = 54 + 2 * (app_h + 16) + client_h // 2 - core_h // 2
+    cont_y = core_y - 52
+    cont_x = 30 + client_w + 190
     cx = cont_x + pad
-    core_y = cont_y + 52
     row2_y = core_y + core_h + 46
     cont_h = row2_y + vc_h + 30 - cont_y
     cont_w = inner_w + 2 * pad
@@ -195,37 +203,45 @@ def top_level():
     s.dependency([(cx + vc_w // 2, core_y + core_h), (cx + vc_w // 2, row2_y)])
     s.dependency([(ci_x + ci_w // 2, core_y + core_h), (ci_x + ci_w // 2, row2_y)])
 
-    # the clients sit at the height of the component that offers the interface, so the connectors are straight
+    # the clients that use the REST and WebSocket interface; the client is at the height of the component that offers it
     core_mid, vc_mid = core_y + core_h // 2, row2_y + vc_h // 2
-    s.comp(30, core_mid - client_h // 2, "Artemis Client", ["Angular single-page app"])
-    gc_w, gc_h = s.size_comp("Git Client", ["IDE or command line"])
+    client_y = core_mid - client_h // 2
+    s.comp(30, client_y, "Artemis Client", ["Angular single-page app"])
+    ios_y = client_y - 16 - app_h
+    android_y = ios_y - 16 - app_h
+    s.comp(30, ios_y, "iOS App", w=client_w)
+    s.comp(30, android_y, "Android App", w=client_w)
+    bus_x = cont_x - 56
+    s.line([(30 + client_w, android_y + app_h // 2), (bus_x, android_y + app_h // 2), (bus_x, core_mid)])
+    s.line([(30 + client_w, ios_y + app_h // 2), (bus_x, ios_y + app_h // 2)])
+    s.p.append(f'<circle cx="{bus_x}" cy="{core_mid}" r="3" fill="{INK}"/>')
+    s.assembly([(cx, core_mid), (30 + client_w, core_mid)], "REST + WebSocket", (30 + client_w + 67, core_mid - 14), stub=pad + 10)
+    gc_h = s.size_comp("Git Client", ["IDE or command line"])[1]
     s.comp(30, vc_mid - gc_h // 2, "Git Client", ["IDE or command line"], w=client_w)
-    label_x = (30 + client_w + cont_x) / 2
-    s.assembly([(cx, core_mid), (30 + client_w, core_mid)], "REST + WebSocket", (label_x, core_mid - 14), stub=pad + 10)
-    s.assembly([(cx, vc_mid), (30 + client_w, vc_mid)], "Git (HTTPS, SSH)", (label_x, vc_mid - 14), stub=pad + 10)
+    s.assembly([(cx, vc_mid), (30 + client_w, vc_mid)], "Git (HTTPS, SSH)", ((30 + client_w + cont_x) / 2, vc_mid - 14), stub=pad + 10)
 
     # what the server requires, one box per interface at the height of its connector
     right_x = cont_x + cont_w + 150
     right = [("PostgreSQL", ["relational database"], "Hibernate (JDBC)"),
              ("User Management", ["LDAP, SAML2, OIDC"], "Authentication"),
-             ("Optional Services", ["Iris, Athena, Hyperion, Weaviate"], "Service APIs")]
+             ("Optional AI Services", ["Iris, Athena, Hyperion, Weaviate"], "Service APIs")]
     right_w = max(s.size_comp(n, sub)[0] for n, sub, _ in right)
     for i, (name, sub, iface) in enumerate(right):
         y = cont_y + 55 + i * 80
         s.comp(right_x, y - 31, name, sub, w=right_w)
         s.assembly([(right_x, y), (cont_x + cont_w, y)], iface, ((right_x + cont_x + cont_w) / 2, y - 14))
 
-    # build agent and distributed data provider below the server
+    # build agent and distributed data provider below the server. The provider lies under LocalCI, the agent under LocalVC
     below_y = cont_y + cont_h + 70
     ba_w, ba_h = s.size_comp("Build Agent", ["runs build jobs in Docker"])
-    dp_w, dp_h = s.size_comp("Distributed Data Provider", ["Hazelcast, Redis or Local"])
-    agent_x = cx
-    provider_x = agent_x + ba_w + 130
+    dp_w, dp_h = s.size_comp(PROVIDER, ["Hazelcast, Redis or Local"])
+    px = ci_x + ci_w // 2
+    provider_x = px - 40
+    agent_x = provider_x - 130 - ba_w
     s.comp(agent_x, below_y, "Build Agent", ["runs build jobs in Docker"])
-    s.comp(provider_x, below_y, "Distributed Data Provider", ["Hazelcast, Redis or Local"])
+    s.comp(provider_x, below_y, PROVIDER, ["Hazelcast, Redis or Local"])
     vx = cx + vc_w // 2 - 10
     s.assembly([(vx, cont_y + cont_h - 30), (vx, below_y)], "Git (HTTPS, SSH)", (vx + 22, below_y - 26), stub=44, anchor="start")
-    px = ci_x + ci_w // 2
     s.assembly([(px, below_y), (px, cont_y + cont_h - 30)], "Distributed Data", (px + 22, below_y - 26), anchor="start")
     mid = below_y + ba_h // 2
     s.assembly([(provider_x, mid), (agent_x + ba_w, mid)], "Distributed Data", ((agent_x + ba_w + provider_x) / 2 - 10, mid - 14))
@@ -299,10 +315,10 @@ def server_arch():
     s.comp(fx + fm_w // 2 - db_w // 2, below_y, "Database")
     dx = fx + fm_w // 2
     s.assembly([(dx, below_y), (dx, data_y + 36 + repo[3])], "Hibernate", (dx + 22, below_y - 26), anchor="start")
-    dp_w, _ = s.size_comp("Distributed Data Provider")
+    dp_w, _ = s.size_comp(PROVIDER)
     px = ci_x + ci_w // 2
     provider_x = px - dp_w // 2
-    s.comp(provider_x, below_y, "Distributed Data Provider")
+    s.comp(provider_x, below_y, PROVIDER)
     s.assembly([(px, below_y), (px, icl_y + 40 + vc_h)], "Distributed Data", (px + 22, below_y - 26), anchor="start")
     agent_x = provider_x + dp_w + 130
     ba_w, _ = s.size_comp("Build Agent")
