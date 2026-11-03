@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 @Profile(PROFILE_JENKINS)
 @Lazy
 @Service

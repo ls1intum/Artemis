@@ -23,7 +23,7 @@ Before running server tests, make sure you have a working Docker setup:
 You can execute the database tests by running the run configurations provided in the repository:
 
 - **For PostgreSQL tests (recommended):** **Artemis Server Tests Postgres**
-- **For MySQL tests:** **Artemis Server Tests MySQL**
+- **For MySQL tests:** **Artemis Server Tests MySQL** (deprecated, removed together with MySQL support in Artemis 11)
 
 ### Creating a Custom Configuration
 
@@ -45,6 +45,8 @@ Alternatively, you can create a custom configuration.
 ```
 
 ### MySQL Tests
+
+MySQL support is deprecated and removed in Artemis 11 (see [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11)), together with this task.
 
 ```bash
 ./gradlew testMysql -x webapp

@@ -273,6 +273,7 @@ jobs:
               - 'pnpm-workspace.yaml'
               - 'config/pnpm/**'
               - 'supporting_scripts/generate-tum-aet-ui-reference-page.mjs'
+              - 'supporting_scripts/check_docs_references.py'
             has_tum_aet_ui:
               - '.github/workflows/release-tum-aet-ui.yml'
               - '.github/workflows/ci.yml'
