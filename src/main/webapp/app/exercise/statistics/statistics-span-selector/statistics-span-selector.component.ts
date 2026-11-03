@@ -13,18 +13,29 @@ interface SpanOption {
     selector: 'div[jhi-statistics-span-selector]',
     imports: [ArtemisTranslatePipe, FormsModule, TumAetUiSelectButtonComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    styles: `
+        .span-selector-scroll {
+            max-width: 100%;
+            overflow-x: auto;
+            /* Keep the focus outline of the first and last period inside the scroll container. */
+            padding: 3px;
+            margin: -3px;
+        }
+    `,
     template: `
-        <tumaet-ui-select-button
-            [attr.aria-label]="'statistics.spanLabel' | artemisTranslate"
-            [options]="spanOptions"
-            [ngModel]="currentSpan()"
-            (ngModelChange)="spanChange.emit($event)"
-            optionLabel="label"
-            optionValue="value"
-            size="small"
-            [allowEmpty]="false"
-            [itemTemplate]="spanItem"
-        />
+        <div class="span-selector-scroll">
+            <tumaet-ui-select-button
+                [attr.aria-label]="'statistics.spanLabel' | artemisTranslate"
+                [options]="spanOptions"
+                [ngModel]="currentSpan()"
+                (ngModelChange)="spanChange.emit($event)"
+                optionLabel="label"
+                optionValue="value"
+                size="small"
+                [allowEmpty]="false"
+                [itemTemplate]="spanItem"
+            />
+        </div>
         <ng-template #spanItem let-option>
             {{ option.label | artemisTranslate }}
         </ng-template>

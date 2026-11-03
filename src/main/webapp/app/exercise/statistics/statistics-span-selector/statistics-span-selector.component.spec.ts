@@ -38,6 +38,13 @@ describe('statistics span selector', () => {
         expect(fixture.nativeElement.querySelectorAll('input')).toHaveLength(0);
     });
 
+    it('keeps the periods in a scroll container, so a narrow screen cannot overflow the page', () => {
+        // jsdom has no layout, so this guards the structure the stylesheet relies on, not the rendered width.
+        const scroll = fixture.nativeElement.querySelector('.span-selector-scroll');
+        expect(scroll).not.toBeNull();
+        expect(scroll.querySelector('tumaet-ui-select-button')).not.toBeNull();
+    });
+
     it('gives the group an accessible name', () => {
         expect(fixture.nativeElement.querySelector('tumaet-ui-select-button').getAttribute('aria-label')).toBe('statistics.spanLabel');
     });
