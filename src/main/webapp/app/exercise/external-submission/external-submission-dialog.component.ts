@@ -10,7 +10,6 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { SCORE_PATTERN } from 'app/app.constants';
-import { User } from 'app/account/user/user.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
@@ -20,6 +19,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { TumAetUiDialogRef } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ExternalSubmissionStudentSearchComponent } from 'app/exercise/external-submission/external-submission-student-search.component';
+import { ExternalSubmissionCandidate } from 'app/exercise/external-submission/external-submission-candidate.model';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
@@ -34,6 +35,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         FaIconComponent,
         MarkdownDirective,
         ArtemisTranslatePipe,
+        ExternalSubmissionStudentSearchComponent,
     ],
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
@@ -45,7 +47,9 @@ export class ExternalSubmissionDialogComponent implements OnInit {
 
     readonly exercise = input.required<Exercise>();
 
-    student: User = new User();
+    /** The student picked in the search; Save stays disabled until there is one. */
+    readonly selectedStudent = signal<ExternalSubmissionCandidate | undefined>(undefined);
+    readonly studentSearchTouched = signal(false);
     // result is a deep two-way [(ngModel)] target (result.score/successful/rated); use a getter/setter facade over a signal.
     private readonly _result = signal<Result>(undefined!);
     get result(): Result {
@@ -89,12 +93,16 @@ export class ExternalSubmissionDialogComponent implements OnInit {
      * Add manual feedbacks to the result and create external submission.
      */
     save() {
+        const student = this.selectedStudent();
+        if (!student) {
+            return;
+        }
         this.result.feedbacks = this.feedbacks;
         this.isSaving.set(true);
         for (let i = 0; i < this.result.feedbacks.length; i++) {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }
-        this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise(), this.student, this.result));
+        this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise(), student, this.result));
     }
 
     /**

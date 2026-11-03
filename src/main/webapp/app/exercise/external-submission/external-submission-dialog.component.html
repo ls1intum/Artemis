@@ -10,20 +10,9 @@
             </div>
         }
         <div class="mb-4!">
-            <h4 class="block font-medium mb-1" jhiTranslate="artemisApp.result.studentLogin"></h4>
-            <input
-                tumAetUiInput
-                [attr.aria-label]="'artemisApp.result.studentLogin' | artemisTranslate"
-                type="text"
-                required
-                class="w-full"
-                name="studentLogin"
-                id="studentLogin"
-                [(ngModel)]="student.login"
-                #studentLogin="ngModel"
-            />
-            @if (studentLogin?.invalid && studentLogin?.errors?.required) {
-                <span class="text-state-danger" jhiTranslate="artemisApp.result.studentLoginRequired"></span>
+            <jhi-external-submission-student-search [exercise]="exercise()" (studentSelected)="selectedStudent.set($event)" (touched)="studentSearchTouched.set(true)" />
+            @if (studentSearchTouched() && !selectedStudent()) {
+                <span class="text-state-danger" data-testid="external-submission-student-required" jhiTranslate="artemisApp.result.studentLoginRequired"></span>
             }
         </div>
         <div class="mb-4! grid grid-cols-12 gap-3! items-end">
@@ -137,7 +126,7 @@
         <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" (click)="clear()">
             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button tumAetUiButton type="submit" [disabled]="editForm.invalid || isSaving()" class="">
+        <button tumAetUiButton type="submit" [disabled]="editForm.invalid || !selectedStudent() || isSaving()" class="">
             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
         </button>
     </div>

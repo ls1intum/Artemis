@@ -74,8 +74,8 @@
             "manualResult": "Manuelles Ergebnis",
             "invalidScore": "Eine Bewertung ist erforderlich und muss eine Zahl zwischen 0 und 100 sein.",
             "resultStringRequired": "Ein Ergebnistext ist erforderlich.",
-            "studentLogin": "Studierenden-Login",
-            "studentLoginRequired": "Studierenden-Login ist erforderlich.",
+            "studentLogin": "Studierende Person",
+            "studentLoginRequired": "Wähle eine studierende Person aus.",
             "exerciseStillOpen": "Die Aufgabe ist noch für Einreichungen geöffnet!",
             "studentOverride": "Die Einreichungsfrist dieser Aufgabe ist noch nicht erreicht. Studierende können das manuelle Ergebnis noch mit einer neuen Lösung überschreiben.",
             "addFeedback": "Neues Feedback hinzufügen",
@@ -139,6 +139,19 @@
                 "niceProgress": "Guter Fortschritt! Du kommst näher.",
                 "scoreDrop": "Ups, deine Punktzahl ist gesunken. Versuche einen anderen Ansatz!",
                 "stuck": "Steckst du fest? Versuche einen neuen Ansatz."
+            }
+        },
+        "externalSubmission": {
+            "searchPlaceholder": "Nach Login, Name, E-Mail oder Matrikelnummer suchen",
+            "searchTooShort": "Gib mindestens {{ min }} Zeichen ein, um zu suchen.",
+            "noResults": "Keine passenden Studierenden.",
+            "searchFailed": "Die Suche ist fehlgeschlagen. Versuche es erneut.",
+            "clearSelection": "Ausgewählte studierende Person entfernen",
+            "ineligible": {
+                "notInCourse": "nicht in diesem Kurs eingeschrieben",
+                "noStudentExam": "hat keine individuelle Klausur",
+                "exerciseNotInStudentExam": "Aufgabe nicht in der individuellen Klausur",
+                "resultAlreadyExists": "hat bereits ein Ergebnis"
             }
         }
     }

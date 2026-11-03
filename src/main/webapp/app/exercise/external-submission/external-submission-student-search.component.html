@@ -1,0 +1,42 @@
+<tumaet-ui-form-field
+    [label]="'artemisApp.result.studentLogin' | artemisTranslate"
+    required
+    controlId="externalSubmissionStudentSearch"
+    [hint]="hintKey() | artemisTranslate: { min: minLength }"
+    [invalid]="!!errorKey()"
+    [error]="errorKey() | artemisTranslate"
+>
+    @if (selected(); as option) {
+        <div class="flex items-center gap-2" data-testid="external-submission-selected-student">
+            <tumaet-ui-chip [label]="option.label" removable [removeAriaLabel]="'artemisApp.externalSubmission.clearSelection' | artemisTranslate" (removed)="clearSelection()" />
+        </div>
+    } @else {
+        <div (focusout)="onFocusOut()">
+            <tumaet-ui-autocomplete
+                #autocomplete
+                data-testid="external-submission-student-search"
+                inputId="externalSubmissionStudentSearch"
+                name="studentSearch"
+                class="block w-full"
+                required
+                [ngModel]="query()"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onQueryChange($event)"
+                [suggestions]="suggestions()"
+                optionLabel="label"
+                optionDisabled="disabled"
+                [optionTemplate]="optionTemplate"
+                [minLength]="minLength"
+                [debounceMs]="debounceMs"
+                [emptyMessage]="errorKey() ?? 'artemisApp.externalSubmission.noResults' | artemisTranslate"
+                [placeholder]="'artemisApp.externalSubmission.searchPlaceholder' | artemisTranslate"
+                (searchRequested)="requestSearch($event.query)"
+                (optionSelected)="selectOption($event)"
+            />
+        </div>
+    }
+</tumaet-ui-form-field>
+
+<ng-template #optionTemplate let-option>
+    <span class="flex-1 truncate" [title]="labelOf(option)">{{ labelOf(option) }}</span>
+</ng-template>
