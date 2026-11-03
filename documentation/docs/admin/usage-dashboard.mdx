@@ -25,22 +25,26 @@ it.
 
 ## What the page shows
 
-The page shows the last four semesters. A visitor picks a semester and sees:
+The page shows the last four semesters. A visitor picks a semester and sees the numbers in three sections, so that
+there are never too many at once:
 
-| Number | What it counts |
-|--------|----------------|
-| **Courses** | The courses of the semester that qualify, see [What counts](#what-counts) |
-| **Students** | Unique people enrolled as students in these courses |
-| **Active students** | Students with at least one submission in these courses |
-| **Submissions** | All submissions of those students, and of student teams |
-| **Exercises** | All exercises, including exam exercises, and a split by type |
-| **Lectures** | Lectures, without tutorial lectures |
-| **Tutorial groups** | Tutorial groups of these courses |
-| **Exams** | Real exams of these courses. Test exams and exams whose title starts with "test" or "mock", in any letter case, are not counted |
-| **Competencies** | Competencies of these courses, without prerequisites |
-| **Builds** and **Average build duration** | Finished builds and the average duration of the successful ones |
-| **Posts**, **Replies**, **Reactions**, **FAQs** | The communication in these courses |
-| **Iris messages** | Messages that users sent to Iris plus the answers of Iris |
+| Section | Number | What it counts |
+|---------|--------|----------------|
+| **Courses and students** | **Courses** | The courses of the semester that qualify, see [What counts](#what-counts) |
+| | **Students** | Unique people enrolled as students in these courses |
+| | **Course enrollments** | All student enrollments, not unique: a student of three courses counts three times |
+| | **Lectures** | Lectures, without tutorial lectures |
+| | **Competencies** | Competencies of these courses, without prerequisites |
+| | **Tutorial groups** | Tutorial groups of these courses |
+| **Exercises and submissions** | **Exercises** | All exercises, including exam exercises, and a split by type below |
+| | **Active students** | Students with at least one submission in these courses |
+| | **Submissions** | All submissions of those students, and of student teams |
+| | **Builds** and **Average build duration** | Finished builds and the average duration of the successful ones |
+| **Exams** | **Exams** | Real exams of these courses. Test exams and exams whose title starts with "test" or "mock", in any letter case, are not counted |
+| | **Exam registrations** | Registrations of students for these exams, not unique: a student registered for three exams counts three times |
+
+Below the three sections, the page shows the communication (**Posts**, **Replies**, **Reactions**, **FAQs**) and the
+**Iris messages**, which are messages that users sent to Iris plus the answers of Iris.
 
 A bar chart compares the **Active students** of all semesters, and a section at the bottom explains how the numbers are
 counted, in the language of the visitor (English or German) and in the light or dark theme.
@@ -57,6 +61,7 @@ January counts for the course that started in October.
   October to March, a summer semester from April to September.
 * A course is **real** if it is not a test course and has at least five students. Deleted users and test users never
   count as students.
+* Deleted users and test users are not counted in **Course enrollments** and **Exam registrations** either.
 * A semester with fewer than three real courses is not shown at all, because its numbers would describe one course.
 * A student is **active** if they made at least one submission themselves. Submissions that instructors or the system
   create on behalf of a student do not count.
@@ -93,7 +98,7 @@ Read the builds of the semester of the switch with that in mind.
 ## Optional modules
 
 The cards of an optional module only appear if the module is enabled. Without Iris there are no **Iris messages** and
-the heading reads **Communication**; without tutorial groups there is no **Tutorial groups** card, without the exam module there is no **Exams** card and
+the heading reads **Communication**; without tutorial groups there is no **Tutorial groups** card, without the exam module there is no **Exams** section and
 without the atlas module there is no **Competencies** card. A disabled module is
 omitted instead of shown as zero.
 

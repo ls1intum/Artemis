@@ -21,6 +21,8 @@ export interface UsageSemester {
     label: string;
     courses: number;
     students: number;
+    /** Student enrolments, not unique: a student of several courses is counted once per course. Absent in responses of a server that predates it. */
+    enrollments?: number;
     activeStudents: number;
     submissions: number;
     lectures: number;
@@ -36,6 +38,8 @@ export interface UsageSemester {
     tutorialGroups?: number;
     /** Real exams (no test exams, no titles starting with test or mock), absent if exams are not enabled on this instance. */
     exams?: number;
+    /** Registrations of students for these exams, not unique: a student registered for several exams is counted once per exam. Absent if exams are not enabled. */
+    examRegistrations?: number;
     /** Competencies without prerequisites, absent if the atlas module is not enabled on this instance. */
     competencies?: number;
 }
