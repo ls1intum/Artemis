@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
-import { AccountInformationComponent } from 'app/account/user/settings/account-information/account-information.component';
-import { GlobalNotificationsSettingsComponent } from 'app/account/user/settings/global-notifications-settings/global-notifications-settings.component';
-import { isAtlasModuleActive } from 'app/account/user/settings/learner-profile/learner-profile-availability';
-import { ScienceSettingsComponent } from 'app/account/user/settings/science-settings/science-settings.component';
+import { AccountInformationComponent } from 'app/account/user/settings/profile/account-information/account-information.component';
+import { GlobalNotificationsSettingsComponent } from 'app/account/user/settings/profile/global-notifications-settings/global-notifications-settings.component';
+import { isAtlasModuleActive } from 'app/account/user/settings/learning/learner-profile-availability';
+import { ScienceSettingsComponent } from 'app/account/user/settings/profile/science-settings/science-settings.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Component({

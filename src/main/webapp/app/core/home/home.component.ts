@@ -14,7 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
+import { WebauthnService } from 'app/account/user/settings/credentials/passkey-settings/webauthn.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { HttpClient } from '@angular/common/http';

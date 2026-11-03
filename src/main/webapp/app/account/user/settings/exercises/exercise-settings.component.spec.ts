@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { IdeSettingsComponent } from 'app/account/user/settings/ide-preferences/ide-settings.component';
-import { QuizTrainingSettingsComponent } from 'app/account/user/settings/quiz-training-settings/quiz-training-settings.component';
+import { IdeSettingsComponent } from 'app/account/user/settings/exercises/ide-preferences/ide-settings.component';
+import { QuizTrainingSettingsComponent } from 'app/account/user/settings/exercises/quiz-training-settings/quiz-training-settings.component';
 import { ExerciseSettingsComponent } from './exercise-settings.component';
 
 @Component({ selector: 'jhi-ide-preferences', template: '' })

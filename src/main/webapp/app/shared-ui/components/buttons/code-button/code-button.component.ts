@@ -29,10 +29,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
-import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
+import { SshUserSettingsService } from 'app/account/user/settings/credentials/ssh-settings/ssh-user-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
-import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
+import { IdeSettingsService } from 'app/account/user/settings/exercises/ide-preferences/ide-settings.service';
+import { Ide } from 'app/account/user/settings/exercises/ide-preferences/ide.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { captureException } from '@sentry/angular';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';

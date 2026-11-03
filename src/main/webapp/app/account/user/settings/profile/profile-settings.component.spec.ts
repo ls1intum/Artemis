@@ -2,9 +2,9 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
-import { AccountInformationComponent } from 'app/account/user/settings/account-information/account-information.component';
-import { GlobalNotificationsSettingsComponent } from 'app/account/user/settings/global-notifications-settings/global-notifications-settings.component';
-import { ScienceSettingsComponent } from 'app/account/user/settings/science-settings/science-settings.component';
+import { AccountInformationComponent } from 'app/account/user/settings/profile/account-information/account-information.component';
+import { GlobalNotificationsSettingsComponent } from 'app/account/user/settings/profile/global-notifications-settings/global-notifications-settings.component';
+import { ScienceSettingsComponent } from 'app/account/user/settings/profile/science-settings/science-settings.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileSettingsComponent } from './profile-settings.component';
 

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterOutlet } from '@angular/router';
-import { DataGuard } from 'app/account/user/settings/data-guard.service';
-import { learnerProfileAvailable } from 'app/account/user/settings/learner-profile/learner-profile-availability';
+import { DataGuard } from 'app/account/user/settings/ai-experience/data-guard.service';
+import { learnerProfileAvailable } from 'app/account/user/settings/learning/learner-profile-availability';
 import { UserSettingsSidebarComponent } from 'app/account/user/settings/navigation/sidebar/user-settings-sidebar.component';
 import { UserSettingsTitleBarComponent } from 'app/account/user/settings/navigation/title-bar/user-settings-title-bar.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

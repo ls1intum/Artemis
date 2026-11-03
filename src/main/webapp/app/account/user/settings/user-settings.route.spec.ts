@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { routes } from './user-settings.route';
-import { DataGuard } from 'app/account/user/settings/data-guard.service';
-import { learnerProfileGuard } from 'app/account/user/settings/learner-profile/learner-profile.guard';
+import { DataGuard } from 'app/account/user/settings/ai-experience/data-guard.service';
+import { learnerProfileGuard } from 'app/account/user/settings/learning/learner-profile.guard';
 
 describe('user settings routes', () => {
     it('provides the canonical settings route tree with Profile as its default', () => {

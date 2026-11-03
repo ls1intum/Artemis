@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
-import { DataGuard } from 'app/account/user/settings/data-guard.service';
-import { learnerProfileGuard } from 'app/account/user/settings/learner-profile/learner-profile.guard';
+import { DataGuard } from 'app/account/user/settings/ai-experience/data-guard.service';
+import { learnerProfileGuard } from 'app/account/user/settings/learning/learner-profile.guard';
 
 export const routes: Routes = [
     {
@@ -36,7 +36,7 @@ export const routes: Routes = [
             {
                 path: 'credentials/ssh/add',
                 loadComponent: () =>
-                    import('app/account/user/settings/ssh-settings/details/ssh-user-settings-key-details.component').then((m) => m.SshUserSettingsKeyDetailsComponent),
+                    import('app/account/user/settings/credentials/ssh-settings/details/ssh-user-settings-key-details.component').then((m) => m.SshUserSettingsKeyDetailsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
                 },
@@ -44,7 +44,9 @@ export const routes: Routes = [
             {
                 path: 'credentials/ssh/fingerprints',
                 loadComponent: () =>
-                    import('app/account/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component').then((m) => m.SshUserSettingsFingerprintsComponent),
+                    import('app/account/user/settings/credentials/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component').then(
+                        (m) => m.SshUserSettingsFingerprintsComponent,
+                    ),
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
                 },
@@ -52,14 +54,14 @@ export const routes: Routes = [
             {
                 path: 'credentials/ssh/view/:keyId',
                 loadComponent: () =>
-                    import('app/account/user/settings/ssh-settings/details/ssh-user-settings-key-details.component').then((m) => m.SshUserSettingsKeyDetailsComponent),
+                    import('app/account/user/settings/credentials/ssh-settings/details/ssh-user-settings-key-details.component').then((m) => m.SshUserSettingsKeyDetailsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
                 },
             },
             {
                 path: 'learning',
-                loadComponent: () => import('app/account/user/settings/learner-profile/learner-profile.component').then((m) => m.LearnerProfileComponent),
+                loadComponent: () => import('app/account/user/settings/learning/learner-profile.component').then((m) => m.LearnerProfileComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.navigation.learning',
                 },
@@ -67,7 +69,8 @@ export const routes: Routes = [
             },
             {
                 path: 'ai-experience',
-                loadComponent: () => import('app/account/user/settings/ai-experience-settings/ai-experience-settings.component').then((m) => m.AiExperienceSettingsComponent),
+                loadComponent: () =>
+                    import('app/account/user/settings/ai-experience/ai-experience-settings/ai-experience-settings.component').then((m) => m.AiExperienceSettingsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.aiExperience',
                 },

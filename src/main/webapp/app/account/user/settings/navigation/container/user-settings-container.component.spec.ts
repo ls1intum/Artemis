@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { provideRouter } from '@angular/router';
 import { UserSettingsContainerComponent } from './user-settings-container.component';
-import { DataGuard } from 'app/account/user/settings/data-guard.service';
+import { DataGuard } from 'app/account/user/settings/ai-experience/data-guard.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 
