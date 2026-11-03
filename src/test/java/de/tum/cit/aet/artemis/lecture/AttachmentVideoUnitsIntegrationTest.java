@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.pdfbox.Loader;
@@ -30,6 +31,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -78,6 +80,8 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     @BeforeEach
     void initTestCase() {
         irisRequestMockProvider.enableMockingOfRequests();
+        irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
+        }, ExpectedCount.manyTimes());
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
@@ -294,7 +298,8 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(slideRepository.findAll()).hasSize(18); // 18 slides should be created for 2 attachment video units (1 break slide is removed and 1 solution slide is removed)
 
         List<Long> attachmentVideoUnitIds = attachmentVideoUnits.stream().map(AttachmentVideoUnitDTO::id).toList();
-        List<AttachmentVideoUnit> attachmentVideoUnitList = attachmentVideoUnitRepository.findAllById(attachmentVideoUnitIds);
+        List<AttachmentVideoUnit> attachmentVideoUnitList = attachmentVideoUnitRepository.findAllById(attachmentVideoUnitIds).stream()
+                .sorted(Comparator.comparing(AttachmentVideoUnit::getId)).toList(); // findAllById does not keep an order; the first unit was created first
 
         assertThat(attachmentVideoUnitList).hasSize(2);
         assertThat(attachmentVideoUnitList).extracting(AttachmentVideoUnit::getId).containsExactlyInAnyOrderElementsOf(attachmentVideoUnitIds);

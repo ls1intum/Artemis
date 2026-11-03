@@ -16,10 +16,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param submissions     number of submissions of students in the exercises of these courses, regardless of the submission date
  * @param lectures        number of lectures in these courses
  * @param exercisesByType number of exercises in these courses, keyed by exercise type (all types present, possibly 0)
+ * @param builds          build numbers of the exercises of these courses, absent for a semester that started before build jobs are deleted
+ * @param communication   posts, replies, reactions and published FAQs of these courses
+ * @param irisMessages    number of messages users and Iris exchanged in these courses, absent if Iris is not enabled
+ * @param tutorialGroups  number of tutorial groups in these courses, absent if tutorial groups are not enabled
+ * @param exams           number of real exams in these courses (no test exams and no exams whose title starts with "test" or "mock"), absent if exams are not enabled
+ * @param competencies    number of competencies in these courses, without prerequisites, absent if the atlas module is not enabled
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record UsageSemesterDTO(String label, long courses, long students, long activeStudents, long submissions, long lectures, Map<String, Long> exercisesByType)
-        implements Serializable {
+public record UsageSemesterDTO(String label, long courses, long students, long activeStudents, long submissions, long lectures, Map<String, Long> exercisesByType,
+        BuildUsageDTO builds, CommunicationUsageDTO communication, Long irisMessages, Long tutorialGroups, Long exams, Long competencies) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
