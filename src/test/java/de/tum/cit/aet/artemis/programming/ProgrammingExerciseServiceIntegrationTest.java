@@ -121,7 +121,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importProgrammingExerciseBasis_givesTheImportItsOwnMetisConfiguration() {
         final var imported = importExerciseBase();
 
