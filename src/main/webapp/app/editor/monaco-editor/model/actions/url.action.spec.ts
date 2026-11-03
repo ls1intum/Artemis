@@ -103,6 +103,14 @@ describe('UrlAction', () => {
             expect(editor.setPosition).toHaveBeenCalledExactlyOnceWith(new TextEditorPosition(1, 9 + expectedLink.length));
         });
 
+        it('should escape backslashes in the pasted URL, so a trailing one cannot escape the closing parenthesis', () => {
+            const selection = selectOnLine('docs');
+
+            expect(pasteHandler('https://example.org/?q=\\')).toBe(true);
+
+            expect(editor.replaceTextAtRange).toHaveBeenCalledExactlyOnceWith(selection, '[docs](https://example.org/?q=\\\\)');
+        });
+
         it('should percent-encode parentheses in the pasted URL', () => {
             const selection = selectOnLine('Java');
 
@@ -217,6 +225,11 @@ describe('UrlAction', () => {
             { where: 'the label of an HTML anchor', text: 'docs', lines: ['See <a href="https://a.example">docs</a>'] },
             { where: 'the label of an HTML anchor that is not closed', text: 'docs', lines: ['See <a href="https://a.example">the docs'] },
             { where: 'a paragraph that starts with an HTML tag', text: 'docs', lines: ['<div>see the docs</div>'] },
+            { where: 'a code cell that contains an escaped pipe', text: 'docs', lines: ['| a | b |', '| - | - |', '| `docs` \\| x | docs |'], line: 3 },
+            { where: 'an HTML pre block right after a paragraph', text: 'docs', lines: ['Intro', '<pre>', 'open docs', '</pre>'], line: 3 },
+            { where: 'an HTML block of a block-level tag right after a paragraph', text: 'docs', lines: ['Intro', '<div class="note">', 'see the docs'], line: 3 },
+            { where: 'an HTML comment', text: 'docs', lines: ['<!--', 'the docs', '-->'], line: 2 },
+            { where: 'an HTML block that starts with a lone tag after a blank line', text: 'docs', lines: ['intro', '', '<span>', 'the docs'], line: 4 },
             { where: 'a fenced code block', text: 'docs', lines: ['intro', '```', 'open docs', '```'], line: 3 },
             { where: 'the fence line of a code block', text: 'docs', lines: ['```docs'] },
             { where: 'a four-backtick block after a three-backtick line inside it', text: 'docs', lines: ['````', '```', 'open docs', '````'], line: 3 },
@@ -254,6 +267,10 @@ describe('UrlAction', () => {
             { after: 'nothing, in a plain cell before a link cell with the same text', lines: ['| a | b |', '| - | - |', '| see the docs | [docs](https://a.example) |'] },
             { after: 'an HTML tag that is no anchor', lines: ['see <b>the</b> docs'] },
             { after: 'a less-than sign that starts no tag', lines: ['if a < b, see the docs'] },
+            { after: 'an escaped pipe in the same table cell', lines: ['| a | b |', '| - | - |', '| x \\| see the docs | `y` |'] },
+            { after: 'a lone tag, which cannot interrupt a paragraph', lines: ['intro', '<span>', 'see the docs'] },
+            { after: 'inline HTML at the start of a paragraph', lines: ['<b>bold</b> and the docs'] },
+            { after: 'an HTML pre block that is closed', lines: ['<pre>code</pre>', '', 'see the docs'] },
             { after: 'a blank line, as an indented paragraph of a numbered list item', lines: ['1.  step', '', '    see the docs'] },
         ])('should handle the paste in text after $after', ({ lines }) => {
             const selection = selectOnLine('docs', lines, lines.length);
