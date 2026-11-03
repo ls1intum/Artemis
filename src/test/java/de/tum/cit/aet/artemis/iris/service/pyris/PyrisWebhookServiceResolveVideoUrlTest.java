@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.exception.IrisVideoSourceUnavailableException;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -45,8 +46,8 @@ class PyrisWebhookServiceResolveVideoUrlTest {
 
     private PyrisWebhookService withTumLive(TumLiveApi tumLiveApi) {
         VideoSourceResolverService resolver = new VideoSourceResolverService(Optional.ofNullable(tumLiveApi), Optional.empty(), youTubeUrlService);
-        return new PyrisWebhookService(mock(PyrisConnectorService.class), mock(PyrisJobService.class), mock(IrisSettingsService.class), Optional.empty(), Optional.empty(),
-                resolver);
+        return new PyrisWebhookService(mock(PyrisConnectorService.class), mock(PyrisJobService.class), mock(PyrisCallbackTokenService.class), mock(IrisSettingsService.class),
+                Optional.empty(), Optional.empty(), resolver);
     }
 
     @Test
@@ -138,8 +139,9 @@ class PyrisWebhookServiceResolveVideoUrlTest {
         IrisSettingsService settings = mock(IrisSettingsService.class);
         when(settings.getSettingsForCourse(any(Course.class))).thenReturn(IrisCourseSettings.defaultSettings());
         when(jobService.addLectureIngestionWebhookJob(anyLong(), anyLong(), anyLong())).thenReturn("job-token");
-        return new PyrisWebhookService(mock(PyrisConnectorService.class), jobService, settings, Optional.empty(), Optional.of(transcriptions),
-                new VideoSourceResolverService(Optional.of(api), Optional.empty(), youTubeUrlService));
+        when(jobService.getJob("job-token")).thenReturn(new LectureIngestionWebhookJob("job-token", 1L, 2L, 3L));
+        return new PyrisWebhookService(mock(PyrisConnectorService.class), jobService, PyrisCallbackTokenTestUtil.tokenService(), settings, Optional.empty(),
+                Optional.of(transcriptions), new VideoSourceResolverService(Optional.of(api), Optional.empty(), youTubeUrlService));
     }
 
     private static AttachmentVideoUnit tumLiveUnit() {
