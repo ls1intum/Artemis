@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -64,12 +65,18 @@ public class SlideSplitterService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService;
+
+    private final AttachmentService attachmentService;
+
     public SlideSplitterService(SlideRepository slideRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository, SlideUnhideService slideUnhideService,
-            ExerciseRepository exerciseRepository) {
+            ExerciseRepository exerciseRepository, LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService, AttachmentService attachmentService) {
         this.slideRepository = slideRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.slideUnhideService = slideUnhideService;
         this.exerciseRepository = exerciseRepository;
+        this.lectureUnitVisibilitySyncService = lectureUnitVisibilitySyncService;
+        this.attachmentService = attachmentService;
     }
 
     /**
@@ -85,17 +92,38 @@ public class SlideSplitterService {
             log.debug("Skipping slide split job for deleted AttachmentVideoUnit {}", job.attachmentVideoUnitId());
             return CompletableFuture.completedFuture(null);
         }
+        boolean split = false;
+        try {
+            split = splitIfStillCurrent(job, attachmentVideoUnit);
+        }
+        finally {
+            // The update request that scheduled this job left telling Iris about the new visibility to it. Whether the split succeeded, was undone after a failure, or was
+            // skipped, tell Iris the visibility of the slides that are saved now.
+            lectureUnitVisibilitySyncService.markVisibilityDirty(attachmentVideoUnit.getId());
+        }
+        if (split) {
+            // Now the saved slides belong to the stored file. A student version regenerated while the split ran used the page numbers of the previous slides, so build it
+            // again from the new ones.
+            attachmentService.regenerateStudentVersionOrRemoveOutdated(attachmentVideoUnit.getAttachment());
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    /**
+     * @return whether the file was split into slides
+     */
+    private boolean splitIfStillCurrent(AttachmentVideoUnitSlideSplitJob job, AttachmentVideoUnit attachmentVideoUnit) {
         if (!job.matches(attachmentVideoUnit.getAttachment())) {
             log.debug("Skipping obsolete slide split job for AttachmentVideoUnit {} and attachment revision {}/{}/{}", job.attachmentVideoUnitId(), job.attachmentId(),
                     job.attachmentVersion(), job.attachmentSha256Hash());
-            return CompletableFuture.completedFuture(null);
+            return false;
         }
 
         Optional<FileSystemLocation> fileLocation = attachmentVideoUnit.getAttachment().fileLocation();
         if (fileLocation.isEmpty()) {
             // An attachment that links to a document hosted elsewhere has no PDF here to split, and the filename its link ends in may belong to an unrelated attachment.
             log.debug("Skipping slide split job for AttachmentVideoUnit {}, whose attachment links to a document this application does not store", job.attachmentVideoUnitId());
-            return CompletableFuture.completedFuture(null);
+            return false;
         }
 
         File file = fileLocation.get().path().toFile();
@@ -107,12 +135,12 @@ public class SlideSplitterService {
             else {
                 splitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, job.hiddenPages(), job.pageOrder());
             }
+            return true;
         }
         catch (IOException e) {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);
             throw new InternalServerErrorException("Could not split AttachmentVideoUnit into single slides: " + e.getMessage());
         }
-        return CompletableFuture.completedFuture(null);
     }
 
     /**
@@ -195,6 +223,7 @@ public class SlideSplitterService {
             }
 
             markSupersededSlides(operation, supersededSlides);
+            stampRevisionOnCompletedDeck(attachmentVideoUnit, operation.savedCurrentSlideIds);
         }
         catch (IOException e) {
             operation.compensate();
@@ -261,6 +290,7 @@ public class SlideSplitterService {
 
             // Clean up slides that are no longer in the page order
             cleanupRemovedSlides(operation, pageOrder, existingSlides);
+            stampRevisionOnCompletedDeck(attachmentVideoUnit, operation.savedCurrentSlideIds);
         }
         catch (IOException e) {
             operation.compensate();
@@ -273,6 +303,21 @@ public class SlideSplitterService {
         }
         // Outside the guarded region: see the note on the overload above.
         operation.succeed();
+    }
+
+    /**
+     * Records on the current slides this split saved that the deck now belongs to the attachment's stored file. Slides the split did not save keep their previous revision,
+     * so a slide left over from an earlier deck never counts as part of this one. It runs as the last step of a split, inside the guarded region: while the
+     * split is still saving slides, some of them carry the previous revision or none, so regeneration and the student downloads treat the deck as not matching the file and
+     * stay closed, instead of seeing a deck in which a hidden page is not saved yet. A split job only runs while the attachment still has the file revision it was scheduled
+     * for, so this is the revision the slides were made from. If the split fails, compensation restores the previous slides with their previous revision.
+     */
+    private void stampRevisionOnCompletedDeck(AttachmentVideoUnit attachmentVideoUnit, Set<Long> savedCurrentSlideIds) {
+        if (savedCurrentSlideIds.isEmpty()) {
+            return;
+        }
+        var attachment = attachmentVideoUnit.getAttachment();
+        slideRepository.stampRevisionOnCurrentSlides(attachmentVideoUnit.getId(), savedCurrentSlideIds, attachment.getVersion(), attachment.getSha256Hash());
     }
 
     /**
@@ -449,21 +494,19 @@ public class SlideSplitterService {
             return;
         }
 
+        // Also when the page order holds only new pages: then every existing slide was removed from the deck, for example after the instructor replaced all pages.
         Set<String> slideIdsInPageOrder = pageOrderList.stream().map(SlideOrderDTO::slideId).filter(id -> !id.startsWith("temp_")).collect(Collectors.toSet());
+        List<Slide> slidesToSupersede = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();
 
-        if (!slideIdsInPageOrder.isEmpty()) {
-            List<Slide> slidesToSupersede = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();
-
-            if (!slidesToSupersede.isEmpty()) {
-                for (Slide slide : slidesToSupersede) {
-                    slide.setSuperseded(true);
-                    // Through the operation like every other write here. These rows already exist, so nothing is
-                    // recorded as created and the restore point already covers them; routing it here keeps that true
-                    // if this ever starts writing a row of its own.
-                    operation.save(slide);
-                }
-                log.debug("Marked {} slides that are no longer in the page order as superseded", slidesToSupersede.size());
+        if (!slidesToSupersede.isEmpty()) {
+            for (Slide slide : slidesToSupersede) {
+                slide.setSuperseded(true);
+                // Through the operation like every other write here. These rows already exist, so nothing is
+                // recorded as created and the restore point already covers them; routing it here keeps that true
+                // if this ever starts writing a row of its own.
+                operation.save(slide);
             }
+            log.debug("Marked {} slides that are no longer in the page order as superseded", slidesToSupersede.size());
         }
     }
 
@@ -499,6 +542,9 @@ public class SlideSplitterService {
 
         private final List<Long> createdSlideIds = new ArrayList<>();
 
+        /** The current slides this operation saved: the deck it produces. */
+        private final Set<Long> savedCurrentSlideIds = new LinkedHashSet<>();
+
         private final List<Slide> restorePoint = new ArrayList<>();
 
         private final List<Runnable> onSuccess = new ArrayList<>();
@@ -522,6 +568,12 @@ public class SlideSplitterService {
             Slide saved = slideRepository.save(slide);
             if (isNew) {
                 createdSlideIds.add(saved.getId());
+            }
+            if (saved.isSuperseded()) {
+                savedCurrentSlideIds.remove(saved.getId());
+            }
+            else {
+                savedCurrentSlideIds.add(saved.getId());
             }
             return saved;
         }

@@ -213,6 +213,46 @@ describe('CourseNotificationOverviewComponent', () => {
         expect(updateSpy).toHaveBeenCalledOnce();
     });
 
+    it.each([
+        { description: 'finished history', seenIds: [1], unseenId: 2, pagesFinished: true },
+        { description: 'full page', seenIds: [1, 2, 3, 4, 5, 6, 7, 8, 9], unseenId: 10, pagesFinished: false },
+    ])('persists newly displayed notifications when reopening cached $description', ({ seenIds, unseenId, pagesFinished }) => {
+        component['selectedCategory'] = CourseNotificationCategory.COMMUNICATION;
+        component['pagesFinished'] = pagesFinished;
+        const cachedNotifications = seenIds.map((id) => createMockNotification(id, 101, CourseNotificationCategory.COMMUNICATION, CourseNotificationViewingStatus.SEEN));
+        const arrival = createMockNotification(unseenId, 101, CourseNotificationCategory.COMMUNICATION);
+
+        // A websocket arrival updates the cached list while the overview is closed.
+        notificationsSubject.next([...cachedNotifications, arrival]);
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).not.toHaveBeenCalled();
+
+        component['toggleOverlay']();
+
+        expect(component['isShown']()).toBe(true);
+        expect(courseNotificationService.getNextNotificationPage).not.toHaveBeenCalled();
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).toHaveBeenCalledExactlyOnceWith(101, [unseenId]);
+
+        component['closeOverlay']();
+
+        expect(courseNotificationService.setNotificationStatusInMap).toHaveBeenCalledWith(101, [unseenId], CourseNotificationViewingStatus.SEEN);
+    });
+
+    it('waits for loading to finish before marking cached notifications as displayed', () => {
+        component['pagesFinished'] = true;
+        const arrival = createMockNotification(1, 101, CourseNotificationCategory.GENERAL);
+        notificationsSubject.next([arrival]);
+        component['isLoading'].set(true);
+
+        component['toggleOverlay']();
+
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).not.toHaveBeenCalled();
+
+        notificationsSubject.next([arrival]);
+
+        expect(component['isLoading']()).toBe(false);
+        expect(courseNotificationService.markDisplayedNotificationsAsSeen).toHaveBeenCalledExactlyOnceWith(101, [1]);
+    });
+
     it('should query for more notifications if less than pageSize are available', () => {
         componentAsAny.notificationsForSelectedCategory.set(
             Array(5)
