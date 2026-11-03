@@ -350,7 +350,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             String containerName = containerBuild.containerName();
             // The group id is this trigger's build id, so a retry or a re-push of the same commit opens a new group instead
             // of joining one that is still merging.
-            BuildJobQueueItem.BuildGroupMembership buildGroup = multiContainerBuild ? new BuildJobQueueItem.BuildGroupMembership(buildJobId, containerBuilds.size(), containerName)
+            BuildJobQueueItem.BuildGroupMembership buildGroup = containerName != null
+                    ? new BuildJobQueueItem.BuildGroupMembership(buildJobId, containerBuilds.size(), containerName)
                     : null;
 
             RepositoryInfo scopedRepositoryInfo = scopeRepositoryInfo(repositoryInfo, containerBuild.container());

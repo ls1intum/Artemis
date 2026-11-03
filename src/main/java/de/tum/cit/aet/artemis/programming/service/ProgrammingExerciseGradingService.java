@@ -348,7 +348,8 @@ public class ProgrammingExerciseGradingService {
             newTestCaseFeedbacks.forEach(feedback -> feedback.setResult(aggregatedResult));
             testCaseFeedbackRepository.saveAll(newTestCaseFeedbacks);
             // static code analysis feedback carries no test case and is appended as reported
-            List<ScaFeedback> newScaFeedbacks = parsed.result().getScaFeedbacks().stream().peek(feedback -> feedback.setResult(aggregatedResult)).toList();
+            List<ScaFeedback> newScaFeedbacks = List.copyOf(parsed.result().getScaFeedbacks());
+            newScaFeedbacks.forEach(feedback -> feedback.setResult(aggregatedResult));
             scaFeedbackRepository.saveAll(newScaFeedbacks);
             return new AppendedContainerResult(aggregatedResult, containerFailed);
         }
@@ -442,7 +443,7 @@ public class ProgrammingExerciseGradingService {
         // repository when a lock repository policy is present. Only lock the repository and the participation if the
         // participation is not for a test run (i.e. for a course exercise practice repository or for an instructor exam
         // test run repository). Student test exam participations will still be locked by this.
-        SubmissionPolicy submissionPolicy = participation.getProgrammingExercise().getSubmissionPolicy();
+        SubmissionPolicy submissionPolicy = participation.getProgrammingExerciseElseThrow().getSubmissionPolicy();
         if (submissionPolicy instanceof LockRepositoryPolicy policy && !((ProgrammingExerciseStudentParticipation) participation).isPracticeMode()) {
             submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
         }
@@ -516,14 +517,7 @@ public class ProgrammingExerciseGradingService {
                         participation.getProgrammingExercise().getId());
             }
             else {
-                Set<String> presentTestCaseNames = aggregatedResult.getTestCaseFeedbacks().stream().map(feedback -> feedback.getTestCase().getTestName())
-                        .collect(Collectors.toSet());
-                // The merged feedback drops a failed test the exercise does not know yet, so whether the build ran clean
-                // comes from its jobs, as the single-container check takes it from the raw report.
-                boolean synchronizationBuildSuccessful = mergedBuildRun != null && mergedBuildRun.everyContainerRanClean()
-                        && aggregatedResult.getTestCaseFeedbacks().stream().anyMatch(feedback -> Boolean.TRUE.equals(feedback.isPositive()));
-                feedbackCreationService.reconcileTestCasesOfMergedSolutionBuild(presentTestCaseNames, participation.getProgrammingExercise(), mergedBuildRun,
-                        synchronizationBuildSuccessful);
+                reconcileTestCasesOfMergedSolutionBuild(aggregatedResult, participation.getProgrammingExercise(), mergedBuildRun);
             }
         }
         // The scoring leaves a result without test-case feedback as it is, so a build whose containers reported no test
@@ -570,6 +564,15 @@ public class ProgrammingExerciseGradingService {
         }
         buildJobRepository.relinkJobsOfResult(aggregatedResult.getId(), manualResult);
         resultService.deleteResult(aggregatedResult, true);
+    }
+
+    private void reconcileTestCasesOfMergedSolutionBuild(Result aggregatedResult, ProgrammingExercise exercise, @Nullable MergedBuildRun mergedBuildRun) {
+        Set<String> presentTestCaseNames = aggregatedResult.getTestCaseFeedbacks().stream().map(feedback -> feedback.getTestCase().getTestName()).collect(Collectors.toSet());
+        // The merged feedback drops a failed test the exercise does not know yet, so whether the build ran clean
+        // comes from its jobs, as the single-container check takes it from the raw report.
+        boolean synchronizationBuildSuccessful = mergedBuildRun != null && mergedBuildRun.everyContainerRanClean()
+                && aggregatedResult.getTestCaseFeedbacks().stream().anyMatch(feedback -> Boolean.TRUE.equals(feedback.isPositive()));
+        feedbackCreationService.reconcileTestCasesOfMergedSolutionBuild(presentTestCaseNames, exercise, mergedBuildRun, synchronizationBuildSuccessful);
     }
 
     /**
