@@ -2,7 +2,7 @@
     [label]="'artemisApp.result.studentLogin' | artemisTranslate"
     required
     controlId="externalSubmissionStudentSearch"
-    [hint]="hintKey() | artemisTranslate: { min: minLength }"
+    [hint]="hint()?.key | artemisTranslate: hint()?.params"
     [invalid]="!!errorKey()"
     [error]="errorKey() | artemisTranslate"
 >
@@ -28,7 +28,7 @@
                 [optionTemplate]="optionTemplate"
                 [minLength]="minLength"
                 [debounceMs]="debounceMs"
-                [emptyMessage]="errorKey() ?? 'artemisApp.externalSubmission.noResults' | artemisTranslate"
+                [emptyMessage]="errorKey() ?? (searchCompleted() ? 'artemisApp.externalSubmission.noResults' : 'global.search.searching') | artemisTranslate"
                 [placeholder]="'artemisApp.externalSubmission.searchPlaceholder' | artemisTranslate"
                 (searchRequested)="requestSearch($event.query)"
                 (optionSelected)="selectOption($event)"

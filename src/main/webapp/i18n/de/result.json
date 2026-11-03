@@ -145,6 +145,7 @@
             "searchPlaceholder": "Nach Login, Name, E-Mail oder Matrikelnummer suchen",
             "searchTooShort": "Gib mindestens {{ min }} Zeichen ein, um zu suchen.",
             "noResults": "Keine passenden Studierenden.",
+            "moreResults": "Es werden die ersten {{ shown }} von {{ total }} passenden Studierenden angezeigt. Gib mehr ein, um die Suche einzugrenzen.",
             "searchFailed": "Die Suche ist fehlgeschlagen. Versuche es erneut.",
             "clearSelection": "Ausgewählte studierende Person entfernen",
             "ineligible": {

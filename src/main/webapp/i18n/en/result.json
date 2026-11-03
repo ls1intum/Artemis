@@ -145,6 +145,7 @@
             "searchPlaceholder": "Search by login, name, email or registration number",
             "searchTooShort": "Type at least {{ min }} characters to search.",
             "noResults": "No matching students.",
+            "moreResults": "Showing the first {{ shown }} of {{ total }} matching students. Type more to narrow the search.",
             "searchFailed": "The search failed. Try again.",
             "clearSelection": "Clear the selected student",
             "ineligible": {

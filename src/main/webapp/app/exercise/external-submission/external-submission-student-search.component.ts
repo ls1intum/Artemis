@@ -34,7 +34,12 @@ interface CandidateOption {
     candidate: ExternalSubmissionCandidate;
 }
 
-type SearchOutcome = { candidates: ExternalSubmissionCandidate[] } | { errorKey: string };
+type SearchOutcome = { searchTerm: string } & ({ candidates: ExternalSubmissionCandidate[]; totalMatches: number } | { errorKey: string });
+
+interface Hint {
+    key: string;
+    params?: Record<string, number>;
+}
 
 /**
  * Student search of the external submission dialog: suggests the course's students while typing, shows those who cannot receive an external result as disabled
@@ -65,16 +70,21 @@ export class ExternalSubmissionStudentSearchComponent {
     protected readonly query = signal('');
     protected readonly suggestions = signal<CandidateOption[]>([]);
     protected readonly selected = signal<CandidateOption | undefined>(undefined);
-    private readonly searchCompleted = signal(false);
+    protected readonly searchCompleted = signal(false);
+    /** How many students match the last search, which can be more than the suggestions show. */
+    private readonly totalMatches = signal(0);
     protected readonly errorKey = signal<string | undefined>(undefined);
 
-    /** The hint below the field: how many characters are needed, or that nothing matched. */
-    protected readonly hintKey = computed(() => {
+    /** The hint below the field: how many characters are needed, that nothing matched, or that only the first matches are shown. */
+    protected readonly hint = computed((): Hint | undefined => {
         if (this.query().trim().length < this.minLength) {
-            return 'artemisApp.externalSubmission.searchTooShort';
+            return { key: 'artemisApp.externalSubmission.searchTooShort', params: { min: this.minLength } };
         }
         if (this.searchCompleted() && this.suggestions().length === 0) {
-            return 'artemisApp.externalSubmission.noResults';
+            return { key: 'artemisApp.externalSubmission.noResults' };
+        }
+        if (this.searchCompleted() && this.totalMatches() > this.suggestions().length) {
+            return { key: 'artemisApp.externalSubmission.moreResults', params: { shown: this.suggestions().length, total: this.totalMatches() } };
         }
         return undefined;
     });
@@ -87,8 +97,8 @@ export class ExternalSubmissionStudentSearchComponent {
             .pipe(
                 switchMap((searchTerm) =>
                     this.externalSubmissionService.searchCandidates(this.exercise(), searchTerm, 0, SEARCH_PAGE_SIZE).pipe(
-                        map((page): SearchOutcome => ({ candidates: page.content })),
-                        catchError((error: unknown) => of<SearchOutcome>({ errorKey: this.errorKeyOf(error) })),
+                        map((page): SearchOutcome => ({ searchTerm, candidates: page.content, totalMatches: page.totalElements })),
+                        catchError((error: unknown) => of<SearchOutcome>({ searchTerm, errorKey: this.errorKeyOf(error) })),
                     ),
                 ),
                 takeUntilDestroyed(this.destroyRef),
@@ -97,10 +107,10 @@ export class ExternalSubmissionStudentSearchComponent {
     }
 
     protected onQueryChange(value: unknown): void {
-        if (typeof value === 'string') {
-            this.query.set(value);
-        } else if (value === undefined) {
-            this.query.set('');
+        if (typeof value === 'string' || value === undefined) {
+            this.query.set(value ?? '');
+            // the suggestions belong to the previous text, so none of them may be selected until the new search answers
+            this.suggestions.set([]);
         }
         // an option object is reported here as well when it is selected; selectOption handles it
         this.searchCompleted.set(false);
@@ -146,6 +156,10 @@ export class ExternalSubmissionStudentSearchComponent {
     }
 
     private applySearchOutcome(outcome: SearchOutcome): void {
+        if (outcome.searchTerm !== this.query().trim()) {
+            // the text changed while the request was running; its own search follows after the debounce
+            return;
+        }
         if ('errorKey' in outcome) {
             this.suggestions.set([]);
             this.errorKey.set(outcome.errorKey);
@@ -154,6 +168,7 @@ export class ExternalSubmissionStudentSearchComponent {
         }
         this.errorKey.set(undefined);
         this.suggestions.set(outcome.candidates.map((candidate) => this.toOption(candidate)));
+        this.totalMatches.set(outcome.totalMatches);
         this.searchCompleted.set(true);
     }
 

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -30,11 +30,16 @@ describe('ExternalSubmissionStudentSearchComponent', () => {
     const errorRegion = (): HTMLElement => fixture.nativeElement.querySelector('.tumaet-ui-form-field-error');
     const chip = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="external-submission-selected-student"]');
 
-    async function type(text: string): Promise<void> {
+    /** Changes the text of the input without waiting for the debounce. */
+    function changeTo(text: string): void {
         input().dispatchEvent(new FocusEvent('focus'));
         input().value = text;
         input().dispatchEvent(new Event('input', { bubbles: true }));
         fixture.detectChanges();
+    }
+
+    async function type(text: string): Promise<void> {
+        changeTo(text);
         await vi.advanceTimersByTimeAsync(300);
         fixture.detectChanges();
     }
@@ -123,6 +128,52 @@ describe('ExternalSubmissionStudentSearchComponent', () => {
         expect(hint()?.textContent).toContain('artemisApp.externalSubmission.noResults');
         expect(input().getAttribute('aria-describedby')).toBe(hint()?.id);
         expect(alertService.error).not.toHaveBeenCalled();
+    });
+
+    it('says that only the first matches are shown when more students match than the suggestions list', async () => {
+        const translate = vi.spyOn(TestBed.inject(TranslateService), 'instant');
+        const tenStudents = Array.from({ length: 10 }, (_, index) => ({ login: `ga${index}abc`, name: `Jane ${index}` }));
+        searchCandidates.mockReturnValue(of({ content: tenStudents, totalElements: 25 }));
+
+        await type('jane');
+
+        expect(options()).toHaveLength(10);
+        expect(hint()?.textContent).toContain('artemisApp.externalSubmission.moreResults');
+        expect(translate).toHaveBeenCalledWith('artemisApp.externalSubmission.moreResults', { shown: 10, total: 25 });
+    });
+
+    it('shows no hint about further matches when all matches are listed', async () => {
+        respondWith([eligible]);
+
+        await type('jane');
+
+        expect(hint()).toBeNull();
+    });
+
+    it('removes the suggestions as soon as the text changes, so a student of the previous search cannot be selected', async () => {
+        respondWith([eligible]);
+        const selected = vi.spyOn(component.studentSelected, 'emit');
+        await type('jane');
+        expect(options()).toHaveLength(1);
+
+        changeTo('john');
+
+        expect(options().map((option) => option.textContent?.trim())).toEqual(['global.search.searching']);
+        options()[0].click();
+        expect(selected).not.toHaveBeenCalled();
+    });
+
+    it('ignores the answer to a search whose text has changed in the meantime', async () => {
+        const pendingSearch = new Subject<PageableResult<ExternalSubmissionCandidate>>();
+        searchCandidates.mockReturnValue(pendingSearch);
+        await type('jane');
+
+        changeTo('john');
+        pendingSearch.next({ content: [eligible], totalElements: 1 });
+        fixture.detectChanges();
+
+        expect(options().map((option) => option.textContent?.trim())).toEqual(['global.search.searching']);
+        expect(hint()).toBeNull();
     });
 
     // U6

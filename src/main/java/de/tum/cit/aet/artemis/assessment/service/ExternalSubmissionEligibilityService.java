@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.ExternalSubmissionExerciseRejection;
 import de.tum.cit.aet.artemis.assessment.domain.ExternalSubmissionIneligibility;
 import de.tum.cit.aet.artemis.assessment.dto.ExternalSubmissionCandidateDTO;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ExternalSubmissionResultRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
@@ -50,7 +50,7 @@ public class ExternalSubmissionEligibilityService {
 
     private final UserRepository userRepository;
 
-    private final ResultRepository resultRepository;
+    private final ExternalSubmissionResultRepository externalSubmissionResultRepository;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -58,10 +58,10 @@ public class ExternalSubmissionEligibilityService {
 
     private final Optional<StudentExamApi> studentExamApi;
 
-    public ExternalSubmissionEligibilityService(UserRepository userRepository, ResultRepository resultRepository, AuthorizationCheckService authCheckService,
-            Optional<ExamDateApi> examDateApi, Optional<StudentExamApi> studentExamApi) {
+    public ExternalSubmissionEligibilityService(UserRepository userRepository, ExternalSubmissionResultRepository externalSubmissionResultRepository,
+            AuthorizationCheckService authCheckService, Optional<ExamDateApi> examDateApi, Optional<StudentExamApi> studentExamApi) {
         this.userRepository = userRepository;
-        this.resultRepository = resultRepository;
+        this.externalSubmissionResultRepository = externalSubmissionResultRepository;
         this.authCheckService = authCheckService;
         this.examDateApi = examDateApi;
         this.studentExamApi = studentExamApi;
@@ -144,7 +144,7 @@ public class ExternalSubmissionEligibilityService {
             withStudentExam = api.findUserIdsWithWorkingPeriod(examId, userIds);
             withExerciseInStudentExam = api.findUserIdsWithExerciseInNewestStudentExam(examId, exercise.getId(), userIds);
         }
-        Set<Long> withResult = resultRepository.findParticipantIdsWithResultForExercise(exercise.getId(), userIds);
+        Set<Long> withResult = externalSubmissionResultRepository.findParticipantIdsWithResultForExercise(exercise.getId(), userIds);
 
         Map<Long, ExternalSubmissionIneligibility> ineligibilities = new HashMap<>();
         for (Long userId : userIds) {
