@@ -533,8 +533,10 @@ or PR retargeting starts current validation. Body/title edits neither cancel sou
 publish its canonical required check.
 
 Complete test runs reuse their JaCoCo XML and LCOV artifacts. Affected client runs emit measured
-selected-spec LCOV as **Sonar Client Coverage**, with independent normal/Monaco reports. Affected
-server runs upload existing execution data as **Sonar Server Coverage**. A trusted XML-only Gradle
+selected-spec LCOV as **Sonar Client Coverage**, with independent normal/Monaco reports. The client
+runner initializes Istanbul before related-test discovery, so Angular transforms cached during
+selection retain coverage instrumentation when the selected tests execute. Affected server runs
+upload existing execution data as **Sonar Server Coverage**. A trusted XML-only Gradle
 task generates the selected Java report on the Sonar runner after compilation, without rerunning
 tests or generating the full module/HTML/coverage-verification graph.
 

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_DISPLAY_TITLE_PATTERN;
 
 import java.time.ZonedDateTime;
 import java.util.regex.Matcher;
@@ -72,7 +72,7 @@ public abstract class BaseExercise extends ExerciseTimeline {
             throw new BadRequestAlertException("The title is not set or is too short.", "Exercise", "titleLengthInvalid");
         }
         // Check if the exercise title matches regex
-        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(getTitle());
+        Matcher titleMatcher = EXERCISE_DISPLAY_TITLE_PATTERN.matcher(getTitle());
         if (!titleMatcher.matches()) {
             throw new BadRequestAlertException("The title is invalid.", "Exercise", "titlePatternInvalid");
         }

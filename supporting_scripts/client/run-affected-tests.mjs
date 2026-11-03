@@ -252,6 +252,9 @@ export async function prepareRelatedProject({ root, configFile, sources, log = c
             // Full-suite thresholds have no meaningful denominator for selected specs. Keep the
             // configured source inclusion/exclusion rules, but report only their actual execution.
             context.config.coverage.thresholds = undefined;
+            // Discovery transforms Angular modules too. Initialize Istanbul before that walk:
+            // toggling coverage later cannot retroactively instrument cached Vite transforms.
+            await context.enableCoverage();
             const selected = new Map();
             // Resolve each input independently: a tested component must not hide an untested
             // service in the same PR. Vite reuses transformed modules across these graph walks.
@@ -287,9 +290,6 @@ export async function prepareRelatedProject({ root, configFile, sources, log = c
                         // The default reporter's related summary describes only the final per-input
                         // query. Our explicit list describes the union including guardrails.
                         context.config.related = undefined;
-                        // Discovery cached transforms before Istanbul was initialized. The public
-                        // toggle invalidates those cache paths so execution is instrumented.
-                        await context.enableCoverage();
                         await context.standalone();
                         // start() rediscovers the same graph; execute the exact prepared specs.
                         const result = await context.runTestSpecifications(specifications);
