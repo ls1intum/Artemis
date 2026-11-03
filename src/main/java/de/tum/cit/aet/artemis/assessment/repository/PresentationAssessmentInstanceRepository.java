@@ -170,8 +170,8 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentExportDTO(
-                course.title, assessment.title, assessment.maxPoints, instance.presentationDate, instance.resultPoints,
-                instance.language, instance.mode, instance.location, instance.meetingLink, instance.remark)
+                course.title, assessment.title, assessment.gradingMethod, assessment.maxPoints, instance.presentationDate, instance.resultPoints,
+                instance.passed, instance.rubricScore, instance.language, instance.mode, instance.location, instance.meetingLink, instance.remark)
             FROM PresentationAssessmentInstance instance
             JOIN instance.presentationAssessment assessment
             JOIN assessment.course course
@@ -182,6 +182,7 @@ public interface PresentationAssessmentInstanceRepository extends ArtemisJpaRepo
 
     /**
      * Deletes all presentation assessment instances of the course with a single statement, keeping the presentation assessments themselves.
+     * Their rubric ratings are removed by the database ({@code ON DELETE CASCADE}).
      *
      * @param courseId the id of the course
      * @return the number of deleted instances

@@ -1,19 +1,30 @@
 package de.tum.cit.aet.artemis.assessment.domain;
 
+import java.util.List;
+
 /**
  * The rating scale of a rubric criterion. Its levels are valued 1 to {@link #getLevelCount()}.
+ * The English level keys name the levels in the personal data export; the client translates its own.
  */
 public enum PresentationRubricScale {
 
-    THREE_POINT(3), FIVE_POINT(5);
+    THREE_POINT(List.of("Poor", "Satisfactory", "Excellent")), FIVE_POINT(List.of("Poor", "Needs Improvement", "Satisfactory", "Good", "Excellent"));
 
-    private final int levelCount;
+    private final List<String> levelKeys;
 
-    PresentationRubricScale(int levelCount) {
-        this.levelCount = levelCount;
+    PresentationRubricScale(List<String> levelKeys) {
+        this.levelKeys = levelKeys;
     }
 
     public int getLevelCount() {
-        return levelCount;
+        return levelKeys.size();
+    }
+
+    /**
+     * @param position the position of a level, starting at 0 for the lowest
+     * @return the English key of the level at that position
+     */
+    public String getLevelKey(int position) {
+        return levelKeys.get(position);
     }
 }

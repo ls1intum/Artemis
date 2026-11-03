@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricRating;
+import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricRatingExportDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricRatingLevelDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
@@ -51,4 +52,24 @@ public interface PresentationRubricRatingRepository extends ArtemisJpaRepository
             WHERE rating.instance.id = :instanceId
             """)
     void deleteAllByInstanceId(@Param("instanceId") long instanceId);
+
+    /**
+     * Loads all rubric ratings of a student for the personal data export.
+     *
+     * @param userId the id of the student
+     * @return the ratings ordered by course, presentation, date and criterion
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.PresentationRubricRatingExportDTO(
+                course.title, assessment.title, instance.presentationDate, criterion.name, criterion.weight, criterion.scale, level.position, rating.comment)
+            FROM PresentationRubricRating rating
+            JOIN rating.instance instance
+            JOIN instance.presentationAssessment assessment
+            JOIN assessment.course course
+            JOIN rating.criterion criterion
+            JOIN rating.level level
+            WHERE instance.student.id = :userId
+            ORDER BY course.title, assessment.title, instance.presentationDate, instance.id, criterion.position
+            """)
+    List<PresentationRubricRatingExportDTO> findExportRowsByStudentId(@Param("userId") long userId);
 }

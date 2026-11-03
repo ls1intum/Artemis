@@ -269,8 +269,8 @@ public class PresentationRubricService {
         Map<Long, Map<Long, Integer>> positionsByInstanceId = presentationRubricRatingRepository.findLevelPositionsByPresentationAssessmentId(assessmentId).stream()
                 .collect(Collectors.groupingBy(PresentationRubricRatingLevelDTO::instanceId,
                         Collectors.toMap(PresentationRubricRatingLevelDTO::criterionId, PresentationRubricRatingLevelDTO::levelPosition)));
-        return positionsByInstanceId.entrySet().stream()
-                .collect(Collectors.groupingBy(entry -> calculateScore(criteria, entry.getValue(), accuracy), Collectors.mapping(Map.Entry::getKey, Collectors.toList())));
+        return positionsByInstanceId.entrySet().stream().collect(Collectors.groupingBy(entry -> calculateScore(criteria, entry.getValue(), accuracy),
+                Collectors.mapping(Map.Entry::getKey, Collectors.toCollection(ArrayList::new))));
     }
 
     /**

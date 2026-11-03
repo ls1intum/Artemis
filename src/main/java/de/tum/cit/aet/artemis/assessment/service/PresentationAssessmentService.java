@@ -241,6 +241,7 @@ public class PresentationAssessmentService {
 
     /**
      * Delete a presentation assessment.
+     * Its instances and its rubric with all ratings are removed by the database ({@code ON DELETE CASCADE}).
      *
      * @param courseId     the course id
      * @param assessmentId the presentation assessment id

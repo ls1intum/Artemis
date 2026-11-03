@@ -138,6 +138,7 @@ public interface AssessmentDataCleanupRepository extends ArtemisJpaRepository<Co
 
     /**
      * Deletes the individual presentation assessment instances of the account.
+     * Their rubric ratings are removed by the database ({@code ON DELETE CASCADE}).
      *
      * @param userId the account being deleted
      * @return the number of deleted instances
