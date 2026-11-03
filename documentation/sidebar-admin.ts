@@ -45,6 +45,7 @@ const sidebars: SidebarsConfig = {
         'benchmarking-tool',
         'telemetry',
         'feature-usage',
+        'usage-dashboard',
         'client-error-reports',
         'error-analysis',
         'cleanup-service',
