@@ -88,6 +88,7 @@ describe('UrlAction', () => {
             vi.spyOn(editor, 'getSelection').mockReturnValue(selection);
             vi.spyOn(editor, 'getTextAtRange').mockReturnValue(text);
             vi.spyOn(editor, 'getLineText').mockImplementation((lineNumber) => lines[lineNumber - 1]);
+            vi.spyOn(editor, 'getNumberOfLines').mockReturnValue(lines.length);
             return selection;
         }
 
@@ -189,6 +190,13 @@ describe('UrlAction', () => {
             { where: 'the label of an existing link', text: 'univ', lines: ['see the [university](https://a.example) site'] },
             { where: 'the URL placeholder the link button selects', text: 'https://', lines: ['see the [docs](https://) here'] },
             { where: 'an inline code span', text: 'docs', lines: ['run `open docs` here'] },
+            { where: 'an inline code span with two backticks', text: 'docs', lines: ['Run ``open docs`` now'] },
+            { where: 'an inline code span that contains a backtick', text: 'docs', lines: ['Run ``open ` docs`` now'] },
+            { where: 'an inline code span that continues on the next line', text: 'docs', lines: ['Run `open docs', 'now` here'] },
+            { where: 'an inline code span that started on the line before', text: 'docs', lines: ['Run `open', 'the docs` now'], line: 2 },
+            { where: 'the alt text of an image', text: 'docs', lines: ['see ![the docs](https://a.example/logo.png)'] },
+            { where: 'an autolink', text: 'docs', lines: ['see <https://a.example/docs> here'] },
+            { where: 'a selection that covers a whole link', text: 'the [tum](https://www.tum.de) site', lines: ['see the [tum](https://www.tum.de) site'] },
             { where: 'a fenced code block', text: 'docs', lines: ['intro', '```', 'open docs', '```'], line: 3 },
             { where: 'the fence line of a code block', text: 'docs', lines: ['```docs'] },
             { where: 'a four-backtick block after a three-backtick line inside it', text: 'docs', lines: ['````', '```', 'open docs', '````'], line: 3 },
@@ -217,6 +225,8 @@ describe('UrlAction', () => {
             { after: 'a tab-indented code block and a blank line', lines: ['\tcode', '', 'see the docs'] },
             { after: 'a paragraph, as an indented lazy continuation of it', lines: ['intro', '    see the docs'] },
             { after: 'a blank line, as an indented paragraph of a list item', lines: ['- step', '', '    see the docs'] },
+            { after: 'a closed inline code span with two backticks on the same line', lines: ['Run ``code`` and see the docs'] },
+            { after: 'a lone backtick that opens no code span', lines: ['it`s in the docs'] },
             { after: 'a blank line, as an indented paragraph of a numbered list item', lines: ['1.  step', '', '    see the docs'] },
         ])('should handle the paste in text after $after', ({ lines }) => {
             const selection = selectOnLine('docs', lines, lines.length);

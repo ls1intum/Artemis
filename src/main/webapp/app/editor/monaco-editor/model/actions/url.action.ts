@@ -5,10 +5,16 @@ import { isHttpUrl, sanitizeStringForMarkdownEditor } from 'app/foundation/util/
 import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { TranslateService } from '@ngx-translate/core';
-import MarkdownIt from 'markdown-it';
+import MarkdownIt, { type Token } from 'markdown-it';
 
-/** A plain CommonMark parser, only used to find the code blocks around a selection. */
+/** A plain CommonMark parser, only used to find the links and code around a selection. */
 const markdownParser = MarkdownIt();
+
+/** Marks both ends of the selection in the parsed copy of the document. A private use character, so real text never contains it. */
+const SELECTION_MARKER = '\uE000';
+
+/** The marker as it appears in a link destination, which the parser percent-encodes. */
+const ENCODED_SELECTION_MARKER = encodeURI(SELECTION_MARKER);
 
 interface UrlArguments {
     text: string;
@@ -114,26 +120,46 @@ export class UrlAction extends TextStyleTextEditorAction {
     }
 
     /**
-     * Checks whether a selection on one line lies where a pasted link would not work: inside an existing link, i.e. its label or its
-     * destination (such as the placeholder the link button selects), inside an inline code span, or inside a fenced or indented code block.
+     * Checks whether a selection on one line lies where a pasted link would not work: inside or across an existing link (its label, or its
+     * destination such as the placeholder the link button selects), inside or across inline code, or inside a fenced or indented code block.
+     * Both ends of the selection are marked with a sentinel character and the document is parsed as Markdown, so the same CommonMark rules
+     * as in the preview decide, including code spans with several backticks or over several lines.
      * @param editor The editor that contains the selection.
      * @param selection The selection, which starts and ends on the same line.
      */
     private isInLinkOrCode(editor: TextEditor, selection: TextEditorRange): boolean {
-        const lineNumber = selection.getStartPosition().getLineNumber();
-        const line = this.getLineText(editor, lineNumber) ?? '';
+        const lineIndex = selection.getStartPosition().getLineNumber() - 1;
         const startIndex = selection.getStartPosition().getColumn() - 1;
         const endIndex = selection.getEndPosition().getColumn() - 1;
-        const overlapsSelection = (pattern: RegExp) => [...line.matchAll(pattern)].some((match) => match.index < endIndex && startIndex < match.index + match[0].length);
-        if (overlapsSelection(/\[[^\]]*\]\([^)]*\)/g) || overlapsSelection(/`[^`]*`/g)) {
-            return true;
-        }
-        // Only the lines up to the selection decide whether it is in a code block, so the rest of the document is not parsed.
-        const linesUpToSelection = Array.from({ length: lineNumber }, (_, index) => this.getLineText(editor, index + 1) ?? '');
-        const lineIndex = lineNumber - 1;
-        return markdownParser
-            .parse(linesUpToSelection.join('\n'), {})
-            .some((token) => (token.type === 'fence' || token.type === 'code_block') && !!token.map && token.map[0] <= lineIndex && lineIndex < token.map[1]);
+        const lines = Array.from({ length: this.getLineCount(editor) }, (_, index) => this.getLineText(editor, index + 1) ?? '');
+        const line = lines[lineIndex] ?? '';
+        lines[lineIndex] = line.slice(0, startIndex) + SELECTION_MARKER + line.slice(startIndex, endIndex) + SELECTION_MARKER + line.slice(endIndex);
+
+        let markersSeen = 0;
+        let linkDepth = 0;
+        const blocksLinks = (token: Token): boolean => {
+            const content = `${token.content} ${token.info} ${token.attrGet('href') ?? ''} ${token.attrGet('src') ?? ''}`;
+            const containsMarker = content.includes(SELECTION_MARKER) || content.includes(ENCODED_SELECTION_MARKER);
+            if (['code_inline', 'fence', 'code_block', 'image'].includes(token.type) && (containsMarker || markersSeen === 1)) {
+                return true;
+            }
+            if (token.type === 'link_open') {
+                linkDepth++;
+                return containsMarker || markersSeen === 1;
+            }
+            if (token.type === 'link_close') {
+                linkDepth--;
+            }
+            if (token.type === 'text' || token.type === 'html_inline' || token.type === 'html_block') {
+                const count = token.content.split(SELECTION_MARKER).length - 1;
+                if (count > 0 && linkDepth > 0) {
+                    return true;
+                }
+                markersSeen += count;
+            }
+            return false;
+        };
+        return markdownParser.parse(lines.join('\n'), {}).some((token) => (token.children ?? [token]).some(blocksLinks));
     }
 
     /**
