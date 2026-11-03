@@ -43,6 +43,8 @@ For October 2026 through October 2027, the project intends to:
 
 - Complete the web client's migration to TUM AET UI and remove the superseded controls.
 - Strengthen scalable infrastructure, including build execution, distributed state, and deployment.
+- Simplify the supported infrastructure to LocalVC, LocalCI and PostgreSQL by removing Jenkins and MySQL in
+  Artemis 11 (see [Planned removals in Artemis 11](#planned-removals-in-artemis-11)).
 - Improve AI-assisted exercise authoring and feedback while keeping these features optional and
   under the institution's control.
 - Extend learning analytics while preserving data privacy.
@@ -55,6 +57,36 @@ delivery dates, or an LTS release during this horizon. The
 The weekly roadmap review checks both the individual items and this one-year direction. Before the
 horizon expires, maintainers extend it or publish its successor so that contributors can always see
 at least a year's intended direction and scope.
+
+### Planned removals in Artemis 11
+
+Artemis 11 is planned to ship in March 2027 (target semester `WS 26/27`). It removes two integrations that
+have a replacement and that cost a disproportionate amount of maintenance and test time:
+
+| Removal | Replacement | Status |
+| --- | --- | --- |
+| **Jenkins**, the only external continuous integration system that Artemis still supports, together with its build plan management, result webhook and the Jenkins-specific user, profile and configuration handling | **LocalCI** (integrated build queue and build agents), combined with **LocalVC** | Deprecated. Existing Jenkins installations keep working until Artemis 11. |
+| **MySQL** as a supported database, including the MySQL JDBC driver, MySQL test and CI jobs, and the MySQL branches of the Liquibase baseline | **PostgreSQL** | Deprecated. Existing MySQL installations keep working until Artemis 11. |
+
+What this means in practice:
+
+- New installations should start with LocalCI and PostgreSQL. LocalVC stays: it is the version control system
+  of both the Integrated Code Lifecycle and the Jenkins setup, and only Jenkins as a build system goes away.
+- Operators of Jenkins or MySQL installations should plan their migration during the 10.x releases, so that
+  the upgrade to Artemis 11 is not combined with a change of build or database system.
+- The [upgrade guide](/admin/upgrade-guide#planned-removals-in-artemis-11) carries the operator-facing notice.
+  The migration guides are [Jenkins to LocalCI](/admin/jenkins-to-localci-migration) and
+  [MySQL to PostgreSQL](/admin/database-tips#migrating-mysql-data-to-postgresql).
+- The [startup telemetry](/admin/telemetry#ci-system-and-middleware) reports whether an installation
+  runs Jenkins or MySQL.
+
+Developers can find every place that goes away by searching the repository for the marker
+`REMOVE_IN_ARTEMIS_11`. Each marker names what is removed, `(Jenkins)` or `(MySQL)`. The marker is placed on
+the declaration or configuration entry that owns the dependency, not on every use, so deleting the marked
+elements and then following the compiler, the architecture tests and the dead code checks finds the rest.
+When you add code that only exists for Jenkins or MySQL, add the marker as well.
+
+As with every roadmap entry, the date is an intention and not a commitment.
 
 ### Board items
 

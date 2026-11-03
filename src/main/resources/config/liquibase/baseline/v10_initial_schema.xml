@@ -3818,6 +3818,7 @@
         <loadData encoding="UTF-8" file="config/liquibase/authorities.csv" separator=";" tableName="jhi_authority"/>
     </changeSet>
 
+    <!-- REMOVE_IN_ARTEMIS_11 (MySQL): the next changeset is the MySQL/H2 branch of the baseline; drop the mysql dbms precondition (H2 only if H2 stays) -->
     <changeSet id="v10-02" author="krusche">
         <preConditions onFail="MARK_RAN">
             <or>

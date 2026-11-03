@@ -66,6 +66,22 @@ public interface PublicUsageStatisticsRepository extends ArtemisJpaRepository<Co
     Set<Long> findStudentIds(@Param("courseIds") Set<Long> courseIds);
 
     /**
+     * Counts every enrolment, so a student of several courses is counted once per course.
+     *
+     * @param courseIds the real courses
+     * @return the number of student enrolments in the courses, without deleted users and test users
+     */
+    @Query("""
+            SELECT COUNT(ucr.id)
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
+                AND ucr.user.deleted = FALSE
+                AND ucr.user.isTestUser = FALSE
+            """)
+    long countStudentEnrollments(@Param("courseIds") Set<Long> courseIds);
+
+    /**
      * @param courseIds the real courses
      * @return the ids of all exercises of the courses, including the exercises of their exams
      */
@@ -106,6 +122,51 @@ public interface PublicUsageStatisticsRepository extends ArtemisJpaRepository<Co
                 AND l.isTutorialLecture = FALSE
             """)
     long countLectures(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * Counts the units of the lectures that {@link #countLectures} counts, of every unit type (text, video, attachment, online and exercise units).
+     *
+     * @param courseIds the courses
+     * @return the number of lecture units in these courses, without the units of tutorial lectures
+     */
+    @Query("""
+            SELECT COUNT(lu.id)
+            FROM LectureUnit lu
+            WHERE lu.lecture.course.id IN :courseIds
+                AND lu.lecture.isTutorialLecture = FALSE
+            """)
+    long countLectureUnits(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * @param courseIds the courses
+     * @return the number of unique people with the instructor role in at least one of the courses, without deleted users and test users
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT ucr.user.id)
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+                AND ucr.user.deleted = FALSE
+                AND ucr.user.isTestUser = FALSE
+            """)
+    long countInstructors(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * Editors are counted as tutors, they are tutors who can also edit the content of a course. Someone who is a tutor in one course and an instructor
+     * in another is counted in both numbers.
+     *
+     * @param courseIds the courses
+     * @return the number of unique people with the tutor or editor role in at least one of the courses, without deleted users and test users
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT ucr.user.id)
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR)
+                AND ucr.user.deleted = FALSE
+                AND ucr.user.isTestUser = FALSE
+            """)
+    long countTutors(@Param("courseIds") Set<Long> courseIds);
 
     /**
      * @param courseIds the real courses

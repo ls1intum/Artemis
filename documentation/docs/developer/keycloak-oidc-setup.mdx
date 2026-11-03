@@ -22,7 +22,7 @@ ready-made `artemis-oidc` realm with 21 test accounts.
 <Callout variant={CalloutVariant.warning}>
 
     Start your database first. Keycloak will happily sign you in without one, and the failure then surfaces at the
-    end of the flow, as a `Communications link failure` from Artemis while it handles the callback, which does not
+    end of the flow, as a connection error from Artemis while it handles the callback (on MySQL, `Communications link failure`), which does not
     look like a missing database at all.
 
 </Callout>
@@ -37,7 +37,7 @@ Together with a database, pass `--env-file .env`, since those compose files take
 have no fallbacks:
 
 ```bash
-docker compose --env-file .env -f deployment/docker/artemis-dev-mysql.yml -f deployment/docker/oidc-test.yml up -d
+docker compose --env-file .env -f deployment/docker/artemis-dev-postgres.yml -f deployment/docker/oidc-test.yml up -d
 ```
 
 You now have:
@@ -130,7 +130,7 @@ signs in with `artemis_test_user_7`.
 The `local` profile is not last in `--spring.profiles.active`, so `application-oidc.yml` and its production defaults
 won. Move `local` to the end, or set the `ARTEMIS_OIDC_*` environment variables.
 
-**Login succeeds, then Artemis fails with `Communications link failure`.**
+**Login succeeds, then Artemis fails with a database connection error** (on MySQL, `Communications link failure`).
 Keycloak is up but the Artemis database is not. Start the database compose file and try again.
 
 **An account signs in but has the wrong role.**
