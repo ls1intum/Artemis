@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -20,8 +22,12 @@ import jakarta.validation.ValidatorFactory;
 
 import javax.sql.DataSource;
 
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
@@ -68,9 +74,11 @@ import liquibase.resource.ClassLoaderResourceAccessor;
  * foreign keys cascade from the participation, the check, the main question, the tutorial group and the exercise without
  * any Metis service being involved, no row can be written without its parent, a follow-up can only name a question of
  * its own check, the unique keys refuse a second window per tutorial group, a second check per participation and a
- * second question per position, a focus file path of 1024 characters fits, only a five- or seven-point Likert scale is
- * accepted, and the module condition follows its property. Every programming exercise owns its configuration from the
- * moment it is stored, with the column defaults, and storing it again neither adds a second row nor resets the first.
+ * second question per position, a focus file path of 1024 characters fits, every bounded column refuses a value past its
+ * bounds by Bean Validation and by its check constraint alike (except that a position or a regeneration count of 128 is refused
+ * by the column type on MySQL and H2, and by the constraint on PostgreSQL), and the module condition follows its property.
+ * Every programming exercise owns its configuration from the moment it is stored, with the column defaults, and storing it
+ * again neither adds a second row nor resets the first.
  *
  * <p>
  * The deletions run through the paths a participation or an exercise really leaves by: a plain delete of the
@@ -101,13 +109,18 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
     /** The changelog that creates the Metis tables, and its changeSet that gives the programming exercises stored before it their configuration. */
     private static final String CHANGELOG = "config/liquibase/changelog/20261103163312_changelog.xml";
 
-    private static final String BACKFILL_CHANGE_SET = "20261103163312-06-backfill-metis-exercise-config";
+    private static final String BACKFILL_CHANGE_SET = "20261103163312-17-backfill-metis-exercise-config";
 
     /** A repository path of exactly 1024 characters, the longest the column holds: 58 nested directories and a long file name. */
     private static final String LONGEST_FOCUS_FILE_PATH = "src/" + "nested_directory/".repeat(58) + "A".repeat(29) + ".java";
 
     /** The columns are datetime(3) without a zone, so what comes back is the same instant, not necessarily the same zone. */
     private static final BiPredicate<ZonedDateTime, ZonedDateTime> SAME_INSTANT = (left, right) -> left.toInstant().equals(right.toInstant());
+
+    /** Checks the Bean Validation rules of the entities, which nothing in production runs on them; the database states the same rules. */
+    private static final ValidatorFactory VALIDATOR_FACTORY = Validation.buildDefaultValidatorFactory();
+
+    private static final Validator VALIDATOR = VALIDATOR_FACTORY.getValidator();
 
     @Autowired
     private MetisExerciseConfigRepository metisExerciseConfigRepository;
@@ -166,6 +179,11 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
     private ProgrammingExerciseStudentParticipation participation;
 
     private TutorialGroup tutorialGroup;
+
+    @AfterAll
+    static void closeTheValidatorFactory() {
+        VALIDATOR_FACTORY.close();
+    }
 
     @BeforeEach
     void setUp() {
@@ -453,29 +471,179 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
         assertThat(metisQuestionRepository.findById(saved.getId())).map(MetisQuestion::getFocusFilePath).contains(LONGEST_FOCUS_FILE_PATH);
     }
 
-    @Test
-    void onlyAFiveOrASevenPointLikertScaleIsAccepted() {
-        MetisExerciseConfig config = configWithEveryFieldSet();
-        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
-            Validator validator = validatorFactory.getValidator();
-            for (int points : List.of(MetisExerciseConfig.MIN_LIKERT_POINTS, MetisExerciseConfig.MAX_LIKERT_POINTS)) {
-                config.setLikertScalePoints(points);
-                assertThat(validator.validate(config)).as("violations of a %d-point scale", points).isEmpty();
-                metisExerciseConfigRepository.saveAndFlush(config);
-                assertThat(metisExerciseConfigRepository.findById(exercise.getId())).map(MetisExerciseConfig::getLikertScalePoints).contains(points);
-            }
+    /**
+     * A value of a bounded column of the configuration, at a bound or just past it: Bean Validation and the database judge it alike.
+     * The database has to, since nothing that writes the row in production validates it: the server disables validation on persist,
+     * the row is inserted by a JPQL insert, and settings are changed by modifying queries.
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("settingsAtAndPastTheirBounds")
+    void aSettingIsJudgedAlikeByValidationAndByTheDatabase(Bound<MetisExerciseConfig> bound) {
+        MetisExerciseConfig config = new MetisExerciseConfig();
+        config.setExerciseId(exercise.getId());
+        bound.entityChange().accept(config);
+        assertThat(VALIDATOR.validate(config)).extracting(violation -> violation.getPropertyPath().toString()).as("Bean Validation").containsExactlyElementsOf(bound.violations());
 
-            // Six lies inside the range from five to seven, which is why the rule is membership and not a range.
-            config.setLikertScalePoints(6);
-            assertThat(validator.validate(config)).extracting(violation -> violation.getPropertyPath().toString()).containsExactly("likertScaleSupported");
+        assertTheDatabaseJudges(bound, "UPDATE metis_exercise_config SET " + bound.sqlChange() + " WHERE exercise_id = " + exercise.getId());
+    }
+
+    /**
+     * A value of a bounded column of a question, at a bound or just past it: Bean Validation and the database judge it alike.
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("questionValuesAtAndPastTheirBounds")
+    void aQuestionValueIsJudgedAlikeByValidationAndByTheDatabase(Bound<MetisQuestion> bound) {
+        MetisCheck check = metisCheckRepository.save(checkOf(participation));
+        MetisQuestion stored = metisQuestionRepository.save(mainQuestionWithEveryFieldSet(check.getId()));
+        MetisQuestion question = mainQuestionWithEveryFieldSet(check.getId());
+        bound.entityChange().accept(question);
+        assertThat(VALIDATOR.validate(question)).extracting(violation -> violation.getPropertyPath().toString()).as("Bean Validation")
+                .containsExactlyElementsOf(bound.violations());
+
+        assertTheDatabaseJudges(bound, "UPDATE metis_question SET " + bound.sqlChange() + " WHERE id = " + stored.getId());
+    }
+
+    @Test
+    void aPositionOrRegenerationCountPastTheTinyintRangeIsRefusedOnEveryEngine() {
+        MetisCheck check = metisCheckRepository.save(checkOf(participation));
+        MetisQuestion stored = metisQuestionRepository.save(mainQuestionWithEveryFieldSet(check.getId()));
+
+        // MySQL and H2 refuse 128 as out of range of the tinyint column before any check runs. PostgreSQL stores a smallint and would take it; there the check
+        // constraint refuses it, so a test on any engine finds an overflow.
+        for (String change : List.of("question_order = 128", "regeneration_count = 128")) {
+            assertThatThrownBy(() -> jdbcTemplate.update("UPDATE metis_question SET " + change + " WHERE id = " + stored.getId())).as(change)
+                    .isInstanceOf(DataAccessException.class);
+        }
+        assertThat(VALIDATOR.validateValue(MetisQuestion.class, "questionOrder", 128)).hasSize(1);
+        assertThat(VALIDATOR.validateValue(MetisQuestion.class, "regenerationCount", 128)).hasSize(1);
+        assertThat(metisQuestionRepository.findById(stored.getId())).hasValueSatisfying(question -> {
+            assertThat(question.getQuestionOrder()).isEqualTo(MAIN_QUESTION_ORDER);
+            assertThat(question.getRegenerationCount()).isEqualTo(stored.getRegenerationCount());
+        });
+    }
+
+    private void assertTheDatabaseJudges(Bound<?> bound, String update) {
+        if (bound.constraint() == null) {
+            assertThat(jdbcTemplate.update(update)).as("rows the database accepted").isEqualTo(1);
+        }
+        else {
+            assertThatThrownBy(() -> jdbcTemplate.update(update)).isInstanceOf(DataAccessException.class)
+                    .satisfies(refusal -> assertThat(refusal.getMessage().toLowerCase(Locale.ROOT)).contains(bound.constraint()));
+        }
+    }
+
+    /**
+     * One value of a bounded column, applied once to an entity that is valid otherwise and once to the stored row, which only the database checks.
+     *
+     * @param description  what the value is, which names the test
+     * @param entityChange applies the value to the entity
+     * @param sqlChange    the same value as the SET clause of an update of the stored row
+     * @param violations   the properties Bean Validation names, empty for a valid value
+     * @param constraint   the check constraint the database names, or null for a valid value
+     * @param <E>          the entity
+     */
+    record Bound<E>(String description, Consumer<E> entityChange, String sqlChange, List<String> violations, @Nullable String constraint) {
+
+        static <E> Bound<E> valid(String description, Consumer<E> entityChange, String sqlChange) {
+            return new Bound<>(description, entityChange, sqlChange, List.of(), null);
         }
 
-        // The database refuses six too, for the writes that do not pass through validation: the server disables it on persist, the row is inserted by a JPQL
-        // insert, and settings are changed by modifying queries.
-        assertThatThrownBy(() -> jdbcTemplate.update("UPDATE metis_exercise_config SET likert_scale_points = ? WHERE exercise_id = ?", 6, exercise.getId()))
-                .isInstanceOf(DataAccessException.class)
-                .satisfies(refusal -> assertThat(refusal.getMessage().toLowerCase(Locale.ROOT)).contains("ck_metis_exercise_config_likert_scale_points"));
-        assertThat(metisExerciseConfigRepository.findById(exercise.getId())).map(MetisExerciseConfig::getLikertScalePoints).contains(MetisExerciseConfig.MAX_LIKERT_POINTS);
+        static <E> Bound<E> refused(String description, Consumer<E> entityChange, String sqlChange, String violation, String constraint) {
+            return new Bound<>(description, entityChange, sqlChange, List.of(violation), constraint);
+        }
+
+        @Override
+        public String toString() {
+            return description;
+        }
+    }
+
+    static Stream<Bound<MetisExerciseConfig>> settingsAtAndPastTheirBounds() {
+        String mainQuestions = "ck_metis_exercise_config_main_question_count";
+        String followUps = "ck_metis_exercise_config_max_follow_ups_per_question";
+        String seconds = "ck_metis_exercise_config_seconds_per_question";
+        String answerLength = "ck_metis_exercise_config_answer_length";
+        String complexity = "ck_metis_exercise_config_complexity";
+        String likert = "ck_metis_exercise_config_likert_scale_points";
+        String threshold = "ck_metis_exercise_config_follow_up_threshold";
+        return Stream.of(Bound.valid("one main question", config -> config.setMainQuestionCount(1), "main_question_count = 1"),
+                Bound.valid("five main questions", config -> config.setMainQuestionCount(5), "main_question_count = 5"),
+                Bound.refused("no main question", config -> config.setMainQuestionCount(0), "main_question_count = 0", "mainQuestionCount", mainQuestions),
+                Bound.refused("six main questions", config -> config.setMainQuestionCount(6), "main_question_count = 6", "mainQuestionCount", mainQuestions),
+                Bound.valid("no follow-ups", config -> config.setMaxFollowUpsPerQuestion(0), "max_follow_ups_per_question = 0"),
+                Bound.valid("three follow-ups", config -> config.setMaxFollowUpsPerQuestion(3), "max_follow_ups_per_question = 3"),
+                Bound.refused("a negative number of follow-ups", config -> config.setMaxFollowUpsPerQuestion(-1), "max_follow_ups_per_question = -1", "maxFollowUpsPerQuestion",
+                        followUps),
+                Bound.refused("four follow-ups", config -> config.setMaxFollowUpsPerQuestion(4), "max_follow_ups_per_question = 4", "maxFollowUpsPerQuestion", followUps),
+                Bound.valid("time limits from 30 seconds to an hour", config -> {
+                    config.setMinSecondsPerQuestion(30);
+                    config.setMaxSecondsPerQuestion(3600);
+                }, "min_seconds_per_question = 30, max_seconds_per_question = 3600"), Bound.valid("one time limit only", config -> {
+                    config.setMinSecondsPerQuestion(120);
+                    config.setMaxSecondsPerQuestion(120);
+                }, "min_seconds_per_question = 120, max_seconds_per_question = 120"),
+                Bound.refused("a shortest time limit of 29 seconds", config -> config.setMinSecondsPerQuestion(29), "min_seconds_per_question = 29", "minSecondsPerQuestion",
+                        seconds),
+                Bound.refused("a longest time limit of an hour and a second", config -> config.setMaxSecondsPerQuestion(3601), "max_seconds_per_question = 3601",
+                        "maxSecondsPerQuestion", seconds),
+                Bound.refused("a shortest time limit above the longest", config -> {
+                    config.setMinSecondsPerQuestion(200);
+                    config.setMaxSecondsPerQuestion(100);
+                }, "min_seconds_per_question = 200, max_seconds_per_question = 100", "timeLimitRangeOrdered", seconds),
+                Bound.valid("the shortest answers", config -> config.setAnswerLength(1), "answer_length = 1"),
+                Bound.valid("the longest answers", config -> config.setAnswerLength(5), "answer_length = 5"),
+                Bound.refused("an answer length of 0", config -> config.setAnswerLength(0), "answer_length = 0", "answerLength", answerLength),
+                Bound.refused("an answer length of 6", config -> config.setAnswerLength(6), "answer_length = 6", "answerLength", answerLength),
+                Bound.valid("the simplest questions", config -> config.setComplexity(1), "complexity = 1"),
+                Bound.valid("the most complex questions", config -> config.setComplexity(5), "complexity = 5"),
+                Bound.refused("a complexity of 0", config -> config.setComplexity(0), "complexity = 0", "complexity", complexity),
+                Bound.refused("a complexity of 6", config -> config.setComplexity(6), "complexity = 6", "complexity", complexity),
+                Bound.valid("five Likert points", config -> config.setLikertScalePoints(5), "likert_scale_points = 5"),
+                Bound.valid("seven Likert points", config -> config.setLikertScalePoints(7), "likert_scale_points = 7"),
+                Bound.refused("four Likert points", config -> config.setLikertScalePoints(4), "likert_scale_points = 4", "likertScaleSupported", likert),
+                // Six lies between five and seven, which is why the rule is membership and not a range.
+                Bound.refused("six Likert points", config -> config.setLikertScalePoints(6), "likert_scale_points = 6", "likertScaleSupported", likert),
+                Bound.refused("eight Likert points", config -> config.setLikertScalePoints(8), "likert_scale_points = 8", "likertScaleSupported", likert),
+                Bound.valid("a follow-up threshold of 1", config -> config.setFollowUpThreshold(1), "follow_up_threshold = 1"),
+                Bound.valid("a follow-up threshold just below the top of five points", config -> config.setFollowUpThreshold(4), "follow_up_threshold = 4"),
+                Bound.valid("a follow-up threshold just below the top of seven points", config -> {
+                    config.setLikertScalePoints(7);
+                    config.setFollowUpThreshold(6);
+                }, "likert_scale_points = 7, follow_up_threshold = 6"),
+                Bound.refused("a follow-up threshold of 0", config -> config.setFollowUpThreshold(0), "follow_up_threshold = 0", "followUpThreshold", threshold),
+                Bound.refused("a follow-up threshold at the top of five points", config -> config.setFollowUpThreshold(5), "follow_up_threshold = 5",
+                        "followUpThresholdBelowTheTopScore", threshold),
+                Bound.refused("a follow-up threshold at the top of seven points", config -> {
+                    config.setLikertScalePoints(7);
+                    config.setFollowUpThreshold(7);
+                }, "likert_scale_points = 7, follow_up_threshold = 7", "followUpThresholdBelowTheTopScore", threshold));
+    }
+
+    static Stream<Bound<MetisQuestion>> questionValuesAtAndPastTheirBounds() {
+        String order = "ck_metis_question_question_order";
+        String regenerations = "ck_metis_question_regeneration_count";
+        String timeLimit = "ck_metis_question_time_limit_seconds";
+        String score = "ck_metis_question_llm_score";
+        String changedLines = "ck_metis_question_focus_file_changed_lines";
+        return Stream.of(Bound.valid("the first position", question -> question.setQuestionOrder(1), "question_order = 1"),
+                Bound.valid("the last position a tinyint holds", question -> question.setQuestionOrder(127), "question_order = 127"),
+                Bound.refused("position 0", question -> question.setQuestionOrder(0), "question_order = 0", "questionOrder", order),
+                Bound.valid("no regeneration", question -> question.setRegenerationCount(0), "regeneration_count = 0"),
+                Bound.valid("127 regenerations", question -> question.setRegenerationCount(127), "regeneration_count = 127"),
+                Bound.refused("a negative number of regenerations", question -> question.setRegenerationCount(-1), "regeneration_count = -1", "regenerationCount", regenerations),
+                Bound.valid("the shortest time limit", question -> question.setTimeLimitSeconds(30), "time_limit_seconds = 30"),
+                Bound.valid("the longest time limit", question -> question.setTimeLimitSeconds(3600), "time_limit_seconds = 3600"),
+                Bound.refused("a time limit of 29 seconds", question -> question.setTimeLimitSeconds(29), "time_limit_seconds = 29", "timeLimitSeconds", timeLimit),
+                Bound.refused("a time limit of an hour and a second", question -> question.setTimeLimitSeconds(3601), "time_limit_seconds = 3601", "timeLimitSeconds", timeLimit),
+                Bound.valid("no score before the rating", question -> question.setLlmScore(null), "llm_score = NULL"),
+                Bound.valid("the lowest score", question -> question.setLlmScore(1), "llm_score = 1"),
+                Bound.valid("the top score of seven points", question -> question.setLlmScore(7), "llm_score = 7"),
+                Bound.refused("a score of 0", question -> question.setLlmScore(0), "llm_score = 0", "llmScore", score),
+                Bound.refused("a score of 8", question -> question.setLlmScore(8), "llm_score = 8", "llmScore", score),
+                Bound.valid("a focus file without changed lines", question -> question.setFocusFileChangedLines(0), "focus_file_changed_lines = 0"),
+                Bound.valid("no focus file, as for a follow-up", question -> question.setFocusFileChangedLines(null), "focus_file_changed_lines = NULL"),
+                Bound.refused("a negative number of changed lines", question -> question.setFocusFileChangedLines(-1), "focus_file_changed_lines = -1", "focusFileChangedLines",
+                        changedLines));
     }
 
     @Test
