@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseDefaultConfigurationsRepository;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
@@ -117,8 +116,6 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
-    private final ExerciseDefaultConfigurationsRepository exerciseDefaultConfigurationsRepository;
-
     private final ExerciseConfigurationService exerciseConfigurationService;
 
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
@@ -155,10 +152,9 @@ public class ProgrammingExerciseCreationUpdateService {
             Optional<VersionControlService> versionControlService, GitService gitService, CompetencyExerciseLinkService competencyExerciseLinkService,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
             TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
-            ExerciseDefaultConfigurationsRepository exerciseDefaultConfigurationsRepository, ExerciseConfigurationService exerciseConfigurationService) {
+            ExerciseConfigurationService exerciseConfigurationService) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
-        this.exerciseDefaultConfigurationsRepository = exerciseDefaultConfigurationsRepository;
         this.exerciseConfigurationService = exerciseConfigurationService;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
@@ -421,8 +417,6 @@ public class ProgrammingExerciseCreationUpdateService {
         // adds the default row an incomplete creation left out. The plagiarism detection configuration is stored when the update carried one and read otherwise.
         teamAssignmentConfigRepository.applyTo(savedProgrammingExercise, null);
         plagiarismDetectionConfigRepository.applyTo(savedProgrammingExercise, updatedProgrammingExercise.getPlagiarismDetectionConfig());
-        // The update carries no Metis settings; it only adds the default Metis configuration an incomplete creation left out.
-        exerciseDefaultConfigurationsRepository.ensureDefaultConfigurations(savedProgrammingExercise);
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 

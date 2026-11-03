@@ -261,12 +261,15 @@ module writes the row itself, the way `CourseDefaultConfigurationsRepository` wr
 course: `ExerciseConfigurationService.initialize` calls `ExerciseDefaultConfigurationsRepository.ensureDefaultConfigurations`,
 which decides from the exercise type, checks for the row with a plain read and inserts it with a plain `INSERT ... VALUES`
 that names only the exercise, so every setting comes from the column defaults and Metis starts switched off. Both
-statements are JPQL that names the entity only by its name, which keeps the exercise module free of any Metis class. A concurrent insert of the same row is
-tolerated, and a call that finds the row changes nothing. The programming import, which goes to the repositories directly,
-makes the same call, and so does `ProgrammingExerciseCreationUpdateService.updateProgrammingExercise` next to the `applyTo`
-calls of the team and plagiarism rows, so the next update of a programming exercise whose creation failed half-way adds the
-row that creation left out. The migration that created the table gave every existing programming exercise its row.
-Switching Metis on or off later only changes the row's `enabled` flag.
+statements are JPQL that names the entity only by its name, which keeps the exercise module free of any Metis class. A
+concurrent insert of the same row is tolerated, and a call that finds the row changes nothing, so the call stays idempotent
+like the rest of `initialize`. The programming import, which goes to the repositories directly, makes the same call.
+Unlike the team and plagiarism rows, which the exercise module reads and so repairs on every update, the exercise module
+never touches the Metis row again: a server that does not use Metis pays a read and an insert per new programming exercise
+and nothing on an update. A programming exercise whose creation failed between storing it and inserting the row is left to
+the Metis module, which reads a missing row as the defaults and inserts it before it first writes the settings. The
+migration that created the table gave every existing programming exercise its row. Switching Metis on or off later only
+changes the row's `enabled` flag.
 
 #### Turning an existing association lazy
 

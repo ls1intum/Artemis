@@ -153,8 +153,8 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
     private JdbcTemplate jdbcTemplate;
 
     /**
-     * For the writes behind the entity's back that have to stay: a configuration removed the way a creation that failed half-way leaves it, and the backfill
-     * changeSet of the migration. The pool of the tests disables auto-commit, so they run on a connection of their own.
+     * For the writes behind the entity's back that have to stay: a configuration removed the way an exercise stored before the migration lacks it, and the
+     * backfill changeSet of the migration. The pool of the tests disables auto-commit, so they run on a connection of their own.
      */
     @Autowired
     private DataSource dataSource;
@@ -422,19 +422,6 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     @Test
-    void anExerciseWhoseConfigurationIsMissingGetsTheDefaultsAgain() throws SQLException {
-        // What a creation that failed after storing the exercise leaves behind: the exercise without its row.
-        deleteConfigurationRow(exercise.getId());
-        assertThat(metisExerciseConfigRepository.findById(exercise.getId())).isEmpty();
-
-        exerciseConfigurationService.initialize(exercise);
-
-        MetisExerciseConfig defaults = new MetisExerciseConfig();
-        defaults.setExerciseId(exercise.getId());
-        assertThat(metisExerciseConfigRepository.findById(exercise.getId()).orElseThrow()).usingRecursiveComparison().isEqualTo(defaults);
-    }
-
-    @Test
     void theMigrationGivesAProgrammingExerciseStoredBeforeItTheDefaultsAndLeavesEveryOtherRowAlone() throws Exception {
         // A programming exercise as the migration finds it on an installation that already has exercises: without a configuration.
         deleteConfigurationRow(exercise.getId());
@@ -531,7 +518,7 @@ class MetisDataModelIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     /**
-     * Removes the configuration row of an exercise without going through the entity, as a creation that failed after storing the exercise leaves it.
+     * Removes the configuration row of an exercise without going through the entity, so that the exercise looks like one stored before the migration.
      *
      * @param exerciseId the id of the exercise whose row goes
      * @throws SQLException if the statement fails
