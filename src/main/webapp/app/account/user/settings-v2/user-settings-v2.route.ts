@@ -34,6 +34,30 @@ export const routes: Routes = [
                 },
             },
             {
+                path: 'credentials/ssh/add',
+                loadComponent: () =>
+                    import('app/account/user/settings/ssh-settings/details/ssh-user-settings-key-details.component').then((m) => m.SshUserSettingsKeyDetailsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
+                },
+            },
+            {
+                path: 'credentials/ssh/fingerprints',
+                loadComponent: () =>
+                    import('app/account/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component').then((m) => m.SshUserSettingsFingerprintsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
+                },
+            },
+            {
+                path: 'credentials/ssh/view/:keyId',
+                loadComponent: () =>
+                    import('app/account/user/settings/ssh-settings/details/ssh-user-settings-key-details.component').then((m) => m.SshUserSettingsKeyDetailsComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
+                },
+            },
+            {
                 path: 'learning',
                 loadComponent: () => import('app/account/user/settings/learner-profile/learner-profile.component').then((m) => m.LearnerProfileComponent),
                 data: {

@@ -10,8 +10,26 @@ describe('user settings V2 routes', () => {
         expect(root.path).toBe('user-settings-v2');
         expect(root.data?.usesModuleBackground).toBe(false);
         expect(root.children?.find((route) => route.path === '')?.redirectTo).toBe('profile');
-        expect(root.children?.map((route) => route.path)).toEqual(['', 'profile', 'credentials', 'learning', 'ai-experience', 'exercises']);
+        expect(root.children?.map((route) => route.path)).toEqual([
+            '',
+            'profile',
+            'credentials',
+            'credentials/ssh/add',
+            'credentials/ssh/fingerprints',
+            'credentials/ssh/view/:keyId',
+            'learning',
+            'ai-experience',
+            'exercises',
+        ]);
         expect(root.children?.filter((route) => route.path).every((route) => route.loadComponent)).toBe(true);
+    });
+
+    it('provides SSH detail pages with the existing SSH title', () => {
+        const sshRoutes = routes[0].children?.filter((route) => route.path?.startsWith('credentials/ssh/'));
+
+        expect(sshRoutes?.map((route) => route.path)).toEqual(['credentials/ssh/add', 'credentials/ssh/fingerprints', 'credentials/ssh/view/:keyId']);
+        expect(sshRoutes?.every((route) => route.data?.pageTitle === 'artemisApp.userSettings.categories.SSH_SETTINGS')).toBe(true);
+        expect(sshRoutes?.every((route) => route.loadComponent)).toBe(true);
     });
 
     it('protects conditional tabs with their existing availability guards', () => {
