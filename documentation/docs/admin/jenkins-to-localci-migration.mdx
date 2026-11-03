@@ -53,7 +53,9 @@ and no Jenkins user to maintain.
    - Overridden Jenkins templates under `src/main/resources/templates/jenkins`, and changes to the pipeline for network access.
      LocalCI uses the [build phases templates](/admin/production-setup/programming-exercise-adjustments) and the Docker flags of the exercise instead.
    - Custom Docker images used by Jenkins agents. LocalCI runs the Docker image configured for the exercise on the build agents. Such an image must be
-     published in a publicly available repository, built for amd64 and arm64, and contain all build dependencies.
+     available to the build agents in a registry, built for the architecture of the build agents (`artemis.continuous-integration.image-architecture`,
+     `amd64` by default), and contain all build dependencies. A Docker build agent needs the registry login of its host. The Kubernetes runner needs an
+     entry in `image-pull-secrets` for a private registry, see [build runners](/admin/production-setup/build-runners).
 4. **Choose the time.** Migrate between teaching periods, never during an exam or in the days before a deadline.
 5. **Take backups** of the Artemis database, the Artemis configuration and the LocalVC repository directory. Keep the Jenkins server
    untouched until the end of the migration.
@@ -143,8 +145,13 @@ Until you upgrade to Artemis 11 you can go back, because Artemis 10 still suppor
 1. Stop all nodes and restore the backups of the database, the configuration and the repositories.
 2. Start the nodes with the old profiles and the old configuration.
 
-Exercises that were created while LocalCI was active have no Jenkins build plan, so recreate it for them after a rollback.
-Results created by LocalCI stay valid and are not removed by a rollback.
+<Callout variant={CalloutVariant.warning}>
+
+  Restoring the backups discards everything that happened after they were taken: new exercises, results, feedback, student commits and
+  every other change in the database and the repositories. Announce the data loss to instructors and students before you do it, and take
+  a fresh backup of the current state first, so that nothing is lost for good.
+
+</Callout>
 
 ## What instructors need to know
 

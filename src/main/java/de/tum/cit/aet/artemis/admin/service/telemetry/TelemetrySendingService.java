@@ -210,12 +210,14 @@ public class TelemetrySendingService {
 
     /**
      * Mirrors the decision of the websocket configuration: messages are relayed to an external broker as soon as one valid broker address is configured.
+     * The addresses are split at the comma and validated as they are, without trimming, exactly like the websocket configuration does, so an address with a
+     * surrounding space is invalid there and here.
      *
      * @return {@code external} for a relay to a broker such as ActiveMQ Artemis, {@code simple} for the in-memory broker
      */
     private String websocketBroker() {
         String addresses = env.getProperty("spring.websocket.broker.addresses", "");
-        boolean relay = Arrays.stream(addresses.split(",")).map(String::trim).anyMatch(address -> InetSocketAddressValidator.getValidAddress(address).isPresent());
+        boolean relay = Arrays.stream(addresses.split(",")).anyMatch(address -> InetSocketAddressValidator.getValidAddress(address).isPresent());
         return relay ? "external" : "simple";
     }
 }

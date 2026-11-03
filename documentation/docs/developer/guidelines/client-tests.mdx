@@ -25,8 +25,11 @@ We use [NgMocks](https://www.npmjs.com/package/ng-mocks/) for mocking the depend
 You can run all tests by invoking `pnpm test` in the root directory of the Artemis project.
 If you want to run individual tests, you can use the following commands:
 
-1. Run all tests in a file: `pnpm exec vitest run src/main/webapp/app/fileupload/manage/assess/file-upload-assessment.component.spec.ts`
-2. Run all tests in a module or folder: `pnpm exec vitest run src/main/webapp/app/fileupload/`
+1. Run all tests in a file: `pnpm run prebuild && pnpm exec vitest run src/main/webapp/app/fileupload/manage/assess/file-upload-assessment.component.spec.ts`
+2. Run all tests in a module or folder: `pnpm run prebuild && pnpm exec vitest run src/main/webapp/app/fileupload/`
+
+The `prebuild` step builds the UI kit in `packages/tum-aet-ui/dist`, which the tests import as `@tumaet/ui-angular`. Without it, a checkout that has not built the kit
+fails to resolve that import. It is only needed once per checkout and after a change of the kit, and `pnpm run test:one <path>` does both steps.
 
 ## Guidelines Overview
 

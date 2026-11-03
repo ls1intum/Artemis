@@ -167,6 +167,9 @@ class TelemetrySendingServiceTest {
         assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).websocketBroker()).isEqualTo("simple");
         env.setProperty("spring.websocket.broker.addresses", "broker1.example:61613, broker2.example:61613");
         assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).websocketBroker()).isEqualTo("external");
+        // the websocket configuration does not trim, so a lone address with a space is invalid there and must not be reported as a relay
+        env.setProperty("spring.websocket.broker.addresses", " broker1.example:61613");
+        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).websocketBroker()).isEqualTo("simple");
     }
 
     @Test
