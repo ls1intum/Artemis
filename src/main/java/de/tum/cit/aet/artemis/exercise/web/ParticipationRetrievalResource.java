@@ -27,9 +27,10 @@ import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -160,7 +161,8 @@ public class ParticipationRetrievalResource {
      * @return all submissions that belong to the participation
      */
     @GetMapping("participations/{participationId}/submissions")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<List<DetailedSubmissionDTO>> getSubmissionsOfParticipation(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         User user = userRepository.getUserWithAuthorities();
@@ -180,17 +182,33 @@ public class ParticipationRetrievalResource {
      * @return a paginated list of ParticipationManagementDTO with pagination headers
      */
     @GetMapping("exercises/{exerciseId}/participations/page")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPage(@PathVariable Long exerciseId, @Valid PagedSearchDTO search,
             @RequestParam(required = false) Integer scoreRangeLower, @RequestParam(required = false) Integer scoreRangeUpper) {
-        log.debug("REST request to get paged Participations for Exercise {}", exerciseId);
+        return getParticipationsPageForKind(exerciseId, search, scoreRangeLower, scoreRangeUpper, false);
+    }
 
+    /**
+     * Returns the exam participation management page, which requires an instructor.
+     *
+     * @param exerciseId      the exam exercise whose participations to load
+     * @param search          the filtering, sorting and pagination parameters
+     * @param scoreRangeLower the optional lower bound of the score range in percent
+     * @param scoreRangeUpper the optional upper bound of the score range in percent
+     * @return the participation page with pagination headers
+     */
+    @GetMapping("exercises/{exerciseId}/participations/page/for-exam")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<List<ParticipationManagementDTO>> getExamParticipationsPage(@PathVariable Long exerciseId, @Valid PagedSearchDTO search,
+            @RequestParam(required = false) Integer scoreRangeLower, @RequestParam(required = false) Integer scoreRangeUpper) {
+        return getParticipationsPageForKind(exerciseId, search, scoreRangeLower, scoreRangeUpper, true);
+    }
+
+    private ResponseEntity<List<ParticipationManagementDTO>> getParticipationsPageForKind(Long exerciseId, PagedSearchDTO search, Integer scoreRangeLower, Integer scoreRangeUpper,
+            boolean examExercise) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (exercise.isCourseExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        }
-        else if (exercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        if (examExercise ? !exercise.isExamExercise() : !exercise.isCourseExercise()) {
+            throw new AccessForbiddenException("The exercise does not belong to the requested course or exam context");
         }
 
         boolean hideParticipant = shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
@@ -210,12 +228,11 @@ public class ParticipationRetrievalResource {
      * @return list of {@link ParticipationNameExportDTO}, one entry per participation
      */
     @GetMapping("exercises/{exerciseId}/participations/names")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<ParticipationNameExportDTO>> getParticipationNamesForExport(@PathVariable Long exerciseId) {
         log.debug("REST request to export participation names for Exercise {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         List<ParticipationNameExportDTO> result = participationService.getParticipationNamesForExport(exercise);
         return ResponseEntity.ok(result);

@@ -83,13 +83,13 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_returnsRequestedPageSize() throws Exception {
         assertThat(getPage(pagedParams("0", "3"))).hasSize(3);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_returnsSecondPage() throws Exception {
         List<CourseRoleMemberDTO> firstPage = getPage(pagedParams("0", "5"));
         List<CourseRoleMemberDTO> secondPage = getPage(pagedParams("1", "5"));
@@ -100,7 +100,7 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_setsTotalCountHeader() throws Exception {
         MvcResult result = request.performMvcRequest(get(pagedUrl()).params(pagedParams("0", "3"))).andExpect(status().isOk()).andReturn();
         assertThat(result.getResponse().getHeader("X-Total-Count")).isEqualTo(String.valueOf(NUMBER_OF_STUDENTS));
@@ -108,13 +108,13 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
     @ParameterizedTest
     @CsvSource({ "0, 0", "-1, 10", "0, 201", "100001, 10", "2147483647, 200" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_rejectsOutOfBoundsPagination(String page, String pageSize) throws Exception {
         request.getList(pagedUrl(), HttpStatus.BAD_REQUEST, CourseRoleMemberDTO.class, pagedParams(page, pageSize));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_searchByLogin_returnsMatchingUser() throws Exception {
         assertThat(getPage(pagedParams("0", "10", TEST_PREFIX + "student1"))).extracting(CourseRoleMemberDTO::login).containsExactly(TEST_PREFIX + "student1");
     }
@@ -123,26 +123,26 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
      * Generated test users have firstName/lastName = login + "First"/"Last", so "First" only matches the name.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_searchByName_returnsMatchingUser() throws Exception {
         assertThat(getPage(pagedParams("0", "10", TEST_PREFIX + "student2First"))).extracting(CourseRoleMemberDTO::login).containsExactly(TEST_PREFIX + "student2");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_searchByEmail_returnsMatchingUser() throws Exception {
         assertThat(getPage(pagedParams("0", "10", "@test.de"))).extracting(CourseRoleMemberDTO::login).contains(TEST_PREFIX + "student1");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_searchByRegistrationNumber_returnsMatchingUser() throws Exception {
         userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", REGISTRATION_NUMBER);
         assertThat(getPage(pagedParams("0", "10", REGISTRATION_NUMBER))).extracting(CourseRoleMemberDTO::login).containsExactly(TEST_PREFIX + "student1");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_sortsDescendingByLogin() throws Exception {
         MultiValueMap<String, String> params = pagedParams("0", String.valueOf(NUMBER_OF_STUDENTS));
         params.set("sortingOrder", "DESCENDING");
@@ -155,7 +155,7 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
      * before "Ann Maria"/"Alpha", but the concatenated strings "Ann Maria Alpha" and "Ann Zulu" sort the other way around.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_sortsByConcatenatedNameNotTuple() throws Exception {
         setUserName(TEST_PREFIX + "student1", "Ann", "Zulu");
         setUserName(TEST_PREFIX + "student2", "Ann Maria", "Alpha");
@@ -168,7 +168,7 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_returnsCorrectDtoFields() throws Exception {
         userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", REGISTRATION_NUMBER);
 
@@ -183,7 +183,7 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getPagedUsersInCourseRole_unknownSlug_returnsBadRequest() throws Exception {
         request.getList("/api/course/courses/" + course.getId() + "/unknownRole/paged", HttpStatus.BAD_REQUEST, CourseRoleMemberDTO.class, pagedParams("0", "10"));
     }
@@ -198,7 +198,7 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void getPagedUsersInCourseRole_forbiddenForTutor() throws Exception {
         request.getList(pagedUrl(), HttpStatus.FORBIDDEN, CourseRoleMemberDTO.class, pagedParams("0", "10"));
     }
@@ -210,7 +210,7 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_byLogin_returnsMatchingUsers() throws Exception {
         List<UserForRegistrationDTO> result = search(TEST_PREFIX + "student");
         assertThat(result).hasSize(NUMBER_OF_STUDENTS);
@@ -218,7 +218,7 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_marksAlreadyEnrolledUser() throws Exception {
         List<UserForRegistrationDTO> result = search(TEST_PREFIX + "student1");
         assertThat(result).hasSize(1);
@@ -230,7 +230,7 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
      * tutor1 is enrolled as a tutor, not as a student, so it is not registered for the students role.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_nonEnrolledUserNotFlagged() throws Exception {
         List<UserForRegistrationDTO> result = search(TEST_PREFIX + "tutor1");
         assertThat(result).hasSize(1);
@@ -239,19 +239,19 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_noResultsForUnknownTerm() throws Exception {
         assertThat(search("zzz_no_match_zzz")).isEmpty();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_searchByEmail_returnsMatchingUser() throws Exception {
         assertThat(search(TEST_PREFIX + "student1@test.de")).extracting(UserForRegistrationDTO::login).containsExactly(TEST_PREFIX + "student1");
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_searchByRegistrationNumber_returnsMatchingUser() throws Exception {
         userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", REGISTRATION_NUMBER);
         assertThat(search(REGISTRATION_NUMBER)).extracting(UserForRegistrationDTO::login).containsExactly(TEST_PREFIX + "student1");
@@ -259,7 +259,7 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
     @ParameterizedTest
     @CsvSource({ "-1, 10", "100001, 10", "0, 0", "0, 201", "2147483647, 200" })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void searchUsersForCourseRole_rejectsOutOfBoundsPagination(String page, String size) throws Exception {
         MultiValueMap<String, String> params = searchParams(TEST_PREFIX + "student");
         params.add("page", page);
@@ -278,7 +278,7 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void searchUsersForCourseRole_forbiddenForTutor() throws Exception {
         request.getList(searchUrl(), HttpStatus.FORBIDDEN, UserForRegistrationDTO.class, searchParams(TEST_PREFIX + "student"));
     }
@@ -290,7 +290,7 @@ class CourseAccessResourceIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void addUsersToCourseRole_unknownSlug_returnsBadRequest() throws Exception {
         request.postWithoutLocation("/api/course/courses/" + course.getId() + "/unknownRole", List.of(), HttpStatus.BAD_REQUEST, null);
     }

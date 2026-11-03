@@ -48,7 +48,7 @@ test.describe('Exam programming repository lock', { tag: '@slow' }, () => {
         await examAPIRequests.registerStudentForExam(exam, studentOne);
         await examAPIRequests.generateMissingIndividualExams(exam);
         await examAPIRequests.prepareExerciseStartForExam(exam);
-        const participation = await exerciseAPIRequests.getProgrammingExerciseParticipation(exercise.id!);
+        const participation = await exerciseAPIRequests.getProgrammingExerciseParticipation(exercise.id!, 'exam');
         const participationId = participation.id!;
         const files = (await (await page.request.get(`api/programming/participations/${participationId}/repository/files`)).json()) as Record<string, string>;
         const sourceFile = Object.keys(files).find((name) => files[name] === 'FILE' && name.endsWith('.c'));

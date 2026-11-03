@@ -1,19 +1,20 @@
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity } from '@tumaet/ui-angular';
+
 import { Component, input, output } from '@angular/core';
-import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export type ModePickerOption<TMode> = {
     value: TMode;
     labelKey?: string;
     label?: string;
-    btnClass: string;
+    btnClass?: string;
+    severity?: TumAetUiButtonSeverity;
 };
 
 @Component({
     selector: 'jhi-mode-picker',
     templateUrl: './mode-picker.component.html',
-    styles: ['.btn.disabled { pointer-events: none }', '.btn-group.disabled { cursor: not-allowed; }'],
-    imports: [NgClass, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, ArtemisTranslatePipe],
 })
 export class ModePickerComponent<TMode> {
     readonly options = input<ModePickerOption<TMode>[]>(undefined!);

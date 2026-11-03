@@ -88,13 +88,13 @@ def get_user_details_by_index(user_index: int) -> Dict[str, Any]:
         authorities = [user_role]
         groups = ["students"]
     elif 6 <= user_index <= 10 or user_index == 101:
-        authorities = [user_role, "ROLE_TA"]
+        authorities = [user_role]
         groups = ["tutors"]
     elif 11 <= user_index <= 15:
-        authorities = [user_role, "ROLE_EDITOR"]
+        authorities = [user_role]
         groups = ["editors"]
     elif 16 <= user_index <= 20 or user_index == 103:
-        authorities = [user_role, "ROLE_INSTRUCTOR"]
+        authorities = [user_role]
         groups = ["instructors"]
 
     return {

@@ -95,7 +95,7 @@ export interface ProgrammingRepositoryButtonsDetail extends DetailBase {
     data: {
         exerciseId?: number;
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
-        type: RepositoryType;
+        type: RepositoryType.TEMPLATE | RepositoryType.SOLUTION | RepositoryType.TESTS;
     };
 }
 

@@ -184,8 +184,7 @@ public class AnswerMessageResource {
      * tutor-in-course authorization inside {@code AnswerMessageService#verifyAnswerMessage} via
      * {@code checkHasAtLeastRoleInCourseElseThrow(TEACHING_ASSISTANT, ...)} plus a channel-membership check.
      * This mirrors the reject (delete) endpoint. The in-body check also covers the channel membership, which no
-     * annotation expresses, so it stays even though {@code @EnforceAtLeastTutorInCourse} no longer requires the global
-     * {@code ROLE_TA} authority that course tutors do not necessarily carry.
+     * annotation expresses, so it stays even though {@code @EnforceAtLeastTutorInCourse} could express the tutor role.
      *
      * @param courseId        id of the course the answer message belongs to
      * @param answerMessageId id of the answer message to approve

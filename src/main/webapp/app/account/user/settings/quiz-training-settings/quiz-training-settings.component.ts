@@ -1,8 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { QuizTrainingSettingsService } from 'app/account/user/settings/quiz-training-settings/quiz-training-settings.service';
-import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
+import { QuizTrainingApi } from 'app/openapi/api/quiz-training-api';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -14,7 +13,7 @@ import { TumAetUiCardComponent, TumAetUiMessageComponent, TumAetUiToggleSwitchCo
     imports: [TranslateDirective, FormsModule, HelpIconComponent, TumAetUiCardComponent, TumAetUiMessageComponent, TumAetUiToggleSwitchComponent],
 })
 export class QuizTrainingSettingsComponent implements OnInit {
-    quizService = inject(QuizTrainingSettingsService);
+    quizTrainingApi = inject(QuizTrainingApi);
     alertService = inject(AlertService);
 
     readonly isVisibleInLeaderboard = signal<boolean | undefined>(undefined);
@@ -29,11 +28,9 @@ export class QuizTrainingSettingsComponent implements OnInit {
     }
 
     private loadSettings(): void {
-        this.quizService.getSettings().subscribe({
-            next: (response) => {
-                if (response.body) {
-                    this.isVisibleInLeaderboard.set(response.body.showInLeaderboard);
-                }
+        this.quizTrainingApi.getLeaderboardSettings().subscribe({
+            next: (settings) => {
+                this.isVisibleInLeaderboard.set(settings.showInLeaderboard);
             },
             error: (error) => {
                 onError(this.alertService, error);
@@ -42,9 +39,7 @@ export class QuizTrainingSettingsComponent implements OnInit {
     }
 
     private saveSettings(): void {
-        const leaderboardSettingsDTO = new LeaderboardSettingsDTO();
-        leaderboardSettingsDTO.showInLeaderboard = this.isVisibleInLeaderboard();
-        this.quizService.updateSettings(leaderboardSettingsDTO).subscribe({
+        this.quizTrainingApi.updateLeaderboardSettings({ showInLeaderboard: this.isVisibleInLeaderboard() }).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.userSettings.quizTrainingSettings.updateSuccess');
             },

@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackSuggestionsBannerComponent, feedbackSuggestionsNotice } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
-import { Message } from 'primeng/message';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -30,7 +30,7 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         fixture.componentRef.setInput('isAssessor', true);
         fixture.detectChanges();
 
-        const messages = fixture.debugElement.queryAll(By.directive(Message));
+        const messages = fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent));
         expect(messages).toHaveLength(1);
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable"]'))).toBeTruthy();
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
@@ -42,7 +42,7 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
         fixture.detectChanges();
 
-        const messages = fixture.debugElement.queryAll(By.directive(Message));
+        const messages = fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent));
         expect(messages).toHaveLength(1);
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
     });
@@ -52,14 +52,14 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.queryAll(By.directive(Message))).toHaveLength(1);
+        expect(fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent))).toHaveLength(1);
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeTruthy();
     });
 
     it('should render nothing when no conditions are met', () => {
         fixture.detectChanges();
 
-        expect(fixture.debugElement.queryAll(By.directive(Message))).toHaveLength(0);
+        expect(fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent))).toHaveLength(0);
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
     });
 
@@ -72,7 +72,7 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         expect(fixture.componentInstance.appearance()).toBe('banner');
         expect(fixture.debugElement.nativeElement.classList.contains('feedback-suggestions-banner--chrome')).toBe(false);
         expect(fixture.debugElement.query(By.css('.feedback-suggestions-chrome'))).toBeNull();
-        expect(fixture.debugElement.queryAll(By.directive(Message))).toHaveLength(1);
+        expect(fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent))).toHaveLength(1);
     });
 
     describe('chrome appearance', () => {
@@ -122,14 +122,14 @@ describe('FeedbackSuggestionsBannerComponent', () => {
             const label = fixture.debugElement.query(By.css('.feedback-suggestions-chrome__label'));
             expect(label.injector.get(TranslateDirective).jhiTranslate()).toBe(labelKey);
             expect(!!fixture.debugElement.query(By.css('[data-testid="feedback-suggestions-chrome-info"]'))).toBe(hasInfoButton);
-            expect(fixture.debugElement.queryAll(By.directive(Message))).toHaveLength(0);
+            expect(fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent))).toHaveLength(0);
         });
 
         it('should render nothing when there is no notice', () => {
             fixture.detectChanges();
 
             expect(island()).toBeNull();
-            expect(fixture.debugElement.queryAll(By.directive(Message))).toHaveLength(0);
+            expect(fixture.debugElement.queryAll(By.directive(TumAetUiMessageComponent))).toHaveLength(0);
         });
     });
 });

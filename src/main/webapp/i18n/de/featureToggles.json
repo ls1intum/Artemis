@@ -54,8 +54,12 @@
                     "description": "Aktiviert den Atlas-Kurs-Chat-Agenten und den autonomen Kompetenz-Orchestrator. Erfordert ein konfiguriertes Sprachmodell. Kompetenzen, Lernpfade und Analysen funktionieren auch ohne."
                 },
                 "hyperion": {
-                    "name": "Hyperion (Aufgabenerstellung)",
-                    "description": "Aktiviert KI-gestützte Aufgabenerstellung mit Hyperion zur Generierung von Programmieraufgaben."
+                    "name": "Hyperion (KI-Autorenhilfe)",
+                    "description": "Aktiviert KI-Unterstützung für Aufgabenstellungen, Quizfragen, FAQs und Quizvarianten."
+                },
+                "hyperion-exercise-generation": {
+                    "name": "Hyperion (Programmieraufgaben-Generierung)",
+                    "description": "Aktiviert die KI-gestützte Generierung vollständiger Programmieraufgaben und Varianten mit einem AI Worker."
                 },
                 "deimos": {
                     "name": "Deimos (Analyse bösartiger Teilnahmen)",

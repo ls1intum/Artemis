@@ -6,23 +6,16 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 describe('MarkdownDirective', () => {
     let fixture: DirectiveFixture<MarkdownDirective>;
     let text: WritableSignal<string | undefined>;
-    let posting: WritableSignal<boolean>;
     let renderCount: number;
 
     const element = (): Element => fixture.nativeElement;
 
     beforeEach(() => {
         text = signal<string | undefined>(undefined);
-        posting = signal(false);
         renderCount = 0;
         fixture = TestBed.createDirective(MarkdownDirective, {
             tagName: 'div',
-            bindings: [
-                inputBinding('jhiMarkdown', text),
-                inputBinding('markdownPosting', posting),
-                inputBinding('markdownContentBeforeReference', () => true),
-                outputBinding('markdownRendered', () => renderCount++),
-            ],
+            bindings: [inputBinding('jhiMarkdown', text), outputBinding('markdownRendered', () => renderCount++)],
         });
     });
 
@@ -51,16 +44,6 @@ describe('MarkdownDirective', () => {
         await vi.waitFor(() => {
             fixture.detectChanges();
             expect(element().innerHTML).toContain('hljs');
-        });
-    });
-
-    it('applies the inline-paragraph class in posting mode', async () => {
-        posting.set(true);
-        text.set('hello world');
-        fixture.detectChanges();
-        await vi.waitFor(() => {
-            fixture.detectChanges();
-            expect(element().innerHTML).toContain('inline-paragraph');
         });
     });
 });

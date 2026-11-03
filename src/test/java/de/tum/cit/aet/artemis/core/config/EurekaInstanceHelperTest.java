@@ -2,10 +2,8 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.InetAddress;
@@ -19,15 +17,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.cloud.client.DefaultServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
-import org.springframework.cloud.client.serviceregistry.ServiceRegistry;
+import org.springframework.cloud.netflix.eureka.serviceregistry.EurekaRegistration;
 import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.netflix.appinfo.ApplicationInfoManager;
+import com.netflix.appinfo.EurekaInstanceConfig;
+import com.netflix.appinfo.InstanceInfo;
 
 class EurekaInstanceHelperTest {
 
     @Test
     void unregisteredNodesHaveNoDiscoveryButCanStillFormatAddresses() {
-        var helper = helper(mock(DiscoveryClient.class), Optional.empty(), Optional.empty(), new MockEnvironment());
+        var helper = helper(mock(DiscoveryClient.class), Optional.empty(), new MockEnvironment());
         assertThat(helper.getServiceId()).isEmpty();
         assertThat(helper.getServiceInstances()).isEmpty();
         assertThat(helper.discoverCoreNodeAddresses()).isEmpty();
@@ -49,7 +51,7 @@ class EurekaInstanceHelperTest {
         var client = instance("127.0.0.3", 8082, Map.of("profile", "buildagent"));
         var unknown = instance("127.0.0.4", 8083, Map.of());
         when(discovery.getInstances("artemis")).thenReturn(List.of(self, core, client, unknown));
-        var helper = helper(discovery, Optional.of(own), Optional.empty(), new MockEnvironment());
+        var helper = helper(discovery, Optional.of(own), new MockEnvironment());
         assertThat(helper.getServiceId()).contains("artemis");
         assertThat(helper.getServiceInstances()).containsExactly(self, core, client, unknown);
         assertThat(helper.discoverCoreNodeAddresses()).containsExactly("[::1]:5702");
@@ -63,7 +65,7 @@ class EurekaInstanceHelperTest {
     @Test
     void identifiesOwnInstanceByNormalizedHostOrResolvedAddressWithMatchingPort() throws Exception {
         Registration own = registration("[::1]", 8080);
-        var helper = helper(mock(DiscoveryClient.class), Optional.of(own), Optional.empty(), new MockEnvironment());
+        var helper = helper(mock(DiscoveryClient.class), Optional.of(own), new MockEnvironment());
         assertThat(helper.isCurrentInstance(instance("::1", 8080, Map.of()))).isTrue();
         assertThat(helper.isCurrentInstance(instance("::1", 8081, Map.of()))).isFalse();
         when(own.getHost()).thenReturn("own-host");
@@ -86,7 +88,7 @@ class EurekaInstanceHelperTest {
     @Test
     void onlyStandaloneBuildAgentProfilesUseClientMode() {
         MockEnvironment environment = new MockEnvironment();
-        var helper = helper(mock(DiscoveryClient.class), Optional.empty(), Optional.empty(), environment);
+        var helper = helper(mock(DiscoveryClient.class), Optional.empty(), environment);
         assertThat(helper.isRunningAsClient()).isFalse();
         environment.setActiveProfiles("buildagent");
         assertThat(helper.isRunningAsClient()).isTrue();
@@ -97,23 +99,33 @@ class EurekaInstanceHelperTest {
     }
 
     @Test
-    void advertisesMetadataEvenWhenRegistryReregistrationFailsOrIsUnavailable() {
+    void advertisesMetadataWithoutARegistryAndUpdatesTheLiveSdkCopyOnEveryChange() {
         Registration registration = registration("127.0.0.1", 8080);
-        @SuppressWarnings("unchecked")
-        ServiceRegistry<Registration> registry = mock(ServiceRegistry.class);
-        var helper = helper(mock(DiscoveryClient.class), Optional.of(registration), Optional.of(registry), new MockEnvironment());
+        var helper = helper(mock(DiscoveryClient.class), Optional.of(registration), new MockEnvironment());
         helper.registerHazelcastAddress("192.0.2.8", 5703);
         assertThat(registration.getMetadata()).containsEntry("hazelcast.host", "192.0.2.8").containsEntry("hazelcast.port", "5703");
-        verify(registry).register(registration);
-        doThrow(new IllegalStateException("registry unavailable")).when(registry).register(registration);
         assertThatCode(() -> helper.registerHazelcastAddress("192.0.2.9", 5704)).doesNotThrowAnyException();
-        helper(mock(DiscoveryClient.class), Optional.of(registration), Optional.empty(), new MockEnvironment()).registerHazelcastAddress("192.0.2.10", 5705);
-        assertThat(registration.getMetadata()).containsEntry("hazelcast.host", "192.0.2.10").containsEntry("hazelcast.port", "5705");
+        assertThat(registration.getMetadata()).containsEntry("hazelcast.host", "192.0.2.9").containsEntry("hazelcast.port", "5704");
+
+        EurekaRegistration eureka = mock(EurekaRegistration.class);
+        var metadata = new HashMap<>(Map.of("profile", "core", "zone", "existing"));
+        InstanceInfo info = InstanceInfo.Builder.newBuilder().setAppName("artemis").setHostName("core").setMetadata(new HashMap<>(metadata)).build();
+        var manager = new ApplicationInfoManager(mock(EurekaInstanceConfig.class), info);
+        when(eureka.getMetadata()).thenReturn(metadata);
+        when(eureka.getApplicationInfoManager()).thenReturn(manager);
+        var sdkHelper = helper(mock(DiscoveryClient.class), Optional.of(eureka), new MockEnvironment());
+        for (int port : List.of(5703, 5704)) {
+            info.setIsDirty(false);
+            sdkHelper.registerHazelcastAddress("192.0.2.10", port);
+            assertThat(metadata).containsEntry("hazelcast.host", "192.0.2.10").containsEntry("hazelcast.port", String.valueOf(port));
+            assertThat(info.getMetadata()).containsEntry("hazelcast.host", "192.0.2.10").containsEntry("hazelcast.port", String.valueOf(port)).containsEntry("profile", "core")
+                    .containsEntry("zone", "existing");
+            assertThat(info.isDirty()).isTrue();
+        }
     }
 
-    private EurekaInstanceHelper helper(DiscoveryClient discovery, Optional<Registration> registration, Optional<ServiceRegistry<Registration>> registry,
-            MockEnvironment environment) {
-        var helper = new EurekaInstanceHelper(discovery, registration, registry, environment);
+    private EurekaInstanceHelper helper(DiscoveryClient discovery, Optional<Registration> registration, MockEnvironment environment) {
+        var helper = new EurekaInstanceHelper(discovery, registration, environment);
         ReflectionTestUtils.setField(helper, "hazelcastPort", 5701);
         return helper;
     }

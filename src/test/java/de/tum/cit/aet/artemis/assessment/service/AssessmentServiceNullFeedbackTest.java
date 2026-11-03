@@ -7,16 +7,22 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
@@ -32,7 +38,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
- * Plain unit test of the grading instruction validation that is skipped when an assessment carries no feedback list.
+ * Plain unit tests of assessment validation, including updates without a feedback list or an existing result.
  */
 class AssessmentServiceNullFeedbackTest {
 
@@ -44,6 +50,8 @@ class AssessmentServiceNullFeedbackTest {
 
     private UserTestRepository userRepository;
 
+    private ComplaintResponseService complaintResponseService;
+
     private AssessmentService assessmentService;
 
     @BeforeEach
@@ -52,7 +60,8 @@ class AssessmentServiceNullFeedbackTest {
         resultRepository = mock(ResultTestRepository.class);
         submissionService = mock(SubmissionService.class);
         userRepository = mock(UserTestRepository.class);
-        assessmentService = new AssessmentService(mock(ComplaintResponseService.class), mock(ComplaintRepository.class), mock(FeedbackRepository.class), resultRepository,
+        complaintResponseService = mock(ComplaintResponseService.class);
+        assessmentService = new AssessmentService(complaintResponseService, mock(ComplaintRepository.class), mock(FeedbackRepository.class), resultRepository,
                 mock(StudentParticipationTestRepository.class), resultService, submissionService, mock(SubmissionTestRepository.class), Optional.empty(), userRepository,
                 Optional.empty(), mock(SingleUserNotificationService.class), mock(ResultWebsocketService.class));
     }
@@ -81,6 +90,59 @@ class AssessmentServiceNullFeedbackTest {
         assessmentService.saveManualAssessment(new TextSubmission(), feedbackList, null, null, 3L);
 
         verify(resultService).validateGradingInstructions(feedbackList, 3L);
+    }
+
+    @Test
+    void saveManualAssessment_withoutOriginalResult_acceptsNewFeedback() {
+        prepareSave();
+        var feedback = new Feedback();
+        feedback.setCredits(2.0);
+
+        var result = assessmentService.saveManualAssessment(new TextSubmission(), List.of(feedback), null, null, 3L);
+
+        assertThat(result.getFeedbacks()).containsExactly(feedback);
+        assertThat(feedback.getResult()).isSameAs(result);
+    }
+
+    private static Stream<List<Feedback>> feedbackWithoutStoredIds() {
+        return Stream.of(null, List.of(), List.of(new Feedback()));
+    }
+
+    @ParameterizedTest
+    @MethodSource("feedbackWithoutStoredIds")
+    void updateAssessmentAfterComplaint_withoutOriginalResult_rejectsBeforeResolvingComplaint(List<Feedback> feedbacks) {
+        var exercise = new TextExercise();
+        exercise.setId(3L);
+        var response = new ComplaintResponse();
+        response.setId(7L);
+        var update = new AssessmentUpdate(feedbacks, response, null);
+        var submission = new TextSubmission();
+
+        assertThatThrownBy(() -> assessmentService.updateAssessmentAfterComplaint(submission.getLatestResult(), exercise, update))
+                .isInstanceOfSatisfying(BadRequestAlertException.class, exception -> {
+                    assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(exception.getErrorKey()).isEqualTo("resultnotfound");
+                });
+
+        verifyNoInteractions(complaintResponseService, submissionService, resultRepository);
+        assertThat(submission.getResults()).isEmpty();
+    }
+
+    @Test
+    void updateAssessmentAfterComplaint_withForeignFeedback_rejectsBeforeResolvingComplaint() {
+        var exercise = new TextExercise();
+        exercise.setId(3L);
+        var originalResult = new Result();
+        originalResult.setId(4L);
+        var foreignFeedback = new Feedback();
+        foreignFeedback.setId(5L);
+        var update = new AssessmentUpdate(List.of(foreignFeedback), new ComplaintResponse(), null);
+
+        assertThatThrownBy(() -> assessmentService.updateAssessmentAfterComplaint(originalResult, exercise, update)).isInstanceOfSatisfying(BadRequestAlertException.class,
+                exception -> assertThat(exception.getErrorKey()).isEqualTo("feedbackIdMismatch"));
+
+        verifyNoInteractions(complaintResponseService, submissionService, resultRepository);
+        assertThat(originalResult.getFeedbacks()).isEmpty();
     }
 
     private static AssessmentUpdate updateWithoutComplaintResponse(List<Feedback> feedbacks) {

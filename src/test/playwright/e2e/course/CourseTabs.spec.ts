@@ -83,6 +83,9 @@ function sidebarCard(page: Page, title: string) {
 }
 
 test.describe('Course overview tabs', { tag: '@fast' }, () => {
+    // Count the tab's requests from one navigation; an automatic fixture reload would add a cancelled request.
+    test.use({ recoverNavigation: false });
+
     let course: Course;
 
     test.beforeEach('Create a course the student is enrolled in', async ({ login, courseManagementAPIRequests }) => {

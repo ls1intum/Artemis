@@ -40,7 +40,7 @@ final class RetainedArtifacts {
 
     static final int MAX_TOTAL_CHARS = 2_000_000;
 
-    /** Matches the bound the status API already applies to the retained SPEC.md. */
+    /** Caps both retained root documents at the bound the status API applies to SPEC.md. */
     static final int MAX_PROBLEM_STATEMENT_CHARS = 100_000;
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
@@ -83,9 +83,10 @@ final class RetainedArtifacts {
             retained.add(new ExerciseGenerationRetainedFileDTO(candidate.getKey().substring(0, separator), candidate.getKey().substring(separator + 1), content));
         }
         String statement = truncate(problemStatement, MAX_PROBLEM_STATEMENT_CHARS);
-        dropped = dropped || !Objects.equals(problemStatement, statement);
+        String spec = truncate(specDocument, MAX_PROBLEM_STATEMENT_CHARS);
+        dropped = dropped || !Objects.equals(problemStatement, statement) || !Objects.equals(specDocument, spec);
         return new ExerciseGenerationRetainedArtifactsDTO(jobId, dropped ? ExerciseGenerationArtifactCompleteness.PARTIAL : ExerciseGenerationArtifactCompleteness.COMPLETE,
-                statement, specDocument, retained);
+                statement, spec, retained);
     }
 
     /** Applies one successful structured mutation to the bounded live candidate snapshot returned to the run owner. */

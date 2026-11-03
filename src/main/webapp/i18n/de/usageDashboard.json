@@ -1,0 +1,49 @@
+{
+    "artemisApp": {
+        "usageDashboard": {
+            "title": "Artemis in Zahlen",
+            "subtitle": "Anonyme, aggregierte Nutzung dieser Artemis-Instanz in den letzten vier Semestern.",
+            "loading": "Nutzungszahlen werden geladen...",
+            "error": "Die Nutzungszahlen konnten nicht geladen werden. Bitte versuche es später erneut.",
+            "empty": "Es gibt noch nicht genug Kurse, um Nutzungszahlen anzuzeigen.",
+            "semesterSelection": "Semester auswählen",
+            "courses": "Kurse",
+            "students": "Studierende",
+            "activeStudents": "Aktive Studierende",
+            "submissions": "Abgaben",
+            "exercises": "Aufgaben",
+            "lectures": "Vorlesungen",
+            "tutorialGroups": "Übungsgruppen",
+            "exams": "Klausuren",
+            "competencies": "Kompetenzen",
+            "builds": "Builds",
+            "averageBuildDuration": "Durchschnittliche Build-Dauer",
+            "communication": "Kommunikation",
+            "communicationAndIris": "Kommunikation und Iris",
+            "posts": "Beiträge",
+            "replies": "Antworten",
+            "reactions": "Reaktionen",
+            "faqs": "FAQs",
+            "irisMessages": "Iris-Nachrichten",
+            "exercisesByType": "Aufgaben nach Typ",
+            "activeStudentsTrend": "Aktive Studierende pro Semester",
+            "exerciseTypes": {
+                "programming": "Programmieren",
+                "quiz": "Quiz",
+                "text": "Text",
+                "modeling": "Modellieren",
+                "file-upload": "Datei-Upload"
+            },
+            "definitions": {
+                "title": "So werden die Zahlen gezählt",
+                "course": "Ein Kurs zählt, wenn er kein Testkurs ist, mindestens 5 Studierende hat und im Semester beginnt. Semester mit weniger als 3 solchen Kursen werden nicht angezeigt.",
+                "students": "Studierende sind eindeutige Personen, die in mindestens einem gezählten Kurs als Studierende eingeschrieben sind.",
+                "activeStudents": "Aktive Studierende sind gezählte Studierende, die mindestens eine Abgabe in einer Aufgabe oder Klausur dieser Kurse gemacht haben.",
+                "activity": "Builds, Beiträge, Antworten, Reaktionen, veröffentlichte FAQs, Iris-Nachrichten und Übungsgruppen sind Summen über die Kurse des Semesters, unabhängig davon, wann sie stattfanden, einschließlich dessen, was Tutorinnen, Tutoren, Lehrende und das System getan haben. Beiträge umfassen Kanäle, Gruppenchats und Direktnachrichten. Gezählt werden abgeschlossene Builds, für die durchschnittliche Build-Dauer nur die erfolgreichen.",
+                "exams": "Klausuren sind die echten Klausuren der gezählten Kurse. Testklausuren und Klausuren, deren Titel mit \"test\" oder \"mock\" beginnt, werden nicht gezählt. Kompetenzen enthalten keine Voraussetzungen. Die Karte Klausuren wird nur angezeigt, wenn die Instanz Klausuren anbietet, und die Karte Kompetenzen nur, wenn sie Kompetenzen anbietet.",
+                "builds": "Builds werden nur angezeigt, wenn die Instanz mit Local CI baut. Build-Jobs werden standardmäßig nach einem Jahr gelöscht, deshalb werden Builds nur für Semester angezeigt, die innerhalb dieser Zeit begonnen haben.",
+                "privacy": "Es werden nur Summen angezeigt, nie einzelne Kurse oder Personen, und Ergebnisse mit zu wenigen Kursen werden ausgeblendet. Die Zahlen werden etwa stündlich aktualisiert."
+            }
+        }
+    }
+}

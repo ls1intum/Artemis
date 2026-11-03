@@ -34,7 +34,7 @@
         "react": "19.3.1",
         "react-dom": "19.3.1",
         "unified": "11.0.5",
-        "unist-util-visit": "5.1.0"
+        "unist-util-visit": "5.2.0"
     },
     "devDependencies": {
         "@docusaurus/module-type-aliases": "3.10.2",
@@ -44,9 +44,9 @@
         "@types/mdast": "4.0.4",
         "@types/prop-types": "15.7.15",
         "@types/react": "19.3.0",
-        "@typescript-eslint/eslint-plugin": "8.72.0",
-        "@typescript-eslint/parser": "8.72.0",
-        "baseline-browser-mapping": "2.11.30",
+        "@typescript-eslint/eslint-plugin": "8.72.1",
+        "@typescript-eslint/parser": "8.72.1",
+        "baseline-browser-mapping": "2.11.34",
         "eslint": "10.13.0",
         "prettier": "3.9.10",
         "typescript": "6.0.3"

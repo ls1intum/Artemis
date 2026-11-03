@@ -25,7 +25,7 @@ interface Composer {
 
 // Every test owns its course and conversations. Browser editing never depends on seed message IDs,
 // another worker's messages, or direct DOM content assignment that bypasses beforeinput/input.
-const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean }>({
+const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean; mentionUsers: { users: string[]; prefix: string } }>({
     expandedToolbar: [true, { option: true }],
     composer: async ({ page, login, courseManagementAPIRequests, communicationAPIRequests, expandedToolbar }, use) => {
         await login(admin);
@@ -49,6 +49,36 @@ const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean }
             await use({ course, channel, editor, route });
         } finally {
             await courseManagementAPIRequests.deleteCourse(course, admin);
+        }
+    },
+    mentionUsers: async ({ composer, login, courseManagementAPIRequests, userManagementAPIRequests }, use) => {
+        const users: string[] = [];
+        const prefix = `mention-${generateUUID().slice(0, 8)}`;
+        try {
+            await login(admin);
+            for (let index = 0; index < 10; index++) {
+                const username = `${prefix}-${index}`;
+                const response = await userManagementAPIRequests.createUser(username, username, UserRole.Student);
+                expect(response.status()).toBe(201);
+                users.push(username);
+                await courseManagementAPIRequests.addStudentToCourse(composer.course, { username, password: username });
+            }
+            await use({ users, prefix });
+        } finally {
+            // Depending on composer keeps its course/page alive until every account cleanup finishes.
+            // Fixture teardown uses Playwright's existing cleanup phase, rather than the keyboard test's body budget.
+            if (users.length) {
+                await login(admin);
+                const results: PromiseSettledResult<void>[] = [];
+                for (let offset = 0; offset < users.length; offset += 3) {
+                    results.push(
+                        ...(await Promise.allSettled(
+                            users.slice(offset, offset + 3).map(async (username) => expect((await userManagementAPIRequests.deleteUser(username)).ok()).toBe(true)),
+                        )),
+                    );
+                }
+                for (const result of results) expect(result.status, result.status === 'rejected' ? String(result.reason) : undefined).toBe('fulfilled');
+            }
         }
     },
 });
@@ -146,6 +176,55 @@ async function send(page: Page, composer: Composer, keyboard: boolean | string =
 
 function postContent(page: Page, id: number) {
     return page.locator(`#item-${id}`).locator('jhi-posting-content');
+}
+
+/**
+ * Reads the lines a user sees by where each character and mention is drawn, so the editor can be compared with the sent message.
+ * innerText is not used: it reports a line break around a mention in a flex layout that is not visible. A mention's @ sign is an icon in the posting.
+ */
+async function visibleLines(content: Locator): Promise<string[]> {
+    return content.evaluate((root) => {
+        const pieces: { text: string; middle: number }[] = [];
+        const walk = (node: Node): void => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent ?? '';
+                for (let index = 0; index < text.length; index++) {
+                    const range = document.createRange();
+                    range.setStart(node, index);
+                    range.setEnd(node, index + 1);
+                    const box = range.getClientRects()[0];
+                    if (box?.height) pieces.push({ text: text[index], middle: box.top + box.height / 2 });
+                }
+            } else if (node instanceof Element) {
+                if (node.matches('[data-message-reference], [data-posting-reference]')) {
+                    const box = node.getBoundingClientRect();
+                    pieces.push({ text: ` ${(node.textContent ?? '').replace(/^@/, '').trim()} `, middle: box.top + box.height / 2 });
+                } else {
+                    node.childNodes.forEach(walk);
+                }
+            }
+        };
+        walk(root);
+        const lines: string[] = [];
+        let previousMiddle = Number.NEGATIVE_INFINITY;
+        for (const piece of pieces) {
+            // Text and a mention on the same line differ by a few pixels at most, the next line is a full line height further down.
+            if (piece.middle - previousMiddle > 10) lines.push('');
+            lines[lines.length - 1] += piece.text;
+            previousMiddle = piece.middle;
+        }
+        return lines.map((line) => line.replace(/[\u200b\s]+/g, ' ').trim()).filter((line) => line.length > 0);
+    });
+}
+
+/** Types a mention of Student One and accepts the completion, as a user does. */
+async function insertMention(page: Page) {
+    await page.keyboard.type(`@${studentOne.username}`);
+    const suggestions = page.getByTestId('message-completion-list');
+    await expect(suggestions).toBeVisible();
+    await expect(suggestions.getByRole('option', { selected: true })).toContainText(studentOne.displayName!);
+    await page.keyboard.press('Enter');
+    await expect(suggestions).toBeHidden();
 }
 
 async function reopen(page: Page, post: Post) {
@@ -1401,86 +1480,59 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         }
     });
 
-    test('keyboard mention navigation scrolls the active option into view in both directions and wraps', async ({
-        page,
-        composer,
-        login,
-        courseManagementAPIRequests,
-        userManagementAPIRequests,
-    }) => {
-        const users: string[] = [];
-        const prefix = `mention-${generateUUID().slice(0, 8)}`;
-        await login(admin);
-        try {
-            for (let index = 0; index < 10; index++) {
-                const username = `${prefix}-${index}`;
-                const response = await userManagementAPIRequests.createUser(username, username, UserRole.Student);
-                expect(response.status()).toBe(201);
-                users.push(username);
-                await courseManagementAPIRequests.addStudentToCourse(composer.course, { username, password: username });
-            }
-            await login(studentOne, composer.route);
-            const { editor } = composer;
-            // Keep pointer hover from choosing a row while exercising keyboard-only navigation.
-            await page.mouse.move(0, 0);
-            await editor.pressSequentially(`@${prefix}`);
-            const popup = page.getByTestId('message-completion-list');
-            const options = popup.getByRole('option');
-            await expect(options).toHaveCount(10);
-            expect(await popup.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
-            const documentScroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
-            const selected = popup.getByRole('option', { selected: true });
-            const expectSelectionVisible = async (index: number) => {
-                await expect(options.nth(index)).toHaveAttribute('aria-selected', 'true');
-                await expect(selected).toHaveCount(1);
-                await expect(editor).toHaveAttribute('aria-activedescendant', (await selected.getAttribute('id'))!);
-                await expect
-                    .poll(() =>
-                        selected.evaluate((element) => {
-                            const bounds = element.getBoundingClientRect();
-                            const container = element.closest('[data-testid="message-completion-list"]')!.getBoundingClientRect();
-                            return bounds.top >= container.top && bounds.bottom <= container.bottom;
-                        }),
-                    )
-                    .toBe(true);
-                await expect(editor).toBeFocused();
-                expect(await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))).toEqual(documentScroll);
-            };
-            await expectSelectionVisible(0);
-            for (let index = 1; index < 10; index++) {
-                await editor.press('ArrowDown');
-                await expectSelectionVisible(index);
-            }
-            expect(await popup.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    test('keyboard mention navigation scrolls the active option into view in both directions and wraps', async ({ page, composer, login, mentionUsers }) => {
+        const { users, prefix } = mentionUsers;
+        await login(studentOne, composer.route);
+        const { editor } = composer;
+        // Keep pointer hover from choosing a row while exercising keyboard-only navigation.
+        await page.mouse.move(0, 0);
+        await editor.pressSequentially(`@${prefix}`);
+        const popup = page.getByTestId('message-completion-list');
+        const options = popup.getByRole('option');
+        await expect(options).toHaveCount(10);
+        expect(await popup.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+        const documentScroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+        const selected = popup.getByRole('option', { selected: true });
+        const expectSelectionVisible = async (index: number) => {
+            await expect(options.nth(index)).toHaveAttribute('aria-selected', 'true');
+            await expect(selected).toHaveCount(1);
+            await expect(editor).toHaveAttribute('aria-activedescendant', (await selected.getAttribute('id'))!);
+            await expect
+                .poll(() =>
+                    selected.evaluate((element) => {
+                        const bounds = element.getBoundingClientRect();
+                        const container = element.closest('[data-testid="message-completion-list"]')!.getBoundingClientRect();
+                        return bounds.top >= container.top && bounds.bottom <= container.bottom;
+                    }),
+                )
+                .toBe(true);
+            await expect(editor).toBeFocused();
+            expect(await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))).toEqual(documentScroll);
+        };
+        await expectSelectionVisible(0);
+        for (let index = 1; index < 10; index++) {
             await editor.press('ArrowDown');
-            await expectSelectionVisible(0);
-            await editor.press('ArrowUp');
-            await expectSelectionVisible(9);
-            for (let index = 8; index >= 0; index--) {
-                await editor.press('ArrowUp');
-                await expectSelectionVisible(index);
-            }
-            const label = (await selected.locator('span').first().textContent())!;
-            const selectedLogin = users.find((username) => label === `@${username} ${username}`);
-            expect(selectedLogin).toBeDefined();
-            await editor.press('Enter');
-            await expect(popup).toBeHidden();
-            await expect(editor.locator('[data-reference-type="user"]')).toHaveText(label);
-            await expect(page.locator('[id^="item-"]')).toHaveCount(0);
-            const saved = await send(page, composer);
-            expect(saved.content).toBe(`[user]${label.slice(1)}(${selectedLogin})[/user]`);
-            await expect(postContent(page, saved.id!)).toContainText(label.slice(1));
-        } finally {
-            await login(admin);
-            // Each account is independent. Bound cleanup concurrency so these twenty requests do not consume
-            // the keyboard-navigation test's remaining budget one round trip at a time.
-            for (let offset = 0; offset < users.length; offset += 3) {
-                const results = await Promise.allSettled(
-                    users.slice(offset, offset + 3).map(async (username) => expect((await userManagementAPIRequests.deleteUser(username)).ok()).toBe(true)),
-                );
-                for (const result of results) expect(result.status, result.status === 'rejected' ? String(result.reason) : undefined).toBe('fulfilled');
-            }
+            await expectSelectionVisible(index);
         }
+        expect(await popup.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+        await editor.press('ArrowDown');
+        await expectSelectionVisible(0);
+        await editor.press('ArrowUp');
+        await expectSelectionVisible(9);
+        for (let index = 8; index >= 0; index--) {
+            await editor.press('ArrowUp');
+            await expectSelectionVisible(index);
+        }
+        const label = (await selected.locator('span').first().textContent())!;
+        const selectedLogin = users.find((username) => label === `@${username} ${username}`);
+        expect(selectedLogin).toBeDefined();
+        await editor.press('Enter');
+        await expect(popup).toBeHidden();
+        await expect(editor.locator('[data-reference-type="user"]')).toHaveText(label);
+        await expect(page.locator('[id^="item-"]')).toHaveCount(0);
+        const saved = await send(page, composer);
+        expect(saved.content).toBe(`[user]${label.slice(1)}(${selectedLogin})[/user]`);
+        await expect(postContent(page, saved.id!)).toContainText(label.slice(1));
     });
 
     for (const kind of ['slides', 'faq'] as const) {
@@ -1723,6 +1775,57 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             }
         });
     }
+
+    test('the sent message keeps the line breaks next to mentions exactly as shown in the editor', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.click();
+        await insertMention(page);
+        await page.keyboard.press('Shift+Enter');
+        await page.keyboard.type('More text ');
+        await insertMention(page);
+        await page.keyboard.press('Shift+Enter');
+        await page.keyboard.press('Shift+Enter');
+        await insertMention(page);
+        await page.keyboard.type('some text');
+        await page.keyboard.press('Shift+Enter');
+        await insertMention(page);
+        const lines = ['Student One', 'More text Student One', 'Student One some text', 'Student One'];
+        await expect.poll(() => visibleLines(editor)).toEqual(lines);
+
+        const saved = await send(page, composer);
+
+        const mention = `[user]${studentOne.displayName}(${studentOne.username})[/user]`;
+        expect(saved.content).toBe(`${mention}\nMore text ${mention}\n\n${mention} some text\n${mention}`);
+        await expect.poll(() => visibleLines(postContent(page, saved.id!))).toEqual(lines);
+        const reopened = await reopen(page, saved);
+        await expect.poll(() => visibleLines(reopened.editor)).toEqual(lines);
+    });
+
+    test('the sent message renders a bullet list with mentions without extra or empty bullets', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.click();
+        await page.keyboard.type('- ');
+        await expect(editor.locator('ul')).toHaveCount(1);
+        await insertMention(page);
+        await page.keyboard.press('Shift+Enter');
+        await page.keyboard.type('More text ');
+        await insertMention(page);
+        await page.keyboard.press('Shift+Enter');
+        await insertMention(page);
+        await page.keyboard.type('some text');
+        await page.keyboard.press('Shift+Enter');
+        await insertMention(page);
+        const items = ['@Student One', 'More text @Student One', '@Student One some text', '@Student One'];
+        await expect(editor.locator('li')).toHaveText(items);
+
+        const saved = await send(page, composer);
+
+        const posted = postContent(page, saved.id!);
+        await expect(posted.locator('li')).toHaveText(items.map((item) => item.replace('@Student', 'Student')));
+        await expect(posted.locator('ul')).toHaveCount(1);
+        const reopened = await reopen(page, saved);
+        await expect(reopened.editor.locator('li')).toHaveText(items);
+    });
 
     test('typing keeps a neutral message field while toolbar keyboard focus stays visible', async ({ page, composer, browserName }) => {
         const { editor } = composer;

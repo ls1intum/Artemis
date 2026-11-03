@@ -1,11 +1,11 @@
 <ng-template #helpTextTemplate let-translationKey="translationKey">
     <ng-template #tipContent><span [innerHTML]="translationKey | artemisTranslate | safeHtml"></span></ng-template>
     @if (bonus.id) {
-        <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="right auto" [ngbTooltip]="tipContent" />
+        <fa-icon [icon]="faQuestionCircle" class="text-(--tumaet-ui-muted-color)" tumAetUiTooltipPlacement="right" [tumAetUiTooltip]="tipContent" />
     }
     @if (!bonus.id) {
-        <div class="d-flex align-items-baseline">
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary" />
+        <div class="flex items-baseline">
+            <fa-icon [icon]="faQuestionCircle" class="text-(--tumaet-ui-muted-color)" />
             <label [innerHTML]="translationKey | artemisTranslate | safeHtml" class="ps-1 pb-1"></label>
         </div>
     }
@@ -14,55 +14,54 @@
     <div *titleBarTitle class="flex items-center">
         <h5 class="mb-0" jhiTranslate="artemisApp.bonus.title"></h5>
     </div>
-    <div class="row mt-4">
-        <div class="bonus-form-step col-1"></div>
-        <div class="form-group col">
-            <label class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.bonusStrategy.title"></label>
+    <div class="flex flex-wrap gap-y-2 mt-6!">
+        <div class="bonus-form-step w-1/12"></div>
+        <div class="field-group mb-4! min-w-0 grow basis-0">
+            <label class="shrink-0 text-lg font-medium" jhiTranslate="artemisApp.bonus.bonusStrategy.title"></label>
             <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusStrategy.helpText' }" />
-            <jhi-mode-picker class="d-block mt-1" [options]="bonusStrategyOptions" [(value)]="currentBonusStrategyOption" (valueChange)="onBonusStrategyInputChange()" />
+            <jhi-mode-picker class="block mt-1" [options]="bonusStrategyOptions" [(value)]="currentBonusStrategyOption" (valueChange)="onBonusStrategyInputChange()" />
         </div>
     </div>
     @if (bonus.id || currentBonusStrategyOption !== undefined) {
-        <div class="row mt-4">
-            <div class="bonus-form-step col-1"></div>
-            <div class="form-group col">
-                <label class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.calculation.title"></label>
+        <div class="flex flex-wrap gap-y-2 mt-6!">
+            <div class="bonus-form-step w-1/12"></div>
+            <div class="field-group mb-4! min-w-0 grow basis-0">
+                <label class="shrink-0 text-lg font-medium" jhiTranslate="artemisApp.bonus.calculation.title"></label>
                 <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.calculation.helpText' }" />
-                <jhi-mode-picker class="d-block mt-1" [options]="calculationSigns" [(value)]="bonus.weight" (valueChange)="onWeightChange()" />
+                <jhi-mode-picker class="block mt-1" [options]="calculationSigns" [(value)]="bonus.weight" (valueChange)="onWeightChange()" />
             </div>
         </div>
     }
     @if (bonus.id || bonus.weight !== undefined) {
-        <div class="row mt-4">
-            <div class="bonus-form-step col-1"></div>
-            <div class="form-group col">
-                <label for="bonus-source-grading-scale" class="no-flex-shrink h5" jhiTranslate="artemisApp.bonus.bonusSource.title"></label>
+        <div class="flex flex-wrap gap-y-2 mt-6!">
+            <div class="bonus-form-step w-1/12"></div>
+            <div class="field-group mb-4! min-w-0 grow basis-0">
+                <label for="bonus-source-grading-scale" class="shrink-0 text-lg font-medium" jhiTranslate="artemisApp.bonus.bonusSource.title"></label>
                 <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusSource.helpText' }" />
-                <select
-                    id="bonus-source-grading-scale"
-                    [attr.aria-label]="'artemisApp.bonus.bonusSource.title' | artemisTranslate"
-                    class="form-select mt-1"
+                <tumaet-ui-select
+                    class="mt-1"
+                    data-testid="bonus-source-grading-scale"
+                    inputId="bonus-source-grading-scale"
+                    [options]="sourceGradingScaleOptions()"
+                    optionLabel="label"
+                    optionValue="value"
                     [(ngModel)]="bonus.sourceGradingScale"
                     (ngModelChange)="onBonusSourceChange($event)"
-                    [title]="'artemisApp.bonus.bonusSource.title' | artemisTranslate"
-                >
-                    @for (sourceGradingScale of sourceGradingScales(); track sourceGradingScale.id) {
-                        <option [ngValue]="sourceGradingScale">{{ getGradingScaleTitle(sourceGradingScale) }}</option>
-                    }
-                </select>
+                    [ariaLabel]="'artemisApp.bonus.bonusSource.title' | artemisTranslate"
+                />
             </div>
         </div>
     }
     <div class="bonus-calculated">
         @if (bonus.sourceGradingScale?.gradeSteps) {
-            <div class="mb-0 ms-2 fs-6 fw-bold no-flex-shrink">
+            <div class="mb-0 ms-2 text-base font-bold shrink-0">
                 <span>{{ 'artemisApp.bonus.bonusSource.maxPoints' | artemisTranslate }}: {{ getGradingScaleMaxPoints(bonus.sourceGradingScale) }}</span>
                 @if (bonus.sourceGradingScale?.course) {
                     <jhi-help-icon text="artemisApp.bonus.bonusSource.maxPointsCourseHelpText" />
                 }
             </div>
-            <div class="mb-4 fs-6">
-                <table class="table table-striped">
+            <div class="mb-6! text-base">
+                <table class="w-full text-left" tumAetUiTable [striped]="true">
                     <thead>
                         <tr>
                             <th jhiTranslate="artemisApp.exam.examSummary.bonus"></th>
@@ -93,8 +92,8 @@
         @if (bonus.bonusStrategy && bonus.sourceGradingScale && bonus.weight) {
             <h5 class="mb-0" jhiTranslate="artemisApp.bonus.formula.title"></h5>
             @if (bonus.bonusStrategy && bonus.weight && bonusToGradeStepsDTO()) {
-                <div class="fs-3 mb-4">
-                    <div class="d-flex pb-2 align-items-center">
+                <div class="text-2xl mb-6!">
+                    <div class="flex pb-2 items-center">
                         <div class="pe-2">
                             <strong
                                 [innerHTML]="
@@ -117,19 +116,23 @@
                         </div>
                     </div>
                     @if (bonus.bonusStrategy === BonusStrategy.POINTS) {
-                        <div class="row fs-6 ps-2" jhiTranslate="artemisApp.bonus.formula.finalGradeFromPoints"></div>
+                        <div class="flex flex-wrap gap-y-2 text-base ps-2" jhiTranslate="artemisApp.bonus.formula.finalGradeFromPoints"></div>
                     }
-                    <div class="row fs-6 ps-2" jhiTranslate="artemisApp.bonus.formula.finalGradeLimit" [translateValues]="{ maxPossibleGrade: maxPossibleGrade() }"></div>
+                    <div
+                        class="flex flex-wrap gap-y-2 text-base ps-2"
+                        jhiTranslate="artemisApp.bonus.formula.finalGradeLimit"
+                        [translateValues]="{ maxPossibleGrade: maxPossibleGrade() }"
+                    ></div>
                 </div>
             }
             @if (hasBonusStrategyWeightMismatch()) {
-                <div class="alert alert-warning" jhiTranslate="artemisApp.bonus.warnStrategyWeightMismatch"></div>
+                <tumaet-ui-message severity="warn"><span jhiTranslate="artemisApp.bonus.warnStrategyWeightMismatch"></span></tumaet-ui-message>
             }
             @if (examples().length) {
                 <div>
                     <h5 jhiTranslate="artemisApp.bonus.examples.title"></h5>
                     <p class="mb-1" jhiTranslate="artemisApp.bonus.examples.helpText"></p>
-                    <table class="table table-striped">
+                    <table class="w-full text-left" tumAetUiTable [striped]="true">
                         <thead>
                             <tr>
                                 <th jhiTranslate="artemisApp.bonus.examples.examPoints"></th>
@@ -155,8 +158,8 @@
                                             @if (example.exceedsMax) {
                                                 <fa-icon
                                                     [icon]="faExclamationTriangle"
-                                                    class="text-warning"
-                                                    [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
+                                                    class="text-state-warning"
+                                                    [tumAetUiTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
                                                 />
                                             }
                                         </td>
@@ -167,7 +170,11 @@
                                         }
                                         {{ example.finalGrade }}
                                         @if (bonus.bonusStrategy !== BonusStrategy.POINTS && example.exceedsMax) {
-                                            <fa-icon [icon]="faExclamationTriangle" class="text-warning" [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate" />
+                                            <fa-icon
+                                                [icon]="faExclamationTriangle"
+                                                class="text-state-warning"
+                                                [tumAetUiTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
+                                            />
                                         }
                                     </td>
                                 </tr>
@@ -205,8 +212,8 @@
                                             @if (dynamicExample.exceedsMax) {
                                                 <fa-icon
                                                     [icon]="faExclamationTriangle"
-                                                    class="text-warning"
-                                                    [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
+                                                    class="text-state-warning"
+                                                    [tumAetUiTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
                                                 />
                                             }
                                         }
@@ -219,7 +226,11 @@
                                     }
                                     {{ dynamicExample.finalGrade }}
                                     @if (bonus.bonusStrategy !== BonusStrategy.POINTS && dynamicExample.exceedsMax) {
-                                        <fa-icon [icon]="faExclamationTriangle" class="text-warning" [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate" />
+                                        <fa-icon
+                                            [icon]="faExclamationTriangle"
+                                            class="text-state-warning"
+                                            [tumAetUiTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
+                                        />
                                     }
                                 </td>
                             </tr>

@@ -23,7 +23,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
 export abstract class StudentExerciseActionsDirective {
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
-    private participationService = inject(ParticipationService);
+    protected participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
 
     constructor() {

@@ -1,5 +1,5 @@
-import { ApplicationRef, Binding, WritableSignal, inputBinding, signal } from '@angular/core';
-import { DirectiveFixture, TestBed } from '@angular/core/testing';
+import { ApplicationRef, Binding, Component, WritableSignal, inputBinding, signal } from '@angular/core';
+import { ComponentFixture, DirectiveFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { TumAetUiTooltipDirective } from './tumaet-ui-tooltip.directive';
 
@@ -337,5 +337,38 @@ describe('TumAetUiTooltipDirective when tumAetUiTooltipDescribesHost changes whi
 
         // The bubble is disposed, so a surviving token would point at nothing.
         expect(button.getAttribute('aria-describedby')).toBeNull();
+    });
+});
+
+@Component({
+    template: `<ng-template #help
+            ><strong>Grading guidance</strong><span>{{ score() }} points</span></ng-template
+        >
+        <button [tumAetUiTooltip]="help" [showDelayMs]="0">Help</button>`,
+    imports: [TumAetUiTooltipDirective],
+})
+class TemplateTooltipHostComponent {
+    readonly score = signal(5);
+}
+
+describe('Template tooltip content', () => {
+    it('renders and updates a consumer template while preserving its bindings', () => {
+        vi.useFakeTimers();
+        let fixture: ComponentFixture<TemplateTooltipHostComponent> | undefined;
+        try {
+            fixture = TestBed.createComponent(TemplateTooltipHostComponent);
+            fixture.detectChanges();
+            const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+            button.dispatchEvent(new MouseEvent('mouseenter'));
+            vi.advanceTimersByTime(1);
+            TestBed.inject(ApplicationRef).tick();
+            expect(document.querySelector('[role="tooltip"] strong')?.textContent).toBe('Grading guidance');
+            fixture.componentInstance.score.set(8);
+            TestBed.inject(ApplicationRef).tick();
+            expect(document.querySelector('[role="tooltip"]')?.textContent).toContain('8 points');
+        } finally {
+            fixture?.destroy();
+            vi.useRealTimers();
+        }
     });
 });

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TableLazyLoadEvent, TablePageEvent } from 'primeng/table';
+import { TableViewLazyLoadEvent as TableLazyLoadEvent, TableViewPageEvent as TablePageEvent } from './table-view-query';
 import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ColumnDef, TableViewComponent, TableViewOptions } from './table-view';
 
@@ -257,8 +257,7 @@ describe('TableViewComponent', () => {
     describe('reset', () => {
         it('should be a no-op in non-lazy mode', () => {
             fixture.componentRef.setInput('options', { lazy: false });
-            const mockTable = { first: 5, filters: {}, sortField: undefined, sortOrder: undefined };
-            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
 
@@ -269,8 +268,8 @@ describe('TableViewComponent', () => {
 
         it('should restore the initial state and emit a lazy load event at page 0', () => {
             fixture.componentRef.setInput('options', { initialSortField: 'name', initialSortOrder: 1, pageSize: 20 });
-            const mockTable = { first: 50, filters: { global: { value: 'test', matchMode: 'contains' } }, sortField: 'email', sortOrder: -1 };
-            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            component['query'].set({ field: 'email', order: -1, search: 'test' });
+            component['columnFilters'].set({ email: 'example' });
             component.pageChange({ first: 50, rows: 10 });
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
@@ -279,10 +278,7 @@ describe('TableViewComponent', () => {
 
             expect(component['currentFirst']()).toBe(0);
             expect(component['currentPageSizeOverride']()).toBeUndefined();
-            expect(mockTable.first).toBe(0);
-            expect(mockTable.filters).toEqual({});
-            expect(mockTable.sortField).toBe('name');
-            expect(mockTable.sortOrder).toBe(1);
+            expect(component['columnFilters']()).toEqual({});
             expect(onLazyLoadSpy).toHaveBeenCalledOnce();
             const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
             expect(event.first).toBe(0);
@@ -295,8 +291,7 @@ describe('TableViewComponent', () => {
 
         it('should cancel any pending search debounce and fire exactly once', () => {
             vi.useFakeTimers();
-            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined, filterGlobal: vi.fn() };
-            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
 
@@ -313,8 +308,7 @@ describe('TableViewComponent', () => {
     describe('reload', () => {
         it('should be a no-op in non-lazy mode', () => {
             fixture.componentRef.setInput('options', { lazy: false });
-            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
-            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
 
@@ -324,13 +318,7 @@ describe('TableViewComponent', () => {
         });
 
         it('should default to the current page, preserving sort, active filter, and position', () => {
-            const mockTable = {
-                first: 50,
-                filters: { global: { value: 'my search', matchMode: 'contains' } },
-                sortField: 'name',
-                sortOrder: -1,
-            };
-            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+            component['query'].set({ field: 'name', order: -1, search: 'my search' });
             fixture.componentRef.setInput('totalRows', 100);
             component.pageChange({ first: 50, rows: 10 });
             const onLazyLoadSpy = vi.fn();
@@ -339,7 +327,6 @@ describe('TableViewComponent', () => {
             component.reload();
 
             expect(component['currentFirst']()).toBe(50);
-            expect(mockTable.first).toBe(50);
             expect(onLazyLoadSpy).toHaveBeenCalledOnce();
             const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
             expect(event.first).toBe(50);
@@ -350,8 +337,6 @@ describe('TableViewComponent', () => {
         });
 
         it('should load page 0 when requested and keep the page size', () => {
-            const mockTable = { first: 50, filters: {}, sortField: undefined, sortOrder: undefined };
-            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
             fixture.componentRef.setInput('totalRows', 100);
             component.pageChange({ first: 50, rows: 10 });
             const onLazyLoadSpy = vi.fn();
@@ -360,15 +345,12 @@ describe('TableViewComponent', () => {
             component.reload({ page: 0 });
 
             expect(component['currentFirst']()).toBe(0);
-            expect(mockTable.first).toBe(0);
             const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
             expect(event.first).toBe(0);
             expect(event.rows).toBe(10);
         });
 
         it('should use null for globalFilter when no search is active', () => {
-            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
-            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
 
@@ -379,8 +361,6 @@ describe('TableViewComponent', () => {
         });
 
         it('should convert the given page to a row offset using the current page size', () => {
-            const mockTable = { first: 50, filters: {}, sortField: undefined, sortOrder: undefined };
-            vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
             fixture.componentRef.setInput('totalRows', 100);
             component.pageChange({ first: 50, rows: 10 });
             const onLazyLoadSpy = vi.fn();
@@ -389,7 +369,6 @@ describe('TableViewComponent', () => {
             component.reload({ page: 3 });
 
             expect(component['currentFirst']()).toBe(30);
-            expect(mockTable.first).toBe(30);
             const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
             expect(event.first).toBe(30);
             expect(event.rows).toBe(10);
@@ -399,8 +378,6 @@ describe('TableViewComponent', () => {
             let onLazyLoadSpy: Mock<(event: TableLazyLoadEvent) => void>;
 
             beforeEach(() => {
-                const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
-                vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
                 onLazyLoadSpy = vi.fn();
                 component.onLazyLoad.subscribe(onLazyLoadSpy);
             });
@@ -505,27 +482,26 @@ describe('TableViewComponent', () => {
     it('should debounce global search - single search', () => {
         vi.useFakeTimers();
 
-        const mockTable = { first: 0, filterGlobal: vi.fn() };
-        // Mock the dt viewChild
-        vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+        const onLazyLoadSpy = vi.fn();
+        component.onLazyLoad.subscribe(onLazyLoadSpy);
 
         component.onGlobalSearch('test search');
 
         // Should not have called filterGlobal yet
-        expect(mockTable.filterGlobal).not.toHaveBeenCalled();
+        expect(onLazyLoadSpy).not.toHaveBeenCalled();
 
         // Wait for debounce
         vi.advanceTimersByTime(TableViewComponent['SEARCH_DEBOUNCE_MS']);
 
-        expect(mockTable.filterGlobal).toHaveBeenCalledWith('test search', 'contains');
-        expect(mockTable.first).toBe(0);
+        expect(onLazyLoadSpy).toHaveBeenCalledWith(expect.objectContaining({ globalFilter: 'test search', first: 0 }));
+        expect(component['currentFirst']()).toBe(0);
     });
 
     it('should debounce global search - cancel previous search', () => {
         vi.useFakeTimers();
 
-        const mockTable = { first: 0, filterGlobal: vi.fn() };
-        vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+        const onLazyLoadSpy = vi.fn();
+        component.onLazyLoad.subscribe(onLazyLoadSpy);
 
         // First search
         component.onGlobalSearch('first search');
@@ -536,27 +512,27 @@ describe('TableViewComponent', () => {
         vi.advanceTimersByTime(100);
 
         // At this point, total time is 200, but debounce is 300
-        expect(mockTable.filterGlobal).not.toHaveBeenCalled();
+        expect(onLazyLoadSpy).not.toHaveBeenCalled();
 
         // Wait for debounce to complete
         vi.advanceTimersByTime(200);
 
         // Should only call filterGlobal once with the second search term
-        expect(mockTable.filterGlobal).toHaveBeenCalledTimes(1);
-        expect(mockTable.filterGlobal).toHaveBeenCalledWith('second search', 'contains');
+        expect(onLazyLoadSpy).toHaveBeenCalledTimes(1);
+        expect(onLazyLoadSpy).toHaveBeenCalledWith(expect.objectContaining({ globalFilter: 'second search' }));
     });
 
     it('should trim and lowercase search value', () => {
         vi.useFakeTimers();
 
-        const mockTable = { first: 0, filterGlobal: vi.fn() };
-        vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
+        const onLazyLoadSpy = vi.fn();
+        component.onLazyLoad.subscribe(onLazyLoadSpy);
 
         component.onGlobalSearch('  TEST SEARCH  ');
 
         vi.advanceTimersByTime(TableViewComponent['SEARCH_DEBOUNCE_MS']);
 
-        expect(mockTable.filterGlobal).toHaveBeenCalledWith('test search', 'contains');
+        expect(onLazyLoadSpy).toHaveBeenCalledWith(expect.objectContaining({ globalFilter: 'test search', first: 0 }));
     });
 
     it('should access currentFirst private property', () => {
