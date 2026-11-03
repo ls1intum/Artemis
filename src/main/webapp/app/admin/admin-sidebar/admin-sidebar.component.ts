@@ -4,6 +4,7 @@ import {
     faBell,
     faBookOpen,
     faBroom,
+    faBug,
     faChartLine,
     faClipboardList,
     faCubes,
@@ -228,6 +229,13 @@ export class AdminSidebarComponent {
                 title: 'Feature Usage',
                 translation: 'global.menu.admin.sidebar.featureUsage',
                 testId: 'admin-feature-usage',
+            },
+            {
+                routerLink: '/admin/error-analysis',
+                icon: faBug,
+                title: 'Error Analysis',
+                translation: 'global.menu.admin.sidebar.errorAnalysis',
+                testId: 'admin-error-analysis',
             },
             {
                 routerLink: '/admin/websocket',

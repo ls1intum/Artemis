@@ -516,6 +516,68 @@ test('Vitest graph selection emits real partial LCOV without unselected specs or
     assert.match(fs.readFileSync(path.join(root, 'build/test-results/vitest/junit.xml'), 'utf8'), /indirect consumer/);
 });
 
+test('instruments both Angular components before repeated related graph discovery caches their transforms', async () => {
+    const { root } = fixture({
+        'tsconfig.json': JSON.stringify({
+            compilerOptions: { target: 'ES2022', module: 'ES2022', moduleResolution: 'bundler', experimentalDecorators: true, skipLibCheck: true },
+            include: ['*.ts'],
+        }),
+        'vitest.fixture.config.mjs': `import angular from '@analogjs/vite-plugin-angular';
+            export default {
+                plugins: [angular({ jit: true, fastCompile: true, tsconfig: new URL('./tsconfig.json', import.meta.url).pathname })],
+                test: { globals: true, environment: 'jsdom', pool: 'forks', setupFiles: ['./setup.ts'], include: ['*.spec.ts'], coverage: { include: ['*.component.ts'] } }
+            };`,
+        'setup.ts': `import '@angular/compiler';
+            import { getTestBed } from '@angular/core/testing';
+            import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
+            getTestBed().initTestEnvironment(BrowserTestingModule, platformBrowserTesting());`,
+        'unrelated.spec.ts': "throw new Error('Unselected spec was executed');",
+    });
+    fs.symlinkSync(path.resolve(import.meta.dirname, '../../node_modules'), path.join(root, 'node_modules'), 'dir');
+    for (const name of ['First', 'Second']) {
+        const filename = name.toLowerCase();
+        fs.writeFileSync(
+            path.join(root, `${filename}.component.ts`),
+            `import { Component, Injectable, inject, signal } from '@angular/core';
+@Injectable({ providedIn: 'root' }) class ${name}Service { text = 'visible'; }
+@Component({ selector: '${filename}-coverage-fixture', standalone: true, template: '<span>{{ label() }}</span>' })
+export class ${name}Component {
+    readonly service = inject(${name}Service);
+    readonly label = signal(this.service.text);
+    untouched() { return 'uncovered'; }
+}
+`,
+        );
+        fs.writeFileSync(
+            path.join(root, `${filename}.component.spec.ts`),
+            `import { TestBed } from '@angular/core/testing';
+            import { ${name}Component } from './${filename}.component';
+            test('renders ${filename} component', () => {
+                TestBed.configureTestingModule({ imports: [${name}Component] });
+                const fixture = TestBed.createComponent(${name}Component);
+                fixture.detectChanges();
+                expect(fixture.nativeElement.textContent).toBe('visible');
+            });`,
+        );
+    }
+    const result = await runRelatedProject({
+        root,
+        configFile: 'vitest.fixture.config.mjs',
+        sources: ['first.component.spec.ts', 'first.component.ts', 'second.component.spec.ts', 'second.component.ts'],
+        log: () => {},
+    });
+    assert.equal(result.success, true);
+    assert.equal(result.selected, 2);
+    const coverage = fs.readFileSync(path.join(root, 'build/test-results/vitest/sonar-coverage/normal/lcov.info'), 'utf8');
+    for (const filename of ['first.component.ts', 'second.component.ts']) {
+        const record = coverage.split('end_of_record').find((entry) => entry.includes(`SF:${filename}\n`));
+        assert.ok(record, `Missing Angular coverage for ${filename}`);
+        assert.match(record, /DA:6,[1-9]\d*\n/);
+        assert.match(record, /DA:7,0\n/);
+    }
+    assert.doesNotMatch(coverage, /SF:.*unrelated\.spec\.ts\n/);
+});
+
 test('normal and Monaco selected runs retain independent LCOV reports', async () => {
     const { root } = fixture({
         'vitest.fixture.config.mjs': "export default { test: { globals: true, environment: 'node', include: ['normal.spec.ts'], coverage: { include: ['**/*.ts'] } } };",
