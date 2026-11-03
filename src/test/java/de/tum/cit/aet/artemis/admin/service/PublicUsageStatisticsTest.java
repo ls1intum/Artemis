@@ -20,6 +20,8 @@ import de.tum.cit.aet.artemis.admin.dto.BuildUsageDTO;
 import de.tum.cit.aet.artemis.admin.dto.PublicUsageStatisticsDTO;
 import de.tum.cit.aet.artemis.admin.dto.StudentSubmissionCountDTO;
 import de.tum.cit.aet.artemis.admin.repository.PublicUsageStatisticsRepository;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyUsageStatisticsApi;
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
@@ -33,7 +35,9 @@ import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.api.ExamUsageStatisticsApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -96,6 +100,18 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private Optional<TutorialGroupUsageStatisticsApi> tutorialGroupUsageStatisticsApi;
+
+    @Autowired
+    private Optional<ExamUsageStatisticsApi> examUsageStatisticsApi;
+
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private Optional<CompetencyUsageStatisticsApi> competencyUsageStatisticsApi;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
 
     @Autowired
     private BuildJobTestRepository buildJobRepository;
@@ -362,6 +378,48 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
 
         assertThat(tutorialGroupUsageStatisticsApi.orElseThrow().countTutorialGroups(Set.of(course.getId()))).isEqualTo(2);
         assertThat(tutorialGroupUsageStatisticsApi.orElseThrow().countTutorialGroups(Set.of(otherCourse.getId()))).isZero();
+    }
+
+    private void saveExam(Course course, String title, boolean testExam) {
+        Exam exam = testExam ? examUtilService.addTestExam(course) : examUtilService.addExam(course);
+        exam.setTitle(title);
+        examRepository.save(exam);
+    }
+
+    @Test
+    void realExams_areCountedWithoutTestExamsAndWithoutTestOrMockTitles() {
+        assertThat(examUsageStatisticsApi).as("exams are enabled in the test setup").isPresent();
+        Course course = createCourseStartingNow(TEST_PREFIX + "r", MIN_STUDENTS);
+        Course otherCourse = createCourseStartingNow(TEST_PREFIX + "s", MIN_STUDENTS);
+        saveExam(course, "Final exam", false);
+        saveExam(course, "Retake", false);
+        // the word may appear elsewhere in the title of a real exam
+        saveExam(course, "Contest of the mocking bird", false);
+        saveExam(course, "Final test run", false);
+        saveExam(course, "Test exam of the instructors", false);
+        saveExam(course, "TESTKLAUSUR", false);
+        saveExam(course, "mock exam", false);
+        saveExam(course, "Mock: dry run", false);
+        saveExam(course, "Practice for students", true);
+        saveExam(otherCourse, "Final exam", false);
+
+        assertThat(examUsageStatisticsApi.orElseThrow().countRealExams(Set.of(course.getId()))).isEqualTo(4);
+        assertThat(examUsageStatisticsApi.orElseThrow().countRealExams(Set.of(course.getId(), otherCourse.getId()))).isEqualTo(5);
+        assertThat(examUsageStatisticsApi.orElseThrow().countRealExams(Set.of(course.getId() + 100_000))).isZero();
+    }
+
+    @Test
+    void competencies_areCountedPerCourse() {
+        assertThat(competencyUsageStatisticsApi).as("atlas is enabled in the test setup").isPresent();
+        Course course = createCourseStartingNow(TEST_PREFIX + "t", MIN_STUDENTS);
+        Course otherCourse = createCourseStartingNow(TEST_PREFIX + "u", MIN_STUDENTS);
+        competencyUtilService.createCompetency(course, "first");
+        competencyUtilService.createCompetency(course, "second");
+        competencyUtilService.createCompetency(otherCourse, "other");
+
+        assertThat(competencyUsageStatisticsApi.orElseThrow().countCompetencies(Set.of(course.getId()))).isEqualTo(2);
+        assertThat(competencyUsageStatisticsApi.orElseThrow().countCompetencies(Set.of(course.getId(), otherCourse.getId()))).isEqualTo(3);
+        assertThat(competencyUsageStatisticsApi.orElseThrow().countCompetencies(Set.of(course.getId() + 100_000))).isZero();
     }
 
     @Test

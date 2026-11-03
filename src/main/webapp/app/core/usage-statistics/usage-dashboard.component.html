@@ -46,6 +46,18 @@
                 <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.lectures"></span>
                 <span class="text-3xl font-bold">{{ semester.lectures | number }}</span>
             </div>
+            @if (semester.exams !== undefined) {
+                <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-exams">
+                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.exams"></span>
+                    <span class="text-3xl font-bold">{{ semester.exams | number }}</span>
+                </div>
+            }
+            @if (semester.competencies !== undefined) {
+                <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-competencies">
+                    <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.competencies"></span>
+                    <span class="text-3xl font-bold">{{ semester.competencies | number }}</span>
+                </div>
+            }
             @if (semester.tutorialGroups !== undefined) {
                 <div class="flex flex-col gap-1 rounded-lg border border-border bg-surface-raised p-4" data-testid="usage-tutorial-groups">
                     <span class="text-sm text-text-secondary" jhiTranslate="artemisApp.usageDashboard.tutorialGroups"></span>
@@ -133,6 +145,7 @@
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.students"></p>
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.activeStudents"></p>
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.activity"></p>
+            <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.exams"></p>
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.builds"></p>
             <p class="m-0" jhiTranslate="artemisApp.usageDashboard.definitions.privacy"></p>
         </section>

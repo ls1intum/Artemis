@@ -28,6 +28,8 @@ describe('UsageDashboardComponent', () => {
                 communication: { posts: 900, replies: 1800, reactions: 3200, faqs: 14 },
                 irisMessages: 5400,
                 tutorialGroups: 36,
+                exams: 28,
+                competencies: 410,
             },
             {
                 label: 'SS 2026',
@@ -77,6 +79,8 @@ describe('UsageDashboardComponent', () => {
         expect(text('usage-builds')).toContain('25,000');
         expect(text('usage-build-duration')).toContain('42 s');
         expect(text('usage-tutorial-groups')).toContain('36');
+        expect(text('usage-exams')).toContain('28');
+        expect(text('usage-competencies')).toContain('410');
         expect(text('usage-posts')).toContain('900');
         expect(text('usage-replies')).toContain('1,800');
         expect(text('usage-reactions')).toContain('3,200');
@@ -91,19 +95,27 @@ describe('UsageDashboardComponent', () => {
         fixture.nativeElement.querySelector('[data-testid="usage-semester-SS 2026"]').click();
         await fixture.whenStable();
 
-        for (const testId of ['usage-builds', 'usage-build-duration', 'usage-tutorial-groups', 'usage-iris-messages']) {
+        for (const testId of ['usage-builds', 'usage-build-duration', 'usage-tutorial-groups', 'usage-exams', 'usage-competencies', 'usage-iris-messages']) {
             expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).toBeNull();
         }
         expect(text('usage-posts')).toContain('0');
     });
 
     it('still renders a response in the shape of an older server without builds and communication', async () => {
-        const { builds: _builds, communication: _communication, irisMessages: _iris, tutorialGroups: _groups, ...olderShape } = statistics.semesters[0];
+        const {
+            builds: _builds,
+            communication: _communication,
+            irisMessages: _iris,
+            tutorialGroups: _groups,
+            exams: _exams,
+            competencies: _competencies,
+            ...olderShape
+        } = statistics.semesters[0];
         httpMock.expectOne('api/core/public/usage-statistics').flush({ generatedAt: statistics.generatedAt, semesters: [olderShape] });
         await fixture.whenStable();
 
         expect(text('usage-courses')).toContain('12');
-        for (const testId of ['usage-builds', 'usage-build-duration', 'usage-communication']) {
+        for (const testId of ['usage-builds', 'usage-build-duration', 'usage-communication', 'usage-exams', 'usage-competencies']) {
             expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).toBeNull();
         }
     });
