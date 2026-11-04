@@ -26,7 +26,6 @@ import {
     faToggleOn,
     faUniversity,
     faUser,
-    faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -62,7 +61,6 @@ export class AdminSidebarComponent {
     layoutService = inject(LayoutService);
 
     protected readonly faChevronRight = faChevronRight;
-    protected readonly faUserShield = faUserShield;
 
     isNavbarCollapsed = input<boolean>(false);
     localCIActive = input<boolean>(false);
