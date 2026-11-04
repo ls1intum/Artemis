@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -71,7 +72,7 @@ public class TumLiveUploadService {
     private final Duration maxAge;
 
     /** The rows of deleted units that the previous cleanup run found; see {@link #purgeRowsOfDeletedUnits()}. */
-    private volatile Set<Long> rowsOfDeletedUnitsFoundBefore = Set.of();
+    private final AtomicReference<Set<Long>> rowsOfDeletedUnitsFoundBefore = new AtomicReference<>(Set.of());
 
     public TumLiveUploadService(TumLiveUnitUploadRepository uploadRepository, TumLiveRecordingCleanupRepository cleanupRepository,
             AttachmentVideoUnitRepository attachmentVideoUnitRepository, Optional<GocastBindingApi> gocastBindingApi,
@@ -270,12 +271,12 @@ public class TumLiveUploadService {
      */
     private void purgeRowsOfDeletedUnits() {
         Set<Long> found = new HashSet<>(uploadRepository.findIdsWithoutUnitAndPendingUpload());
-        Set<Long> foundBefore = found.stream().filter(rowsOfDeletedUnitsFoundBefore::contains).collect(Collectors.toSet());
+        Set<Long> foundBefore = found.stream().filter(rowsOfDeletedUnitsFoundBefore.get()::contains).collect(Collectors.toSet());
         if (!foundBefore.isEmpty()) {
             uploadRepository.deleteWithoutUnitAndPendingUploadByIdIn(foundBefore);
         }
         found.removeAll(foundBefore);
-        rowsOfDeletedUnitsFoundBefore = found;
+        rowsOfDeletedUnitsFoundBefore.set(Set.copyOf(found));
     }
 
     private void deleteUpload(GocastBindingApi api, TumLiveRecordingCleanup cleanup) {

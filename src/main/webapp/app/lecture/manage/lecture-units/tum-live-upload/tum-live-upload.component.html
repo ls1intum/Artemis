@@ -1,7 +1,7 @@
 @let current = state();
 @if (current && (current.connected || current.pendingRef || current.attachedRef)) {
     <section class="mt-4 flex flex-col gap-2 rounded border border-surface-300 p-3" data-testid="tum-live-upload">
-        <h3 class="text-base font-semibold" jhiTranslate="artemisApp.tumLiveUpload.title"></h3>
+        <h3 class="text-base font-semibold">{{ 'artemisApp.tumLiveUpload.title' | artemisTranslate }}</h3>
         @if (transferProgress() !== undefined) {
             <span jhiTranslate="artemisApp.tumLiveUpload.uploading"></span>
             <tumaet-ui-progress-bar [value]="transferProgress()!" />
