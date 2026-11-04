@@ -282,8 +282,11 @@ Java 25 / Ares 2 Gradle and Maven harnesses and their dependencies. Ares 1 harne
 exercise to the current Artemis harness separately; Hyperion does not rewrite its build files.
 Rebuild and qualify `deployment/docker/hyperion/gradle-sandbox.Dockerfile` when its
 canonical toolchain or dependencies change; an older Java 17 sandbox cannot grade
-this harness. Keep `SecurityPolicy.yaml` explicit. Generation may update only its
-instructor-test class list, not its supervised package or resource permissions.
+this harness. Keep `SecurityPolicy.yaml` explicit. The worker writes its instructor-test
+class list from the test sources before every build; the agent cannot edit the file. The
+only permission generation adds is the `org.junit.jupiter` package import, when the
+reference solution contains test classes that students write. The supervised package and
+all other resource permissions stay as seeded.
 The pre-provider readiness build rejects incompatible exercise harnesses before
 model authoring starts. The worker receives a frozen, bounded repository snapshot, not credentials or repository paths. Core validates returned artifacts
 against that snapshot before persisting them, and checks repository heads and

@@ -25,7 +25,7 @@ final class AresSecurityPolicy {
     private static final Pattern SOURCE = Pattern.compile("^(?:test|behavior/test|structural/test)/([A-Za-z_$][\\w$/]*)\\.java$");
 
     /** The package student-written tests import; its permission is the only one ever derived. */
-    static final String JUNIT_PACKAGE = "org.junit.jupiter";
+    private static final String JUNIT_PACKAGE = "org.junit.jupiter";
 
     private static final Pattern PACKAGE_IMPORTS = Pattern.compile("(?m)^([ \\t]*)regardingPackageImports:[ \\t]*(\\[[ \\t]*\\])?[ \\t]*\\n");
 
