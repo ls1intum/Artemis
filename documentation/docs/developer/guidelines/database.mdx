@@ -2,7 +2,7 @@
 id: database
 title: Database
 sidebar_label: Database
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-04
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -266,10 +266,11 @@ concurrent insert of the same row is tolerated, and a call that finds the row ch
 like the rest of `initialize`. The programming import, which goes to the repositories directly, makes the same call.
 Unlike the team and plagiarism rows, which the exercise module reads and so repairs on every update, the exercise module
 never touches the Metis row again: a server that does not use Metis pays a read and an insert per new programming exercise
-and nothing on an update. A programming exercise whose creation failed between storing it and inserting the row is left to
-the Metis module, which reads a missing row as the defaults and inserts it before it first writes the settings. The
-migration that created the table gave every existing programming exercise its row. Switching Metis on or off later only
-changes the row's `enabled` flag.
+and nothing on an update. The migration that created the table gave every existing programming exercise its row. Two kinds
+of programming exercise have none: one whose creation failed between storing it and inserting the row, and one that a node
+still running the previous version stored during a rolling deployment, after another node had run the migration. Both are
+left to the Metis module, which reads a missing row as the defaults and inserts it before it first writes the settings.
+Switching Metis on or off later only changes the row's `enabled` flag.
 
 #### Turning an existing association lazy
 
