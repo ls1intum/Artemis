@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.jenkins.exception.JenkinsException;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsEndpoints;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsXmlFileUtils;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 @Lazy
 @Service
 @Profile(PROFILE_JENKINS)

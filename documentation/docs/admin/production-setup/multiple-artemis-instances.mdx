@@ -100,11 +100,11 @@ eureka:
         enabled: true
         service-url:
             defaultZone: {{ artemis_eureka_urls }}
-instance:
-    prefer-ip-address: true
-    ip-address: {{ artemis_ip_address }}
-    appname: Artemis
-    instanceId: Artemis:{{ artemis_eureka_instance_id }}
+    instance:
+        prefer-ip-address: true
+        ip-address: {{ artemis_ip_address }}
+        appname: Artemis
+        instanceId: Artemis:{{ artemis_eureka_instance_id }}
 
 logging:
     file:
@@ -694,10 +694,10 @@ Artemis also ships a proof-of-concept Kubernetes runner that executes each build
 build-agent pods need no Docker socket. [LocalCI Build Runners](/admin/production-setup/build-runners) compares both and documents
 how to configure and deploy them.
 
-Build agents run as [Hazelcast Lite Members](https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members) and require a full member, in our case a core node, to be running.
-Thus, before starting a build agent make sure that at least the primary node is running. You can then add and remove build agents to the cluster as desired.
+With Hazelcast, build agents run as [Hazelcast Lite Members](https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members) and require a full member, in our case a core node, to be running. With Redis or Valkey, build agents connect to the Redis or Valkey store that the core nodes use instead.
+Thus, before starting a build agent make sure that at least the primary node (or the Redis or Valkey store) is running. You can then add and remove build agents to the cluster as desired.
 
-You can verify that a build agent has been successfully added to the cluster by checking the Build Agent View in the Server Administration.
+You can verify that a build agent has been successfully added to the cluster by checking the Build Agents page under **Administration → Build System**.
 It may take a few seconds for the build agent to show up:
 
 <Image
@@ -749,7 +749,7 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
     * artemis-app-node-1: using following spring profile: `prod,localvc,localci,core,scheduling,docker`
     * artemis-app-node-2: using following profile: `prod,localvc,localci,buildagent,core,docker`
     * artemis-app-node-3: using following profile: `prod,buildagent`
-* A MySQL database addressable on port 3306 of the host system
+* A PostgreSQL database addressable on port 5432 of the host system
 * A Load balancer (nginx) addressable on ports 80/443 of the host system: `http(s)://localhost`.
 * A Registry service addressable on port 8761 of the host system: http://localhost:8761
 * An ActiveMQ broker
@@ -788,9 +788,9 @@ Keep these shared values in that file rather than in `node1.env`, so every core 
     You may run into the following error when starting the containers
     `No member group is available to assign partition ownership...`. This issue should resolve itself after a few
     minutes. Otherwise, you can first start the following containers:
-    `docker compose --env-file .env -f deployment/docker/test-server-multi-node-mysql-localci.yml up mysql jhipster-registry activemq-broker artemis-app-node-1`.
+    `docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up postgres jhipster-registry activemq-broker artemis-app-node-1`.
     After these containers are up and running, you can start the remaining containers:
-    `docker compose --env-file .env -f deployment/docker/test-server-multi-node-mysql-localci.yml up artemis-app-node-2 artemis-app-node-3 nginx`.
+    `docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up artemis-app-node-2 artemis-app-node-3 nginx`.
 </Callout>
 
 
@@ -825,7 +825,7 @@ Keep these shared values in that file rather than in `node1.env`, so every core 
 3. Start the docker containers by running the following command:
 
     ```bash
-    docker compose --env-file .env -f deployment/docker/test-server-multi-node-mysql-localci.yml up
+    docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up
     ```
 
 4. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
@@ -845,7 +845,7 @@ Keep these shared values in that file rather than in `node1.env`, so every core 
 2. Start the docker containers by running the following command:
 
     ```yaml
-    docker compose --env-file .env -f deployment/docker/test-server-multi-node-mysql-localci.yml up
+    docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up
     ```
 
 3. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
@@ -859,7 +859,7 @@ Keep these shared values in that file rather than in `node1.env`, so every core 
 2. Start the docker containers by running
 
     ```bash
-    docker compose --env-file .env -f deployment/docker/test-server-multi-node-mysql-localci.yml up
+    docker compose --env-file .env -f deployment/docker/test-server-multi-node-postgresql-localci.yml up
     ```
 
 3. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.

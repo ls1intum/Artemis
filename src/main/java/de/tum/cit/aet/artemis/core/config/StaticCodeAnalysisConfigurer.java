@@ -7,6 +7,7 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.ParserPolicy;
+import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.SwiftLintRuleKinds;
 import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.sarif.ClippyCategorizer;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
@@ -148,19 +149,26 @@ public class StaticCodeAnalysisConfigurer {
     }
 
     /**
-     * Create an unmodifiable List of default static code analysis categories for Swift
+     * Create an unmodifiable List of default static code analysis categories for Swift.
+     * SwiftLint reports no category, so its parser assigns the kind of the violated rule, see {@link SwiftLintRuleKinds}. Each Artemis category collects one kind.
      *
      * @return unmodifiable static code analysis categories
      */
     private static List<StaticCodeAnalysisDefaultCategory> createDefaultCategoriesForSwift() {
         return List.of(
-                // TODO: rene: add correct category rules
-                new StaticCodeAnalysisDefaultCategory("Code Style", 0.2D, 2D, CategoryState.FEEDBACK, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "swiftLint"))),
-                new StaticCodeAnalysisDefaultCategory("Idiomatic", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "n/a"))),
-                new StaticCodeAnalysisDefaultCategory("Code Metrics", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "n/a"))),
-                new StaticCodeAnalysisDefaultCategory("Lint", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "n/a"))),
-                new StaticCodeAnalysisDefaultCategory("Performance", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "n/a"))),
-                new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0D, 0D, CategoryState.INACTIVE, List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, "n/a"))));
+                // "swiftLint" is the category that every SwiftLint issue had before the kinds were introduced. Results stored with it keep their category.
+                new StaticCodeAnalysisDefaultCategory("Code Style", 0.2D, 2D, CategoryState.FEEDBACK,
+                        List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, SwiftLintRuleKinds.KIND_STYLE), createMapping(StaticCodeAnalysisTool.SWIFTLINT, "swiftLint"))),
+                new StaticCodeAnalysisDefaultCategory("Idiomatic", 0D, 0D, CategoryState.INACTIVE,
+                        List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, SwiftLintRuleKinds.KIND_IDIOMATIC))),
+                new StaticCodeAnalysisDefaultCategory("Code Metrics", 0D, 0D, CategoryState.INACTIVE,
+                        List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, SwiftLintRuleKinds.KIND_METRICS))),
+                new StaticCodeAnalysisDefaultCategory("Lint", 0D, 0D, CategoryState.INACTIVE,
+                        List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, SwiftLintRuleKinds.KIND_LINT))),
+                new StaticCodeAnalysisDefaultCategory("Performance", 0D, 0D, CategoryState.INACTIVE,
+                        List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, SwiftLintRuleKinds.KIND_PERFORMANCE))),
+                new StaticCodeAnalysisDefaultCategory("Miscellaneous", 0D, 0D, CategoryState.INACTIVE,
+                        List.of(createMapping(StaticCodeAnalysisTool.SWIFTLINT, SwiftLintRuleKinds.KIND_MISCELLANEOUS))));
     }
 
     /**
