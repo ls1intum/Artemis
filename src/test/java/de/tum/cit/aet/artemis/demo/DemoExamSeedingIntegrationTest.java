@@ -23,6 +23,10 @@ import org.springframework.http.HttpStatus;
 import de.tum.cit.aet.artemis.account.api.UserApi;
 import de.tum.cit.aet.artemis.account.service.user.UserDemoService;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
+import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
+import de.tum.cit.aet.artemis.assessment.domain.GradeType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.course.api.CourseApi;
@@ -39,6 +43,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
@@ -105,6 +110,12 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     private ChannelRepository channelRepository;
 
     @Autowired
+    private GradingScaleRepository gradingScaleRepository;
+
+    @Autowired
+    private StudentExamTestRepository studentExamRepository;
+
+    @Autowired
     private ExerciseVersionRepository exerciseVersionRepository;
 
     @Autowired
@@ -153,6 +164,29 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
+    void seedsTheGradingKeyAndTheTestRunOfTheExam() {
+        seed();
+        Exam exam = demoExamWithExercises();
+
+        GradingScale gradingScale = gradingScaleRepository.findByExamId(exam.getId()).orElseThrow();
+        assertThat(gradingScale.getGradeType()).as("the exam is graded with grades").isEqualTo(GradeType.GRADE);
+        assertThat(gradingScale.getGradeSteps()).as("the exam has the thirteen grade steps of the course, from 5.0 to 1.0").hasSize(13).extracting(GradeStep::getGradeName)
+                .contains("5.0", "4.0", "1.0");
+        assertThat(gradingScale.getGradeSteps()).as("grades from 4.0 on are passing").filteredOn(GradeStep::getIsPassingGrade).extracting(GradeStep::getGradeName)
+                .doesNotContain("5.0", "4.7", "4.3").contains("4.0", "1.0");
+
+        List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(exam.getId());
+        assertThat(testRuns).as("the instructor tried the exam once as a student").hasSize(1).allSatisfy(testRun -> {
+            assertThat(testRun.isTestRun()).isTrue();
+            assertThat(testRun.getWorkingTime()).as("the test run has the working time of the exam").isEqualTo(exam.getWorkingTime());
+        });
+        StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRuns.getFirst().getId(), true).orElseThrow();
+        assertThat(testRun.getUser().getLogin()).as("the demo instructor is its author").isEqualTo(UserDemoService.DEMO_INSTRUCTOR_LOGIN);
+        assertThat(testRun.getExercises()).as("the test run holds the exercises of the exam").extracting(DomainObject::getId)
+                .containsExactlyElementsOf(exercisesOf(exam).stream().map(DomainObject::getId).toList());
+    }
+
+    @Test
     void demoStudentCanStartTheTestExam() throws Exception {
         seed();
         long courseId = demoCourse().getId();
@@ -187,7 +221,8 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
 
         seed();
 
-        assertThat(examIdentity()).as("seeding again must neither create nor replace the exam, its exercise groups or its exercises").isEqualTo(afterFirstRun);
+        assertThat(examIdentity()).as("seeding again must neither create nor replace the exam, its exercise groups, its exercises, its grading scale or its test run")
+                .isEqualTo(afterFirstRun);
     }
 
     @Test
@@ -271,9 +306,11 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
      */
     private ExamIdentity examIdentity() {
         Exam exam = demoExamWithExercises();
-        return new ExamIdentity(exam.getId(), exam.getExerciseGroups().stream().map(DomainObject::getId).toList(), exercisesOf(exam).stream().map(DomainObject::getId).toList());
+        return new ExamIdentity(exam.getId(), exam.getExerciseGroups().stream().map(DomainObject::getId).toList(), exercisesOf(exam).stream().map(DomainObject::getId).toList(),
+                gradingScaleRepository.findByExamId(exam.getId()).map(DomainObject::getId).orElse(null),
+                studentExamRepository.findAllTestRunsByExamId(exam.getId()).stream().map(DomainObject::getId).toList());
     }
 
-    private record ExamIdentity(long examId, List<Long> exerciseGroupIds, List<Long> exerciseIds) {
+    private record ExamIdentity(long examId, List<Long> exerciseGroupIds, List<Long> exerciseIds, Long gradingScaleId, List<Long> testRunIds) {
     }
 }

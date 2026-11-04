@@ -181,8 +181,9 @@ light theme, in English and with reduced motion. An entry has these fields:
 
 Before an image is taken, the renderer postpones the passkey reminder, skips the first-visit introduction of the competency management, hides the
 development ribbon and the footer (they show the instance, not the page), waits for chart animations, and replaces relative time stamps such as
-"Today, 12:10" and "5 minutes ago" by constants. Absolute dates stay: they belong to the demo data, which is created relative to the day of the run,
-so images with dates and the calendar differ a little from one day to the next, which the threshold of the comparison tolerates.
+"Today, 12:10" and "5 minutes ago" by constants. The time of day of an absolute date such as "Oct 28, 2026 15:35" is replaced by 10:00, because it is the
+minute of the seeding. The day stays: it belongs to the demo data, which is created relative to the day of the run, so images with dates and the calendar
+differ a little from one day to the next, which the threshold of the comparison tolerates.
 
 **One command.** `./supporting_scripts/e2e/render-docs-screenshots.sh` starts a PostgreSQL container, a server with the `demo` profile and the client
 on ports of its own (18080, 19000, 17921 and 15432, changeable with `DOCS_SHOTS_*_PORT`), renders the entries, compares the images with the

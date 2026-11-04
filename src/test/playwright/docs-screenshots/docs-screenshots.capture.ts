@@ -54,7 +54,8 @@ const VOLATILE_STYLES = [
     'jhi-page-ribbon, jhi-footer { display: none !important; }',
 ].join('\n');
 // Relative time stamps depend on the minute in which the demo data was created, so their text is replaced by a constant before the image is taken.
-// A time stamp that the page prints as an absolute date is part of the demo data and stays.
+// The day of an absolute date is part of the demo data and stays, but its time of day is the minute of the seeding, so it becomes 10:00 as well.
+const ABSOLUTE_TIME = /\b([A-Z][a-z]{2} \d{1,2}, \d{4})( ?-? ?)\d{1,2}:\d{2}\b/g;
 const RELATIVE_TIME = /\b(Today|Yesterday|Tomorrow), \d{1,2}:\d{2}( ?[AP]M)?/g;
 const RELATIVE_AGO = /\b\d+ (second|minute|hour|day|week|month)s? ago\b/g;
 const CHART_SETTLE_MS = Number(process.env.DOCS_SCREENSHOT_SETTLE_MS ?? 1500);
@@ -162,13 +163,16 @@ for (const entry of manifest.screenshots.filter((candidate) => only.length === 0
         // Charts draw themselves with a script animation that no style can switch off, so the image waits until they have finished.
         await page.waitForTimeout(CHART_SETTLE_MS);
         await page.evaluate(
-            ([time, ago]) => {
+            ([time, ago, absolute]) => {
                 const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
                 for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-                    node.nodeValue = (node.nodeValue ?? '').replace(new RegExp(time, 'g'), '$1, 10:00').replace(new RegExp(ago, 'g'), '5 $1s ago');
+                    node.nodeValue = (node.nodeValue ?? '')
+                        .replace(new RegExp(time, 'g'), '$1, 10:00')
+                        .replace(new RegExp(ago, 'g'), '5 $1s ago')
+                        .replace(new RegExp(absolute, 'g'), (_match, day: string, separator: string) => `${day}${separator}10:00`);
                 }
             },
-            [RELATIVE_TIME.source, RELATIVE_AGO.source],
+            [RELATIVE_TIME.source, RELATIVE_AGO.source, ABSOLUTE_TIME.source],
         );
 
         const target = update ? path.join(DOCS_ROOT, entry.image) : path.join(outputRoot, entry.image);

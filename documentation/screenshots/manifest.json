@@ -897,6 +897,38 @@
             "source": [
                 "src/main/webapp/app/course/manage/course-scores"
             ]
+        },
+        {
+            "id": "exam-grading",
+            "image": "instructor/exams/assets/configure_grading.png",
+            "pages": [
+                "instructor/exams/add-exercises.mdx"
+            ],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/exams/{exam:Practice Exam: Software Engineering Fundamentals}/grading",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "source": [
+                "src/main/webapp/app/exam/manage"
+            ]
+        },
+        {
+            "id": "exam-test-runs",
+            "image": "instructor/exams/assets/test_run_management.png",
+            "pages": [
+                "instructor/exams/prepare-and-test.mdx"
+            ],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/exams/{exam:Practice Exam: Software Engineering Fundamentals}/test-runs",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "source": [
+                "src/main/webapp/app/exam/manage/test-runs"
+            ]
         }
     ]
 }
