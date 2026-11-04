@@ -140,6 +140,15 @@ final class GenerationReviewSupport {
         return java.util.stream.Stream.concat(mutants.stream().map(GenerationReviewSupport::semanticMutantFinding), findings.stream()).toList();
     }
 
+    /** The report as the repair-progress comparison must see it: prior survivors without a fresh verdict still count as executed blockers. */
+    static SpecFidelityReport withUndrainedSurvivors(SpecFidelityReport report, List<SemanticMutant> survivorsWithoutVerdict) {
+        if (survivorsWithoutVerdict.isEmpty()) {
+            return report;
+        }
+        return new SpecFidelityReport(
+                java.util.stream.Stream.concat(report.findings().stream(), survivorsWithoutVerdict.stream().map(GenerationReviewSupport::semanticMutantFinding)).toList());
+    }
+
     static List<SemanticMutant.Exclusion> rememberExecutedMutants(List<SemanticMutant.Exclusion> history, List<SemanticMutantOutcome> freshOutcomes, int limit) {
         return java.util.stream.Stream
                 .concat(history.stream(), freshOutcomes.stream().filter(outcome -> outcome.disposition() != Disposition.INCONCLUSIVE).map(outcome -> outcome.mutant().exclusion()))

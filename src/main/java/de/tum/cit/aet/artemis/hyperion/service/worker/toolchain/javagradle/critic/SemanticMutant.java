@@ -57,6 +57,17 @@ public record SemanticMutant(String ruleId, String solutionPath, String original
         return new SemanticMutant(probed, solutionPath, originalSolutionSource, variantSource, description, null, Evidence.PRINTED_TRANSCRIPT);
     }
 
+    /**
+     * The same replacement keyed to the current source of its file, so a later repair that changed that file cannot silently retire it. Executing it shows whether the current
+     * suite still accepts that complete wrong implementation; a replacement that no longer compiles against the new source executes no test and proves nothing.
+     *
+     * @param currentSolutionSource the current reference source of {@link #solutionPath()}
+     * @return this mutant keyed to {@code currentSolutionSource}
+     */
+    public SemanticMutant rekeyedTo(String currentSolutionSource) {
+        return new SemanticMutant(ruleId, solutionPath, currentSolutionSource, mutantSource, counterexample, reviewTarget, evidence);
+    }
+
     public boolean printsTranscriptOnly() {
         return evidence == Evidence.PRINTED_TRANSCRIPT;
     }
