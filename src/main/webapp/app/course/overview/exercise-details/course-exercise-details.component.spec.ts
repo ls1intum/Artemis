@@ -500,7 +500,7 @@ describe('CourseExerciseDetailsComponent', () => {
         comp.sortedHistoryResults = [{ id: 2 }];
         comp.exercise = { ...exercise };
 
-        comp.loadComplaintAndLatestRatedResult();
+        comp.loadComplaint();
         await vi.advanceTimersByTimeAsync(0);
 
         expect(complaintServiceSpy).toHaveBeenCalledOnce();
@@ -1190,6 +1190,18 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(successSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.lateSubmissionResultReceived');
         });
 
+        it.each([ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING])(
+            'should offer the rated result of a %s assessment that arrives while the page is open',
+            (type) => {
+                startWith([{ id: 1, testRun: false, submissions: [{ id: 5, results: [] }] } as unknown as StudentParticipation], type);
+                expect(comp.latestRatedResult()).toBeUndefined();
+
+                participationWebsocketBehaviorSubject.next(changed([{ id: 9, completionDate: dayjs(), rated: true, assessmentType: AssessmentType.MANUAL } as Result]));
+
+                expect(comp.latestRatedResult()?.id).toBe(9);
+            },
+        );
+
         it('should not notify about a late result of a practice participation', () => {
             startWith([
                 { id: 1, testRun: false, submissions: [] } as unknown as StudentParticipation,
@@ -1434,13 +1446,13 @@ describe('CourseExerciseDetailsComponent', () => {
             vi.spyOn(participationService, 'getSpecificStudentParticipation').mockReturnValue(graded);
         });
 
-        it('should load the complaint and the latest rated result of a programming exercise', () => {
+        it('should load the complaint and offer the latest rated result of a programming exercise', () => {
             comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING } as unknown as Exercise;
             const complaint = { id: 9 } as Complaint;
             vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: { id: 9 } } as EntityResponseType));
             vi.spyOn(complaintService, 'convertComplaintFromServer').mockReturnValue(complaint);
 
-            comp.loadComplaintAndLatestRatedResult();
+            comp.loadComplaint();
 
             expect(comp.complaint()).toBe(complaint);
             expect(comp.latestRatedResult()?.id).toBe(2);
@@ -1451,17 +1463,14 @@ describe('CourseExerciseDetailsComponent', () => {
             vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as unknown as EntityResponseType));
             const convertSpy = vi.spyOn(complaintService, 'convertComplaintFromServer');
 
-            comp.loadComplaintAndLatestRatedResult();
+            comp.loadComplaint();
 
             expect(convertSpy).not.toHaveBeenCalled();
             expect(comp.complaint()).toBeUndefined();
         });
 
-        it.each([ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])('should load the latest rated result of a %s exercise for the details panel', (type) => {
+        it.each([ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])('should offer the latest rated result of a %s exercise to the details panel', (type) => {
             comp.exercise = { ...exercise, type } as unknown as Exercise;
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as unknown as EntityResponseType));
-
-            comp.loadComplaintAndLatestRatedResult();
 
             expect(comp.latestRatedResult()?.id).toBe(2);
         });
@@ -1471,7 +1480,7 @@ describe('CourseExerciseDetailsComponent', () => {
             const findSpy = vi.spyOn(complaintService, 'findBySubmissionId');
             comp.sortedHistoryResults = [];
 
-            comp.loadComplaintAndLatestRatedResult();
+            comp.loadComplaint();
 
             expect(findSpy).not.toHaveBeenCalled();
         });

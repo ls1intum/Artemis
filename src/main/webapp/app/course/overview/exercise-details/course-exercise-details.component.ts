@@ -199,8 +199,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly _resultWithComplaint = signal<Result | undefined>(undefined);
     readonly resultWithComplaint = this._resultWithComplaint.asReadonly();
 
-    private readonly _latestRatedResult = signal<Result | undefined>(undefined);
-    readonly latestRatedResult = this._latestRatedResult.asReadonly();
+    /** Derived from the graded submissions, so that the details panel also offers the rating and the complaint for an assessment arriving over the websocket. */
+    readonly latestRatedResult = computed(() =>
+        getAllResultsOfAllSubmissions(this.gradedStudentParticipation()?.submissions)
+            .filter((result: Result) => result.rated)
+            .sort(this.resultSortFunction)
+            .last(),
+    );
 
     private readonly _complaint = signal<Complaint | undefined>(undefined);
     readonly complaint = this._complaint.asReadonly();
@@ -379,7 +384,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             // Re-evaluated now that the participations are known: before the response the routed id could not be
             // matched to one of them yet.
             this.syncModeWithRoutedParticipation();
-            this.loadComplaintAndLatestRatedResult();
+            this.loadComplaint();
         });
     }
 
@@ -771,9 +776,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Loads and stores the complaint if any exists. Furthermore, loads the latest rated result and stores it.
+     * Loads and stores the complaint if any exists.
      */
-    loadComplaintAndLatestRatedResult(): void {
+    loadComplaint(): void {
         const graded = this.gradedStudentParticipation();
         const sorted = this._sortedHistoryResults();
         if (!graded?.submissions?.[0] || !sorted?.length) {
@@ -790,19 +795,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.onError(err.message);
             },
         });
-
-        // The details panel offers the rating and the complaint from this result; the modeling editor still renders both itself.
-        if (this.exercise!.type === ExerciseType.MODELING) {
-            return;
-        }
-
-        const ratedResults = getAllResultsOfAllSubmissions(graded?.submissions)
-            ?.filter((result: Result) => result.rated)
-            .sort(this.resultSortFunction);
-        if (ratedResults) {
-            const latestResult = ratedResults.last();
-            this._latestRatedResult.set(latestResult);
-        }
     }
 
     /**
