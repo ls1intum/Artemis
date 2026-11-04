@@ -20,6 +20,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.model.ChatModel;
@@ -205,6 +206,38 @@ class AgentLoopRunnerTest {
 
         assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
         verify(model).call(any(Prompt.class));
+    }
+
+    /** Runaway text that fills the output limit ended whole generation runs; its call completed, so the loop drops the text and asks once for a short, acting reply. */
+    @Test
+    void aTextReplyCutOffAtTheLimitIsDiscardedAndTheAgentIsAskedOnceToAct() {
+        ChatModel model = mock(ChatModel.class);
+        var truncated = new ChatResponse(List.of(new Generation(new AssistantMessage("runaway text"), ChatGenerationMetadata.builder().finishReason("length").build())));
+        when(model.call(any(Prompt.class))).thenReturn(truncated, calls("1", "write"), text("finished"));
+        RecordingTools tools = new RecordingTools();
+
+        var result = runner(model).run("system", "brief", tools, 6, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(tools.actions).containsExactly("write");
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        org.mockito.Mockito.verify(model, org.mockito.Mockito.times(3)).call(prompts.capture());
+        List<Message> secondPrompt = prompts.getAllValues().get(1).getInstructions();
+        assertThat(secondPrompt).noneMatch(message -> message instanceof AssistantMessage assistant && "runaway text".equals(assistant.getText()));
+        assertThat(secondPrompt.getLast().getText()).contains("cut off at the output token limit", "act through a tool call");
+    }
+
+    @Test
+    void twoConsecutiveTextRepliesCutOffAtTheLimitEndTheSession() {
+        ChatModel model = mock(ChatModel.class);
+        var truncated = new ChatResponse(List.of(new Generation(new AssistantMessage("runaway text"), ChatGenerationMetadata.builder().finishReason("length").build())));
+        when(model.call(any(Prompt.class))).thenReturn(truncated, truncated, text("finished"));
+
+        var session = runner(model).runSession("system", null, "brief", new RecordingTools(), 6, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(session.result().stopCause()).contains("cut off at the output token limit on turn 2");
+        verify(model, org.mockito.Mockito.times(2)).call(any(Prompt.class));
     }
 
     @Test

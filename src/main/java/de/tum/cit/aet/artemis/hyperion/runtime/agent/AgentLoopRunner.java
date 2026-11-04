@@ -313,6 +313,7 @@ public class AgentLoopRunner {
         String lastAssistantText = "";
         int consecutiveToolFailures = 0;
         int consecutiveRejectedActions = 0;
+        boolean previousReplyCutOffWithoutAction = false;
         Map<String, Integer> repeatedCallCounts = new HashMap<>();
         int repeatedRejections = 0;
         long lastPromptTokens = 0;
@@ -372,7 +373,17 @@ public class AgentLoopRunner {
             if (!response.hasToolCalls()) {
                 if (isTruncatedByTokenLimit(response)) {
                     emit(stepListener, "The AI response was cut off before it could finish.");
-                    return failed(turn, lastAssistantText, conversation, "The AI response was cut off at the output token limit on turn " + turn + ".");
+                    if (previousReplyCutOffWithoutAction || turn == maxTurns || toolCallbacks.length == 0) {
+                        return failed(turn, lastAssistantText, conversation, "The AI response was cut off at the output token limit on turn " + turn + ".");
+                    }
+                    // A text-only reply that fills the whole output limit is almost always runaway text. Its call completed, so its usage is already accounted; drop the
+                    // text so it cannot crowd the context, and ask once for a short reply that acts.
+                    previousReplyCutOffWithoutAction = true;
+                    conversation.add(new UserMessage("Your previous reply was cut off at the output token limit before it took any action, so it was discarded. Reply "
+                            + "briefly and act through a tool call; split large content across several smaller calls."));
+                    prompt = new Prompt(conversation,
+                            agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
+                    continue;
                 }
                 // Append this closing turn before returning so a caller carrying the conversation forward does not lose it.
                 emit(stepListener, "Preparing the exercise for verification.");
@@ -381,6 +392,7 @@ public class AgentLoopRunner {
                 return session(AgentLoopResult.Status.COMPLETED, turn, lastAssistantText, completedConversation);
             }
 
+            previousReplyCutOffWithoutAction = false;
             // A completion cut off by the token limit may carry silently truncated tool arguments (half a file in write_file's content). Executing them would corrupt the
             // workspace while the model believes the calls landed, so every call id is answered with a re-issue instruction instead.
             if (isTruncatedByTokenLimit(response) && !toolCalls.isEmpty()) {
