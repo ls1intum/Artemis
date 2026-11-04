@@ -228,7 +228,7 @@ public class DifferentialVerifier {
         boolean statementTasksHaveInstructions = statementTaskInstructionReasons.isEmpty();
         reasons.addAll(statementTaskInstructionReasons);
         List<String> templateTodoSeamReasons = contractSpecifications.stream()
-                .flatMap(spec -> ExerciseIntegrityGate.templateTodoSeamReasons(spec, request.producedTemplateFiles()).stream()).distinct().toList();
+                .flatMap(spec -> ExerciseIntegrityGate.templateTodoSeamReasons(spec, request.producedTemplateFiles(), request.producedTestsFiles()).stream()).distinct().toList();
         boolean templateTodoSeamsHold = templateTodoSeamReasons.isEmpty();
         reasons.addAll(templateTodoSeamReasons);
 
@@ -316,8 +316,8 @@ public class DifferentialVerifier {
         List<String> statementTraceabilityReasons = includeStatementChecks ? ExerciseIntegrityGate.statementTraceabilityReasons(testPlanJson, problemStatement) : List.of();
         boolean statementTraceabilityHolds = statementTraceabilityReasons.isEmpty();
         reasons.addAll(statementTraceabilityReasons);
-        List<String> templateTodoSeamReasons = contractSpecifications.stream().flatMap(spec -> ExerciseIntegrityGate.templateTodoSeamReasons(spec, templateFiles).stream())
-                .distinct().toList();
+        List<String> templateTodoSeamReasons = contractSpecifications.stream()
+                .flatMap(spec -> ExerciseIntegrityGate.templateTodoSeamReasons(spec, templateFiles, testsRepositoryFiles).stream()).distinct().toList();
         boolean templateTodoSeamsHold = templateTodoSeamReasons.isEmpty();
         reasons.addAll(templateTodoSeamReasons);
 

@@ -584,10 +584,11 @@ public final class ExerciseIntegrityGate {
 
     /**
      * Verifies the template's TODO anchors against the approved specification. The Testing Strategy, not the comment text, links each seam to its owner type, so a TODO carries
-     * only the task wording: a seam ID would be a label students see but the statement never defines. Every stubbed seam owner carries a TODO in its declaring source, and no
-     * TODO sits outside a stubbed type, because given types are complete and student-created types are absent from the template.
+     * only the task wording: a seam ID would be a label students see but the statement never defines. Every stubbed seam owner carries a TODO in its declaring source. A TODO
+     * in a given type marks work in code that ships complete, and one in the graded tests is an unfinished grader, so both are rejected; other student-facing files, such as
+     * student test skeletons or helpers outside the Design table, may carry TODOs.
      */
-    static List<String> templateTodoSeamReasons(String specification, Map<String, String> templateFiles) {
+    static List<String> templateTodoSeamReasons(String specification, Map<String, String> templateFiles, Map<String, String> testsFiles) {
         List<StageChecks.TestingStrategyRow> rows = StageChecks.testingStrategyRows(specification == null ? "" : specification);
         if (rows.isEmpty()) {
             return List.of();
@@ -618,15 +619,26 @@ public final class ExerciseIntegrityGate {
                         + "SPEC.md.");
             }
         }
-        Set<String> stubbedTypes = statusByType.entrySet().stream().filter(entry -> "stubbed".equals(entry.getValue())).map(Map.Entry::getKey).collect(Collectors.toSet());
-        List<String> strayFiles = todoFiles.stream().filter(path -> stubbedTypes.stream().noneMatch(type -> JavaSourceInspector.sourceDeclaresType(javaFiles.get(path), type)))
-                .sorted().toList();
-        if (!strayFiles.isEmpty()) {
-            reasons.add("the template has TODOs outside every stubbed type: " + strayFiles + ". A TODO marks unfinished student work in a stubbed owner's own source; given "
-                    + "types ship complete and student-created types are absent, so their work is anchored by the statement task and tests instead. Remove these TODOs or "
-                    + "move them to the owner that the work belongs to.");
+        Set<String> stubbedTypes = typesWithStatus(statusByType, "stubbed");
+        Set<String> givenTypes = typesWithStatus(statusByType, "given");
+        List<String> givenFiles = todoFiles.stream().filter(path -> givenTypes.stream().anyMatch(type -> JavaSourceInspector.sourceDeclaresType(javaFiles.get(path), type)))
+                .filter(path -> stubbedTypes.stream().noneMatch(type -> JavaSourceInspector.sourceDeclaresType(javaFiles.get(path), type))).sorted().toList();
+        if (!givenFiles.isEmpty()) {
+            reasons.add("the template has TODOs in given types: " + givenFiles + ". Given types ship complete, so a TODO there points students at work that does not exist; "
+                    + "remove it, or move it to the stubbed owner the work belongs to. A student-created type's work is anchored by its statement task and tests instead.");
+        }
+        List<String> testTodoFiles = testsFiles == null ? List.of()
+                : testsFiles.entrySet().stream().filter(entry -> JavaSourceInspector.isJavaSource(entry.getKey()) && entry.getValue() != null)
+                        .filter(entry -> TODO_COMMENT.matcher(entry.getValue()).find()).map(Map.Entry::getKey).sorted().toList();
+        if (!testTodoFiles.isEmpty()) {
+            reasons.add(
+                    "the graded tests contain TODOs: " + testTodoFiles + ". The tests are finished grading code, not student work; complete or remove what each TODO " + "marks.");
         }
         return List.copyOf(reasons);
+    }
+
+    private static Set<String> typesWithStatus(Map<String, String> statusByType, String status) {
+        return statusByType.entrySet().stream().filter(entry -> status.equals(entry.getValue())).map(Map.Entry::getKey).collect(Collectors.toSet());
     }
 
     private static boolean repositoryDeclaresType(Map<String, String> files, String type) {

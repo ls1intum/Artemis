@@ -1082,11 +1082,15 @@ class ExerciseIntegrityGateTest {
         Map<String, String> template = Map.of("src/Player.java", "class Player { // TODO S1: create strategy\n}", "src/Context.java",
                 "class Context {\n  /** Wires the strategy. */\n  void wire() {}\n}");
 
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, template)).hasSize(2)
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, template, Map.of())).hasSize(2)
                 .anySatisfy(reason -> assertThat(reason).contains("internal seam IDs", "src/Player.java", "// TODO: <task wording>"))
                 .anySatisfy(reason -> assertThat(reason).contains("Context", "S2", "declaring source"));
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, Map.of("src/Player.java", "class Player { /* TODO (S1) create strategy */ }", "src/Context.java",
-                "class Context {\n  /**\n   * TODO: wire strategy\n   */\n  void wire() {}\n}"))).singleElement().asString().contains("internal seam IDs");
+        assertThat(
+                ExerciseIntegrityGate.templateTodoSeamReasons(spec,
+                        Map.of("src/Player.java", "class Player { /* TODO (S1) create strategy */ }", "src/Context.java",
+                                "class Context {\n  /**\n   * TODO: wire strategy\n   */\n  void wire() {}\n}"),
+                        Map.of()))
+                .singleElement().asString().contains("internal seam IDs");
     }
 
     @Test
@@ -1105,7 +1109,7 @@ class ExerciseIntegrityGateTest {
                 """;
         Map<String, String> template = Map.of("src/Player.java", "class Player { // TODO: create strategy\n}", "src/Context.java", "class Context { // TODO: wire strategy\n}");
 
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, template)).isEmpty();
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, template, Map.of())).isEmpty();
     }
 
     @Test
@@ -1246,17 +1250,18 @@ class ExerciseIntegrityGateTest {
         Map<String, String> template = Map.of("src/Player.java", "class Player { // TODO: create strategy\n}", "README.md", "TODO S9: author note", "target/Stale.java",
                 "// TODO S8: generated output");
 
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, template)).isEmpty();
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, template, Map.of())).isEmpty();
     }
 
     @Test
-    void templateTodoSeams_rejectTodosOutsideEveryStubbedType() {
+    void templateTodoSeams_rejectTodosInGivenTypesAndGradedTestsButNotInOtherStudentFiles() {
         String spec = """
                 ## Design
                 | Type | Role | Template status |
                 |---|---|---|
                 | FireSpell | strategy | student-creates |
                 | IceSpell | strategy | student-creates |
+                | Spell | strategy interface | given |
                 | Mage | context | stubbed |
                 ## Testing Strategy
                 | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
@@ -1266,14 +1271,25 @@ class ExerciseIntegrityGateTest {
                 | S3 | Mage | delegation and switching | 3 | yes |
                 """;
         Map<String, String> honest = Map.of("src/Mage.java", "class Mage { // TODO: delegate and switch\n}", "src/Spell.java", "interface Spell { int cast(); }");
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, honest)).isEmpty();
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, honest, Map.of())).isEmpty();
 
-        Map<String, String> wrongFile = Map.of("src/Mage.java", "class Mage { // TODO: delegate\n}", "src/Helper.java", "class Helper { // TODO: create FireSpell\n}");
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, wrongFile)).singleElement().asString().contains("outside every stubbed type", "src/Helper.java",
-                "student-created types are absent");
+        // Student-facing files outside the Design table, such as a student test skeleton or a helper, may anchor their own work.
+        Map<String, String> studentSkeletons = Map.of("src/Mage.java", "class Mage { // TODO: delegate\n}", "src/Helper.java", "class Helper { // TODO: format the log\n}",
+                "test/MageTest.java", "class MageTest { // TODO: test switching\n}");
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, studentSkeletons, Map.of())).isEmpty();
+
+        Map<String, String> givenTodo = Map.of("src/Mage.java", "class Mage { // TODO: delegate\n}", "src/Spell.java",
+                "interface Spell { // TODO: create FireSpell\n int cast(); }");
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, givenTodo, Map.of())).singleElement().asString().contains("TODOs in given types", "src/Spell.java");
+
+        Map<String, String> unfinishedTests = Map.of("test/MageTest.java", "class MageTest { @Test void casts() { /* TODO assert the damage */ } }", "SecurityPolicy.yaml",
+                "# TODO is not Java");
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, honest, unfinishedTests)).singleElement().asString().contains("graded tests contain TODOs",
+                "test/MageTest.java");
 
         Map<String, String> ownerMentionedOnlyInAComment = Map.of("src/Helper.java", "// class Mage would own this\nclass Helper { // TODO: delegate\n}");
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, ownerMentionedOnlyInAComment)).anySatisfy(reason -> assertThat(reason).contains("declaring source", "Mage"));
+        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, ownerMentionedOnlyInAComment, Map.of()))
+                .anySatisfy(reason -> assertThat(reason).contains("declaring source", "Mage"));
     }
 
     @Test
