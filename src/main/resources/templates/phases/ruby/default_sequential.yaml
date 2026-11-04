@@ -1,0 +1,25 @@
+- name: install_dependencies
+  script: |-
+    cd "${testWorkingDirectory}"
+    bundler install
+- name: syntax_check
+  script: |-
+    find . -type f -name "*.rb" -print0 | xargs -0 -n1 ruby -wc
+- name: structural_tests
+  script: |-
+    cd "${testWorkingDirectory}"
+    status=0
+    TEST=test/test_structural.rb bundler exec rake ci:test || status=$?
+    mv report.xml structural-report.xml
+    exit $status
+  resultPaths:
+    - '${testWorkingDirectory}/structural-report.xml'
+- name: behavior_tests
+  script: |-
+    cd "${testWorkingDirectory}"
+    status=0
+    TEST=test/test_behavior.rb bundler exec rake ci:test || status=$?
+    mv report.xml behavior-report.xml
+    exit $status
+  resultPaths:
+    - '${testWorkingDirectory}/behavior-report.xml'
