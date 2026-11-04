@@ -707,6 +707,61 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void anOracleRepairThatKillsTheSurvivorIsKeptWhenTheReReviewRaisesNewTextBlockers() {
+        stubSchedulerFixture();
+        SpecFidelityReport reRolled = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT, "a re-rolled text verdict", "not raised on the first review")));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty(), reRolled);
+        SemanticMutant mutant = mutant("R1", "allPrerequisites", "honors only the first prerequisite");
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of());
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)));
+
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+        loop.run();
+
+        verify(baseTools).enterRepairScope(Set.of("tests", "test-plan.json", "problem-statement.md"));
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.ATTEMPT_CAP_REACHED);
+        assertThat(loop.lastMechanicallyVerifiedCandidate().problemStatement()).isEqualTo("PROBLEM STATEMENT 2");
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.requirement().equals("a re-rolled text verdict"))
+                .noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+    }
+
+    @Test
+    void aRepairThatKilledASurvivorIsNeverRolledBackEvenWhenAnotherSurvivorAppears() {
+        stubSchedulerFixture();
+        SemanticMutant killed = mutant("R1", "allPrerequisites", "honors only the first prerequisite");
+        SemanticMutant fresh = mutant("R2", "lexicalTie", "uses FIFO insertion order");
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(killed), List.of(fresh));
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any())).thenReturn(
+                List.of(new SemanticMutantOutcome(killed, Disposition.SURVIVED_GRADED_SUITE)), List.of(new SemanticMutantOutcome(fresh, Disposition.SURVIVED_GRADED_SUITE)));
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(killed, Disposition.KILLED_BY_GRADED_SUITE)));
+        GenerationOutcome preserved = mock(GenerationOutcome.class);
+        when(service.preserveCandidate(any(), any(), anyString(), any())).thenReturn(preserved);
+
+        GenerationAttemptLoop loop = newGenerateLoop(4, 3);
+
+        assertThat(loop.run()).isSameAs(preserved);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REPAIR_DID_NOT_IMPROVE);
+        assertThat(loop.lastMechanicallyVerifiedCandidate().problemStatement()).isEqualTo("PROBLEM STATEMENT 2");
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings())
+                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE && finding.requirement().contains("R2"));
+        assertThat(progressLines).anyMatch(line -> line.contains("keeping the repaired candidate"));
+    }
+
+    /** A specification, a tests repository the probes can host in, and a solution file the scheduler mutants were authored against. */
+    private void stubSchedulerFixture() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | honor every prerequisite |\n| R2 | break ties lexically |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any()))
+                .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any()))
+                .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
+    }
+
+    @Test
     void adjudicatedReferenceFailureBlocksConvergenceUntilTheExactWitnessPasses() {
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | every admitted boundary returns the mathematically nearest value |");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any()))

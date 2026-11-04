@@ -158,19 +158,33 @@ class RepairRoundScheduler {
         return finding.kind().name() + '\n' + normalizeRequirement(finding.requirement());
     }
 
-    static boolean repairImproved(SpecFidelityReport previous, SpecFidelityReport current) {
-        Set<String> previousBlockers = candidateBlockingFindingIdentities(previous);
-        Set<String> currentBlockers = candidateBlockingFindingIdentities(current);
+    /**
+     * Whether a semantic repair made progress. Executed evidence decides first: a repair that killed a surviving mutant, or drained an executed blocker, improved unless the
+     * executable review now reports an executed blocker it did not report before. Text-only blockers that appear beside such progress stay on the repaired candidate for later
+     * rounds and the instructor: a re-review re-rolls text verdicts, so letting them roll back an environment-proven kill would discard the stronger grading. Without executed
+     * progress, the reviewed blockers must strictly shrink, because text identity is then the only evidence there is.
+     *
+     * @param killedSurvivingMutant whether the repaired suite killed at least one mutant the previous candidate's suite let survive
+     */
+    static boolean repairImproved(SpecFidelityReport previous, SpecFidelityReport current, boolean killedSurvivingMutant) {
+        Set<String> previousExecuted = candidateBlockingFindingIdentities(previous, true);
+        Set<String> currentExecuted = candidateBlockingFindingIdentities(current, true);
+        if (killedSurvivingMutant || !currentExecuted.containsAll(previousExecuted)) {
+            return previousExecuted.containsAll(currentExecuted);
+        }
+        Set<String> previousBlockers = candidateBlockingFindingIdentities(previous, false);
+        Set<String> currentBlockers = candidateBlockingFindingIdentities(current, false);
         if (previousBlockers.isEmpty()) {
             return currentBlockers.isEmpty();
         }
         return currentBlockers.size() < previousBlockers.size() && previousBlockers.containsAll(currentBlockers);
     }
 
-    private static Set<String> candidateBlockingFindingIdentities(SpecFidelityReport report) {
+    private static Set<String> candidateBlockingFindingIdentities(SpecFidelityReport report, boolean executedOnly) {
         return report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking).filter(finding -> switch (finding.kind()) {
             case QUALITY_REVIEW_UNAVAILABLE, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, EXECUTABLE_EVIDENCE_UNAVAILABLE, CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE -> false;
-            default -> true;
+            case EXECUTABLE_WEAK_TEST_ORACLE -> true;
+            default -> !executedOnly;
         }).map(RepairRoundScheduler::findingIdentity).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 

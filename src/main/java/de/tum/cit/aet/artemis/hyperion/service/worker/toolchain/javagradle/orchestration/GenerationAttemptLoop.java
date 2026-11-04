@@ -252,6 +252,9 @@ class GenerationAttemptLoop {
     @Nullable
     private CandidateSnapshot candidateBeforeCurrentRepair;
 
+    /** Mutants the previous candidate's suite let survive and the in-flight repair's suite killed in an executed recheck; the repair must never be rolled back past them. */
+    private int mutantsKilledByCurrentRepair;
+
     @Nullable
     private SemanticRepairBatch pendingSemanticRepair;
 
@@ -597,6 +600,7 @@ class GenerationAttemptLoop {
         List<SemanticMutantOutcome> outcomes = verifier.checkSemanticMutants(sandbox, sessionId, exercise, currentSolution, seededStructuralTests, applicableMutants,
                 restoreCandidate);
         GenerationReviewSupport.SemanticMutantRecheck recheck = GenerationReviewSupport.semanticMutantRecheck(outcomes);
+        mutantsKilledByCurrentRepair += (int) outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).count();
         semanticMutantsAwaitingKill = recheck.unresolvedMutants();
         if (semanticMutantsAwaitingKill.isEmpty()) {
             return result;
@@ -661,14 +665,27 @@ class GenerationAttemptLoop {
         specFidelityReport = preserveDesignAuthorityState(specFidelityReport);
         specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot);
         recordReviewRound(attempt);
+        boolean killedSurvivingMutant = candidateBeforeCurrentRepair != null && mutantsKilledByCurrentRepair > 0;
         if (candidateBeforeCurrentRepair != null && !RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport)
-                && !RepairRoundScheduler.repairImproved(candidateBeforeCurrentRepair.reviewReport(), specFidelityReport)) {
+                && !RepairRoundScheduler.repairImproved(candidateBeforeCurrentRepair.reviewReport(), specFidelityReport, killedSurvivingMutant)) {
+            if (killedSurvivingMutant) {
+                // The older candidate lets a mutant survive that this one kills, so restoring it would ship strictly weaker grading. Keep the repair and stop instead.
+                promoteReviewedCandidate(artifacts, specDocumentSnapshot);
+                terminationReason = TerminationReason.REPAIR_DID_NOT_IMPROVE;
+                emit("The repair killed " + mutantsKilledByCurrentRepair + " environment-proven mutant(s), but the executable review found another surviving one; keeping "
+                        + "the repaired candidate, which grades strictly more, and stopping.");
+                return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
+            }
             CandidateSnapshot retained = candidateBeforeCurrentRepair;
             candidateBeforeCurrentRepair = null;
             lastMechanicallyVerifiedCandidate = retained;
             terminationReason = TerminationReason.REPAIR_DID_NOT_IMPROVE;
             emit("The repair did not reduce the reviewed blockers without introducing another one; retaining the previous reviewed checkpoint.");
             return service.preserveCandidate(retained, sandbox, sessionId, workspaceSeed);
+        }
+        if (killedSurvivingMutant) {
+            emit("The repair killed " + mutantsKilledByCurrentRepair + " environment-proven mutant(s); keeping the repaired candidate and carrying any new review findings "
+                    + "forward on it.");
         }
         promoteReviewedCandidate(artifacts, specDocumentSnapshot);
         if (cancelled.getAsBoolean()) {
@@ -698,7 +715,8 @@ class GenerationAttemptLoop {
      * preserve the candidate that was just verified and reviewed, while {@link #applySemanticRepair} records it again if another repair actually starts.
      */
     private void promoteReviewedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
-        if (candidateBeforeCurrentRepair != null && RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport)) {
+        // A repair that killed a surviving mutant is promoted even without a primary verdict: the older checkpoint provably grades less.
+        if (candidateBeforeCurrentRepair != null && mutantsKilledByCurrentRepair == 0 && RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport)) {
             emit("The repaired candidate passed mechanical verification, but its primary quality review did not complete; retaining the previously reviewed checkpoint ("
                     + candidateBeforeCurrentRepair.verification().testCount() + " tests).");
             return;
@@ -773,6 +791,7 @@ class GenerationAttemptLoop {
             return LoopStep.STOP;
         }
         candidateBeforeCurrentRepair = lastMechanicallyVerifiedCandidate;
+        mutantsKilledByCurrentRepair = 0;
         pendingSemanticRepair = repairBatch.get();
         boolean repairsExecutableOracle = pendingSemanticRepair.report().findings().stream()
                 .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
