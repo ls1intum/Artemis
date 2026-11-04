@@ -62,6 +62,9 @@ final class OutputOnlyMainProbe {
 
     private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_$][\\w$]*");
 
+    /** A static initializer block, or a static field initializer that calls a method or constructor; matched on masked source. */
+    private static final Pattern STATIC_INITIALIZATION_CODE = Pattern.compile("\\bstatic\\s*\\{|\\bstatic\\b[^;{}()=]*=[^;{}]*\\(");
+
     private static final Pattern READS_STANDARD_INPUT = Pattern.compile("\\bSystem\\s*\\.\\s*in\\b");
 
     /** The student source tree the exercise build compiles as the assignment; student-written tests and build files live elsewhere. */
@@ -168,9 +171,16 @@ final class OutputOnlyMainProbe {
         }).toList();
     }
 
-    /** The graded suite's verdict on the class source with a {@code main} that prints nothing: whether a weighted test fails without main's output. */
+    /**
+     * The graded suite's verdict on the class source with a {@code main} that prints nothing: whether a weighted test fails without main's output. Only the body of
+     * {@code main} is replaced, so a class whose static initialization can run code, which might print the transcript when the test first calls {@code main}, gives no
+     * verdict.
+     */
     private static Disposition silentMainOutcome(String solutionPath, String source, SemanticMutant probe, Map<String, String> solutionFiles, Predicate<String> graded,
             SemanticMutantExecution.ProbeRunner runner) {
+        if (STATIC_INITIALIZATION_CODE.matcher(JavaSourceText.maskCommentsAndLiterals(source)).find()) {
+            return Disposition.INCONCLUSIVE;
+        }
         Optional<SemanticMutant> silent = transcriptOnlyVariant(source, "")
                 .map(variant -> new SemanticMutant(probe.ruleId(), solutionPath, source, variant, probe.counterexample(), null, SemanticMutant.Evidence.PRINTED_TRANSCRIPT));
         return silent.isEmpty() ? Disposition.INCONCLUSIVE : SemanticMutantExecution.recheck(solutionFiles, List.of(silent.get()), graded, runner).getFirst().disposition();

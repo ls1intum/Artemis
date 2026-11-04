@@ -262,6 +262,31 @@ class OutputOnlyMainProbeTest {
         assertThat(built).isEmpty();
     }
 
+    /** Only main's body is replaced, so code that static initialization runs could still print the transcript; a passing silent run then proves nothing. */
+    @Test
+    void aClassWhoseStaticInitializationRunsCodeGivesNoSilentVerdict() {
+        String printingOnLoad = SOLUTION.replace("public class Library {", "public class Library {\n    static { System.out.println(\"Books: 1\"); }");
+        String callingOnLoad = SOLUTION.replace("public class Library {", "public class Library {\n    private static final String BANNER = Banner.render();");
+        List<String> built = new ArrayList<>();
+        SemanticMutantExecution.ProbeRunner passing = (mutant, ignored) -> {
+            built.add(mutant.mutantSource());
+            return new BuildSummary(1, 0, 0, false, List.of("printsTheSize()"), List.of(), List.of(), "");
+        };
+        String transcriptUngraded = """
+                {"tests":[{"name":"printsTheSize","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}]}
+                """;
+
+        for (String source : List.of(printingOnLoad, callingOnLoad)) {
+            SemanticMutant probe = SemanticMutant.printedTranscript(PATH, source, OutputOnlyMainProbe.transcriptOnlyVariant(source, "Books: 1\n").orElseThrow(), "Library");
+            SemanticMutant stale = SemanticMutant.printedTranscript(PATH, SOLUTION, probe.mutantSource(), "Library");
+            assertThat(OutputOnlyMainProbe.resolveStale(TESTS, Map.of(PATH, source), transcriptUngraded, List.of(stale), passing)).extracting(SemanticMutantOutcome::disposition)
+                    .containsExactly(Disposition.INCONCLUSIVE);
+            assertThat(OutputOnlyMainProbe.recheck(TESTS, Map.of(PATH, source), transcriptUngraded, List.of(probe), passing)).extracting(SemanticMutantOutcome::disposition)
+                    .containsExactly(Disposition.INCONCLUSIVE);
+        }
+        assertThat(built).isEmpty();
+    }
+
     @Test
     void theVariantCompilesKeepsEveryOtherMemberAndPrintsExactlyTheTranscript(@TempDir Path directory) throws Exception {
         String transcript = "Books: 1 { \"quoted\" }\n\ttab \\ backslash \u001b[0m é世 😀\r\n" + "x".repeat(1_500) + "\n";
