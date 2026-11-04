@@ -124,7 +124,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     class CreatePresentation {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void passFail_shouldStoreTheMethodWithoutMaxPoints() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.PASS_FAIL, null, null);
 
@@ -136,21 +136,21 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void score_withoutMaxPoints_shouldBeRejected() throws Exception {
             expectError(MockMvcRequestBuilders.post(baseUrl(course)), presentation(PresentationGradingMethod.SCORE, null, null), "maxPointsRequired");
         }
 
         @ParameterizedTest
         @EnumSource(value = PresentationGradingMethod.class, names = { "PASS_FAIL", "RUBRIC" })
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void otherMethod_withMaxPoints_shouldBeRejected(PresentationGradingMethod gradingMethod) throws Exception {
             List<PresentationRubricCriterionDTO> criteria = gradingMethod == PresentationGradingMethod.RUBRIC ? standardRubric() : null;
             expectError(MockMvcRequestBuilders.post(baseUrl(course)), presentation(gradingMethod, 20.0, criteria), "maxPointsNotAllowed");
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void rubric_shouldStoreCriteriaAndLevelsInOrder() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
 
@@ -168,28 +168,28 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void rubric_withoutCriteria_shouldBeRejected() throws Exception {
             expectError(MockMvcRequestBuilders.post(baseUrl(course)), presentation(PresentationGradingMethod.RUBRIC, null, null), "rubricRequired");
         }
 
         @ParameterizedTest
         @EnumSource(value = PresentationGradingMethod.class, names = { "PASS_FAIL", "SCORE" })
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void otherMethod_withCriteria_shouldBeRejected(PresentationGradingMethod gradingMethod) throws Exception {
             Double maxPoints = gradingMethod == PresentationGradingMethod.SCORE ? 20.0 : null;
             expectError(MockMvcRequestBuilders.post(baseUrl(course)), presentation(gradingMethod, maxPoints, standardRubric()), "rubricNotAllowed");
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void rubric_withWeightsNotAddingUpTo100_shouldBeRejected() throws Exception {
             var criteria = List.of(criterion("Content", 50, PresentationRubricScale.FIVE_POINT), criterion("Delivery", 40, PresentationRubricScale.THREE_POINT));
             expectError(MockMvcRequestBuilders.post(baseUrl(course)), presentation(PresentationGradingMethod.RUBRIC, null, criteria), "rubricWeightSumInvalid");
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void rubric_withLevelsNotMatchingTheScale_shouldBeRejected() throws Exception {
             // Five levels, which are within the allowed size but do not match a three-point scale
             var fivePoint = criterion("Content", 100, PresentationRubricScale.FIVE_POINT);
@@ -199,7 +199,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @ParameterizedTest
         @ValueSource(ints = { 0, 21 })
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void rubric_withTooFewOrTooManyCriteria_shouldBeRejected(int criterionCount) throws Exception {
             List<PresentationRubricCriterionDTO> criteria = IntStream.range(0, criterionCount)
                     .mapToObj(index -> criterion("Criterion " + index, 5, PresentationRubricScale.THREE_POINT)).toList();
@@ -208,14 +208,14 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @ParameterizedTest
         @ValueSource(ints = { 0, 101 })
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void rubric_withWeightOutOfRange_shouldBeRejected(int weight) throws Exception {
             var criteria = List.of(criterion("Content", weight, PresentationRubricScale.FIVE_POINT));
             request.postWithResponseBody(baseUrl(course), presentation(PresentationGradingMethod.RUBRIC, null, criteria), PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void rubric_withBlankCriterionName_shouldBeRejected() throws Exception {
             var criteria = List.of(criterion(" ", 100, PresentationRubricScale.FIVE_POINT));
             request.postWithResponseBody(baseUrl(course), presentation(PresentationGradingMethod.RUBRIC, null, criteria), PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
@@ -226,7 +226,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     class UpdateRubric {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void changingTheGradingMethod_shouldBeRejected() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.SCORE, 20.0, null);
             var update = new PresentationAssessmentDTO(created.id(), created.title(), created.description(), PresentationGradingMethod.PASS_FAIL, null, null, null, null);
@@ -235,7 +235,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void withoutInstances_shouldReplaceTheWholeRubric() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
             var replacement = List.of(criterion("Structure", 60, PresentationRubricScale.THREE_POINT), criterion("Delivery", 40, PresentationRubricScale.FIVE_POINT));
@@ -249,7 +249,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void withoutCriteriaInTheRequest_shouldKeepTheRubric() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
             PresentationRubricDTO before = getRubric(created.id());
@@ -262,7 +262,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void withInstances_shouldStillChangeTexts() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
             createInstances(created.id(), List.of(student(1)), null, null, null);
@@ -283,7 +283,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void withInstances_addingACriterion_shouldBeRejected() throws Exception {
             PresentationAssessmentDTO created = createLockedRubricPresentation();
             List<PresentationRubricCriterionDTO> criteria = new ArrayList<>(withWeights(getRubric(created.id()), 40, 30, 20));
@@ -293,7 +293,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void withInstances_removingACriterion_shouldBeRejected() throws Exception {
             PresentationAssessmentDTO created = createLockedRubricPresentation();
             List<PresentationRubricCriterionDTO> criteria = withWeights(getRubric(created.id()), 70, 30, 0).subList(0, 2);
@@ -302,7 +302,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void withInstances_changingAScale_shouldBeRejected() throws Exception {
             PresentationAssessmentDTO created = createLockedRubricPresentation();
             PresentationRubricDTO rubric = getRubric(created.id());
@@ -317,7 +317,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void withInstances_reorderingCriteria_shouldBeRejected() throws Exception {
             PresentationAssessmentDTO created = createLockedRubricPresentation();
             List<PresentationRubricCriterionDTO> criteria = new ArrayList<>(getRubric(created.id()).criteria());
@@ -327,7 +327,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void withInstances_levelOfAnotherCriterion_shouldBeRejected() throws Exception {
             PresentationAssessmentDTO created = createLockedRubricPresentation();
             PresentationRubricDTO rubric = getRubric(created.id());
@@ -341,7 +341,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void changingWeights_shouldRecalculateTheAssessedScores() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
             PresentationRubricDTO rubric = getRubric(created.id());
@@ -359,7 +359,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void changingWeights_shouldNotQueryMoreForMoreInstancesWithTheSameScore() throws Exception {
             long queriesForTwoInstances = countQueriesOfWeightChange(2);
             long queriesForSixInstances = countQueriesOfWeightChange(6);
@@ -369,7 +369,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void changingWeights_withoutAssessedInstances_shouldLeaveTheInstancesUnassessed() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
             long unassessed = createInstances(created.id(), List.of(student(1)), null, null, null).getFirst().id();
@@ -400,7 +400,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     class GetRubric {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void asTutor_shouldCountInstancesAndAssessedInstances() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             PresentationRubricDTO rubric = getRubric(presentationId);
@@ -415,7 +415,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @ParameterizedTest
         @EnumSource(value = PresentationGradingMethod.class, names = { "PASS_FAIL", "SCORE" })
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void ofAnotherMethod_shouldBeRejected(PresentationGradingMethod gradingMethod) throws Exception {
             Double maxPoints = gradingMethod == PresentationGradingMethod.SCORE ? 20.0 : null;
             PresentationAssessmentDTO created = createPresentation(gradingMethod, maxPoints, null);
@@ -433,7 +433,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void viaTheUrlOfAnotherCourse_shouldNotBeFound() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
 
@@ -445,7 +445,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     class GradePassFail {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void batch_shouldGiveEveryPresenterTheResult() throws Exception {
             long presentationId = createPresentationAsInstructor(PresentationGradingMethod.PASS_FAIL, null);
 
@@ -456,7 +456,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void withoutResult_shouldBeGradedLater() throws Exception {
             long presentationId = createPresentationAsInstructor(PresentationGradingMethod.PASS_FAIL, null);
             PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), null, null, null).getFirst();
@@ -468,7 +468,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void changingTheResult_shouldBeAllowed() throws Exception {
             long presentationId = createPresentationAsInstructor(PresentationGradingMethod.PASS_FAIL, null);
             PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), null, true, null).getFirst();
@@ -479,7 +479,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void removingTheResult_shouldBeRejected() throws Exception {
             long presentationId = createPresentationAsInstructor(PresentationGradingMethod.PASS_FAIL, null);
             PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), null, true, null).getFirst();
@@ -489,7 +489,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @ParameterizedTest
         @ValueSource(strings = { "points", "ratings" })
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void resultOfAnotherMethod_shouldBeRejected(String otherResult) throws Exception {
             long presentationId = createPresentationAsInstructor(PresentationGradingMethod.PASS_FAIL, null);
             var dto = batch(List.of(student(1)), otherResult.equals("points") ? 5.0 : null, true, otherResult.equals("ratings") ? unresolvedRatings() : null);
@@ -503,7 +503,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @ParameterizedTest
         @ValueSource(strings = { "passed", "ratings" })
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void resultOfAnotherMethod_shouldBeRejected(String otherResult) throws Exception {
             long presentationId = createPresentationAsInstructor(PresentationGradingMethod.SCORE, 20.0);
             var dto = batch(List.of(student(1)), 5.0, otherResult.equals("passed") ? true : null, otherResult.equals("ratings") ? unresolvedRatings() : null);
@@ -512,7 +512,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void removingThePoints_shouldBeRejected() throws Exception {
             long presentationId = createPresentationAsInstructor(PresentationGradingMethod.SCORE, 20.0);
             PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), 12.0, null, null).getFirst();
@@ -525,7 +525,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     class GradeRubric {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void ratings_shouldBeStoredAndScored() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             PresentationRubricDTO rubric = getRubric(presentationId);
@@ -539,7 +539,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void batch_shouldGiveEveryPresenterTheSameRatings() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             List<PresentationRubricRatingDTO> ratings = ratings(getRubric(presentationId), 4, 0, 0);
@@ -553,7 +553,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void withoutRatings_shouldStayUnassessed() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
 
@@ -565,7 +565,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @ParameterizedTest
         @ValueSource(strings = { "missing", "duplicate", "foreign" })
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void incompleteRatings_shouldBeRejected(String problem) throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             List<PresentationRubricRatingDTO> ratings = new ArrayList<>(ratings(getRubric(presentationId), 3, 2, 1));
@@ -579,7 +579,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void levelOfAnotherCriterion_shouldBeRejected() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             PresentationRubricDTO rubric = getRubric(presentationId);
@@ -590,7 +590,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void changingTheRatings_shouldReplaceThemAndTheScore() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             PresentationRubricDTO rubric = getRubric(presentationId);
@@ -604,7 +604,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void removingTheRatings_shouldBeRejected() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), null, null, ratings(getRubric(presentationId), 3, 2, 1)).getFirst();
@@ -614,7 +614,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @ParameterizedTest
         @ValueSource(strings = { "points", "passed" })
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void resultOfAnotherMethod_shouldBeRejected(String otherResult) throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             var dto = batch(List.of(student(1)), otherResult.equals("points") ? 5.0 : null, otherResult.equals("passed") ? true : null,
@@ -624,7 +624,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void score_shouldBeRoundedAsTheCourseRoundsScores() throws Exception {
             course.setAccuracyOfScores(0);
             courseRepository.save(course);
@@ -639,7 +639,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @ParameterizedTest
         @ValueSource(strings = { "withoutLevel", "longComment" })
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void invalidRating_shouldBeRejected(String problem) throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             List<PresentationRubricRatingDTO> ratings = new ArrayList<>(ratings(getRubric(presentationId), 3, 2, 1));
@@ -652,7 +652,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void ratingsOfAnInstanceOfAnotherPresentation_shouldNotBeFound() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             long otherPresentationId = createRubricPresentationAsInstructor();
@@ -675,7 +675,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     class StatisticsAndRows {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void statistics_shouldCountTheResultsOfEveryMethod() throws Exception {
             createAssessedInstanceOfEveryMethod();
 
@@ -687,7 +687,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
         @ParameterizedTest
         @ValueSource(booleans = { true, false })
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void rows_shouldBeFilteredByTheResultOfEveryMethod(boolean assessed) throws Exception {
             createAssessedInstanceOfEveryMethod();
             var params = new LinkedMultiValueMap<String, String>();
@@ -724,7 +724,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     class DeletionCascade {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void deletingAnInstance_shouldDeleteItsRatings() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), null, null, ratings(getRubric(presentationId), 3, 2, 1)).getFirst();
@@ -736,7 +736,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void deletingThePresentation_shouldDeleteItsRubricInstancesAndRatings() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             PresentationRubricDTO rubric = getRubric(presentationId);
@@ -752,7 +752,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void resettingTheCourse_shouldDeleteTheRatingsButKeepAnUnlockedRubric() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
             PresentationRubricDTO rubric = getRubric(created.id());
@@ -773,7 +773,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     class Roles {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void asEditor_shouldCreateARubricAndChangeItsWeights() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
 
@@ -783,7 +783,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
         void asTutor_changingTheRubric_shouldBeForbidden() throws Exception {
             long presentationId = createRubricPresentationAsInstructor();
             PresentationRubricDTO rubric = getRubric(presentationId);
@@ -804,7 +804,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     class ConcurrentRubricChanges {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void changingWeights_afterConcurrentGrading_shouldRejectStaleScores() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
             PresentationRubricDTO rubric = getRubric(created.id());
@@ -826,7 +826,7 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
         void grading_afterConcurrentWeightChange_shouldRejectTheStaleScore() throws Exception {
             PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
             PresentationRubricDTO rubric = getRubric(created.id());
