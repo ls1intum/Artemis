@@ -29,7 +29,8 @@ final class AresSecurityPolicy {
     /** The package student-written tests import; its permission is the only one ever derived. */
     private static final String JUNIT_PACKAGE = "org.junit.jupiter";
 
-    private static final Pattern PACKAGE_IMPORTS = Pattern.compile("(?m)^([ \\t]*)regardingPackageImports:[ \\t]*(\\[[ \\t]*\\])?[ \\t]*\\n");
+    /** The package-import list header; possessive, so a long blank run after it cannot backtrack between the optional empty list and the line end. */
+    private static final Pattern PACKAGE_IMPORTS = Pattern.compile("(?m)^([ \\t]*+)regardingPackageImports:[ \\t]*+(\\[[ \\t]*+\\])?[ \\t]*+\\n");
 
     private static final Pattern JUNIT_IMPORT_PERMISSION = Pattern.compile("(?m)^[ \\t]*-[ \\t]*importTheFollowingPackage:[ \\t]*\"" + Pattern.quote(JUNIT_PACKAGE) + "\"[ \\t]*$");
 

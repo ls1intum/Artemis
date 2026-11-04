@@ -555,7 +555,8 @@ public final class ExerciseIntegrityGate {
                     + "|\\bnew\\s+(?:java\\s*\\.\\s*util\\s*\\.\\s*)?Scanner\\s*\\(\\s*(?:new\\s+(?:java\\s*\\.\\s*io\\s*\\.\\s*)?File\\b|(?:java\\s*\\.\\s*nio\\s*\\.\\s*file\\s*\\.\\s*)?(?:Path\\s*\\.\\s*of|Paths\\s*\\.\\s*get)\\b)"
                     + "|\\bgetResource(?:AsStream)?\\s*\\(|\\bFileUtils\\s*\\.\\s*read\\w*\\s*\\(");
 
-    private static final Pattern STRING_LITERAL = Pattern.compile("\"((?:[^\"\\\\\\n]|\\\\.)*)\"");
+    /** A double-quoted literal on one line; the possessive repetition keeps a long literal from overflowing the stack. */
+    private static final Pattern STRING_LITERAL = Pattern.compile("\"((?:[^\"\\\\\\n]|\\\\.)*+)\"");
 
     /**
      * A string naming the student source tree or a source or class file: a {@code .java} or {@code .class} name, a {@code src} or {@code assignment} path segment, or the CI

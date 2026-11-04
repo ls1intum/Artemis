@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ClassPathResource;
@@ -834,6 +835,15 @@ class ExerciseIntegrityGateTest {
                 .contains("assignment/src/de/example/Client.java");
         assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", qualifiedScanner))).singleElement().asString().contains("Client.java");
         assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", pathInAConstant))).singleElement().asString().contains("src/de/example/Client.java");
+    }
+
+    @Test
+    @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void sourceReadingTests_scanALongEscapedLiteralWithoutOverflowingTheStack() {
+        String literal = "assignment/src/" + "a\\\"".repeat(30_000) + "/Client.java";
+        String test = "class T { @Test void t() throws Exception { String s = java.nio.file.Files.readString(java.nio.file.Path.of(\"" + literal + "\")); } }";
+
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", test))).singleElement().asString().contains("/Client.java");
     }
 
     @Test

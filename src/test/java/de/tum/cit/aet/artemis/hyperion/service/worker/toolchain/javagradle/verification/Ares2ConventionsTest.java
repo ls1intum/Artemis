@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ClassPathResource;
@@ -161,6 +162,18 @@ class Ares2ConventionsTest {
 
         assertThat(derived).contains("    regardingPackageImports:\n      - importTheFollowingPackage: \"org.junit.jupiter\"\n    regardingTimeouts: [ ]\n")
                 .doesNotContain("regardingPackageImports: [ ]");
+    }
+
+    /** An unterminated header followed by a long blank run is scanned once, not once per split of the run around the optional empty list. */
+    @Test
+    @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void aLongBlankRunAfterAnUnterminatedPackageImportHeaderIsScannedInLinearTime() throws IOException {
+        String seedPolicy = harness().get(AresSecurityPolicy.PATH) + "    regardingPackageImports:" + " ".repeat(100_000);
+        Map<String, String> tests = candidate();
+
+        String derived = AresSecurityPolicy.derive(seedPolicy, tests, SOLUTION_WITH_STUDENT_TESTS, SPEC_ASSIGNING_STUDENT_TESTS);
+
+        assertThat(derived).contains("    regardingPackageImports:\n      - importTheFollowingPackage: \"org.junit.jupiter\"\n");
     }
 
     @ParameterizedTest

@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,10 +56,17 @@ final class OutputOnlyMainProbe {
 
     private static final int LITERAL_CHUNK_CHARS = 512;
 
-    private static final Pattern MAIN_DECLARATION = Pattern.compile(
-            "(?<![\\w$.])((?:(?:public|static|final|synchronized|strictfp)\\s+)+)void\\s+main\\s*\\(\\s*(?:final\\s+)?String\\s*(?:\\[\\s*]\\s*[\\w$]+|\\.\\.\\.\\s*[\\w$]+|[\\w$]+\\s*\\[\\s*])\\s*\\)");
+    /**
+     * A {@code main(String[])} signature from its {@code void}, which follows whitespace; {@link #mainModifiers} reads the modifiers before it. The modifiers are scanned
+     * rather than matched, so a long run of them can neither overflow the stack nor be rescanned from every keyword.
+     */
+    private static final Pattern MAIN_SIGNATURE = Pattern
+            .compile("(?<=\\s)void\\s++main\\s*+\\(\\s*+(?:final\\s++)?String\\s*+(?:\\[\\s*+]\\s*+[\\w$]++|\\.\\.\\.\\s*+[\\w$]++|[\\w$]++\\s*+\\[\\s*+])\\s*+\\)");
 
-    private static final Pattern PACKAGE = Pattern.compile("^\\s*package\\s+([A-Za-z_$][\\w$]*(?:\\s*\\.\\s*[A-Za-z_$][\\w$]*)*)\\s*;", Pattern.MULTILINE);
+    private static final Set<String> MAIN_MODIFIERS = Set.of("public", "static", "final", "synchronized", "strictfp");
+
+    /** The package declaration; indentation before it stays on its line, so blank lines are not rescanned from every line start. */
+    private static final Pattern PACKAGE = Pattern.compile("^[ \\t\\x0B\\f]*+package\\s++([A-Za-z_$][\\w$]*+(?:\\s*+\\.\\s*+[A-Za-z_$][\\w$]*+)*+)\\s*+;", Pattern.MULTILINE);
 
     private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_$][\\w$]*");
 
@@ -77,7 +85,7 @@ final class OutputOnlyMainProbe {
     private static final Pattern COMPARING_ASSERTION = Pattern.compile("(?<![\\w$])(?:assert(?!DoesNotThrow\\b|Throws\\b|ThrowsExactly\\b|Timeout\\w*\\b)\\w*|fail)\\s*\\(");
 
     /** A method or constructor declaration header up to its body's opening brace, on masked source. */
-    private static final Pattern METHOD_HEADER = Pattern.compile("(?<![\\w$.])([A-Za-z_$][\\w$]*)\\s*\\([^()]*\\)\\s*(?:throws\\s+[\\w$.,\\s]+)?\\{");
+    private static final Pattern METHOD_HEADER = Pattern.compile("(?<![\\w$.])([A-Za-z_$][\\w$]*+)\\s*+\\([^()]*+\\)\\s*+(?:throws\\s[\\w$.,\\s]++)?\\{");
 
     private static final Set<String> NON_METHOD_KEYWORDS = Set.of("if", "for", "while", "switch", "catch", "synchronized", "try", "do", "else", "return", "new");
 
@@ -411,10 +419,47 @@ final class OutputOnlyMainProbe {
     }
 
     private static List<MatchResult> mainDeclarations(String masked) {
-        return MAIN_DECLARATION.matcher(masked).results().filter(declaration -> {
-            List<String> modifiers = List.of(declaration.group(1).strip().split("\\s+"));
+        return MAIN_SIGNATURE.matcher(masked).results().filter(signature -> {
+            Set<String> modifiers = mainModifiers(masked, signature.start());
             return modifiers.contains("public") && modifiers.contains("static");
         }).toList();
+    }
+
+    /**
+     * The modifier keywords of the whitespace-separated run that ends right before a {@code main} signature. The run starts at the earliest keyword that does not continue a
+     * name, so one after a word character, {@code $} or {@code .} is not part of it.
+     */
+    private static Set<String> mainModifiers(String masked, int signatureStart) {
+        Set<String> modifiers = new HashSet<>();
+        int cursor = signatureStart;
+        boolean extended = true;
+        while (extended) {
+            int keywordEnd = cursor;
+            while (keywordEnd > 0 && isPatternWhitespace(masked.charAt(keywordEnd - 1))) {
+                keywordEnd--;
+            }
+            int keywordStart = keywordEnd;
+            while (keywordStart > 0 && isWordCharacter(masked.charAt(keywordStart - 1))) {
+                keywordStart--;
+            }
+            String keyword = masked.substring(keywordStart, keywordEnd);
+            extended = keywordEnd < cursor && MAIN_MODIFIERS.contains(keyword) && (keywordStart == 0 || masked.charAt(keywordStart - 1) != '.');
+            if (extended) {
+                modifiers.add(keyword);
+                cursor = keywordStart;
+            }
+        }
+        return modifiers;
+    }
+
+    /** Whether the character is in the regex class {@code \s}. */
+    private static boolean isPatternWhitespace(char character) {
+        return character == ' ' || character == '\t' || character == '\n' || character == 0x0B || character == '\f' || character == '\r';
+    }
+
+    /** Whether the character is in the regex class {@code [\w$]}. */
+    private static boolean isWordCharacter(char character) {
+        return character == '$' || character == '_' || (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') || (character >= '0' && character <= '9');
     }
 
     private static int matchingBrace(String masked, int open) {

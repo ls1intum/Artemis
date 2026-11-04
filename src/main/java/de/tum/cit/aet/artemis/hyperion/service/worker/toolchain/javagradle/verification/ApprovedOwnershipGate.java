@@ -36,8 +36,8 @@ public final class ApprovedOwnershipGate {
     /** A type declaration header on masked source; its body starts at the next opening brace. */
     private static final Pattern TYPE_DECLARATION = Pattern.compile("(?<![\\w$])(?:class|interface|enum|record)\\s+([A-Za-z_$][\\w$]*)");
 
-    /** A TODO labelled with an internal seam ID, such as {@code TODO S1:} or {@code TODO (S1)}. */
-    private static final Pattern TODO_SEAM_LABEL = Pattern.compile("\\bTODO\\s*[-\\[(:]?\\s*S[1-9][0-9]*\\b");
+    /** A to-do marker labelled with an internal seam ID, such as the marker followed by {@code S1:} or {@code (S1)}. Possessive, so a long blank run cannot backtrack. */
+    private static final Pattern TODO_SEAM_LABEL = Pattern.compile("\\bTODO\\s*+(?:[-\\[(:]\\s*+)?S[1-9]\\d*+\\b");
 
     private static final Set<String> NON_SOURCE_TYPE_FILE_SUFFIXES = Set.of(".class", ".md", ".orig", ".txt");
 

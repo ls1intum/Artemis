@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -442,6 +443,27 @@ class ApprovedOwnershipGateTest {
                                 "class Context {\n  /**\n   * TODO: wire strategy\n   */\n  void wire() {}\n}"),
                         Map.of()))
                 .singleElement().asString().contains("internal seam IDs");
+    }
+
+    @Test
+    @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void templateTodoSeams_scanALongBlankRunAfterTheMarkerInLinearTime() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Player | player | stubbed |
+                ## Testing Strategy
+                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
+                |---|---|---|---|---|
+                | S1 | Player | create strategy | 3 | no |
+                """;
+        String blanks = " ".repeat(100_000);
+        Map<String, String> unlabelled = Map.of("src/Player.java", "class Player { // TODO" + blanks + "create strategy\n}");
+        Map<String, String> labelled = Map.of("src/Player.java", "class Player { // TODO -" + blanks + "S1 create strategy\n}");
+
+        assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, unlabelled, Map.of())).isEmpty();
+        assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, labelled, Map.of())).singleElement().asString().contains("internal seam IDs");
     }
 
     @Test

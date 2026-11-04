@@ -347,6 +347,7 @@ class StageChecksTest {
         @Test
         void demotesAGivenTypeWhoseCodeNeedsAStudentCreatedTypeOnlyThroughTheStageGateCorrection() {
             String spec = specWithDesign("| Player | context students create | student-creates |\n| Demo | supplied entry point | given |\n");
+            assertThat(service.correctGivenOwnership(sandbox, "s")).as("no approved specification to correct").isEmpty();
             approvedSpecs.approve("s", spec);
             sandbox.spec = spec;
             sandbox.templateRepositoryFiles = Map.of("src/Demo.java", "public class Demo { public int calculate(int input) { return new Player().calculate(input); } }");

@@ -26,6 +26,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
@@ -107,6 +108,34 @@ class OutputOnlyMainProbeTest {
                 OutputOnlyMainProbe.targets(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION.replace("library.add(\"Dune\");", "new java.util.Scanner(System.in);")), graded))
                 .as("reads standard input").isEmpty();
         assertThat(OutputOnlyMainProbe.targets(TESTS, Map.of(), Map.of("test/example/Library.java", SOLUTION), graded)).as("outside the student source tree").isEmpty();
+    }
+
+    @Test
+    void mainIsFoundAfterAnyArrangementOfItsModifiersButOnlyWhenItIsPublicAndStatic() {
+        String signature = "public static void main(String[] args)";
+
+        assertThat(OutputOnlyMainProbe.transcriptOnlyVariant(SOLUTION.replace(signature, "static\n    public final void main(final String... args)"), "x")).isPresent();
+        assertThat(OutputOnlyMainProbe.transcriptOnlyVariant(SOLUTION.replace(signature, "public static void main(String args [ ])"), "x")).isPresent();
+        assertThat(OutputOnlyMainProbe.transcriptOnlyVariant(SOLUTION.replace(signature, "public void main(String[] args)"), "x")).as("an instance main").isEmpty();
+        assertThat(OutputOnlyMainProbe.transcriptOnlyVariant(SOLUTION.replace(signature, "Library.public static void main(String[] args)"), "x"))
+                .as("a keyword that continues a qualified name is no modifier").isEmpty();
+    }
+
+    @Test
+    @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void longModifierRunsPackageNamesBlankLinesAndHeadersAreScannedInLinearTime() {
+        String manyModifiers = SOLUTION.replace("public static void main", "public ".repeat(20_000) + "static void main");
+        String modifiersWithoutMain = SOLUTION.replace("public static void main", "public ".repeat(20_000) + "static void notMain");
+        String longPackage = SOLUTION.replace("package example;", "\n".repeat(100_000) + "package example" + ".a".repeat(50_000) + ";");
+        Map<String, String> unterminatedHeader = Map.of("test/example/LibraryTest.java", TESTS.get("test/example/LibraryTest.java") + "void helper() throws" + " ".repeat(100_000));
+        Set<String> graded = OutputOnlyMainProbe.gradedTestMethods(PLAN);
+
+        assertThat(OutputOnlyMainProbe.transcriptOnlyVariant(manyModifiers, "x")).isPresent();
+        assertThat(OutputOnlyMainProbe.transcriptOnlyVariant(modifiersWithoutMain, "x")).isEmpty();
+        assertThat(OutputOnlyMainProbe.targets(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, longPackage), graded)).singleElement()
+                .isEqualTo(new OutputOnlyMainProbe.Target(PATH, "Library", "example" + ".a".repeat(50_000) + ".Library"));
+        assertThat(OutputOnlyMainProbe.targets(unterminatedHeader, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), graded))
+                .containsExactly(new OutputOnlyMainProbe.Target(PATH, "Library", "example.Library"));
     }
 
     @Test

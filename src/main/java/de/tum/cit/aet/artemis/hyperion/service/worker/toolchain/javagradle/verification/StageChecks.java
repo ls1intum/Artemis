@@ -686,8 +686,12 @@ public class StageChecks {
      * @return the agent-facing notice, or empty when no correction was needed or it could not be recorded
      */
     public Optional<String> correctGivenOwnership(InteractiveSandbox sandbox, String sessionId) {
-        Optional<String> approved = approvedSpecs.approved(sessionId);
-        List<String> studentCreatedTypes = approved.map(StageChecks::specStudentCreatedTypes).orElse(List.of());
+        Optional<String> approvedSpec = approvedSpecs.approved(sessionId);
+        if (approvedSpec.isEmpty()) {
+            return Optional.empty();
+        }
+        String approved = approvedSpec.get();
+        List<String> studentCreatedTypes = specStudentCreatedTypes(approved);
         if (studentCreatedTypes.isEmpty()) {
             return Optional.empty();
         }
@@ -700,14 +704,14 @@ public class StageChecks {
             log.warn("Could not read the repositories to check given-type ownership for session {} ({})", sessionId, e.getClass().getSimpleName());
             return Optional.empty();
         }
-        List<String> dependencies = ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(designTableRows(approved.get()), studentCreatedTypes, sources.templateFiles(),
+        List<String> dependencies = ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(designTableRows(approved), studentCreatedTypes, sources.templateFiles(),
                 sources.solutionFiles());
         if (dependencies.isEmpty()) {
             return Optional.empty();
         }
         Set<String> demoted = dependencies.stream().map(dependency -> dependency.substring(0, dependency.indexOf("->"))).collect(Collectors.toCollection(LinkedHashSet::new));
-        String amended = demoteGivenTypes(approved.get(), demoted);
-        if (amended.equals(approved.get()) || !approvedSpecs.amend(sessionId, approved.get(), amended)) {
+        String amended = demoteGivenTypes(approved, demoted);
+        if (amended.equals(approved) || !approvedSpecs.amend(sessionId, approved, amended)) {
             return Optional.empty();
         }
         sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(Map.of("SPEC.md", amended), Map.of()));
