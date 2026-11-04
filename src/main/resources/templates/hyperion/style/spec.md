@@ -54,8 +54,10 @@ collaborator only when students implement independently actionable collaborator 
 type's seam ID as a class-body breadcrumb. An empty interface declaration still pre-creates the type, so it is not
 faithful when the brief explicitly assigns creating that interface to students.
 A type marked `given` must ship complete, so none of its Public API signatures may name a `student-creates` type
-that is absent from the template. Resolve that ownership dependency in the specification; never make a given type
-empty or silently reassign it to students later merely to make the starter compile.
+that is absent from the template, and neither may its bodies, imports, or private members: a type whose code constructs,
+calls, or imports a student-created type is `stubbed` (its dependent bodies are TODOs), never `given`. Resolve that
+ownership dependency in the specification; never make a given type empty or silently reassign it to students later
+merely to make the starter compile.
 For every piece of MUTABLE STATE, say below the table which type owns it and whether it survives object
 replacement (a swap, reset, or re-registration): tests may only demand what this ownership makes possible.
 ## Public API

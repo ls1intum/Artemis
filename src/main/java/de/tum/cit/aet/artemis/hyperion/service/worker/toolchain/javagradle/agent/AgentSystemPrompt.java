@@ -192,7 +192,8 @@ public class AgentSystemPrompt {
             - `## Design`: table `| Type | Role | Template status |`. Status is exactly `given`, `stubbed`, or `student-creates`, without formatting. Describe what each owner
               supplies and what the learner changes in Role. Given types stay complete and identical across repositories. Student-created types are absent from the starter.
               State who owns mutable state and whether it survives replacement. Supplied declarations must not depend on an absent type; omit only student-owned dependent
-              members, marked `/** @studentCreates */` in Public API, with their own owner seam when independently actionable.
+              members, marked `/** @studentCreates */` in Public API, with their own owner seam when independently actionable. A `given` type's whole source, bodies and
+              imports included, ships unchanged in the starter, so a type whose code constructs, calls, or imports a student-created type is `stubbed`, never `given`.
             - `## Public API`: one `### TypeName` subsection per type, each with a fenced `java` block containing the completed solution's type declaration and exact
               contract-visible signatures, including all final enum constants. This is the final graded contract, not an intermediate starter or an earlier task's API.
               Use `{ ... }` for constructor bodies and semicolons for method signatures. List fields only when deliberately public and graded. Private state is not a reflective API.

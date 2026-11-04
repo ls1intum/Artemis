@@ -267,6 +267,15 @@ public final class ExerciseIntegrityGate {
                     + ". A stubbed type ships in the template as the real signatures with TODO bodies, so the student has something to complete and the graded tests can name "
                     + "it; restore them instead of deleting the tests that need them.");
         }
+        List<String> givenDependencies = givenTypeStudentCreatedDependencies(designRows, studentCreatedTypes, producedTemplateFiles, producedSolutionFiles);
+        if (!givenDependencies.isEmpty()) {
+            reasons.add("the approved specification marks these types 'given', but their code references types students create: " + givenDependencies
+                    + ". A given type ships byte-identical in the template, where a student-created type does not exist, so the template cannot compile, and adding that "
+                    + "type or a placeholder for it to the template is rejected. Keep given code limited to given and stubbed types, for example by working through a given "
+                    + "or stubbed abstraction the approved API already exposes; do not hide the reference behind reflection or Object. If a given type cannot do its approved "
+                    + "job without a student-created type, the ownership is contradictory: that type must be 'stubbed' (its dependent bodies become TODOs) or "
+                    + "'student-creates' in the specification.");
+        }
         List<String> divergentGivenTypes = designRows.stream().filter(row -> "given".equals(row.status())).map(StageChecks.DesignRow::type)
                 .filter(type -> !canonicalGivenFileMatches(type, producedTemplateFiles, producedSolutionFiles)).toList();
         if (!divergentGivenTypes.isEmpty()) {
@@ -277,6 +286,31 @@ public final class ExerciseIntegrityGate {
                     + "needed, then copy the whole canonical file to the template. Never delete solution documentation or weaken either copy merely to make the bytes match.");
         }
         return List.copyOf(reasons);
+    }
+
+    /**
+     * Finds given types whose source names a student-created type outside comments and literals. Both repositories are read: the solution copy shows the dependency before
+     * the template copy exists, and the template copy is the one that fails to compile. Signature-level dependencies are already rejected at the specification gate; this
+     * catches the bodies, imports, and private members the specification does not list.
+     *
+     * @return {@code Given->StudentCreated} pairs in Design-table order
+     */
+    static List<String> givenTypeStudentCreatedDependencies(List<StageChecks.DesignRow> designRows, List<String> studentCreatedTypes, Map<String, String> templateFiles,
+            Map<String, String> solutionFiles) {
+        if (studentCreatedTypes.isEmpty()) {
+            return List.of();
+        }
+        List<String> dependencies = new ArrayList<>();
+        designRows.stream().filter(row -> "given".equals(row.status())).map(StageChecks.DesignRow::type).filter(type -> JAVA_IDENTIFIER.matcher(type).matches()).forEach(given -> {
+            String suffix = "/" + given + ".java";
+            List<String> sources = java.util.stream.Stream
+                    .concat(canonicalJavaFiles(templateFiles, given, suffix).stream(), canonicalJavaFiles(solutionFiles, given, suffix).stream())
+                    .map(entry -> JavaSourceInspector.maskCommentsAndLiterals(entry.getValue())).toList();
+            studentCreatedTypes.stream().filter(created -> !created.equals(given))
+                    .filter(created -> sources.stream().anyMatch(source -> Pattern.compile("(?<![\\w$])" + Pattern.quote(created) + "(?![\\w$])").matcher(source).find()))
+                    .forEach(created -> dependencies.add(given + "->" + created));
+        });
+        return List.copyOf(dependencies);
     }
 
     private static boolean canonicalGivenFileMatches(String type, Map<String, String> templateFiles, Map<String, String> solutionFiles) {

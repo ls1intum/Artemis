@@ -790,6 +790,38 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/Track.java", track), solution)).isEmpty();
     }
 
+    @Test
+    void approvedSpecification_rejectsAGivenTypeWhoseCodeConstructsAStudentCreatedType() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Track` | supplied data type | given |
+                | `Demo` | supplied entry point | given |
+                | `Player` | context students create | student-creates |
+                """;
+        String track = "public record Track(String title) {}";
+        // The signature names no student-created type, so the specification gate cannot see the dependency; only the body does.
+        String demo = "public class Demo { public static void main(String[] args) { new Player().play(new Track(\"a\")); } }";
+        Map<String, String> solution = map("src/Track.java", track, "src/Demo.java", demo, "src/Player.java", "public class Player { public void play(Track t) {} }");
+        Map<String, String> template = map("src/Track.java", track, "src/Demo.java", demo);
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).singleElement()
+                .satisfies(reason -> assertThat(reason).contains("[Demo->Player]", "cannot compile", "'stubbed'").doesNotContain("Track->"));
+        // The solution copy alone already shows the dependency, before the template copy exists.
+        assertThat(ExerciseIntegrityGate.givenTypeStudentCreatedDependencies(StageChecks.designTableRows(spec), List.of("Player"), Map.of(), solution))
+                .containsExactly("Demo->Player");
+    }
+
+    @Test
+    void approvedSpecification_ignoresStudentCreatedTypeNamesInGivenCommentsAndLiterals() {
+        String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Demo | entry point | given |\n| Player | context | student-creates |\n";
+        String demo = "/** Students write Player. */ public class Demo { String hint() { return \"implement Player\"; } // Player\n }";
+        Map<String, String> files = map("src/Demo.java", demo);
+
+        assertThat(ExerciseIntegrityGate.givenTypeStudentCreatedDependencies(StageChecks.designTableRows(spec), List.of("Player"), files, files)).isEmpty();
+    }
+
     private static Stream<Arguments> annotatedTypeOwnershipCases() {
         return Stream
                 .of("@FunctionalInterface public interface Strategy { int apply(int x); }", "@java.lang.FunctionalInterface public interface Strategy { int apply(int x); }",
