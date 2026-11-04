@@ -661,7 +661,7 @@ public class DifferentialVerifier {
                 || !contractSpecifications.stream().allMatch(spec -> ExerciseIntegrityGate.solutionMatchesApprovedApi(spec, solutionFiles))) {
             return List.of();
         }
-        return List.of("Server defect, not an authoring error: the server-owned structural check(s) " + failingSeeded + " fail on the reference solution although it "
+        return List.of(VerificationResult.SERVER_DEFECT_PREFIX + " the server-owned structural check(s) " + failingSeeded + " fail on the reference solution although it "
                 + "declares exactly the approved Public API those checks were derived from. Authoring cannot repair this: do not change the solution, template, tests, or "
                 + "SPEC.md to satisfy them. The exercise cannot be verified until the Artemis administrators fix the structural seeding.");
     }

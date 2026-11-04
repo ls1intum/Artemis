@@ -382,6 +382,12 @@ class GenerationAttemptLoop {
             if (verification.mechanicallyVerified()) {
                 checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot);
             }
+            if (verification.serverDefect()) {
+                // The diagnostic tells the agent to change nothing, so another attempt could only contradict it or repeat the same verdict.
+                emit("Verification failed on a server-side defect that no repair can fix; stopping and keeping the last verified candidate for the administrators.");
+                terminationReason = TerminationReason.ENVIRONMENT_UNAVAILABLE;
+                break;
+            }
             if (cancelled.getAsBoolean()) {
                 return cancelledOutcome(cancelledResult(loopResult));
             }

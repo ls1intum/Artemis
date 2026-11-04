@@ -258,7 +258,7 @@
                     "DEADLINE_EXCEEDED": "Der Durchlauf hat sein Zeitlimit erreicht.",
                     "TOKEN_BUDGET_EXHAUSTED": "Der Durchlauf hat sein Budgetlimit erreicht.",
                     "AGENT_ERROR": "Das KI-Modell ist bei der Arbeit an der Aufgabe fehlgeschlagen.",
-                    "ENVIRONMENT_UNAVAILABLE": "Die Build-Umgebung war nicht verfügbar.",
+                    "ENVIRONMENT_UNAVAILABLE": "Die Build-Umgebung konnte den Lauf nicht ausführen oder prüfen. Das ist ein serverseitiges Problem, das kein Reparaturversuch beheben kann.",
                     "ACCOUNTING_INCOMPLETE": "Die KI-Nutzung konnte nicht überprüft werden. Weitere KI-Anfragen wurden gestoppt, um das Budget einzuhalten. Versuche es später erneut oder kontaktiere einen Administrator.",
                     "RUN_FAILED": "Der Durchlauf ist unerwartet fehlgeschlagen.",
                     "NOT_STARTED": "Der Durchlauf ist nie gestartet."

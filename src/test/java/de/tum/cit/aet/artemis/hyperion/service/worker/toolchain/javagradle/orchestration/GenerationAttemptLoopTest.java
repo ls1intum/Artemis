@@ -324,6 +324,19 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void aServerDefectStopsTheRunInsteadOfAskingForAnotherRepair() {
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class)))
+                .thenReturn(rejected(VerificationResult.SERVER_DEFECT_PREFIX + " the server-owned structural check(s) [testClass[Stack]] fail on the reference solution."));
+
+        GenerationAttemptLoop loop = newGenerateLoop(4, 2);
+        loop.run();
+
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.ENVIRONMENT_UNAVAILABLE);
+        verify(agentLoopRunner, times(1)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+        assertThat(progressLines).anyMatch(line -> line.contains("server-side defect that no repair can fix"));
+    }
+
+    @Test
     void nonImprovingSemanticRepairStopsAndPreservesThePreviousCheckpoint() {
         SpecFidelityReport blocker = report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(blocker, blocker);
