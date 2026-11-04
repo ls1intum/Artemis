@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
@@ -19,6 +20,12 @@ import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
  * Static and side-effect-free apart from that list.
  */
 final class DifferentialBuildChecks {
+
+    /**
+     * A structural check that loads a candidate class initializes it, so a static initializer of the candidate that throws fails the check. That failure is the candidate's,
+     * however exactly its declarations match the approved Public API.
+     */
+    private static final Pattern CANDIDATE_INITIALIZATION_FAILURE = Pattern.compile("ExceptionInInitializerError|Could not initialize class");
 
     private DifferentialBuildChecks() {
     }
@@ -48,14 +55,18 @@ final class DifferentialBuildChecks {
 
     /**
      * Names server-owned structural checks that fail on a reference solution matching the approved Public API. The server derived them from that contract, so the failure is a
-     * seeding defect the agent cannot repair. The checks still fail verification; this only keeps the diagnostic from presenting the defect as an authoring error.
+     * seeding defect the agent cannot repair. The checks still fail verification; this only keeps the diagnostic from presenting the defect as an authoring error. A check that
+     * failed because initializing a candidate class threw is not one: the candidate's own code failed, and it can repair that.
      */
     static List<String> structuralSeedingDefectReasons(BuildSummary solution, Set<String> seededStructuralTestNames, List<String> contractSpecifications,
             Map<String, String> solutionFiles) {
         Set<String> seeded = seededStructuralTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
         List<String> failingSeeded = solution.testFailedNames().stream().filter(name -> seeded.contains(ProblemStatementBindingChecker.normalizeTestName(name))).distinct().sorted()
                 .toList();
-        if (failingSeeded.isEmpty() || contractSpecifications.isEmpty()
+        boolean candidateInitializationFailed = solution.failureEvidence().stream()
+                .anyMatch(evidence -> seeded.contains(ProblemStatementBindingChecker.normalizeTestName(evidence.testName()))
+                        && CANDIDATE_INITIALIZATION_FAILURE.matcher(evidence.message()).find());
+        if (failingSeeded.isEmpty() || candidateInitializationFailed || contractSpecifications.isEmpty()
                 || !contractSpecifications.stream().allMatch(spec -> ApprovedOwnershipGate.solutionMatchesApprovedApi(spec, solutionFiles))) {
             return List.of();
         }
