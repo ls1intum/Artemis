@@ -2,7 +2,7 @@
     <div class="flex flex-col gap-6">
         <jhi-presentation-rubric-editor [form]="form" [locked]="locked()" [showErrors]="showErrors()" />
         <div class="flex justify-end gap-2 border-t border-[var(--border-color)] pt-4">
-            <tumaet-ui-button severity="secondary" type="button" (clicked)="cancel()">
+            <tumaet-ui-button severity="secondary" type="button" data-testid="cancel-rubric-button" (clicked)="cancel()">
                 <fa-icon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>
             </tumaet-ui-button>

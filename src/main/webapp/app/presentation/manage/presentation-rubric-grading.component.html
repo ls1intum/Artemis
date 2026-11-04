@@ -43,7 +43,7 @@
                 }
             </div>
 
-            @if (rating.controls.levelId.value !== null) {
+            @if (rating.controls.levelId.value !== undefined) {
                 <div class="presentation-rubric-grading-field">
                     <label
                         [for]="'rubric-grading-comment-' + index"
@@ -51,7 +51,7 @@
                         [translateValues]="{ name: criterion.name }"
                     ></label>
                     <textarea
-                        [id]="'rubric-grading-comment-' + index"
+                        [tumAetUiInputId]="'rubric-grading-comment-' + index"
                         tumAetUiTextarea
                         class="w-full"
                         rows="3"

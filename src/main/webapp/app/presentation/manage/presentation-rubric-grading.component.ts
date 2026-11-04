@@ -35,7 +35,7 @@ export class PresentationRubricGradingComponent {
     }
 
     protected selectLevel(rating: RatingForm, levelId: number | undefined): void {
-        rating.controls.levelId.setValue(levelId ?? null);
+        rating.controls.levelId.setValue(levelId);
         rating.markAsDirty();
     }
 

@@ -3,13 +3,13 @@ import { FormArray, FormControl, FormGroup, ValidationErrors, ValidatorFn, Valid
 import { PresentationRubricCriterion, PresentationRubricRating } from 'app/presentation/shared/entities/presentation-assessment.model';
 
 export type RatingForm = FormGroup<{
-    levelId: FormControl<number | null>;
+    levelId: FormControl<number | undefined>;
     comment: FormControl<string>;
 }>;
 export type RatingsForm = FormArray<RatingForm>;
 
 export function countUnrated(form: RatingsForm): number {
-    return form.controls.filter((rating) => rating.controls.levelId.value === null).length;
+    return form.controls.filter((rating) => rating.controls.levelId.value === undefined).length;
 }
 
 /** A rubric is rated completely or not at all, and a saved rubric result can be changed but not removed. */
@@ -33,8 +33,8 @@ export function createRatingsForm(criteria: PresentationRubricCriterion[], ratin
         criteria.map((criterion) => {
             const rating = ratings.find((candidate) => candidate.criterionId === criterion.id);
             return new FormGroup({
-                // An unrated criterion has no level; null rather than undefined, which FormControl replaces with null anyway
-                levelId: new FormControl<number | null>(rating?.levelId ?? null),
+                // An unrated criterion has no level; a state object keeps that undefined, passed directly FormControl would replace it with null
+                levelId: new FormControl<number | undefined>({ value: rating?.levelId, disabled: false }, { nonNullable: true }),
                 comment: new FormControl(rating?.comment ?? '', { nonNullable: true, validators: [Validators.maxLength(1000)] }),
             });
         }),
@@ -47,7 +47,7 @@ export function readRatingsForm(criteria: PresentationRubricCriterion[], form: R
     const ratings = form.controls.flatMap((rating, index) => {
         const levelId = rating.controls.levelId.value;
         const criterionId = criteria[index]?.id;
-        return levelId !== null && criterionId !== undefined ? [{ criterionId, levelId, comment: rating.controls.comment.value.trim() || undefined }] : [];
+        return levelId !== undefined && criterionId !== undefined ? [{ criterionId, levelId, comment: rating.controls.comment.value.trim() || undefined }] : [];
     });
     return ratings.length > 0 ? ratings : undefined;
 }

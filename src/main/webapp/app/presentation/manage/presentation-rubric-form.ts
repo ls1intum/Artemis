@@ -12,7 +12,7 @@ export type RubricCriterionForm = FormGroup<{
     id: FormControl<number | undefined>;
     name: FormControl<string>;
     description: FormControl<string>;
-    weight: FormControl<number | null>;
+    weight: FormControl<number | undefined>;
     scale: FormControl<PresentationRubricScale>;
     levels: FormArray<RubricLevelForm>;
 }>;
@@ -47,10 +47,14 @@ export function createRubricForm(criteria: PresentationRubricCriterion[] = [], l
 export function createCriterionForm(criterion?: Partial<PresentationRubricCriterion>, locked = false): RubricCriterionForm {
     const scale = criterion?.scale ?? PresentationRubricScale.FIVE_POINT;
     return new FormGroup({
-        id: new FormControl<number | undefined>(criterion?.id, { nonNullable: true }),
+        // A state object keeps an undefined value; passed directly, FormControl would replace it with null
+        id: new FormControl<number | undefined>({ value: criterion?.id, disabled: false }, { nonNullable: true }),
         name: new FormControl(criterion?.name ?? '', { nonNullable: true, validators: [Validators.required, notBlank, Validators.maxLength(255)] }),
         description: new FormControl(criterion?.description ?? '', { nonNullable: true, validators: [Validators.maxLength(1000)] }),
-        weight: new FormControl<number | null>(criterion?.weight ?? null, [Validators.required, Validators.min(1), Validators.max(RUBRIC_WEIGHT_SUM)]),
+        weight: new FormControl<number | undefined>(
+            { value: criterion?.weight, disabled: false },
+            { nonNullable: true, validators: [Validators.required, Validators.min(1), Validators.max(RUBRIC_WEIGHT_SUM)] },
+        ),
         scale: new FormControl({ value: scale, disabled: locked }, { nonNullable: true }),
         levels: createLevelForms(scale, criterion?.levels),
     });
@@ -63,7 +67,7 @@ export function createLevelForms(scale: PresentationRubricScale, levels: Present
             { length: rubricLevelCount(scale) },
             (_, position) =>
                 new FormGroup({
-                    id: new FormControl<number | undefined>(levels[position]?.id, { nonNullable: true }),
+                    id: new FormControl<number | undefined>({ value: levels[position]?.id, disabled: false }, { nonNullable: true }),
                     description: new FormControl(levels[position]?.description ?? '', { nonNullable: true, validators: [Validators.maxLength(1000)] }),
                 }),
         ),

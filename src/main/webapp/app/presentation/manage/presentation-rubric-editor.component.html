@@ -74,7 +74,7 @@
                             <span jhiTranslate="artemisApp.presentationAssessment.rubric.name"></span>
                             <span class="text-state-danger" aria-hidden="true"> *</span>
                         </label>
-                        <input [id]="'rubric-criterion-name-' + index" tumAetUiInput class="w-full" type="text" formControlName="name" required />
+                        <input [tumAetUiInputId]="'rubric-criterion-name-' + index" tumAetUiInput class="w-full" type="text" formControlName="name" required />
                         @if (criterion.controls.name.invalid && criterion.controls.name.touched) {
                             <tumaet-ui-message severity="error">
                                 <span jhiTranslate="artemisApp.presentationAssessment.rubric.validation.nameRequired"></span>
@@ -84,7 +84,7 @@
 
                     <div class="presentation-rubric-field">
                         <label [for]="'rubric-criterion-description-' + index" jhiTranslate="artemisApp.presentationAssessment.rubric.description"></label>
-                        <input [id]="'rubric-criterion-description-' + index" tumAetUiInput class="w-full" type="text" formControlName="description" />
+                        <input [tumAetUiInputId]="'rubric-criterion-description-' + index" tumAetUiInput class="w-full" type="text" formControlName="description" />
                     </div>
 
                     <div class="presentation-rubric-field">
