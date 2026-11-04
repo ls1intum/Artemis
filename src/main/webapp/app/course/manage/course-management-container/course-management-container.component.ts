@@ -358,7 +358,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         // 8+. Other management items
         sidebarItems.push(...this.addCommunicationItem(currentCourse));
         if (isInstructor) {
-            sidebarItems.push(...this.getIrisSettingsItem());
+            sidebarItems.push(...this.getIrisSettingsItem(), ...this.getAthenaSettingsItem());
         }
         sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem(courseId));
         if (this.atlasEnabled && isEditor && this.learningPathsActive()) {
@@ -406,6 +406,14 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             irisItems.push(this.sidebarItemService.getIrisSettingsItem(this.courseId()));
         }
         return irisItems;
+    }
+
+    private getAthenaSettingsItem() {
+        const athenaItems: SidebarItem[] = [];
+        if (this.athenaEnabled) {
+            athenaItems.push(this.sidebarItemService.getAthenaSettingsItem(this.courseId()));
+        }
+        return athenaItems;
     }
 
     override ngOnDestroy() {
