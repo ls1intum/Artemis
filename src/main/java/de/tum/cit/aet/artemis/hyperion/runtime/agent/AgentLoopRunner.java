@@ -323,6 +323,10 @@ public class AgentLoopRunner {
             }
 
             AgentPromptSafety.requirePromptSafe(prompt);
+            if (conversation != lastPromptConversation) {
+                // Only compaction replaces the conversation between two prompts. It drops earlier results, so re-reading them is not a repeat.
+                AgentToolBatch.forgetObservations(repeatedCallCounts);
+            }
             messagesAtLastCall = conversation.size();
             lastPromptConversation = conversation;
             emitWaitingOnModel(stepListener, activity);
@@ -435,9 +439,8 @@ public class AgentLoopRunner {
                     emit(stepListener, "The build environment stopped responding.");
                     return failed(turn, lastAssistantText, conversation, "The build environment stopped responding on turn " + turn + ".");
                 }
-                int repeatedThisTurn = AgentToolBatch.escalateRepeatedRejections(conversation, toolCalls, repeatedCallCounts);
-                if (repeatedThisTurn > 0) {
-                    repeatedRejections += repeatedThisTurn;
+                if (AgentToolBatch.escalateRepeatedRejections(conversation, toolCalls, repeatedCallCounts)) {
+                    repeatedRejections++;
                     log.warn("Agent loop repeated an identical tool call on turn {} (repeats this session: {})", turn, repeatedRejections);
                     if (repeatedRejections >= MAX_CONSECUTIVE_TOOL_FAILURES) {
                         return failed(turn, lastAssistantText, conversation, "The agent repeated identical rejected tool calls " + repeatedRejections

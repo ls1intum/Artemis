@@ -28,16 +28,23 @@ final class AgentToolBatch {
     static final String SUBMIT_TOOL_NAME = "submit";
 
     /**
-     * The occurrence of an identical tool call that is answered with an explicit observation instead of its result: the same tool and arguments when it was rejected, or the same
-     * tool, arguments and result when it succeeded. Neither can make progress by being repeated. Only a repeated rejection counts toward ending the session: a repeated
-     * observation is answered with a note, and the turn budget bounds it.
+     * The occurrence of an identical tool call that is answered explicitly: the same tool and arguments when it was rejected, or the same tool, arguments and result when it
+     * succeeded. A repeated rejection is replaced by an escalation and counts toward ending the session; a repeated observation keeps its full result behind a note, and the turn
+     * budget bounds it.
      */
     static final int REPEATED_REJECTION_ESCALATION = 3;
 
     private static final int MAX_REPEATED_REJECTION_EXCERPT_CHARS = 400;
 
-    /** Tools that change the workspace. Their successful result does not show whether the workspace changed in between, so identical successes are not repeats. */
+    /**
+     * Tools that change the workspace. Their successful result does not show whether the workspace changed in between, so identical successes are not repeats, and a success
+     * means earlier observations may be out of date.
+     */
     private static final Set<String> WORKSPACE_MUTATING_TOOLS = Set.of("write_file", "edit_file", "delete_file");
+
+    private static final String REJECTED_CALL_KEY = "rejected\n";
+
+    private static final String OBSERVED_CALL_KEY = "observed\n";
 
     private static final JsonHelper TOOL_ARGUMENT_JSON = new JsonHelper();
 
@@ -125,16 +132,20 @@ final class AgentToolBatch {
     }
 
     /**
-     * Counts the calls of the latest tool batch and replaces the result of each call repeated {@link #REPEATED_REJECTION_ESCALATION} or more times with an explicit observation
-     * that repeating it changes nothing. A rejected call is identified by tool and arguments; a successful call also by its result, so re-reading a file after an edit is not a
-     * repeat. A model that interleaves the same call with other calls never trips the consecutive limit, so without this it can spend a whole session repeating it.
+     * Counts the calls of the latest tool batch and answers each call repeated {@link #REPEATED_REJECTION_ESCALATION} or more times explicitly. A rejected call is identified by
+     * tool and arguments and its result is replaced by an escalation; a successful call also by its result, so re-reading a file after an edit is not a repeat, and it keeps its
+     * full result behind a note. A model that interleaves the same call with other calls never trips the consecutive limit, so without this it can spend a whole session
+     * repeating it. A successful write, edit or delete may change what an earlier observation showed, so it restarts the count of every successful call.
      *
-     * @return how many calls of the batch were repeated rejections, which count toward ending the session
+     * @return whether the batch repeated a rejected call; one batch counts at most once toward ending the session, so the model always reads an escalation before the next counts
      */
-    static int escalateRepeatedRejections(List<Message> conversation, List<AssistantMessage.ToolCall> toolCalls, Map<String, Integer> repeatedCallCounts) {
+    static boolean escalateRepeatedRejections(List<Message> conversation, List<AssistantMessage.ToolCall> toolCalls, Map<String, Integer> repeatedCallCounts) {
         for (int i = conversation.size() - 1; i >= 0; i--) {
             if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
-                int repeatedRejections = 0;
+                if (toolResponse.getResponses().stream().anyMatch(response -> WORKSPACE_MUTATING_TOOLS.contains(response.name()) && !isErrorResponse(response.responseData()))) {
+                    forgetObservations(repeatedCallCounts);
+                }
+                boolean repeatedRejection = false;
                 boolean replaced = false;
                 List<ToolResponseMessage.ToolResponse> responses = new ArrayList<>(toolResponse.getResponses().size());
                 for (ToolResponseMessage.ToolResponse response : toolResponse.getResponses()) {
@@ -150,34 +161,40 @@ final class AgentToolBatch {
                     }
                     String arguments = toolCalls.stream().filter(call -> call.id() != null && call.id().equals(response.id())).map(AssistantMessage.ToolCall::arguments).findFirst()
                             .orElse("");
-                    String key = response.name() + '\n' + arguments + (rejected ? "" : '\n' + response.responseData());
+                    String key = rejected ? REJECTED_CALL_KEY + response.name() + '\n' + arguments
+                            : OBSERVED_CALL_KEY + response.name() + '\n' + arguments + '\n' + response.responseData();
                     int occurrences = repeatedCallCounts.merge(key, 1, Integer::sum);
                     if (occurrences < REPEATED_REJECTION_ESCALATION) {
                         responses.add(response);
                         continue;
                     }
                     replaced = true;
-                    if (rejected) {
-                        repeatedRejections++;
-                    }
-                    String observation = excerpt(response.responseData().strip());
-                    // A repeated observation is not a rejection: the note must not start with ERROR, or it would count toward the consecutive-failure limit.
+                    repeatedRejection |= rejected;
+                    // A repeated observation is not a rejection: the note must not start with ERROR, or it would count toward the consecutive-failure limit. It keeps the full
+                    // result, because a re-read can be legitimate, for example after compaction dropped the earlier one, and a shell command may have changed the workspace.
                     String escalation = rejected
                             ? "ERROR: this exact " + response.name() + " call has now been rejected " + occurrences
                                     + " times and will be rejected every time. Do not repeat it; take a different action. Each further repeat counts toward ending this "
-                                    + "session. The rejection was: " + observation
+                                    + "session. The rejection was: " + excerpt(response.responseData().strip())
                             : "NOTE: this exact " + response.name() + " call has now returned the same result " + occurrences
-                                    + " times. Repeating it cannot change anything until you change the workspace; take a different action. The unchanged result was: "
-                                    + observation;
+                                    + " times. Unless you expect a different result, take a different action instead of repeating it. The result was:\n" + response.responseData();
                     responses.add(new ToolResponseMessage.ToolResponse(response.id(), response.name(), escalation));
                 }
                 if (replaced) {
                     conversation.set(i, ToolResponseMessage.builder().responses(responses).metadata(toolResponse.getMetadata()).build());
                 }
-                return repeatedRejections;
+                return repeatedRejection;
             }
         }
-        return 0;
+        return false;
+    }
+
+    /**
+     * Restarts the count of every successful call, keeping the count of rejected calls: once the workspace or the conversation changed, an identical result no longer shows that
+     * the model is repeating itself without reason.
+     */
+    static void forgetObservations(Map<String, Integer> repeatedCallCounts) {
+        repeatedCallCounts.keySet().removeIf(key -> key.startsWith(OBSERVED_CALL_KEY));
     }
 
     static boolean hasOnlyRecoverableFileToolRejections(List<Message> conversation) {

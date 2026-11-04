@@ -435,6 +435,20 @@ class AgentLoopRunnerTest {
                 .allSatisfy(result -> assertThat(result).startsWith("NOTE: this exact status call has now returned the same result").contains("not a git repository"));
     }
 
+    /** A model that sends one rejected call several times in a single response must read the escalation before the repeats can end the session. */
+    @Test
+    void identicalRejectedCallsInOneResponseCountOnceTowardEndingTheSession() {
+        ChatModel model = mock(ChatModel.class);
+        List<AssistantMessage.ToolCall> repeated = IntStream.range(0, 7)
+                .mapToObj(index -> new AssistantMessage.ToolCall("call-" + index, "function", "shell", "{\"command\":\"ls -la /root/.gradle\"}")).toList();
+        when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(repeated).build()))),
+                text("finished"));
+
+        var session = runner(model).runSession("system", null, "brief", new RefusingTools(), 10, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+    }
+
     /** A discarded cut-off reply must not come back as the final message, which the specification stage would otherwise write to SPEC.md. */
     @Test
     void aDiscardedCutOffReplyIsNotTheFinalMessage() {
