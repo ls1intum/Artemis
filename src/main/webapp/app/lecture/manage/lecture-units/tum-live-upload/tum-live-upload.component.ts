@@ -49,6 +49,7 @@ export class TumLiveUploadComponent {
     private startedRef?: string;
     /** The upload whose start request is still answered; cancelling it marks it, so its reference is discarded once known. */
     private starting?: { cancelled: boolean };
+    private destroyed = false;
 
     constructor() {
         effect(() => {
@@ -56,6 +57,11 @@ export class TumLiveUploadComponent {
             untracked(() => this.load(lectureUnitId));
         });
         this.destroyRef.onDestroy(() => {
+            this.destroyed = true;
+            // The start may have created the upload already; its answer still arrives and gives it up.
+            if (this.starting) {
+                this.starting.cancelled = true;
+            }
             this.transfer?.unsubscribe();
             this.poll?.unsubscribe();
             this.retry?.unsubscribe();
@@ -82,47 +88,52 @@ export class TumLiveUploadComponent {
         const unitId = this.lectureUnitId();
         const attempt = { cancelled: false };
         this.starting = attempt;
-        this.tumLiveUploadService
-            .start(unitId)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (target) => {
-                    if (this.starting === attempt) {
-                        this.starting = undefined;
-                    }
-                    if (attempt.cancelled) {
-                        this.discard(unitId, target.ref);
-                        return;
-                    }
-                    this.activeRef = target.ref;
-                    this.activeUnitId = unitId;
-                    this.startedRef = target.ref;
-                    this.transfer = this.tumLiveUploadService.transfer(target.uploadUrl, file).subscribe({
-                        next: (event) => this.transferProgress.set(event.type === 'progress' ? event.percent : 100),
-                        complete: () => {
-                            this.activeRef = undefined;
-                            this.transferProgress.set(undefined);
-                            this.file.set(undefined);
-                            this.transferred.emit();
-                            this.load(this.lectureUnitId());
-                        },
-                        error: (error: Error) => this.giveUp(unitId, target.ref, error.message),
-                    });
-                },
-                error: () => {
-                    if (this.starting === attempt) {
-                        this.starting = undefined;
-                    }
-                    if (attempt.cancelled) {
-                        this.busy.set(false);
+        // Not bound to the component: an upload the start created must be given up also when the page is left before the answer.
+        this.tumLiveUploadService.start(unitId).subscribe({
+            next: (target) => {
+                if (this.starting === attempt) {
+                    this.starting = undefined;
+                }
+                if (this.destroyed) {
+                    this.tumLiveUploadService.discard(unitId, target.ref).subscribe();
+                    return;
+                }
+                if (attempt.cancelled) {
+                    this.discard(unitId, target.ref);
+                    return;
+                }
+                this.activeRef = target.ref;
+                this.activeUnitId = unitId;
+                this.startedRef = target.ref;
+                this.transfer = this.tumLiveUploadService.transfer(target.uploadUrl, file).subscribe({
+                    next: (event) => this.transferProgress.set(event.type === 'progress' ? event.percent : 100),
+                    complete: () => {
+                        this.activeRef = undefined;
+                        this.transferProgress.set(undefined);
+                        this.file.set(undefined);
+                        this.transferred.emit();
                         this.load(this.lectureUnitId());
-                        return;
-                    }
-                    // The error alert names the reason.
-                    this.transferProgress.set(undefined);
+                    },
+                    error: (error: Error) => this.giveUp(unitId, target.ref, error.message),
+                });
+            },
+            error: () => {
+                if (this.starting === attempt) {
+                    this.starting = undefined;
+                }
+                if (this.destroyed) {
+                    return;
+                }
+                if (attempt.cancelled) {
+                    this.busy.set(false);
                     this.load(this.lectureUnitId());
-                },
-            });
+                    return;
+                }
+                // The error alert names the reason.
+                this.transferProgress.set(undefined);
+                this.load(this.lectureUnitId());
+            },
+        });
     }
 
     /** Cancels the running upload; its TUM.Live lecture is deleted, also when the server has not named it yet. */

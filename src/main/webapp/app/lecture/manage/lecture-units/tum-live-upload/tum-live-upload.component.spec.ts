@@ -263,6 +263,22 @@ describe('TumLiveUploadComponent', () => {
         expect(transferred).not.toHaveBeenCalled();
     });
 
+    it('gives up the upload a start created when the page was left before its answer', () => {
+        render({ connected: true });
+        const start = new Subject<{ ref: string; uploadUrl: string }>();
+        vi.spyOn(service, 'start').mockReturnValue(start);
+        const transferSpy = vi.spyOn(service, 'transfer');
+        const discardSpy = vi.spyOn(service, 'discard').mockReturnValue(of(undefined));
+        chooseFile();
+        component.upload();
+
+        fixture.destroy();
+        start.next({ ref: 'reference-a-0000', uploadUrl: 'https://tum.live/u' });
+
+        expect(discardSpy).toHaveBeenCalledExactlyOnceWith(7, 'reference-a-0000');
+        expect(transferSpy).not.toHaveBeenCalled();
+    });
+
     it('reports a file that was sent completely and keeps its upload when the page is left', () => {
         render({ connected: true });
         vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: 'https://tum.live/u' }));

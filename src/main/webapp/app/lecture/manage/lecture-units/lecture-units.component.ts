@@ -853,6 +853,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
             form?.takeOverSavedFile(savedUnit.attachment?.link, savedUnit.attachment?.version, pending.confirmed.data.fileProperties.file);
         } else if (pending.confirmed?.confirmed === 'videoSource') {
             form?.takeOverSavedVideoSource(savedUnit.videoSource);
+            if ((savedUnit.videoSource || undefined) !== (pending.confirmed.data.formProperties.videoSource || undefined)) {
+                // The link was changed meanwhile, so the server kept that one. The entered link stays in the field as a change of it, to be saved again.
+                this.alertService.warning('artemisApp.lecture.unitEditor.videoSourceChangedMeanwhile');
+            }
         }
     }
 
@@ -942,8 +946,12 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
         return this.attachmentVideoUnitService.update(this.lecture().id!, attachmentVideoUnit.id!, formData, notificationText, AUTOSAVE_REQUEST_CONTEXT()).pipe(
             map((response) => {
-                // The response has the new version and link of an uploaded file.
+                // The response has the new version and link of an uploaded file, and the unit's video link: the server keeps the link if it was changed
+                // meanwhile, by another editor or a TUM.Live upload, so the link the request sent may not be the saved one.
                 attachmentVideoUnit.attachment = response.body?.attachment ?? attachment;
+                if (response.body) {
+                    attachmentVideoUnit.videoSource = response.body.videoSource || undefined;
+                }
                 return attachmentVideoUnit;
             }),
         );
