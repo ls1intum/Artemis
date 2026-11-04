@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -1020,6 +1021,65 @@ class GenerationAttemptLoopTest {
         assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE
                 && finding.detail().contains(deferred.ruleId()) && finding.detail().contains("not conclusively rechecked against this candidate"));
         assertThat(loop.terminationReason()).isNotEqualTo(TerminationReason.CONVERGED);
+    }
+
+    @Test
+    void aDeferredTranscriptRegressionFoundDuringReviewRejectsARepairThatKillsAnotherTarget() {
+        stubSchedulerFixture();
+        List<SemanticMutant> historical = java.util.stream.IntStream.range(0, 13)
+                .mapToObj(index -> SemanticMutant.printedTranscript("src/Main" + index + ".java", "class Main" + index + " {}", "class Main" + index + " { }", "Main" + index))
+                .toList();
+        Map<String, String> sources = new java.util.LinkedHashMap<>();
+        sources.put("src/Scheduler.java", "class Scheduler {}");
+        historical.forEach(mutant -> sources.put(mutant.solutionPath(), mutant.originalSolutionSource()));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any())).thenReturn(new GenerationWorkspace.RepositoryExtraction(sources, false));
+        AtomicInteger attempts = new AtomicInteger();
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            attempts.incrementAndGet();
+            return loopSession(completed());
+        });
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any())).thenAnswer(invocation -> new GenerationWorkspace.RepositoryExtraction(
+                Map.of("test/SchedulerTest.java", "class SchedulerTest { int revision" + attempts.get() + "; }"), false));
+        SemanticMutant target = mutant("R1", "newTarget", "ignores a new boundary");
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(target), List.of());
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(target, Disposition.SURVIVED_GRADED_SUITE)), List.of());
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> checked = invocation.getArgument(5);
+            return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)).toList();
+        });
+        AtomicReference<SemanticMutant> deferred = new AtomicReference<>();
+        when(verifier.recheckOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> checked = invocation.getArgument(7);
+            if (attempts.get() == 3) {
+                assertThat(checked).hasSize(12);
+                List<SemanticMutant> omitted = historical.stream().filter(mutant -> !checked.contains(mutant)).toList();
+                assertThat(omitted).hasSize(1);
+                deferred.set(omitted.getFirst());
+            }
+            return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)).toList();
+        });
+        java.util.concurrent.atomic.AtomicBoolean deferredProbeRan = new java.util.concurrent.atomic.AtomicBoolean();
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            if (attempts.get() == 1) {
+                return historical.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)).toList();
+            }
+            if (attempts.get() == 3) {
+                Set<String> skipped = invocation.getArgument(8);
+                assertThat(deferred.get()).isNotNull();
+                assertThat(skipped).hasSize(12).doesNotContain(deferred.get().solutionPath());
+                deferredProbeRan.set(true);
+                return List.of(new SemanticMutantOutcome(deferred.get(), Disposition.SURVIVED_GRADED_SUITE));
+            }
+            return List.of();
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
+        assertThat(deferredProbeRan).isTrue();
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REPAIR_DID_NOT_IMPROVE);
+        assertThat(loop.lastMechanicallyVerifiedCandidate().problemStatement()).isEqualTo("PROBLEM STATEMENT 2");
     }
 
     @Test

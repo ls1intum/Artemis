@@ -31,6 +31,8 @@ final class MutantEvidence {
         SURVIVOR_UNVERIFIED,
         /** A candidate's suite killed it after it had survived: regression coverage every later repair rechecks. */
         KILLED,
+        /** This candidate lets an earlier kill survive again; retained until a conclusive kill or the next candidate. */
+        REGRESSED,
         /** It was killed, and the latest regression check gave no verdict or was deferred: reported as unavailable evidence. */
         KILL_UNVERIFIED
     }
@@ -38,7 +40,7 @@ final class MutantEvidence {
     private record Entry(SemanticMutant mutant, Status status) {
 
         boolean killed() {
-            return status == Status.KILLED || status == Status.KILL_UNVERIFIED;
+            return status == Status.KILLED || status == Status.KILL_UNVERIFIED || status == Status.REGRESSED;
         }
     }
 
@@ -65,7 +67,7 @@ final class MutantEvidence {
 
     /**
      * Records one outcome. A kill of a survivor credits the current repair; a survivor that a later check kills becomes regression coverage; a survival of an earlier kill is
-     * a regression, which the caller reports, while the record keeps the kill of the accepted candidate; no verdict leaves the mutant unresolved.
+     * a regression retained in the record as both a current survivor and accepted-candidate kill history; an inconclusive check cannot clear that proof for the same candidate.
      *
      * @param outcome the outcome, whose mutant becomes the tracked form of its record
      * @return whether the outcome is a regression of an earlier kill
@@ -75,8 +77,8 @@ final class MutantEvidence {
         Entry previous = entries.remove(identity(mutant));
         Status status = switch (outcome.disposition()) {
             case KILLED_BY_GRADED_SUITE -> previous == null ? null : Status.KILLED;
-            case SURVIVED_GRADED_SUITE -> previous != null && previous.killed() ? Status.KILLED : Status.SURVIVING;
-            default -> previous == null ? null : previous.killed() ? Status.KILL_UNVERIFIED : Status.SURVIVOR_UNVERIFIED;
+            case SURVIVED_GRADED_SUITE -> previous != null && previous.killed() ? Status.REGRESSED : Status.SURVIVING;
+            default -> previous == null ? null : previous.status() == Status.REGRESSED ? Status.REGRESSED : previous.killed() ? Status.KILL_UNVERIFIED : Status.SURVIVOR_UNVERIFIED;
         };
         if (status == null) {
             return false;
@@ -93,6 +95,15 @@ final class MutantEvidence {
         record(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
     }
 
+    /** A different verified candidate needs fresh evidence; an earlier candidate's regression is not a survival verdict against this one. */
+    void beginCandidate() {
+        entries.replaceAll((variant, entry) -> entry.status() == Status.REGRESSED ? new Entry(entry.mutant(), Status.KILL_UNVERIFIED) : entry);
+    }
+
+    List<SemanticMutant> regressions() {
+        return withStatus(Set.of(Status.REGRESSED));
+    }
+
     void beginRepair() {
         killsSinceRepairBegan = 0;
     }
@@ -103,7 +114,7 @@ final class MutantEvidence {
 
     /** Current survivors, the weaknesses a repair must close. */
     List<SemanticMutant> surviving() {
-        return withStatus(Set.of(Status.SURVIVING));
+        return withStatus(Set.of(Status.SURVIVING, Status.REGRESSED));
     }
 
     /** Survivors whose latest check gave no verdict. */
@@ -113,12 +124,12 @@ final class MutantEvidence {
 
     /** Every survivor, with or without a current verdict, in check order. */
     List<SemanticMutant> unresolvedSurvivors() {
-        return withStatus(Set.of(Status.SURVIVING, Status.SURVIVOR_UNVERIFIED));
+        return withStatus(Set.of(Status.SURVIVING, Status.SURVIVOR_UNVERIFIED, Status.REGRESSED));
     }
 
     /** The regression history, least recently checked first. */
     List<SemanticMutant> kills() {
-        return withStatus(Set.of(Status.KILLED, Status.KILL_UNVERIFIED));
+        return withStatus(Set.of(Status.KILLED, Status.KILL_UNVERIFIED, Status.REGRESSED));
     }
 
     /** Kills whose latest regression check gave no verdict or was deferred. */

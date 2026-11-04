@@ -125,6 +125,7 @@ final class ExecutableEvidenceLedger {
      */
     VerificationResult recheckAfterVerification(VerificationResult result, Map<RepositoryRole, Map<String, String>> candidateFiles, @Nullable String testPlanSnapshot,
             boolean repairInFlight, SeededStructuralTests seededStructuralTests, Runnable restoreCandidate) {
+        evidence.beginCandidate();
         Map<String, String> currentSolution = candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of());
         List<SemanticMutant> applicableMutants = repairTargets.stream().filter(mutant -> mutant.originalSolutionSource().equals(currentSolution.get(mutant.solutionPath())))
                 .toList();
@@ -355,6 +356,11 @@ final class ExecutableEvidenceLedger {
     void beginRepair(boolean repairsExecutableOracle) {
         evidence.beginRepair();
         repairTargets = repairsExecutableOracle ? evidence.surviving() : List.of();
+    }
+
+    /** A conclusive regression from verification or review blocks promotion, even when another target was killed. */
+    boolean hasRegressions() {
+        return !evidence.regressions().isEmpty();
     }
 
     /** Tracked survivors a candidate's suite killed since the current repair began, from the acceptance recheck and the review alike. */

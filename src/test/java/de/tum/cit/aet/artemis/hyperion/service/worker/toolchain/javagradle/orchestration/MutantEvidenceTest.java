@@ -73,9 +73,14 @@ class MutantEvidenceTest {
 
         assertThat(evidence.record(new SemanticMutantOutcome(reported, Disposition.SURVIVED_GRADED_SUITE))).as("regression").isTrue();
         assertThat(evidence.kills()).containsExactly(reported);
-        assertThat(evidence.surviving()).isEmpty();
+        assertThat(evidence.surviving()).containsExactly(reported);
+        assertThat(evidence.regressions()).containsExactly(reported);
 
         evidence.recordWithoutVerdict(reported);
+        assertThat(evidence.regressions()).containsExactly(reported);
+        assertThat(evidence.unverifiedKills()).isEmpty();
+        evidence.beginCandidate();
+        assertThat(evidence.regressions()).isEmpty();
         assertThat(evidence.unverifiedKills()).containsExactly(reported);
         assertThat(evidence.killsSinceRepairBegan()).isZero();
     }

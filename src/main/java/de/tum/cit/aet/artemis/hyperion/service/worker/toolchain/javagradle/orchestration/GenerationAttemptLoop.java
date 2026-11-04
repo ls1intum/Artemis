@@ -642,9 +642,9 @@ class GenerationAttemptLoop {
         specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot);
         recordReviewRound(attempt);
         boolean killedSurvivingMutant = candidateBeforeCurrentRepair != null && executableEvidence.mutantsKilledByCurrentRepair() > 0;
-        if (candidateBeforeCurrentRepair != null && !RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport)
-                && !RepairRoundScheduler.repairImproved(candidateBeforeCurrentRepair.reviewReport(),
-                        GenerationReviewSupport.withUndrainedSurvivors(specFidelityReport, executableEvidence.survivorsWithoutVerdict()), killedSurvivingMutant)) {
+        if (candidateBeforeCurrentRepair != null && (executableEvidence.hasRegressions()
+                || !RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport) && !RepairRoundScheduler.repairImproved(candidateBeforeCurrentRepair.reviewReport(),
+                        GenerationReviewSupport.withUndrainedSurvivors(specFidelityReport, executableEvidence.survivorsWithoutVerdict()), killedSurvivingMutant))) {
             CandidateSnapshot retained = candidateBeforeCurrentRepair;
             candidateBeforeCurrentRepair = null;
             lastMechanicallyVerifiedCandidate = retained;
