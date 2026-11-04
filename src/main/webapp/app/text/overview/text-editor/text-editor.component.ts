@@ -126,6 +126,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     protected readonly onTextEditorTab = onTextEditorTab;
 
     participationUpdateListener?: Subscription;
+    private examSummaryReload?: Subscription;
     readonly sortedHistoryResults = signal<Result[]>([]);
     hasAthenaResultForLatestSubmission = false;
     submissionId: number | undefined;
@@ -204,6 +205,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     return;
                 }
                 const changedParticipation = updatedParticipation as StudentParticipation;
+                let resultIdToReload: number | undefined;
                 for (const athenaResult of this.athenaResultNotificationTracker.resultsToNotify(changedParticipation.submissions)) {
                     if (athenaResult.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
@@ -211,16 +213,30 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise()?.title ?? '' });
                         this.hasAthenaResultForLatestSubmission = true;
                         if (this.isExamSummary() && this.participation()?.id !== undefined) {
-                            this.textService.get(this.participation().id!, athenaResult.id, this.viewingPurpose()).subscribe({
-                                next: (data) => this.updateParticipation(data, this.submissionId, athenaResult.id),
-                                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                            });
-                            return;
+                            resultIdToReload = athenaResult.id;
                         }
                     }
                 }
+                if (resultIdToReload !== undefined) {
+                    this.reloadForExamSummary(resultIdToReload);
+                    return;
+                }
                 this.updateParticipation(changedParticipation, this.submissionId, this.resultId);
             });
+    }
+
+    /**
+     * Loads the participation with the given result again for the exam summary. Only the latest reload may write its
+     * answer back, so an earlier one is cancelled rather than left to replace it.
+     *
+     * @param resultId the id of the result to load the participation with
+     */
+    private reloadForExamSummary(resultId: number): void {
+        this.examSummaryReload?.unsubscribe();
+        this.examSummaryReload = this.textService.get(this.participation().id!, resultId, this.viewingPurpose()).subscribe({
+            next: (data) => this.updateParticipation(data, this.submissionId, resultId),
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     private inputValuesArePresent(): boolean {
@@ -374,6 +390,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         this.participationUpdateListener?.unsubscribe();
+        this.examSummaryReload?.unsubscribe();
         if (this.participation()) {
             this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation().id!, this.textExercise());
         }

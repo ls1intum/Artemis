@@ -1047,6 +1047,51 @@ describe('TextEditorComponent', () => {
             expect(comp.participation()).toBe(reloaded);
         });
 
+        it('should alert every new Athena result of one update and reload the exam summary once', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const reloaded = withResults([athenaResult(true)]);
+            getTextForParticipationStub.mockReturnValue(of(reloaded));
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            const update = withResults([athenaResult(true)]);
+            update.submissions!.push({ id: 8, text: 'answer', results: [{ ...athenaResult(true), id: 6 }] } as TextSubmission);
+
+            participationSubject.next(update);
+
+            expect(successSpy).toHaveBeenCalledTimes(2);
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, 6, 'owner');
+            expect(comp.participation()).toBe(reloaded);
+        });
+
+        it('should drop the answer of an exam summary reload that a newer one replaced', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const firstReload = new Subject<StudentParticipation>();
+            const secondReload = new Subject<StudentParticipation>();
+            getTextForParticipationStub.mockReturnValueOnce(firstReload.asObservable()).mockReturnValueOnce(secondReload.asObservable());
+            const update = withResults([athenaResult(true)]);
+            update.submissions!.push({ id: 8, text: 'answer', results: [{ ...athenaResult(true), id: 6 }] } as TextSubmission);
+
+            participationSubject.next(withResults([athenaResult(true)]));
+            participationSubject.next(update);
+            const newest = withResults([athenaResult(true)]);
+            secondReload.next(newest);
+            firstReload.next(withResults([]));
+
+            expect(comp.participation()).toBe(newest);
+        });
+
+        it('should stop an exam summary reload when the component is destroyed', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            const reload = new Subject<StudentParticipation>();
+            getTextForParticipationStub.mockReturnValue(reload.asObservable());
+
+            participationSubject.next(withResults([athenaResult(true)]));
+            expect(reload.observed).toBe(true);
+
+            fixture.destroy();
+
+            expect(reload.observed).toBe(false);
+        });
+
         it('should alert when the participation with the Athena result cannot be reloaded in the exam summary', () => {
             const participationSubject = openWithParticipation(withResults([]), true);
             getTextForParticipationStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
