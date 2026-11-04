@@ -22,6 +22,18 @@ class SandboxBuildCommandsTest {
 
     private final GenerationInput input = new GenerationInput(1, "de.example", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
 
+    /**
+     * The agent's shell runs under a per-file size limit that the image's unpacked Gradle distribution exceeds, so copying the whole Gradle home made every agent-run verify.sh
+     * fail with "File size limit exceeded". The distributions are linked in place; only their lock and marker files are copied.
+     */
+    @Test
+    void verifyScriptLinksTheUnpackedWrapperDistributionInsteadOfCopyingIt() {
+        String script = new SandboxBuildCommands(new GenerationResources()).verifyScriptContent(input);
+
+        assertThat(script).doesNotContain("cp -a /root/.gradle/. ").contains("[ \"$entry\" = /root/.gradle/wrapper ] && continue",
+                "for entry in /root/.gradle/wrapper/dists/*/*/*; do", "if [ -d \"$entry\" ]; then ln -s \"$entry\" \"$target\"", "else cp -a \"$entry\" \"$target\"");
+    }
+
     @Test
     void disposableGradleCachesNeverUsePersistentDaemons() {
         var commands = new SandboxBuildCommands(new GenerationResources());
