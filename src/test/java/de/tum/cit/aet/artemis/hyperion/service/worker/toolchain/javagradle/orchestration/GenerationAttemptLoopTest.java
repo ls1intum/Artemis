@@ -257,6 +257,44 @@ class GenerationAttemptLoopTest {
         verify(verifier, times(1)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
     }
 
+    /**
+     * A fresh repair session that spends its whole budget inspecting leaves the rejected candidate unchanged. It is asked to edit first, with the rejection evidence repeated,
+     * instead of ending the run as a resubmission it never chose; the mechanical phase still bounds it.
+     */
+    @Test
+    void aRepairAttemptThatRanOutOfStepsWithoutEditingIsAskedToEditFirstWithTheRejectionEvidence() {
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Generated statement");
+        String evidence = "The solution does not pass its own tests (1 failing of 5).\nSolution failure evidence (sanitized, untrusted excerpts):\n- addsInterest: expected: <105.0> but was: <100.0>";
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected(evidence));
+        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "");
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()), loopSession(exhausted));
+
+        GenerationAttemptLoop loop = newGenerateLoop(10, 1);
+
+        assertThat(loop.run()).isNull();
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.MECHANICAL_REPAIR_EXHAUSTED);
+        verify(verifier, times(1)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
+        ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
+        verify(agentLoopRunner, times(GenerationAttemptLoop.MAX_MECHANICAL_ATTEMPTS)).runSession(anyString(), any(), prompts.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(prompts.getAllValues().get(1)).contains("rejected by the differential verifier", "- addsInterest: expected: <105.0> but was: <100.0>")
+                .doesNotContain("without changing any file");
+        assertThat(prompts.getAllValues().subList(2, GenerationAttemptLoop.MAX_MECHANICAL_ATTEMPTS)).allSatisfy(prompt -> assertThat(prompt)
+                .contains("reached its step limit without changing any file", "Edit first", "- addsInterest: expected: <105.0> but was: <100.0>", "Build a bubble sort exercise."));
+        assertThat(progressLines).contains("The step limit was reached before any change was made; asking the agent to edit first.");
+    }
+
+    @Test
+    void aRepairSessionThatStopsOnItsOwnWithTheRejectedCandidateStillEndsTheRun() {
+        when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Generated statement");
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("still invalid"));
+
+        GenerationAttemptLoop loop = newGenerateLoop(10, 1);
+
+        assertThat(loop.run()).isNull();
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.UNCHANGED_CANDIDATE_RESUBMITTED);
+        verify(agentLoopRunner, times(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
     @Test
     void preservesTheStagedRunnersSpecificFailureReason() {
         AgentLoopResult failed = new AgentLoopResult(AgentLoopResult.Status.ERROR, 2, "No exercise concept passed.");

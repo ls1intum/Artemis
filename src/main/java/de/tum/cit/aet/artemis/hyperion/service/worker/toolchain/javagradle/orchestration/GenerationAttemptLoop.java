@@ -331,9 +331,10 @@ class GenerationAttemptLoop {
             if (cancelled.getAsBoolean()) {
                 return cancelledOutcome(cancelledResult(loopResult));
             }
-            if (adaptAttemptEndedWithoutAnyEdit(artifacts)) {
-                // The tree is still the seeded baseline: a differential build of it costs a full verification and can only say what the agent already knows. The attempt still
-                // counts, both against the run's attempt cap and the bounded mechanical phase, so an agent that never edits cannot keep the run alive.
+            boolean adaptUnedited = adaptAttemptEndedWithoutAnyEdit(artifacts);
+            if (adaptUnedited || repairAttemptEndedWithoutAnyEdit(artifacts)) {
+                // The tree is still the seeded baseline or the rejected candidate: a differential build of it costs a full verification and can only say what the agent already
+                // knows. The attempt still counts, both against the run's attempt cap and the bounded mechanical phase, so an agent that never edits cannot keep the run alive.
                 if (attempt == maxGenerationAttempts) {
                     emit("The step limit was reached before any change was made on the final attempt; stopping.");
                     terminationReason = TerminationReason.ATTEMPT_CAP_REACHED;
@@ -345,7 +346,8 @@ class GenerationAttemptLoop {
                     break;
                 }
                 emit("The step limit was reached before any change was made; asking the agent to edit first.");
-                currentPrompt = repairPrompts.editBeforeInspecting(attempt);
+                currentPrompt = adaptUnedited ? repairPrompts.editBeforeInspecting(attempt)
+                        : repairPrompts.editBeforeRepairing(attempt, specSnapshot.get(), verification.report(), specFidelityReport);
                 continue;
             }
             if (lastRejectedVerificationRequest != null && lastRejectedVerificationRequest.equals(artifacts.verificationRequest())) {
@@ -534,6 +536,15 @@ class GenerationAttemptLoop {
     private boolean adaptAttemptEndedWithoutAnyEdit(CandidateArtifacts artifacts) {
         return mode == Mode.ADAPT && loopResult.status() == AgentLoopResult.Status.BUDGET_EXHAUSTED && artifacts.extractionFailed().isEmpty()
                 && !hasProducedChanges(baselineRepositoryFiles, producedFilesByType, baselineProblemStatement, producedProblemStatement);
+    }
+
+    /**
+     * A mechanical repair attempt that ran out of steps without changing the candidate the verifier just rejected. A fresh session that loses its whole budget to inspection
+     * would otherwise end the run as an unchanged resubmission, although it never chose to resubmit; a session that stopped on its own still does.
+     */
+    private boolean repairAttemptEndedWithoutAnyEdit(CandidateArtifacts artifacts) {
+        return loopResult.status() == AgentLoopResult.Status.BUDGET_EXHAUSTED && artifacts.extractionFailed().isEmpty() && repairScheduler.roundsStarted() == 0
+                && verification != null && lastRejectedVerificationRequest != null && lastRejectedVerificationRequest.equals(artifacts.verificationRequest());
     }
 
     /** Reads all candidate artifacts back and preserves extraction failures so verification can distinguish them from empty repositories. */

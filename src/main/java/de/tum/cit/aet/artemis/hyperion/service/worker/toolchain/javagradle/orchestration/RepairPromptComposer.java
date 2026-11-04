@@ -93,11 +93,28 @@ final class RepairPromptComposer {
      */
     String mechanicalRejection(int completedAttempt, @Nullable String specSnapshot, String verificationReport, @Nullable SemanticRepairBatch precedingRepair,
             SpecFidelityReport report) {
+        return rejectionRepair(completedAttempt, "Your previous attempt was rejected by the differential verifier:\n", specSnapshot, verificationReport, precedingRepair, report);
+    }
+
+    /**
+     * The prompt after a repair attempt that spent its whole step budget without changing the rejected candidate. Each attempt is a fresh session, so the rejection is repeated
+     * verbatim and the edit is put first rather than ending the run on an unchanged resubmission.
+     */
+    String editBeforeRepairing(int completedAttempt, @Nullable String specSnapshot, String verificationReport, SpecFidelityReport report) {
+        return rejectionRepair(completedAttempt,
+                "Your previous repair attempt reached its step limit without changing any file, so the workspace still holds the rejected candidate. Edit first: open only the "
+                        + "files the evidence below names, change them with write_file or edit_file within your first steps, and do not read the build harness, the wrapper, or "
+                        + "the dependency cache. The differential verifier rejected the candidate with:\n",
+                specSnapshot, verificationReport, null, report);
+    }
+
+    private String rejectionRepair(int completedAttempt, String opening, @Nullable String specSnapshot, String verificationReport, @Nullable SemanticRepairBatch precedingRepair,
+            SpecFidelityReport report) {
         String semanticCorrectionGuidance = precedingRepair == null ? ""
                 : "\n\nThis rejection followed a " + precedingRepair.surface().name().toLowerCase(Locale.ROOT)
                         + " quality repair. Before changing production code, audit the new assertion against the frozen contract. If the assertion invents behavior the contract "
                         + "does not require, fix or remove the unsupported assertion first. " + precedingRepair.guidance();
-        return attemptFraming(completedAttempt) + "Your previous attempt was rejected by the differential verifier:\n" + boundedVerificationReport(verificationReport)
+        return attemptFraming(completedAttempt) + opening + boundedVerificationReport(verificationReport)
                 + "\n\nThe workspace still contains all your files. Read the relevant files, fix exactly these issues, call the structured `verify` tool, then submit when it reports "
                 + "MECHANICAL PRECHECK: PASS. If a reason names a forbidden, duplicate, or abandoned path, delete it; replacing it with a "
                 + "placeholder does not remove the violation. Make the smallest coherent repair, leave unrelated files unchanged, and preserve the source requirements below.\n\n"
