@@ -30,6 +30,50 @@ class ApprovedStructuralContractTest {
         assertThat(oracle.at("/genericApi/signatures").toString()).contains("superclass:Enum<RoastProfile>", "method:labels[]:List<String>");
     }
 
+    /** Ares matches member annotations exactly and reads an absent list as none, so an approved {@code @Test} must reach the oracle or a correct solution fails testMethods. */
+    @Test
+    void approvedAnnotationsReachTheOracleAsAresSimpleNames() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                @DisplayName("validator") public class CommandLineValidatorTest {
+                    @Deprecated public String label;
+                    @Deprecated public CommandLineValidatorTest() { ... }
+                    @org.junit.jupiter.api.Test @SuppressWarnings("unused") public void testNullInput();
+                    @Override public String toString();
+                    public void helper();
+                }
+                ```
+                """, Set.of("CommandLineValidatorTest"));
+
+        assertThat(parsed.errors()).isEmpty();
+        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example")).get(0);
+        assertThat(oracle.at("/class/annotations").toString()).isEqualTo("[\"DisplayName\"]");
+        assertThat(oracle.at("/attributes/0/annotations").toString()).isEqualTo("[\"Deprecated\"]");
+        assertThat(oracle.at("/constructors/0/annotations").toString()).isEqualTo("[\"Deprecated\"]");
+        JsonNode methods = oracle.get("methods");
+        assertThat(methods.findValues("name").stream().map(JsonNode::asString)).containsExactly("testNullInput", "toString", "helper");
+        // Compiler-only annotations never reach runtime reflection, so they are left out like the absent list of an unannotated member.
+        assertThat(methods.get(0).get("annotations").toString()).isEqualTo("[\"Test\"]");
+        assertThat(methods.get(1).has("annotations")).isFalse();
+        assertThat(methods.get(2).has("annotations")).isFalse();
+
+        String solution = """
+                package example;
+                import org.junit.jupiter.api.Test;
+                @DisplayName("validator") public class CommandLineValidatorTest {
+                    @Deprecated public String label;
+                    @Deprecated public CommandLineValidatorTest() {}
+                    @Test public void testNullInput() {}
+                    @Override public String toString() { return ""; }
+                    public void helper() {}
+                }
+                """;
+        assertThat(parsed.contract().solutionOracleMismatches(Map.of("example/CommandLineValidatorTest.java", solution), "example")).isEmpty();
+        assertThat(parsed.contract().solutionOracleMismatches(Map.of("example/CommandLineValidatorTest.java", solution.replace("@Test public", "public")), "example"))
+                .singleElement().asString().contains("testNullInput");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "extends", "implements" })
     void genericSupertypesRetainTheirApprovedArguments(String relationship) {

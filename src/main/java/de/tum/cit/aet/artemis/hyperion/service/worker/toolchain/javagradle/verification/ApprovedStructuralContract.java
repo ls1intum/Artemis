@@ -16,6 +16,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaAnnotatedElement;
+import com.thoughtworks.qdox.model.JavaAnnotation;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaConstructor;
 import com.thoughtworks.qdox.model.JavaField;
@@ -51,7 +52,10 @@ final class ApprovedStructuralContract {
     private static final JsonMapper ORACLE_MAPPER = JsonMapper.builder().changeDefaultPropertyInclusion(inclusion -> inclusion.withValueInclusion(JsonInclude.Include.NON_NULL))
             .build();
 
-    /** Annotations the compiler discards, so the runtime reflection Ares uses never sees them. Any other annotation is treated as visible. */
+    /**
+     * Annotations the compiler discards, so the runtime reflection Ares uses never sees them; the oracle leaves them out. Any other annotation is treated as visible at runtime,
+     * like the structure oracle generator of ordinary programming exercises does.
+     */
     private static final Set<String> SOURCE_ONLY_ANNOTATIONS = Set.of("Override", "SuppressWarnings");
 
     private final Map<String, JavaClass> types;
@@ -206,7 +210,7 @@ final class ApprovedStructuralContract {
     /**
      * Why the solution would fail the structural oracle this contract writes for the given package, judged as Ares judges it: for every contract type, the class entry and the
      * generic API must equal the entries written from the solution's own declaration, and every expected method, attribute and constructor must appear there with the same
-     * modifiers and types. The oracle lists no annotations, so Ares expects none on those members, and a solution member carrying one that is kept at runtime fails too.
+     * modifiers, types and runtime-visible annotations, which Ares matches exactly.
      *
      * @param solutionFiles the reference solution
      * @param packageName   the exercise package the oracle is written for
@@ -232,27 +236,18 @@ final class ApprovedStructuralContract {
             StructuralOracleEntry expected = toEntry(contractType.getValue(), packageName, types.keySet());
             StructuralOracleEntry observed = toEntry(actual, packageName, types.keySet());
             String name = contractType.getKey();
-            if (!expected.classProperties().equals(observed.classProperties()) || !java.util.Objects.equals(expected.enumValues(), observed.enumValues())) {
+            // Ares compares class annotations only when the oracle lists them.
+            OracleClass observedClass = expected.classProperties().annotations() == null ? observed.classProperties().withoutAnnotations() : observed.classProperties();
+            if (!expected.classProperties().equals(observedClass) || !java.util.Objects.equals(expected.enumValues(), observed.enumValues())) {
                 mismatches.add(name + ": class properties");
             }
             if (!sameGenericApi(expected.genericApi(), observed.genericApi())) {
                 mismatches.add(name + ": generic API");
             }
-            Map<OracleMethod, JavaMethod> methods = new LinkedHashMap<>();
-            actual.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible).forEach(method -> methods.putIfAbsent(toOracleMethod(method), method));
-            Map<OracleAttribute, JavaField> attributes = new LinkedHashMap<>();
-            actual.getFields().stream().filter(field -> !field.isEnumConstant()).filter(ApprovedStructuralContract::isContractVisible)
-                    .forEach(field -> attributes.putIfAbsent(toOracleAttribute(field), field));
-            Map<OracleConstructor, @Nullable JavaAnnotatedElement> constructors = new LinkedHashMap<>();
-            actual.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible)
-                    .forEach(constructor -> constructors.putIfAbsent(toOracleConstructor(constructor), constructor));
-            if (actual.getConstructors().isEmpty() && !actual.isInterface() && !actual.isEnum()) {
-                // The implicit public constructor exists at runtime and carries no annotation.
-                constructors.put(new OracleConstructor(List.of("public"), null), null);
-            }
-            membersMismatch(name, "method", expected.methods(), methods).forEach(mismatches::add);
-            membersMismatch(name, "attribute", expected.attributes(), attributes).forEach(mismatches::add);
-            membersMismatch(name, "constructor", expected.constructors(), constructors).forEach(mismatches::add);
+            // Member entries carry their annotations, which Ares matches exactly, so an expected member must appear in the solution's entry unchanged.
+            missingMembers(name, "method", expected.methods(), observed.methods()).forEach(mismatches::add);
+            missingMembers(name, "attribute", expected.attributes(), observed.attributes()).forEach(mismatches::add);
+            missingMembers(name, "constructor", expected.constructors(), observed.constructors()).forEach(mismatches::add);
         }
         return List.copyOf(mismatches);
     }
@@ -264,28 +259,12 @@ final class ApprovedStructuralContract {
         return expected.parameterCount() == observed.parameterCount() && Set.copyOf(expected.signatures()).equals(Set.copyOf(observed.signatures()));
     }
 
-    /** Each expected member must exist with the same oracle entry and carry no annotation Ares can see, because the oracle expects none. */
-    private static <M> List<String> membersMismatch(String typeName, String kind, @Nullable List<M> expected, Map<M, ? extends @Nullable JavaAnnotatedElement> observed) {
+    private static <M> List<String> missingMembers(String typeName, String kind, @Nullable List<M> expected, @Nullable List<M> observed) {
         if (expected == null) {
             return List.of();
         }
-        List<String> mismatches = new ArrayList<>();
-        for (M member : expected) {
-            if (!observed.containsKey(member)) {
-                mismatches.add(typeName + ": " + kind + " " + member);
-                continue;
-            }
-            JavaAnnotatedElement declaration = observed.get(member);
-            if (declaration == null) {
-                continue;
-            }
-            List<String> runtimeAnnotations = declaration.getAnnotations().stream().map(annotation -> annotation.getType().getFullyQualifiedName())
-                    .map(annotation -> annotation.substring(annotation.lastIndexOf('.') + 1)).filter(annotation -> !SOURCE_ONLY_ANNOTATIONS.contains(annotation)).toList();
-            if (!runtimeAnnotations.isEmpty()) {
-                mismatches.add(typeName + ": " + kind + " " + member + " carries annotations " + runtimeAnnotations + " that the oracle does not list");
-            }
-        }
-        return mismatches;
+        List<M> present = observed == null ? List.of() : observed;
+        return expected.stream().filter(member -> !present.contains(member)).map(member -> typeName + ": " + kind + " " + member).toList();
     }
 
     List<String> solutionSurfaceReasons(Map<String, String> solutionFiles) {
@@ -352,7 +331,7 @@ final class ApprovedStructuralContract {
         String superclassName = superclass != null && !"java.lang.Object".equals(superclass.getCanonicalName()) ? superclass.getSimpleName() : null;
         List<String> interfaces = type.getInterfaces().isEmpty() ? null : type.getInterfaces().stream().map(JavaClass::getSimpleName).sorted().toList();
         OracleClass classProperties = new OracleClass(type.getSimpleName(), packageName, classModifiers, type.isInterface(), type.isEnum(),
-                type.isAbstract() && !type.isInterface(), superclassName, interfaces);
+                type.isAbstract() && !type.isInterface(), superclassName, interfaces, oracleAnnotations(type.getAnnotations()));
 
         List<OracleMethod> methods = type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible).map(ApprovedStructuralContract::toOracleMethod).toList();
         List<OracleAttribute> attributes = type.getFields().stream().filter(field -> !field.isEnumConstant()).filter(ApprovedStructuralContract::isContractVisible)
@@ -360,7 +339,7 @@ final class ApprovedStructuralContract {
         List<OracleConstructor> constructors = new ArrayList<>(
                 type.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible).map(ApprovedStructuralContract::toOracleConstructor).toList());
         if (constructors.isEmpty() && !type.isInterface() && !type.isEnum()) {
-            constructors.add(new OracleConstructor(List.of("public"), null));
+            constructors.add(new OracleConstructor(List.of("public"), null, null));
         }
         List<String> enumValues = type.getFields().stream().filter(JavaField::isEnumConstant).map(JavaField::getName).toList();
         return new StructuralOracleEntry(classProperties, genericApi(type, exerciseTypes), nullIfEmpty(methods), nullIfEmpty(attributes), nullIfEmpty(constructors),
@@ -519,15 +498,28 @@ final class ApprovedStructuralContract {
 
     private static OracleMethod toOracleMethod(JavaMethod method) {
         return new OracleMethod(method.getName(), effectiveModifiers(method.getModifiers(), method.getDeclaringClass().isInterface(), method.isDefault(), method.isStatic()),
-                oracleParameters(method.getParameters(), method.getDeclaringClass()), simpleErasedType(method.getReturnType(), method.getDeclaringClass()));
+                oracleAnnotations(method.getAnnotations()), oracleParameters(method.getParameters(), method.getDeclaringClass()),
+                simpleErasedType(method.getReturnType(), method.getDeclaringClass()));
     }
 
     private static OracleAttribute toOracleAttribute(JavaField field) {
-        return new OracleAttribute(field.getName(), effectiveFieldModifiers(field), simpleErasedType(field.getType(), field.getDeclaringClass()));
+        return new OracleAttribute(field.getName(), effectiveFieldModifiers(field), oracleAnnotations(field.getAnnotations()),
+                simpleErasedType(field.getType(), field.getDeclaringClass()));
     }
 
     private static OracleConstructor toOracleConstructor(JavaConstructor constructor) {
-        return new OracleConstructor(new ArrayList<>(constructor.getModifiers()), oracleParameters(constructor.getParameters(), constructor.getDeclaringClass()));
+        return new OracleConstructor(new ArrayList<>(constructor.getModifiers()), oracleParameters(constructor.getParameters(), constructor.getDeclaringClass()),
+                oracleAnnotations(constructor.getAnnotations()));
+    }
+
+    /**
+     * The simple names of the declared annotations Ares can see at runtime, sorted, as the structure oracle generator of ordinary programming exercises writes them, or
+     * {@code null} when there are none: Ares then expects a member without annotations and skips the check for a class.
+     */
+    @Nullable
+    private static List<String> oracleAnnotations(List<JavaAnnotation> annotations) {
+        List<String> names = annotations.stream().map(annotation -> annotation.getType().getSimpleName()).filter(name -> !SOURCE_ONLY_ANNOTATIONS.contains(name)).sorted().toList();
+        return names.isEmpty() ? null : names;
     }
 
     /** The erased simple type names of the parameters, or {@code null} when there are none because the oracle leaves the key out. */

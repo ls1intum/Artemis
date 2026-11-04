@@ -274,6 +274,53 @@ class DockerGradleBuildTest {
         assertThat(erased.testFailedNames()).doesNotContain("testMethods[RoastProfile]");
     }
 
+    /**
+     * Ares compares member annotations exactly, so the oracle must carry the annotations the approved API declares. The student sources compile without JUnit in this harness,
+     * so {@code @Deprecated} stands in for a runtime annotation such as {@code @Test}; Ares matches both by simple name.
+     */
+    @Test
+    void specificationDerivedMethodGraderAcceptsTheApprovedAnnotationsAndRejectsTheirAbsence() throws IOException {
+        String session = sandbox.createSession();
+        var workspaceSeed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+        ApprovedSpecRegistry specifications = new ApprovedSpecRegistry();
+        specifications.approve(session, """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | ScoreChecks | Checks students write | student-creates |
+                ## Public API
+                ```java
+                public class ScoreChecks {
+                    @Deprecated public void checkNullInput();
+                    @Override public String toString();
+                }
+                ```
+                """);
+        StructuralOracleSeeder seeder = new StructuralOracleSeeder(workspace, specifications);
+        seeder.captureBaseline(session, workspaceSeed.testsSeedSnapshot());
+        SeededStructuralTests seeded = seeder.seedIfStructuralDiff(sandbox, session, exercise);
+        assertThat(seeded.testNames()).contains("testMethods[ScoreChecks]");
+        String path = "solution/src/de/tum/cit/aet/reference/ScoreChecks.java";
+        String annotated = """
+                package de.tum.cit.aet.reference;
+                public class ScoreChecks {
+                    @Deprecated public void checkNullInput() {}
+                    @Override public String toString() { return "checks"; }
+                }
+                """;
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, annotated), Map.of()));
+        var correct = build(session, "solution");
+        assertThat(correct.exitCode()).as(correct.buildDiagnostic()).isZero();
+        assertThat(correct.testNames()).contains("testMethods[ScoreChecks]");
+
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, annotated.replace("@Deprecated ", "")), Map.of()));
+        var unannotated = build(session, "solution");
+        assertThat(unannotated.exitCode()).isNotZero();
+        assertThat(unannotated.testFailedNames()).contains("testMethods[ScoreChecks]");
+    }
+
     // Both build tools must report the seeded dynamic check by its display name; surefire names flat dynamic tests genericApi()[n].
     @ParameterizedTest
     @EnumSource(GenerationBuildTool.class)
