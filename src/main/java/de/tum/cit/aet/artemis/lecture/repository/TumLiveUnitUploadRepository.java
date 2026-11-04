@@ -192,7 +192,7 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
      */
     @Transactional
     default boolean discardPending(long lectureUnitId, String ref, String reason, ZonedDateTime now) {
-        Optional<AttachmentVideoUnit> unit = findAttachmentVideoUnitForUpdateById(lectureUnitId);
+        findAttachmentVideoUnitForUpdateById(lectureUnitId);
         Optional<TumLiveUnitUpload> pending = findForUpdateByLectureUnitId(lectureUnitId).filter(upload -> ref.equals(upload.getPendingRef()));
         if (pending.isEmpty()) {
             return false;
@@ -201,13 +201,8 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
         insertCleanup(upload.getCourseId(), upload.getIntegrationId(), upload.getPendingGrantId(), ref, now);
         upload.clearPending();
         upload.setLastError(reason);
-        if (unit.isEmpty()) {
-            // The unit was deleted without asking about TUM.Live; its attached recording stays there.
-            delete(upload);
-        }
-        else {
-            saveAndFlush(upload);
-        }
+        // Kept also when the unit is gone: its deletion may still release the attached recording, and the cleanup removes the row later.
+        saveAndFlush(upload);
         return true;
     }
 

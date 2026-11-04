@@ -312,6 +312,23 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
+    void aReplacementGivenUpBetweenTheUnitsDeletionAndItsReleaseKeepsTheChoiceForTheAttachedRecording() {
+        var now = ZonedDateTime.now();
+        uploadRepository.startPending(unit.getId(), 17, 23, "algo", ref("first"), now);
+        uploadRepository.attachPending(unit.getId(), ref("first"), WATCH_PAGE, now);
+        uploadRepository.startPending(unit.getId(), 17, 23, "algo", ref("second"), now);
+        attachmentVideoUnitRepository.deleteById(unit.getId());
+
+        // The background job finds the converted replacement of a unit that is gone, before the deletion released the unit's uploads.
+        assertThat(uploadRepository.attachPending(unit.getId(), ref("second"), "https://tum.live/w/algo/56", now)).isFalse();
+        uploadRepository.releaseForDeletion(unit.getId(), true, now);
+
+        assertThat(queued(ref("second"))).isTrue();
+        assertThat(queued(ref("first"))).as("deleted in TUM.Live as the instructor chose").isTrue();
+        assertThat(uploadRepository.findByLectureUnitId(unit.getId())).isEmpty();
+    }
+
+    @Test
     void rowsOfUnitsDeletedWithoutAskingArePurged() {
         var now = ZonedDateTime.now();
         uploadRepository.startPending(unit.getId(), 17, 23, "algo", ref("first"), now);
