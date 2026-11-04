@@ -375,8 +375,9 @@ class StagedGenerationRunnerTest {
 
         verify(agentLoopRunner, times(3)).run(anyString(), prompts.capture(), any(), anyInt(), any(), any(), any());
         String statementPrompt = prompts.getAllValues().get(2);
-        assertThat(statementPrompt).contains("raw brief", "ACCEPTED STATEMENT HANDOFF", "`[task][Student-facing title](exactTestName)`",
-                "Bind every visible test below exactly once", "S1: visibleCase")
+        assertThat(statementPrompt)
+                .contains("raw brief", "ACCEPTED STATEMENT HANDOFF", "`[task][Student-facing title](exactTestName)`", "Bind every visible test below exactly once",
+                        "S1: visibleCase", "=== DIAGRAM ===", "This exercise does not require a class diagram")
                 .doesNotContain("INITIAL WORKSPACE LAYOUT", "reference/problem-statement.md", "hiddenCase", "MECHANICAL PRECHECK");
     }
 
