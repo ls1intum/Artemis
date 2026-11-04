@@ -1,0 +1,423 @@
+#!/usr/bin/env python3
+"""Keep the documentation screenshots in step with the application.
+
+A screenshot is the part of a page that goes stale fastest and that no text check can see. The screenshots that can be
+rendered again from the demo data are listed in documentation/screenshots/manifest.json. This script has three jobs:
+
+  (default)       Validate the manifest. Every entry names an image that exists, is shown by every page that it lists,
+                  has a route with a known placeholder, a known user and a viewport, and every `source` path exists.
+                  Reports how many images of the documentation are not covered yet (information, not a failure).
+  --compare DIR   Compare the images that src/test/playwright/docs-screenshots rendered into DIR with the checked-in
+                  ones and list those that differ by more than --threshold (a share of the pixels, default 1 percent).
+  --stale         List the manifest images whose `source` files (the components and translations that the screenshot
+                  shows) were committed after the image. Needs the git history of the files.
+
+Only the Python standard library is used. PNG files are decoded with zlib: 8-bit grey, grey with alpha, RGB, RGBA and
+palette images without interlacing, which covers what browsers and screenshot tools write.
+
+Usage:
+    python3 supporting_scripts/check_docs_screenshots.py
+    python3 supporting_scripts/check_docs_screenshots.py --compare build/docs-screenshots
+    python3 supporting_scripts/check_docs_screenshots.py --stale
+    python3 supporting_scripts/check_docs_screenshots.py --self-test
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import struct
+import subprocess
+import sys
+import tempfile
+import zlib
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DOCS_ROOT = REPO_ROOT / "documentation" / "docs"
+MANIFEST = REPO_ROOT / "documentation" / "screenshots" / "manifest.json"
+IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+PLACEHOLDERS = {"courseId"}
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+# A channel value may differ by this much before a pixel counts as changed: anti-aliasing differs between machines.
+CHANNEL_TOLERANCE = 8
+DEFAULT_THRESHOLD = 0.01
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Manifest
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+def load_manifest(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def page_text(docs_root: Path, page: str) -> str | None:
+    path = docs_root / page
+    return path.read_text(encoding="utf-8") if path.is_file() else None
+
+
+def validate(manifest: dict, repo_root: Path, docs_root: Path) -> list[str]:
+    """Returns the problems of a manifest, empty when it is sound."""
+    problems: list[str] = []
+    users = manifest.get("users")
+    if not isinstance(users, dict) or not users:
+        problems.append("`users` must map a role name to a login")
+        users = {}
+    entries = manifest.get("screenshots")
+    if not isinstance(entries, list) or not entries:
+        return problems + ["`screenshots` must be a non-empty list"]
+    ids: set[str] = set()
+    images: set[str] = set()
+    for position, entry in enumerate(entries):
+        label = entry.get("id", f"#{position}") if isinstance(entry, dict) else f"#{position}"
+        if not isinstance(entry, dict):
+            problems.append(f"entry {label}: must be an object")
+            continue
+        for key in ("id", "image", "pages", "user", "route"):
+            if key not in entry:
+                problems.append(f"{label}: missing `{key}`")
+        if "id" in entry:
+            if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", str(entry["id"])):
+                problems.append(f"{label}: `id` must be kebab-case")
+            if entry["id"] in ids:
+                problems.append(f"{label}: duplicate id")
+            ids.add(entry["id"])
+        image = entry.get("image")
+        if isinstance(image, str):
+            if image in images:
+                problems.append(f"{label}: `{image}` is described twice")
+            images.add(image)
+            if Path(image).suffix.lower() not in IMAGE_SUFFIXES:
+                problems.append(f"{label}: `{image}` is not an image file")
+            elif not (docs_root / image).is_file():
+                problems.append(f"{label}: image `{image}` does not exist below documentation/docs")
+        pages = entry.get("pages")
+        if "pages" in entry and (not isinstance(pages, list) or not pages):
+            problems.append(f"{label}: `pages` must list at least one page")
+        elif isinstance(pages, list) and isinstance(image, str):
+            for page in pages:
+                text = page_text(docs_root, page)
+                if text is None:
+                    problems.append(f"{label}: page `{page}` does not exist")
+                elif Path(image).name not in text:
+                    problems.append(f"{label}: page `{page}` does not show `{Path(image).name}`")
+        if "user" in entry and entry["user"] not in users:
+            problems.append(f"{label}: unknown user `{entry['user']}`")
+        route = entry.get("route")
+        if isinstance(route, str):
+            if not route.startswith("/") or re.search(r"\s", route):
+                problems.append(f"{label}: `route` must start with / and contain no spaces")
+            for name in re.findall(r"\{([^}]*)\}", route):
+                if name not in PLACEHOLDERS:
+                    problems.append(f"{label}: unknown placeholder {{{name}}} in the route")
+        for key in ("viewport",):
+            viewport = entry.get(key)
+            if viewport is not None and not (isinstance(viewport, dict) and all(isinstance(viewport.get(side), int) and viewport[side] > 0 for side in ("width", "height"))):
+                problems.append(f"{label}: `{key}` needs a positive integer width and height")
+        scale = entry.get("deviceScaleFactor")
+        if scale is not None and (not isinstance(scale, (int, float)) or scale <= 0):
+            problems.append(f"{label}: `deviceScaleFactor` must be positive")
+        for key in ("source", "mask"):
+            values = entry.get(key, [])
+            if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
+                problems.append(f"{label}: `{key}` must be a list of strings")
+        for source in entry.get("source", []) if isinstance(entry.get("source"), list) else []:
+            if isinstance(source, str) and not (repo_root / source).exists():
+                problems.append(f"{label}: source `{source}` does not exist")
+    return problems
+
+
+def uncovered_images(manifest: dict, docs_root: Path) -> tuple[int, int]:
+    """Returns (images in the documentation, images the manifest covers)."""
+    present = {path.relative_to(docs_root).as_posix() for path in docs_root.rglob("*") if path.is_file() and path.suffix.lower() in IMAGE_SUFFIXES}
+    covered = {entry["image"] for entry in manifest.get("screenshots", []) if isinstance(entry, dict) and "image" in entry}
+    return len(present), len(present & covered)
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# PNG comparison
+# ---------------------------------------------------------------------------------------------------------------------
+
+CHANNELS = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}
+
+
+def png_size(data: bytes) -> tuple[int, int]:
+    if not data.startswith(PNG_SIGNATURE):
+        raise ValueError("not a PNG file")
+    return struct.unpack(">II", data[16:24])
+
+
+def decode_png(data: bytes) -> tuple[int, int, int, list[bytes]]:
+    """Returns (width, height, channels, rows) of an 8-bit, non-interlaced PNG. Palette images are expanded to RGB."""
+    width, height = png_size(data)
+    position = 8
+    idat = b""
+    palette = b""
+    depth = color = interlace = None
+    while position < len(data):
+        length, kind = struct.unpack(">I4s", data[position : position + 8])
+        body = data[position + 8 : position + 8 + length]
+        if kind == b"IHDR":
+            depth, color, _, _, interlace = struct.unpack(">5B", body[8:13])
+        elif kind == b"PLTE":
+            palette = body
+        elif kind == b"IDAT":
+            idat += body
+        position += 12 + length
+    if depth != 8 or interlace != 0 or color not in CHANNELS:
+        raise ValueError(f"unsupported PNG (bit depth {depth}, colour type {color}, interlace {interlace})")
+    channels = CHANNELS[color]
+    stride = width * channels
+    raw = zlib.decompress(idat)
+    rows: list[bytes] = []
+    previous = bytearray(stride)
+    offset = 0
+    for _ in range(height):
+        method = raw[offset]
+        line = bytearray(raw[offset + 1 : offset + 1 + stride])
+        offset += 1 + stride
+        if method == 1:
+            for i in range(channels, stride):
+                line[i] = (line[i] + line[i - channels]) & 255
+        elif method == 2:
+            for i in range(stride):
+                line[i] = (line[i] + previous[i]) & 255
+        elif method == 3:
+            for i in range(stride):
+                left = line[i - channels] if i >= channels else 0
+                line[i] = (line[i] + ((left + previous[i]) >> 1)) & 255
+        elif method == 4:
+            for i in range(stride):
+                left = line[i - channels] if i >= channels else 0
+                up = previous[i]
+                corner = previous[i - channels] if i >= channels else 0
+                estimate = left + up - corner
+                distance_left, distance_up, distance_corner = abs(estimate - left), abs(estimate - up), abs(estimate - corner)
+                if distance_left <= distance_up and distance_left <= distance_corner:
+                    predictor = left
+                elif distance_up <= distance_corner:
+                    predictor = up
+                else:
+                    predictor = corner
+                line[i] = (line[i] + predictor) & 255
+        elif method != 0:
+            raise ValueError(f"unknown PNG filter {method}")
+        previous = line
+        rows.append(bytes(line))
+    if color == 3:
+        expanded = []
+        for row in rows:
+            out = bytearray()
+            for index in row:
+                out += palette[index * 3 : index * 3 + 3]
+            expanded.append(bytes(out))
+        return width, height, 3, expanded
+    return width, height, channels, rows
+
+
+def changed_share(old: bytes, new: bytes) -> float | str:
+    """The share of pixels that differ, or a text when the images cannot be compared pixel by pixel."""
+    if old == new:
+        return 0.0
+    old_size, new_size = png_size(old), png_size(new)
+    if old_size != new_size:
+        return f"size {old_size[0]}x{old_size[1]} instead of {new_size[0]}x{new_size[1]}"
+    try:
+        width, height, old_channels, old_rows = decode_png(old)
+        _, _, new_channels, new_rows = decode_png(new)
+    except (ValueError, zlib.error) as error:
+        return f"not comparable ({error})"
+    if old_channels != new_channels:
+        return "colour layout differs"
+    changed = 0
+    for old_row, new_row in zip(old_rows, new_rows):
+        if old_row == new_row:
+            continue
+        for start in range(0, len(old_row), old_channels):
+            for channel in range(old_channels):
+                if abs(old_row[start + channel] - new_row[start + channel]) > CHANNEL_TOLERANCE:
+                    changed += 1
+                    break
+    return changed / (width * height)
+
+
+def compare(manifest: dict, rendered: Path, docs_root: Path, threshold: float) -> tuple[list[str], int]:
+    """Returns the Markdown lines about the images that differ and the number of images that were compared."""
+    lines: list[str] = []
+    compared = 0
+    for entry in manifest["screenshots"]:
+        new_path = rendered / entry["image"]
+        old_path = docs_root / entry["image"]
+        if not new_path.is_file():
+            lines.append(f"- `{entry['image']}`: was not rendered")
+            continue
+        compared += 1
+        result = changed_share(old_path.read_bytes(), new_path.read_bytes())
+        pages = ", ".join(f"`{page}`" for page in entry["pages"])
+        if isinstance(result, str):
+            lines.append(f"- `{entry['image']}` ({pages}): {result}")
+        elif result > threshold:
+            lines.append(f"- `{entry['image']}` ({pages}): {result:.1%} of the pixels changed")
+    return lines, compared
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Age
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+def last_commit(path: str) -> int | None:
+    result = subprocess.run(["git", "log", "-1", "--format=%ct", "--", path], cwd=REPO_ROOT, capture_output=True, text=True, check=False)
+    text = result.stdout.strip()
+    return int(text) if text else None
+
+
+def stale(manifest: dict) -> list[str]:
+    lines: list[str] = []
+    for entry in manifest["screenshots"]:
+        image_time = last_commit(f"documentation/docs/{entry['image']}")
+        if image_time is None:
+            continue
+        newer = [source for source in entry.get("source", []) if (changed := last_commit(source)) is not None and changed > image_time]
+        if newer:
+            lines.append(f"- `{entry['image']}`: changed after the image: {', '.join(f'`{source}`' for source in newer)}")
+    return lines
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Self-test
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+def make_png(width: int, height: int, pixel, color: int = 2, method: int = 0) -> bytes:
+    """Writes a PNG whose rows all use the given filter, so the decoder is exercised on each of them."""
+    channels = CHANNELS[color]
+    rows = [bytes(value for x in range(width) for value in pixel(x, y)) for y in range(height)]
+    raw = b""
+    previous = bytes(width * channels)
+    for row in rows:
+        out = bytearray()
+        for i, value in enumerate(row):
+            left = row[i - channels] if i >= channels else 0
+            up = previous[i]
+            corner = previous[i - channels] if i >= channels else 0
+            if method == 0:
+                predictor = 0
+            elif method == 1:
+                predictor = left
+            elif method == 2:
+                predictor = up
+            elif method == 3:
+                predictor = (left + up) >> 1
+            else:
+                estimate = left + up - corner
+                distances = (abs(estimate - left), abs(estimate - up), abs(estimate - corner))
+                predictor = (left, up, corner)[distances.index(min(distances))]
+            out.append((value - predictor) & 255)
+        raw += bytes([method]) + bytes(out)
+        previous = row
+
+    def chunk(kind: bytes, body: bytes) -> bytes:
+        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+
+    header = struct.pack(">IIBBBBB", width, height, 8, color, 0, 0, 0)
+    return PNG_SIGNATURE + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+
+
+def self_test() -> None:
+    def gradient(x, y):
+        return (x * 20 % 256, y * 30 % 256, (x + y) * 10 % 256)
+
+    for method in range(5):
+        data = make_png(9, 7, gradient, method=method)
+        width, height, channels, rows = decode_png(data)
+        assert (width, height, channels) == (9, 7, 3), method
+        assert rows[3][:3] == bytes(gradient(0, 3)), method
+        assert rows[6][-3:] == bytes(gradient(8, 6)), method
+    rgba = make_png(4, 4, lambda x, y: (x, y, 0, 255), color=6, method=4)
+    assert decode_png(rgba)[2] == 4
+
+    same = make_png(20, 10, gradient)
+    assert changed_share(same, make_png(20, 10, gradient, method=2)) == 0.0, "the filter must not change the pixels"
+    one_pixel = make_png(20, 10, lambda x, y: (255, 0, 0) if (x, y) == (3, 3) else gradient(x, y))
+    assert abs(changed_share(same, one_pixel) - 1 / 200) < 1e-9
+    nearly = make_png(20, 10, lambda x, y: tuple(min(255, value + 3) for value in gradient(x, y)))
+    assert changed_share(same, nearly) == 0.0, "differences inside the tolerance are anti-aliasing"
+    assert isinstance(changed_share(same, make_png(21, 10, gradient)), str), "a different size is reported as text"
+
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        docs = root / "docs"
+        (docs / "area" / "assets").mkdir(parents=True)
+        (docs / "area" / "assets" / "shot.png").write_bytes(same)
+        (docs / "area" / "page.mdx").write_text("import shot from './assets/shot.png';\n", encoding="utf-8")
+        (docs / "area" / "assets" / "other.png").write_bytes(same)
+        (root / "src").mkdir()
+        entry = {"id": "shot", "image": "area/assets/shot.png", "pages": ["area/page.mdx"], "user": "student", "route": "/courses/{courseId}/x", "source": ["src"]}
+        good = {"users": {"student": "demo_student"}, "screenshots": [entry]}
+        assert validate(good, root, docs) == [], validate(good, root, docs)
+        assert uncovered_images(good, docs) == (2, 1)
+
+        def broken(**changes) -> list[str]:
+            return validate({"users": good["users"], "screenshots": [{**entry, **changes}]}, root, docs)
+
+        assert any("does not exist below" in problem for problem in broken(image="area/assets/missing.png"))
+        assert any("does not show" in problem for problem in broken(image="area/assets/other.png"))
+        assert any("page `nope.mdx` does not exist" in problem for problem in broken(pages=["nope.mdx"]))
+        assert any("unknown user" in problem for problem in broken(user="admin"))
+        assert any("unknown placeholder" in problem for problem in broken(route="/courses/{exerciseId}"))
+        assert any("must start with /" in problem for problem in broken(route="courses/1"))
+        assert any("source `gone` does not exist" in problem for problem in broken(source=["gone"]))
+        assert any("viewport" in problem for problem in broken(viewport={"width": 0, "height": 5}))
+        assert any("kebab-case" in problem for problem in broken(id="Shot_1"))
+        assert any("described twice" in problem or "duplicate id" in problem for problem in validate({"users": good["users"], "screenshots": [entry, entry]}, root, docs))
+
+        rendered = root / "rendered"
+        (rendered / "area" / "assets").mkdir(parents=True)
+        (rendered / "area" / "assets" / "shot.png").write_bytes(one_pixel)
+        lines, compared = compare(good, rendered, docs, 0.001)
+        assert compared == 1 and len(lines) == 1 and "0.5%" in lines[0], lines
+        assert compare(good, rendered, docs, 0.01)[0] == []
+    print("check_docs_screenshots self-test passed")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--compare", metavar="DIR", help="compare the images rendered into DIR with the checked-in ones")
+    parser.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD, help="share of changed pixels that counts as a difference (default 0.01)")
+    parser.add_argument("--stale", action="store_true", help="list images whose source files changed after the image")
+    parser.add_argument("--self-test", action="store_true", help="run the built-in tests")
+    args = parser.parse_args()
+    if args.self_test:
+        self_test()
+        return 0
+    manifest = load_manifest(MANIFEST)
+    if args.compare:
+        lines, compared = compare(manifest, Path(args.compare), DOCS_ROOT, args.threshold)
+        print(f"{len(lines)} of {compared} compared screenshot(s) differ")
+        print("\n".join(lines))
+        return 0
+    if args.stale:
+        lines = stale(manifest)
+        print(f"{len(lines)} screenshot(s) may be outdated")
+        print("\n".join(lines))
+        return 0
+    problems = validate(manifest, REPO_ROOT, DOCS_ROOT)
+    total, covered = uncovered_images(manifest, DOCS_ROOT)
+    print(f"{covered} of {total} documentation images are described in the screenshot manifest")
+    if problems:
+        print("\nThe screenshot manifest has problems:", file=sys.stderr)
+        for problem in problems:
+            print(f"  {problem}", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

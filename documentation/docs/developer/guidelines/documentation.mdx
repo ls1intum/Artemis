@@ -2,7 +2,7 @@
 id: documentation
 title: Writing Documentation
 sidebar_label: Documentation
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-04
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -161,6 +161,30 @@ is empty — if a recapture would come out emptier than what is already there, l
 **Retire what you replace.** When a screenshot stops being referenced, delete the file. Unreferenced assets
 accumulate invisibly; they are never noticed until someone measures.
 
+### Generated screenshots
+
+A screenshot that can be rendered again from the demo course does not have to be recaptured by hand.
+`documentation/screenshots/manifest.json` describes such a screenshot: the image below `documentation/docs`, the pages that show it,
+the user (a demo user), the route with the placeholder `{courseId}`, the viewport, optional `mask` entries (the `data-testid` of an
+element with volatile content, such as a time stamp) and the `source` paths of the components and translations that the image shows.
+`src/test/playwright/docs-screenshots` renders every entry in a light theme, in English and with reduced motion, and
+`supporting_scripts/check_docs_screenshots.py` validates the manifest, compares rendered images with the checked-in ones and lists
+the images whose `source` changed after the image.
+
+To render the screenshots against a local instance:
+
+1. Start Artemis with the `demo` profile in addition to `core` and `scheduling`, as described in [Demo data](/developer/setup#demo-data-optional).
+   The demo users log in with the password `demo1234`.
+2. In `src/test/playwright`, run `BASE_URL=http://localhost:9000 pnpm exec playwright test --config docs-screenshots/playwright.config.ts`.
+   The images land in `build/docs-screenshots`. `DOCS_SCREENSHOT_ONLY=calendar-month-desktop` renders one entry.
+3. Compare them with `python3 supporting_scripts/check_docs_screenshots.py --compare build/docs-screenshots`. If the page really changed,
+   run the step 2 again with `DOCS_SCREENSHOT_UPDATE=true`, which replaces the checked-in images, look at them, and commit them.
+
+To add a screenshot, add an entry with the viewport of the image, check it with `python3 supporting_scripts/check_docs_screenshots.py`,
+and render it. The workflow `docs-screenshots.yml` renders the manifest weekly against the instance in the repository variable
+`DOCS_SCREENSHOT_BASE_URL`, and keeps one issue that lists the images that differ. It never commits an image.
+Interactions such as an open dialog are not part of the manifest yet; such screenshots stay manual and keep the rules above.
+
 ## Screencasts
 
 Embed TUM-Live recordings with the `TumLiveVideo` component, passing the **bare recording id**:
@@ -314,6 +338,8 @@ Checks keep these habits honest. They only report what they can prove, so they d
 | `python3 supporting_scripts/check_docs_freshness.py --validate` | Every page has a valid `last_reviewed` date in its front matter. | Every pull request (`docs-checks`) |
 | `python3 supporting_scripts/generate_architecture_diagrams.py --check` | The UML diagrams of the [system design](/developer/system-design) are what their generator draws. | Every pull request (`docs-checks`) |
 | `python3 supporting_scripts/check_docs_freshness.py --impact` | Lists the pages that mention a file or a class that the pull request changes, and the edited pages that kept an old review date. It is advice and never fails. | The summary of the `docs-checks` job |
+| `python3 supporting_scripts/check_docs_screenshots.py` | Every entry of the screenshot manifest names an existing image that its pages show, a known user, a route with a known placeholder, and existing source paths. | Every pull request (`docs-checks`) |
+| `docs-screenshots.yml` | Renders the manifest screenshots, and opens an issue for the images that differ from the checked-in ones. | Weekly |
 | `docs-maintenance.yml` | Opens an issue for every page that was not reviewed for a year, and one for external links that no longer work. | Weekly |
 
 Paths that are expected to be missing in a checkout, such as build output or a file the reader creates, are exempt through git ignore rules.

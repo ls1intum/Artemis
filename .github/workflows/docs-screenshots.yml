@@ -1,0 +1,138 @@
+name: Documentation Screenshots
+
+# Screenshots go stale without anybody touching a page: a component changes its layout and the image keeps showing the old one. This
+# workflow renders the screenshots that documentation/screenshots/manifest.json describes against a running Artemis with the `demo`
+# profile, compares them with the checked-in images and keeps one open issue that lists the images that differ. It never commits an
+# image and never fails a pull request. A maintainer replaces an image after looking at the artifact (see "Screenshots" in
+# documentation/docs/developer/guidelines/documentation.mdx).
+#
+# The workflow does not start Artemis. It renders against the instance in the repository variable DOCS_SCREENSHOT_BASE_URL (or the
+# `base_url` input of a manual run), which has to run with the profiles listed in the guideline, so that the demo course exists. As long
+# as neither is set, the scheduled run does nothing.
+
+on:
+  schedule:
+    - cron: '0 4 * * 2'
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Artemis client that runs with the demo profile. Defaults to the repository variable DOCS_SCREENSHOT_BASE_URL.'
+        required: false
+        default: ''
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: docs-screenshots
+  cancel-in-progress: false
+
+jobs:
+  render:
+    name: Render the screenshots
+    if: github.repository == 'ls1intum/Artemis'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # The image of the Playwright version in src/test/playwright/package.json: browsers and fonts are the same for every run, which
+    # keeps the text of the images from changing with the runner.
+    container: mcr.microsoft.com/playwright:v1.64.1-noble
+    permissions:
+      contents: read
+    env:
+      BASE_URL: ${{ inputs.base_url || vars.DOCS_SCREENSHOT_BASE_URL }}
+    outputs:
+      rendered: ${{ steps.render.outputs.rendered }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        if: ${{ env.BASE_URL != '' }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - name: Install the Playwright dependencies
+        if: ${{ env.BASE_URL != '' }}
+        working-directory: src/test/playwright
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+      - name: Render
+        id: render
+        run: |
+          set -Eeuo pipefail
+          if [ -z "${BASE_URL}" ]; then
+            echo "DOCS_SCREENSHOT_BASE_URL is not set and no base_url was given, nothing to render."
+            echo "rendered=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          cd src/test/playwright
+          DOCS_SCREENSHOT_DIR="${GITHUB_WORKSPACE}/build/docs-screenshots" pnpm exec playwright test --config docs-screenshots/playwright.config.ts
+          echo "rendered=true" >> "$GITHUB_OUTPUT"
+      - name: Upload the rendered images
+        if: ${{ steps.render.outputs.rendered == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docs-screenshots-rendered
+          path: build/docs-screenshots
+          if-no-files-found: error
+          retention-days: 30
+
+  compare:
+    name: Compare with the checked-in images
+    needs: render
+    if: github.repository == 'ls1intum/Artemis' && needs.render.outputs.rendered == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The age of an image is the date of its last commit, which needs the history.
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      - name: Download the rendered images
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: docs-screenshots-rendered
+          path: build/docs-screenshots
+      - name: Compare
+        run: |
+          set -Eeuo pipefail
+          python supporting_scripts/check_docs_screenshots.py --compare build/docs-screenshots > "${RUNNER_TEMP}/differ.md"
+          python supporting_scripts/check_docs_screenshots.py --stale > "${RUNNER_TEMP}/stale.md"
+          cat "${RUNNER_TEMP}/differ.md" "${RUNNER_TEMP}/stale.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: 'Documentation: screenshots that differ from the application'
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -Eeuo pipefail
+          existing=$(gh issue list --state open --search "\"${TITLE}\" in:title" --json number,title --jq "[.[] | select(.title == \"${TITLE}\")][0].number // empty")
+          if grep -q '^0 of ' "${RUNNER_TEMP}/differ.md"; then
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --comment "Every rendered screenshot matches the checked-in image."
+            fi
+            exit 0
+          fi
+          {
+            echo "### Rendered images that differ"
+            cat "${RUNNER_TEMP}/differ.md"
+            echo
+            echo "### Images whose component or translations changed after the image"
+            cat "${RUNNER_TEMP}/stale.md"
+            echo
+            echo "The rendered images are the artifact \`docs-screenshots-rendered\` of [this run](${RUN_URL}). Look at the difference first: a changed demo course is not a change of the page. To replace an image, run the steps of \"Screenshots\" in the documentation guideline."
+            echo "This issue is kept up to date by \`.github/workflows/docs-screenshots.yml\`."
+          } > "${RUNNER_TEMP}/body.md"
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body-file "${RUNNER_TEMP}/body.md"
+          else
+            gh issue create --title "$TITLE" --body-file "${RUNNER_TEMP}/body.md"
+          fi

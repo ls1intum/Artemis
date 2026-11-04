@@ -63,6 +63,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: python supporting_scripts/generate_architecture_diagrams.py --check
 
+      - name: Screenshot manifest
+        if: ${{ !cancelled() }}
+        run: |
+          python supporting_scripts/check_docs_screenshots.py --self-test
+          python supporting_scripts/check_docs_screenshots.py
+
       # Advice, never a failure: which pages mention what this pull request changes, and which edited pages kept an
       # old review date. The author is the one who can compare the page with the code.
       - name: Pages that the change may have made wrong

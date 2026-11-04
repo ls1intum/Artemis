@@ -1,0 +1,101 @@
+{
+    "version": 1,
+    "comment": "Describes the documentation screenshots that supporting_scripts/check_docs_screenshots.py validates and src/test/playwright/docs-screenshots renders. Format and workflow: documentation/docs/developer/guidelines/documentation.mdx#screenshots",
+    "defaults": {
+        "viewport": { "width": 1440, "height": 900 },
+        "deviceScaleFactor": 1,
+        "locale": "en",
+        "theme": "light"
+    },
+    "users": {
+        "student": "demo_student",
+        "tutor": "demo_tutor",
+        "instructor": "demo_instructor"
+    },
+    "screenshots": [
+        {
+            "id": "calendar-month-desktop",
+            "image": "student/assets/calendar/desktop-month-presentation.png",
+            "pages": ["student/progress-analytics/calendar.mdx"],
+            "user": "student",
+            "route": "/courses/{courseId}/calendar",
+            "viewport": { "width": 1288, "height": 680 },
+            "source": ["src/main/webapp/app/calendar", "src/main/webapp/i18n/en/calendar.json"]
+        },
+        {
+            "id": "student-faq",
+            "image": "student/assets/faq/student-view.png",
+            "pages": ["student/communication-support/faq.mdx"],
+            "user": "student",
+            "route": "/courses/{courseId}/faq",
+            "viewport": { "width": 1681, "height": 835 },
+            "source": ["src/main/webapp/app/communication/faq", "src/main/webapp/i18n/en/faq.json"]
+        },
+        {
+            "id": "instructor-faq",
+            "image": "instructor/communication-support/assets/faq/instructor-view.png",
+            "pages": ["instructor/communication-support/faq.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/faqs",
+            "viewport": { "width": 1256, "height": 426 },
+            "source": ["src/main/webapp/app/communication/faq", "src/main/webapp/i18n/en/faq.json"]
+        },
+        {
+            "id": "lectures-management",
+            "image": "instructor/lectures/assets/lectures/lectures-management.png",
+            "pages": ["instructor/lectures/lectures.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/lectures",
+            "viewport": { "width": 1264, "height": 353 },
+            "source": ["src/main/webapp/app/lecture/manage", "src/main/webapp/i18n/en/lecture.json"]
+        },
+        {
+            "id": "tutorial-groups-student-overview",
+            "image": "student/assets/tutorial-groups/students-all-groups.png",
+            "pages": ["student/communication-support/tutorial-groups.mdx"],
+            "user": "student",
+            "route": "/courses/{courseId}/tutorial-groups",
+            "viewport": { "width": 1502, "height": 716 },
+            "source": ["src/main/webapp/app/tutorialgroup/overview", "src/main/webapp/i18n/en/tutorialGroups.json"]
+        },
+        {
+            "id": "notification-settings",
+            "image": "student/assets/notifications/notification-settings.png",
+            "pages": ["student/communication-support/notifications.mdx"],
+            "user": "student",
+            "route": "/user-settings/notifications",
+            "viewport": { "width": 1298, "height": 797 },
+            "deviceScaleFactor": 2,
+            "source": ["src/main/webapp/app/account/user/settings/global-notifications-settings", "src/main/webapp/i18n/en/userSettings.json"]
+        },
+        {
+            "id": "competency-management",
+            "image": "instructor/analytics/assets/adaptive-learning/manage-competencies.png",
+            "pages": ["instructor/analytics/adaptive-learning.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/competency-management",
+            "viewport": { "width": 1572, "height": 874 },
+            "source": ["src/main/webapp/app/atlas/manage/competency-management", "src/main/webapp/i18n/en/competency.json"]
+        },
+        {
+            "id": "learning-path-management",
+            "image": "instructor/analytics/assets/adaptive-learning/learning-path-management.png",
+            "pages": ["instructor/analytics/adaptive-learning.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/learning-path-management",
+            "viewport": { "width": 1510, "height": 758 },
+            "deviceScaleFactor": 2,
+            "source": ["src/main/webapp/app/atlas/manage/learning-path-instructor-page", "src/main/webapp/i18n/en/learningPath.json"]
+        },
+        {
+            "id": "course-communication",
+            "image": "student/assets/communication/message-page.png",
+            "pages": ["student/communication-support/communication.mdx"],
+            "user": "student",
+            "route": "/courses/{courseId}/communication",
+            "viewport": { "width": 1456, "height": 652 },
+            "deviceScaleFactor": 2,
+            "source": ["src/main/webapp/app/communication/course-conversations", "src/main/webapp/i18n/en/conversation.json"]
+        }
+    ]
+}
