@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import posixpath
 import re
 import subprocess
 import sys
@@ -93,6 +94,10 @@ GRADLE_BUILTIN_TASKS = {
     "jacocoTestCoverageVerification", "compileJava", "compileTestJava", "processResources", "installDist", "dependencyUpdates", "cyclonedxBom", "publishToMavenLocal",
     "publish", "buildEnvironment", "outgoingVariants", "resolvableConfigurations", "javaToolchains", "model", "components", "dependentComponents", "init", "installGitHooks",
 }
+
+# Options of Gradle that take the next word as their value, which is therefore not a task
+GRADLE_OPTIONS_WITH_VALUE = {"-x", "--exclude-task", "--tests", "-p", "--project-dir", "-P", "--init-script", "-I", "--console", "--max-workers", "-b", "--build-file", "-c",
+                             "--settings-file", "-g", "--gradle-user-dir", "--project-cache-dir", "--priority", "--warning-mode", "--include-build", "--write-verification-metadata"}
 
 PNPM_BUILTIN_COMMANDS = {
     "install", "i", "add", "remove", "rm", "update", "up", "upgrade", "exec", "dlx", "test", "t", "start", "store", "config", "env", "audit", "outdated", "why", "list", "ls",
@@ -168,18 +173,24 @@ def version_matches(claim: str, pin: str) -> bool:
     return pinned[: len(claimed)] == claimed
 
 
+# The parts of a sentence that can talk about different versions: "Upgraded from Java 21; now requires Java 25" has a historical and a current claim.
+CLAUSE_BREAK = re.compile(r"[;:]|\s[\u2013\u2014-]\s|,\s+(?:but|and|now|so)\b|\b(?:but|now|today|currently)\b|\.\s+(?=[A-Z])")
+
+
 def version_claims(page: Path, text: str) -> list[str]:
     problems = []
     pins = pinned_versions()
     for number, line in prose_lines(text):
-        for m in VERSION_CLAIM.finditer(line):
-            name, claim = m.groups()
-            pin = pins.get(name)
-            if pin is None or version_matches(claim, pin) or HISTORY_WORDS.search(line):
+        for clause in CLAUSE_BREAK.split(line):
+            # only the clause that holds the historical wording is exempt, a current claim next to it is still checked
+            if HISTORY_WORDS.search(clause):
                 continue
-            if f"{rel(page)}: {name} {claim}" in VERSION_ALLOWLIST:
-                continue
-            problems.append(f"{rel(page)}:{number}: `{name} {claim}` but the repository pins {name} {pin}")
+            for m in VERSION_CLAIM.finditer(clause):
+                name, claim = m.groups()
+                pin = pins.get(name)
+                if pin is None or version_matches(claim, pin) or f"{rel(page)}: {name} {claim}" in VERSION_ALLOWLIST:
+                    continue
+                problems.append(f"{rel(page)}:{number}: `{name} {claim}` but the repository pins {name} {pin}")
     return problems
 
 
@@ -267,7 +278,9 @@ def check_default(page: Path, number: int, key: str, claimed: str, values: dict[
 # ---------------------------------------------------------------------------------------------
 
 SHELL_LANGUAGES = {"sh", "bash", "shell", "zsh", "console", "shell-session"}
-PNPM = re.compile(r"\bpnpm\s+(?:run\s+)?([a-z][\w:.-]*)")
+# `pnpm --dir documentation run build`: options, some with a value, may precede the command. A word after an option is read as the value only
+# when the rest still names a command, because the expression backtracks.
+PNPM = re.compile(r"\bpnpm(?:\s+-[\w-]+(?:=\S+|\s+(?!run\b)[^-\s#]\S*)?)*\s+(?:run\s+)?([a-z][\w:.-]*)")
 GRADLEW = re.compile(r"\./gradlew((?:\s+[^\s`|&;]+)+)")
 
 
@@ -328,23 +341,23 @@ def command_problems(page: Path, text: str) -> list[str]:
                 continue
             problems.append(f"{rel(page)}:{number}: `pnpm {name}` is neither a script of a package.json nor a pnpm command")
         for m in GRADLEW.finditer(segment):
-            words = m.group(1).split()
             skip = False
-            for word in words:
+            for word in m.group(1).split():
+                if word == "#":
+                    break  # a comment of the shell line
                 if skip:
                     skip = False
                     continue
-                if word in ("-x", "--exclude-task", "--tests", "-p", "--project-dir", "-P", "--init-script", "-I"):
+                if word in GRADLE_OPTIONS_WITH_VALUE:
                     skip = True
                     continue
-                if word.startswith("-") or "<" in word or "$" in word or "=" in word or word in ("\\", "..."):
+                if word.startswith("-") or any(c in word for c in "<$=\"'") or word in ("\\", "..."):
                     continue
                 task = word.split(":")[-1]
                 if not task:
-                    break
+                    continue
                 if task not in GRADLE_BUILTIN_TASKS and not re.search(r"\b%s\b" % re.escape(task), gradle) and f"{rel(page)}: ./gradlew {task}" not in COMMAND_ALLOWLIST:
                     problems.append(f"{rel(page)}:{number}: `./gradlew {task}` is not a task that a Gradle file or a plugin defines")
-                break
         for m in re.finditer(r"(?:--spring\.profiles\.active=|SPRING_PROFILES_ACTIVE[=:]\s*)[\"']?([\w,-]+)", segment):
             for profile in m.group(1).split(","):
                 if profile and profile not in known_profiles():
@@ -421,25 +434,67 @@ def route_problems(page: Path, text: str) -> list[str]:
 MARKDOWN_IMAGE = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)")
 
 
+IMAGE_REFERENCE = re.compile(r"[\w@./~%-]+\.(?:png|jpe?g|gif|webp|svg|ico)\b", re.I)
+IMAGE_TAG = re.compile(r"<(?:img|Image)\b[^>]*>", re.I | re.S)
+ALT_ATTRIBUTE = re.compile(r"""\balt\s*=\s*(?:"[^"]*[^"\s][^"]*"|'[^']*[^'\s][^']*'|\{\s*(?:"[^"]*[^"\s][^"]*"|'[^']*[^'\s][^']*'|`[^`]*[^`\s][^`]*`|[A-Za-z_][\w.]*)\s*\})""")
+
+
+def referenced_images() -> set[str]:
+    """The repository paths that a documentation source names, each resolved against the file that names it, so that two images with the same file name are told apart."""
+    referenced: set[str] = set()
+    for path in tracked_files():
+        if not (path.startswith("documentation/") and Path(path).suffix in (".md", ".mdx", ".ts", ".tsx", ".js", ".css", ".json") and "node_modules" not in path):
+            continue
+        for target in IMAGE_REFERENCE.findall(read(path)):
+            if target.startswith("@site/"):
+                resolved = "documentation/" + target.removeprefix("@site/")
+            elif target.startswith("/"):
+                resolved = "documentation/static" + target
+            else:
+                resolved = (Path(path).parent / target).as_posix()
+            referenced.add(posixpath.normpath(resolved))
+    return referenced
+
+
 def image_problems() -> list[str]:
     problems = []
     # documentation/static is served under fixed URLs that other sites may link to, so only the images of the pages are checked
     images = [p for p in tracked_files() if p.startswith("documentation/docs/") and Path(p).suffix.lower() in IMAGE_SUFFIXES]
-    corpus = ""
-    for path in tracked_files():
-        if path.startswith("documentation/") and Path(path).suffix in (".md", ".mdx", ".ts", ".tsx", ".js", ".css", ".json") and "node_modules" not in path:
-            corpus += read(path) + "\n"
+    referenced = referenced_images()
     for image in images:
         if (REPO_ROOT / image).stat().st_size > IMAGE_BUDGET_BYTES:
             problems.append(f"{image}: {(REPO_ROOT / image).stat().st_size // 1000} kB is above the budget of {IMAGE_BUDGET_BYTES // 1000} kB, crop or reduce it")
-        if Path(image).name not in corpus and not image.endswith("favicon.ico"):
+        if image not in referenced:
             problems.append(f"{image}: no page references this image, delete it")
     for page in prose_files():
-        for number, line in prose_lines(page.read_text(encoding="utf-8")):
-            for alt, target in MARKDOWN_IMAGE.findall(line):
-                if not alt.strip() and Path(target).suffix.lower() in IMAGE_SUFFIXES:
-                    problems.append(f"{rel(page)}:{number}: image `{target}` has no alt text")
+        problems.extend(alt_text_problems(page, page.read_text(encoding="utf-8")))
     return problems
+
+
+def alt_text_problems(page: Path, text: str) -> list[str]:
+    """Markdown images, raw <img> tags and <Image> components without a text alternative."""
+    problems = []
+    for number, line in prose_lines(text):
+        for alt, target in MARKDOWN_IMAGE.findall(line):
+            if not alt.strip() and Path(target).suffix.lower() in IMAGE_SUFFIXES:
+                problems.append(f"{rel(page)}:{number}: image `{target}` has no alt text")
+    # a tag may span several lines, so it is matched on the page without its fenced blocks and code spans, which keeps the line numbers
+    prose = "\n".join(line if is_prose else "" for is_prose, line in _prose_marks(text))
+    for m in IMAGE_TAG.finditer(prose):
+        if not ALT_ATTRIBUTE.search(m.group(0)):
+            problems.append(f"{rel(page)}:{prose.count(chr(10), 0, m.start()) + 1}: `{m.group(0).split()[0].rstrip('>')}` has no alt text")
+    return problems
+
+
+def _prose_marks(text: str):
+    """(is prose, line) for every line of the page."""
+    fenced = False
+    for line in text.splitlines():
+        if FENCE.match(line):
+            fenced = not fenced
+            yield False, line
+        else:
+            yield not fenced, INLINE_CODE.sub(" ", line)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -529,13 +584,11 @@ def marker_problems() -> list[str]:
 # ---------------------------------------------------------------------------------------------
 
 
-def glossary_terms() -> list[tuple[str, list[str]]]:
-    """(term, words to avoid) for every row of the glossary tables. The Avoid column holds backticked words."""
-    if not GLOSSARY.exists():
-        return []
+def glossary_rows(text: str) -> list[tuple[str, str]]:
+    """(term, the raw Avoid cell) for every row of the glossary tables."""
     rows = []
     columns: list[str] = []
-    for line in GLOSSARY.read_text(encoding="utf-8").splitlines():
+    for line in text.splitlines():
         if not line.startswith("|"):
             columns = []
             continue
@@ -544,9 +597,21 @@ def glossary_terms() -> list[tuple[str, list[str]]]:
             columns = [c.lower() for c in cells]
             continue
         if columns and "avoid" in columns and not set(cells[0]) <= set("-: "):
-            avoid = re.findall(r"`([^`]+)`", cells[columns.index("avoid")]) if columns.index("avoid") < len(cells) else []
-            rows.append((cells[0].strip("*` "), avoid))
+            rows.append((cells[0].strip("*` "), cells[columns.index("avoid")] if columns.index("avoid") < len(cells) else ""))
     return rows
+
+
+def glossary_terms() -> list[tuple[str, list[str]]]:
+    """(term, words to avoid) for every row of the glossary tables. The Avoid column holds backticked words."""
+    if not GLOSSARY.exists():
+        return []
+    return [(term, re.findall(r"`([^`]+)`", cell)) for term, cell in glossary_rows(GLOSSARY.read_text(encoding="utf-8"))]
+
+
+def avoid_cell_problems(rows: list[tuple[str, str]]) -> list[str]:
+    """A word in the Avoid column that is not in backticks would silently ban nothing."""
+    return [f"{rel(GLOSSARY)}: the Avoid cell of `{term}` names no word in backticks, so the check cannot use it: {cell.strip()}"
+            for term, cell in rows if cell.strip() not in ("", "-", "\u2013", "\u2014", "n/a") and "`" not in cell]
 
 
 def glossary_problems() -> list[str]:
@@ -556,6 +621,7 @@ def glossary_problems() -> list[str]:
     terms = glossary_terms()
     if not terms:
         return [f"{rel(GLOSSARY)} defines no terms"]
+    problems.extend(avoid_cell_problems(glossary_rows(GLOSSARY.read_text(encoding="utf-8"))))
     names = [t.lower() for t, _ in terms]
     for dup in {n for n in names if names.count(n) > 1}:
         problems.append(f"{rel(GLOSSARY)}: the term `{dup}` is defined twice")
@@ -610,6 +676,9 @@ def self_test() -> None:
     assert len(version_claims(page, wrong)) == 1, version_claims(page, wrong)
     assert not version_claims(page, f"Artemis runs on Java {pins['Java']} and Node {pins['Node'].split('.')[0]}.\n")
     assert not version_claims(page, "Since Java 11 this was different.\n"), "history is not a claim"
+    mixed = f"Upgraded from Java 21; now requires Java {int(pins['Java']) - 1}.\n"
+    assert len(version_claims(page, mixed)) == 1, "the current claim next to a historical one is still checked"
+    assert not version_claims(page, f"Upgraded from Java 21; now requires Java {pins['Java']}.\n")
 
     values = {"artemis.x.timeout": "90"}
     found: list[str] = []
@@ -623,6 +692,11 @@ def self_test() -> None:
     found = command_problems(page, bad)
     assert len(found) == 4, found
     assert not command_problems(page, "`pnpm install` `./gradlew build` `--spring.profiles.active=dev,localvc,localci`\n")
+    assert len(command_problems(page, "`pnpm --dir documentation run no-such-script-xyz`\n")) == 1, "options may precede the command"
+    assert not command_problems(page, "`pnpm --dir documentation run build` `pnpm -r run build` `pnpm --filter foo install`\n")
+    assert not command_problems(page, "```bash\npnpm --version   # should print the pinned version\n```\n"), "a comment after an option is not a command"
+    assert len(command_problems(page, "`./gradlew clean noSuchTaskXyz`\n")) == 1, "every task is checked, not only the first"
+    assert not command_problems(page, "`./gradlew build --console plain -x test`\n"), "an option value is not a task"
 
     instructor_page = REPO_ROOT / "documentation/docs/instructor/x.mdx"
     found = route_problems(instructor_page, "`/nosuchsection/x/y` and `/api/nosuchmodule/foo` and `/course-management/<id>/exercises`\n")
@@ -640,6 +714,14 @@ def self_test() -> None:
 
     banned = glossary_terms()
     assert not GLOSSARY.exists() or banned, "the glossary has terms"
+    rows = glossary_rows("| Term | Meaning | Avoid |\n| --- | --- | --- |\n| Exercise | x | coding exercise |\n| Result | y | `outcome` |\n| Run | z | - |\n")
+    assert [t for t, _ in rows] == ["Exercise", "Result", "Run"], rows
+    assert len(avoid_cell_problems(rows)) == 1 and "Exercise" in avoid_cell_problems(rows)[0], avoid_cell_problems(rows)
+
+    tags = alt_text_problems(page, '<Image src={a} />\n<Image src={a} alt="" />\n<Image\n  src={a}\n  alt="A chart"\n/>\n<img src="a.png">\n<Image src={a} alt={"x"} />\n`<img src="b.png">`\n')
+    assert len(tags) == 3 and ":1:" in tags[0] and ":2:" in tags[1] and ":7:" in tags[2], tags
+    assert posixpath.normpath((Path("documentation/docs/a") / "../b/x.png").as_posix()) == "documentation/docs/b/x.png"
+    assert "documentation/docs/student/assets/faq/student-view.png" in referenced_images() or not tracked_files(), "the images are resolved to repository paths"
     print("Self-test passed.")
 
 
@@ -651,7 +733,11 @@ def main() -> int:
     if args.self_test:
         self_test()
         return 0
-    problems = check(set(args.only.split(",")) if args.only else None)
+    only = set(args.only.split(",")) if args.only else None
+    unknown = (only or set()) - {*PAGE_CHECKS, *GLOBAL_CHECKS}
+    if unknown:
+        parser.error(f"unknown check(s): {', '.join(sorted(unknown))}. The checks are: {', '.join([*PAGE_CHECKS, *GLOBAL_CHECKS])}")
+    problems = check(only)
     for problem in problems:
         print(problem)
     if problems:
