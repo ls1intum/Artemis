@@ -104,6 +104,14 @@ export class AthenaCourseConfigState {
         defaultFeedbackFormality: 0,
     };
 
+    /** How many saves of each field have succeeded, so that a load can tell whether one overtook it. */
+    private readonly saved: Record<AthenaConfigField, number> = {
+        formativeFeedbackEnabled: 0,
+        gradingFeedbackEnabled: 0,
+        defaultFeedbackDetail: 0,
+        defaultFeedbackFormality: 0,
+    };
+
     constructor(
         private readonly courseId: number,
         private readonly athenaCourseConfigService: AthenaCourseConfigService,
@@ -115,28 +123,20 @@ export class AthenaCourseConfigState {
      * {@link ensureLoaded}): each answer is merged into whatever is on screen rather than assumed to be the first one,
      * so a page opened again later still picks up a change another instructor made in the meantime.
      *
-     * The answer describes the course as of some point during the request, not as of when it arrives, so a field only
-     * takes it where nothing happened to that field for the whole request: no switch already in flight when the
-     * request was sent, and none started before the answer arrived. A switch that had settled before the request was
-     * sent is old news the answer already reflects. The answer is also recorded as the confirmed state of a field the
-     * server has not spoken about yet, even one still being switched, so a switch that fails rolls back to what is
-     * stored rather than to "disabled".
+     * The answer describes the course as of some point during the request, so for a field whose save succeeded in the
+     * meantime it may be out of date and is dropped. A save that failed changed nothing, and one that had succeeded
+     * before the request was sent is already reflected, so otherwise the answer is the latest word on what is stored
+     * and becomes the confirmed state. It is only shown when no switch of that field is in flight: such a switch keeps
+     * what it put on screen and, if it fails, rolls back to this answer rather than to an older one or "disabled".
      */
     load(): void {
         this.loadFailed.set(false);
-        const revisionsAtRequest = deepClone(this.revisions);
-        const settledAtRequest = deepClone(this.settled);
+        const savedAtRequest = deepClone(this.saved);
 
         this.athenaCourseConfigService.getCourseConfig(this.courseId).subscribe({
             next: (loaded) => {
                 for (const feature of ATHENA_FEATURES) {
-                    if (this.wasIdleForWholeRequest(feature, revisionsAtRequest, settledAtRequest)) {
-                        this.confirmed[feature] = loaded[feature];
-                        this.apply(feature, loaded[feature]);
-                    } else if (this.confirmed[feature] === undefined) {
-                        // The server has not spoken about this feature yet, so the answer is its first word even though
-                        // a switch overlapped the request. A switch still in flight keeps what it put on screen and, if
-                        // it fails, rolls back to this; one that already failed left only a fallback on screen.
+                    if (this.saved[feature] === savedAtRequest[feature]) {
                         this.confirmed[feature] = loaded[feature];
                         if (this.settled[feature] === this.revisions[feature]) {
                             this.apply(feature, loaded[feature]);
@@ -146,10 +146,7 @@ export class AthenaCourseConfigState {
                 // The style defaults follow the same rule as the two features above.
                 for (const field of ATHENA_FEEDBACK_STYLE_FIELDS) {
                     const value = loaded[field] ?? 0;
-                    if (this.wasIdleForWholeRequest(field, revisionsAtRequest, settledAtRequest)) {
-                        this.confirmed[field] = value;
-                        this.applyStyle(field, value);
-                    } else if (this.confirmed[field] === undefined) {
+                    if (this.saved[field] === savedAtRequest[field]) {
                         this.confirmed[field] = value;
                         if (this.settled[field] === this.revisions[field]) {
                             this.applyStyle(field, value);
@@ -205,6 +202,7 @@ export class AthenaCourseConfigState {
             next: (response) => {
                 const stored = response.body?.[feature] ?? enabled;
                 this.confirmed[feature] = stored;
+                this.saved[feature]++;
                 this.settle(feature, revision);
                 this.applyIfLatest(feature, revision, stored);
             },
@@ -251,6 +249,7 @@ export class AthenaCourseConfigState {
             next: (response) => {
                 const stored = response.body?.[field] ?? value;
                 this.confirmed[field] = stored;
+                this.saved[field]++;
                 this.settle(field, revision);
                 this.applyStyleIfLatest(field, revision, stored);
             },
@@ -321,18 +320,6 @@ export class AthenaCourseConfigState {
      */
     private settle(feature: AthenaConfigField, revision: number): void {
         this.settled[feature] = Math.max(this.settled[feature], revision);
-    }
-
-    /**
-     * Whether a field had no switch in flight for the whole duration of a {@link load} request: none unanswered when
-     * the request was sent, and none started before its answer arrived.
-     *
-     * @param field the field to check
-     * @param revisionsAtRequest a snapshot of {@link revisions} taken before the request was sent
-     * @param settledAtRequest a snapshot of {@link settled} taken before the request was sent
-     */
-    private wasIdleForWholeRequest(field: AthenaConfigField, revisionsAtRequest: Record<AthenaConfigField, number>, settledAtRequest: Record<AthenaConfigField, number>): boolean {
-        return settledAtRequest[field] === revisionsAtRequest[field] && this.revisions[field] === revisionsAtRequest[field];
     }
 }
 

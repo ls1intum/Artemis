@@ -223,6 +223,66 @@ describe('AthenaCourseConfigState', () => {
             expect(state.gradingFeedbackEnabled()).toBe(true);
         });
 
+        it.each([
+            { name: 'a switch', cached: true, stored: false },
+            { name: 'a switch back', cached: false, stored: true },
+        ])('should show a revalidated feature when $name overlapping the load fails', ({ cached, stored }) => {
+            // The cached state comes from an earlier load; another instructor has changed it since.
+            load.next({ gradingFeedbackEnabled: cached, formativeFeedbackEnabled: false });
+            const revalidation = new Subject<AthenaCourseConfigDTO>();
+            mockLoad(revalidation.asObservable());
+            state.load();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(failure));
+
+            state.setEnabled('gradingFeedbackEnabled', !cached);
+            revalidation.next({ gradingFeedbackEnabled: stored, formativeFeedbackEnabled: false });
+
+            expect(state.gradingFeedbackEnabled()).toBe(stored);
+        });
+
+        it('should show a revalidated feedback style when a save overlapping the load fails', () => {
+            load.next({ ...bothDisabled, defaultFeedbackDetail: 3 });
+            const revalidation = new Subject<AthenaCourseConfigDTO>();
+            mockLoad(revalidation.asObservable());
+            state.load();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(failure));
+
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 2);
+            expect(state.defaultFeedbackDetail()).toBe(3);
+            revalidation.next({ ...bothDisabled, defaultFeedbackDetail: 1 });
+
+            expect(state.defaultFeedbackDetail()).toBe(1);
+        });
+
+        it('should roll a failed save back to a revalidated value that arrived while it was in flight', () => {
+            load.next({ ...bothDisabled, defaultFeedbackDetail: 3 });
+            const revalidation = new Subject<AthenaCourseConfigDTO>();
+            mockLoad(revalidation.asObservable());
+            state.load();
+            const save = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(save.asObservable());
+
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 2);
+            revalidation.next({ ...bothDisabled, defaultFeedbackDetail: 1 });
+            expect(state.defaultFeedbackDetail()).toBe(2);
+            save.error(failure());
+
+            expect(state.defaultFeedbackDetail()).toBe(1);
+        });
+
+        it('should drop a revalidated value that a successful save overlapping the load has replaced', () => {
+            load.next({ ...bothDisabled, defaultFeedbackDetail: 3 });
+            const revalidation = new Subject<AthenaCourseConfigDTO>();
+            mockLoad(revalidation.asObservable());
+            state.load();
+            vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(of(new HttpResponse({ body: { ...bothDisabled, defaultFeedbackDetail: 2 } })));
+
+            state.setFeedbackStyleDefault('defaultFeedbackDetail', 2);
+            revalidation.next({ ...bothDisabled, defaultFeedbackDetail: 1 });
+
+            expect(state.defaultFeedbackDetail()).toBe(2);
+        });
+
         it('should roll a failed switch back to the state the load supplied while it was in flight', () => {
             const save = new Subject<HttpResponse<AthenaCourseConfigDTO>>();
             vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(save.asObservable());
