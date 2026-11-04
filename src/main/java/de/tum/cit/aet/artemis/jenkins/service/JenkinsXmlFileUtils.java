@@ -26,6 +26,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 public class JenkinsXmlFileUtils {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsXmlFileUtils.class);

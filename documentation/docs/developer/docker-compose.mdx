@@ -62,7 +62,7 @@ import dockerStructure from './assets/artemis-docker-file-structure.drawio.png';
 The easiest way to configure a local deployment via Docker is a deployment with a *docker compose* file.
 In the directory `deployment/docker/` you can find the following *docker compose* files for different **setups**:
 
-- `artemis-dev-mysql.yml`: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
+- `artemis-dev-mysql.yml`: **Artemis-Dev-MySQL** Setup (MySQL is deprecated and removed in Artemis 11, see [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11)) containing the development build of Artemis and a MySQL DB
 - `artemis-dev-postgres.yml`: **Artemis-Dev-Postgres** Setup containing the development build of Artemis and a PostgreSQL DB
 - `artemis-dev-local-vc-local-ci-postgres.yml`: **Artemis-Dev-LocalVC-LocalCI-Postgres** Setup adding the integrated code lifecycle (LocalVC, LocalCI, and a build agent) on top of the dev build, so that programming exercises work. This is the setup behind [Try Artemis](/about/try)
 - `artemis-dev-local-vc-local-ci-mysql.yml`: the same with a MySQL DB
@@ -130,7 +130,7 @@ For each service being used in these *docker compose* files, a **base service** 
 - `mysql.yml`: **MySQL DB Service**
 - `nginx.yml`: **Nginx Service**
 - `postgres.yml`: **PostgreSQL DB Service**
-- `jenkins.yml`: **Jenkins Service**
+- `jenkins.yml`: **Jenkins Service** (Jenkins is deprecated and removed in Artemis 11)
 
 ### Testing Services
 
@@ -188,7 +188,7 @@ The `artemis.yml` **base service** (e.g. in the `artemis-prod-mysql.yml` setup) 
 ## Debugging with Docker
 
 See the [Debugging with Docker](/developer/docker-debugging) section for detailed information.
-In all development *docker compose* setups like `artemis-dev-mysql.yml` Java Remote Debugging is enabled by default.
+In all development *docker compose* setups like `artemis-dev-postgres.yml` Java Remote Debugging is enabled by default.
 
 ## Service, Container and Volume Names
 

@@ -8,10 +8,10 @@ import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
 
-import topLevelDesign from './assets/system-design/TopLevelDesign.png';
+import topLevelDesign from './assets/system-design/TopLevelDesign.svg';
 import deploymentOverview from './assets/system-design/DeploymentOverview.svg';
 import dataModel from './assets/system-design/DataModel.svg';
-import serverArchitecture from './assets/system-design/ServerArchitecture.png';
+import serverArchitecture from './assets/system-design/ServerArchitecture.svg';
 import iclDeployment from './assets/system-design/integrated-code-lifecycle/Integrated_Code_Lifecycle_Deployment.svg';
 import iclVCSubsystem from './assets/system-design/integrated-code-lifecycle/Integrated_Code_Lifecycle_Subsystem_VC.png';
 import iclCISubsystem from './assets/system-design/integrated-code-lifecycle/Integrated_Code_Lifecycle_Subsystem_CI.svg';
@@ -21,39 +21,99 @@ import iclBuildAgent from './assets/system-design/integrated-code-lifecycle/Inte
 import iclCancellationClass from './assets/system-design/integrated-code-lifecycle/Integrated_Code_Lifecycle_Class_Diagram_Build_Job_Cancellation.png';
 import iclCancellationComm from './assets/system-design/integrated-code-lifecycle/Integrated_Code_Lifecycle_Communication_Diagram_Cancellation.png';
 
+## Architectural Drivers
+
+The architecture of Artemis follows from five properties of the environment it runs in.
+The rationale given below for each design decision refers back to them.
+
+1. **Self-hosted by universities.** Every instance is operated by the institution that uses it, often by a small team.
+   Artemis has to be installable and operable with few moving parts.
+2. **Peaks of load.** Many students submit at the same deadline, and exams start and end at the same moment.
+   Capacity has to grow by adding nodes, without downtime.
+3. **Untrusted code.** Student submissions are executed automatically. A faulty or malicious submission must not endanger the host or other submissions.
+4. **Variety between institutions.** Institutions differ in how users authenticate, in the features they want and in the AI services they may use.
+   Features and integrations that an institution does not need must be switchable.
+5. **Many contributors over many years.** Artemis is open source and developed by many people.
+   The structure has to keep changes local, and architectural rules have to be checked automatically.
+
 ## Top-Level Design
 
-The following diagram shows the top-level design of Artemis which is decomposed into an application client
-(running as Angular web app in the browser) and an application server (based on Spring Boot).
-For programming exercises, the application server connects to a version control system (VCS) and
-a continuous integration system (CIS).
-Authentication is handled by an external user management system (UMS).
+The following UML component diagram shows the top-level design of Artemis.
+Artemis is decomposed into an application client (an Angular single-page application in the browser) and an application server (one Spring Boot application).
+Interfaces are drawn as ball-and-socket connectors: the ball is the provided interface, the socket is the required interface.
 
-<Image src={topLevelDesign} caption="Top-Level Design" alt="Top-Level Design" size={ImageSize.large} />
+<Image src={topLevelDesign} caption="Top-Level Design (UML component diagram)" alt="UML component diagram of the Artemis client, server, build agents and the systems around them" size={ImageSize.large} />
+
+| Component | Responsibility | Interfaces |
+|-----------|----------------|------------|
+| Artemis Client | Presents all user interfaces and talks to the server. | Requires REST and WebSocket |
+| Artemis Server | Contains all feature modules, LocalVC and LocalCI. | Provides REST + WebSocket and Git (HTTPS, SSH); requires JDBC, Distributed Data, Authentication and Service APIs |
+| LocalVC | The integrated Git server. Stores the repositories on the file system and serves `fetch` and `push` over HTTPS and SSH. | Provides Git |
+| LocalCI | Keeps the queue of build jobs, receives the results of the build jobs, grades them and notifies the user. | Requires Distributed Data |
+| Build Agent | Takes build jobs from the queue, clones the repositories from LocalVC and runs each job in a Docker container. Can run inside a core node or as a separate node. | Requires Git and Distributed Data |
+| Distributed Data Provider | Holds the state that all nodes of an installation share, for example the build job queue. Hazelcast, Redis (or Valkey), or a local implementation for a single node. | Provides Distributed Data |
+| PostgreSQL | Persistent data. MySQL is still supported until Artemis 11, see the callout below. | Provides JDBC |
+| User Management | Optional external user management such as LDAP, SAML2 or OIDC. | Provides Authentication |
+| Optional Services | Iris, Athena, Hyperion, Weaviate and further services that extend the core. | Provide Service APIs |
+
+<Callout variant={CalloutVariant.warning}>
+
+    **Planned removals in Artemis 11 (March 2027).**
+    Jenkins, the only remaining external CI system, is deprecated and will be removed in Artemis 11.
+    MySQL support will be removed in Artemis 11 as well, which leaves PostgreSQL as the only database.
+    See [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11) for the timeline, and the guides
+    [Jenkins to LocalCI](/admin/jenkins-to-localci-migration) and
+    [MySQL to PostgreSQL](/admin/database-tips#migrating-mysql-data-to-postgresql) for the migration steps.
+
+</Callout>
+
+### Rationale
+
+The following table lists the main design decisions with the driver they address and what they cost.
+It describes the intent behind the architecture. The decisions are not independent: the first three together make the Integrated Code Lifecycle possible.
+
+| Decision | Why | Trade-off |
+|----------|-----|-----------|
+| **One server application with feature modules** instead of separate services (drivers 1, 5) | One artifact to build, deploy and configure keeps the operation simple for a small team. The feature modules keep the code base decomposable: each module reaches other modules only through its `api` package, and architecture tests enforce this. | The server scales as a unit and is one failure domain per node. Running several core nodes mitigates both. |
+| **Integrated version control (LocalVC) and continuous integration (LocalCI)** instead of external systems (drivers 1, 3) | Administrators need no separate Git hosting or CI server. Repository operations such as copying the template into a new repository are file system operations, which is faster than calls to an external system. LocalVC reuses the authorization rules of the online editor, and build agents authenticate with per-job clone tokens or SSH keys instead of a shared password. | Artemis maintains a Git server and a build system itself. Supporting Jenkins as an alternative cost test time and code paths for every feature, which is why Jenkins is removed once LocalCI covers all features. |
+| **Build agents decoupled from the core nodes by a shared job queue** (drivers 2, 3) | Builds are bursty and CPU intensive and must not compete with serving the user interface. Agents can be added where capacity is available, run inside the university or in a cloud, and take a job only when they have capacity. | Needs a reliable shared state, see below. Jobs of a lost agent have to be detected, which `LocalCIEventListenerService` does. |
+| **One Docker container per build job** (driver 3) | The container isolates the untrusted code, is created for the job, and is removed with its data when the job ends. | Images have to be provided on the agents, and starting a container adds latency to each build. |
+| **A `DistributedDataProvider` abstraction** instead of using Hazelcast or Redis directly (drivers 2, 5) | The nodes share the job queue, feature toggles, caches and more. Behind one interface the provider can be Hazelcast (embedded in each node, no extra service), Redis (external, persistent) or local (one node, for development). An architecture test fails the build if production code outside the provider adapters uses a provider directly. | Hazelcast loses its data when the cluster stops, and Redis needs a versioned data schema. The maintainers are considering to deprecate Hazelcast, which the abstraction makes possible. |
+| **An external STOMP broker for several core nodes** (driver 2) | A websocket message has to reach the clients that are connected to any node. A single node uses an in-memory broker. | One more component to run, only needed with several core nodes. |
+| **One relational database, migrated with Liquibase at startup** (drivers 1, 5) | There is one source of truth, and an upgrade needs no separate migration step. Supporting only PostgreSQL after Artemis 11 removes the need to write queries that behave the same on two engines, and one database from the test matrix. | Existing MySQL installations have to migrate. |
+| **Optional modules and integrations behind configuration** (driver 4) | An institution enables what it needs, for example with `artemis.iris.enabled`, and delegates authentication to LDAP, SAML2 or OIDC. | Every combination is a configuration that has to be tested. |
+| **A single-page client that talks to the server through REST and WebSocket** (driver 5) | The server API is the only coupling between client and server. For DTO-only endpoints, the client models are generated from OpenAPI specifications, see [OpenAPI](/developer/openapi). | Two code bases that evolve together. |
 
 ## Deployment
 
-The following UML deployment diagram shows a typical deployment of Artemis application server and application client.
-Student, Instructor and Teaching Assistant (TA) computers are all equipped equally with the Artemis application client
-being displayed in the browser.
+The following UML deployment diagram shows a typical deployment of an Artemis installation.
+Student, instructor and teaching assistant devices are all equipped equally with the Artemis client in the browser and a Git client.
 
-The Continuous Integration Server typically delegates the build jobs to local build agents within
-the university infrastructure or to remote build agents, e.g. hosted in the Amazon Cloud (AWS).
+<Image src={deploymentOverview} caption="Typical Deployment (UML deployment diagram)" alt="UML deployment diagram of user devices, reverse proxy, core nodes, build agent nodes, database server, distributed data server, and broker node" size={ImageSize.large} />
 
-<Image src={deploymentOverview} caption="Deployment Overview" alt="Deployment Overview" size={ImageSize.large} />
+- **Core nodes** run the Artemis server artifact with LocalVC and LocalCI. They keep their state in the database, in the shared file system (the repositories) and in the distributed data provider, so a load balancer can distribute requests without sticky sessions, and a node can be added without downtime.
+  Several small nodes usually beat one large one at the same cost, because they fail independently, see [Scaling](/admin/scaling).
+- **Exactly one core node has the `scheduling` profile.** The server runs scheduled tasks, for example to lock repositories on the due date or to clean up unused resources. They must not run on every node.
+  This node also sends the startup [telemetry](/admin/telemetry).
+- **Build agent nodes** run the same artifact with the `buildagent` profile. They connect to the distributed data provider, clone repositories from LocalVC and run each build job in a Docker container.
+  They can run on servers of the university or in a cloud, and are scaled independently of the core nodes. A core node can also build.
+- **Database server.** PostgreSQL. MySQL is still supported until Artemis 11.
+- **Distributed data server.** Only needed with the Redis provider. Hazelcast runs embedded in the core and build agent nodes.
+- **Broker node.** Only needed with several core nodes, to relay websocket messages between them.
 
 ## Data Model
 
-The Artemis application server uses the following (simplified) data model in the MySQL database.
+The Artemis application server uses the following (simplified) data model in its relational database (PostgreSQL).
 It supports multiple courses with multiple exercises.
 Each student in the participating student group can participate in the exercise by clicking
 the **Start Exercise** button.
-Then a repository and a build plan for the student (User) will be created and configured.
+Then a repository for the student (User) will be created and configured.
+With the deprecated Jenkins integration, Artemis additionally creates a build plan for each student.
 The initialization state helps to track the progress of this complex operation and allows recovering from errors.
 A student can submit multiple solutions by committing and pushing the source code changes to a given example code
 into the version control system or using the user interface.
-The continuous integration server automatically tests each submission, and notifies the Artemis application server,
-when a new result exists.
+LocalCI automatically tests each submission and hands the result to the application server for grading.
+(An external CI system such as Jenkins notifies the application server when a new result exists.)
 In addition, teaching assistants can assess student solutions and "manually" create results.
 
 <Image src={dataModel} caption="Data Model" alt="Data Model" size={ImageSize.large} />
@@ -68,21 +128,35 @@ submission subclasses, etc.)
 
 ## Server Architecture
 
-The following UML component diagram shows more details of the Artemis application server architecture and its
-REST interfaces to the application client.
+The following UML component diagram shows the structure of the Artemis server.
+It is a layered architecture whose application layer is divided into feature modules.
 
-<Image src={serverArchitecture} caption="Server Architecture" alt="Server Architecture" size={ImageSize.large} />
+<Image src={serverArchitecture} caption="Server Architecture (UML component diagram)" alt="UML component diagram of the web layer, application layer and data layer of the Artemis server" size={ImageSize.large} />
+
+- The **web layer** exposes the server to the client. REST resources check the role of the user, and websocket topics are declared in code and sent through one messaging service.
+- The **application layer** holds the logic. It is divided into feature modules such as `exercise`, `programming`, `exam`, `assessment`, `communication` and `lecture`, and into the Integrated Code Lifecycle with the modules `localvc` and `localci`.
+- The **data layer** consists of Spring Data repositories. Transactions are declared in the repositories only, so that a service or a controller never decides about a transaction boundary.
+
+Dependencies point downwards: resources use the application layer, which uses the repositories.
+The application layer reaches the database and the shared state of the installation (Distributed Data) through the data layer and the distributed data provider.
+
+**Rationale.** The layers separate what changes at a different pace: the REST API, the domain logic and the persistence.
+The feature modules keep a change local to one feature, since another module reaches a module only through its `api` package, and never through its repositories.
+Optional modules are reached through `Optional<*Api>`, so a module that an institution switches off does not break the others.
+The architecture tests (ArchUnit) check these rules on every change, because with many contributors a convention that is not checked does not last.
+See the [server development guidelines](/developer/guidelines/server-development) for the details.
 
 ## Integrated Code Lifecycle
 
-Artemis supports an integrated version control system (VCS) and continuous integration system (CIS).
-If you use Integrated Code Lifecycle, the architecture differs from the architecture with external VC and CI systems.
+The Integrated Code Lifecycle is the default and recommended way to run programming exercises.
+It consists of the integrated version control system (LocalVC) and the integrated continuous integration system (LocalCI).
+The only external CI system that Artemis still supports is Jenkins (combined with LocalVC), which is deprecated and removed in Artemis 11.
 An exemplary deployment with Integrated Code Lifecycle (without using an external user management system), consisting of one main application server and three build agent servers, looks like this:
 
 <Image src={iclDeployment} caption="Integrated Code Lifecycle Deployment" alt="Integrated Code Lifecycle Deployment" size={ImageSize.large} />
 
 Employing the Integrated Code Lifecycle, administrators and developers can set the Artemis application up without the need for dedicated VCS and CIS installations.
-This new architecture simplifies the setup process, reduces dependencies on external systems, and streamlines maintenance for both developers and administrators.
+This architecture simplifies the setup process, reduces dependencies on external systems, and streamlines maintenance for both developers and administrators.
 Developers have fewer applications to run in parallel, which translates into decreased system requirements.
 See [Integrated Code Lifecycle Setup Description](setup#set-up-artemis) on how to set up a single-node environment for developing purposes.
 
@@ -123,7 +197,7 @@ The following diagram shows an overview of the components in the CI Management s
 
 <Image src={iclCIMSubsystem} caption="CI Management Subsystem" alt="CI Management Subsystem" size={ImageSize.large} />
 
-The CI Management prepares information for build jobs and add them to the distributed Hazelcast queue. It has complete access to the distributed data structures related to the CI system.
+The CI Management prepares information for build jobs and add them to the distributed build job queue, which lives in the distributed data provider (Hazelcast, Redis or local). It has complete access to the distributed data structures related to the CI system.
 It provides endpoints so users can interact with these data structures, such as viewing and cancelling build jobs. It also receives the build job results, grades them, and notifies the user.
 The CI Management has access to the database and the file system.
 
@@ -207,21 +281,39 @@ The ephemeral nature of Docker containers allows the `BuildJobExecutionService` 
 Finally, when the build ran through successfully, the `SharedQueueProcessingService` puts the build result into the result queue so it can then be processed by the CI Management.
 If there were any errors, the `BuildJobManagementService` stops the Docker container and `SharedQueueProcessingService` relays the exception message to the CI Management via the result queue.
 
-### Hazelcast Distributed Data Structures
+### Distributed Data Structures
 
-The integration employs various Hazelcast distributed data structures to streamline the processing of build jobs across the network.
+Local CI keeps the build job queue, the running jobs and the build agent information in shared data structures that all core nodes and build agents access.
+Artemis does not use Hazelcast or Redis directly. It accesses them through the `DistributedDataProvider` abstraction, and the provider is selected
+with `artemis.distributed-data.provider`:
+
+| Provider | Use | Notes |
+|----------|-----|-------|
+| `Hazelcast` | Single or multiple nodes | The default. Artemis nodes form a Hazelcast cluster and discover each other through the service registry. Data is kept in memory and is lost when the cluster stops. |
+| `Redis` | Single or multiple nodes | Uses Redis or Valkey as an external store. Needs no service registry. Data persists across restarts, so the stored schema is versioned, see [Distributed Data with Redis or Valkey](/admin/production-setup/distributed-data). |
+| `Local` | A single node only | Keeps the data in the memory of the node. |
+
+<Callout variant={CalloutVariant.info}>
+
+    The maintainers are considering to deprecate the Hazelcast provider. No decision has been made yet.
+    Code outside the provider implementations must not depend on Hazelcast, so that the provider can be replaced.
+    The structures below use the Hazelcast type names; the Redis provider implements the same structures with versioned keys (`artemis:v1:*`).
+
+</Callout>
+
+The integration employs various distributed data structures to streamline the processing of build jobs across the network.
 These structures include the `buildJobQueue`, an `IQueue` used for queuing all build jobs awaiting processing;
 the `processingJobs`, an `IMap` tracking build jobs currently under processing;
-and the `canceledBuildJobsTopic`, an `ITopic` utilized to signal build agents to cancel specific build jobs.
+and the `canceledBuildJobsTopic`, a `DistributedTopic` utilized to signal build agents to cancel specific build jobs.
 
-Here we can see an overview of all Hazelcast data structures used in Local CI and their purpose:
+Here we can see an overview of all distributed data structures used in Local CI and their purpose (named after their Hazelcast types):
 
 | Name                       | Type       | Description                                                                     |
 |----------------------------|------------|---------------------------------------------------------------------------------|
 | `buildJobQueue`            | `IQueue`   | Queue for all build jobs that are waiting to be processed.                      |
 | `processingJobs`           | `IMap`     | Map including all build jobs that are currently being processed.                |
 | `buildAgentInformation`    | `IMap`     | Map containing information on each build agent, such as its status and metrics. |
-| `canceledBuildsTopic`      | `ITopic`   | Topic to order build agents to cancel a specific build job.                     |
+| `canceledBuildJobsTopic`   | `ITopic`   | Topic to order build agents to cancel a specific build job.                     |
 | `buildJobResultQueue`      | `IQueue`   | Queue containing the results produced by the build job execution.               |
 | `dockerImageCleanupInfo`   | `IMap`     | Map containing information about the last date of use of Docker images.         |
 | `pauseBuildAgentTopic`     | `ITopic`   | Topic used to notify which build agent should be paused.                        |
@@ -242,8 +334,8 @@ The following diagram shows an overview of the components in the build job cance
 
 <Image src={iclCancellationClass} caption="Build Job Cancellation Class Diagram" alt="Build Job Cancellation Class Diagram" size={ImageSize.large} />
 
-The build job cancellation mechanism is implemented using Hazelcast's distributed data structures.
-As shown in the Build Job Cancellation Class Diagram we have services such as the `SharedQueueManagementService` that run on the core Artemis node and are responsible for managing Hazelcast's distributed datatypes.
+The build job cancellation mechanism is implemented using the distributed data structures of the `DistributedDataProvider`, whichever provider is configured.
+As shown in the Build Job Cancellation Class Diagram we have services such as the `SharedQueueManagementService` that run on the core Artemis node and are responsible for managing these distributed data types.
 However, the real processing of each build job runs independently on each build agent. Therefore we have separate services such as the `SharedQueueProcessingService` in a build agent package.
 
 The processing of build jobs gets triggered by the insertion or removal of jobs from the `buildJobQueue`.
@@ -261,8 +353,8 @@ The above Communication Diagram sets the stage for understanding the cancellatio
 Upon receiving a cancellation request through the `@DeleteMapping("build-jobs/{buildJobId}/cancel")` endpoint in either the `AdminBuildJobQueueResource` or `BuildJobQueueResource`,
 the `cancelBuildJob(String buildJobId)` method within the `SharedQueueManagementService` is activated.
 Initially, it checks whether the build job is queued but not yet in process. If so, it is simply removed from the `buildJobQueue`.
-The process becomes more complex for jobs already in process, involving the `canceledBuildJobsTopic` `ITopic`.
-A cancellation message for the build job ID is broadcast to all build agents, with the `BuildJobManagementService` listening for these messages via Hazelcast's `MessageListener`.
+The process becomes more complex for jobs already in process, involving the `canceledBuildJobsTopic` `DistributedTopic`.
+A cancellation message for the build job ID is broadcast to all build agents, with the `BuildJobManagementService` listening for these messages through a listener on the topic of the distributed data provider.
 Every build agent then checks its `runningFutures` map to see if it holds the specific build job future.
 Should a build agent currently process the specified job, it executes `cancelBuildJob(String buildJobId)` within the `BuildJobManagementService`.
 This step involves cancelling the future and recording the job ID in `Set<String> cancelledBuildJobs`.
