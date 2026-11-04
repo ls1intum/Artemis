@@ -318,17 +318,57 @@ public final class ExerciseIntegrityGate {
         if (studentCreatedTypes.isEmpty()) {
             return List.of();
         }
+        // A student-created type is resolved against its declaration in the reference solution; without one, no simple name can be shown to mean it.
+        Map<String, String> createdTypePackages = new LinkedHashMap<>();
+        studentCreatedTypes.forEach(created -> solutionFiles.values().stream().filter(Objects::nonNull).filter(source -> JavaSourceInspector.sourceDeclaresType(source, created))
+                .findFirst().ifPresent(source -> createdTypePackages.put(created, javaPackage(JavaSourceInspector.maskCommentsAndLiterals(source)))));
         List<String> dependencies = new ArrayList<>();
         designRows.stream().filter(row -> "given".equals(row.status())).map(StageChecks.DesignRow::type).filter(type -> JAVA_IDENTIFIER.matcher(type).matches()).forEach(given -> {
             String suffix = "/" + given + ".java";
             List<String> sources = java.util.stream.Stream
                     .concat(canonicalJavaFiles(templateFiles, given, suffix).stream(), canonicalJavaFiles(solutionFiles, given, suffix).stream())
                     .map(entry -> JavaSourceInspector.maskCommentsAndLiterals(entry.getValue())).toList();
-            studentCreatedTypes.stream().filter(created -> !created.equals(given))
-                    .filter(created -> sources.stream().anyMatch(source -> Pattern.compile("(?<![\\w$])" + Pattern.quote(created) + "(?![\\w$])").matcher(source).find()))
-                    .forEach(created -> dependencies.add(given + "->" + created));
+            createdTypePackages.forEach((created, createdPackage) -> {
+                if (!created.equals(given) && sources.stream().anyMatch(source -> referencesType(source, created, createdPackage))) {
+                    dependencies.add(given + "->" + created);
+                }
+            });
         });
         return List.copyOf(dependencies);
+    }
+
+    private static final Pattern PACKAGE_DECLARATION = Pattern.compile("(?m)^\\s*package\\s+([\\w.]+)\\s*;");
+
+    private static final Pattern IMPORT_DECLARATION = Pattern.compile("(?m)^\\s*import\\s+(static\\s+)?([\\w.]+?)(\\s*\\.\\s*\\*)?\\s*;");
+
+    private static String javaPackage(String maskedSource) {
+        Matcher declaration = PACKAGE_DECLARATION.matcher(maskedSource);
+        return declaration.find() ? declaration.group(1) : "";
+    }
+
+    /**
+     * Whether a source's simple-name use resolves to the given top-level type: the type must be visible (same package, or imported by name or on demand), not shadowed by a
+     * single-type import of another type with that name, and used unqualified, so {@code Map.Entry} never means a student's {@code Entry}.
+     */
+    private static boolean referencesType(String maskedSource, String simpleName, String typePackage) {
+        boolean visible = typePackage.equals(javaPackage(maskedSource));
+        Matcher imports = IMPORT_DECLARATION.matcher(maskedSource);
+        while (imports.find()) {
+            if (imports.group(1) != null) {
+                continue;
+            }
+            String imported = imports.group(2);
+            if (imports.group(3) != null) {
+                visible |= imported.equals(typePackage);
+            }
+            else if (imported.equals(simpleName) || imported.endsWith("." + simpleName)) {
+                if (!imported.equals(typePackage.isEmpty() ? simpleName : typePackage + "." + simpleName)) {
+                    return false;
+                }
+                visible = true;
+            }
+        }
+        return visible && Pattern.compile("(?<![\\w$.])" + Pattern.quote(simpleName) + "(?![\\w$])").matcher(maskedSource).find();
     }
 
     private static boolean canonicalGivenFileMatches(String type, Map<String, String> templateFiles, Map<String, String> solutionFiles) {

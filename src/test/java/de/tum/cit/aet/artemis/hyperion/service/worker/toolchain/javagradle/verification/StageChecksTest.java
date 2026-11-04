@@ -59,6 +59,8 @@ class StageChecksTest {
 
         private Map<String, String> templateRepositoryFiles = Map.of();
 
+        private Map<String, String> solutionRepositoryFiles = Map.of();
+
         /** {@code diff -rq} exit code; 1 means the trees differ (the expected, healthy case). */
         private int diffExitCode = 1;
 
@@ -141,6 +143,10 @@ class StageChecksTest {
 
         @Override
         public TarArchiveInputStream copyOut(String sessionId, String path) {
+            if (path.equals("/workspace/solution") && !solutionRepositoryFiles.isEmpty()) {
+                return ReportTarFixtures.tar("solution", solutionRepositoryFiles.entrySet().stream()
+                        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
+            }
             if (!path.equals("/workspace/template")) {
                 return super.copyOut(sessionId, path);
             }
@@ -342,6 +348,7 @@ class StageChecksTest {
             approvedSpecs.approve("s", spec);
             sandbox.spec = spec;
             sandbox.templateRepositoryFiles = Map.of("src/Demo.java", "public class Demo { public int calculate(int input) { return new Player().calculate(input); } }");
+            sandbox.solutionRepositoryFiles = Map.of("src/Player.java", "public class Player { public int calculate(int input) { return input; } }");
             when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, false));
 
             StageCheckResult result = check(GenerationStage.TESTS);

@@ -817,9 +817,32 @@ class ExerciseIntegrityGateTest {
     void approvedSpecification_ignoresStudentCreatedTypeNamesInGivenCommentsAndLiterals() {
         String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Demo | entry point | given |\n| Player | context | student-creates |\n";
         String demo = "/** Students write Player. */ public class Demo { String hint() { return \"implement Player\"; } // Player\n }";
-        Map<String, String> files = map("src/Demo.java", demo);
+        Map<String, String> solution = map("src/Demo.java", demo, "src/Player.java", "public class Player {}");
 
-        assertThat(ExerciseIntegrityGate.givenTypeStudentCreatedDependencies(StageChecks.designTableRows(spec), List.of("Player"), files, files)).isEmpty();
+        assertThat(ExerciseIntegrityGate.givenTypeStudentCreatedDependencies(StageChecks.designTableRows(spec), List.of("Player"), map("src/Demo.java", demo), solution)).isEmpty();
+    }
+
+    @Test
+    void givenDependencies_resolveNamesAgainstTheStudentTypesDeclarationAndImports() {
+        String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Ledger | supplied store | given |\n| Entry | record students create | student-creates |\n";
+        List<StageChecks.DesignRow> rows = StageChecks.designTableRows(spec);
+        String entry = "package de.test;\npublic record Entry(String key) {}";
+        String qualified = "package de.test;\nimport java.util.Map;\npublic class Ledger { int size(Map<String, Integer> m) { for (Map.Entry<String, Integer> e : m.entrySet()) {} return 0; } }";
+        String importedElsewhere = "package de.test;\nimport java.util.Map.Entry;\npublic class Ledger { Entry<String, Integer> first; }";
+        String otherPackage = "package de.other;\npublic class Ledger { Entry first; }";
+        String importedStudentType = "package de.other;\nimport de.test.Entry;\npublic class Ledger { Entry first; }";
+        String samePackage = "package de.test;\npublic class Ledger { Entry first; }";
+
+        for (String ledger : List.of(qualified, importedElsewhere, otherPackage)) {
+            assertThat(ExerciseIntegrityGate.givenTypeStudentCreatedDependencies(rows, List.of("Entry"), Map.of(),
+                    map("src/de/test/Entry.java", entry, "src/de/test/Ledger.java", ledger))).as(ledger).isEmpty();
+        }
+        for (String ledger : List.of(importedStudentType, samePackage)) {
+            assertThat(ExerciseIntegrityGate.givenTypeStudentCreatedDependencies(rows, List.of("Entry"), Map.of(),
+                    map("src/de/test/Entry.java", entry, "src/de/test/Ledger.java", ledger))).as(ledger).containsExactly("Ledger->Entry");
+        }
+        // Without the student type's declaration nothing can be resolved, so nothing is reported.
+        assertThat(ExerciseIntegrityGate.givenTypeStudentCreatedDependencies(rows, List.of("Entry"), Map.of(), map("src/de/test/Ledger.java", samePackage))).isEmpty();
     }
 
     private static Stream<Arguments> annotatedTypeOwnershipCases() {
