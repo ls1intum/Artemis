@@ -214,6 +214,7 @@ public class DifferentialVerifier {
                 .toList();
         boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
         reasons.addAll(approvedSpecificationReasons);
+        reasons.addAll(structuralSeedingDefectReasons(solution, request.seededStructuralTestNames(), contractSpecifications, request.producedSolutionFiles()));
         String approvedSpec = String.join("\n\n", contractSpecifications);
         List<String> approvedTestPlanReasons = ExerciseIntegrityGate.approvedTestPlanReasons(approvedSpec, request.producedTestPlan(), solution.testNames(), exercise.hasDueDate(),
                 request.seededStructuralTestNames(), baselineHiddenTestNames);
@@ -303,6 +304,7 @@ public class DifferentialVerifier {
                 .flatMap(spec -> ExerciseIntegrityGate.approvedSpecificationReasons(spec, templateFiles, solutionFiles).stream()).distinct().toList();
         boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
         reasons.addAll(approvedSpecificationReasons);
+        reasons.addAll(structuralSeedingDefectReasons(solution, seededStructuralTestNames, contractSpecifications, solutionFiles));
         List<String> approvedTestPlanReasons = includeStatementChecks
                 ? ExerciseIntegrityGate.approvedTestPlanReasons(String.join("\n\n", contractSpecifications), testPlanJson, solution.testNames(), exercise.hasDueDate(),
                         seededStructuralTestNames, baselineHiddenTestNames)
@@ -644,6 +646,24 @@ public class DifferentialVerifier {
                     + "). The solution must compile and pass every test.\n" + AgentVerifyReport.renderFailureEvidence("Solution", solution.failureEvidence()).stripTrailing());
         }
         return solutionPassed;
+    }
+
+    /**
+     * Names server-owned structural checks that fail on a reference solution matching the approved Public API. The server derived them from that contract, so the failure is a
+     * seeding defect the agent cannot repair. The checks still fail verification; this only keeps the diagnostic from presenting the defect as an authoring error.
+     */
+    static List<String> structuralSeedingDefectReasons(BuildSummary solution, Set<String> seededStructuralTestNames, List<String> contractSpecifications,
+            Map<String, String> solutionFiles) {
+        Set<String> seeded = seededStructuralTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
+        List<String> failingSeeded = solution.testFailedNames().stream().filter(name -> seeded.contains(ProblemStatementBindingChecker.normalizeTestName(name))).distinct().sorted()
+                .toList();
+        if (failingSeeded.isEmpty() || contractSpecifications.isEmpty()
+                || !contractSpecifications.stream().allMatch(spec -> ExerciseIntegrityGate.solutionMatchesApprovedApi(spec, solutionFiles))) {
+            return List.of();
+        }
+        return List.of("Server defect, not an authoring error: the server-owned structural check(s) " + failingSeeded + " fail on the reference solution although it "
+                + "declares exactly the approved Public API those checks were derived from. Authoring cannot repair this: do not change the solution, template, tests, or "
+                + "SPEC.md to satisfy them. The exercise cannot be verified until the Artemis administrators fix the structural seeding.");
     }
 
     /** The bounded build output of a build whose test reports cannot explain its failure, such as one that did not compile. */

@@ -230,6 +230,20 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
+     * Whether the reference solution declares exactly the approved Java Public API. The server derives its structural checks from that same contract, so a structural check
+     * that fails on such a solution exposes a server seeding defect rather than an authoring error.
+     */
+    static boolean solutionMatchesApprovedApi(String approvedSpec, Map<String, String> producedSolutionFiles) {
+        if (approvedSpec == null || !approvedSpec.contains("## Public API")) {
+            return false;
+        }
+        Set<String> designTypes = StageChecks.designTableRows(approvedSpec).stream().map(StageChecks.DesignRow::type).collect(Collectors.toSet());
+        ApprovedStructuralContract.ParseResult structuralContract = ApprovedStructuralContract.parse(approvedSpec, designTypes,
+                Set.copyOf(StageChecks.specStudentCreatedTypes(approvedSpec)));
+        return structuralContract.valid() && structuralContract.contract().solutionSurfaceReasons(producedSolutionFiles).isEmpty();
+    }
+
+    /**
      * Enforces the approved specification's student/template ownership decisions against the exact repository maps final verification hands to persistence. A differential build
      * cannot detect this violation: tests pass against a fully stubbed template even when the approved exercise required students to create those types themselves.
      */

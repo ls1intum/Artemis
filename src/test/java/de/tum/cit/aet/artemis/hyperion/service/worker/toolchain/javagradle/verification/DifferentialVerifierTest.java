@@ -1070,6 +1070,43 @@ class DifferentialVerifierTest {
                 .contains("The solution ran no tests in this lane.", "ClassTest.java:3: error: package does not exist");
     }
 
+    @Test
+    void aSeededStructuralCheckFailingOnAnApiConformingSolutionIsReportedAsAServerDefect() {
+        String structuralName = "testClass[Level]";
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Level | difficulty levels | stubbed |
+                ## Public API
+                ### Level
+                ```java
+                public enum Level { LOW, HIGH; }
+                ```
+                """;
+        List<String> behaviorNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        VerificationRequest conforming = new VerificationRequest(harness(), harness(), Map.of(),
+                Map.of("src/de/test/Level.java", "package de.test; public enum Level { LOW, HIGH }"), Set.of(), structuralTests(Set.of(structuralName)), Set.of());
+        VerificationRequest diverging = new VerificationRequest(harness(), harness(), Map.of(), Map.of("src/de/test/Level.java", "package de.test; public enum Level { LOW }"),
+                Set.of(), structuralTests(Set.of(structuralName)), Set.of());
+
+        for (VerificationRequest request : List.of(conforming, diverging)) {
+            ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, behaviorNames, List.of()), resultWithFails(1, behaviorNames, behaviorNames),
+                    PROBLEM_STATEMENT_WITH_TASK + "\n[task][Create Level](" + structuralName + ")\nCreate the Level type.")
+                    .withStructuralReports(BuildReportSpec.of(List.of(structuralName), List.of(structuralName), 1), BuildReportSpec.of(List.of(structuralName), List.of(), 0));
+            VerificationResult result = newVerifier(spec).verify(sandbox, "s", input(), request, NO_RESTORE);
+
+            assertThat(result.mechanicallyVerified()).isFalse();
+            if (request == conforming) {
+                assertThat(result.reasons()).filteredOn(reason -> reason.startsWith("Server defect")).singleElement().asString().contains(structuralName,
+                        "declares exactly the approved Public API", "do not change the solution");
+            }
+            else {
+                assertThat(result.reasons()).noneMatch(reason -> reason.startsWith("Server defect"));
+            }
+        }
+    }
+
     /** The post-loop reason had the same defect as the in-loop observation: "0 failing of 2" reads as a contradiction and names nothing to repair. */
     @Test
     void shouldNameTheBuildRatherThanTheTestsWhenNoTestFailed() {
