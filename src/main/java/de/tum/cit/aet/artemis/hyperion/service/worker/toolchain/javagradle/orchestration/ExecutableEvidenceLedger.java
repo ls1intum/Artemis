@@ -134,15 +134,15 @@ final class ExecutableEvidenceLedger {
                     + "reference source; the executable review rechecks them against the current solution.");
         }
         repairTargets = List.of();
-        Set<SemanticMutant.Exclusion> targeted = applicableMutants.stream().map(SemanticMutant::exclusion).collect(Collectors.toUnmodifiableSet());
-        List<SemanticMutant> earlierKills = !repairInFlight ? List.of() : evidence.kills().stream().filter(mutant -> !targeted.contains(mutant.exclusion())).toList();
+        Set<MutantEvidence.Variant> targeted = applicableMutants.stream().map(evidence::identity).collect(Collectors.toUnmodifiableSet());
+        List<SemanticMutant> earlierKills = !repairInFlight ? List.of() : evidence.kills().stream().filter(mutant -> !targeted.contains(evidence.identity(mutant))).toList();
         // Bounded cost: the least recently checked kills go first, and the deferred rest is recorded without a verdict rather than dropped.
         earlierKills.stream().skip(MAX_REGRESSION_CHECKS_PER_VERIFICATION).forEach(evidence::recordWithoutVerdict);
         List<SemanticMutantOutcome> allOutcomes = checkAgainstCurrentSource(
                 java.util.stream.Stream.concat(applicableMutants.stream(), earlierKills.stream().limit(MAX_REGRESSION_CHECKS_PER_VERIFICATION)).toList(), candidateFiles,
                 testPlanSnapshot, seededStructuralTests, restoreCandidate);
-        List<SemanticMutantOutcome> targetOutcomes = allOutcomes.stream().filter(outcome -> targeted.contains(outcome.mutant().exclusion())).toList();
-        List<SemanticMutantOutcome> regressionOutcomes = allOutcomes.stream().filter(outcome -> !targeted.contains(outcome.mutant().exclusion())).toList();
+        List<SemanticMutantOutcome> targetOutcomes = allOutcomes.stream().filter(outcome -> targeted.contains(evidence.identity(outcome.mutant()))).toList();
+        List<SemanticMutantOutcome> regressionOutcomes = allOutcomes.stream().filter(outcome -> !targeted.contains(evidence.identity(outcome.mutant()))).toList();
         targetOutcomes.forEach(evidence::record);
         // Judged on this recheck alone: a correction that kills a regressed mutant again clears the regression.
         List<SemanticMutant> regressed = regressionOutcomes.stream().filter(evidence::record).map(SemanticMutantOutcome::mutant).toList();

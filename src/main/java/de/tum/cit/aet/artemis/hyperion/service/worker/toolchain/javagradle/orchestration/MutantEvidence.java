@@ -45,12 +45,12 @@ final class MutantEvidence {
     /** Insertion order is check order: an entry moves to the end whenever an outcome is recorded for it, so the least recently checked kills come first. */
     private final Map<Variant, Entry> entries = new LinkedHashMap<>();
 
-    private record Variant(SemanticMutant.Exclusion exclusion, String replacement, SemanticMutant.Evidence evidence) {
+    record Variant(SemanticMutant.Exclusion exclusion, String replacement, SemanticMutant.Evidence evidence) {
     }
 
     private final Map<Variant, Variant> inheritedIdentities = new HashMap<>();
 
-    private Variant identity(SemanticMutant mutant) {
+    Variant identity(SemanticMutant mutant) {
         Variant variant = new Variant(mutant.exclusion(), mutant.mutantSource(), mutant.evidence());
         return inheritedIdentities.getOrDefault(variant, variant);
     }

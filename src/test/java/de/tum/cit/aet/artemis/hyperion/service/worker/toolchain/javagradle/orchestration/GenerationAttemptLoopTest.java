@@ -1043,6 +1043,29 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void aLaterRepairCannotReviveAKilledVariantWithTheSameNoveltyKeyAsItsTarget() {
+        SemanticMutant first = mutant("R1", "allPrerequisites", "honors only the first prerequisite");
+        SemanticMutant second = new SemanticMutant(first.ruleId(), first.solutionPath(), first.originalSolutionSource(), "class Scheduler { int anotherWrongImplementation; }",
+                new ContractWitness("R1", "anotherPrerequisite", "@Test void anotherPrerequisite() {}", first.counterexample().wrongBehavior()));
+        assertThat(second.exclusion()).isEqualTo(first.exclusion());
+        stubKilledThenFreshSurvivor(first, second);
+        AtomicInteger rechecks = new AtomicInteger();
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            boolean laterRepair = rechecks.incrementAndGet() > 1;
+            List<SemanticMutant> checked = invocation.getArgument(5);
+            return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant,
+                    laterRepair && mutant.mutantSource().equals(first.mutantSource()) ? Disposition.SURVIVED_GRADED_SUITE : Disposition.KILLED_BY_GRADED_SUITE)).toList();
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(5, 3);
+        loop.run();
+
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.POST_REPAIR_CORRECTION_EXHAUSTED);
+        assertThat(loop.lastMechanicallyVerifiedCandidate().problemStatement()).isEqualTo("PROBLEM STATEMENT 2");
+        assertThat(loop.verification().reasons()).anyMatch(reason -> reason.contains("no longer kills the semantic mutant for rule R1"));
+    }
+
+    @Test
     void aRegressionTheCorrectionFixesIsJudgedOnTheLatestRecheckAndNotRolledBack() {
         // The second repair misses its target R2 and lets R1 survive again; both are verification failures, and the correction kills both.
         SemanticMutant first = mutant("R1", "allPrerequisites", "honors only the first prerequisite");
