@@ -137,10 +137,7 @@ final class OutputOnlyMainProbe {
         List<SemanticMutantOutcome> outcomes = new ArrayList<>();
         for (SemanticMutant probe : probes) {
             if (!stillApplies(probe, testFiles, testPlanJson)) {
-                Optional<SemanticMutant> silent = transcriptOnlyVariant(probe.originalSolutionSource(), "").map(variant -> new SemanticMutant(probe.ruleId(), probe.solutionPath(),
-                        probe.originalSolutionSource(), variant, probe.counterexample(), null, SemanticMutant.Evidence.PRINTED_TRANSCRIPT));
-                Disposition silentOutcome = silent.isEmpty() ? Disposition.INCONCLUSIVE
-                        : SemanticMutantExecution.recheck(solutionFiles, List.of(silent.get()), graded, runner).getFirst().disposition();
+                Disposition silentOutcome = silentMainOutcome(probe.solutionPath(), probe.originalSolutionSource(), probe, solutionFiles, graded, runner);
                 if (silentOutcome != Disposition.KILLED_BY_GRADED_SUITE) {
                     // A silent main that passes every weighted test proves no weighted test reads main's output; a build without a verdict proves nothing.
                     outcomes.add(
@@ -151,6 +148,32 @@ final class OutputOnlyMainProbe {
             outcomes.addAll(SemanticMutantExecution.recheck(solutionFiles, List.of(probe), graded, runner));
         }
         return List.copyOf(outcomes);
+    }
+
+    /**
+     * Resolves printed-transcript probes proven against an earlier revision of their class, for which a probe of the current class gave no verdict. Their print-only variant
+     * no longer matches the class, so only one question can still be answered: whether any weighted test reads what {@code main} prints. When the source shows no graded
+     * transcript comparison and a {@code main} that prints nothing passes every weighted test, the weakness is gone; otherwise the probe stays unresolved.
+     *
+     * @return one outcome per probe: {@link Disposition#KILLED_BY_GRADED_SUITE} when resolved, otherwise {@link Disposition#INCONCLUSIVE}
+     */
+    static List<SemanticMutantOutcome> resolveStale(Map<String, String> testFiles, Map<String, String> solutionFiles, @Nullable String testPlanJson,
+            List<SemanticMutant> staleProbes, SemanticMutantExecution.ProbeRunner runner) {
+        Predicate<String> graded = gradedTest(testPlanJson);
+        return staleProbes.stream().map(probe -> {
+            String current = solutionFiles.get(probe.solutionPath());
+            boolean resolved = current != null && !stillApplies(probe, testFiles, testPlanJson)
+                    && silentMainOutcome(probe.solutionPath(), current, probe, solutionFiles, graded, runner) == Disposition.SURVIVED_GRADED_SUITE;
+            return new SemanticMutantOutcome(probe, resolved ? Disposition.KILLED_BY_GRADED_SUITE : Disposition.INCONCLUSIVE);
+        }).toList();
+    }
+
+    /** The graded suite's verdict on the class source with a {@code main} that prints nothing: whether a weighted test fails without main's output. */
+    private static Disposition silentMainOutcome(String solutionPath, String source, SemanticMutant probe, Map<String, String> solutionFiles, Predicate<String> graded,
+            SemanticMutantExecution.ProbeRunner runner) {
+        Optional<SemanticMutant> silent = transcriptOnlyVariant(source, "")
+                .map(variant -> new SemanticMutant(probe.ruleId(), solutionPath, source, variant, probe.counterexample(), null, SemanticMutant.Evidence.PRINTED_TRANSCRIPT));
+        return silent.isEmpty() ? Disposition.INCONCLUSIVE : SemanticMutantExecution.recheck(solutionFiles, List.of(silent.get()), graded, runner).getFirst().disposition();
     }
 
     /**

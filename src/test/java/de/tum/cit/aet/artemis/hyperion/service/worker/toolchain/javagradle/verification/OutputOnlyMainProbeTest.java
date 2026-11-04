@@ -236,6 +236,33 @@ class OutputOnlyMainProbeTest {
     }
 
     @Test
+    void aProbeProvenAgainstAnEarlierClassIsResolvedOnlyWhenNoWeightedTestReadsWhatMainPrints() {
+        String earlier = SOLUTION.replace("library.add(\"Dune\");", "library.add(\"Emma\");");
+        SemanticMutant stale = SemanticMutant.printedTranscript(PATH, earlier, OutputOnlyMainProbe.transcriptOnlyVariant(earlier, "Books: 1\n").orElseThrow(), "Library");
+        List<String> built = new ArrayList<>();
+        // Without main's output the transcript test fails; the plan decides whether that failure costs credit.
+        SemanticMutantExecution.ProbeRunner silentFailsTranscript = (mutant, ignored) -> {
+            built.add(mutant.mutantSource());
+            return new BuildSummary(1, 1, 1, false, List.of("printsTheSize()"), List.of("printsTheSize()"), List.of(), "");
+        };
+        String transcriptUngraded = """
+                {"tests":[{"name":"printsTheSize","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"},
+                 {"name":"countsAddedBooks","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"}]}
+                """;
+
+        assertThat(OutputOnlyMainProbe.resolveStale(TESTS, Map.of(PATH, SOLUTION), transcriptUngraded, List.of(stale), silentFailsTranscript))
+                .extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.KILLED_BY_GRADED_SUITE);
+        assertThat(built).singleElement().asString().contains("public int size()").doesNotContain("System.out.print(");
+
+        built.clear();
+        assertThat(OutputOnlyMainProbe.resolveStale(TESTS, Map.of(PATH, SOLUTION), PLAN, List.of(stale), silentFailsTranscript)).as("the transcript is still weighted")
+                .extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.INCONCLUSIVE);
+        assertThat(OutputOnlyMainProbe.resolveStale(TESTS, Map.of(), transcriptUngraded, List.of(stale), silentFailsTranscript)).as("the class was deleted")
+                .extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.INCONCLUSIVE);
+        assertThat(built).isEmpty();
+    }
+
+    @Test
     void theVariantCompilesKeepsEveryOtherMemberAndPrintsExactlyTheTranscript(@TempDir Path directory) throws Exception {
         String transcript = "Books: 1 { \"quoted\" }\n\ttab \\ backslash \u001b[0m é世 😀\r\n" + "x".repeat(1_500) + "\n";
 

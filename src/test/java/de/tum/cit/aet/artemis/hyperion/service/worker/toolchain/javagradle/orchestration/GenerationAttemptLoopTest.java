@@ -1039,6 +1039,30 @@ class GenerationAttemptLoopTest {
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
     }
 
+    @Test
+    void aPrintOnlySurvivorWhoseClassTheRepairChangedStaysUnresolvedWithoutACurrentVerdict() {
+        // A contract repair changes Scheduler.java and passes main as a method reference, which target discovery does not recognize, so no current probe replaces the survivor.
+        SemanticMutant printOnly = stubPrintOnlyMainSurvivor(TRANSCRIPT_TEST,
+                TRANSCRIPT_TEST.replace("Scheduler.main(new String[0]);", "java.util.function.Consumer<String[]> program = Scheduler::main; program.accept(new String[0]);"));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any())).thenReturn(
+                new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false),
+                new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler { int contractFix; }"), false));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), SpecFidelityReport.empty());
+        when(verifier.resolveStaleOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> stale = invocation.getArgument(7);
+            return stale.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE)).toList();
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
+        verify(verifier).resolveStaleOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), Mockito.eq(List.of(printOnly)), any());
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE
+                && finding.detail().contains("Scheduler.main") && finding.detail().contains("only prints the expected output"));
+        assertThat(loop.terminationReason()).isNotEqualTo(TerminationReason.CONVERGED);
+    }
+
     private void stubPrintOnlyRecheck(Disposition disposition) {
         when(verifier.recheckOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
             List<SemanticMutant> checked = invocation.getArgument(7);

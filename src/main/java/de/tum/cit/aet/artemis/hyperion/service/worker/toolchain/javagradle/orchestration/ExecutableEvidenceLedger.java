@@ -236,6 +236,8 @@ final class ExecutableEvidenceLedger {
                 producedFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), solutionFiles, testPlanJson, seededStructuralTests, skippedTranscriptProbes, restoreCandidate);
         rememberTranscriptVerdicts(probedTranscriptOutcomes);
         List<SemanticMutantOutcome> transcriptOutcomes = java.util.stream.Stream.concat(reusedTranscriptOutcomes.stream(), probedTranscriptOutcomes.stream()).toList();
+        List<SemanticMutant> staleTranscriptWithoutVerdict = staleTranscriptProbesWithoutVerdict(stalePendingMutants, transcriptOutcomes, testsFiles, solutionFiles, testPlanJson,
+                seededStructuralTests, restoreCandidate);
         int freshCapacity = Math.max(0, MAX_TRACKED_SEMANTIC_MUTANTS - (int) java.util.stream.Stream.concat(pendingMutantOutcomes.stream(), transcriptOutcomes.stream())
                 .filter(outcome -> outcome.disposition() != Disposition.KILLED_BY_GRADED_SUITE).count());
         List<SemanticMutant> authoredPendingMutants = applicablePendingMutants.stream().filter(mutant -> !mutant.printsTranscriptOnly()).toList();
@@ -254,7 +256,8 @@ final class ExecutableEvidenceLedger {
                 .map(SemanticMutantOutcome::mutant).distinct().toList();
         List<SemanticMutant> inconclusivePendingMutants = pendingMutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)
                 .map(SemanticMutantOutcome::mutant).toList();
-        survivorsWithoutVerdict = java.util.stream.Stream.of(inconclusivePendingMutants, unexecutableStaleMutants).flatMap(List::stream).distinct().toList();
+        survivorsWithoutVerdict = java.util.stream.Stream.of(inconclusivePendingMutants, unexecutableStaleMutants, staleTranscriptWithoutVerdict).flatMap(List::stream).distinct()
+                .toList();
         semanticMutantsPendingRepair = validatedMutants;
         // Preserve every prior survivor without a verdict, including one keyed to a changed or deleted source, as unavailable evidence until an executed recheck resolves it;
         // never upgrade it to a current survivor.
@@ -300,6 +303,32 @@ final class ExecutableEvidenceLedger {
         positiveWitnessesAwaitingAdjudication.stream().map(GenerationReviewSupport::positiveWitnessAdjudicationUnavailable).filter(finding -> !combined.contains(finding))
                 .forEach(combined::add);
         return preserveReferenceWitnessState(new SpecFidelityReport(List.copyOf(combined)));
+    }
+
+    /**
+     * The printed-transcript survivors proven against an earlier source of their class that still have no verdict. A conclusive probe of the current class replaces one; without
+     * it, one is resolved only when execution shows that no weighted test reads what {@code main} prints. The rest stay unresolved in their original form, because their
+     * print-only variant no longer matches the class.
+     */
+    private List<SemanticMutant> staleTranscriptProbesWithoutVerdict(List<SemanticMutant> stalePendingMutants, List<SemanticMutantOutcome> transcriptOutcomes,
+            Map<String, String> testsFiles, Map<String, String> solutionFiles, @Nullable String testPlanJson, SeededStructuralTests seededStructuralTests,
+            Runnable restoreCandidate) {
+        Set<String> conclusivelyProbed = transcriptOutcomes.stream().filter(outcome -> outcome.disposition() != Disposition.INCONCLUSIVE)
+                .map(outcome -> outcome.mutant().solutionPath()).collect(Collectors.toUnmodifiableSet());
+        List<SemanticMutant> unreplaced = stalePendingMutants.stream().filter(SemanticMutant::printsTranscriptOnly)
+                .filter(probe -> !conclusivelyProbed.contains(probe.solutionPath())).toList();
+        if (unreplaced.isEmpty()) {
+            return List.of();
+        }
+        Set<SemanticMutant> resolved = verifier
+                .resolveStaleOutputOnlyMains(sandbox, sessionId, exercise, testsFiles, solutionFiles, testPlanJson, seededStructuralTests, unreplaced, restoreCandidate).stream()
+                .filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).map(SemanticMutantOutcome::mutant).collect(Collectors.toUnmodifiableSet());
+        List<SemanticMutant> withoutVerdict = unreplaced.stream().filter(probe -> !resolved.contains(probe)).toList();
+        if (!withoutVerdict.isEmpty()) {
+            emitter.accept("Kept " + withoutVerdict.size() + " print-only main survivor(s) whose class the repair changed as unresolved evidence: no probe of the current class "
+                    + "gave a verdict.");
+        }
+        return withoutVerdict;
     }
 
     /**

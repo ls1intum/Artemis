@@ -791,6 +791,31 @@ public class DifferentialVerifier {
                 (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate));
     }
 
+    /**
+     * Resolves printed-transcript probes proven against an earlier revision of their class that a probe of the current class could not replace: one is resolved only when the
+     * source shows no graded transcript comparison and a {@code main} that prints nothing passes every weighted test.
+     *
+     * @param sandbox               the active generation sandbox
+     * @param sessionId             the active sandbox session
+     * @param exercise              the exercise whose build commands should run
+     * @param producedTestsFiles    the current graded tests
+     * @param producedSolutionFiles the current reference-solution sources
+     * @param testPlanJson          the current grading plan
+     * @param seededStructuralTests the exact server-owned structural authority
+     * @param staleProbes           printed-transcript probes proven against an earlier source of their class
+     * @param restoreCandidate      restores the verified candidate between probes
+     * @return one outcome per probe, killed when resolved and inconclusive otherwise
+     */
+    public List<SemanticMutantOutcome> resolveStaleOutputOnlyMains(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> producedTestsFiles,
+            Map<String, String> producedSolutionFiles, @Nullable String testPlanJson, SeededStructuralTests seededStructuralTests, List<SemanticMutant> staleProbes,
+            Runnable restoreCandidate) {
+        if (staleProbes.isEmpty()) {
+            return List.of();
+        }
+        return OutputOnlyMainProbe.resolveStale(producedTestsFiles, producedSolutionFiles, testPlanJson, staleProbes,
+                (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate));
+    }
+
     private BuildSummary runSemanticMutantProbe(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, SeededStructuralTests seededStructuralTests,
             @Nullable SemanticMutant mutant, @Nullable Map<String, String> counterexampleProbe, Runnable restoreCandidate) {
         return SemanticMutantWorkspaceProbe.run(sandbox, sessionId, mutant, counterexampleProbe, restoreCandidate,
