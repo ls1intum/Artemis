@@ -230,7 +230,7 @@ class DockerGradleBuildTest {
     @Test
     void specificationDerivedEnumGraderAcceptsImplicitGenericSuperclassButRejectsErasedMember() throws IOException {
         String session = sandbox.createSession();
-        workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        var workspaceSeed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
         sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
                 WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
         ApprovedSpecRegistry specifications = new ApprovedSpecRegistry();
@@ -244,7 +244,10 @@ class DockerGradleBuildTest {
                 public enum RoastProfile { LIGHT; public java.util.List<String> labels(); }
                 ```
                 """);
-        SeededStructuralTests seeded = new StructuralOracleSeeder(workspace, specifications).seedIfStructuralDiff(sandbox, session, exercise);
+        // As the orchestrator does: the seeded policy is the baseline the server writes its test-class list into.
+        StructuralOracleSeeder seeder = new StructuralOracleSeeder(workspace, specifications);
+        seeder.captureBaseline(session, workspaceSeed.testsSeedSnapshot());
+        SeededStructuralTests seeded = seeder.seedIfStructuralDiff(sandbox, session, exercise);
         assertThat(seeded.testNames()).contains("testClass[GenericApi:RoastProfile]");
         String path = "solution/src/de/tum/cit/aet/reference/RoastProfile.java";
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
@@ -278,7 +281,7 @@ class DockerGradleBuildTest {
         boolean maven = buildTool == GenerationBuildTool.MAVEN;
         var input = maven ? new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of(), Set.of(), buildTool) : exercise;
         String session = sandbox.createSession();
-        workspace.seedWorkspace(sandbox, session, input, Mode.ADAPT, maven ? mavenSnapshot("java/test/maven/projectTemplate/pom.xml") : snapshot(), true);
+        var workspaceSeed = workspace.seedWorkspace(sandbox, session, input, Mode.ADAPT, maven ? mavenSnapshot("java/test/maven/projectTemplate/pom.xml") : snapshot(), true);
         sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
                 WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(input)), Map.of()));
         ApprovedSpecRegistry specifications = new ApprovedSpecRegistry();
@@ -296,7 +299,9 @@ class DockerGradleBuildTest {
                 }
                 ```
                 """);
-        SeededStructuralTests seeded = new StructuralOracleSeeder(workspace, specifications).seedIfStructuralDiff(sandbox, session, input);
+        StructuralOracleSeeder seeder = new StructuralOracleSeeder(workspace, specifications);
+        seeder.captureBaseline(session, workspaceSeed.testsSeedSnapshot());
+        SeededStructuralTests seeded = seeder.seedIfStructuralDiff(sandbox, session, input);
         assertThat(seeded.testNames()).contains("testClass[GenericApi:Box]");
         String path = "solution/src/de/tum/cit/aet/reference/Box.java";
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
