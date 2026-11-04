@@ -19,6 +19,7 @@ artemis:
 
 spring:
     datasource:
+        # REMOVE_IN_ARTEMIS_11 (MySQL): switch the docker datasource to PostgreSQL before MySQL support is removed
         url: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectionCollation=utf8mb4_unicode_ci&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
 
 server:

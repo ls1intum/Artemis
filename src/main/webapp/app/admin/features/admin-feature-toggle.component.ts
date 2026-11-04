@@ -116,6 +116,7 @@ export class AdminFeatureToggleComponent implements OnInit {
     }
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): drop PROFILE_JENKINS here and its docs link below
     private readonly displayedProfiles: ProfileFeature[] = [PROFILE_LOCALCI, PROFILE_BUILDAGENT, PROFILE_JENKINS];
 
     /** Module features to display */
