@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -197,21 +198,21 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
             expectError(MockMvcRequestBuilders.post(baseUrl(course)), presentation(PresentationGradingMethod.RUBRIC, null, List.of(mismatch)), "levelsDoNotMatchScale");
         }
 
-        @ParameterizedTest
-        @ValueSource(ints = { 0, 21 })
+        @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-        void rubric_withTooFewOrTooManyCriteria_shouldBeRejected(int criterionCount) throws Exception {
-            List<PresentationRubricCriterionDTO> criteria = IntStream.range(0, criterionCount)
-                    .mapToObj(index -> criterion("Criterion " + index, 5, PresentationRubricScale.THREE_POINT)).toList();
-            request.postWithResponseBody(baseUrl(course), presentation(PresentationGradingMethod.RUBRIC, null, criteria), PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+        void rubric_withMoreThan20Criteria_shouldBeRejected() throws Exception {
+            // The 21 criteria still add up to 100 percent, so only the number of criteria is wrong
+            List<PresentationRubricCriterionDTO> criteria = IntStream.range(0, 21)
+                    .mapToObj(index -> criterion("Criterion " + index, index < 16 ? 5 : 4, PresentationRubricScale.THREE_POINT)).toList();
+            expectFieldError(MockMvcRequestBuilders.post(baseUrl(course)), presentation(PresentationGradingMethod.RUBRIC, null, criteria), "rubricCriteria");
         }
 
-        @ParameterizedTest
-        @ValueSource(ints = { 0, 101 })
+        @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-        void rubric_withWeightOutOfRange_shouldBeRejected(int weight) throws Exception {
-            var criteria = List.of(criterion("Content", weight, PresentationRubricScale.FIVE_POINT));
-            request.postWithResponseBody(baseUrl(course), presentation(PresentationGradingMethod.RUBRIC, null, criteria), PresentationAssessmentDTO.class, HttpStatus.BAD_REQUEST);
+        void rubric_withWeightBelowOne_shouldBeRejected() throws Exception {
+            // The weights still add up to 100 percent, so only the weight of zero is wrong
+            var criteria = List.of(criterion("Content", 0, PresentationRubricScale.FIVE_POINT), criterion("Delivery", 100, PresentationRubricScale.FIVE_POINT));
+            expectFieldError(MockMvcRequestBuilders.post(baseUrl(course)), presentation(PresentationGradingMethod.RUBRIC, null, criteria), "rubricCriteria[0].weight");
         }
 
         @Test
@@ -928,6 +929,12 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
     /** Sends the request and expects it to be rejected with the given error key. */
     private void expectError(MockHttpServletRequestBuilder builder, Object body, String errorKey) throws Exception {
         request.performMvcRequest(json(builder, body)).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value(errorKey));
+    }
+
+    /** Sends the request and expects bean validation to reject the given field. */
+    private void expectFieldError(MockHttpServletRequestBuilder builder, Object body, String field) throws Exception {
+        request.performMvcRequest(json(builder, body)).andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").value("error.validation"))
+                .andExpect(jsonPath("$.fieldErrors[*].field").value(hasItem(field)));
     }
 
     private MockHttpServletRequestBuilder json(MockHttpServletRequestBuilder builder, Object body) throws Exception {
