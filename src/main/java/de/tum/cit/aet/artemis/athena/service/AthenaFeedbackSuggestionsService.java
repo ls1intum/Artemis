@@ -159,13 +159,12 @@ public class AthenaFeedbackSuggestionsService {
 
     /**
      * Extract the learner profile from a submission if it's a student participation.
-     * This method handles the extraction of learner profile information from a submission,
-     * with proper error handling and logging.
      *
      * @param submission the submission to extract the profile from
+     * @param requester  the user whose profile counts for a team participation, which has no single student, or null to use none
      * @return the learner profile or null if not available
      */
-    private LearnerProfile extractLearnerProfile(Submission submission) {
+    private LearnerProfile extractLearnerProfile(Submission submission, @Nullable User requester) {
         if (submission == null) {
             log.debug("Cannot extract learner profile: submission is null");
             return null;
@@ -176,22 +175,13 @@ public class AthenaFeedbackSuggestionsService {
             return null;
         }
 
-        // Get the student from the participation
-        var studentOpt = studentParticipation.getStudent();
-        if (studentOpt.isEmpty()) {
+        var student = studentParticipation.getStudent().orElse(requester);
+        if (student == null) {
             log.debug("Cannot extract learner profile: no student found in participation");
             return null;
         }
 
-        var student = studentOpt.get();
-
-        try {
-            return learnerProfileApi.map(api -> api.getOrCreateLearnerProfile(student)).orElse(null);
-        }
-        catch (Exception e) {
-            log.error("Error retrieving learner profile for student {}: {}", student.getId(), e.getMessage());
-            return null;
-        }
+        return learnerProfileApi.map(api -> api.getOrCreateLearnerProfile(student)).orElse(null);
     }
 
     /**
@@ -200,16 +190,25 @@ public class AthenaFeedbackSuggestionsService {
      * <p>
      * Only used for text requests: Athena's programming and modeling modules do not read the learner profile. Within
      * text, only non-graded feedback is adapted to it, so the course defaults are only looked up for such a request,
-     * which saves the query for graded ones. The course defaults also apply without a profile, as when Atlas is disabled.
+     * which saves the query for graded ones. The course defaults also apply without a profile, as when Atlas is disabled,
+     * but not when reading the profile failed: the student may have a preference of their own, so neither is sent then.
      *
      * @param submission          the submission to extract the profile from
      * @param exercise            the exercise the submission belongs to, used to look up the course's Athena configuration
      * @param applyCourseDefaults whether the request is non-graded, so that Athena adapts it to the profile and the course
      *                                defaults apply
+     * @param user                the user requesting the feedback, whose preference counts for a non-graded request of a team
      * @return the resulting DTO, or null if the submission has neither a learner profile nor course defaults that apply
      */
-    private LearnerProfileDTO buildLearnerProfileDTO(Submission submission, Exercise exercise, boolean applyCourseDefaults) {
-        LearnerProfile learnerProfile = extractLearnerProfile(submission);
+    private LearnerProfileDTO buildLearnerProfileDTO(Submission submission, Exercise exercise, boolean applyCourseDefaults, @Nullable User user) {
+        LearnerProfile learnerProfile;
+        try {
+            learnerProfile = extractLearnerProfile(submission, applyCourseDefaults ? user : null);
+        }
+        catch (Exception e) {
+            log.error("Error retrieving learner profile for a submission of exercise {}: {}", exercise.getId(), e.getMessage());
+            return null;
+        }
         if (!applyCourseDefaults || (learnerProfile != null && learnerProfile.hasSetupFeedbackPreferences())) {
             return LearnerProfileDTO.of(learnerProfile);
         }
@@ -278,7 +277,7 @@ public class AthenaFeedbackSuggestionsService {
         List<CourseCompetencyDTO> competencies = courseCompetencyApi.map(api -> api.findAllByExerciseId(exercise.getId()).stream().map(CourseCompetencyDTO::of).toList())
                 .orElse(null);
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                buildLearnerProfileDTO(submission, exercise, !isGraded), isGraded, extractSelectedLLMUsage(user, isGraded), latestSubmissionDTO, competencies);
+                buildLearnerProfileDTO(submission, exercise, !isGraded, user), isGraded, extractSelectedLLMUsage(user, isGraded), latestSubmissionDTO, competencies);
         final long startNanos = System.nanoTime();
         // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
         boolean failed = true;
