@@ -18,7 +18,7 @@ export default defineConfig({
     workers: 1,
     retries: 0,
     fullyParallel: false,
-    timeout: 60_000,
+    timeout: 90_000,
     outputDir: path.join(__dirname, '..', 'test-results', 'docs-screenshots'),
     reporter: [['list']],
     expect: { timeout: 15_000 },

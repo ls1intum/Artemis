@@ -70,6 +70,13 @@ DB_CONTAINER="docs-shots-pg"
 STATE_DIR="$ROOT/build/docs-screenshots-stack"
 OUTPUT_DIR="build/docs-screenshots"
 mkdir -p "$STATE_DIR"
+# The repositories of the demo programming exercise live below the state directory, so that a repository of an earlier run (or of a development
+# server that was started in this directory) cannot make the seeding fail with "Project already exists". A kept stack (--keep) keeps them.
+REPO_DIR="$STATE_DIR/repositories"
+if [ "$STOP" = false ]; then
+    rm -rf "$REPO_DIR"
+    mkdir -p "$REPO_DIR"
+fi
 
 log() { echo "[docs-screenshots] $*"; }
 
@@ -177,6 +184,10 @@ log "Starting the server on port $SERVER_PORT (log: build/docs-screenshots-stack
     export ARTEMIS_GIT_EMAIL="artemis@example.com"
     export ARTEMIS_TELEMETRY_ENABLED="false"
     export ARTEMIS_RATELIMITING_EXEMPTADDRESSES="127.0.0.1/32,::1/128"
+    export ARTEMIS_VERSIONCONTROL_LOCALVCSREPOPATH="$REPO_DIR/local-vcs-repos"
+    export ARTEMIS_REPOCLONEPATH="$REPO_DIR/repos"
+    export ARTEMIS_REPODOWNLOADCLONEPATH="$REPO_DIR/repos-download"
+    export ARTEMIS_CHECKEDOUTREPOSPATH="$REPO_DIR/checked-out-repos"
     export SERVER_URL="http://localhost:${SERVER_PORT}"
     export EUREKA_CLIENT_ENABLED="false"
     export INFO_TESTSERVER="true"

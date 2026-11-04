@@ -152,7 +152,8 @@ for (const entry of manifest.screenshots.filter((candidate) => only.length === 0
         const courseId = await demoCourseId(page);
 
         await page.goto(await resolveRoute(baseURL, entry.route, courseId));
-        await page.waitForLoadState('networkidle');
+        // A page with a websocket or a poll may never be idle, so the wait is bounded; `waitFor` and the settle time below decide when the page is ready.
+        await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => undefined);
         if (entry.waitFor) {
             await expect(page.locator(entry.waitFor).first()).toBeVisible();
         }

@@ -202,6 +202,11 @@ pixels (`--threshold`) differ. `--stale` lists the images whose `source` changed
 To add a screenshot, add an entry with the viewport of the image, check the manifest with `python3 supporting_scripts/check_docs_screenshots.py`,
 render it with `--only`, look at the image, and commit it. The workflow `docs-screenshots.yml` runs the script weekly on a GitHub runner, uploads the
 rendered images and keeps one issue that lists the images that differ. It never commits an image.
+The manifest covers about fifty images of the student and instructor guides. They show the one demo course, "Introduction to Software Engineering", so
+the same users, exercises, lectures and exam run through the whole documentation. A screenshot does not have to reproduce an older hand-made image: it
+shows the page as it is, and a page that the demo course cannot fill yet gets a small extension of the demo seeding instead of a manual image.
+The script keeps the repositories of the demo programming exercise below `build/docs-screenshots-stack`, so a repository of an earlier run cannot
+keep the exercise from being seeded.
 Interactions such as an open dialog, and screens that need data the demo course does not have (a programming exercise with builds, a started exam),
 are not part of the manifest; such screenshots stay manual and keep the rules above.
 
