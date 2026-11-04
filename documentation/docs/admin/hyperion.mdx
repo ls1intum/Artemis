@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-04
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -286,7 +286,7 @@ canonical toolchain or dependencies change; an older Java 17 sandbox cannot grad
 this harness. Keep `SecurityPolicy.yaml` explicit. The worker writes its instructor-test
 class list from the test sources before every build; the agent cannot edit the file. The
 only permission generation adds is the `org.junit.jupiter` package import, when the
-reference solution contains test classes that students write. The supervised package and
+approved specification assigns test classes to students. The supervised package and
 all other resource permissions stay as seeded.
 The pre-provider readiness build rejects incompatible exercise harnesses before
 model authoring starts. The worker receives a frozen, bounded repository snapshot, not credentials or repository paths. Core validates returned artifacts
