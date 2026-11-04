@@ -128,6 +128,19 @@ jobs:
       infrastructure_failed: ${{ steps.run-tests-phase1.outputs.infrastructure_failed }}
       phase_result: ${{ steps.classify.outputs.phase_result }}
     steps:
+      # A container that ran Playwright as root against this bind-mounted workspace and was killed could not hand its output
+      # back (run-tests.sh does that when it exits normally). actions/checkout cannot delete such a root-owned directory and
+      # fails after a few seconds, on every later job that lands on this runner, until somebody deletes it on the host.
+      # This returns the output to the runner user before the checkout. It never fails the job, so the checkout still
+      # reports a real problem.
+      - name: Return ownership of leftover Playwright output
+        continue-on-error: true
+        run: |
+          for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
+              [ -d "$dir" ] || continue
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+          done
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
@@ -334,6 +347,19 @@ jobs:
       PLAYWRIGHT_REPORT_PHASE: phase2
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
+      # A container that ran Playwright as root against this bind-mounted workspace and was killed could not hand its output
+      # back (run-tests.sh does that when it exits normally). actions/checkout cannot delete such a root-owned directory and
+      # fails after a few seconds, on every later job that lands on this runner, until somebody deletes it on the host.
+      # This returns the output to the runner user before the checkout. It never fails the job, so the checkout still
+      # reports a real problem.
+      - name: Return ownership of leftover Playwright output
+        continue-on-error: true
+        run: |
+          for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
+              [ -d "$dir" ] || continue
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+          done
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
@@ -529,6 +555,19 @@ jobs:
       PLAYWRIGHT_REPORT_PHASE: all
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     steps:
+      # A container that ran Playwright as root against this bind-mounted workspace and was killed could not hand its output
+      # back (run-tests.sh does that when it exits normally). actions/checkout cannot delete such a root-owned directory and
+      # fails after a few seconds, on every later job that lands on this runner, until somebody deletes it on the host.
+      # This returns the output to the runner user before the checkout. It never fails the job, so the checkout still
+      # reports a real problem.
+      - name: Return ownership of leftover Playwright output
+        continue-on-error: true
+        run: |
+          for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
+              [ -d "$dir" ] || continue
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+          done
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
@@ -707,6 +746,19 @@ jobs:
     env:
       PLAYWRIGHT_REPORT_PHASE: all
     steps:
+      # A container that ran Playwright as root against this bind-mounted workspace and was killed could not hand its output
+      # back (run-tests.sh does that when it exits normally). actions/checkout cannot delete such a root-owned directory and
+      # fails after a few seconds, on every later job that lands on this runner, until somebody deletes it on the host.
+      # This returns the output to the runner user before the checkout. It never fails the job, so the checkout still
+      # reports a real problem.
+      - name: Return ownership of leftover Playwright output
+        continue-on-error: true
+        run: |
+          for dir in src/test/playwright/test-results src/test/playwright/test-reports; do
+              [ -d "$dir" ] || continue
+              docker run --rm --user 0:0 --volume "$PWD/$dir:/output" docker.io/library/alpine:3.24.3 chown -R "$(id -u):$(id -g)" /output
+          done
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
