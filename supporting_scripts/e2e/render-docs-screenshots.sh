@@ -19,6 +19,7 @@ set -Eeuo pipefail
 #   --browser <where>   `container` (default): the browser runs in a pinned Playwright image, so fonts and anti-aliasing are the
 #                       same on every machine and the images can be compared with the checked-in ones. `host`: use the
 #                       Playwright browsers of this machine, which is faster but renders text slightly differently.
+#                       NOTE: in `container` mode the client listens on all network interfaces during the run; `host` does not.
 #   --threshold <share> Share of changed pixels that counts as a difference, default 0.01.
 #   --skip-install      Do not run pnpm install and the build of the UI kit (use when the dependencies are current).
 #   --keep              Leave the database, server and client running (stop them with --stop).
@@ -243,6 +244,7 @@ CLIENT_ARGS=(--port "$CLIENT_PORT" --proxy-config "$STATE_DIR/proxy.conf.mjs" --
 if [ "$BROWSER" = "container" ]; then
     # The browser in the container reaches the client from outside the loopback interface.
     CLIENT_ARGS+=(--host 0.0.0.0)
+    log "WARNING: the client listens on all network interfaces for the duration of this run, and its proxy reaches a demo server with known demo logins. Use --browser host to avoid this."
 fi
 log "Starting the client on port $CLIENT_PORT (log: build/docs-screenshots-stack/client.log)"
 pnpm exec ng serve "${CLIENT_ARGS[@]}" > "$STATE_DIR/client.log" 2>&1 &

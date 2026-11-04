@@ -198,9 +198,9 @@ It needs Docker, Java 25 and Node. Options:
   `--stop` stops only the processes of this checkout on the ports of the script and the database container that carries the label of this checkout.
   Anything else on those ports is reported and left alone.
 
-The server listens on the loopback interface only, and its admin account has a random password for each run. The client has to listen on all interfaces in
-the default `container` mode, because the browser container reaches it through the address of the host. Run the script on a machine whose network you trust,
-or with `--browser host`, which needs no such access (the images then differ slightly in the text rendering).
+The server listens on the loopback interface only, and its admin account has a random password for each run. In the default `container` mode the client listens
+on all network interfaces for the duration of the run, because the browser container reaches it through the address of the host, and its proxy reaches a demo
+server with known demo logins; the script prints a warning, and `--browser host` avoids the exposure (the images then differ slightly in the text rendering).
 
 **Comparison.** `python3 supporting_scripts/check_docs_screenshots.py --compare build/docs-screenshots --all` prints the similarity of every image.
 A size that differs by up to two pixels is compared on the area that both images have, and an image counts as different when more than 1 percent of the
