@@ -210,10 +210,8 @@ export class ExerciseSplitPanelComponent {
     });
 
     readonly showComplaintView = computed(() => {
-        const exercise = this.exercise();
         const result = this.latestRatedResult();
         return (
-            exercise.type === ExerciseType.PROGRAMMING &&
             !!this.gradedStudentParticipation() &&
             !!result &&
             (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC || this.allowComplaintsForAutomaticAssessments())
@@ -222,12 +220,7 @@ export class ExerciseSplitPanelComponent {
 
     readonly showRating = computed(() => {
         const result = this.latestRatedResult();
-        return (
-            this.exercise().type === ExerciseType.PROGRAMMING &&
-            !!this.gradedStudentParticipation() &&
-            !!result &&
-            (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC)
-        );
+        return !!this.gradedStudentParticipation() && !!result && (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC);
     });
 
     constructor() {

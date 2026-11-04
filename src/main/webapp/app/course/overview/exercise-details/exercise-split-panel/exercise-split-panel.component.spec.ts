@@ -15,6 +15,8 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { User } from 'app/account/user/user.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { ExerciseSplitPanelComponent } from 'app/course/overview/exercise-details/exercise-split-panel/exercise-split-panel.component';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -248,6 +250,30 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(resizablePanels.activeRightIndex()).toBe(0);
         expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('Problem Statement');
+    });
+
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
+        'should offer the rating and the complaint below the %s exercise details for a tutor assessment',
+        (type) => {
+            fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
+            fixture.componentRef.setInput('gradedStudentParticipation', { id: 5 } as StudentParticipation);
+            fixture.componentRef.setInput('latestRatedResult', { id: 3, assessmentType: AssessmentType.MANUAL } as Result);
+
+            expect(component.showRating()).toBe(true);
+            expect(component.showComplaintView()).toBe(true);
+        },
+    );
+
+    it('should not offer the rating or the complaint for an automatic result unless complaints about it are allowed', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as Exercise);
+        fixture.componentRef.setInput('gradedStudentParticipation', { id: 5 } as StudentParticipation);
+        fixture.componentRef.setInput('latestRatedResult', { id: 3, assessmentType: AssessmentType.AUTOMATIC } as Result);
+
+        expect(component.showRating()).toBe(false);
+        expect(component.showComplaintView()).toBe(false);
+
+        fixture.componentRef.setInput('allowComplaintsForAutomaticAssessments', true);
+        expect(component.showComplaintView()).toBe(true);
     });
 
     describe('exercise details panel', () => {
