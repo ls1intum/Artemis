@@ -38,6 +38,12 @@ interface Manifest {
 const REPOSITORY_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 const MANIFEST_PATH = path.join(REPOSITORY_ROOT, 'documentation', 'screenshots', 'manifest.json');
 const DOCS_ROOT = path.join(REPOSITORY_ROOT, 'documentation', 'docs');
+// Transitions and the caret would make two renderings differ. The development ribbon and the footer with the branch, commit and build time
+// belong to the instance that rendered the image, not to the page that the documentation describes.
+const VOLATILE_STYLES = [
+    '*, *::before, *::after { transition: none !important; animation: none !important; caret-color: transparent !important; }',
+    'jhi-page-ribbon, jhi-footer { display: none !important; }',
+].join('\n');
 const DEMO_PASSWORD = 'demo1234';
 const DEMO_COURSE_TITLE = 'Introduction to Software Engineering';
 
@@ -66,8 +72,10 @@ async function demoCourseId(page: Page): Promise<number> {
 }
 
 for (const entry of manifest.screenshots.filter((candidate) => only.length === 0 || only.includes(candidate.id))) {
-    test(`documentation screenshot ${entry.id}`, async ({ browser }) => {
+    test(`documentation screenshot ${entry.id}`, async ({ browser, baseURL }) => {
+        // browser.newContext() does not inherit the options of the configuration, so the base URL has to be passed on.
         const context = await browser.newContext({
+            baseURL,
             viewport: entry.viewport ?? manifest.defaults.viewport,
             deviceScaleFactor: entry.deviceScaleFactor ?? manifest.defaults.deviceScaleFactor,
             locale: 'en-US',
@@ -77,7 +85,13 @@ for (const entry of manifest.screenshots.filter((candidate) => only.length === 0
         });
         const page = await context.newPage();
         // The theme preference of a previous session must not win over the light scheme.
-        await page.addInitScript(() => window.localStorage.removeItem('jhi-artemisapp.theme.preference'));
+        await page.addInitScript(() => {
+            window.localStorage.removeItem('jhi-artemisapp.theme.preference');
+            // The passkey reminder is a modal that covers the page, so it is postponed far into the future, as a user does with "Remind me in 30 days".
+            window.localStorage.setItem('earliestSetupPasskeyReminderDate', JSON.stringify('2099-01-01T00:00:00.000Z'));
+            // The competency management opens an introduction on the first visit of a browser.
+            window.localStorage.setItem('alreadyVisitedCompetencyManagement', JSON.stringify(true));
+        });
         if (process.env.DOCS_SCREENSHOT_FIXED_TIME) {
             await page.clock.setFixedTime(new Date(process.env.DOCS_SCREENSHOT_FIXED_TIME));
         }
@@ -90,7 +104,7 @@ for (const entry of manifest.screenshots.filter((candidate) => only.length === 0
         await page.goto(entry.route.replace('{courseId}', String(courseId)));
         await page.waitForLoadState('networkidle');
         // Transitions and the caret would make two renderings of the same page differ.
-        await page.addStyleTag({ content: '*, *::before, *::after { transition: none !important; animation: none !important; caret-color: transparent !important; }' });
+        await page.addStyleTag({ content: VOLATILE_STYLES });
 
         const target = update ? path.join(DOCS_ROOT, entry.image) : path.join(outputRoot, entry.image);
         fs.mkdirSync(path.dirname(target), { recursive: true });

@@ -180,6 +180,13 @@ To render the screenshots against a local instance:
 3. Compare them with `python3 supporting_scripts/check_docs_screenshots.py --compare build/docs-screenshots`. If the page really changed,
    run the step 2 again with `DOCS_SCREENSHOT_UPDATE=true`, which replaces the checked-in images, look at them, and commit them.
 
+The renderer postpones the passkey reminder, skips the first-visit introduction of the competency management and hides the
+development ribbon and the footer, which show the instance and not the page. Two renderings of the same instance are identical.
+The images that were checked in before the manifest were captured from other data and often as a crop of the page, so every entry
+differs from its image until someone reviews the rendering and commits it with `DOCS_SCREENSHOT_UPDATE=true`. From then on a
+difference means that the screen changed. Time stamps such as "Today, 12:10" come from the time at which the demo data was created,
+so compare images of the same demo data only.
+
 To add a screenshot, add an entry with the viewport of the image, check it with `python3 supporting_scripts/check_docs_screenshots.py`,
 and render it. The workflow `docs-screenshots.yml` renders the manifest weekly against the instance in the repository variable
 `DOCS_SCREENSHOT_BASE_URL`, and keeps one issue that lists the images that differ. It never commits an image.
