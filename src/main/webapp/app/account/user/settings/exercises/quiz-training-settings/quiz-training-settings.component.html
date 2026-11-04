@@ -1,0 +1,23 @@
+<div>
+    <h2 class="text-xl! font-bold!" jhiTranslate="artemisApp.userSettings.quizTrainingSettings.quizTraining"></h2>
+
+    <tumaet-ui-card class="mt-4 block">
+        <h4 tumAetUiCardHeader class="px-5 pt-5" jhiTranslate="artemisApp.userSettings.quizTrainingSettings.leaderboardSettings"></h4>
+        @if (isVisibleInLeaderboard() !== undefined) {
+            <div class="flex items-center gap-2">
+                <tumaet-ui-toggle-switch
+                    inputId="leaderboardVisibilityToggle"
+                    [ngModel]="isVisibleInLeaderboard()"
+                    [ngModelOptions]="{ standalone: true }"
+                    (changed)="onLeaderboardVisibilityChange($event)"
+                />
+                <label for="leaderboardVisibilityToggle" jhiTranslate="artemisApp.quizTraining.showInLeaderboard"></label>
+                <jhi-help-icon placement="right auto" text="artemisApp.userSettings.quizTrainingSettings.leaderboardVisibilityInfo" />
+            </div>
+        } @else {
+            <tumaet-ui-message severity="info">
+                <span jhiTranslate="artemisApp.userSettings.quizTrainingSettings.visitQuizTrainingFirst"></span>
+            </tumaet-ui-message>
+        }
+    </tumaet-ui-card>
+</div>
