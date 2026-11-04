@@ -388,9 +388,19 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
         var currentUser = cloudAiUser;
 
+        LearnerProfile profile = new LearnerProfile();
+        profile.setId(42L);
+        profile.setFeedbackDetail(3);
+        profile.setFeedbackFormality(1);
+        profile.setHasSetupFeedbackPreferences(true);
+        LearnerProfileApi mockLearnerProfileApi = mock(LearnerProfileApi.class);
+        when(mockLearnerProfileApi.getOrCreateLearnerProfile(currentUser)).thenReturn(profile);
+        ReflectionTestUtils.setField(athenaFeedbackSuggestionsService, "learnerProfileApi", Optional.of(mockLearnerProfileApi));
+
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(teamSubmission.getId()),
-                jsonPath("$.submission.text").value(teamSubmission.getText()), jsonPath("$.selection").value(AiSelectionDecision.CLOUD_AI.name()));
+                jsonPath("$.submission.text").value(teamSubmission.getText()), jsonPath("$.selection").value(AiSelectionDecision.CLOUD_AI.name()),
+                jsonPath("$.learnerProfile.feedbackDetail").value(3), jsonPath("$.learnerProfile.feedbackFormality").value(1));
 
         List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, teamSubmission, false, currentUser);
 

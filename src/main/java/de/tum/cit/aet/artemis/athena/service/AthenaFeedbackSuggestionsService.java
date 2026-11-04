@@ -192,6 +192,8 @@ public class AthenaFeedbackSuggestionsService {
      * text, only non-graded feedback is adapted to it, so the course defaults are only looked up for such a request,
      * which saves the query for graded ones. The course defaults also apply without a profile, as when Atlas is disabled,
      * but not when reading the profile failed: the student may have a preference of their own, so neither is sent then.
+     * A failure reading the course configuration is deliberately not caught and fails the request: continuing would
+     * silently replace the defaults the instructor configured with neutral values.
      *
      * @param submission          the submission to extract the profile from
      * @param exercise            the exercise the submission belongs to, used to look up the course's Athena configuration
