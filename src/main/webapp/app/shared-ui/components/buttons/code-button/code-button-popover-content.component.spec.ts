@@ -5,7 +5,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
-import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
+import { Ide } from 'app/account/user/settings/exercises/ide-preferences/ide.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
