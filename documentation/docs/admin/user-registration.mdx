@@ -293,7 +293,7 @@ records. The entries relevant to account state:
 | `ADMIN_CHANGE_USER_PASSWORD` | An administrator sets a user's password | The acting administrator | Which credential types were revoked |
 
 All three are classified as security events, so they are written to `security_audit_event` and appear under
-the **Security** tab of **Server Administration → Audits** in the admin UI, or through `GET /api/admin/audits`.
+the **Security** tab of **Administration → Monitoring → Audits** in the admin UI, or through `GET /api/admin/audits`.
 `DEACTIVATE_USER` in particular is the only audit record of a wholesale credential revocation, since the
 revocation itself writes none. Retention is configured separately per log; see
 [Cleanup Service](cleanup-service.mdx).
