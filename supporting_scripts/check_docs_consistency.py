@@ -314,7 +314,18 @@ def known_profiles() -> set[str]:
     return profiles
 
 
-SHELL_COMMENT = re.compile(r"(?:^|\s)#.*$")
+def strip_shell_comment(line: str) -> str:
+    """The line without its comment. A # starts a comment only at the start of a word outside quotes, so `MESSAGE="Fix #123"` and `a#b` stay."""
+    quote = ""
+    for index, char in enumerate(line):
+        if quote:
+            if char == quote:
+                quote = ""
+        elif char in "'\"":
+            quote = char
+        elif char == "#" and (index == 0 or line[index - 1].isspace()):
+            return line[:index]
+    return line
 
 
 def code_segments(text: str):
@@ -329,7 +340,7 @@ def code_segments(text: str):
         if fenced:
             if language in SHELL_LANGUAGES:
                 # a comment is prose ("# Requires pnpm and Node 24"), not a command, and a trailing one is cut off as well
-                command = SHELL_COMMENT.sub("", line)
+                command = strip_shell_comment(line)
                 if command.strip():
                     yield number, command, True
         else:
@@ -703,6 +714,8 @@ def self_test() -> None:
     assert not command_problems(page, "```bash\npnpm --version   # should print the pinned version\n```\n"), "a comment after an option is not a command"
     assert not command_problems(page, "```bash\n# Requires pnpm and Node 24, use pnpm to install\npnpm install  # pnpm should work\n```\n"), "a shell comment is not a command"
     assert len(command_problems(page, "```bash\n# pnpm is needed\npnpm run no-such-script-xyz  # still reported\n```\n")) == 1
+    assert strip_shell_comment('MESSAGE="Fix #123" pnpm run x  # note') == 'MESSAGE="Fix #123" pnpm run x  ' and strip_shell_comment("echo a#b 'x #y'") == "echo a#b 'x #y'"
+    assert len(command_problems(page, '```bash\nMESSAGE="Fix #123" pnpm run no-such-script-xyz\n```\n')) == 1, "a quoted # is not a comment"
     assert len(command_problems(page, "`./gradlew clean noSuchTaskXyz`\n")) == 1, "every task is checked, not only the first"
     assert not command_problems(page, "`./gradlew build --console plain -x test`\n"), "an option value is not a task"
 
