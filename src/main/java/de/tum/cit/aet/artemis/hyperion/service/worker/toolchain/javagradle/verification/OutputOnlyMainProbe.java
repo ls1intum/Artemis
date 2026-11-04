@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.JavaSourceText;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome.Disposition;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 
 /**
@@ -114,7 +116,41 @@ final class OutputOnlyMainProbe {
             captureTranscript.apply(target).flatMap(transcript -> transcriptOnlyVariant(source, transcript))
                     .ifPresent(variant -> variants.add(SemanticMutant.printedTranscript(target.solutionPath(), source, variant, target.simpleName())));
         }
-        return variants.isEmpty() ? List.of() : SemanticMutantExecution.recheck(solutionFiles, variants, runner);
+        return variants.isEmpty() ? List.of() : SemanticMutantExecution.recheck(solutionFiles, variants, gradedTest(testPlanJson), runner);
+    }
+
+    /**
+     * Rechecks printed-transcript probes against the current candidate; only a failing test that carries weight kills one. When the source no longer shows a graded test
+     * comparing the transcript, that alone resolves nothing, because a call shape the source check does not follow looks the same: the graded suite runs against a {@code main}
+     * that prints nothing, and only when every weighted test still passes, so none observes what {@code main} prints, is the probe resolved.
+     *
+     * @param testFiles     the current tests repository
+     * @param solutionFiles the current reference solution
+     * @param testPlanJson  the current grading plan; without a usable plan every test counts as graded
+     * @param probes        printed-transcript probes proven against the solution
+     * @param runner        executes the graded suite against one variant
+     * @return one outcome per probe, {@link Disposition#KILLED_BY_GRADED_SUITE} when the weakness it proved is gone
+     */
+    static List<SemanticMutantOutcome> recheck(Map<String, String> testFiles, Map<String, String> solutionFiles, @Nullable String testPlanJson, List<SemanticMutant> probes,
+            SemanticMutantExecution.ProbeRunner runner) {
+        Predicate<String> graded = gradedTest(testPlanJson);
+        List<SemanticMutantOutcome> outcomes = new ArrayList<>();
+        for (SemanticMutant probe : probes) {
+            if (!stillApplies(probe, testFiles, testPlanJson)) {
+                Optional<SemanticMutant> silent = transcriptOnlyVariant(probe.originalSolutionSource(), "").map(variant -> new SemanticMutant(probe.ruleId(), probe.solutionPath(),
+                        probe.originalSolutionSource(), variant, probe.counterexample(), null, SemanticMutant.Evidence.PRINTED_TRANSCRIPT));
+                Disposition silentOutcome = silent.isEmpty() ? Disposition.INCONCLUSIVE
+                        : SemanticMutantExecution.recheck(solutionFiles, List.of(silent.get()), graded, runner).getFirst().disposition();
+                if (silentOutcome != Disposition.KILLED_BY_GRADED_SUITE) {
+                    // A silent main that passes every weighted test proves no weighted test reads main's output; a build without a verdict proves nothing.
+                    outcomes.add(
+                            new SemanticMutantOutcome(probe, silentOutcome == Disposition.SURVIVED_GRADED_SUITE ? Disposition.KILLED_BY_GRADED_SUITE : Disposition.INCONCLUSIVE));
+                    continue;
+                }
+            }
+            outcomes.addAll(SemanticMutantExecution.recheck(solutionFiles, List.of(probe), graded, runner));
+        }
+        return List.copyOf(outcomes);
     }
 
     /**
@@ -154,13 +190,13 @@ final class OutputOnlyMainProbe {
     }
 
     /**
-     * Whether a probe still applies to the current tests: a graded test still compares what the probed {@code main} prints. A repair that grades the behavior through objects
-     * and keeps a pure transcript check ungraded, or removes it, resolves the probe without another build.
+     * Whether the source still shows a graded test comparing what the probed {@code main} prints. A {@code false} answer is not evidence on its own: {@link #recheck} confirms it
+     * by execution before resolving the probe.
      *
      * @param probe        a printed-transcript probe
      * @param testFiles    the current tests repository
      * @param testPlanJson the current grading plan
-     * @return whether the probe must still be executed against the graded suite
+     * @return whether the source shows a graded transcript comparison
      */
     static boolean stillApplies(SemanticMutant probe, Map<String, String> testFiles, @Nullable String testPlanJson) {
         String simpleName = probe.ruleId().substring(0, probe.ruleId().length() - ".main".length());
@@ -180,6 +216,12 @@ final class OutputOnlyMainProbe {
         catch (IllegalArgumentException invalidPlan) {
             return null;
         }
+    }
+
+    /** Whether a failure of the executed test with this name costs credit: it is weighted above zero, or there is no usable plan and every test counts. */
+    private static Predicate<String> gradedTest(@Nullable String testPlanJson) {
+        Set<String> graded = gradedTestMethods(testPlanJson);
+        return graded == null ? testName -> true : testName -> graded.contains(methodName(testName));
     }
 
     /** {@code Suite.method(args)[1]} and {@code method} both name the method {@code method}. */

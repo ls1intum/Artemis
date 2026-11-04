@@ -335,33 +335,36 @@ final class ExecutableEvidenceLedger {
     }
 
     /**
-     * Rechecks executed mutants against the current candidate. A printed-transcript probe whose class no graded test compares any more is resolved without a build, because
-     * the weakness it proved is gone; one probed against these exact sources and tests reuses its verdict.
+     * Rechecks executed mutants against the current candidate. A printed-transcript probe is judged by the weighted tests of the current grading plan; one probed against
+     * these exact sources and tests reuses its verdict.
      */
     private List<SemanticMutantOutcome> recheckSemanticMutants(Map<RepositoryRole, Map<String, String>> candidateFiles, @Nullable String testPlanJson,
             SeededStructuralTests seededStructuralTests, List<SemanticMutant> mutants, Runnable restoreCandidate) {
-        Map<String, String> testsFiles = candidateFiles.getOrDefault(RepositoryRole.TESTS, Map.of());
+        Map<String, String> solutionFiles = candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of());
         Map<String, SemanticMutantOutcome> known = transcriptVerdicts(candidateFiles, testPlanJson);
         List<SemanticMutantOutcome> settled = new ArrayList<>();
         List<SemanticMutant> executed = new ArrayList<>();
+        List<SemanticMutant> transcriptProbes = new ArrayList<>();
         for (SemanticMutant mutant : mutants) {
             SemanticMutantOutcome reusable = known.get(mutant.solutionPath());
             if (!mutant.printsTranscriptOnly()) {
                 executed.add(mutant);
             }
-            else if (!DifferentialVerifier.printedOutputStillGraded(mutant, testsFiles, testPlanJson)) {
-                settled.add(new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE));
-            }
             else if (reusable != null && reusable.mutant().equals(mutant)) {
                 settled.add(reusable);
             }
             else {
-                executed.add(mutant);
+                transcriptProbes.add(mutant);
             }
         }
-        List<SemanticMutantOutcome> outcomes = executed.isEmpty() ? List.of()
-                : verifier.checkSemanticMutants(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()), seededStructuralTests, executed,
-                        restoreCandidate);
+        List<SemanticMutantOutcome> outcomes = new ArrayList<>();
+        if (!executed.isEmpty()) {
+            outcomes.addAll(verifier.checkSemanticMutants(sandbox, sessionId, exercise, solutionFiles, seededStructuralTests, executed, restoreCandidate));
+        }
+        if (!transcriptProbes.isEmpty()) {
+            outcomes.addAll(verifier.recheckOutputOnlyMains(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryRole.TESTS, Map.of()), solutionFiles, testPlanJson,
+                    seededStructuralTests, transcriptProbes, restoreCandidate));
+        }
         rememberTranscriptVerdicts(outcomes);
         return java.util.stream.Stream.concat(settled.stream(), outcomes.stream()).toList();
     }

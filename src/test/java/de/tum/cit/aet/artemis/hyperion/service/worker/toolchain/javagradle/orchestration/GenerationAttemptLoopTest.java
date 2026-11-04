@@ -999,31 +999,51 @@ class GenerationAttemptLoopTest {
         // The repair keeps comparing the transcript but changes the tests, so the probe must be rechecked rather than answered from the previous verdict.
         SemanticMutant printOnly = stubPrintOnlyMainSurvivor(TRANSCRIPT_TEST,
                 TRANSCRIPT_TEST.replace("out.toString());", "out.toString()); assertEquals(1, Scheduler.created());"));
-        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
-            List<SemanticMutant> checked = invocation.getArgument(5);
-            return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)).toList();
-        });
+        stubPrintOnlyRecheck(Disposition.KILLED_BY_GRADED_SUITE);
 
         GenerationAttemptLoop loop = newGenerateLoop(3, 2);
         loop.run();
 
         assertThat(enteredRepairScopes()).containsExactly(Set.of("tests", "test-plan.json", "problem-statement.md"));
-        verify(verifier).checkSemanticMutants(any(), anyString(), any(), any(), any(), Mockito.eq(List.of(printOnly)), any());
+        verify(verifier).recheckOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), Mockito.eq(List.of(printOnly)), any());
+        verify(verifier, never()).checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any());
         assertThat(progressLines).anyMatch(line -> line.contains("The repair killed 1 environment-proven mutant(s)"));
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
     }
 
     @Test
-    void aPrintOnlyProbeIsResolvedWithoutABuildOnceNoGradedTestComparesTheTranscript() {
-        stubPrintOnlyMainSurvivor(TRANSCRIPT_TEST, "package p; class SchedulerTest { @Test void schedules() { assertEquals(1, new Scheduler().size()); } }");
+    void aPrintOnlyProbeTheSourceNoLongerShowsAsGradedIsStillRecheckedByExecution() {
+        // The repair keeps the transcript graded behind a call shape the source check does not follow; only execution can tell.
+        SemanticMutant printOnly = stubPrintOnlyMainSurvivor(TRANSCRIPT_TEST,
+                TRANSCRIPT_TEST.replace("Scheduler.main(new String[0]);", "java.util.function.Consumer<String[]> program = Scheduler::main; program.accept(new String[0]);"));
+        stubPrintOnlyRecheck(Disposition.SURVIVED_GRADED_SUITE);
 
         GenerationAttemptLoop loop = newGenerateLoop(3, 2);
         loop.run();
 
-        verify(verifier, never()).checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any());
+        verify(verifier).recheckOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), Mockito.eq(List.of(printOnly)), any());
+        assertThat(progressLines).noneMatch(line -> line.contains("The repair killed"));
+        assertThat(loop.terminationReason()).isNotEqualTo(TerminationReason.CONVERGED);
+    }
+
+    @Test
+    void aPrintOnlyProbeResolvedByExecutionCountsAsProgress() {
+        stubPrintOnlyMainSurvivor(TRANSCRIPT_TEST, "package p; class SchedulerTest { @Test void schedules() { assertEquals(1, new Scheduler().size()); } }");
+        stubPrintOnlyRecheck(Disposition.KILLED_BY_GRADED_SUITE);
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
         assertThat(progressLines).anyMatch(line -> line.contains("The repair killed 1 environment-proven mutant(s)"));
         assertThat(loop.specFidelityReport().findings()).noneMatch(SpecFidelityReport.Finding::isBlocking);
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+    }
+
+    private void stubPrintOnlyRecheck(Disposition disposition) {
+        when(verifier.recheckOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> checked = invocation.getArgument(7);
+            return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant, disposition)).toList();
+        });
     }
 
     @Test
@@ -1035,7 +1055,7 @@ class GenerationAttemptLoopTest {
         loop.run();
 
         verify(verifier, times(1)).probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any());
-        verify(verifier, never()).checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any());
+        verify(verifier, never()).recheckOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any());
         assertThat(loop.verification().reasons()).anyMatch(reason -> reason.contains("Scheduler.main that only prints the expected output"));
     }
 

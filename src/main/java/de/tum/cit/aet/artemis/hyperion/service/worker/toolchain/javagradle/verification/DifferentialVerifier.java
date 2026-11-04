@@ -767,16 +767,28 @@ public class DifferentialVerifier {
     }
 
     /**
-     * Whether a printed-transcript probe still applies to the current tests, that is, a graded test still compares what the probed {@code main} prints. When none does, the
-     * weakness the probe proved is gone and it is resolved without a build.
+     * Rechecks printed-transcript probes after a repair. Only a failing test that carries weight kills one; a probe whose transcript comparison the source no longer shows is
+     * resolved only once a {@code main} that prints nothing passes every weighted test. A failed probe preserves the prior evidence by propagating.
      *
-     * @param probe        a printed-transcript probe
-     * @param testsFiles   the current tests repository
-     * @param testPlanJson the current grading plan
-     * @return whether the probe must still be executed against the graded suite
+     * @param sandbox               the active generation sandbox
+     * @param sessionId             the active sandbox session
+     * @param exercise              the exercise whose build commands should run
+     * @param producedTestsFiles    the current graded tests
+     * @param producedSolutionFiles the current reference-solution sources
+     * @param testPlanJson          the current grading plan
+     * @param seededStructuralTests the exact server-owned structural authority
+     * @param probes                printed-transcript probes proven against the solution
+     * @param restoreCandidate      restores the verified candidate between probes
+     * @return one outcome per probe
      */
-    public static boolean printedOutputStillGraded(SemanticMutant probe, Map<String, String> testsFiles, @Nullable String testPlanJson) {
-        return OutputOnlyMainProbe.stillApplies(probe, testsFiles, testPlanJson);
+    public List<SemanticMutantOutcome> recheckOutputOnlyMains(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> producedTestsFiles,
+            Map<String, String> producedSolutionFiles, @Nullable String testPlanJson, SeededStructuralTests seededStructuralTests, List<SemanticMutant> probes,
+            Runnable restoreCandidate) {
+        if (probes.isEmpty()) {
+            return List.of();
+        }
+        return OutputOnlyMainProbe.recheck(producedTestsFiles, producedSolutionFiles, testPlanJson, probes,
+                (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate));
     }
 
     private BuildSummary runSemanticMutantProbe(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, SeededStructuralTests seededStructuralTests,

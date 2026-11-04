@@ -181,6 +181,61 @@ class OutputOnlyMainProbeTest {
     }
 
     @Test
+    void onlyAFailingWeightedTestKillsThePrintOnlyVariant() {
+        String planWithPreservation = """
+                {"tests":[{"name":"printsTheSize","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                 {"name":"keepsTheSuppliedSetup","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}]}
+                """;
+        // Replacing all of main also drops supplied setup, which only the zero-weight check observes; the weighted transcript test still passes.
+        SemanticMutantExecution.ProbeRunner preservationFails = (mutant, probe) -> new BuildSummary(2, 1, 1, false,
+                List.of("LibraryTest.printsTheSize()", "LibraryTest.keepsTheSuppliedSetup()"), List.of("LibraryTest.keepsTheSuppliedSetup()"), List.of(), "");
+
+        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), planWithPreservation, Set.of(), target -> Optional.of("Books: 1\n"),
+                preservationFails)).extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.SURVIVED_GRADED_SUITE);
+        SemanticMutant probe = SemanticMutant.printedTranscript(PATH, SOLUTION, SOLUTION, "Library");
+        assertThat(OutputOnlyMainProbe.recheck(TESTS, Map.of(PATH, SOLUTION), planWithPreservation, List.of(probe), preservationFails))
+                .extracting(SemanticMutantOutcome::disposition).as("a later recheck is judged the same way").containsExactly(Disposition.SURVIVED_GRADED_SUITE);
+    }
+
+    @Test
+    void aTranscriptCheckTheSourceCheckNoLongerSeesIsResolvedOnlyWhenAMainThatPrintsNothingPassesEveryWeightedTest() {
+        SemanticMutant probe = SemanticMutant.printedTranscript(PATH, SOLUTION, OutputOnlyMainProbe.transcriptOnlyVariant(SOLUTION, "Books: 1\n").orElseThrow(), "Library");
+        // Still weighted, but main is passed as a method reference, a call shape the source check does not follow.
+        Map<String, String> unrecognizedShape = Map.of("test/example/LibraryTest.java", """
+                class LibraryTest {
+                    private final java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                    private String run(java.util.function.Consumer<String[]> program) {
+                        System.setOut(new java.io.PrintStream(out));
+                        program.accept(new String[0]);
+                        return out.toString();
+                    }
+                    @Test void printsTheSize() { assertEquals("Books: 1\\n", run(Library::main)); }
+                }
+                """);
+        assertThat(OutputOnlyMainProbe.stillApplies(probe, unrecognizedShape, PLAN)).isFalse();
+        List<String> built = new ArrayList<>();
+        SemanticMutantExecution.ProbeRunner transcriptGraded = (mutant, ignored) -> {
+            boolean prints = mutant.mutantSource().contains("System.out.print(");
+            built.add(prints ? "print-only" : "silent");
+            return prints ? new BuildSummary(1, 0, 0, false, List.of("printsTheSize()"), List.of(), List.of(), "")
+                    : new BuildSummary(1, 1, 1, false, List.of("printsTheSize()"), List.of("printsTheSize()"), List.of(), "");
+        };
+
+        assertThat(OutputOnlyMainProbe.recheck(unrecognizedShape, Map.of(PATH, SOLUTION), PLAN, List.of(probe), transcriptGraded)).extracting(SemanticMutantOutcome::disposition)
+                .as("the weighted test still reads what main prints").containsExactly(Disposition.SURVIVED_GRADED_SUITE);
+        assertThat(built).containsExactly("silent", "print-only");
+
+        String transcriptUngraded = """
+                {"tests":[{"name":"printsTheSize","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"},
+                 {"name":"countsAddedBooks","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"}]}
+                """;
+        built.clear();
+        assertThat(OutputOnlyMainProbe.recheck(TESTS, Map.of(PATH, SOLUTION), transcriptUngraded, List.of(probe), transcriptGraded)).extracting(SemanticMutantOutcome::disposition)
+                .as("only the zero-weight transcript check reads main").containsExactly(Disposition.KILLED_BY_GRADED_SUITE);
+        assertThat(built).containsExactly("silent");
+    }
+
+    @Test
     void theVariantCompilesKeepsEveryOtherMemberAndPrintsExactlyTheTranscript(@TempDir Path directory) throws Exception {
         String transcript = "Books: 1 { \"quoted\" }\n\ttab \\ backslash \u001b[0m é世 😀\r\n" + "x".repeat(1_500) + "\n";
 
