@@ -16,7 +16,7 @@
 - [ ] This is a small issue that I tested locally and was confirmed by another developer on a test server.
 - [ ] Language: I followed the [guidelines for inclusive, diversity-sensitive, and appreciative language](https://docs.artemis.tum.de/developer/guidelines/language).
 - [ ] I chose a title conforming to the [naming conventions for pull requests](https://docs.artemis.tum.de/developer/development-process#pr-naming-conventions).
-- [ ] I updated the [documentation](https://docs.artemis.tum.de/developer/guidelines/documentation#keeping-the-documentation-up-to-date) for changed configuration, deployment files, commands, user-facing labels or behavior, or none of these apply.
+- [ ] I updated the [documentation](https://docs.artemis.tum.de/developer/guidelines/documentation#keeping-the-documentation-up-to-date) for changed configuration, deployment files, commands, user-facing labels or behavior, and set `last_reviewed` of the pages I checked against the code, or none of these apply.
 
 
 #### Server

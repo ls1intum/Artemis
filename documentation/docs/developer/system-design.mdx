@@ -2,6 +2,7 @@
 id: system-design
 title: System Design
 sidebar_label: System Design
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -39,22 +40,28 @@ The rationale given below for each design decision refers back to them.
 ## Top-Level Design
 
 The following UML component diagram shows the top-level design of Artemis.
-Artemis is decomposed into an application client (an Angular single-page application in the browser) and an application server (one Spring Boot application).
-Interfaces are drawn as ball-and-socket connectors: the ball is the provided interface, the socket is the required interface.
+Artemis is decomposed into application clients (an Angular single-page application in the browser, the Android and iOS apps, and any Git client) and an application server (one Spring Boot application).
+The server is the only place where data, rules and builds live. The clients present them, and the systems around the server (database, user management, optional AI services, distributed data) are replaceable behind an interface.
 
-<Image src={topLevelDesign} caption="Top-Level Design (UML component diagram)" alt="UML component diagram of the Artemis client, server, build agents and the systems around them" size={ImageSize.large} />
+Interfaces are drawn as ball-and-socket connectors: the ball is the provided interface, the socket is the required interface.
+The mobile apps are drawn with an interface of their own, although the server offers one REST and WebSocket API to all clients.
+The apps are separate products with their own code bases and release cycle, see [Mobile applications](/student/getting-started/mobile-applications), so their dependency on the API is a dependency of its own that has to stay compatible.
+
+<Image src={topLevelDesign} caption="Top-Level Design (UML component diagram)" alt="UML component diagram of the Artemis web client, Android and iOS apps, server, build agents and the systems around them" size={ImageSize.large} />
 
 | Component | Responsibility | Interfaces |
 |-----------|----------------|------------|
-| Artemis Client | Presents all user interfaces and talks to the server. | Requires REST and WebSocket |
-| Artemis Server | Contains all feature modules, LocalVC and LocalCI. | Provides REST + WebSocket and Git (HTTPS, SSH); requires JDBC, Distributed Data, Authentication and Service APIs |
+| Artemis Client | Presents all user interfaces of the web application and talks to the server. | Requires REST and WebSocket |
+| Mobile Apps | The native Android and iOS apps, which cover the activities of students on the move, see [Mobile applications](/student/getting-started/mobile-applications). They use the same server API as the web client. | Require REST and WebSocket |
+| Git Client | The IDE or the command line of a student, an instructor or a tutor. | Requires Git |
+| Artemis Server | Contains all feature modules, LocalVC and LocalCI. | Provides REST + WebSocket and Git (HTTPS, SSH); requires Hibernate (JDBC), Distributed Data, Authentication and Service APIs |
 | LocalVC | The integrated Git server. Stores the repositories on the file system and serves `fetch` and `push` over HTTPS and SSH. | Provides Git |
 | LocalCI | Keeps the queue of build jobs, receives the results of the build jobs, grades them and notifies the user. | Requires Distributed Data |
 | Build Agent | Takes build jobs from the queue, clones the repositories from LocalVC and runs each job in a Docker container. Can run inside a core node or as a separate node. | Requires Git and Distributed Data |
 | Distributed Data Provider | Holds the state that all nodes of an installation share, for example the build job queue. Hazelcast, Redis (or Valkey), or a local implementation for a single node. | Provides Distributed Data |
-| PostgreSQL | Persistent data. MySQL is still supported until Artemis 11, see the callout below. | Provides JDBC |
+| PostgreSQL | Persistent data, accessed with Hibernate. MySQL is still supported until Artemis 11, see the callout below. | Provides JDBC |
 | User Management | Optional external user management such as LDAP, SAML2 or OIDC. | Provides Authentication |
-| Optional Services | Iris, Athena, Hyperion, Weaviate and further services that extend the core. | Provide Service APIs |
+| Optional AI Services | Iris, Athena, Hyperion, Weaviate and further services that extend the core. | Provide Service APIs |
 
 <Callout variant={CalloutVariant.warning}>
 
@@ -83,23 +90,35 @@ It describes the intent behind the architecture. The decisions are not independe
 | **One relational database, migrated with Liquibase at startup** (drivers 1, 5) | There is one source of truth, and an upgrade needs no separate migration step. Supporting only PostgreSQL after Artemis 11 removes the need to write queries that behave the same on two engines, and one database from the test matrix. | Existing MySQL installations have to migrate. |
 | **Optional modules and integrations behind configuration** (driver 4) | An institution enables what it needs, for example with `artemis.iris.enabled`, and delegates authentication to LDAP, SAML2 or OIDC. | Every combination is a configuration that has to be tested. |
 | **A single-page client that talks to the server through REST and WebSocket** (driver 5) | The server API is the only coupling between client and server. For DTO-only endpoints, the client models are generated from OpenAPI specifications, see [OpenAPI](/developer/openapi). | Two code bases that evolve together. |
+| **Native mobile apps next to the web client, on the same API** (drivers 4, 5) | Students expect to read learning material and follow communication on their phone, and they expect push notifications and the look of their platform. A native app delivers that, and it reuses the API, so the server has no second interface to maintain. The apps live in their own repositories and are released independently. The server can demand a minimum app version, so an old app is asked to update when the API has moved on. | An API change has to be compatible with the app versions that are in use. The apps do not cover every feature of the web application. |
+| **Hibernate with Spring Data repositories as the only access to the database** (drivers 1, 5) | An object-relational mapper keeps the domain model in code and the schema in Liquibase changelogs, so one model serves all feature modules. Repositories are the only place where queries and transactions live. A transaction in a service would hold its locks across every repository call, remote request and file write inside it and block other users, so the guidelines place transactions in repositories. Lazy fetching is the rule, because loading the relationships of an entity costs far more than selecting the entity. | The mapper hides what a query costs. Fetching and transaction rules are needed, and checked by architecture tests, see the [database guidelines](/developer/guidelines/database). |
 
 ## Deployment
 
 The following UML deployment diagram shows a typical deployment of an Artemis installation.
-Student, instructor and teaching assistant devices are all equipped equally with the Artemis client in the browser and a Git client.
+A box with a shaded side is a node, a server or a device. The boxes inside it are the software that runs on it.
+The number of nodes depends on the installation: there are one or more core nodes, any number of build agent nodes, and the distributed data server and the broker node only exist when the installation needs them.
+Student, instructor and teaching assistant devices are all equipped equally with the Artemis client in the browser or the mobile app, and a Git client.
 
-<Image src={deploymentOverview} caption="Typical Deployment (UML deployment diagram)" alt="UML deployment diagram of user devices, reverse proxy, core nodes, build agent nodes, database server, distributed data server, and broker node" size={ImageSize.large} />
+<Image src={deploymentOverview} caption="Deployment Overview (UML deployment diagram)" alt="UML deployment diagram of user devices, reverse proxy, core nodes, build agent nodes, database server, distributed data server, and broker node" size={ImageSize.large} />
 
+- **Reverse proxy.** nginx receives the HTTPS requests of the users and forwards HTTP and websocket requests to the core nodes.
 - **Core nodes** run the Artemis server artifact with LocalVC and LocalCI. They keep their state in the database, in the shared file system (the repositories) and in the distributed data provider, so a load balancer can distribute requests without sticky sessions, and a node can be added without downtime.
   Several small nodes usually beat one large one at the same cost, because they fail independently, see [Scaling](/admin/scaling).
 - **Exactly one core node has the `scheduling` profile.** The server runs scheduled tasks, for example to lock repositories on the due date or to clean up unused resources. They must not run on every node.
   This node also sends the startup [telemetry](/admin/telemetry).
 - **Build agent nodes** run the same artifact with the `buildagent` profile. They connect to the distributed data provider, clone repositories from LocalVC and run each build job in a Docker container.
   They can run on servers of the university or in a cloud, and are scaled independently of the core nodes. A core node can also build.
-- **Database server.** PostgreSQL. MySQL is still supported until Artemis 11.
+- **Database server.** PostgreSQL, which the core nodes access with Hibernate. MySQL is still supported until Artemis 11.
 - **Distributed data server.** Only needed with the Redis provider. Hazelcast runs embedded in the core and build agent nodes.
 - **Broker node.** Only needed with several core nodes, to relay websocket messages between them.
+
+**Rationale.** The deployment separates what has a different load, a different risk and a different owner.
+The reverse proxy is the single entry point for browsers and apps, so the core nodes can be added and removed behind it without the users noticing.
+The database server, the distributed data server and the broker are separate nodes because each is operated, backed up and scaled by different means than the Artemis server. An institution can use a managed database or an existing Redis service instead of running its own.
+Build agents are separate from the core nodes because they run untrusted student code in containers and need access to the Docker daemon of their host. Keeping them off the nodes that serve the users limits what a faulty or malicious submission can reach, and the builds cannot take capacity from the user interface at a deadline.
+The Git clients connect to the core nodes, because LocalVC is part of the server, and the build agents clone from there as well.
+Everything that is optional in the diagram is left out in a small installation: one core node can run the scheduled tasks, build in Docker, use the local provider and the in-memory websocket broker. The distributed data server and the broker appear when the installation grows to several core nodes, which keeps the minimal installation to one application and one database (driver 1).
 
 ## Data Model
 
@@ -140,11 +159,16 @@ It is a layered architecture whose application layer is divided into feature mod
 Dependencies point downwards: resources use the application layer, which uses the repositories.
 The application layer reaches the database and the shared state of the installation (Distributed Data) through the data layer and the distributed data provider.
 
-**Rationale.** The layers separate what changes at a different pace: the REST API, the domain logic and the persistence.
-The feature modules keep a change local to one feature, since another module reaches a module only through its `api` package, and never through its repositories.
-Optional modules are reached through `Optional<*Api>`, so a module that an institution switches off does not break the others.
-The architecture tests (ArchUnit) check these rules on every change, because with many contributors a convention that is not checked does not last.
-See the [server development guidelines](/developer/guidelines/server-development) for the details.
+**Rationale.**
+
+* **Layers separate what changes at a different pace:** the REST API, the domain logic and the persistence. Each layer can be understood, tested and changed without knowing the details of the others.
+* **The web layer is the border of trust.** Every REST resource declares who may call it, and every websocket destination is a declared topic with an access rule that the sender uses. Nothing reaches the logic without passing a check, which matters because an institution exposes the server to all of its students.
+* **Feature modules keep a change local to one feature.** Another module reaches a module only through its `api` package and never through its repositories, so a module can be changed internally and its dependencies are visible.
+  Optional modules are reached through `Optional<*Api>`, so a module that an institution switches off does not break the others (driver 4).
+* **Repositories are the only access to the database.** Queries and transactions live there and nowhere else, see the rationale for Hibernate in the [table above](#rationale). Services therefore cannot hold a transaction open across a remote call, and the cost of a query shows up in one place.
+* **Dependencies point downwards.** Resources use the application layer, which uses the repositories. The application layer reaches the database and the shared state of the installation (Distributed Data) through the data layer and the distributed data provider, so a feature module never depends on Hibernate, Hazelcast or Redis directly.
+* **The rules are checked, not only written.** The architecture tests (ArchUnit) check them on every change, because with many contributors over many years a convention that is not checked does not last (driver 5).
+  See the [server development guidelines](/developer/guidelines/server-development) for the details.
 
 ## Integrated Code Lifecycle
 
@@ -202,7 +226,7 @@ It provides endpoints so users can interact with these data structures, such as 
 The CI Management has access to the database and the file system.
 
 The CI Management subsystem implements the `ContinuousIntegrationTriggerService` interface, the `LocalCITriggerService` which provides the `triggerBuild` method. This method gets called whenever a repository needs to be tested, i.e. after creating a programming exercise or when a student submits code.
-When the `triggerBuild` method is called, all information necessary to execute the build job is prepared and used to create a `BuildJobQueueItem` object. The object contains, among other things, repository URIs, the build configuration, a user-defined build script (prepared by the `LocalCIScriptService`) and a priority value (more details in the Priority Calculation section).
+When the `triggerBuild` method is called, all information necessary to execute the build job is prepared and used to create a `BuildJobQueueItem` object. The object contains, among other things, repository URIs, the build configuration, a user-defined build script (prepared by the `BuildScriptProviderService`) and a priority value (more details in the Priority Calculation section).
 The exercise due date is also taken into account. This object is then added to the job queue where it will be retrieved by a build agent to execute the build job. The following diagram shows the structure of the `BuildJobQueueItem`:
 
 <Image src={iclBuildJobItem} caption="BuildJobQueueItem" alt="BuildJobQueueItem" size={ImageSize.large} />
@@ -257,7 +281,7 @@ This ensures that build agents are accurately tracked, including their status, n
 The collected data is used to maintain an up-to-date view of the system.
 
 To improve the reliability of the system, the `BuildJobManagementService` implements a timeout mechanism.
-Administrators can configure a maximum amount of time that build jobs can run by setting the `artemis.continuous-integration.timeout-seconds` environment variable. The default value is 120 seconds.
+Administrators can configure a maximum amount of time that build jobs can run by setting `artemis.continuous-integration.build-timeout-seconds.max`. The default value is 240 seconds.
 If a build job times out, the `BuildJobManagementService` interrupts the build job.
 This is crucial to prevent jobs that require an abnormally high amount of time from clogging up the system and reducing overall system performance.
 
@@ -323,7 +347,7 @@ This approach ensures the efficient synchronization of build job processing.
 The CI Management also provides REST endpoints and supports WebSocket connections.
 These endpoints and real-time connections allow users to monitor and manage both queued and running jobs along with the build agents themselves,
 enhancing the system's operability and user interaction capabilities.
-Additionally, the `processingJobs`, `buildJobQueue` and `canceledBuildJobsTopic` are enhanced with Hazelcast `EntryListener`, `ItemListener` and `MessageListener`, enabling immediate detection of changes such as additions, removals, and updates.
+Additionally, the `processingJobs`, `buildJobQueue` and `canceledBuildJobsTopic` are observed with listeners of the distributed data provider, enabling immediate detection of changes such as additions, removals, and updates.
 As previously mentioned, most of the listeners are added in `LocalCIEventListenerService`.
 
 ### Build Job Cancellation

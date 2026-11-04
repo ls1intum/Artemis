@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -47,9 +49,9 @@ class LocalCIProgrammingLanguageFeatureServiceTest {
         assertThat(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.SWIFT)).containsExactly(StaticCodeAnalysisTool.SWIFTLINT);
     }
 
-    @Test
-    void shouldKeepSequentialTestRunsOfJavaAndHaskell() {
-        assertThat(service.getProgrammingLanguageFeatures(ProgrammingLanguage.JAVA).sequentialTestRuns()).isTrue();
-        assertThat(service.getProgrammingLanguageFeatures(ProgrammingLanguage.HASKELL).sequentialTestRuns()).isTrue();
+    @ParameterizedTest
+    @EnumSource(value = ProgrammingLanguage.class, names = { "C_SHARP", "DART", "GO", "HASKELL", "JAVA", "JAVASCRIPT", "KOTLIN", "PYTHON", "RUBY", "RUST", "SWIFT", "TYPESCRIPT" })
+    void shouldSupportSequentialTestRunsWhereATemplateExists(ProgrammingLanguage language) {
+        assertThat(service.getProgrammingLanguageFeatures(language).sequentialTestRuns()).isTrue();
     }
 }
