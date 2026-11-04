@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<checkstyle version="4.3">
+	<file name="/var/tmp/testing-dir/assignment/Sources/Lib/BubbleSort.swift">
+		<error line="6" column="9" severity="warning" message="Conditional statements should always return on the next line" source="swiftlint.rules.conditional_returns_on_newline"/>
+		<error line="6" column="9" severity="warning" message="`if`, `for`, `guard`, `switch`, `while`, and `catch` statements shouldn&apos;t unnecessarily wrap their conditionals or arguments in parentheses" source="swiftlint.rules.control_statement"/>
+		<error line="6" column="19" severity="error" message="Prefer checking `isEmpty` over comparing `count` to zero" source="swiftlint.rules.empty_count"/>
+		<error line="27" column="16" severity="warning" message="Prefer using `.first(where:)` over `.filter { }.first` in collections" source="swiftlint.rules.first_where"/>
+		<error line="11" column="17" severity="warning" message="`where` clauses are preferred over a single `if` inside a `for`" source="swiftlint.rules.for_where"/>
+		<error line="22" column="21" severity="error" message="Force tries should be avoided" source="swiftlint.rules.force_try"/>
+		<error line="22" column="35" severity="warning" message="Force unwrapping should be avoided" source="swiftlint.rules.force_unwrapping"/>
+		<error line="31" column="5" severity="error" message="Function should have 5 parameters or less: it currently has 7" source="swiftlint.rules.function_parameter_count"/>
+		<error line="31" column="1" severity="error" message="Line should be 120 characters or less; currently it has 127 characters" source="swiftlint.rules.line_length"/>
+		<error line="30" column="5" severity="warning" message="MARK comment should be in valid format. e.g. &apos;// MARK: ...&apos; or &apos;// MARK: - ...&apos;" source="swiftlint.rules.mark"/>
+		<error line="11" column="46" severity="warning" message="Operators should be surrounded by a single whitespace when they are being used" source="swiftlint.rules.operator_usage_whitespace"/>
+		<error line="23" column="22" severity="warning" message="Lines should not have trailing semicolons" source="swiftlint.rules.trailing_semicolon"/>
+	</file>
+</checkstyle>
