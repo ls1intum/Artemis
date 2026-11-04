@@ -121,6 +121,58 @@ class TelemetrySendingServiceTest {
     }
 
     @Test
+    void reportsLocalCiAndLocalVcFromTheProfiles() {
+        env.setActiveProfiles("prod", "core", "scheduling", "localvc", "localci");
+        var data = service.buildTelemetryData(false, "startup-id", Instant.EPOCH);
+        assertThat(data.ciSystem()).isEqualTo("localci");
+        assertThat(data.versionControlSystem()).isEqualTo("localvc");
+    }
+
+    @Test
+    void reportsJenkinsWithLocalVcFromTheProfiles() {
+        env.setActiveProfiles("prod", "core", "scheduling", "localvc", "jenkins");
+        var data = service.buildTelemetryData(false, "startup-id", Instant.EPOCH);
+        assertThat(data.ciSystem()).isEqualTo("jenkins");
+        assertThat(data.versionControlSystem()).isEqualTo("localvc");
+    }
+
+    @Test
+    void reportsNoCiSystemWithoutABuildProfile() {
+        var data = service.buildTelemetryData(false, "startup-id", Instant.EPOCH);
+        assertThat(data.ciSystem()).isEqualTo("none");
+        assertThat(data.versionControlSystem()).isEqualTo("none");
+    }
+
+    @Test
+    void reportsTheConfiguredDistributedDataProvider() {
+        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).distributedDataProvider()).isEqualTo("hazelcast");
+        env.setProperty("artemis.distributed-data.provider", "Redis");
+        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).distributedDataProvider()).isEqualTo("redis");
+        env.setProperty("artemis.distributed-data.provider", "Local");
+        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).distributedDataProvider()).isEqualTo("local");
+    }
+
+    @Test
+    void reportsTheSupersededProviderPropertyToo() {
+        env.setProperty("artemis.continuous-integration.data-store", "Redis");
+        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).distributedDataProvider()).isEqualTo("redis");
+    }
+
+    @Test
+    void reportsAnExternalWebsocketBrokerOnlyForAValidAddress() {
+        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).websocketBroker()).isEqualTo("simple");
+        env.setProperty("spring.websocket.broker.addresses", "");
+        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).websocketBroker()).isEqualTo("simple");
+        env.setProperty("spring.websocket.broker.addresses", "not-an-address");
+        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).websocketBroker()).isEqualTo("simple");
+        env.setProperty("spring.websocket.broker.addresses", "broker1.example:61613, broker2.example:61613");
+        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).websocketBroker()).isEqualTo("external");
+        // the websocket configuration does not trim, so a lone address with a space is invalid there and must not be reported as a relay
+        env.setProperty("spring.websocket.broker.addresses", " broker1.example:61613");
+        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).websocketBroker()).isEqualTo("simple");
+    }
+
+    @Test
     void postsTheReportAsJson() {
         when(nodes.getLiveNodeIds()).thenReturn(Set.of("node1", "node2"));
         when(agents.getConnectedBuildAgentCount()).thenReturn(3);
@@ -128,6 +180,8 @@ class TelemetrySendingServiceTest {
                 .andExpect(jsonPath("$.universityName").value("University")).andExpect(jsonPath("$.moduleFeatures[0]").value("iris"))
                 .andExpect(jsonPath("$.numberOfNodes").value(2)).andExpect(jsonPath("$.buildAgentCount").value(3)).andExpect(jsonPath("$.isMultiNode").value(true))
                 .andExpect(jsonPath("$.startupId").value("startup-id")).andExpect(jsonPath("$.startedAt").value("1970-01-01T00:00:00Z"))
+                .andExpect(jsonPath("$.ciSystem").value("none")).andExpect(jsonPath("$.versionControlSystem").value("none"))
+                .andExpect(jsonPath("$.distributedDataProvider").value("hazelcast")).andExpect(jsonPath("$.websocketBroker").value("simple"))
                 .andExpect(jsonPath("$.adminName").doesNotExist()).andExpect(jsonPath("$.contact").doesNotExist()).andRespond(withSuccess());
         service.sendTelemetryByPostRequest(false, "startup-id", Instant.EPOCH);
         server.verify();

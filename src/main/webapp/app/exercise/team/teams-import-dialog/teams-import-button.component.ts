@@ -1,25 +1,28 @@
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { Component, inject, input, output } from '@angular/core';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TeamsImportDialogComponent } from 'app/exercise/team/teams-import-dialog/teams-import-dialog.component';
-import { ButtonDirective } from 'primeng/button';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-teams-import-button',
     template: `
-        <button pButton severity="primary" size="small" (click)="openTeamsImportDialog($event)">
-            <i class="pi pi-upload"></i>
+        <button tumAetUiButton severity="primary" size="small" (click)="openTeamsImportDialog($event)">
+            <fa-icon [icon]="faUpload" />
             <span>{{ 'artemisApp.team.importTeams.buttonLabel' | artemisTranslate }}</span>
         </button>
     `,
-    imports: [ButtonDirective, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TumAetUiButtonDirective, ArtemisTranslatePipe],
 })
 export class TeamsImportButtonComponent {
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
     private readonly translateService = inject(TranslateService);
+    readonly faUpload = faUpload;
 
     readonly exercise = input.required<Exercise>();
     readonly teams = input.required<Team[]>();
@@ -36,10 +39,9 @@ export class TeamsImportButtonComponent {
         const titleLabel = this.translateService.instant('artemisApp.team.importTeams.buttonLabel');
         const exerciseTitle = exercise.title;
         const header = exerciseTitle ? `${titleLabel} (${exerciseTitle})` : titleLabel;
-        const ref = this.dialogService.open(TeamsImportDialogComponent, {
+        const ref = this.dialogService.open<TeamsImportDialogComponent, Team[]>(TeamsImportDialogComponent, {
             header,
-            width: '50rem',
-            modal: true,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,

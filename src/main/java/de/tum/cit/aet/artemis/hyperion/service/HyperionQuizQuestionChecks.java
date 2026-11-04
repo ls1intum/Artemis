@@ -47,10 +47,11 @@ final class HyperionQuizQuestionChecks {
      * References to an artifact the question would have to contain: "the following tableau", "the given network", "das folgende Tableau".
      * A question matching this while its text holds no multi-line data block names material the reader cannot see, so it is unanswerable.
      */
-    private static final Pattern DANGLING_REFERENCE = Pattern.compile(
-            "\\b(the|this|that|das|die|der|dem|den) (following|above|given|shown|presented|folgende\\w*|obige\\w*|gegebene\\w*|gezeigte\\w*|dargestellte\\w*) "
-                    + "(tableau|table|figure|diagram|graph|network|matrix|linear program|program|lp|code|tabelle|abbildung|graph\\w*|netzwerk|matrix|programm)\\b",
-            Pattern.CASE_INSENSITIVE);
+    private static final Pattern DANGLING_REFERENCE = Pattern
+            .compile(
+                    "\\b(the|this|that|das|die|der|dem|den) (following|above|given|shown|presented|folgende\\w*|obige\\w*|gegebene\\w*|gezeigte\\w*|dargestellte\\w*) "
+                            + "(tableau|table|figure|diagram|network|matrix|linear program|program|lp|code|tabelle|abbildung|graph\\w*|netzwerk|programm)\\b",
+                    Pattern.CASE_INSENSITIVE);
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 

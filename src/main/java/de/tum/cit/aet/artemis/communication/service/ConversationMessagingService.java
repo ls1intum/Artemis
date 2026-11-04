@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -26,7 +25,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
-import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -146,15 +144,8 @@ public class ConversationMessagingService extends PostingService {
         // update last read date and unread message count of author
         conversationParticipantRepository.updateLastRead(author.getId(), conversation.getId(), ZonedDateTime.now());
 
-        var createdMessage = conversationMessageRepository.save(newMessage);
-        log.debug("      conversationMessageRepository.save DONE");
-
-        // Increment the recipients' unread counters here rather than on the @Async notification path below. The read
-        // side resets this counter to zero, and nothing orders the two, so an increment running asynchronously could
-        // land after a recipient had already read the message and leave them an unread badge for it (#13396 in spirit:
-        // the counter contradicted what the user had seen). Running it in the request also means the counter is correct
-        // by the time the websocket broadcast reaches the client.
-        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
+        // The post and its unread counters commit together, before any reader can acknowledge the post.
+        var createdMessage = conversationMessageRepository.saveWithUnreadMessages(newMessage);
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
         log.debug("      conversationMessageRepository.save DONE");
@@ -306,15 +297,11 @@ public class ConversationMessagingService extends PostingService {
             // If there is no entry yet (e.g. for course-wide channels in which the user did not write a post yet,
             // we create the entry to be able to track the unread count)
             if (participantSet.isEmpty()) {
-                var participant = ConversationParticipant.createWithDefaultValues(requestingUser, conversationService.getConversationById(conversationId));
-                participant.setLastRead(ZonedDateTime.now());
-                // We surround this with a try/catch to avoid errors in case there are multiple requests at the exact
-                // same time and the select query on top was not aware of that yet. Therefore, we simply continue.
-                try {
-                    conversationParticipantRepository.save(participant);
-                }
-                catch (DataIntegrityViolationException e) {
-                    // Continue
+                // The client loads the messages of a channel in several requests at once, so the first time a student opens a course-wide channel several requests get here
+                // together. Only one of them creates the participant. The others find it created and update the last read date, as they would have for an existing one.
+                var now = ZonedDateTime.now();
+                if (!conversationParticipantRepository.createIfAbsent(conversationId, requestingUser.getId(), false, now, 0L)) {
+                    conversationParticipantRepository.updateLastRead(requestingUser.getId(), conversationId, now);
                 }
             }
             else {

@@ -82,10 +82,8 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
 
         final var userAuthority = new Authority(Role.STUDENT.getAuthority());
-        final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
         final var adminAuthority = new Authority(Role.ADMIN.getAuthority());
-        final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
-        authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
+        authorityRepository.saveAll(List.of(userAuthority, adminAuthority));
 
         student = userTestRepository.findOneWithAuthoritiesByLogin(USERNAME).orElseThrow();
         final var encodedPassword = passwordService.hashPassword(USER_PASSWORD);

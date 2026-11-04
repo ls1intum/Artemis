@@ -1182,6 +1182,10 @@ public class ParticipationService {
                 continue;
             }
             final StudentParticipation originalParticipation = optionalOriginalParticipation.get();
+            // the exercise id of the DTO is only compared with the path, so the participation itself must belong to the exercise
+            if (!exercise.getId().equals(originalParticipation.getExercise().getId())) {
+                continue;
+            }
 
             final ZonedDateTime newIndividualDueDate;
             if (exercise.getDueDate() == null || (dto.individualDueDate() != null && dto.individualDueDate().isBefore(exercise.getDueDate()))) {

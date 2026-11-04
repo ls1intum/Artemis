@@ -8,6 +8,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
@@ -46,6 +48,13 @@ class HyperionQuizQuestionChecksTest {
     @Test
     void defectOf_rejectsAReferenceToMaterialTheQuestionDoesNotContain() {
         assertThat(defectOf(question("Which variable leaves the basis in the following tableau?", "x1", "x2", "x3", "x4"))).contains(Defect.DANGLING_REFERENCE);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "the following table", "the following tableau", "the given graph", "the shown network", "the presented matrix", "das folgende Programm",
+            "die gegebene Tabelle", "der gezeigte Graph", "der gezeigte Graphen", "die dargestellte Matrix" })
+    void defectOf_rejectsEnglishAndGermanReferencesToMissingArtifacts(String reference) {
+        assertThat(defectOf(question("Consider " + reference + ". Which answer is correct?", "Alpha", "Beta", "Gamma", "Delta"))).contains(Defect.DANGLING_REFERENCE);
     }
 
     @Test

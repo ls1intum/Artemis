@@ -44,9 +44,23 @@ describe('ExamRoomsService', () => {
                 expect(response.body).toEqual(mockOverview);
             });
 
-            const req = httpMock.expectOne('api/exam/rooms/overview');
+            const req = httpMock.expectOne('api/exam/rooms/admin/overview');
             expect(req.request.method).toBe('GET');
             req.flush(mockOverview);
+        });
+
+        it('should send the course and exam id when the overview is loaded for an exam', () => {
+            const overview: ExamRoomOverviewDTO = { newestUniqueExamRooms: [] };
+
+            service.getRoomOverview(3, 4).subscribe((response) => {
+                expect(response.body).toEqual(overview);
+            });
+
+            const req = httpMock.expectOne((request) => request.url === 'api/exam/rooms/overview');
+            expect(req.request.method).toBe('GET');
+            expect(req.request.params.get('courseId')).toBe('3');
+            expect(req.request.params.get('examId')).toBe('4');
+            req.flush(overview);
         });
 
         it('should handle empty overview response', () => {
@@ -59,7 +73,7 @@ describe('ExamRoomsService', () => {
                 expect(response.body?.newestUniqueExamRooms).toHaveLength(0);
             });
 
-            const req = httpMock.expectOne('api/exam/rooms/overview');
+            const req = httpMock.expectOne('api/exam/rooms/admin/overview');
             req.flush(emptyOverview);
         });
     });
@@ -79,7 +93,7 @@ describe('ExamRoomsService', () => {
                 expect(response.body?.numberOfUploadedRooms).toBe(5);
             });
 
-            const req = httpMock.expectOne('api/exam/rooms/upload');
+            const req = httpMock.expectOne('api/exam/rooms/admin/upload');
             expect(req.request.method).toBe('POST');
             expect(req.request.body instanceof FormData).toBe(true);
             expect(req.request.body.get('file')).toBe(mockFile);
@@ -99,7 +113,7 @@ describe('ExamRoomsService', () => {
                 expect(response.body?.uploadedRoomNames).toHaveLength(1);
             });
 
-            const req = httpMock.expectOne('api/exam/rooms/upload');
+            const req = httpMock.expectOne('api/exam/rooms/admin/upload');
             req.flush(mockResponse);
         });
     });

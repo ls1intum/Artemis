@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSeenRequestDTO;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationStatusUpdateRequestDTO;
 import de.tum.cit.aet.artemis.notification.service.UserCourseNotificationStatusService;
@@ -83,7 +82,7 @@ public class UserCourseNotificationStatusResource {
 
         var currentUser = userRepository.getUser();
 
-        userCourseNotificationStatusService.updateUserCourseNotificationStatus(currentUser, requestDTO.notificationIds(), UserCourseNotificationStatusType.SEEN, courseId);
+        userCourseNotificationStatusService.markDisplayedNotificationsAsSeen(currentUser, requestDTO.notificationIds(), courseId);
 
         return ResponseEntity.ok().build();
     }

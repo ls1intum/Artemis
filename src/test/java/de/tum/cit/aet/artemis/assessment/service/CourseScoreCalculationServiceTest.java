@@ -98,7 +98,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void calculateCourseScoresForExamBonusSourceWithNotIncludedExercises() {
         var exerciseList = new ArrayList<>(course.getExercises());
         exerciseList.sort(Comparator.comparing(Exercise::getId));
@@ -123,7 +123,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void calculateCourseScoreForExamBonusSourceWithoutExercises() {
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
@@ -135,7 +135,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation(boolean withDueDate) {
 
         ZonedDateTime dueDate = withDueDate ? ZonedDateTime.now().plusDays(1) : null;
@@ -383,7 +383,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void variantGroupMaxPointsAreCappedInReachablePoints() {
         long variantGroupId = 1L;
         double variantGroupCap = 5.0;

@@ -959,7 +959,7 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
      * instructor's untouched test run is enough to break the tab for them even when no student ever started anything.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void shouldLoadTheOverviewWithATestRunThatHasNoSubmission() throws Exception {
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().plusDays(2),

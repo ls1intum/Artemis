@@ -76,6 +76,15 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
     Optional<OneToOneChat> findWithParticipantsAndUserCourseRolesInCourseBetweenUsers(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA,
             @Param("userIdB") Long userIdB);
 
+    /**
+     * Find the one-to-one chat of a pair of users in a course by the key of the pair, whether or not its participants exist yet.
+     *
+     * @param courseId           the ID of the course to search in
+     * @param participantPairKey the key of the pair, see {@link OneToOneChat#pairKeyOf(long, long)}
+     * @return the chat of the pair, if there is one
+     */
+    Optional<OneToOneChat> findByCourseIdAndParticipantPairKey(Long courseId, String participantPairKey);
+
     Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
 
     @Query("""

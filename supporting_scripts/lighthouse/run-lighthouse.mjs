@@ -100,7 +100,6 @@ const MOCK_PROFILE_INFO = {
     programmingLanguageFeatures: [],
     registrationEnabled: false,
     repositoryAuthenticationMechanisms: ['password'],
-    sentry: { dsn: '' },
     sshCloneURLTemplate: '',
     studentExamStoreSessionData: false,
     theiaPortalURL: '',

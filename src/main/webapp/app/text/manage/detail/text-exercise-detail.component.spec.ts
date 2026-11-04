@@ -5,7 +5,7 @@
 import { Component, input } from '@angular/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TextExerciseDetailComponent } from 'app/text/manage/detail/text-exercise-detail.component';
@@ -13,7 +13,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
@@ -96,7 +95,7 @@ describe('TextExercise Management Detail Component', () => {
         await TestBed.configureTestingModule({
             imports: [TextExerciseDetailComponent],
             providers: [
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ActivatedRoute, useValue: { params: of({}), snapshot: { pathFromRoot: [{ params: {} }] } } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -176,12 +175,16 @@ describe('TextExercise Management Detail Component', () => {
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
             route.params = of({ exerciseId: textExerciseWithExerciseGroup.id });
+            const examSnapshot = new ActivatedRouteSnapshot();
+            examSnapshot.params = { examId: 7 };
+            vi.spyOn(examSnapshot, 'pathFromRoot', 'get').mockReturnValue([examSnapshot]);
+            route.snapshot = examSnapshot;
         });
 
         it('should call load on init and be in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
-            const exerciseServiceStub = vi.spyOn(exerciseService, 'find').mockReturnValue(
+            const exerciseServiceStub = vi.spyOn(exerciseService, 'findForExam').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: textExerciseWithExerciseGroup,

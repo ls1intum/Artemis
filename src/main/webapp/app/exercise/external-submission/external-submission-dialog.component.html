@@ -1,39 +1,41 @@
 <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-    <div class="modal-body">
-        <div class="mb-3">
+    <div class="p-4!">
+        <div class="mb-4!">
             <h5 class="mb-0">{{ exercise().title }}</h5>
         </div>
         @if (exercise().gradingInstructions) {
-            <div class="form-group">
+            <div class="mb-4!">
                 <h3 for="id" jhiTranslate="artemisApp.exercise.assessmentInstructions"></h3>
                 <span [jhiMarkdown]="exercise().gradingInstructions"></span>
             </div>
         }
-        <div class="form-group">
-            <h4 class="control-label" jhiTranslate="artemisApp.result.studentLogin"></h4>
+        <div class="mb-4!">
+            <h4 class="block font-medium mb-1" jhiTranslate="artemisApp.result.studentLogin"></h4>
             <input
+                tumAetUiInput
                 [attr.aria-label]="'artemisApp.result.studentLogin' | artemisTranslate"
                 type="text"
                 required
-                class="form-control"
+                class="w-full"
                 name="studentLogin"
                 id="studentLogin"
                 [(ngModel)]="student.login"
                 #studentLogin="ngModel"
             />
             @if (studentLogin?.invalid && studentLogin?.errors?.required) {
-                <span class="text-danger" jhiTranslate="artemisApp.result.studentLoginRequired"></span>
+                <span class="text-state-danger" jhiTranslate="artemisApp.result.studentLoginRequired"></span>
             }
         </div>
-        <div class="form-group row align-items-end">
-            <div class="col-md-6">
-                <h4 class="control-label" jhiTranslate="artemisApp.result.scorePercentage"></h4>
+        <div class="mb-4! grid grid-cols-12 gap-3! items-end">
+            <div class="col-span-12 md:col-span-6">
+                <h4 class="block font-medium mb-1" jhiTranslate="artemisApp.result.scorePercentage"></h4>
                 <input
+                    tumAetUiInput
                     [attr.aria-label]="'artemisApp.result.scorePercentage' | artemisTranslate"
                     type="number"
                     [pattern]="SCORE_PATTERN"
                     required
-                    class="form-control"
+                    class="w-full"
                     name="score"
                     id="field_score"
                     [(ngModel)]="result.score"
@@ -41,25 +43,24 @@
                     #score="ngModel"
                 />
                 @if (score.dirty && score.invalid) {
-                    <span class="text-danger" jhiTranslate="artemisApp.result.invalidScore"></span>
+                    <span class="text-state-danger" jhiTranslate="artemisApp.result.invalidScore"></span>
                 }
             </div>
-            <div class="checkbox col-md-6">
-                <div class="artemis-label form-check">
-                    <input
-                        [attr.aria-label]="'artemisApp.result.successful' | artemisTranslate"
-                        class="form-check-input"
-                        type="checkbox"
+            <div class="inline-flex items-center gap-2 col-span-12 md:col-span-6">
+                <div class="artemis-label inline-flex items-center gap-2">
+                    <tumaet-ui-checkbox
+                        [ariaLabel]="'artemisApp.result.successful' | artemisTranslate"
+                        class="accent-primary"
                         name="successful"
                         [(ngModel)]="result.successful"
                         [disabled]="true"
                     />
-                    <span class="form-check-label" jhiTranslate="artemisApp.result.successful"></span>
+                    <span class="cursor-pointer" jhiTranslate="artemisApp.result.successful"></span>
                 </div>
             </div>
         </div>
-        <div class="form-group mb-2">
-            <button type="button" class="btn btn-default" [hidden]="feedbacks.length > 0" (click)="pushFeedback()">
+        <div class="mb-4! mb-2">
+            <button tumAetUiButton type="button" class="" [hidden]="feedbacks.length > 0" (click)="pushFeedback()">
                 <span jhiTranslate="artemisApp.result.addFeedback"></span>
             </button>
         </div>
@@ -67,40 +68,48 @@
             <div>
                 @for (feedback of feedbacks; track feedback; let i = $index) {
                     <div>
-                        <div class="form-group">
-                            <label for="feedbackText{{ i }}" class="control-label" [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }">
+                        <div class="mb-4!">
+                            <label for="feedbackText{{ i }}" class="block font-medium mb-1" [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }">
                                 Feedback #{{ i + 1 }} Text
                             </label>
                             <input
-                                id="feedbackText{{ i }}"
+                                tumAetUiInput
+                                [id]="'feedbackText' + i"
+                                [tumAetUiInputId]="'feedbackText' + i"
                                 type="text"
-                                class="form-control"
+                                class="w-full"
                                 name="feedbackText{{ i }}"
                                 required
                                 [(ngModel)]="feedback.text"
                                 #feedbackText="ngModel"
                             />
                             @if (feedbackText?.invalid && feedbackText?.errors?.required) {
-                                <span class="text-danger" jhiTranslate="artemisApp.result.feedbackTextRequired"></span>
+                                <span class="text-state-danger" jhiTranslate="artemisApp.result.feedbackTextRequired"></span>
                             }
                         </div>
-                        <div class="form-group row align-items-end">
-                            <div class="col-md-6">
-                                <label for="feedbackErrorText{{ i }}" class="control-label" [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }">
+                        <div class="mb-4! grid grid-cols-12 gap-3! items-end">
+                            <div class="col-span-12 md:col-span-6">
+                                <label
+                                    for="feedbackErrorText{{ i }}"
+                                    class="block font-medium mb-1"
+                                    [ngClass]="{ negative: !feedback || !feedback.positive, positive: feedback.positive }"
+                                >
                                     Feedback #{{ i + 1 }} Detail Text
                                 </label>
                                 <textarea
+                                    tumAetUiInput
                                     type="text"
-                                    class="form-control"
-                                    id="feedbackErrorText{{ i }}"
+                                    class="w-full"
+                                    [id]="'feedbackErrorText' + i"
+                                    [tumAetUiInputId]="'feedbackErrorText' + i"
                                     name="feedbackErrorText{{ i }}"
                                     [(ngModel)]="feedback.detailText"
                                 ></textarea>
                             </div>
-                            <div class="checkbox col-md-6">
-                                <label class="artemis-label form-check">
-                                    <input class="form-check-input" type="checkbox" name="positive{{ i }}" [(ngModel)]="feedback.positive" />
-                                    <span class="form-check-label" jhiTranslate="artemisApp.result.positive"></span>
+                            <div class="inline-flex items-center gap-2 col-span-12 md:col-span-6">
+                                <label class="artemis-label inline-flex items-center gap-2">
+                                    <tumaet-ui-checkbox class="accent-primary" name="positive{{ i }}" [(ngModel)]="feedback.positive" />
+                                    <span class="cursor-pointer" jhiTranslate="artemisApp.result.positive"></span>
                                 </label>
                             </div>
                         </div>
@@ -109,24 +118,26 @@
             </div>
         }
         @if (feedbacks.length > 0) {
-            <div class="form-group mb-2">
-                <button type="button" class="btn btn-default" (click)="pushFeedback()">
+            <div class="mb-4! mb-2">
+                <button tumAetUiButton type="button" class="" (click)="pushFeedback()">
                     <span jhiTranslate="artemisApp.result.addFeedback"></span>
                 </button>
                 &nbsp;
-                <button type="button" class="btn btn-default" (click)="popFeedback()">
+                <button tumAetUiButton type="button" class="" (click)="popFeedback()">
                     <span jhiTranslate="artemisApp.result.deleteFeedback"></span>
                 </button>
             </div>
         }
-        <div class="form-check mt-3">
-            <input class="form-check-input" type="checkbox" name="resultRated" id="resultRated" [(ngModel)]="result.rated" #resultRated="ngModel" />
-            <label for="resultRated" class="form-check-label" jhiTranslate="artemisApp.result.rated"></label>
+        <div class="inline-flex items-center gap-2 mt-4!">
+            <tumaet-ui-checkbox class="accent-primary" name="resultRated" inputId="resultRated" [(ngModel)]="result.rated" #resultRated="ngModel" />
+            <label for="resultRated" class="cursor-pointer" jhiTranslate="artemisApp.result.rated"></label>
         </div>
     </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="clear()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
-        <button type="submit" [disabled]="editForm.invalid || isSaving()" class="btn btn-primary">
+    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4!">
+        <button variant="outlined" severity="secondary" tumAetUiButton type="button" class="" (click)="clear()">
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button tumAetUiButton type="submit" [disabled]="editForm.invalid || isSaving()" class="">
             <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
         </button>
     </div>

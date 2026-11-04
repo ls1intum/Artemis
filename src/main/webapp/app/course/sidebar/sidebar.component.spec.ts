@@ -13,7 +13,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { ActivatedRoute, NavigationEnd, Params, Router, RouterModule, RouterOutlet, provideRouter } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
 import { ExerciseFilterResults } from 'app/foundation/types/exercise-filter';
 import { EventEmitter } from '@angular/core';
@@ -40,7 +40,7 @@ describe('SidebarComponent', () => {
     let fixture: ComponentFixture<SidebarComponent>;
     let router: MockRouter;
     let activatedRoute: MockActivatedRoute;
-    let modalService: NgbModal;
+    let modalService: TumAetUiDialogService;
 
     beforeEach(() => {
         router = new MockRouter();
@@ -63,7 +63,7 @@ describe('SidebarComponent', () => {
                 MockRouterLinkDirective,
             ],
             providers: [
-                MockProvider(NgbModal),
+                MockProvider(TumAetUiDialogService),
                 { provide: ActivatedRoute, useValue: activatedRoute },
                 { provide: Router, useValue: router },
                 provideHttpClient(),
@@ -75,7 +75,7 @@ describe('SidebarComponent', () => {
 
         fixture = TestBed.createComponent(SidebarComponent);
         component = fixture.componentInstance;
-        modalService = TestBed.inject(NgbModal);
+        modalService = TestBed.inject(TumAetUiDialogService);
 
         fixture.componentRef.setInput('sidebarData', {
             sidebarType: 'default',
@@ -172,7 +172,7 @@ describe('SidebarComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', false);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]'))).toBeTruthy();
     });
 
     it('should hide the sidebar collapse button in the sidebar header while collapsed', () => {
@@ -181,7 +181,7 @@ describe('SidebarComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', true);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]'))).toBeNull();
     });
 
     it('should emit toggleSidebar when the sidebar collapse button is clicked', () => {
@@ -191,7 +191,7 @@ describe('SidebarComponent', () => {
         fixture.componentRef.setInput('isSidebarCollapsed', false);
         fixture.changeDetectorRef.detectChanges();
 
-        fixture.debugElement.query(By.css('.btn-sidebar-collapse')).triggerEventHandler('click');
+        fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).triggerEventHandler('click');
 
         expect(emitSpy).toHaveBeenCalledOnce();
     });
@@ -316,7 +316,7 @@ describe('SidebarComponent', () => {
                     exerciseFilters: {},
                     filterApplied: filterAppliedMock,
                 },
-            } as NgbModalRef;
+            } as TumAetUiDialogRef;
             const openModalSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
             const openFilterExercisesDialogSpy = vi.spyOn(component, 'openFilterExercisesDialog');
             const initFilterOptionsSpy = vi.spyOn(component, 'initializeFilterOptions');
@@ -326,7 +326,12 @@ describe('SidebarComponent', () => {
 
             expect(initFilterOptionsSpy).toHaveBeenCalledOnce();
             expect(openFilterExercisesDialogSpy).toHaveBeenCalledOnce();
-            expect(openModalSpy).toHaveBeenCalledWith(ExerciseFilterModalComponent, { animation: true, backdrop: 'static', size: 'lg' });
+            expect(openModalSpy).toHaveBeenCalledWith(ExerciseFilterModalComponent, {
+                size: 'large',
+                showHeader: false,
+                ariaLabel: 'artemisApp.courseOverview.exerciseFilter.modalTitle',
+                dismissableMask: false,
+            });
         });
     });
 
@@ -371,12 +376,12 @@ describe('SidebarComponent', () => {
     describe('openFilterExercisesDialog', () => {
         it('should subscribe to filterApplied from modal', () => {
             const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();
-            const mockModalRef: Partial<NgbModalRef> = {
+            const mockModalRef: Partial<TumAetUiDialogRef> = {
                 componentInstance: {
                     filterApplied: filterAppliedEmitter,
                 },
             };
-            const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as TumAetUiDialogRef);
             const subscribeSpy = vi.spyOn(filterAppliedEmitter, 'subscribe');
 
             component.openFilterExercisesDialog();
@@ -387,12 +392,12 @@ describe('SidebarComponent', () => {
 
         it('should update variables correctly when filterApplied is emitted', () => {
             const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();
-            const mockModalRef: Partial<NgbModalRef> = {
+            const mockModalRef: Partial<TumAetUiDialogRef> = {
                 componentInstance: {
                     filterApplied: filterAppliedEmitter,
                 },
             };
-            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as TumAetUiDialogRef);
 
             const mockFilterResults: ExerciseFilterResults = {
                 filteredSidebarData: {
@@ -537,7 +542,7 @@ describe('SidebarComponent variant group selection', () => {
                 ]),
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(NgbModal),
+                MockProvider(TumAetUiDialogService),
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: CourseConversationsService, useClass: MockCourseConversationsService },
