@@ -157,7 +157,8 @@ public class StructuralOracleSeeder {
     }
 
     /**
-     * Writes the session's seeded Ares policy with the test classes of the live instructor test sources. A no-op without a captured seed policy or when the live file already
+     * Writes the session's seeded Ares policy with the test classes of the live instructor test sources and, when the live reference solution contains student-written
+     * JUnit tests, their import permitted. A no-op without a captured seed policy or when the live file already
      * matches. A read-back or write failure, or a seed whose list cannot be inspected, leaves the file as it is; the verifier's policy gate then rejects it with the reason.
      */
     private void writeServerOwnedSecurityPolicy(InteractiveSandbox sandbox, String sessionId) {
@@ -172,7 +173,12 @@ public class StructuralOracleSeeder {
                 log.warn("Not writing the server-owned Ares policy for session {}: the tests repository could not be read back", sessionId);
                 return;
             }
-            String derived = AresSecurityPolicy.derive(seedPolicy, tests.files());
+            GenerationWorkspace.RepositoryExtraction solution = workspace.extractRepository(sandbox, sessionId, RepositoryRole.SOLUTION, null);
+            if (solution.extractionFailed() && solution.files().isEmpty()) {
+                log.warn("Not writing the server-owned Ares policy for session {}: the reference solution could not be read back", sessionId);
+                return;
+            }
+            String derived = AresSecurityPolicy.derive(seedPolicy, tests.files(), solution.files());
             if (derived == null || derived.equals(tests.files().get(AresSecurityPolicy.PATH))) {
                 return;
             }
