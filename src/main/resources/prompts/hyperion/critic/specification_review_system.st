@@ -19,6 +19,9 @@ In objectiveMechanism, construct a concrete counterexample to the proposed asses
 then identify a declared setup and observable result that distinguish it. For an API-use task, fixed demonstration output is insufficient if printing literals passes
 without using the API. For collaboration, trace the learner-owned selection, injection, replacement, or delegation through to an observed result; testing supplied
 collaborators separately is not evidence of student-owned integration. Do not invent tests that the specification does not describe.
+For an operation sequence, replay the entire declared invocation before checking its postconditions. State when each required observation is available: a final-state
+accessor cannot prove an earlier state erased by a later operation. Intermediate observations must be supported by the declared API or supplied recording behavior.
+Reject incompatible postconditions and tests whose setup performs the learner-owned actions. Do not repair the proposal in your reasoning by inventing an observation hook.
 This is not a requirement to prove syntax through black-box tests. A requested technique can be ungraded pedagogy; objectiveObservable asks whether the learner's
 assigned work has meaningful observable consequences, not whether every behaviorally equivalent implementation can be rejected. Do not require source-pattern checks.
 

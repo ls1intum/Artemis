@@ -58,7 +58,7 @@ tell a student what rule failed and why; the message is part of the pedagogy.
 Grade the learner-owned operation through runtime evidence that distinguishes a plausible bypass from the required work. Choose the observation mechanism together with
 its Public API, before the specification freezes. Vary inputs when behavior depends on them; observe state or interactions when the objective is API use. Supplied runtime
 observation may expose operations on objects a beginner creates locally without making them write new abstractions. Tests of the supplied API alone do not grade the student's
-integration. Keep the student's prerequisites and responsibilities intact. Do not invent normative call counts, allocation counts or syntax restrictions merely to help a test.
+integration. For an operation sequence, state when each observation is taken. A final snapshot cannot establish an earlier state erased by a later operation; use supplied intermediate observations where needed. Observation support must record student actions, not perform them. Keep the student's prerequisites and responsibilities intact. Do not invent normative call counts, allocation counts or syntax restrictions merely to help a test.
 Source and bytecode inspection are not supported grading mechanisms.
 
 ## Harness conventions (Java/Ares)
