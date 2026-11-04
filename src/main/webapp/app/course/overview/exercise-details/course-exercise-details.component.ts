@@ -791,7 +791,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             },
         });
 
-        if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
+        // The details panel offers the rating and the complaint from this result; the modeling editor still renders both itself.
+        if (this.exercise!.type === ExerciseType.MODELING) {
             return;
         }
 
