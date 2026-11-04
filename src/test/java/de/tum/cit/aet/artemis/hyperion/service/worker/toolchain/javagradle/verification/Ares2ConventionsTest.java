@@ -73,6 +73,16 @@ class Ares2ConventionsTest {
                 "de.test.StackTest");
     }
 
+    @Test
+    void aPolicyAddedToASeedWithoutOneIsRejectedWhileAnUnseededSnapshotUsesItsOwn() throws IOException {
+        Map<String, String> seedWithoutPolicy = harness();
+        seedWithoutPolicy.remove(AresSecurityPolicy.PATH);
+        Map<String, String> candidate = candidate();
+
+        assertThat(ExerciseIntegrityGate.securityPolicyReasons(seedWithoutPolicy, candidate, Map.of())).singleElement().asString().contains("has no SecurityPolicy.yaml");
+        assertThat(ExerciseIntegrityGate.securityPolicyReasons(Map.of(), candidate, Map.of())).isEmpty();
+    }
+
     private static final Map<String, String> SOLUTION_WITH_STUDENT_TESTS = Map.of("src/de/test/Stack.java", "package de.test;\npublic class Stack {}",
             "src/de/test/StackUsageTest.java", """
                     package de.test;

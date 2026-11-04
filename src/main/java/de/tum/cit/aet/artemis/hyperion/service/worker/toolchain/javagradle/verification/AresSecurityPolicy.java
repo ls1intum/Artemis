@@ -85,8 +85,9 @@ final class AresSecurityPolicy {
     }
 
     /**
-     * Rejects a produced policy that differs from the one the server derives. Without a seed (a harness-free or legacy snapshot) the produced policy's own permissions are taken as
-     * the base, so its test-class list must still match the instructor test sources exactly.
+     * Rejects a produced policy that differs from the one the server derives. Without any seed (a harness-free or legacy snapshot) the produced policy's own permissions are taken
+     * as the base, so its test-class list must still match the instructor test sources exactly. A seeded tests repository without a policy admits none: a policy the candidate
+     * added would otherwise define its own permissions.
      *
      * @param seed             the tests repository before authoring
      * @param produced         the produced tests repository
@@ -99,6 +100,9 @@ final class AresSecurityPolicy {
             return List.of("Ares 2 tests must keep the explicit SecurityPolicy.yaml; the default policy must not derive exemptions from student code.");
         }
         String seedPolicy = seed.get(PATH);
+        if (seedPolicy == null && !seed.isEmpty()) {
+            return List.of("The seeded tests repository has no SecurityPolicy.yaml, so its Ares 2 permissions cannot come from the candidate; delete tests/SecurityPolicy.yaml.");
+        }
         String expected;
         try {
             expected = derive(seedPolicy == null ? policy : seedPolicy, produced, producedSolution);
