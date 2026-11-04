@@ -314,6 +314,9 @@ def known_profiles() -> set[str]:
     return profiles
 
 
+SHELL_COMMENT = re.compile(r"(?:^|\s)#.*$")
+
+
 def code_segments(text: str):
     """(line number, text, is_fenced_shell) for inline code spans in the prose and for the lines of fenced shell examples."""
     fenced, language = False, ""
@@ -325,7 +328,10 @@ def code_segments(text: str):
             continue
         if fenced:
             if language in SHELL_LANGUAGES:
-                yield number, line, True
+                # a comment is prose ("# Requires pnpm and Node 24"), not a command, and a trailing one is cut off as well
+                command = SHELL_COMMENT.sub("", line)
+                if command.strip():
+                    yield number, command, True
         else:
             for span in INLINE_CODE.findall(line):
                 yield number, span, False
@@ -695,6 +701,8 @@ def self_test() -> None:
     assert len(command_problems(page, "`pnpm --dir documentation run no-such-script-xyz`\n")) == 1, "options may precede the command"
     assert not command_problems(page, "`pnpm --dir documentation run build` `pnpm -r run build` `pnpm --filter foo install`\n")
     assert not command_problems(page, "```bash\npnpm --version   # should print the pinned version\n```\n"), "a comment after an option is not a command"
+    assert not command_problems(page, "```bash\n# Requires pnpm and Node 24, use pnpm to install\npnpm install  # pnpm should work\n```\n"), "a shell comment is not a command"
+    assert len(command_problems(page, "```bash\n# pnpm is needed\npnpm run no-such-script-xyz  # still reported\n```\n")) == 1
     assert len(command_problems(page, "`./gradlew clean noSuchTaskXyz`\n")) == 1, "every task is checked, not only the first"
     assert not command_problems(page, "`./gradlew build --console plain -x test`\n"), "an option value is not a task"
 
