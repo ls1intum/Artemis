@@ -293,6 +293,7 @@ class DockerGradleBuildTest {
                 ## Public API
                 ```java
                 public class ScoreChecks {
+                    @java.lang.annotation.Native public static final int LIMIT = 3;
                     @Deprecated public void checkNullInput();
                     @Override public String toString();
                 }
@@ -301,11 +302,13 @@ class DockerGradleBuildTest {
         StructuralOracleSeeder seeder = new StructuralOracleSeeder(workspace, specifications);
         seeder.captureBaseline(session, workspaceSeed.testsSeedSnapshot());
         SeededStructuralTests seeded = seeder.seedIfStructuralDiff(sandbox, session, exercise);
-        assertThat(seeded.testNames()).contains("testMethods[ScoreChecks]");
+        assertThat(seeded.testNames()).contains("testMethods[ScoreChecks]", "testAttributes[ScoreChecks]");
         String path = "solution/src/de/tum/cit/aet/reference/ScoreChecks.java";
+        // @Native has source retention, so reflection never sees it and the oracle must not expect it.
         String annotated = """
                 package de.tum.cit.aet.reference;
                 public class ScoreChecks {
+                    @java.lang.annotation.Native public static final int LIMIT = 3;
                     @Deprecated public void checkNullInput() {}
                     @Override public String toString() { return "checks"; }
                 }
@@ -313,7 +316,7 @@ class DockerGradleBuildTest {
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, annotated), Map.of()));
         var correct = build(session, "solution");
         assertThat(correct.exitCode()).as(correct.buildDiagnostic()).isZero();
-        assertThat(correct.testNames()).contains("testMethods[ScoreChecks]");
+        assertThat(correct.testNames()).contains("testMethods[ScoreChecks]", "testAttributes[ScoreChecks]");
 
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, annotated.replace("@Deprecated ", "")), Map.of()));
         var unannotated = build(session, "solution");

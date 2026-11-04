@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification;
 
 import java.io.StringReader;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -51,12 +53,6 @@ final class ApprovedStructuralContract {
     /** Ares reads an absent key differently from an empty array, so the oracle omits only the keys that are {@code null} and keeps every empty array and empty text. */
     private static final JsonMapper ORACLE_MAPPER = JsonMapper.builder().changeDefaultPropertyInclusion(inclusion -> inclusion.withValueInclusion(JsonInclude.Include.NON_NULL))
             .build();
-
-    /**
-     * Annotations the compiler discards, so the runtime reflection Ares uses never sees them; the oracle leaves them out. Any other annotation is treated as visible at runtime,
-     * like the structure oracle generator of ordinary programming exercises does.
-     */
-    private static final Set<String> SOURCE_ONLY_ANNOTATIONS = Set.of("Override", "SuppressWarnings");
 
     private final Map<String, JavaClass> types;
 
@@ -518,8 +514,32 @@ final class ApprovedStructuralContract {
      */
     @Nullable
     private static List<String> oracleAnnotations(List<JavaAnnotation> annotations) {
-        List<String> names = annotations.stream().map(annotation -> annotation.getType().getSimpleName()).filter(name -> !SOURCE_ONLY_ANNOTATIONS.contains(name)).sorted().toList();
+        List<String> names = annotations.stream().filter(annotation -> visibleAtRuntime(annotation.getType().getFullyQualifiedName()))
+                .map(annotation -> annotation.getType().getSimpleName()).sorted().toList();
         return names.isEmpty() ? null : names;
+    }
+
+    /**
+     * Whether runtime reflection, which Ares uses, can see an annotation of this type. A JDK annotation type is decided by its retention, an absent {@code @Retention} meaning
+     * {@code CLASS}; an unqualified name is also looked up in {@code java.lang}, which needs no import. Only the platform class loader is asked, so a name written in the
+     * specification never loads application classes. Any other annotation, such as JUnit's {@code @Test}, cannot be inspected here and is kept, because an annotation a
+     * solution must carry is almost always meant to be seen at runtime.
+     */
+    private static boolean visibleAtRuntime(String annotationType) {
+        List<String> candidates = annotationType.contains(".") ? List.of(annotationType) : List.of("java.lang." + annotationType);
+        for (String candidate : candidates) {
+            try {
+                Class<?> type = Class.forName(candidate, false, ClassLoader.getPlatformClassLoader());
+                if (type.isAnnotation()) {
+                    Retention retention = type.getAnnotation(Retention.class);
+                    return retention != null && retention.value() == RetentionPolicy.RUNTIME;
+                }
+            }
+            catch (ClassNotFoundException | LinkageError notAJdkType) {
+                // Not a JDK annotation: keep it.
+            }
+        }
+        return true;
     }
 
     /** The erased simple type names of the parameters, or {@code null} when there are none because the oracle leaves the key out. */

@@ -74,6 +74,37 @@ class ApprovedStructuralContractTest {
                 .singleElement().asString().contains("testNullInput");
     }
 
+    /** Ares sees only runtime-retained annotations; one the compiler discards must not reach the oracle, or a matching solution fails its structural check. */
+    @Test
+    void annotationsWithoutRuntimeRetentionStayOutOfTheOracle() {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Buffer {
+                    @java.lang.annotation.Native public static final int DEFAULT_SIZE = 10;
+                    @Deprecated public static final int LEGACY_SIZE = 5;
+                    @SafeVarargs @SuppressWarnings("unchecked") public static final void fill(Object first);
+                }
+                ```
+                """, Set.of("Buffer"));
+
+        assertThat(parsed.errors()).isEmpty();
+        JsonNode oracle = MAPPER.readTree(parsed.contract().toOracle("example")).get(0);
+        assertThat(oracle.at("/attributes/0/name").asString()).isEqualTo("DEFAULT_SIZE");
+        assertThat(oracle.at("/attributes/0").has("annotations")).as("@Native has source retention").isFalse();
+        assertThat(oracle.at("/attributes/1/annotations").toString()).isEqualTo("[\"Deprecated\"]");
+        assertThat(oracle.at("/methods/0/annotations").toString()).isEqualTo("[\"SafeVarargs\"]");
+        String solution = """
+                package example;
+                public class Buffer {
+                    @java.lang.annotation.Native public static final int DEFAULT_SIZE = 10;
+                    @Deprecated public static final int LEGACY_SIZE = 5;
+                    @SafeVarargs @SuppressWarnings("unchecked") public static final void fill(Object first) {}
+                }
+                """;
+        assertThat(parsed.contract().solutionOracleMismatches(Map.of("example/Buffer.java", solution), "example")).isEmpty();
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "extends", "implements" })
     void genericSupertypesRetainTheirApprovedArguments(String relationship) {
