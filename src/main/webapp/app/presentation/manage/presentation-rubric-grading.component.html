@@ -65,12 +65,11 @@
 
             @if (rating.controls.levelId.value !== undefined) {
                 <div class="flex flex-col gap-2 px-4">
-                    <label
-                        [for]="'rubric-grading-comment-' + index"
-                        jhiTranslate="artemisApp.presentationAssessment.rubric.feedbackFor"
-                        [translateValues]="{ name: criterion.name }"
-                    ></label>
+                    <label [for]="'rubric-grading-comment-' + index">{{
+                        'artemisApp.presentationAssessment.rubric.feedbackFor' | artemisTranslate: { name: criterion.name }
+                    }}</label>
                     <textarea
+                        [id]="'rubric-grading-comment-' + index"
                         [tumAetUiInputId]="'rubric-grading-comment-' + index"
                         tumAetUiTextarea
                         class="w-full"

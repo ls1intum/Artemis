@@ -3,8 +3,8 @@
     <ng-template #remarkField let-general="general">
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-remark">
-                <span [jhiTranslate]="general ? 'artemisApp.presentationAssessment.generalRemark' : 'artemisApp.presentationAssessment.remark'"></span>
-                <span class="ms-1 text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.optional"></span>
+                {{ (general ? 'artemisApp.presentationAssessment.generalRemark' : 'artemisApp.presentationAssessment.remark') | artemisTranslate }}
+                <span class="ms-1 text-sm text-(--text-body-secondary)">{{ 'artemisApp.presentationAssessment.optional' | artemisTranslate }}</span>
             </label>
             @if (general) {
                 <textarea
@@ -48,7 +48,7 @@
     }
 
     <section class="flex flex-col gap-4">
-        <h2 class="m-0! text-lg! font-semibold!" jhiTranslate="artemisApp.presentationAssessment.presentationDetails"></h2>
+        <h2 class="m-0! text-lg! font-semibold!">{{ 'artemisApp.presentationAssessment.presentationDetails' | artemisTranslate }}</h2>
         <div class="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
             <div class="flex flex-col gap-2">
                 <label for="presentation-instance-date">
@@ -172,7 +172,7 @@
                                     aria-hidden="true"
                                     ><fa-icon [icon]="outcome.icon"
                                 /></span>
-                                <strong [jhiTranslate]="'artemisApp.presentationAssessment.result.' + outcome.key"></strong>
+                                <strong>{{ 'artemisApp.presentationAssessment.result.' + outcome.key | artemisTranslate }}</strong>
                                 <span
                                     class="ms-auto size-4.5 shrink-0 rounded-full"
                                     [class]="selected ? 'border-[5px] border-(--primary)' : 'border border-(--border-color)'"

@@ -366,7 +366,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
 
     it('should ask for the presenters first, then the details and then the assessment', () => {
         const presenters = query('jhi-presentation-assessment-presenter-selector')!;
-        const details = query('[jhiTranslate="artemisApp.presentationAssessment.presentationDetails"]')!;
+        const details = query('h2')!;
         const assessment = query('[jhiTranslate="artemisApp.presentationAssessment.assessment"]')!;
 
         expect(presenters.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
