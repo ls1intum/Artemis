@@ -244,6 +244,8 @@ describe('Lecture', () => {
         await lectureComponentFixture.whenStable();
 
         expect(errorSpy).toHaveBeenCalledWith('error.http.400');
+        // Deleting a lecture then asks about its videos in TUM.Live, since it is not known which lectures have some.
+        expect(lectureComponent.tumLiveUploadsUnknown()).toBe(true);
     });
 
     it('should import lecture', async () => {

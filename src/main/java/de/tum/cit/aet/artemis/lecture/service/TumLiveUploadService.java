@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -154,7 +155,9 @@ public class TumLiveUploadService {
      * @param newVideoSource the unit's video link now
      */
     public void forgetUploadUnlessShown(long lectureUnitId, String newVideoSource) {
-        gocastBindingApi.ifPresent(api -> uploadRepository.forgetCurrentUnlessShown(lectureUnitId, newVideoSource, api.findStreamId(newVideoSource).orElse(null)));
+        // Without the TUM.Live connection the link cannot be read; the upload is then forgotten, which at worst keeps a recording in TUM.Live.
+        Long shownStreamId = gocastBindingApi.flatMap(api -> api.findStreamId(newVideoSource)).orElse(null);
+        uploadRepository.forgetCurrentUnlessShown(lectureUnitId, newVideoSource, shownStreamId);
     }
 
     /**
@@ -205,9 +208,7 @@ public class TumLiveUploadService {
             if (exception.getUpstreamStatus().isSameCodeAs(HttpStatus.NOT_FOUND)) {
                 uploadRepository.discardPending(unitId, ref, "The lecture in TUM.Live no longer exists.", now);
             }
-            else {
-                giveUpIfOverdue(unitId, ref, overdue, now);
-            }
+            // Otherwise TUM.Live could not be asked: the recording may be ready, so the upload waits for the next run also when it is overdue.
             return;
         }
         if (recording.failed()) {
@@ -294,8 +295,8 @@ public class TumLiveUploadService {
 
     /**
      * Before a course is disconnected from TUM.Live, deletes there what its uploads through this grant left unattached, while the grant still works: pending
-     * uploads and the queued deletions, at most 50 of these so the disconnection does not wait long. Attached recordings stay. A failure is logged and does not
-     * stop the disconnection; the queue keeps what is left.
+     * uploads and all queued deletions, in batches of 50. Each takes one request to TUM.Live, so a long queue delays the disconnection; an unavailable TUM.Live
+     * ends it early. Attached recordings stay. A failure is logged and does not stop the disconnection; the queue keeps what is left.
      *
      * @param event the grant about to be revoked
      */
@@ -309,24 +310,40 @@ public class TumLiveUploadService {
             for (TumLiveUnitUpload upload : uploadRepository.findByCourseIdAndPendingGrantId(event.courseId(), event.grantId())) {
                 uploadRepository.discardPending(upload.getLectureUnitId(), upload.getPendingRef(), "The course was disconnected from TUM.Live.", now);
             }
-            for (TumLiveRecordingCleanup cleanup : cleanupRepository.findTop50ByGrantIdOrderByNextAttemptAtAsc(event.grantId())) {
-                try {
-                    gocastBindingApi.get().deleteUpload(event.grantId(), cleanup.getExternalRef());
-                    cleanupRepository.deleteConfirmed(cleanup.getId());
-                }
-                catch (GocastIntegrationException exception) {
-                    log.warn("Could not delete the uploaded lecture {} before the TUM.Live grant {} is revoked: {}", cleanup.getExternalRef(), event.grantId(),
-                            exception.getUpstreamStatus());
-                    HttpStatus status = HttpStatus.resolve(exception.getUpstreamStatus().value());
-                    if (status != HttpStatus.NOT_FOUND && status != HttpStatus.CONFLICT) {
+            long lastId = 0;
+            List<TumLiveRecordingCleanup> batch;
+            do {
+                batch = cleanupRepository.findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(event.grantId(), lastId);
+                for (TumLiveRecordingCleanup cleanup : batch) {
+                    lastId = cleanup.getId();
+                    if (!deleteBeforeRevocation(event.grantId(), cleanup)) {
                         // TUM.Live is unavailable: the disconnection should not wait for every remaining entry to time out.
-                        break;
+                        return;
                     }
                 }
             }
+            while (!batch.isEmpty());
         }
         catch (RuntimeException exception) {
             log.warn("Could not delete the unattached TUM.Live uploads of course {} before disconnecting it", event.courseId(), exception);
+        }
+    }
+
+    /**
+     * Deletes a queued upload through the grant that is about to be revoked.
+     *
+     * @return false if TUM.Live is unavailable, so the remaining entries are not tried
+     */
+    private boolean deleteBeforeRevocation(long grantId, TumLiveRecordingCleanup cleanup) {
+        try {
+            gocastBindingApi.orElseThrow().deleteUpload(grantId, cleanup.getExternalRef());
+            cleanupRepository.deleteConfirmed(cleanup.getId());
+            return true;
+        }
+        catch (GocastIntegrationException exception) {
+            log.warn("Could not delete the uploaded lecture {} before the TUM.Live grant {} is revoked: {}", cleanup.getExternalRef(), grantId, exception.getUpstreamStatus());
+            HttpStatus status = HttpStatus.resolve(exception.getUpstreamStatus().value());
+            return status == HttpStatus.NOT_FOUND || status == HttpStatus.CONFLICT;
         }
     }
 

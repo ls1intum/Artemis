@@ -67,7 +67,8 @@ export class TumLiveUploadComponent {
             this.retry?.unsubscribe();
             // Leaving the page stops the transfer, so its upload cannot finish: give it up rather than leave it waiting. Not bound to this component, which is gone.
             if (this.activeRef !== undefined && this.activeUnitId !== undefined) {
-                this.tumLiveUploadService.discard(this.activeUnitId, this.activeRef).subscribe();
+                // Best effort: if it fails, the background job gives the upload up once it is overdue.
+                this.tumLiveUploadService.discard(this.activeUnitId, this.activeRef).subscribe({ error: () => undefined });
             }
         });
     }
@@ -95,7 +96,7 @@ export class TumLiveUploadComponent {
                     this.starting = undefined;
                 }
                 if (this.destroyed) {
-                    this.tumLiveUploadService.discard(unitId, target.ref).subscribe();
+                    this.tumLiveUploadService.discard(unitId, target.ref).subscribe({ error: () => undefined });
                     return;
                 }
                 if (attempt.cancelled) {
@@ -175,10 +176,14 @@ export class TumLiveUploadComponent {
         }
         this.busy.set(true);
         const done = () => {
+            if (this.destroyed) {
+                return;
+            }
             this.busy.set(false);
             this.load(this.lectureUnitId());
         };
-        this.tumLiveUploadService.discard(unitId, ref).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ complete: done, error: done });
+        // Not bound to the component: closing the editor must not abort the request, or the upload stays pending.
+        this.tumLiveUploadService.discard(unitId, ref).subscribe({ complete: done, error: done });
     }
 
     private load(lectureUnitId: number): void {

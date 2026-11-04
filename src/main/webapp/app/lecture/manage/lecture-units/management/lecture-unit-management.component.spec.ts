@@ -21,7 +21,7 @@ import { Subject, of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
-import { faCheck, faFile, faFilePdf, faFileVideo, faLink, faScroll } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faFile, faFileCircleQuestion, faFilePdf, faFileVideo, faLink, faScroll } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -215,6 +215,9 @@ describe('LectureUnitManagementComponent', () => {
 
         expect(lectureUnitManagementComponent.tumLiveUploadedUnitIds()).toEqual(new Set([4]));
         expect(errorSpy).toHaveBeenCalledWith('error.http.400');
+        // Since it is not known which units have a video in TUM.Live now, deleting any file or video unit asks about it.
+        expect(lectureUnitManagementComponent.asksAboutTumLiveVideo({ id: 9, type: LectureUnitType.ATTACHMENT_VIDEO } as LectureUnit)).toBe(true);
+        expect(lectureUnitManagementComponent.asksAboutTumLiveVideo({ id: 10, type: LectureUnitType.TEXT } as LectureUnit)).toBe(false);
     });
 
     it('should show loadData on delete', () => {
@@ -884,6 +887,7 @@ describe('LectureUnitManagementComponent', () => {
             ['another file', withAttachment('attachments/sheet.zip'), 'file', faFile],
             ['a video', withAttachment(undefined, 'https://live.rbg.tum.de/w/1'), 'video', faFileVideo],
             ['a file and a video', withAttachment('attachments/slides.pdf', 'https://live.rbg.tum.de/w/1'), 'fileAndVideo', faFileVideo],
+            ['neither a file nor a video yet', withAttachment(undefined), 'empty', faFileCircleQuestion],
         ])('should name a file unit with %s by what it holds', (_, unit, kind, icon) => {
             expect(lectureUnitManagementComponent.getTypeLabelKey(unit)).toBe(`artemisApp.lectureUnit.management.type.${kind}`);
             expect(lectureUnitManagementComponent.getTypeIcon(unit)).toBe(icon);

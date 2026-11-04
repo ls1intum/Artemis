@@ -185,6 +185,16 @@ class TumLiveUploadServiceTest {
     }
 
     @Test
+    void anOverdueUploadIsKeptWhileTumLiveCannotBeAsked() {
+        when(uploadRepository.findTop50ByPendingRefIsNotNullOrderByPendingCheckedAtAsc()).thenReturn(List.of(pending(ZonedDateTime.now().minusHours(7), 55L)));
+        when(api.getRecording(23, 55)).thenThrow(new GocastIntegrationException("down", HttpStatus.SERVICE_UNAVAILABLE));
+
+        service.processPendingUploads();
+
+        verify(uploadRepository, never()).discardPending(anyLong(), anyString(), any(), any());
+    }
+
+    @Test
     void unreachableTumLiveLeavesPendingUploadsAlone() {
         when(uploadRepository.findTop50ByPendingRefIsNotNullOrderByPendingCheckedAtAsc()).thenReturn(List.of(pending(ZonedDateTime.now(), 55L)));
         when(api.getRecording(23, 55)).thenThrow(new GocastIntegrationException("down", HttpStatus.SERVICE_UNAVAILABLE));
@@ -271,6 +281,16 @@ class TumLiveUploadServiceTest {
     }
 
     @Test
+    void withoutTheTumLiveConnectionAnUploadIsForgottenWhenTheLinkChanges() {
+        var withoutConnection = new TumLiveUploadService(uploadRepository, cleanupRepository, unitRepository, Optional.empty(), Optional.of(contentProcessingService),
+                Duration.ofHours(6));
+
+        withoutConnection.forgetUploadUnlessShown(UNIT_ID, "https://tum.live/w/algo/56");
+
+        verify(uploadRepository).forgetCurrentUnlessShown(UNIT_ID, "https://tum.live/w/algo/56", null);
+    }
+
+    @Test
     void cleanupOfARevokedGrantGoesThroughTheCoursesNewGrant() {
         when(cleanupRepository.findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(any())).thenReturn(List.of(cleanup()));
         doThrow(new GocastIntegrationException("revoked", HttpStatus.NOT_FOUND)).when(api).deleteUpload(23, REF);
@@ -297,7 +317,7 @@ class TumLiveUploadServiceTest {
     @Test
     void beforeTheGrantIsRevokedItsUnattachedUploadsAreDeleted() {
         when(uploadRepository.findByCourseIdAndPendingGrantId(7L, 23L)).thenReturn(List.of(pending(ZonedDateTime.now(), 55L)));
-        when(cleanupRepository.findTop50ByGrantIdOrderByNextAttemptAtAsc(23L)).thenReturn(List.of(cleanup()));
+        when(cleanupRepository.findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(23L, 0L)).thenReturn(List.of(cleanup()));
 
         service.deleteUnattachedUploadsBeforeRevocation(new GocastGrantRevokingEvent(7, 17, 23));
 
@@ -307,9 +327,31 @@ class TumLiveUploadServiceTest {
     }
 
     @Test
+    void allQueuedDeletionsOfTheGrantAreTriedBeforeItIsRevoked() {
+        var second = cleanup();
+        second.setId(6L);
+        ReflectionTestUtils.setField(second, "externalRef", "reference-b-0000");
+        var third = cleanup();
+        third.setId(7L);
+        ReflectionTestUtils.setField(third, "externalRef", "reference-c-0000");
+        when(uploadRepository.findByCourseIdAndPendingGrantId(7L, 23L)).thenReturn(List.of());
+        when(cleanupRepository.findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(23L, 0L)).thenReturn(List.of(cleanup(), second));
+        when(cleanupRepository.findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(23L, 6L)).thenReturn(List.of(third));
+        // TUM.Live refuses the first one; the others are tried all the same.
+        doThrow(new GocastIntegrationException("refused", HttpStatus.CONFLICT)).when(api).deleteUpload(23, REF);
+
+        service.deleteUnattachedUploadsBeforeRevocation(new GocastGrantRevokingEvent(7, 17, 23));
+
+        verify(cleanupRepository).deleteConfirmed(6L);
+        verify(cleanupRepository).deleteConfirmed(7L);
+        verify(cleanupRepository, never()).deleteConfirmed(5L);
+        verify(cleanupRepository).findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(23L, 7L);
+    }
+
+    @Test
     void aFailureBeforeTheRevocationIsOnlyLogged() {
         when(uploadRepository.findByCourseIdAndPendingGrantId(7L, 23L)).thenReturn(List.of());
-        when(cleanupRepository.findTop50ByGrantIdOrderByNextAttemptAtAsc(23L)).thenReturn(List.of(cleanup()));
+        when(cleanupRepository.findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(23L, 0L)).thenReturn(List.of(cleanup()));
         doThrow(new GocastIntegrationException("down", HttpStatus.SERVICE_UNAVAILABLE)).when(api).deleteUpload(23, REF);
 
         assertThatCode(() -> service.deleteUnattachedUploadsBeforeRevocation(new GocastGrantRevokingEvent(7, 17, 23))).doesNotThrowAnyException();
@@ -323,7 +365,7 @@ class TumLiveUploadServiceTest {
         second.setId(6L);
         ReflectionTestUtils.setField(second, "externalRef", "reference-b-0000");
         when(uploadRepository.findByCourseIdAndPendingGrantId(7L, 23L)).thenReturn(List.of());
-        when(cleanupRepository.findTop50ByGrantIdOrderByNextAttemptAtAsc(23L)).thenReturn(List.of(cleanup(), second));
+        when(cleanupRepository.findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(23L, 0L)).thenReturn(List.of(cleanup(), second));
         doThrow(new GocastIntegrationException("down", HttpStatus.SERVICE_UNAVAILABLE)).when(api).deleteUpload(23, REF);
 
         service.deleteUnattachedUploadsBeforeRevocation(new GocastGrantRevokingEvent(7, 17, 23));

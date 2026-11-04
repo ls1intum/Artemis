@@ -220,9 +220,7 @@
                                         [entityTitle]="unitName"
                                         [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
                                         [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
-                                        [additionalChecks]="
-                                            tumLiveUploadedUnitIds().has(lectureUnit.id!) ? { deleteTumLiveRecordings: 'artemisApp.tumLiveUpload.deleteRecording' } : {}
-                                        "
+                                        [additionalChecks]="asksAboutTumLiveVideo(lectureUnit) ? { deleteTumLiveRecordings: 'artemisApp.tumLiveUpload.deleteRecording' } : {}"
                                         (delete)="deleteLectureUnit(lectureUnit.id!, $event)"
                                         [dialogError]="dialogError$"
                                     >

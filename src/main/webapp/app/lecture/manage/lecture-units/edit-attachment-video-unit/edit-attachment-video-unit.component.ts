@@ -171,7 +171,22 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
-                next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
+                next: (response) => {
+                    const savedVideoSource = response.body?.videoSource || undefined;
+                    const sentVideoSource = videoSource || undefined;
+                    if (response.body && sentVideoSource !== (currentUnit.videoSource || undefined) && savedVideoSource !== sentVideoSource) {
+                        // The link was changed meanwhile, so the server kept that one. The page stays, shows it as the saved link and keeps the entered one to
+                        // be saved again; the rest of the change is saved.
+                        this.attachmentVideoUnit.set(cloneWith(currentUnit, { name, description, releaseDate, competencyLinks, videoSource: savedVideoSource }));
+                        if (response.body.attachment) {
+                            this.attachment.set(cloneWith(response.body.attachment, { attachmentVideoUnit: undefined }));
+                        }
+                        this.attachmentVideoUnitForm()?.applyServerVideoSource(savedVideoSource);
+                        this.alertService.warning('artemisApp.lecture.unitEditor.videoSourceChangedMeanwhile');
+                        return;
+                    }
+                    void this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
+                },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }

@@ -149,7 +149,9 @@
                                             deleteQuestion="artemisApp.lecture.delete.question"
                                             deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
                                             [additionalChecks]="
-                                                tumLiveUploadLectureIds().has(lecture.id!) ? { deleteTumLiveRecordings: 'artemisApp.tumLiveUpload.deleteRecordings' } : {}
+                                                tumLiveUploadsUnknown() || tumLiveUploadLectureIds().has(lecture.id!)
+                                                    ? { deleteTumLiveRecordings: 'artemisApp.tumLiveUpload.deleteRecordings' }
+                                                    : {}
                                             "
                                             (delete)="deleteLecture(lecture.id!, $event)"
                                             [dialogError]="dialogError$"

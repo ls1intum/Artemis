@@ -176,17 +176,22 @@ export class LectureComponent implements OnInit, OnDestroy {
     /** Identifies the latest request for the uploaded units, so an older answer that arrives later does not replace a newer one. */
     private tumLiveUploadsSequence = 0;
 
+    /** Set while reading the uploaded units failed: deleting any lecture then asks about TUM.Live, since it may have videos there. */
+    readonly tumLiveUploadsUnknown = signal(false);
+
     private loadTumLiveUploads() {
         const sequence = ++this.tumLiveUploadsSequence;
         this.tumLiveUploadService.getUploadedUnits(this.courseId).subscribe({
             next: (units) => {
                 if (sequence === this.tumLiveUploadsSequence) {
                     this.tumLiveUploadLectureIds.set(new Set(units.map((unit) => unit.lectureId)));
+                    this.tumLiveUploadsUnknown.set(false);
                 }
             },
-            // Say so instead of acting as if there were none: deleting a lecture would then not ask about its videos in TUM.Live.
+            // Say so and ask for every lecture instead of acting as if there were none: deleting a lecture would then not ask about its videos in TUM.Live.
             error: (error: HttpErrorResponse) => {
                 if (sequence === this.tumLiveUploadsSequence) {
+                    this.tumLiveUploadsUnknown.set(true);
                     onError(this.alertService, error);
                 }
             },

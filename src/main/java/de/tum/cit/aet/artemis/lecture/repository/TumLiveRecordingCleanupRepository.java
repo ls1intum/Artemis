@@ -22,7 +22,7 @@ public interface TumLiveRecordingCleanupRepository extends ArtemisJpaRepository<
 
     List<TumLiveRecordingCleanup> findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(ZonedDateTime now);
 
-    List<TumLiveRecordingCleanup> findTop50ByGrantIdOrderByNextAttemptAtAsc(long grantId);
+    List<TumLiveRecordingCleanup> findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(long grantId, long id);
 
     /**
      * Postpones a deletion TUM.Live could not confirm.

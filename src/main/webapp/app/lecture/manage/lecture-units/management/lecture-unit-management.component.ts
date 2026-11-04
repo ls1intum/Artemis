@@ -30,6 +30,7 @@ import {
     faEye,
     faEyeSlash,
     faFile,
+    faFileCircleQuestion,
     faFileLines,
     faFilePdf,
     faFileVideo,
@@ -305,6 +306,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     /** Identifies the latest request for the uploaded units, so an older answer that arrives later does not replace a newer one. */
     private tumLiveUploadsSequence = 0;
 
+    /** Set while reading the uploaded units failed: deleting a file or video unit then asks about TUM.Live, since it may have a video there. */
+    readonly tumLiveUploadsUnknown = signal(false);
+
+    /**
+     * Whether deleting the unit asks whether to delete its video in TUM.Live too.
+     * @param lectureUnit the unit
+     */
+    asksAboutTumLiveVideo(lectureUnit: LectureUnit): boolean {
+        return this.tumLiveUploadedUnitIds().has(lectureUnit.id!) || (this.tumLiveUploadsUnknown() && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO);
+    }
+
     /** Reads again which units have a video uploaded to TUM.Live, for example after a file was sent there. */
     refreshTumLiveUploads() {
         this.loadTumLiveUploads(this.lecture()?.course?.id);
@@ -319,11 +331,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             next: (units) => {
                 if (sequence === this.tumLiveUploadsSequence) {
                     this.tumLiveUploadedUnitIds.set(new Set(units.map((unit) => unit.lectureUnitId)));
+                    this.tumLiveUploadsUnknown.set(false);
                 }
             },
-            // Keep what is known and say so: an empty set would delete units without asking about their videos in TUM.Live.
+            // Say so and ask about every file or video unit: an empty set would delete units without asking about their videos in TUM.Live.
             error: (errorResponse: HttpErrorResponse) => {
                 if (sequence === this.tumLiveUploadsSequence) {
+                    this.tumLiveUploadsUnknown.set(true);
                     onError(this.alertService, errorResponse);
                 }
             },
@@ -409,7 +423,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getTypeIcon(lectureUnit: LectureUnit): IconDefinition {
         switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT_VIDEO:
-                return { pdf: faFilePdf, file: faFile, video: faFileVideo, fileAndVideo: faFileVideo }[this.getAttachmentVideoKind(lectureUnit)];
+                return { pdf: faFilePdf, file: faFile, video: faFileVideo, fileAndVideo: faFileVideo, empty: faFileCircleQuestion }[this.getAttachmentVideoKind(lectureUnit)];
             case LectureUnitType.EXERCISE:
                 return faCheck;
             case LectureUnitType.ONLINE:
@@ -436,7 +450,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
-    private getAttachmentVideoKind(unit: AttachmentVideoUnit): 'pdf' | 'file' | 'video' | 'fileAndVideo' {
+    private getAttachmentVideoKind(unit: AttachmentVideoUnit): 'pdf' | 'file' | 'video' | 'fileAndVideo' | 'empty' {
         const hasFile = !!unit.attachment?.link;
         if (hasFile && unit.videoSource) {
             return 'fileAndVideo';
@@ -444,7 +458,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         if (hasFile) {
             return unit.attachment!.link!.toLowerCase().endsWith('.pdf') ? 'pdf' : 'file';
         }
-        return unit.videoSource ? 'video' : 'file';
+        // A unit can be saved without both, so its video can be uploaded to TUM.Live afterwards.
+        return unit.videoSource ? 'video' : 'empty';
     }
 
     getAttachmentVersion(lectureUnit: LectureUnit) {

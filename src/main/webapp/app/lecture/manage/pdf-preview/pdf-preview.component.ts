@@ -554,6 +554,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const formData = new FormData();
             const attachmentVideoUnitWithoutFile = hydrate(new AttachmentVideoUnit(), attachmentVideoUnit, {
                 attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+                // The PDF editor does not change the video link.
+                loadedVideoSource: attachmentVideoUnit.videoSource ?? '',
             });
 
             formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitWithoutFile));
