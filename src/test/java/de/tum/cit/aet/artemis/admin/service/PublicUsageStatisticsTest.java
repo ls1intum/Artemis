@@ -40,15 +40,15 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamUsageStatisticsApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
@@ -115,13 +115,13 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
     private ExamTestRepository examRepository;
 
     @Autowired
-    private StudentExamRepository studentExamRepository;
+    private StudentExamTestRepository studentExamTestRepository;
 
     @Autowired
     private LectureUtilService lectureUtilService;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureTestRepository;
 
     @Autowired
     private Optional<CompetencyUsageStatisticsApi> competencyUsageStatisticsApi;
@@ -477,7 +477,7 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
         lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture);
         Lecture tutorialLecture = lectureUtilService.createLecture(course);
         tutorialLecture.setIsTutorialLecture(true);
-        lectureRepository.save(tutorialLecture);
+        lectureTestRepository.save(tutorialLecture);
         lectureUtilService.createTextUnit(tutorialLecture);
         lectureUtilService.createTextUnit(lectureUtilService.createLecture(otherCourse));
 
@@ -492,7 +492,7 @@ class PublicUsageStatisticsTest extends AbstractSpringIntegrationIndependentTest
             studentExam.setStartedAndStartDate(ZonedDateTime.now());
         }
         studentExam.setTestRun(testRun);
-        return studentExamRepository.save(studentExam);
+        return studentExamTestRepository.save(studentExam);
     }
 
     @Test
