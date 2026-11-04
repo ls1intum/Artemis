@@ -81,6 +81,40 @@ class MutantEvidenceTest {
     }
 
     @Test
+    void killingAnotherImplementationOfTheSameMisconceptionDoesNotResolveTheSurvivor() {
+        MutantEvidence evidence = new MutantEvidence();
+        SemanticMutant other = new SemanticMutant(SURVIVOR.ruleId(), SURVIVOR.solutionPath(), SURVIVOR.originalSolutionSource(), "class Scheduler { int otherWrong; }",
+                SURVIVOR.counterexample());
+        evidence.record(new SemanticMutantOutcome(SURVIVOR, Disposition.SURVIVED_GRADED_SUITE));
+        evidence.beginRepair();
+        evidence.record(new SemanticMutantOutcome(other, Disposition.KILLED_BY_GRADED_SUITE));
+        assertThat(evidence.surviving()).containsExactly(SURVIVOR);
+        assertThat(evidence.kills()).isEmpty();
+        assertThat(evidence.killsSinceRepairBegan()).isZero();
+
+        evidence.record(new SemanticMutantOutcome(other, Disposition.SURVIVED_GRADED_SUITE));
+        evidence.record(new SemanticMutantOutcome(other.rekeyedTo("class Scheduler { int fixed; }"), Disposition.KILLED_BY_GRADED_SUITE));
+        assertThat(evidence.surviving()).containsExactly(SURVIVOR);
+        assertThat(evidence.killsSinceRepairBegan()).isOne();
+    }
+
+    @Test
+    void rederivedTranscriptProbeExplicitlyContinuesItsOriginalIdentity() {
+        MutantEvidence evidence = new MutantEvidence();
+        SemanticMutant replacement = SemanticMutant.printedTranscript("src/Main.java", "class Main { int changed; }", "class Main { int changed; /* print */ }", "Main");
+        evidence.record(new SemanticMutantOutcome(PRINT_ONLY, Disposition.SURVIVED_GRADED_SUITE));
+        evidence.beginRepair();
+        evidence.inheritIdentity(PRINT_ONLY, replacement);
+        evidence.record(new SemanticMutantOutcome(replacement, Disposition.KILLED_BY_GRADED_SUITE));
+        assertThat(evidence.unresolvedSurvivors()).isEmpty();
+        assertThat(evidence.kills()).containsExactly(replacement);
+        assertThat(evidence.killsSinceRepairBegan()).isOne();
+        evidence.beginRepair();
+        assertThat(evidence.record(new SemanticMutantOutcome(replacement.rekeyedTo("class Main { int anotherChange; }"), Disposition.SURVIVED_GRADED_SUITE))).isTrue();
+        assertThat(evidence.killsSinceRepairBegan()).isZero();
+    }
+
+    @Test
     void aMutantTheSuiteKilledAtOnceIsNotTrackedAndKillsComeLeastRecentlyCheckedFirst() {
         MutantEvidence evidence = new MutantEvidence();
         evidence.record(new SemanticMutantOutcome(SURVIVOR, Disposition.KILLED_BY_GRADED_SUITE));

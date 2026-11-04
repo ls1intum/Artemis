@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +16,8 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
  * through {@link #record}; the current survivors, the regression history, the unavailable evidence and the current repair's progress credit are all derived from those
  * outcomes, so no path can update one view and forget another.
  * <p>
- * A mutant is identified by its rule, file and misconception, so a probe re-derived or rekeyed for a changed source continues the record of the mutant it replaces. Only a
+ * Authored variants are identified by their replacement source as well as their novelty exclusion and evidence kind. Rekeying the reference source preserves that identity;
+ * a re-derived transcript probe explicitly inherits the identity of the probe it replaces. Only a
  * mutant that once survived the graded suite is tracked; a proposal the suite killed at once is not evidence of anything a repair could undo. Per run and not thread-safe,
  * like the ledger that owns it.
  */
@@ -41,7 +43,22 @@ final class MutantEvidence {
     }
 
     /** Insertion order is check order: an entry moves to the end whenever an outcome is recorded for it, so the least recently checked kills come first. */
-    private final Map<SemanticMutant.Exclusion, Entry> entries = new LinkedHashMap<>();
+    private final Map<Variant, Entry> entries = new LinkedHashMap<>();
+
+    private record Variant(SemanticMutant.Exclusion exclusion, String replacement, SemanticMutant.Evidence evidence) {
+    }
+
+    private final Map<Variant, Variant> inheritedIdentities = new HashMap<>();
+
+    private Variant identity(SemanticMutant mutant) {
+        Variant variant = new Variant(mutant.exclusion(), mutant.mutantSource(), mutant.evidence());
+        return inheritedIdentities.getOrDefault(variant, variant);
+    }
+
+    /** A server-derived replacement probe continues the evidence record of the probe it replaces. */
+    void inheritIdentity(SemanticMutant original, SemanticMutant replacement) {
+        inheritedIdentities.put(new Variant(replacement.exclusion(), replacement.mutantSource(), replacement.evidence()), identity(original));
+    }
 
     /** Tracked survivors a later candidate's suite killed since the current repair began, from any path. */
     private int killsSinceRepairBegan;
@@ -55,7 +72,7 @@ final class MutantEvidence {
      */
     boolean record(SemanticMutantOutcome outcome) {
         SemanticMutant mutant = outcome.mutant();
-        Entry previous = entries.remove(mutant.exclusion());
+        Entry previous = entries.remove(identity(mutant));
         Status status = switch (outcome.disposition()) {
             case KILLED_BY_GRADED_SUITE -> previous == null ? null : Status.KILLED;
             case SURVIVED_GRADED_SUITE -> previous != null && previous.killed() ? Status.KILLED : Status.SURVIVING;
@@ -67,7 +84,7 @@ final class MutantEvidence {
         if (status == Status.KILLED && !previous.killed()) {
             killsSinceRepairBegan++;
         }
-        entries.put(mutant.exclusion(), new Entry(mutant, status));
+        entries.put(identity(mutant), new Entry(mutant, status));
         return outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE && previous != null && previous.killed();
     }
 
