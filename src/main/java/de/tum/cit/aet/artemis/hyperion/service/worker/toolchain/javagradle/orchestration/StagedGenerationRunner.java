@@ -533,31 +533,20 @@ public class StagedGenerationRunner {
                             }
                             if (!review.complete()) {
                                 // Fail open on the subjective axis: a qualitative reviewer that cannot return a well-formed verdict must never discard a specification that
-                                // already passed the deterministic mechanical gate. The current draft is unmeasured on this path, so a strictly better measured draft already in
-                                // hand is restored rather than frozen over.
-                                if (bestSpecSnapshot != null && !bestSpecSnapshot.equals(specSnapshot)) {
-                                    String restoreAfterIncompleteReview = baseTools.writeFile("SPEC.md", bestSpecSnapshot);
-                                    if (restoreAfterIncompleteReview != null && !restoreAfterIncompleteReview.startsWith("ERROR")) {
-                                        log.info("Specification review was inconclusive for exercise {}; restoring the best measured draft ({} findings)", exercise.id(),
-                                                bestSpecFindingCount);
-                                        specSnapshot = bestSpecSnapshot;
-                                    }
-                                    else {
-                                        log.warn("Could not restore the best measured specification for exercise {}: {}", exercise.id(), restoreAfterIncompleteReview);
-                                    }
-                                }
+                                // already passed the deterministic mechanical gate. The draft just gated is the latest revision, usually written to fix what an earlier review
+                                // measured, so it is frozen as is: restoring an older measured draft would bring back defects the agent had already corrected.
                                 String reviewAdvisory;
-                                if (bestSpecSnapshot != null && bestSpecSnapshot.equals(specSnapshot)) {
+                                if (specSnapshot.equals(bestSpecSnapshot)) {
                                     unresolvedSpecificationFindings = bestSpecFindings;
                                     reviewAdvisory = bestSpecFindings.isEmpty()
                                             ? "The latest specification review was inconclusive; continuing with the previously accepted, mechanically checked specification."
-                                            : "The latest specification review was inconclusive; continuing with the strongest measured specification and attaching its remaining "
-                                                    + "concerns for instructor review.";
+                                            : "The latest specification review was inconclusive; continuing with the unchanged specification and attaching the concerns its earlier "
+                                                    + "review measured for instructor review.";
                                 }
                                 else {
                                     unresolvedSpecificationFindings = SpecificationReviewPrompts.unresolvedInconclusiveReviewFindings(review);
-                                    reviewAdvisory = "The specification quality review was inconclusive; continuing with the mechanically checked specification and attaching that "
-                                            + "uncertainty for instructor review.";
+                                    reviewAdvisory = "The specification quality review was inconclusive; continuing with the latest mechanically checked specification and attaching "
+                                            + "that uncertainty for instructor review.";
                                 }
                                 log.warn("Specification review was inconclusive for exercise {}; freezing the mechanically-valid specification and continuing", exercise.id());
                                 emit(progress, reviewAdvisory);

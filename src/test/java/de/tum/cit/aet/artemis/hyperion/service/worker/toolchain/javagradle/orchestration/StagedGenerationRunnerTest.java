@@ -739,7 +739,7 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void failedBestSpecificationRestoreKeepsUncertaintyAttachedToTheDraftActuallyApproved() {
+    void inconclusiveReviewFreezesTheLatestGatePassingRevisionRatherThanAnOlderMeasuredOne() {
         String measuredDraft = VALID_SPEC_DOCUMENT + "\n<!-- measured -->\n";
         String unmeasuredDraft = VALID_SPEC_DOCUMENT + "\n<!-- unmeasured -->\n";
         sandbox.specMarkdown = measuredDraft;
@@ -756,14 +756,15 @@ class StagedGenerationRunnerTest {
             }
             return completed(1, "done");
         });
-        when(baseTools.writeFile("SPEC.md", measuredDraft)).thenReturn("ERROR: workspace unavailable");
         when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
 
         StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
                 () -> SeededStructuralTests.EMPTY);
 
         assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        // The latest revision answered the measured concern; restoring the measured draft would bring back what the agent had already corrected.
         assertThat(approvedSpecs.approved("s")).contains(unmeasuredDraft);
+        verify(baseTools, never()).writeFile("SPEC.md", measuredDraft);
         assertThat(outcome.unresolvedSpecificationFindings()).singleElement().asString().contains("quality review was inconclusive").doesNotContain("measured concern");
     }
 
