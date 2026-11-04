@@ -100,7 +100,8 @@
                 "src/main/webapp/app/atlas/shared/orchestration-result-dialog/**/*.scss",
                 "src/main/webapp/app/shared-ui/detail-overview-list/detail-overview-list.component.scss",
                 "src/main/webapp/app/exercise/participation/programming-exercise-participation-actions/**/*.scss",
-                "src/main/webapp/app/exercise/statistics/statistics-span-selector/**/*.scss"
+                "src/main/webapp/app/exercise/statistics/statistics-span-selector/**/*.scss",
+                "src/main/webapp/app/metis/**/*.scss"
             ],
             "customSyntax": "postcss-scss",
             "rules": {

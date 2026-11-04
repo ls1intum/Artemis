@@ -25,7 +25,7 @@ import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
-import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
@@ -70,6 +70,7 @@ import { ProblemStatementComponent } from 'app/course/overview/exercise-details/
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { MetisService } from 'app/metis/shared/services/metis.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
@@ -77,12 +78,12 @@ import { MockScienceService } from 'test/helpers/mocks/service/mock-science-serv
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { ScienceEventType } from 'app/foundation/science/science.model';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS, MODULE_FEATURE_METIS } from 'app/app.constants';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ElementRef, signal } from '@angular/core';
 import { ResetRepoButtonComponent } from 'app/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -679,6 +680,69 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(getCourseSettingsSpy).not.toHaveBeenCalled();
         expect(comp.irisEnabled()).toBe(false);
         expect(comp.irisChatEnabled()).toBe(false);
+    });
+
+    it.each<[string, boolean, boolean]>([
+        ['active', false, true],
+        ['inactive', false, false],
+        ['active', true, false],
+    ])('should offer the comprehension check only while the Metis module feature is %s (exam exercise: %s)', async (feature, isExamExercise, expected) => {
+        vi.useFakeTimers();
+        const metisExercise = {
+            id: 42,
+            type: ExerciseType.PROGRAMMING,
+            studentParticipations: [],
+            course: { id: 1 },
+            exerciseGroup: isExamExercise ? { id: 10 } : undefined,
+        } as unknown as ProgrammingExercise;
+        getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: metisExercise } }));
+
+        const profileService = TestBed.inject(ProfileService);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((moduleFeature) => moduleFeature === MODULE_FEATURE_METIS && feature === 'active');
+        const metisService = TestBed.inject(MetisService);
+        const isEnabledSpy = vi.spyOn(metisService, 'isEnabledForExercise').mockReturnValue(of(true));
+
+        comp.ngOnInit();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(comp.metisEnabled()).toBe(expected);
+        if (expected) {
+            expect(isEnabledSpy).toHaveBeenCalledOnce();
+            expect(isEnabledSpy).toHaveBeenCalledWith(42);
+        } else {
+            expect(isEnabledSpy).not.toHaveBeenCalled();
+        }
+    });
+
+    it.each([
+        ['the server reports it disabled', of(false)],
+        ['the request fails', throwError(() => new HttpErrorResponse({ status: 500 }))],
+    ])('should hide the comprehension check when %s', async (_, status) => {
+        vi.useFakeTimers();
+        const metisExercise = { id: 42, type: ExerciseType.PROGRAMMING, studentParticipations: [], course: { id: 1 } } as unknown as ProgrammingExercise;
+        getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: metisExercise } }));
+        vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation((moduleFeature) => moduleFeature === MODULE_FEATURE_METIS);
+        vi.spyOn(TestBed.inject(MetisService), 'isEnabledForExercise').mockReturnValue(status);
+
+        comp.ngOnInit();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(comp.metisEnabled()).toBe(false);
+    });
+
+    it('should ignore the comprehension check status of an exercise that was left meanwhile', () => {
+        const pendingStatus = new Subject<boolean>();
+        vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockImplementation((moduleFeature) => moduleFeature === MODULE_FEATURE_METIS);
+        const isEnabledSpy = vi.spyOn(TestBed.inject(MetisService), 'isEnabledForExercise').mockReturnValueOnce(pendingStatus).mockReturnValueOnce(of(false));
+        const programmingExercise = (id: number) => ({ id, type: ExerciseType.PROGRAMMING, studentParticipations: [], course: { id: 1 } }) as unknown as ProgrammingExercise;
+
+        comp.handleNewExercise({ exercise: programmingExercise(42) } as ExerciseDetailsType);
+        comp.handleNewExercise({ exercise: programmingExercise(43) } as ExerciseDetailsType);
+        pendingStatus.next(true);
+
+        expect(isEnabledSpy).toHaveBeenNthCalledWith(1, 42);
+        expect(isEnabledSpy).toHaveBeenNthCalledWith(2, 43);
+        expect(comp.metisEnabled()).toBe(false);
     });
 
     it('should log event on init', () => {

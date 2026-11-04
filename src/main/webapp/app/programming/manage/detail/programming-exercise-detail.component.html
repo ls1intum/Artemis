@@ -86,6 +86,9 @@
                                 >
                                     <fa-icon [icon]="faChartBar" />&nbsp;<span jhiTranslate="statistics.statistics-title"></span>
                                 </a>
+                                @if (metisModuleEnabled) {
+                                    <jhi-metis-dashboard-link [link]="[baseResource(), 'comprehension-check']" />
+                                }
                             }
                         }
                     </div>

@@ -40,13 +40,16 @@ api/quiz-exercise-evaluation-resources.ts
 api/quiz-statistics-resources.ts
 api/hyperion-exercise-variant-resources.ts
 api/hyperion-programming-variant-resources.ts
+api/metis-dashboard-resources.ts
 api/hyperion-exercise-generation-resources.ts
 api/hyperion-problem-statement-resources.ts
 api/quiz-exercise-deletion-resources.ts
 api/quiz-training-resources.ts
+api/metis-student-check-resources.ts
 api/admin-hyperion-generation-resources.ts
 api/quiz-exercise-batch-resources.ts
 api/quiz-assessment-resources.ts
+api/metis-exercise-config-resources.ts
 api/tutorial-group-resources.ts
 api/hyperion-code-generation-resources.ts
 api/quiz-participation-resources.ts
@@ -59,5 +62,6 @@ api/tutorial-group-free-period-resources.ts
 api/hyperion-quiz-question-pool-resources.ts
 api/quiz-exercise-resources.ts
 api/hyperion-faq-resources.ts
+api/metis-question-review-resources.ts
 api/calendar-resources.ts
 api/quiz-exercise-creation-update-resources.ts

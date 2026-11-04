@@ -64,7 +64,12 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { MODULE_FEATURE_METIS, MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { MetisExerciseConfigDTO } from 'app/metis/shared/entities/metis.model';
+import { MetisService } from 'app/metis/shared/services/metis.service';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { TextDetail } from 'app/shared-ui/detail-overview-list/detail.model';
+import dayjs from 'dayjs/esm';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { HttpHeaders } from '@angular/common/http';
@@ -142,7 +147,25 @@ describe('ProgrammingExerciseDetailComponent', () => {
         activeModuleFeatures: [MODULE_FEATURE_PLAGIARISM],
     } as unknown as ProfileInfo;
 
+    const metisConfig: MetisExerciseConfigDTO = {
+        exerciseId: 123,
+        enabled: true,
+        windowStart: dayjs('2026-11-03T10:00:00'),
+        windowEnd: dayjs('2026-11-03T10:20:00'),
+        mainQuestionCount: 3,
+        maxFollowUpsPerQuestion: 2,
+        minSecondsPerQuestion: 60,
+        maxSecondsPerQuestion: 300,
+        answerLength: 3,
+        complexity: 3,
+        likertScalePoints: 5,
+        followUpThreshold: 3,
+        reviewRequired: true,
+    };
+    const metisService = { config: vi.fn() };
+
     beforeEach(() => {
+        metisService.config.mockReset().mockReturnValue(of(metisConfig));
         TestBed.configureTestingModule({
             imports: [],
             providers: [
@@ -151,6 +174,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: MetisService, useValue: metisService },
                 { provide: ProfileService, useValue: new MockProfileService() },
                 { provide: ProgrammingExerciseGradingService, useValue: new MockProgrammingExerciseGradingService() },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
@@ -482,6 +506,98 @@ describe('ProgrammingExerciseDetailComponent', () => {
             type: AlertType.DANGER,
             message: 'error',
             disableTranslation: true,
+        });
+    });
+
+    describe('comprehension check entry point', () => {
+        const buttonSelector = '[data-testid="comprehension-check-button"]';
+
+        function createTutorExercise(exerciseGroup?: ExerciseGroup): ProgrammingExercise {
+            const course = new Course();
+            course.id = 6;
+            const exercise = new ProgrammingExercise(exerciseGroup ? undefined : course, exerciseGroup);
+            exercise.id = 123;
+            exercise.isAtLeastTutor = true;
+            return exercise;
+        }
+
+        /** The module flag is read when the component is constructed, so every case renders a component of its own. */
+        function render(activeModuleFeatures: string[], exercise: ProgrammingExercise): HTMLElement {
+            profileInfo.activeModuleFeatures = activeModuleFeatures;
+            const entryFixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
+            const entryComponent = entryFixture.componentInstance;
+            entryComponent.programmingExercise.set(exercise);
+            entryComponent.isExamExercise.set(!!exercise.exerciseGroup);
+            entryComponent.canAccessParticipationsAndScores.set(true);
+            entryComponent.baseResource.set('/course-management/6/programming-exercises/123/');
+            entryComponent.shortBaseResource.set('/course-management/6/');
+            entryComponent.teamBaseResource.set('/course-management/6/exercises/123/');
+            entryFixture.detectChanges();
+            return entryFixture.nativeElement;
+        }
+
+        afterEach(() => {
+            profileInfo.activeModuleFeatures = [MODULE_FEATURE_PLAGIARISM];
+        });
+
+        it('should show the dashboard button to a tutor of a course exercise when the module is active', () => {
+            const element = render([MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_METIS], createTutorExercise());
+
+            expect(element.querySelector(buttonSelector)).not.toBeNull();
+        });
+
+        it('should hide the dashboard button for an exam exercise', () => {
+            const exam = { id: 4, course: { id: 6 } as Course } as Exam;
+            const element = render([MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_METIS], createTutorExercise({ id: 9, exam }));
+
+            expect(element.querySelector(buttonSelector)).toBeNull();
+        });
+
+        it('should hide the dashboard button without the module feature', () => {
+            const element = render([MODULE_FEATURE_PLAGIARISM], createTutorExercise());
+
+            expect(element.querySelector(buttonSelector)).toBeNull();
+        });
+
+        it('should list the comprehension check configuration in the general section when the module is active', async () => {
+            profileInfo.activeModuleFeatures = [MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_METIS];
+            const entryComponent = TestBed.createComponent(ProgrammingExerciseDetailComponent).componentInstance;
+            const route = TestBed.inject(ActivatedRoute);
+            route.snapshot.data = { programmingExercise: createTutorExercise() };
+
+            entryComponent.ngOnInit();
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(metisService.config).toHaveBeenCalledWith(123);
+            expect(entryComponent.metisConfig()).toBe(metisConfig);
+            const generalSection = entryComponent.getExerciseDetails()[0];
+            const metisDetail = generalSection.details.find((detail) => !!detail && detail.title === 'artemisApp.metis.detail.title') as TextDetail | undefined;
+            expect(metisDetail).toBeDefined();
+            expect(metisDetail!.data.text).toContain('artemisApp.metis.detail.enabled');
+            expect(metisDetail!.data.text).toContain('artemisApp.metis.detail.window');
+            expect(metisDetail!.data.text).toContain('artemisApp.metis.detail.questions');
+            expect(metisDetail!.data.text).toContain('artemisApp.metis.detail.reviewRequired');
+        });
+
+        it('should describe a disabled comprehension check in one word', () => {
+            profileInfo.activeModuleFeatures = [MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_METIS];
+            const entryComponent = TestBed.createComponent(ProgrammingExerciseDetailComponent).componentInstance;
+            entryComponent.programmingExercise.set(createTutorExercise());
+            entryComponent.metisConfig.set({ ...metisConfig, enabled: false, windowStart: undefined, windowEnd: undefined });
+
+            const generalSection = entryComponent.getExerciseDetails()[0];
+            const metisDetail = generalSection.details.find((detail) => !!detail && detail.title === 'artemisApp.metis.detail.title') as TextDetail | undefined;
+
+            expect(metisDetail!.data.text).toBe('artemisApp.metis.detail.disabled');
+        });
+
+        it('should leave the configuration line out without the module feature', () => {
+            comp.programmingExercise.set(createTutorExercise());
+
+            const generalSection = comp.getExerciseDetails()[0];
+
+            expect(metisService.config).not.toHaveBeenCalled();
+            expect(generalSection.details.find((detail) => !!detail && detail.title === 'artemisApp.metis.detail.title')).toBeUndefined();
         });
     });
 });
