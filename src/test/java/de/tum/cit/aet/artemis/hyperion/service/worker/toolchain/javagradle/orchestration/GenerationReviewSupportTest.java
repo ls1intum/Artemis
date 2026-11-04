@@ -49,10 +49,13 @@ class GenerationReviewSupportTest {
         assertThat(finding.isBlocking()).isTrue();
         assertThat(SemanticRepairBatch.surfaceFor(finding.kind())).isEqualTo(RepairSurface.ORACLE);
         assertThat(finding.requirement()).contains("Library.main", "only prints the expected output");
-        assertThat(finding.detail()).contains("Observe object state or interactions, not only the printed transcript").doesNotContain("counterexample");
+        assertThat(finding.detail())
+                .contains("Grade the behavior main is responsible for through object state or interactions",
+                        "vary the inputs or given data the test runs main with, so a hard-coded transcript fails", "ungraded", "cannot resolve this")
+                .doesNotContain("counterexample");
         assertThat(finding.location()).isEqualTo(new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, "src/Library.java", 2, 5));
         assertThat(GenerationReviewSupport.semanticMutantRecheck(List.of(new SemanticMutantOutcome(printOnly, Disposition.SURVIVED_GRADED_SUITE))).failureReasons()).singleElement()
-                .asString().contains("only prints the expected output", "observes object state or interactions");
+                .asString().contains("only prints the expected output", "through object state or interactions", "may stay only ungraded");
     }
 
     @Test

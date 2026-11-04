@@ -923,6 +923,78 @@ class GenerationAttemptLoopTest {
                 List.of());
     }
 
+    @Test
+    void aPrintOnlyMainSurvivorIsRepairedAndItsKillCountsAsProgressLikeAnExecutedMutant() {
+        // The repair keeps comparing the transcript but changes the tests, so the probe must be rechecked rather than answered from the previous verdict.
+        SemanticMutant printOnly = stubPrintOnlyMainSurvivor(TRANSCRIPT_TEST,
+                TRANSCRIPT_TEST.replace("out.toString());", "out.toString()); assertEquals(1, Scheduler.created());"));
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> checked = invocation.getArgument(5);
+            return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)).toList();
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
+        assertThat(enteredRepairScopes()).containsExactly(Set.of("tests", "test-plan.json", "problem-statement.md"));
+        verify(verifier).checkSemanticMutants(any(), anyString(), any(), any(), any(), Mockito.eq(List.of(printOnly)), any());
+        assertThat(progressLines).anyMatch(line -> line.contains("The repair killed 1 environment-proven mutant(s)"));
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+    }
+
+    @Test
+    void aPrintOnlyProbeIsResolvedWithoutABuildOnceNoGradedTestComparesTheTranscript() {
+        stubPrintOnlyMainSurvivor(TRANSCRIPT_TEST, "package p; class SchedulerTest { @Test void schedules() { assertEquals(1, new Scheduler().size()); } }");
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
+        verify(verifier, never()).checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any());
+        assertThat(progressLines).anyMatch(line -> line.contains("The repair killed 1 environment-proven mutant(s)"));
+        assertThat(loop.specFidelityReport().findings()).noneMatch(SpecFidelityReport.Finding::isBlocking);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+    }
+
+    @Test
+    void anUnchangedCandidateReusesThePrintOnlyVerdictInsteadOfRebuilding() {
+        // The repair touches only the statement, so sources and tests are those the probe already executed against.
+        stubPrintOnlyMainSurvivor(TRANSCRIPT_TEST, TRANSCRIPT_TEST);
+
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+        loop.run();
+
+        verify(verifier, times(1)).probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(verifier, never()).checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any());
+        assertThat(loop.verification().reasons()).anyMatch(reason -> reason.contains("Scheduler.main that only prints the expected output"));
+    }
+
+    private static final String TRANSCRIPT_TEST = """
+            package p;
+            class SchedulerTest {
+                private final java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                @BeforeEach void capture() { System.setOut(new java.io.PrintStream(out)); }
+                @Test void printsTheSchedule() { Scheduler.main(new String[0]); assertEquals("1\\n", out.toString()); }
+            }
+            """;
+
+    /** The first review's probe finds a print-only survivor; the repair attempt leaves the tests as {@code repairedTests}. */
+    private SemanticMutant stubPrintOnlyMainSurvivor(String initialTests, String repairedTests) {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | print the schedule |");
+        AtomicInteger sessions = new AtomicInteger();
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            sessions.incrementAndGet();
+            return loopSession(completed());
+        });
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any())).thenAnswer(
+                invocation -> new GenerationWorkspace.RepositoryExtraction(Map.of("test/SchedulerTest.java", sessions.get() <= 1 ? initialTests : repairedTests), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any()))
+                .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
+        SemanticMutant printOnly = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(printOnly, Disposition.SURVIVED_GRADED_SUITE)), List.of());
+        return printOnly;
+    }
+
     /** A specification, a tests repository the probes can host in, and a solution file the scheduler mutants were authored against. */
     private void stubSchedulerFixture() {
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | honor every prerequisite |\n| R2 | break ties lexically |");

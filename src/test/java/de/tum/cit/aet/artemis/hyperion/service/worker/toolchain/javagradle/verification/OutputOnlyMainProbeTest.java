@@ -28,6 +28,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -81,22 +82,92 @@ class OutputOnlyMainProbeTest {
             }
             """;
 
+    /** A graded test that captures what main prints and compares it, the shape a print-only main can pass. */
     private static final Map<String, String> TESTS = Map.of("test/example/LibraryTest.java", """
             package example;
             class LibraryTest {
-                @Test void printsTheSize() { Library.main(new String[0]); }
+                private final java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                @BeforeEach void capture() { System.setOut(new java.io.PrintStream(out)); }
+                @Test void printsTheSize() {
+                    Library.main(new String[0]);
+                    assertEquals("Books: 1\\n", out.toString(), "main prints the size");
+                }
             }
             """);
 
+    private static final String PLAN = """
+            {"tests":[{"name":"printsTheSize","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"}]}
+            """;
+
     @Test
     void probesOnlyStudentOwnedMainsTheGradedTestsCall() {
-        assertThat(OutputOnlyMainProbe.targets(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION)))
+        Set<String> graded = OutputOnlyMainProbe.gradedTestMethods(PLAN);
+        assertThat(OutputOnlyMainProbe.targets(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), graded))
                 .containsExactly(new OutputOnlyMainProbe.Target(PATH, "Library", "example.Library"));
-        assertThat(OutputOnlyMainProbe.targets(TESTS, Map.of(PATH, SOLUTION), Map.of(PATH, SOLUTION))).as("unchanged between template and solution").isEmpty();
+        assertThat(OutputOnlyMainProbe.targets(TESTS, Map.of(PATH, SOLUTION), Map.of(PATH, SOLUTION), graded)).as("unchanged between template and solution").isEmpty();
         assertThat(OutputOnlyMainProbe.targets(Map.of("test/example/LibraryTest.java", "class LibraryTest { @Test void size() { new Library().size(); } }"), Map.of(PATH, TEMPLATE),
-                Map.of(PATH, SOLUTION))).as("no graded test calls main").isEmpty();
-        assertThat(OutputOnlyMainProbe.targets(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION.replace("library.add(\"Dune\");", "new java.util.Scanner(System.in);"))))
+                Map.of(PATH, SOLUTION), graded)).as("no graded test calls main").isEmpty();
+        assertThat(
+                OutputOnlyMainProbe.targets(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION.replace("library.add(\"Dune\");", "new java.util.Scanner(System.in);")), graded))
                 .as("reads standard input").isEmpty();
+        assertThat(OutputOnlyMainProbe.targets(TESTS, Map.of(), Map.of("test/example/Library.java", SOLUTION), graded)).as("outside the student source tree").isEmpty();
+    }
+
+    @Test
+    void onlyAGradedTestThatComparesThePrintedOutputMakesMainAProbeTarget() {
+        Set<String> graded = OutputOnlyMainProbe.gradedTestMethods(PLAN);
+        Map<String, String> smokeTest = Map.of("test/example/LibraryTest.java", """
+                class LibraryTest {
+                    private final java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                    @BeforeEach void capture() { System.setOut(new java.io.PrintStream(out)); }
+                    @Test void printsTheSize() { assertDoesNotThrow(() -> Library.main(new String[0])); }
+                }
+                """);
+        Map<String, String> noCapture = Map.of("test/example/LibraryTest.java", """
+                class LibraryTest {
+                    @Test void printsTheSize() { Library.main(new String[0]); assertEquals(1, new Library().size()); }
+                }
+                """);
+        Map<String, String> throughHelper = Map.of("test/example/LibraryTest.java", """
+                class LibraryTest {
+                    private String run() {
+                        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                        System.setOut(new java.io.PrintStream(out));
+                        Library.main(new String[0]);
+                        return out.toString();
+                    }
+                    @Test void printsTheSize() { assertEquals("Books: 1\\n", run()); }
+                }
+                """);
+        String ungradedPlan = """
+                {"tests":[{"name":"printsTheSize","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}]}
+                """;
+
+        assertThat(OutputOnlyMainProbe.targets(smokeTest, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), graded)).as("a smoke test only calls main").isEmpty();
+        assertThat(OutputOnlyMainProbe.targets(noCapture, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), graded)).as("nothing captures the output").isEmpty();
+        assertThat(OutputOnlyMainProbe.targets(throughHelper, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), graded)).as("compared through a helper").hasSize(1);
+        assertThat(OutputOnlyMainProbe.targets(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), OutputOnlyMainProbe.gradedTestMethods(ungradedPlan)))
+                .as("the transcript check carries no weight").isEmpty();
+        assertThat(OutputOnlyMainProbe.targets(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), OutputOnlyMainProbe.gradedTestMethods(null)))
+                .as("without a plan every test counts as graded").hasSize(1);
+    }
+
+    @Test
+    void aProbeNoLongerAppliesOnceNoGradedTestComparesTheTranscript() {
+        SemanticMutant probe = SemanticMutant.printedTranscript(PATH, SOLUTION, SOLUTION, "Library");
+        String ungradedPlan = """
+                {"tests":[{"name":"printsTheSize","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"},
+                 {"name":"countsAddedBooks","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"}]}
+                """;
+        Map<String, String> behaviorGraded = Map.of("test/example/LibraryTest.java", """
+                class LibraryTest {
+                    @Test void countsAddedBooks() { Library library = new Library(); library.add("Dune"); assertEquals(1, library.size()); }
+                }
+                """);
+
+        assertThat(OutputOnlyMainProbe.stillApplies(probe, TESTS, PLAN)).isTrue();
+        assertThat(OutputOnlyMainProbe.stillApplies(probe, TESTS, ungradedPlan)).as("the transcript check was made zero-weight").isFalse();
+        assertThat(OutputOnlyMainProbe.stillApplies(probe, behaviorGraded, PLAN)).as("the transcript check was removed").isFalse();
     }
 
     @Test
@@ -128,8 +199,41 @@ class OutputOnlyMainProbeTest {
         assertThat(OutputOnlyMainProbe.transcript(new SandboxExecResultDTO(92, encoded, "", false))).isEmpty();
         byte[] oversized = new byte[OutputOnlyMainProbe.MAX_TRANSCRIPT_BYTES + 1];
         assertThat(OutputOnlyMainProbe.transcript(new SandboxExecResultDTO(0, Base64.getEncoder().encodeToString(oversized), "", false))).isEmpty();
-        assertThat(OutputOnlyMainProbe.captureCommand(new OutputOnlyMainProbe.Target(PATH, "Library", "example.Library"))).contains("'example.Library'", "< /dev/null",
-                "timeout 20", "head -c " + (OutputOnlyMainProbe.MAX_TRANSCRIPT_BYTES + 1));
+        // The sandbox keeps the tail of a long output behind a marker; the MIME decoder would skip the marker and decode the rest into garbage.
+        assertThat(OutputOnlyMainProbe.transcript(new SandboxExecResultDTO(0, "[... output truncated, showing last 50000 characters ...]\n" + encoded, "", false))).isEmpty();
+    }
+
+    @Test
+    void theLargestCapturableTranscriptStillFitsTheSandboxOutputLimit() {
+        byte[] largest = new byte[OutputOnlyMainProbe.MAX_TRANSCRIPT_BYTES];
+        assertThat(Base64.getMimeEncoder(76, new byte[] { '\n' }).encodeToString(largest).length() + 1).isLessThan(50_000);
+    }
+
+    /** Runs the generated capture command against a real solution tree, so a broken pipeline, quoting, or source selection fails here rather than silently in the sandbox. */
+    @Test
+    void theCaptureCommandCompilesOnlyTheStudentSourcesAndPrintsTheExactTranscript(@TempDir Path solution) throws Exception {
+        for (String tool : List.of("sh", "javac", "java", "timeout", "base64", "head", "mktemp")) {
+            Assumptions.assumeTrue(onPath(tool), tool + " is not installed");
+        }
+        Files.createDirectories(solution.resolve("src/example"));
+        Files.writeString(solution.resolve(PATH), SOLUTION.replace("\"Books: \"", "\"Bücher: \""), StandardCharsets.UTF_8);
+        // A student test needs JUnit, which the probe does not resolve; compiling it would make the whole capture fail.
+        Files.createDirectories(solution.resolve("test/example"));
+        Files.writeString(solution.resolve("test/example/LibraryTest.java"), "package example; import org.junit.jupiter.api.Test; class LibraryTest { @Test void t() {} }");
+        String command = OutputOnlyMainProbe.captureCommand(new OutputOnlyMainProbe.Target(PATH, "Library", "example.Library")).replace("'/workspace/solution'",
+                "'" + solution + "'");
+
+        Process process = new ProcessBuilder("sh", "-c", command).start();
+        String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
+        int exit = process.waitFor();
+
+        assertThat(exit).as(stderr).isZero();
+        assertThat(OutputOnlyMainProbe.transcript(new SandboxExecResultDTO(exit, stdout, stderr, false))).contains("Bücher: 1 { \"quoted\" }\n");
+    }
+
+    private static boolean onPath(String tool) {
+        return Arrays.stream(System.getenv().getOrDefault("PATH", "").split(java.io.File.pathSeparator)).anyMatch(directory -> Files.isExecutable(Path.of(directory, tool)));
     }
 
     @Test
@@ -140,8 +244,8 @@ class OutputOnlyMainProbeTest {
             return new BuildSummary(1, 0, 0, false, List.of("printsTheSize"), List.of(), List.of(), "");
         };
 
-        List<SemanticMutantOutcome> survived = OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), Set.of(), target -> Optional.of("Books: 1\n"),
-                passing);
+        List<SemanticMutantOutcome> survived = OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(),
+                target -> Optional.of("Books: 1\n"), passing);
 
         assertThat(survived).singleElement().satisfies(outcome -> {
             assertThat(outcome.disposition()).isEqualTo(Disposition.SURVIVED_GRADED_SUITE);
@@ -152,11 +256,11 @@ class OutputOnlyMainProbeTest {
         assertThat(built).singleElement().satisfies(mutant -> assertThat(mutant.mutantSource()).contains("System.out.print(\"Books: 1\\n\");"));
 
         SemanticMutantExecution.ProbeRunner failing = (mutant, probe) -> new BuildSummary(1, 1, 1, false, List.of("printsTheSize"), List.of("printsTheSize"), List.of(), "");
-        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), Set.of(), target -> Optional.of("Books: 1\n"), failing))
+        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.of("Books: 1\n"), failing))
                 .extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.KILLED_BY_GRADED_SUITE);
-        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), Set.of(PATH), target -> Optional.of("Books: 1\n"), failing))
+        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(PATH), target -> Optional.of("Books: 1\n"), failing))
                 .as("a pending probe is rechecked elsewhere").isEmpty();
-        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), Set.of(), target -> Optional.empty(), failing))
+        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.empty(), failing))
                 .as("a reference run that is not deterministic and bounded proves nothing").isEmpty();
     }
 
@@ -182,7 +286,7 @@ class OutputOnlyMainProbeTest {
         GenerationInput exercise = new GenerationInput(42, "example", "", false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
 
         List<SemanticMutantOutcome> outcomes = new DifferentialVerifier(commands).probeOutputOnlyMains(sandbox, "session", exercise, TESTS, Map.of(PATH, TEMPLATE),
-                Map.of(PATH, SOLUTION), SeededStructuralTests.EMPTY, Set.of(), () -> {
+                Map.of(PATH, SOLUTION), PLAN, SeededStructuralTests.EMPTY, Set.of(), () -> {
                 });
 
         assertThat(outcomes).singleElement().satisfies(outcome -> {

@@ -899,38 +899,52 @@ public class DifferentialVerifier {
      * @param producedTestsFiles    mechanically verified graded tests
      * @param producedTemplateFiles the student starter, which decides which classes are student-owned
      * @param producedSolutionFiles pristine reference-solution sources
+     * @param testPlanJson          the grading plan, which decides which tests carry weight
      * @param seededStructuralTests the exact server-owned structural authority
      * @param pendingSolutionPaths  classes whose probe is already pending and is rechecked by {@link #checkSemanticMutants}
      * @param restoreCandidate      restores the verified candidate between probes
      * @return one executed outcome per probed class
      */
     public List<SemanticMutantOutcome> probeOutputOnlyMains(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> producedTestsFiles,
-            Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, SeededStructuralTests seededStructuralTests, Set<String> pendingSolutionPaths,
-            Runnable restoreCandidate) {
-        List<SemanticMutantOutcome> outcomes = OutputOnlyMainProbe.evaluate(producedTestsFiles, producedTemplateFiles, producedSolutionFiles, pendingSolutionPaths, target -> {
-            restoreCandidate.run();
-            SandboxExecResultDTO capture;
-            try {
-                capture = sandbox.exec(sessionId, OutputOnlyMainProbe.CAPTURE_TIMEOUT, "sh", "-c", OutputOnlyMainProbe.captureCommand(target));
-            }
-            catch (RuntimeException exception) {
-                throw new VerificationInfrastructureException("The output-only probe could not run the reference main of " + target.simpleName(), exception);
-            }
-            if (capture.timedOut()) {
-                throw VerificationInfrastructureException.sessionLost("The output-only probe of " + target.simpleName() + " exceeded its sandbox deadline");
-            }
-            Optional<String> transcript = OutputOnlyMainProbe.transcript(capture);
-            if (transcript.isEmpty()) {
-                log.info("Output-only probe for exercise {} skipped {}: its reference main did not finish deterministically within its bounds (exit {})", exercise.id(),
-                        target.simpleName(), capture.exitCode());
-            }
-            return transcript;
-        }, (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate));
+            Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, @Nullable String testPlanJson, SeededStructuralTests seededStructuralTests,
+            Set<String> pendingSolutionPaths, Runnable restoreCandidate) {
+        List<SemanticMutantOutcome> outcomes = OutputOnlyMainProbe.evaluate(producedTestsFiles, producedTemplateFiles, producedSolutionFiles, testPlanJson, pendingSolutionPaths,
+                target -> {
+                    restoreCandidate.run();
+                    SandboxExecResultDTO capture;
+                    try {
+                        capture = sandbox.exec(sessionId, OutputOnlyMainProbe.CAPTURE_TIMEOUT, "sh", "-c", OutputOnlyMainProbe.captureCommand(target));
+                    }
+                    catch (RuntimeException exception) {
+                        throw new VerificationInfrastructureException("The output-only probe could not run the reference main of " + target.simpleName(), exception);
+                    }
+                    if (capture.timedOut()) {
+                        throw VerificationInfrastructureException.sessionLost("The output-only probe of " + target.simpleName() + " exceeded its sandbox deadline");
+                    }
+                    Optional<String> transcript = OutputOnlyMainProbe.transcript(capture);
+                    if (transcript.isEmpty()) {
+                        log.warn("Output-only probe for exercise {} skipped {}: {}", exercise.id(), target.simpleName(), OutputOnlyMainProbe.skipReason(capture));
+                    }
+                    return transcript;
+                }, (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate));
         if (!outcomes.isEmpty()) {
             log.info("Output-only probe for exercise {}: {}", exercise.id(),
                     outcomes.stream().map(outcome -> outcome.mutant().ruleId() + "=" + outcome.disposition()).collect(Collectors.joining(", ")));
         }
         return outcomes;
+    }
+
+    /**
+     * Whether a printed-transcript probe still applies to the current tests, that is, a graded test still compares what the probed {@code main} prints. When none does, the
+     * weakness the probe proved is gone and it is resolved without a build.
+     *
+     * @param probe        a printed-transcript probe
+     * @param testsFiles   the current tests repository
+     * @param testPlanJson the current grading plan
+     * @return whether the probe must still be executed against the graded suite
+     */
+    public static boolean printedOutputStillGraded(SemanticMutant probe, Map<String, String> testsFiles, @Nullable String testPlanJson) {
+        return OutputOnlyMainProbe.stillApplies(probe, testsFiles, testPlanJson);
     }
 
     private BuildSummary runSemanticMutantProbe(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, SeededStructuralTests seededStructuralTests,

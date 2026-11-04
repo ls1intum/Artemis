@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradl
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -267,6 +268,16 @@ class GenerationAttemptLoop {
      * killed nor drained, so the repair-progress comparison still counts them.
      */
     private List<SemanticMutant> survivorsWithoutVerdict = List.of();
+
+    /** Digest of the repositories and grading plan the printed-transcript probes last executed against. */
+    @Nullable
+    private String transcriptProbeDigest;
+
+    /**
+     * Conclusive printed-transcript verdicts for {@link #transcriptProbeDigest}, by probed solution path. The probe is deterministic, so unchanged sources and tests give the same
+     * verdict; an unchanged candidate reuses it instead of running the reference main and a graded build again.
+     */
+    private Map<String, SemanticMutantOutcome> transcriptProbeVerdicts = Map.of();
 
     @Nullable
     private SemanticRepairBatch pendingSemanticRepair;
@@ -622,7 +633,7 @@ class GenerationAttemptLoop {
         if (applicableMutants.isEmpty() && regressionChecks.isEmpty()) {
             return result;
         }
-        List<SemanticMutantOutcome> allOutcomes = verifier.checkSemanticMutants(sandbox, sessionId, exercise, currentSolution, seededStructuralTests,
+        List<SemanticMutantOutcome> allOutcomes = recheckSemanticMutants(candidateFiles, testPlanSnapshot,
                 java.util.stream.Stream.concat(applicableMutants.stream(), regressionChecks.stream()).toList(), restoreCandidate);
         // Judged on this recheck alone: a correction that kills a regressed mutant again clears the regression.
         List<SemanticMutant> regressed = allOutcomes.stream().filter(outcome -> regressionChecks.contains(outcome.mutant()))
@@ -890,7 +901,7 @@ class GenerationAttemptLoop {
                     .filter(mutant -> solutionFiles.get(mutant.solutionPath()) != null).map(mutant -> mutant.rekeyedTo(solutionFiles.get(mutant.solutionPath()))).toList();
             List<SemanticMutant> recheckedPendingMutants = java.util.stream.Stream.concat(applicablePendingMutants.stream(), rekeyedPendingMutants.stream()).toList();
             List<SemanticMutantOutcome> pendingMutantOutcomes = recheckedPendingMutants.isEmpty() ? List.of()
-                    : verifier.checkSemanticMutants(sandbox, sessionId, exercise, solutionFiles, seededStructuralTests, recheckedPendingMutants, restoreCandidate);
+                    : recheckSemanticMutants(candidateFiles, artifacts.testPlanJson(), recheckedPendingMutants, restoreCandidate);
             List<SemanticMutant> rekeyedWithoutVerdict = pendingMutantOutcomes.stream().filter(outcome -> rekeyedPendingMutants.contains(outcome.mutant()))
                     .filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE).map(SemanticMutantOutcome::mutant).toList();
             List<SemanticMutant> unexecutableStaleMutants = stalePendingMutants.stream().filter(mutant -> !mutant.printsTranscriptOnly())
@@ -899,11 +910,20 @@ class GenerationAttemptLoop {
                 emit("Retired " + (rekeyedWithoutVerdict.size() + unexecutableStaleMutants.size()) + " pending semantic mutant(s) that no longer execute against the changed "
                         + "reference source; they still count as unresolved, and the executable reviewer will propose replacements against the current solution.");
             }
-            // Deterministic and model-free, so it runs on every reviewed candidate; a pending probe of the same class was just rechecked above.
+            // Deterministic and model-free, so it runs on every reviewed candidate; a pending probe of the same class was just rechecked above, and a class probed against
+            // these exact sources and tests reuses its verdict.
             Set<String> pendingTranscriptProbes = applicablePendingMutants.stream().filter(SemanticMutant::printsTranscriptOnly).map(SemanticMutant::solutionPath)
                     .collect(Collectors.toUnmodifiableSet());
-            List<SemanticMutantOutcome> transcriptOutcomes = verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, testsFiles,
-                    producedFilesByType.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), solutionFiles, seededStructuralTests, pendingTranscriptProbes, restoreCandidate);
+            List<SemanticMutantOutcome> reusedTranscriptOutcomes = transcriptVerdicts(candidateFiles, artifacts.testPlanJson()).entrySet().stream()
+                    .filter(verdict -> !pendingTranscriptProbes.contains(verdict.getKey())).map(Map.Entry::getValue).toList();
+            Set<String> skippedTranscriptProbes = java.util.stream.Stream
+                    .concat(pendingTranscriptProbes.stream(), transcriptVerdicts(candidateFiles, artifacts.testPlanJson()).keySet().stream())
+                    .collect(Collectors.toUnmodifiableSet());
+            List<SemanticMutantOutcome> probedTranscriptOutcomes = verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, testsFiles,
+                    producedFilesByType.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), solutionFiles, artifacts.testPlanJson(), seededStructuralTests, skippedTranscriptProbes,
+                    restoreCandidate);
+            rememberTranscriptVerdicts(probedTranscriptOutcomes);
+            List<SemanticMutantOutcome> transcriptOutcomes = java.util.stream.Stream.concat(reusedTranscriptOutcomes.stream(), probedTranscriptOutcomes.stream()).toList();
             int freshCapacity = Math.max(0, MAX_TRACKED_SEMANTIC_MUTANTS - (int) java.util.stream.Stream.concat(pendingMutantOutcomes.stream(), transcriptOutcomes.stream())
                     .filter(outcome -> outcome.disposition() != Disposition.KILLED_BY_GRADED_SUITE).count());
             List<SemanticMutant> authoredPendingMutants = applicablePendingMutants.stream().filter(mutant -> !mutant.printsTranscriptOnly()).toList();
@@ -986,6 +1006,55 @@ class GenerationAttemptLoop {
             findings.addAll(SpecFidelityReport.executableEvidenceUnavailable("Executable probe authoring or evaluation did not complete.").findings());
             return preserveExecutableEvidenceState(new SpecFidelityReport(findings));
         }
+    }
+
+    /**
+     * Rechecks executed mutants against the current candidate. A printed-transcript probe whose class no graded test compares any more is resolved without a build, because
+     * the weakness it proved is gone; one probed against these exact sources and tests reuses its verdict.
+     */
+    private List<SemanticMutantOutcome> recheckSemanticMutants(Map<RepositoryRole, Map<String, String>> candidateFiles, @Nullable String testPlanJson, List<SemanticMutant> mutants,
+            Runnable restoreCandidate) {
+        Map<String, String> testsFiles = candidateFiles.getOrDefault(RepositoryRole.TESTS, Map.of());
+        Map<String, SemanticMutantOutcome> known = transcriptVerdicts(candidateFiles, testPlanJson);
+        List<SemanticMutantOutcome> settled = new ArrayList<>();
+        List<SemanticMutant> executed = new ArrayList<>();
+        for (SemanticMutant mutant : mutants) {
+            SemanticMutantOutcome reusable = known.get(mutant.solutionPath());
+            if (!mutant.printsTranscriptOnly()) {
+                executed.add(mutant);
+            }
+            else if (!DifferentialVerifier.printedOutputStillGraded(mutant, testsFiles, testPlanJson)) {
+                settled.add(new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE));
+            }
+            else if (reusable != null && reusable.mutant().equals(mutant)) {
+                settled.add(reusable);
+            }
+            else {
+                executed.add(mutant);
+            }
+        }
+        List<SemanticMutantOutcome> outcomes = executed.isEmpty() ? List.of()
+                : verifier.checkSemanticMutants(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()), seededStructuralTests, executed,
+                        restoreCandidate);
+        rememberTranscriptVerdicts(outcomes);
+        return java.util.stream.Stream.concat(settled.stream(), outcomes.stream()).toList();
+    }
+
+    /** The printed-transcript verdicts that still hold for this candidate; switches the cache to the candidate's digest, dropping verdicts for other inputs. */
+    private Map<String, SemanticMutantOutcome> transcriptVerdicts(Map<RepositoryRole, Map<String, String>> candidateFiles, @Nullable String testPlanJson) {
+        String digest = GenerationReviewSupport.probeInputDigest(candidateFiles, testPlanJson);
+        if (!digest.equals(transcriptProbeDigest)) {
+            transcriptProbeDigest = digest;
+            transcriptProbeVerdicts = Map.of();
+        }
+        return transcriptProbeVerdicts;
+    }
+
+    private void rememberTranscriptVerdicts(List<SemanticMutantOutcome> outcomes) {
+        Map<String, SemanticMutantOutcome> verdicts = new LinkedHashMap<>(transcriptProbeVerdicts);
+        outcomes.stream().filter(outcome -> outcome.mutant().printsTranscriptOnly() && outcome.disposition() != Disposition.INCONCLUSIVE)
+                .forEach(outcome -> verdicts.put(outcome.mutant().solutionPath(), outcome));
+        transcriptProbeVerdicts = Map.copyOf(verdicts);
     }
 
     private SpecFidelityReport preserveExecutableEvidenceState(SpecFidelityReport report) {
