@@ -897,6 +897,84 @@ class GenerationAttemptLoopTest {
         assertThat(progressLines).anyMatch(line -> line.contains("no longer kills the semantic mutant for rule R1"));
     }
 
+    /** A contract repair whose review kills the survivor R1 while a fresh R2 appears made progress: the kill counts however it was found. */
+    @Test
+    void aKillFoundByTheReviewCountsAsTheContractRepairsProgress() {
+        stubSchedulerFixture();
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), SpecFidelityReport.empty());
+        SemanticMutant killedByReview = mutant("R1", "allPrerequisites", "honors only the first prerequisite");
+        SemanticMutant fresh = mutant("R2", "lexicalTie", "uses FIFO insertion order");
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(killedByReview), List.of(fresh), List.of());
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> evaluated = invocation.getArgument(6);
+            return evaluated.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)).toList();
+        });
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> checked = invocation.getArgument(5);
+            return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)).toList();
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+        loop.run();
+
+        assertThat(loop.terminationReason()).isNotEqualTo(TerminationReason.REPAIR_DID_NOT_IMPROVE);
+        assertThat(loop.lastMechanicallyVerifiedCandidate().problemStatement()).isEqualTo("PROBLEM STATEMENT 2");
+        assertThat(progressLines).anyMatch(line -> line.contains("The repair killed 1 environment-proven mutant(s)"));
+    }
+
+    static Stream<Arguments> reDerivedTranscriptProbes() {
+        // A current probe of the reworded class either survives, a regression, or gives no verdict, which leaves the kill unverified.
+        return Stream.of(Arguments.of(Disposition.SURVIVED_GRADED_SUITE), Arguments.of(Disposition.INCONCLUSIVE));
+    }
+
+    /** A killed print-only probe whose class a later repair changes, even by a comment, is re-derived for the current class instead of being skipped. */
+    @ParameterizedTest
+    @MethodSource("reDerivedTranscriptProbes")
+    void aKilledPrintOnlyProbeIsReDerivedWhenItsClassChanges(Disposition currentProbe) {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | print the schedule |");
+        AtomicInteger sessions = new AtomicInteger();
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            sessions.incrementAndGet();
+            return loopSession(completed());
+        });
+        // The oracle repair strengthens the tests, so the probe is executed again rather than answered from the earlier verdict.
+        String strengthened = TRANSCRIPT_TEST.replace("out.toString());", "out.toString()); assertEquals(1, Scheduler.created());");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any())).thenAnswer(
+                invocation -> new GenerationWorkspace.RepositoryExtraction(Map.of("test/SchedulerTest.java", sessions.get() <= 1 ? TRANSCRIPT_TEST : strengthened), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any())).thenAnswer(invocation -> new GenerationWorkspace.RepositoryExtraction(
+                Map.of("src/Scheduler.java", sessions.get() <= 2 ? "class Scheduler {}" : "class Scheduler { /* reworded */ }"), false));
+        // The oracle repair kills the probe; its review then finds a contract problem, whose repair rewords the class.
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty(),
+                report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), SpecFidelityReport.empty());
+        SemanticMutant printOnly = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
+        SemanticMutant reDerived = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler { /* reworded */ }", "class Scheduler { }", "Scheduler");
+        AtomicInteger probes = new AtomicInteger();
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> switch (probes.incrementAndGet()) {
+            case 1 -> List.of(new SemanticMutantOutcome(printOnly, Disposition.SURVIVED_GRADED_SUITE));
+            case 3 -> List.of(new SemanticMutantOutcome(reDerived, currentProbe));
+            default -> List.of();
+        });
+        stubPrintOnlyRecheck(Disposition.KILLED_BY_GRADED_SUITE);
+        when(verifier.resolveStaleOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> stale = invocation.getArgument(7);
+            return stale.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE)).toList();
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(4, 3);
+        loop.run();
+
+        assertThat(probes.get()).as("the regression check probed the reworded class").isGreaterThanOrEqualTo(3);
+        if (currentProbe == Disposition.SURVIVED_GRADED_SUITE) {
+            assertThat(progressLines).anyMatch(line -> line.contains("no longer kills the semantic mutant for rule Scheduler.main"));
+        }
+        else {
+            assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings())
+                    .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE && finding.detail().contains("Scheduler.main")
+                            && finding.detail().contains("not conclusively rechecked against this candidate"));
+        }
+    }
+
     @Test
     void aSeventhKilledMutantIsStillRecheckedForRegression() {
         // Two repairs kill four mutants each; the third repair, aimed at a fresh survivor, lets the seventh kill survive again.
@@ -934,9 +1012,11 @@ class GenerationAttemptLoopTest {
         verify(verifier, Mockito.atLeast(4)).checkSemanticMutants(any(), anyString(), any(), any(), any(), checked.capture(), any());
         List<SemanticMutant> fourthRepair = checked.getAllValues().get(3);
         List<SemanticMutant> killedBefore = rounds.subList(0, 3).stream().flatMap(List::stream).toList();
-        // Every kill was confirmed by the third repair, by recheck or by its own kill; the order is then kill order, so the newest kill is the one deferred.
-        SemanticMutant deferred = rounds.get(2).getFirst();
-        assertThat(fourthRepair).hasSize(1 + 12).containsAll(rounds.get(3)).containsAll(killedBefore.subList(0, 12)).doesNotContain(deferred);
+        // Every earlier kill was confirmed by the third repair, so exactly one of the thirteen is deferred; it is reported rather than dropped.
+        assertThat(fourthRepair).hasSize(1 + 12).containsAll(rounds.get(3));
+        List<SemanticMutant> notRechecked = killedBefore.stream().filter(mutant -> !fourthRepair.contains(mutant)).toList();
+        assertThat(notRechecked).hasSize(1);
+        SemanticMutant deferred = notRechecked.getFirst();
         assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE
                 && finding.detail().contains(deferred.ruleId()) && finding.detail().contains("not conclusively rechecked against this candidate"));
         assertThat(loop.terminationReason()).isNotEqualTo(TerminationReason.CONVERGED);

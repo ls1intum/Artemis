@@ -203,8 +203,7 @@ final class GenerationReviewSupport {
     }
 
     /** A text-only or interrupted review cannot discharge executable mutant state; retain exact provenance without asserting a fresh survival result. */
-    static SpecFidelityReport preserveSemanticMutantState(SpecFidelityReport report, List<SemanticMutant> pendingRepair, List<SemanticMutant> awaitingRecheck) {
-        List<SemanticMutant> unresolved = java.util.stream.Stream.concat(pendingRepair.stream(), awaitingRecheck.stream()).distinct().toList();
+    static SpecFidelityReport preserveSemanticMutantState(SpecFidelityReport report, List<SemanticMutant> unresolved) {
         if (unresolved.isEmpty()) {
             return report;
         }
