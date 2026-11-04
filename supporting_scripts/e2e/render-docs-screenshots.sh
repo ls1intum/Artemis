@@ -14,10 +14,10 @@ set -Eeuo pipefail
 #
 # Options:
 #   --update            Replace the checked-in images with the rendered ones. Look at them (git diff shows the changed files) before committing.
-#   --render-only       Render into build/docs-screenshots and stop, without comparing (the weekly workflow compares in a later job).
+#   --render-only       Render into build/docs-screenshots and stop, without comparing.
 #   --only <ids>        Render only these manifest ids, comma separated.
-#   --browser <where>   `container` (default): the browser runs in the Playwright image that the CI uses, so fonts and anti-aliasing are the
-#                       same on every machine and the images can be compared with the ones of the weekly workflow. `host`: use the
+#   --browser <where>   `container` (default): the browser runs in a pinned Playwright image, so fonts and anti-aliasing are the
+#                       same on every machine and the images can be compared with the checked-in ones. `host`: use the
 #                       Playwright browsers of this machine, which is faster but renders text slightly differently.
 #   --threshold <share> Share of changed pixels that counts as a difference, default 0.01.
 #   --skip-install      Do not run pnpm install and the build of the UI kit (use when the dependencies are current).

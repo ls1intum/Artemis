@@ -192,8 +192,8 @@ It needs Docker, Java 25 and Node. Options:
 
 * `--update` replaces the checked-in images with the rendered ones. Look at them with `git status` and the image diff of your tool, and commit what you keep.
 * `--only calendar-month-desktop,student-faq` renders only these entries.
-* `--browser host` uses the Playwright browsers of the machine. The default `container` runs the browser in the Playwright image of the weekly workflow,
-  so the text of an image is rendered the same way on every machine. Images that you update on another browser differ from the ones of the workflow.
+* `--browser host` uses the Playwright browsers of the machine. The default `container` runs the browser in a pinned Playwright image,
+  so the text of an image is rendered the same way on every machine. Images that you update on another browser differ from the ones that others render.
 * `--keep` leaves the stack running for repeated renderings, and `--stop` stops it.
 
 **Comparison.** `python3 supporting_scripts/check_docs_screenshots.py --compare build/docs-screenshots --all` prints the similarity of every image.
@@ -201,9 +201,15 @@ A size that differs by up to two pixels is compared on the area that both images
 pixels (`--threshold`) differ. `--stale` lists the images whose `source` changed after the image.
 
 To add a screenshot, add an entry with the viewport of the image, check the manifest with `python3 supporting_scripts/check_docs_screenshots.py`,
-render it with `--only`, look at the image, and commit it. The workflow `docs-screenshots.yml` runs the script weekly on a GitHub runner, uploads the
-rendered images and keeps one issue that lists the images that differ. It never commits an image.
-The manifest covers about fifty images of the student and instructor guides. They show the one demo course, "Introduction to Software Engineering", so
+render it with `--only`, look at the image, and commit it.
+
+**When to render.** The screenshots are rendered on demand, on your machine, not by a scheduled job. Run the script after a bigger change of the interface
+and before a release, look at the changed images (a changed demo course is not a change of the page), render again with `--update`, and commit the images
+that you keep. The script needs Docker, JDK 25 and Node and takes about eight minutes: three to start the stack and four to render the images. The weekly
+`docs-maintenance.yml` needs no stack and lists the images whose `source` files changed after the image (`--stale`) in an issue of its own, which tells you
+which images to look at first.
+
+The manifest covers 52 images of the student and instructor guides. They show the one demo course, "Introduction to Software Engineering", so
 the same users, exercises, lectures and exam run through the whole documentation. A screenshot does not have to reproduce an older hand-made image: it
 shows the page as it is, and a page that the demo course cannot fill yet gets a small extension of the demo seeding instead of a manual image.
 The script keeps the repositories of the demo programming exercise below `build/docs-screenshots-stack`, so a repository of an earlier run cannot
@@ -365,8 +371,7 @@ Checks keep these habits honest. They only report what they can prove, so they d
 | `python3 supporting_scripts/generate_architecture_diagrams.py --check` | The UML diagrams of the [system design](/developer/system-design) are what their generator draws. | Every pull request (`docs-checks`) |
 | `python3 supporting_scripts/check_docs_freshness.py --impact` | Lists the pages that mention a file or a class that the pull request changes, and the edited pages that kept an old review date. It is advice and never fails. | The summary of the `docs-checks` job |
 | `python3 supporting_scripts/check_docs_screenshots.py` | Every entry of the screenshot manifest names an existing image that its pages show, a known user, a route with a known placeholder, and existing source paths. | Every pull request (`docs-checks`) |
-| `docs-screenshots.yml` | Renders the manifest screenshots, and opens an issue for the images that differ from the checked-in ones. | Weekly |
-| `docs-maintenance.yml` | Opens an issue for every page that was not reviewed for a year, and one for external links that no longer work. | Weekly |
+| `docs-maintenance.yml` | Opens an issue for every page that was not reviewed for a year, one for external links that no longer work, and one for screenshots whose component or translations changed after the image. | Weekly |
 
 Paths that are expected to be missing in a checkout, such as build output or a file the reader creates, are exempt through git ignore rules.
 Every other exception is an entry of an allowlist at the top of the script, and needs a reason.
