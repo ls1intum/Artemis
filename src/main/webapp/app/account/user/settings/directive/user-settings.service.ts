@@ -4,7 +4,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { User } from 'app/account/user/user.model';
 import { Setting, SettingGroup, UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
-import { ScienceSetting, scienceSettingsStructure } from 'app/account/user/settings/science-settings/science-settings-structure';
+import { ScienceSetting, scienceSettingsStructure } from 'app/account/user/settings/profile/science-settings/science-settings-structure';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Service()
