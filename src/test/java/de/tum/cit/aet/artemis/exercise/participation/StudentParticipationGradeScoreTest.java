@@ -176,6 +176,27 @@ class StudentParticipationGradeScoreTest extends AbstractSpringIntegrationIndepe
     }
 
     /**
+     * A result without an assessment type is no AI feedback, so leaving out AI feedback must keep it: otherwise its participant score would be deleted.
+     */
+    @Test
+    void shouldKeepAProgrammingResultWithoutAssessmentTypeForTheParticipantScore() {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise exercise = (ProgrammingExercise) course.getExercises().iterator().next();
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        var submission = new ProgrammingSubmission();
+        submission.setSubmissionDate(now.minusHours(1));
+        submission.setSubmitted(true);
+        var savedSubmission = participationUtilService.addSubmission(participation, submission);
+        Result result = participationUtilService.addResultToSubmission(null, now.minusMinutes(30), savedSubmission, true, true, 60.0);
+        long studentId = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
+
+        assertThat(resultRepository.getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exercise.getId(), studentId)).extracting(Result::getId)
+                .containsExactly(result.getId());
+        assertThat(resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exercise.getId(), studentId)).extracting(Result::getId)
+                .containsExactly(result.getId());
+    }
+
+    /**
      * Quiz submissions are stored in reverse order, so the grade queries deliberately pick the earliest submission of a
      * quiz participation instead of the latest one.
      */
