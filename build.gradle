@@ -697,6 +697,7 @@ dependencies {
     implementation "org.bouncycastle:bcpg-jdk18on:1.86"
 
     // required for database connections
+    // REMOVE_IN_ARTEMIS_11 (MySQL): remove the driver once MySQL support is removed
     implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
     implementation "org.postgresql:postgresql:42.7.14"
 
@@ -861,6 +862,7 @@ configurations.matching { it.name in ["compileClasspath", "runtimeClasspath", "t
 configurations.matching { it.name != 'mockitoAgent' }.configureEach {
     resolutionStrategy {
         dependencySubstitution {
+            // REMOVE_IN_ARTEMIS_11 (MySQL): remove the testcontainers mysql substitution
             substitute module("org.testcontainers:mysql") using module("org.testcontainers:testcontainers-mysql:${testcontainers_version}")
             substitute module("org.testcontainers:postgresql") using module("org.testcontainers:testcontainers-postgresql:${testcontainers_version}")
             substitute module("org.testcontainers:jdbc") using module("org.testcontainers:testcontainers-jdbc:${testcontainers_version}")
@@ -932,6 +934,7 @@ tasks.named("dependencyUpdates").configure {
 // 2) Execute tests (PostgreSQL, Docker required):  ./gradlew test -x webapp
 // 2a) Execute tests with coverage report:          ./gradlew test jacocoTestReport -x webapp
 // 2b) Execute tests with H2 (no Docker needed):    ./gradlew test -x webapp -Dzonky.test.database.type=H2
+// REMOVE_IN_ARTEMIS_11 (MySQL): remove the testMysql task and this line
 // 2c) Execute tests with MySQL test container:     ./gradlew testMysql -x webapp  (requires Docker)
 // 2d) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
 // 2e) Run tests for modules:                       ./gradlew test -DincludeModules=athena,atlas -x webapp (executes all tests in directories ./src/main/test/.../athena and ./src/main/test/.../atlas) + ArchitectureTests

@@ -517,7 +517,7 @@ See [distributed-data upgrades](/admin/production-setup/distributed-data) for st
 
 ### Inspect runs and worker capacity
 
-Open **Administration → AI generations** to see active generation/adaptation
+Open **Administration → Monitoring → AI Generation** to see active generation/adaptation
 runs, their owners and start times, assigned workers and slots, and free versus
 total capacity. Worker diagnostics include heartbeat times, sandbox image digests,
 and execution identities. The page refreshes every 15 seconds while visible;
@@ -651,7 +651,7 @@ administrator-switchable runtime feature toggle. Core configuration and the
 | Writer with both Hyperion settings false                         | Does not coordinate repository writes with generation on another node. Do not admit generation elsewhere until this writer enables the generation setting.             |
 | Core with both settings true but a required profile missing      | Generation stays off. Cross-node mutation coordination remains active if this node is a core or LocalVC writer.                                                        |
 
-The Administration > Features page shows AI authoring and programming exercise
+The **Administration → Configuration → Features** page shows AI authoring and programming exercise
 generation as separate module cards. Their status reports which features this
 core offers; it does not report worker capacity. A missing ready worker or a
 full worker returns `503 generationCapacityUnavailable` without changing the

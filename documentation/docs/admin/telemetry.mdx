@@ -62,12 +62,14 @@ info:
 | Field | Meaning |
 | --- | --- |
 | `version`, `serverUrl`, `operator`, `universityName` | Installation version, URL, operator and institution |
-| `profiles` | Active profiles on the scheduling node |
+| `profiles` | Active Spring profiles on the scheduling node |
+| `ciSystem`, `versionControlSystem`, `distributedDataProvider`, `websocketBroker` | The CI system, version control system and middleware of the installation, see [below](#ci-system-and-middleware) |
 | `moduleFeatures` | Enabled module features resolved from Artemis configuration; these are not measurements of user activity |
 | `numberOfNodes` | Core Artemis nodes with recent registry heartbeats |
 | `buildAgentCount` | Connected build agents, including paused agents and core nodes that also build |
 | `isMultiNode` | Whether more than one core node is connected |
-| `isProductionInstance`, `isTestServer`, `dataSource`, `isLocalLLMDeploymentEnabled` | Deployment configuration |
+| `dataSource` | The database in use, `postgresql` or `mysql`. Any JDBC URL that does not start with `jdbc:mysql` is reported as `postgresql` |
+| `isProductionInstance`, `isTestServer`, `isLocalLLMDeploymentEnabled` | Deployment configuration |
 | `startupId`, `startedAt` | Identifier and start time of this startup of the scheduling node's application |
 | `adminName`, `contact` | Administrator details, only when `sendAdminDetails` is enabled |
 
@@ -76,3 +78,21 @@ to both counts. Missing connectivity information is omitted rather than reported
 without LocalCI, the build-agent count is zero. Ten minutes allows discovery to settle, but the
 report describes the observed topology at that time, not a guarantee that all configured nodes
 are healthy. The collector records its own receipt time separately from `startedAt`.
+
+## CI system and middleware
+
+Newer Artemis versions report which systems an installation runs. The maintainers use these values to decide which
+integrations to keep supporting, for example before removing Jenkins or MySQL in Artemis 11.
+
+| Field | Values | Derived from |
+| --- | --- | --- |
+| `ciSystem` | `localci`, `jenkins`, `none` | The `localci` and `jenkins` profiles of the scheduling node. `none` means neither is active, for example an installation without programming exercises. |
+| `versionControlSystem` | `localvc`, `none` | The `localvc` profile of the scheduling node |
+| `distributedDataProvider` | `hazelcast`, `redis`, `local` | `artemis.distributed-data.provider`, or the superseded `artemis.continuous-integration.data-store`. Hazelcast is the default. |
+| `websocketBroker` | `external`, `simple` | `external` when `spring.websocket.broker.addresses` contains at least one valid address, so that websocket messages are relayed to a broker such as ActiveMQ Artemis. `simple` is the in-memory broker of a single node. |
+
+`dataSource` reports `postgresql` or `mysql` and `buildAgentCount` the number of connected build agents, which is `0` without
+LocalCI. Reports of older Artemis versions do not contain the four fields above, and the collector keeps them unknown.
+
+Only the scheduling node reports, so the values describe that node. Dedicated build agent nodes do not report; they are
+visible only through `buildAgentCount`.

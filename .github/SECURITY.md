@@ -30,7 +30,8 @@ Artemis supports multiple authentication mechanisms depending on the deployment 
 
 - **External authentication providers**
   - LDAP (e.g. institutional directories)
-  - SAML2-based identity providers  
+  - SAML2-based identity providers
+  - OpenID Connect (OIDC) identity providers  
   → In these cases, **no passwords are stored in Artemis**
 
 - **Internal user management**

@@ -5,6 +5,7 @@ import org.w3c.dom.Document;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 public interface JenkinsXmlConfigBuilder {
 
     /**
