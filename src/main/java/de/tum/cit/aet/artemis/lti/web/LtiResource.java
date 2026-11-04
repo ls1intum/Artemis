@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -189,7 +190,8 @@ public class LtiResource {
             case COMPETENCY, LEARNING_PATH, IRIS -> ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, resourceType);
         };
 
-        return ResponseEntity.ok(JsonObjectMapper.get().writeValueAsString(new DeepLinkingTargetDTO(targetLink)));
+        // Set explicitly: a String body is otherwise written as text/plain when the client accepts any type.
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(JsonObjectMapper.get().writeValueAsString(new DeepLinkingTargetDTO(targetLink)));
     }
 
     /**
