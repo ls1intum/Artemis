@@ -4,7 +4,10 @@
 
     <!--
         Every presentation is graded by one method. Existing presentations were all graded by points, so they become SCORE. The default also
-        keeps inserts of the previous version working, which do not know the column. Only SCORE presentations have maximum points.
+        keeps inserts of the previous version working, which do not know the column. Only SCORE presentations have maximum points, so
+        max_points becomes nullable. The previous version maps max_points to a primitive double and cannot load a presentation without
+        maximum points, and restoring the constraint fails once such a row exists: rolling back after presentations graded by pass/fail
+        or rubric were created needs the backup taken immediately before this migration.
     -->
     <changeSet id="20261026152205-01-add-presentation-grading-method" author="suckart">
         <addColumn tableName="presentation_assessment">

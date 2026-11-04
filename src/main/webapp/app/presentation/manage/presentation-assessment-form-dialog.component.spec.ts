@@ -316,7 +316,7 @@ describe('PresentationAssessmentFormDialogComponent', () => {
             enterText('input#presentation-assessment-title', 'Final presentation');
             clickButton('continue-presentation-button');
 
-            expect(steps()[0].classList).toContain('presentation-assessment-step-complete');
+            expect(steps()[0].querySelector('fa-icon')).not.toBeNull();
             expect(steps()[1].getAttribute('aria-current')).toBe('step');
             expect(Object.values(PresentationGradingMethod).map((method) => byTestId(`grading-method-${method}`)?.querySelector('fa-icon'))).not.toContain(null);
 

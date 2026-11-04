@@ -1,10 +1,10 @@
-<form [formGroup]="editForm" (ngSubmit)="save()" class="instance-form">
+<form [formGroup]="editForm" (ngSubmit)="save()" class="flex flex-col gap-6">
     <!-- Pass/fail and score take a short remark next to the result; a rubric takes a general remark below its criteria -->
     <ng-template #remarkField let-general="general">
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-remark">
                 <span [jhiTranslate]="general ? 'artemisApp.presentationAssessment.generalRemark' : 'artemisApp.presentationAssessment.remark'"></span>
-                <small class="instance-optional" jhiTranslate="artemisApp.presentationAssessment.optional"></small>
+                <span class="ms-1 text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.optional"></span>
             </label>
             @if (general) {
                 <textarea
@@ -47,9 +47,9 @@
         </tumaet-ui-message>
     }
 
-    <section class="instance-details">
+    <section class="flex flex-col gap-4">
         <h2 class="m-0! text-lg! font-semibold!" jhiTranslate="artemisApp.presentationAssessment.presentationDetails"></h2>
-        <div class="instance-fields">
+        <div class="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
             <div class="flex flex-col gap-2">
                 <label for="presentation-instance-date">
                     <span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span>
@@ -93,8 +93,9 @@
                 <label for="presentation-instance-mode" jhiTranslate="artemisApp.presentationAssessment.mode.label"></label>
                 <tumaet-ui-select inputId="presentation-instance-mode" [options]="modeOptions()" optionLabel="label" optionValue="value" formControlName="mode" />
             </div>
+            <!-- Location and meeting link belong to the mode, so they stay in its column -->
             @if (editForm.controls.mode.value === PresentationAssessmentMode.IN_PERSON) {
-                <div class="instance-location-field flex flex-col gap-2">
+                <div class="flex flex-col gap-2 sm:col-start-2">
                     <label for="presentation-instance-location" jhiTranslate="artemisApp.presentationAssessment.location"></label>
                     <input
                         id="presentation-instance-location"
@@ -114,7 +115,7 @@
                     }
                 </div>
             } @else {
-                <div class="instance-location-field flex flex-col gap-2">
+                <div class="flex flex-col gap-2 sm:col-start-2">
                     <label for="presentation-instance-link" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></label>
                     <input
                         id="presentation-instance-link"
@@ -146,27 +147,37 @@
         </div>
     </section>
 
-    <div class="instance-divider" role="separator">
+    <div class="presentation-instance-divider flex items-center gap-3 text-xs font-semibold tracking-[0.04em] text-(--text-body-secondary) uppercase" role="separator">
         <span jhiTranslate="artemisApp.presentationAssessment.assessment"></span>
     </div>
 
     @switch (gradingMethod()) {
         @case (PresentationGradingMethod.PASS_FAIL) {
-            <div class="instance-assessment-row instance-assessment-row-pass-fail">
+            <div class="grid grid-cols-1 items-start gap-6 sm:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]">
                 <div class="flex flex-col gap-2">
                     <span id="presentation-instance-result-label" jhiTranslate="artemisApp.presentationAssessment.result.label"></span>
-                    <div class="instance-outcomes" role="radiogroup" aria-labelledby="presentation-instance-result-label">
+                    <div class="grid grid-cols-2 gap-2" role="radiogroup" aria-labelledby="presentation-instance-result-label">
+                        <!-- The cards are as high as the remark field next to them -->
                         @for (outcome of outcomes; track outcome.key) {
+                            @let selected = editForm.controls.passed.value === outcome.value;
                             <label
-                                class="instance-outcome"
-                                [class.instance-outcome-selected]="editForm.controls.passed.value === outcome.value"
-                                [class.instance-outcome-failed]="!outcome.value"
+                                class="flex! min-h-10 cursor-pointer items-center gap-2 rounded-lg border ps-1.5 pe-3 text-sm focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-(--primary)"
+                                [class]="selected ? 'border-(--primary) bg-(--selected-option-bg) shadow-[inset_0_0_0_1px_var(--primary)]' : 'border-(--border-color)'"
                                 [attr.data-testid]="'presentation-instance-' + outcome.key"
                             >
                                 <input class="sr-only" type="radio" formControlName="passed" [value]="outcome.value" />
-                                <span class="instance-outcome-icon" aria-hidden="true"><fa-icon [icon]="outcome.icon" /></span>
+                                <span
+                                    class="inline-flex size-7 items-center justify-center rounded-md"
+                                    [class]="outcome.value ? 'bg-(--accent-surface-bg) text-(--primary)' : 'bg-(--hover-slightly-darker-body-bg) text-state-danger'"
+                                    aria-hidden="true"
+                                    ><fa-icon [icon]="outcome.icon"
+                                /></span>
                                 <strong [jhiTranslate]="'artemisApp.presentationAssessment.result.' + outcome.key"></strong>
-                                <span class="instance-outcome-radio" aria-hidden="true"></span>
+                                <span
+                                    class="ms-auto size-4.5 shrink-0 rounded-full"
+                                    [class]="selected ? 'border-[5px] border-(--primary)' : 'border border-(--border-color)'"
+                                    aria-hidden="true"
+                                ></span>
                             </label>
                         }
                     </div>
@@ -186,11 +197,13 @@
             }
         }
         @default {
-            <div class="instance-assessment-row">
+            <!-- The result takes little space, so the remark gets the rest of the row -->
+            <div class="grid grid-cols-1 items-start gap-6 sm:grid-cols-[14rem_minmax(0,1fr)]">
                 <div class="flex flex-col gap-2">
                     <label for="presentation-instance-result" jhiTranslate="artemisApp.presentationAssessment.resultPoints"></label>
-                    <div class="instance-points">
+                    <div class="flex items-center gap-2">
                         <jhi-points-input
+                            class="w-28"
                             inputId="presentation-instance-result"
                             fluid
                             [min]="0"
@@ -199,9 +212,9 @@
                             [placeholder]="'artemisApp.presentationAssessment.placeholder.resultPoints' | artemisTranslate"
                             formControlName="resultPoints"
                         />
-                        <span>
+                        <span class="whitespace-nowrap text-(--text-body-secondary)">
                             <span jhiTranslate="artemisApp.presentationAssessment.pointsOf"></span>
-                            <strong>{{ presentationAssessment().maxPoints }}</strong>
+                            <strong class="text-(--body-color)">{{ presentationAssessment().maxPoints }}</strong>
                         </span>
                     </div>
                     @if (editForm.controls.resultPoints.invalid && editForm.controls.resultPoints.touched) {
@@ -229,10 +242,10 @@
         }
     }
 
-    <div class="instance-actions">
+    <div class="flex items-center gap-2 border-t border-(--border-color) pt-4">
         @if (remainingCriteria() > 0) {
             <span
-                class="instance-remaining"
+                class="text-sm text-(--text-body-secondary)"
                 data-testid="rubric-remaining"
                 jhiTranslate="artemisApp.presentationAssessment.rubric.remaining"
                 [translateValues]="{ count: remainingCriteria() }"

@@ -1,6 +1,8 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import { merge } from 'rxjs';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp, faPlus, faTableCellsLarge, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -26,7 +28,6 @@ import { RubricCriterionForm, RubricForm, createCriterionForm, createLevelForms,
 @Component({
     selector: 'jhi-presentation-rubric-editor',
     templateUrl: './presentation-rubric-editor.component.html',
-    styleUrl: './presentation-rubric-editor.component.scss',
     providers: [TumAetUiConfirmationService],
     imports: [
         ReactiveFormsModule,
@@ -47,6 +48,7 @@ import { RubricCriterionForm, RubricForm, createCriterionForm, createLevelForms,
 export class PresentationRubricEditorComponent {
     private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly translateService = inject(TranslateService);
+    private readonly translationChanges = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange));
 
     /** The rubric being edited; the enclosing dialog owns it to check its validity and read it when saving. */
     readonly form = input.required<RubricForm>();
@@ -64,16 +66,27 @@ export class PresentationRubricEditorComponent {
     protected readonly weightSum = RUBRIC_WEIGHT_SUM;
     protected readonly rubricLevelCount = rubricLevelCount;
     protected readonly rubricLevelKey = rubricLevelKey;
-    protected readonly scaleOptions = Object.values(PresentationRubricScale).map((scale) => ({
-        label: this.translateService.instant(`artemisApp.presentationAssessment.rubric.scale.${scale}`),
-        value: scale,
-    }));
+    readonly scaleOptions = computed(() => {
+        this.translationChanges();
+        return Object.values(PresentationRubricScale).map((scale) => ({
+            label: this.translateService.instant(`artemisApp.presentationAssessment.rubric.scale.${scale}`),
+            value: scale,
+        }));
+    });
 
     /** The criteria whose levels are shown, tracked by form so that removing a criterion keeps the others as they were. */
     private readonly expandedCriteria = signal<ReadonlySet<RubricCriterionForm>>(new Set());
 
     protected totalWeight(): number {
         return rubricTotalWeight(this.form());
+    }
+
+    /** Whether the weights add up to 100 percent, miss it, or there is no criterion to weigh yet. */
+    protected totalState(): 'valid' | 'invalid' | 'empty' {
+        if (this.totalWeight() === RUBRIC_WEIGHT_SUM) {
+            return 'valid';
+        }
+        return this.form().length > 0 ? 'invalid' : 'empty';
     }
 
     protected isExpanded(criterion: RubricCriterionForm): boolean {

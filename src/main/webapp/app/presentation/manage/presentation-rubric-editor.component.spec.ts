@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationRubricEditorComponent } from 'app/presentation/manage/presentation-rubric-editor.component';
 import { RubricForm, createRubricForm } from 'app/presentation/manage/presentation-rubric-form';
@@ -102,19 +102,19 @@ describe('PresentationRubricEditorComponent', () => {
 
     it('should show the total weight in red until it reaches 100 percent and in green then', () => {
         const total = () => query('rubric-total-weight')!;
+        const severity = () => total().querySelector('[data-severity]')!.getAttribute('data-severity');
         render(createRubricForm());
-        expect(total().classList).not.toContain('presentation-rubric-total-invalid');
-        expect(total().classList).not.toContain('presentation-rubric-total-valid');
+        expect(severity()).toBe('primary');
 
         render(createRubricForm([criterion('Content', 60)]));
         expect(total().textContent).toContain('60 %');
-        expect(total().classList).toContain('presentation-rubric-total-invalid');
+        expect(severity()).toBe('danger');
 
         typeIntoInputNumber(fixture.nativeElement.querySelector('input#rubric-criterion-weight-0'), '100');
         fixture.detectChanges();
 
         expect(total().textContent).toContain('100 %');
-        expect(total().classList).toContain('presentation-rubric-total-valid');
+        expect(severity()).toBe('success');
     });
 
     it('should show the errors of the whole rubric only when asked to', () => {
@@ -211,6 +211,18 @@ describe('PresentationRubricEditorComponent', () => {
 
         expect(form.at(0).controls.scale.value).toBe(PresentationRubricScale.FIVE_POINT);
         expect(form.at(0).controls.levels.at(4).controls.description.value).toBe('Outstanding');
+    });
+
+    it('should translate the scales again when the active language changes', () => {
+        render(createRubricForm());
+        const translateService = TestBed.inject(TranslateService) as unknown as MockTranslateService;
+        vi.spyOn(translateService, 'instant').mockImplementation((key) => `de:${key}`);
+        translateService.onLangChangeSubject.next({ lang: 'de', translations: {} });
+
+        expect(fixture.componentInstance.scaleOptions().map((option) => option.label)).toEqual([
+            'de:artemisApp.presentationAssessment.rubric.scale.THREE_POINT',
+            'de:artemisApp.presentationAssessment.rubric.scale.FIVE_POINT',
+        ]);
     });
 
     it('should not let a locked rubric add or remove criteria', () => {

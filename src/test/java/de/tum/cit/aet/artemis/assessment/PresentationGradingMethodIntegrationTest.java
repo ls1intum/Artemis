@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,6 +25,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationGradingMethod;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricScale;
@@ -42,7 +45,11 @@ import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentReposi
 import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricLevelRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricRatingRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationRubricWriteRepository.PresentationRubricChanges;
 import de.tum.cit.aet.artemis.assessment.service.PresentationAssessmentService;
+import de.tum.cit.aet.artemis.assessment.service.PresentationRubricService;
+import de.tum.cit.aet.artemis.assessment.service.PresentationRubricService.RubricGrade;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -72,6 +79,9 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private PresentationAssessmentService presentationAssessmentService;
+
+    @Autowired
+    private PresentationRubricService presentationRubricService;
 
     @Autowired
     private PresentationRubricCriterionRepository presentationRubricCriterionRepository;
@@ -756,6 +766,86 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
             assertThat(getRubric(created.id()).instanceCount()).isZero();
             // Without instances, the structure of the rubric can change again
             updatePresentation(rubricUpdate(created, List.of(criterion("Structure", 100, PresentationRubricScale.THREE_POINT))), HttpStatus.OK);
+        }
+    }
+
+    @Nested
+    class Roles {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void asEditor_shouldCreateARubricAndChangeItsWeights() throws Exception {
+            PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
+
+            updatePresentation(rubricUpdate(created, withWeights(getRubric(created.id()), 40, 40, 20)), HttpStatus.OK);
+
+            assertThat(getRubric(created.id()).criteria()).extracting(PresentationRubricCriterionDTO::weight).containsExactly(40, 40, 20);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void asTutor_changingTheRubric_shouldBeForbidden() throws Exception {
+            long presentationId = createRubricPresentationAsInstructor();
+            PresentationRubricDTO rubric = getRubric(presentationId);
+            var update = new PresentationAssessmentDTO(presentationId, "Final presentation", "Presentation of the project", PresentationGradingMethod.RUBRIC, null, null, null,
+                    null, withWeights(rubric, 40, 40, 20));
+
+            updatePresentation(update, HttpStatus.FORBIDDEN);
+
+            assertThat(getRubric(presentationId).criteria()).extracting(PresentationRubricCriterionDTO::weight).containsExactly(50, 30, 20);
+        }
+    }
+
+    /**
+     * A change of the weights recalculates the scores of all assessed instances, so it must not overlap with grading.
+     * Both orders are tested deterministically: the write that comes second read the version before the other one wrote.
+     */
+    @Nested
+    class ConcurrentRubricChanges {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void changingWeights_afterConcurrentGrading_shouldRejectStaleScores() throws Exception {
+            PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
+            PresentationRubricDTO rubric = getRubric(created.id());
+            PresentationAssessmentInstanceDTO instance = createInstances(created.id(), List.of(student(1)), null, null, ratings(rubric, 3, 2, 1)).getFirst();
+            long courseId = course.getId();
+
+            // The change of the weights reads the version and recalculates the scores from the ratings before the tutor saves new ones.
+            PresentationAssessment weightUpdate = presentationAssessmentRepository.findByIdElseThrow(created.id());
+            long versionReadByWeightUpdate = weightUpdate.getVersion();
+            PresentationRubricChanges changes = presentationRubricService.buildLockedUpdate(created.id(), withWeights(rubric, 40, 40, 20));
+
+            presentationAssessmentService.updateInstance(courseId, created.id(), instance.id(), instanceUpdate(instance, student(1), null, null, ratings(rubric, 0, 0, 0)));
+
+            assertThatThrownBy(
+                    () -> presentationRubricCriterionRepository.updateWithRubricIfVersionMatches(courseId, created.id(), versionReadByWeightUpdate, weightUpdate, changes))
+                    .isInstanceOf(ConflictException.class);
+            assertThat(getRubric(created.id()).criteria()).extracting(PresentationRubricCriterionDTO::weight).containsExactly(50, 30, 20);
+            assertThat(rubricScore(instance.id())).isEqualTo(0.0);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void grading_afterConcurrentWeightChange_shouldRejectTheStaleScore() throws Exception {
+            PresentationAssessmentDTO created = createPresentation(PresentationGradingMethod.RUBRIC, null, standardRubric());
+            PresentationRubricDTO rubric = getRubric(created.id());
+            List<PresentationRubricRatingDTO> storedRatings = ratings(rubric, 3, 2, 1);
+            long instanceId = createInstances(created.id(), List.of(student(1)), null, null, storedRatings).getFirst().id();
+            long courseId = course.getId();
+
+            // The tutor reads the version and calculates the score with the old weights before the weights change.
+            long versionReadByGrading = presentationAssessmentRepository.findByIdElseThrow(created.id()).getVersion();
+            PresentationAssessmentInstance staleInstance = presentationAssessmentInstanceRepository.findByIdElseThrow(instanceId);
+            RubricGrade grade = presentationRubricService.grade(created.id(), ratings(rubric, 0, 0, 0));
+            staleInstance.setRubricScore(grade.score());
+
+            presentationAssessmentService.update(courseId, created.id(), rubricUpdate(created, withWeights(rubric, 40, 40, 20)));
+
+            assertThatThrownBy(() -> presentationAssessmentInstanceRepository.updateInstanceIfVersionMatches(courseId, created.id(), versionReadByGrading, staleInstance,
+                    grade.ratingsFor(staleInstance))).isInstanceOf(ConflictException.class);
+            assertThat(rubricScore(instanceId)).isEqualTo(75.0);
+            assertThat(getRatings(created.id(), instanceId)).containsExactlyElementsOf(storedRatings);
         }
     }
 

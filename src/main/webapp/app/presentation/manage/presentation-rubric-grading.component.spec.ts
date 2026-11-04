@@ -84,7 +84,7 @@ describe('PresentationRubricGradingComponent', () => {
         rate(0, 3);
 
         expect(form.at(0).controls.levelId.value).toBe(14);
-        expect(query('rubric-grading-level-0-3')!.classList).toContain('presentation-rubric-grading-level-selected');
+        expect((query('rubric-grading-level-0-3')!.querySelector('input') as HTMLInputElement).checked).toBe(true);
         expect(query('rubric-grading-unrated-0')).toBeNull();
         expect(query('rubric-grading-comment-0')).not.toBeNull();
         expect(form.at(0).dirty).toBe(true);

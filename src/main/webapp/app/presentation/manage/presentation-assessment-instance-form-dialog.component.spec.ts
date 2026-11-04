@@ -379,7 +379,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
         it('should send the chosen result and no result of another method', () => {
             (query('[data-testid="presentation-instance-failed"] input') as HTMLInputElement).click();
             fixture.detectChanges();
-            expect(query('[data-testid="presentation-instance-failed"]')!.classList).toContain('instance-outcome-selected');
+            expect((query('[data-testid="presentation-instance-failed"] input') as HTMLInputElement).checked).toBe(true);
 
             submit();
 

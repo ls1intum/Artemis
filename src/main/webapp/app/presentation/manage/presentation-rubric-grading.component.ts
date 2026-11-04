@@ -16,7 +16,6 @@ import { RatingForm, RatingsForm, rubricPreviewScore } from 'app/presentation/ma
 @Component({
     selector: 'jhi-presentation-rubric-grading',
     templateUrl: './presentation-rubric-grading.component.html',
-    styleUrl: './presentation-rubric-grading.component.scss',
     imports: [ReactiveFormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent, TumAetUiInputDirective, TumAetUiMessageComponent],
 })
 export class PresentationRubricGradingComponent {
