@@ -37,8 +37,9 @@ javadoc that already live in the template -- the template IS the API reference a
 
 ## The diagram, when the design earns one
 
-A multi-type design (students create types or wire a pattern) gets a PlantUML class diagram placed right
-after the tasks that reference it ("following the below class diagram"). The diagram is interactive in
+The specification's `## Diagram` decision is binding. When it says yes, the statement contains one PlantUML class
+diagram placed right after the tasks that reference it ("following the below class diagram"); verification
+rejects a statement without it, and the decision cannot be revoked. When it says no, include none. The diagram is interactive in
 Artemis: every member and relation linked with `testsColor` renders green/red as the student's tests pass or
 fail, showing exactly what remains. Link every element that has a check, and only elements that have one:
 members as `<color:testsColor(exactTestName)>+member()</color>`, relations as

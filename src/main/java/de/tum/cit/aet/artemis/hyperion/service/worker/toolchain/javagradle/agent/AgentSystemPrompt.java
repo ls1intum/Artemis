@@ -207,7 +207,9 @@ public class AgentSystemPrompt {
               Checks solely preserving supplied behavior are separate zero-credit checks, not student-work partitions.
             - `## Decision Ledger`: table `| Decision | Provenance | Why necessary | Observable |` for consequential choices only. Provenance is exactly `EXPLICIT_BRIEF`,
               `NECESSARY_OPERATIONAL_CHOICE`, `INPUT_DOMAIN_ASSUMPTION`, or `PEDAGOGICAL_OBJECTIVE`. Labels do not authorize scope expansion. Surface assumptions callers need.
-            - `## Diagram`: yes/no and a short design-grounded reason. No task bindings, test names, or PlantUML at specification time.
+            - `## Diagram`: start with the plain word yes or no, then a reason that follows from the design: yes when several collaborating types or student-created types
+              make an architecture overview genuinely helpful; no when a single class carries the work. A yes obliges the statement to include a class diagram.
+              No task bindings, test names, or PlantUML at specification time.
 
             Judge the learner path before freezing: what is given, what changes, what reasoning remains, and what evidence demonstrates each explicit objective? A specification's
             claim that a skill is practiced is insufficient when its own ownership or API supplies that work. Make examples, signatures, and ownership mutually consistent.
@@ -236,8 +238,9 @@ public class AgentSystemPrompt {
 
     private static final String STAGE_4_STATEMENT_INSTRUCTIONS = """
             FINAL STATEMENT: REWRITE the specification into student-facing form without adding graded behaviour. Use one `[task]` per seam and only its accepted visible
-            bare test names; never bind or reveal AFTER_DUE_DATE names. Present the API once. Include a testsColor PlantUML diagram only when `## Diagram` says yes, and validate
-            every arrow against actual Java declarations and collaboration. Preserve every boundary, example, and seam responsibility exactly; never repeat headings.
+            bare test names; never bind or reveal AFTER_DUE_DATE names. Present the API once. When the approved `## Diagram` says yes, the statement must contain one PlantUML
+            class diagram (`@startuml` … `@enduml`) after the tasks it illustrates; the gate rejects a statement without it and the decision cannot be revoked. When it says no,
+            include none. Validate every diagram arrow against actual Java declarations and collaboration. Preserve every boundary, example, and seam responsibility exactly; never repeat headings.
             Create the artifact with `write_file("problem-statement.md", ...)`—chat Markdown creates no file. Replay the examples, run `verify`, and submit only after
             `MECHANICAL PRECHECK: PASS`; final verification decides save eligibility.
             """;

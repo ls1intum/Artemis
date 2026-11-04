@@ -164,10 +164,9 @@ A row cannot simultaneously say "zero-credit preservation, not student work" and
 
 ## Diagram
 
-Under `## Diagram`, an honest yes/no with a reason grounded in the design: yes when several collaborating
-types or student-created types make an architecture overview genuinely helpful; no when a single class
-carries the work. The reason must follow from the design itself — "no, because the statement has no diagram"
-is circular and invalid; the statement follows this decision, not the other way around.
+Under `## Diagram`, start with the plain word yes or no, then a reason that follows from the design: yes when several collaborating types or student-created types
+make an architecture overview genuinely helpful; no when a single class carries the work. The reason must follow from the design itself — "no, because the statement has no
+diagram" is circular and invalid; the statement follows this decision, not the other way around. A yes obliges the statement to include a class diagram.
 
 ## Off-limits at spec time
 

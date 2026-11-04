@@ -2,6 +2,10 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agen
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
@@ -107,5 +111,23 @@ class AgentSystemPromptTest {
     void hiddenTestGuidanceTracksTheImmutableDueDateCapability() {
         assertThat(prompts.buildStage(input(false), GenerationStage.TESTS)).contains("Every Testing Strategy hidden-variant cell must be `no`");
         assertThat(prompts.buildStage(input(true), GenerationStage.TESTS)).contains("configured due date", "additional `AFTER_DUE_DATE` witness");
+    }
+
+    @Test
+    void specificationPromptCarriesTheDiagramDefaultOfTheStyleGuideItCannotRead() throws IOException {
+        String styleGuide;
+        try (InputStream input = new GenerationResources().getResource(Path.of("templates/hyperion/style/spec.md")).getInputStream()) {
+            styleGuide = normalizeWhitespace(new String(input.readAllBytes(), StandardCharsets.UTF_8));
+        }
+        String section = styleGuide.substring(styleGuide.indexOf("## Diagram"));
+        String defaultRule = section.substring(section.indexOf("yes when"), section.indexOf("carries the work.") + "carries the work.".length());
+
+        assertThat(normalizeWhitespace(prompts.buildStage(input(false), GenerationStage.SPEC))).contains(defaultRule, "A yes obliges the statement to include a class diagram.");
+        assertThat(normalizeWhitespace(prompts.buildStage(input(false), GenerationStage.STATEMENT)))
+                .contains("When the approved `## Diagram` says yes, the statement must contain one PlantUML", "the gate rejects a statement without it");
+    }
+
+    private static String normalizeWhitespace(String text) {
+        return text.replaceAll("\\s+", " ");
     }
 }
