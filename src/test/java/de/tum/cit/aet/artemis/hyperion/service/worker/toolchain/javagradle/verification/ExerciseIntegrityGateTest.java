@@ -865,6 +865,19 @@ class ExerciseIntegrityGateTest {
                 }
                 """;
 
+        String sameNameInAnotherMethod = """
+                class ReportTest {
+                    @Test void readsTheReport() throws Exception {
+                        String fileName = "report.csv";
+                        var lines = java.nio.file.Files.readAllLines(java.nio.file.Path.of(fileName));
+                    }
+                    @Test void namesTheSource() {
+                        String fileName = "Report.java";
+                        assertEquals(fileName, new Report().sourceName());
+                    }
+                }
+                """;
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ReportTest.java", sameNameInAnotherMethod))).as("a same-named local of another method").isEmpty();
         assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ClientTest.java", capture, "test/T.java", ownData, "test/U.java", commentedOut, "test/ParserTest.java",
                 ownDataAndASourceNameInAMessage, "test/FileNameTest.java", ownDataAndAnExpectedFileName))).isEmpty();
     }

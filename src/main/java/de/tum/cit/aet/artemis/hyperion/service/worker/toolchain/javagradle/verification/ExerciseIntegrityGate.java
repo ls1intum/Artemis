@@ -608,8 +608,8 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * The source ranges that can contribute to a path a test reads: the arguments of every path expression, and the value of every variable or field named in such a range,
-     * followed until no further variable is named.
+     * The source ranges that can contribute to a path a test reads: the arguments of every path expression, and the value of every variable or field named in such a range
+     * and in scope there, followed until no further variable is named.
      *
      * @param masked comment- and literal-masked source, so parentheses inside literals are not counted
      * @return the ranges, each from its start to its exclusive end
@@ -620,23 +620,45 @@ public final class ExerciseIntegrityGate {
         while (call.find()) {
             ranges.add(new SourceRange(call.end() - 1, closingParenthesis(masked, call.end() - 1)));
         }
-        Set<String> followed = new HashSet<>();
+        List<SourceRange> blocks = braceBlocks(masked);
+        Set<Integer> followedAssignments = new HashSet<>();
         for (int index = 0; index < ranges.size(); index++) {
             SourceRange range = ranges.get(index);
-            Set<String> named = IDENTIFIER.matcher(masked.substring(range.start(), range.end())).results().map(MatchResult::group).filter(followed::add)
-                    .collect(Collectors.toSet());
+            Set<String> named = IDENTIFIER.matcher(masked.substring(range.start(), range.end())).results().map(MatchResult::group).collect(Collectors.toSet());
             if (named.isEmpty()) {
                 continue;
             }
             Matcher assignment = ASSIGNMENT.matcher(masked);
             while (assignment.find()) {
-                if (named.contains(assignment.group(1))) {
+                // Only an assignment whose blocks all enclose the use is in scope there: a field, or a local of the same method; a same-named local elsewhere is not.
+                if (named.contains(assignment.group(1)) && visibleAt(blocks, assignment.start(), range.start()) && followedAssignments.add(assignment.start())) {
                     int end = masked.indexOf(';', assignment.end());
                     ranges.add(new SourceRange(assignment.end(), end < 0 ? masked.length() : end));
                 }
             }
         }
         return ranges;
+    }
+
+    /** Every brace-delimited block of the masked source, from its opening to its closing brace. */
+    private static List<SourceRange> braceBlocks(String masked) {
+        List<SourceRange> blocks = new ArrayList<>();
+        java.util.Deque<Integer> open = new java.util.ArrayDeque<>();
+        for (int index = 0; index < masked.length(); index++) {
+            char current = masked.charAt(index);
+            if (current == '{') {
+                open.push(index);
+            }
+            else if (current == '}' && !open.isEmpty()) {
+                blocks.add(new SourceRange(open.pop(), index));
+            }
+        }
+        open.forEach(start -> blocks.add(new SourceRange(start, masked.length())));
+        return blocks;
+    }
+
+    private static boolean visibleAt(List<SourceRange> blocks, int declaration, int use) {
+        return blocks.stream().filter(block -> block.start() < declaration && declaration < block.end()).allMatch(block -> block.start() < use && use < block.end());
     }
 
     private record SourceRange(int start, int end) {
