@@ -638,6 +638,48 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     }
 
     @Test
+    void testBuildLearnerProfileDTO_UsesCourseDefaultWithoutLearnerProfileApi() throws Exception {
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setId(999L);
+        ReflectionTestUtils.setField(athenaFeedbackSuggestionsService, "learnerProfileApi", Optional.empty());
+
+        CourseAthenaConfigRepository mockConfigRepository = mock(CourseAthenaConfigRepository.class);
+        when(mockConfigRepository.findConfigByCourseId(999L)).thenReturn(Optional.of(new CourseAthenaConfigDTO(true, false, 3, 0)));
+        ReflectionTestUtils.setField(athenaFeedbackSuggestionsService, "courseAthenaConfigRepository", mockConfigRepository);
+
+        LearnerProfileDTO result = invokeBuildLearnerProfileDTOWithoutStub(true);
+
+        assertThat(result).isNotNull();
+        assertThat(result.feedbackDetail()).isEqualTo(3);
+        // The course sets no default for this one, so it stays neutral.
+        assertThat(result.feedbackFormality()).isEqualTo(LearnerProfile.DEFAULT_PROFILE_VALUE);
+        assertThat(result.hasSetupFeedbackPreferences()).isFalse();
+    }
+
+    @Test
+    void testBuildLearnerProfileDTO_SendsNoProfileWithoutLearnerProfileApiAndCourseDefault() throws Exception {
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setId(999L);
+        ReflectionTestUtils.setField(athenaFeedbackSuggestionsService, "learnerProfileApi", Optional.empty());
+
+        CourseAthenaConfigRepository mockConfigRepository = mock(CourseAthenaConfigRepository.class);
+        when(mockConfigRepository.findConfigByCourseId(999L)).thenReturn(Optional.of(new CourseAthenaConfigDTO(true, false, 0, 0)));
+        ReflectionTestUtils.setField(athenaFeedbackSuggestionsService, "courseAthenaConfigRepository", mockConfigRepository);
+
+        assertThat(invokeBuildLearnerProfileDTOWithoutStub(true)).isNull();
+    }
+
+    @Test
+    void testBuildLearnerProfileDTO_IgnoresCourseDefaultWithoutLearnerProfileApiWhenNotApplicable() throws Exception {
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setId(999L);
+        ReflectionTestUtils.setField(athenaFeedbackSuggestionsService, "learnerProfileApi", Optional.empty());
+
+        CourseAthenaConfigRepository mockConfigRepository = mock(CourseAthenaConfigRepository.class);
+        ReflectionTestUtils.setField(athenaFeedbackSuggestionsService, "courseAthenaConfigRepository", mockConfigRepository);
+
+        assertThat(invokeBuildLearnerProfileDTOWithoutStub(false)).isNull();
+        verify(mockConfigRepository, never()).findConfigByCourseId(anyLong());
+    }
+
+    @Test
     void testBuildLearnerProfileDTO_IgnoresCourseDefaultWhenNotApplicable() throws Exception {
         textExercise.getCourseViaExerciseGroupOrCourseMember().setId(999L);
 
@@ -730,6 +772,10 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
      */
     private LearnerProfileDTO invokeBuildLearnerProfileDTO(LearnerProfile learnerProfile, boolean applyCourseDefaults) throws Exception {
         stubLearnerProfile(learnerProfile);
+        return invokeBuildLearnerProfileDTOWithoutStub(applyCourseDefaults);
+    }
+
+    private LearnerProfileDTO invokeBuildLearnerProfileDTOWithoutStub(boolean applyCourseDefaults) throws Exception {
         Method buildLearnerProfileDTOMethod = AthenaFeedbackSuggestionsService.class.getDeclaredMethod("buildLearnerProfileDTO", Submission.class, Exercise.class, boolean.class);
         buildLearnerProfileDTOMethod.setAccessible(true);
         return (LearnerProfileDTO) buildLearnerProfileDTOMethod.invoke(athenaFeedbackSuggestionsService, textSubmission, textExercise, applyCourseDefaults);

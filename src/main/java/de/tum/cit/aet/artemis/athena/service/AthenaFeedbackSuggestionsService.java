@@ -200,20 +200,17 @@ public class AthenaFeedbackSuggestionsService {
      * <p>
      * Only used for text requests: Athena's programming and modeling modules do not read the learner profile. Within
      * text, only non-graded feedback is adapted to it, so the course defaults are only looked up for such a request,
-     * which saves the query for graded ones.
+     * which saves the query for graded ones. The course defaults also apply without a profile, as when Atlas is disabled.
      *
      * @param submission          the submission to extract the profile from
      * @param exercise            the exercise the submission belongs to, used to look up the course's Athena configuration
      * @param applyCourseDefaults whether the request is non-graded, so that Athena adapts it to the profile and the course
      *                                defaults apply
-     * @return the resulting DTO, or null if no learner profile is available for the submission
+     * @return the resulting DTO, or null if the submission has neither a learner profile nor course defaults that apply
      */
     private LearnerProfileDTO buildLearnerProfileDTO(Submission submission, Exercise exercise, boolean applyCourseDefaults) {
         LearnerProfile learnerProfile = extractLearnerProfile(submission);
-        if (learnerProfile == null) {
-            return null;
-        }
-        if (!applyCourseDefaults || learnerProfile.hasSetupFeedbackPreferences()) {
+        if (!applyCourseDefaults || (learnerProfile != null && learnerProfile.hasSetupFeedbackPreferences())) {
             return LearnerProfileDTO.of(learnerProfile);
         }
 
@@ -223,7 +220,8 @@ public class AthenaFeedbackSuggestionsService {
         CourseAthenaConfigDTO courseConfig = courseId != null ? courseAthenaConfigRepository.findConfigByCourseId(courseId).orElse(null) : null;
         int defaultFeedbackDetail = courseConfig != null ? courseConfig.defaultFeedbackDetail() : 0;
         int defaultFeedbackFormality = courseConfig != null ? courseConfig.defaultFeedbackFormality() : 0;
-        return LearnerProfileDTO.withCourseDefaults(learnerProfile, defaultFeedbackDetail, defaultFeedbackFormality);
+        return learnerProfile != null ? LearnerProfileDTO.withCourseDefaults(learnerProfile, defaultFeedbackDetail, defaultFeedbackFormality)
+                : LearnerProfileDTO.ofCourseDefaults(defaultFeedbackDetail, defaultFeedbackFormality);
     }
 
     /**

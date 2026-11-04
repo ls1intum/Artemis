@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
+import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.DEFAULT_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MAX_PROFILE_VALUE;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PROFILE_VALUE;
 
@@ -53,6 +54,23 @@ public record LearnerProfileDTO(long id, @Min(MIN_PROFILE_VALUE) @Max(MAX_PROFIL
         int feedbackDetail = courseDefaultFeedbackDetail > 0 ? clamp(courseDefaultFeedbackDetail) : clamp(learnerProfile.getFeedbackDetail());
         int feedbackFormality = courseDefaultFeedbackFormality > 0 ? clamp(courseDefaultFeedbackFormality) : clamp(learnerProfile.getFeedbackFormality());
         return new LearnerProfileDTO(learnerProfile.getId(), feedbackDetail, feedbackFormality, false);
+    }
+
+    /**
+     * Creates a {@link LearnerProfileDTO} from the course-level defaults alone, for a student without a learner profile,
+     * as when Atlas is disabled. There is no profile to refer to, so the id is 0; Athena does not read it.
+     *
+     * @param courseDefaultFeedbackDetail    the course's default feedback detail, or a non-positive value for "not set"
+     * @param courseDefaultFeedbackFormality the course's default feedback formality, or a non-positive value for "not set"
+     * @return the resulting DTO, or null if the course sets neither default
+     */
+    public static LearnerProfileDTO ofCourseDefaults(int courseDefaultFeedbackDetail, int courseDefaultFeedbackFormality) {
+        if (courseDefaultFeedbackDetail <= 0 && courseDefaultFeedbackFormality <= 0) {
+            return null;
+        }
+        int feedbackDetail = courseDefaultFeedbackDetail > 0 ? clamp(courseDefaultFeedbackDetail) : DEFAULT_PROFILE_VALUE;
+        int feedbackFormality = courseDefaultFeedbackFormality > 0 ? clamp(courseDefaultFeedbackFormality) : DEFAULT_PROFILE_VALUE;
+        return new LearnerProfileDTO(0, feedbackDetail, feedbackFormality, false);
     }
 
     /**
