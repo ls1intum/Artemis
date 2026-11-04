@@ -395,6 +395,23 @@ class SandboxAgentToolsTest {
         assertThat(sandbox.execCount()).isZero();
     }
 
+    /** An authored test class with a structural provider's name makes the seeder treat the whole structural bundle as a foreign harness and stop the run. */
+    @Test
+    void writeFile_rejectsFileNamesReservedForSeededStructuralTests() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.writeFile("tests/test/de/tum/cit/aet/exgen/exercise/AttributeTest.java", "class AttributeTest {}"))
+                .startsWith("ERROR: do not write tests/test/de/tum/cit/aet/exgen/exercise/AttributeTest.java").contains("different, descriptive name");
+        assertThat(tools.writeFile("tests/test/de/tum/cit/aet/exgen/exercise/test.json", "[]")).startsWith("ERROR: do not write");
+        assertThat(tools.writeFile("tests/test/de/tum/cit/aet/exgen/exercise/RadiusRuleTest.java", "class RadiusRuleTest {}")).doesNotStartWith("ERROR");
+        assertThat(tools.writeFile("solution/src/de/tum/cit/aet/exgen/exercise/ClassTest.java", "class ClassTest {}")).doesNotStartWith("ERROR");
+        assertThat(sandbox.files()).doesNotContainKey("/workspace/tests/test/de/tum/cit/aet/exgen/exercise/AttributeTest.java");
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat > tests/test/de/tum/cit/aet/exgen/exercise/AttributeTest.java <<'EOF'")).isTrue();
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat tests/test/de/tum/cit/aet/exgen/exercise/AttributeTest.java")).isFalse();
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat > tests/test/de/tum/cit/aet/exgen/exercise/RadiusRuleTest.java <<'EOF'")).isFalse();
+    }
+
     /** Artemis writes the Ares policy itself before every build, so neither a structured edit nor a shell write may touch it. */
     @Test
     void theServerOwnedSecurityPolicyIsNotWritable() {

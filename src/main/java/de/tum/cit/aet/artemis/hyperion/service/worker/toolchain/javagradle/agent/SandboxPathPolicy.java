@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ExerciseIntegrityGate;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleSeeder;
 
 /**
  * Model steering for the sandbox tools' path arguments. <strong>Not a security boundary.</strong>
@@ -23,6 +24,10 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 final class SandboxPathPolicy {
 
     private static final Pattern SAFE_RELATIVE_PATH = Pattern.compile("[a-zA-Z0-9_./-]+");
+
+    /** A seeded structural test or oracle anywhere in the tests repository, lowercased like the command line it is matched against. */
+    private static final Pattern RESERVED_STRUCTURAL_FILE = Pattern
+            .compile("tests/(?:[^\\s'\"]*/)?(?:classtest\\.java|methodtest\\.java|attributetest\\.java|constructortest\\.java|generictypetest\\.java|test\\.json)");
 
     private static final Pattern MANAGED_BUILD_ROOT = Pattern.compile("(?:tests|solution|template)/");
 
@@ -51,7 +56,8 @@ final class SandboxPathPolicy {
                 // Includes tests/SecurityPolicy.yaml: Artemis writes its test-class list itself before every build.
                 String repositoryPath = path.substring(repository.length());
                 return repositoryPath.startsWith("buildSrc/") || repositoryPath.startsWith("gradle/") || repositoryPath.startsWith(".mvn/") || repositoryPath.startsWith(".m2/")
-                        || repositoryPath.startsWith("target/") || repositoryPath.startsWith("build/") || ExerciseIntegrityGate.isHarnessFile(repositoryPath);
+                        || repositoryPath.startsWith("target/") || repositoryPath.startsWith("build/") || ExerciseIntegrityGate.isHarnessFile(repositoryPath)
+                        || (repository.equals("tests/") && isReservedStructuralTestPath(repositoryPath));
             }
         }
         return false;
@@ -62,7 +68,15 @@ final class SandboxPathPolicy {
                 || path.startsWith("tests/");
     }
 
+    private static boolean isReservedStructuralTestPath(String repositoryPath) {
+        return StructuralOracleSeeder.isReservedStructuralFileName(repositoryPath.substring(repositoryPath.lastIndexOf('/') + 1));
+    }
+
     static String immutableHarnessError(String path) {
+        if (path.startsWith("tests/") && isReservedStructuralTestPath(path.substring("tests/".length()))) {
+            return "ERROR: do not write " + path + ". Artemis seeds the structural tests (ClassTest, MethodTest, AttributeTest, ConstructorTest, GenericTypeTest, test.json) "
+                    + "itself, so these file names are reserved. Put behavioral tests in a test class with a different, descriptive name.";
+        }
         return "ERROR: do not modify " + path + ". Repository build infrastructure is seeded and managed by Artemis; edit only the problem statement and exercise source files.";
     }
 
@@ -85,7 +99,7 @@ final class SandboxPathPolicy {
 
     /** Whether a repository root is followed by a seeded build file, or anywhere later by a Cabal file. */
     private static boolean namesManagedBuildPath(String lower) {
-        if (MANAGED_BUILD_FILE.matcher(lower).find()) {
+        if (MANAGED_BUILD_FILE.matcher(lower).find() || RESERVED_STRUCTURAL_FILE.matcher(lower).find()) {
             return true;
         }
         Matcher root = MANAGED_BUILD_ROOT.matcher(lower);
