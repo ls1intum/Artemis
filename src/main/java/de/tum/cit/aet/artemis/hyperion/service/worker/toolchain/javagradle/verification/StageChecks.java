@@ -105,7 +105,7 @@ public class StageChecks {
             return Optional.empty();
         }
         return Optional.of("ERROR: the approved specification assigns these types to students to create: " + restoredTypes
-                + ". Do not restore or pre-create their declarations in the template, and do not put their seam IDs on unrelated collaborators. Test the student-created types "
+                + ". Do not restore or pre-create their declarations in the template, and do not put TODOs for them on unrelated collaborators. Test the student-created types "
                 + "through Class.forName/reflection (and a dynamic proxy where the context needs an interface instance), as shown by the seeded test utilities.");
     }
 
@@ -294,7 +294,7 @@ public class StageChecks {
         if (!malformedOwners.isEmpty()) {
             return StageCheckResult.failed("These Testing Strategy rows have no enforceable Owner type: " + malformedOwners
                     + ". Add an Owner type column and put one bare type name from the Design table in every row. This exact link determines whether and where the template "
-                    + "may carry that seam's TODO breadcrumb.");
+                    + "must carry that seam's TODO.");
         }
         List<String> missingResponsibilities = testingRows.stream().filter(row -> row.observableResponsibility().isBlank()).map(TestingStrategyRow::seamId).toList();
         if (!missingResponsibilities.isEmpty()) {
@@ -378,7 +378,7 @@ public class StageChecks {
                         + "that updates the same counter passes — and it forces machinery into the student's contract that the exercise does not need. Reading the student's "
                         + "source file is rejected outright. State the rule in terms of the result the student must produce, and put the technique in the prose.";
         return StageCheckResult.passed("Specification accepted. Parsed template plan the later gates will enforce: " + echo + ". Parsed work ownership: " + seamEcho
-                + ". A student-creates type is absent from the template and therefore has no template TODO; a stubbed owner carries its own seam TODO." + reflectionConsequence
+                + ". A student-creates type is absent from the template and therefore has no template TODO; a stubbed owner carries its own TODO." + reflectionConsequence
                 + techniqueAdvice);
     }
 

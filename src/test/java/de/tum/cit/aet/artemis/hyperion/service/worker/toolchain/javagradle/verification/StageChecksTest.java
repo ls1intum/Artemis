@@ -55,7 +55,7 @@ class StageChecksTest {
         private java.util.function.Supplier<String> builtAgainstSpec = () -> spec;
 
         /** Stable work markers found in the template; the default matches the default specification's sole S1 seam. */
-        private String templateTodoOutput = "TODO S1:";
+        private String templateTodoOutput = "TODO:";
 
         private Map<String, String> templateRepositoryFiles = Map.of();
 
@@ -262,7 +262,7 @@ class StageChecksTest {
         assertThat(service.validateArtifactWrite("s", "template/src/FuelStrategy.java", "public interface FuelStrategy { double compute(double input); }"))
                 .hasValueSatisfying(message -> assertThat(message).contains("FuelStrategy").contains("Do not restore or pre-create"));
         assertThat(service.validateArtifactWrite("s", "solution/src/FuelStrategy.java", "public interface FuelStrategy {}")).isEmpty();
-        assertThat(service.validateArtifactWrite("s", "template/src/Spacecraft.java", "public class Spacecraft { // TODO S1: create strategy\n}")).isEmpty();
+        assertThat(service.validateArtifactWrite("s", "template/src/Spacecraft.java", "public class Spacecraft { // TODO: create strategy\n}")).isEmpty();
         assertThat(service.validateArtifactWrite("s", "SPEC.md", sandbox.spec)).hasValueSatisfying(message -> assertThat(message).contains("read-only"));
     }
 

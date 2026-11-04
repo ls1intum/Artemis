@@ -109,13 +109,14 @@ public class AgentSystemPrompt {
     private static final String TEMPLATE_AS_TEACHING_SCAFFOLD = """
             TEMPLATE AS TEACHING SCAFFOLD
             The template is the student's guided starting point: work from it alone, using the statement only as reference. Every stubbed member carries complete Javadoc (or the
-            language's doc idiom) stating its contract — purpose, parameters, return, errors. Anchor each stubbed seam with its Testing Strategy ID and wording:
-            `// TODO S<n>: <task wording>`
-            Put it INSIDE the member at the assigned change; above its throw for a new unfinished body. If an absent type makes the seam undeclarable, keep an empty owner class with its own seam TODO. Do not restore the
-            type, use `Object`, edit SPEC.md, or reuse its seam.
+            language's doc idiom) stating its contract — purpose, parameters, return, errors. Anchor each stubbed seam with an imperative TODO that mirrors its task wording:
+            `// TODO: <task wording>`
+            Never put the seam ID in the comment: students see the TODO, but the statement never defines seam IDs; the Testing Strategy already links each seam to its owner.
+            Put it INSIDE the member at the assigned change; above its throw for a new unfinished body. If an absent type makes the seam undeclarable, keep an empty owner class with its own TODO. Do not restore the
+            type, use `Object`, edit SPEC.md, or anchor its work elsewhere.
             A TODO marks unfinished student work only: never leave one on code that is already complete, and never leave authoring or design notes in any repository file.
             Omit student-created types, keep the starter compiling, and grade them with the reference's structural/reflection pattern. Tasks and tests anchor them; never put their
-            seam IDs on unrelated collaborator code. Imitate the reference's FORM, not its content.
+            TODOs on unrelated collaborator code. Imitate the reference's FORM, not its content.
 
             """;
 

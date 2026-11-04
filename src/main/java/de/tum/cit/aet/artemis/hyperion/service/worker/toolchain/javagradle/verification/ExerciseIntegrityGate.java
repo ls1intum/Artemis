@@ -47,7 +47,11 @@ public final class ExerciseIntegrityGate {
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
-    private static final Pattern TODO_SEAM = Pattern.compile("\\bTODO\\s+(S[1-9][0-9]*)\\s*:");
+    /** A TODO comment: a line comment, a block or doc comment opening, or a continuation line of one. */
+    private static final Pattern TODO_COMMENT = Pattern.compile("(?m)(?://|/\\*+|^\\s*\\*)\\s*TODO\\b");
+
+    /** A TODO labelled with an internal seam ID, such as {@code TODO S1:} or {@code TODO (S1)}. */
+    private static final Pattern TODO_SEAM_LABEL = Pattern.compile("\\bTODO\\s*[-\\[(:]?\\s*S[1-9][0-9]*\\b");
 
     /**
      * The sibling repositories CI lays out next to each other, never legitimate top-level source folders. A file whose first path component is one of these duplicates the CI
@@ -525,8 +529,9 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * Verifies the specification's seam-to-owner links against the template: a stubbed owner carries its seam TODO in the source declaring it, while an omitted student-created
-     * owner has no truthful template location and so must not have a breadcrumb fabricated in an unrelated collaborator.
+     * Verifies the template's TODO anchors against the approved specification. The Testing Strategy, not the comment text, links each seam to its owner type, so a TODO carries
+     * only the task wording: a seam ID would be a label students see but the statement never defines. Every stubbed seam owner carries a TODO in its declaring source, and no
+     * TODO sits outside a stubbed type, because given types are complete and student-created types are absent from the template.
      */
     static List<String> templateTodoSeamReasons(String specification, Map<String, String> templateFiles) {
         List<StageChecks.TestingStrategyRow> rows = StageChecks.testingStrategyRows(specification == null ? "" : specification);
@@ -535,44 +540,37 @@ public final class ExerciseIntegrityGate {
         }
         Map<String, String> statusByType = StageChecks.designTableRows(specification).stream().filter(row -> row.status() != null)
                 .collect(Collectors.toMap(StageChecks.DesignRow::type, StageChecks.DesignRow::status, (first, ignored) -> first, LinkedHashMap::new));
-        Map<String, Set<String>> seamFiles = new LinkedHashMap<>();
         Map<String, String> javaFiles = templateFiles == null ? Map.of()
                 : templateFiles.entrySet().stream().filter(entry -> JavaSourceInspector.isJavaSource(entry.getKey()) && entry.getValue() != null)
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, ignored) -> first, LinkedHashMap::new));
-        javaFiles.forEach((path, content) -> TODO_SEAM.matcher(content).results().map(match -> match.group(1))
-                .forEach(seam -> seamFiles.computeIfAbsent(seam, ignored -> new LinkedHashSet<>()).add(path)));
-
-        Set<String> declared = rows.stream().map(StageChecks.TestingStrategyRow::seamId).collect(Collectors.toCollection(LinkedHashSet::new));
         List<String> reasons = new ArrayList<>();
-        List<String> unknown = seamFiles.keySet().stream().filter(id -> !declared.contains(id)).toList();
-        if (!unknown.isEmpty()) {
-            reasons.add("the template uses TODO seam IDs the approved Testing Strategy does not declare: " + unknown + ". Replace these stale or invented IDs with one of "
-                    + declared + ".");
+        List<String> labelledFiles = javaFiles.entrySet().stream().filter(entry -> TODO_SEAM_LABEL.matcher(entry.getValue()).find()).map(Map.Entry::getKey).sorted().toList();
+        if (!labelledFiles.isEmpty()) {
+            reasons.add("the template labels TODOs with internal seam IDs in " + labelledFiles + ". Students never see these IDs defined, so write each as '// TODO: <task "
+                    + "wording>' without the ID; the approved Testing Strategy already links every seam to its owner.");
         }
+        Set<String> todoFiles = javaFiles.entrySet().stream().filter(entry -> TODO_COMMENT.matcher(entry.getValue()).find()).map(Map.Entry::getKey)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         for (StageChecks.TestingStrategyRow row : rows) {
-            Set<String> actualFiles = seamFiles.getOrDefault(row.seamId(), Set.of());
-            String status = statusByType.get(row.ownerType());
-            if ("student-creates".equals(status) && !actualFiles.isEmpty()) {
-                reasons.add("the template uses " + row.seamId() + " TODO breadcrumb(s) in " + actualFiles + " even though its owner " + row.ownerType()
-                        + " is student-created and absent. Remove the misleading breadcrumb; the statement task and reflective tests guide this seam.");
-                continue;
+            if (!"stubbed".equals(statusByType.get(row.ownerType()))) {
+                continue; // a student-created owner is absent; a malformed owner/status is rejected by the specification gate
             }
-            if (!"stubbed".equals(status)) {
-                continue; // malformed owner/status is rejected by the specification gate
+            boolean anchored = javaFiles.entrySet().stream()
+                    .anyMatch(entry -> todoFiles.contains(entry.getKey()) && JavaSourceInspector.sourceDeclaresType(entry.getValue(), row.ownerType()));
+            if (!anchored) {
+                reasons.add("the stubbed owner " + row.ownerType() + " of seam " + row.seamId() + " has no '// TODO: ...' in its declaring source. Put the TODO at the "
+                        + "unfinished student work inside that source. If its student-owned members cannot be declared without an omitted student-created type, keep a "
+                        + "compile-safe empty owner class and put the TODO once in the class body where those members will be added; do not restore the absent type or change "
+                        + "SPEC.md.");
             }
-            Set<String> ownerFiles = javaFiles.entrySet().stream().filter(entry -> JavaSourceInspector.sourceDeclaresType(entry.getValue(), row.ownerType())).map(Map.Entry::getKey)
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
-            Set<String> correctlyPlaced = actualFiles.stream().filter(ownerFiles::contains).collect(Collectors.toCollection(LinkedHashSet::new));
-            if (correctlyPlaced.isEmpty()) {
-                reasons.add("the stubbed owner " + row.ownerType() + " has no '// TODO " + row.seamId() + ": ...' breadcrumb in its declaring source. Put the marker at the "
-                        + "unfinished student work inside that source. If its student-owned members cannot be declared without an omitted student-created type, keep a compile-safe "
-                        + "empty owner class and put this owner's own seam TODO once in the class body where those members will be added; do not restore the absent type or change SPEC.md.");
-            }
-            Set<String> misplaced = actualFiles.stream().filter(path -> !ownerFiles.contains(path)).collect(Collectors.toCollection(LinkedHashSet::new));
-            if (!misplaced.isEmpty()) {
-                reasons.add("the template places TODO " + row.seamId() + " outside its approved owner " + row.ownerType() + ": " + misplaced
-                        + ". Move or relabel those breadcrumbs so the seam ID points at the work it actually grades.");
-            }
+        }
+        Set<String> stubbedTypes = statusByType.entrySet().stream().filter(entry -> "stubbed".equals(entry.getValue())).map(Map.Entry::getKey).collect(Collectors.toSet());
+        List<String> strayFiles = todoFiles.stream().filter(path -> stubbedTypes.stream().noneMatch(type -> JavaSourceInspector.sourceDeclaresType(javaFiles.get(path), type)))
+                .sorted().toList();
+        if (!strayFiles.isEmpty()) {
+            reasons.add("the template has TODOs outside every stubbed type: " + strayFiles + ". A TODO marks unfinished student work in a stubbed owner's own source; given "
+                    + "types ship complete and student-created types are absent, so their work is anchored by the statement task and tests instead. Remove these TODOs or "
+                    + "move them to the owner that the work belongs to.");
         }
         return List.copyOf(reasons);
     }

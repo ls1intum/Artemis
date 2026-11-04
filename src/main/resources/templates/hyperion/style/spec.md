@@ -50,8 +50,8 @@ the brief. An exact approved API can grade creation of that type, but it is not 
 ownership from the brief and compile-safe dependency graph rather than applying one mandatory Strategy layout.
 When a provided collaborator refers to an omitted type, omit only the dependent members necessary for the starter
 to compile and anchor their insertion point in the statement and reflective tests. Put a separate seam on the
-collaborator only when students implement independently actionable collaborator work; do not reuse an absent
-type's seam ID as a class-body breadcrumb. An empty interface declaration still pre-creates the type, so it is not
+collaborator only when students implement independently actionable collaborator work; do not anchor an absent
+type's work with a class-body TODO in that collaborator. An empty interface declaration still pre-creates the type, so it is not
 faithful when the brief explicitly assigns creating that interface to students.
 A type marked `given` must ship complete, so none of its Public API signatures may name a `student-creates` type
 that is absent from the template, and neither may its bodies, imports, or private members: a type whose code constructs,
@@ -133,8 +133,8 @@ precondition, or approve any error path that has no legal setup through the publ
 ## Testing strategy
 
 A table under `## Testing Strategy` with one row per SEAM — an independently actionable unit of student work.
-Give the first column stable IDs `S1`, `S2`, ...; the template TODOs, grading plan, and statement tasks carry
-these IDs through the rest of generation. The second column, `Owner type`, is one exact bare type from the Design table: the type where students implement that seam.
+Give the first column stable IDs `S1`, `S2`, ...; the grading plan carries these IDs through the rest of generation, while
+template TODOs and statement tasks use the seam's wording and never show the ID to students. The second column, `Owner type`, is one exact bare type from the Design table: the type where students implement that seam.
 The third column, `Observable responsibility`, states the student-owned behavior, collaboration, or state transition the seam grades and groups the input partitions its tests
 need. Keep it an owner-controlled responsibility: do not make a concrete policy's seam responsible for state changes owned by the context that calls it. Each visible seam test
 must be independently diagnosable using given support or a tiny fake/recording collaborator; it must not fail first in another independently actionable student seam. When work is
@@ -144,7 +144,7 @@ machine-readable:
 `| Seam | Owner type | Observable responsibility | Weight | Hidden variant |`
 
 A `stubbed` owner carries the seam's TODO inside its own source; a `student-creates` owner is absent and has no template TODO—the statement and tests anchor that work. Never put
-its ID on an unrelated collaborator merely to complete the ID set. If a collaborator has separately actionable student work, give it a separate seam owned by that collaborator.
+its TODO on an unrelated collaborator. If a collaborator has separately actionable student work, give it a separate seam owned by that collaborator.
 Each seam grades student-owned executable behavior, not the presence or exact signature of a supplied declaration or a placeholder that is meant to keep throwing. An ordinary
 abstract interface method has no student-owned body: mark the interface `given` when students only implement it, or `student-creates` when the brief assigns its design; do not
 label that declaration `stubbed` merely to create a structural seam.

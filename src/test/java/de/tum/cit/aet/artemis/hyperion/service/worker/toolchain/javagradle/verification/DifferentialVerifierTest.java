@@ -1518,7 +1518,7 @@ class DifferentialVerifierTest {
 
             ScriptedSandbox misleading = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withSpec(spec)
                     .withTestPlan(plan)
-                    .withRepositories(solutionFiles, Map.of("src/de/test/Mage.java", "package de.test; public class Mage { // TODO S1: create FireSpell\n}"), testsFiles);
+                    .withRepositories(solutionFiles, Map.of("src/de/test/Mage.java", "package de.test; public class Mage { // TODO: create FireSpell\n}"), testsFiles);
             AgentVerifyReport rejected = verifier.selfCheck(misleading, "s", javaExercise, Map.of(), false, SeededStructuralTests.EMPTY);
             assertThat(rejected.wouldBeAccepted()).isFalse();
             assertThat(rejected.blockingReasons()).anyMatch(reason -> reason.contains("student-created") && reason.contains("Mage.java"));

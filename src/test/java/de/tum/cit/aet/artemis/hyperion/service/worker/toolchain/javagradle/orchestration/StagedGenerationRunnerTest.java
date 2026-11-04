@@ -143,7 +143,7 @@ class StagedGenerationRunnerTest {
                 return found(layout);
             }
             if (command.length > 0 && "grep".equals(command[0])) {
-                return found("TODO S1:");
+                return found("TODO:");
             }
             return found("");
         }
