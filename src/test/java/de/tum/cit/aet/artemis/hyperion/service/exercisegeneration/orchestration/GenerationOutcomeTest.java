@@ -108,6 +108,29 @@ class GenerationOutcomeTest {
         }
     }
 
+    @Test
+    void keepsOnlyFindingLocationsTheSavedCandidateResolves() {
+        var files = List.of(text("solution/src/Sorter.java", "class Sorter {\n  int sort() {\n    return 0;\n  }\n}\n"));
+        var resolvable = location(SpecFidelityReport.Location.Repository.SOLUTION, "src/Sorter.java", 2, 4);
+        var findings = List.of(finding(resolvable), finding(location(SpecFidelityReport.Location.Repository.SOLUTION, "src/Missing.java", 1, 1)),
+                finding(location(SpecFidelityReport.Location.Repository.SOLUTION, "src/Sorter.java", 3, 9)),
+                finding(location(SpecFidelityReport.Location.Repository.TESTS, "src/Sorter.java", 1, 1)));
+        var snapshot = new WorkspaceSnapshot(files);
+        var output = new GenerationOutput(snapshot, new VerificationResult(true, true, true, 1, List.of()), snapshot.sha256(), new SpecFidelityReport(findings), "CONVERGED", null,
+                GenerationOutput.AccountingState.INCOMPLETE, "default");
+
+        assertThat(GenerationOutcome.received(output, seed(List.of()), false).specFidelityReport().findings()).extracting(SpecFidelityReport.Finding::location)
+                .containsExactly(resolvable, null, null, null);
+    }
+
+    private static SpecFidelityReport.Location location(SpecFidelityReport.Location.Repository repository, String path, int start, int end) {
+        return new SpecFidelityReport.Location(repository, path, start, end);
+    }
+
+    private static SpecFidelityReport.Finding finding(SpecFidelityReport.Location location) {
+        return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "survivor", "Add a test.", location);
+    }
+
     private static WorkspaceFile text(String path, String value) {
         return new WorkspaceFile(path, value.getBytes(StandardCharsets.UTF_8), false);
     }

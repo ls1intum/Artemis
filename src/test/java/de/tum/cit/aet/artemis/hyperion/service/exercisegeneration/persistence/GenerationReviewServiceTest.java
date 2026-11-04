@@ -99,6 +99,17 @@ class GenerationReviewServiceTest {
     }
 
     @Test
+    void toReviewFindings_anchorsLocatedFindingsInTheirRepositoryAndOthersAtTheStatement() {
+        SpecFidelityReport report = new SpecFidelityReport(List.of(
+                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "survivor", "Add a test.",
+                        new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, "src/de/test/Sorter.java", 4, 6)),
+                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "contradiction", "Review this behavior.")));
+
+        assertThat(GenerationReviewService.toReviewFindings(report)).extracting(finding -> finding.relatedLocations().getFirst()).containsExactly(
+                new ArtifactLocationDTO(ArtifactType.SOLUTION_REPOSITORY, "src/de/test/Sorter.java", 4, 6), new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 1, 1));
+    }
+
+    @Test
     void attachFindings_emptyReportCreatesNothing() {
         assertThat(reviewService.attachFindings(exercise, user, SpecFidelityReport.empty())).isZero();
 

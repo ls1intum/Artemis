@@ -102,7 +102,28 @@ final class GenerationReviewSupport {
                         + "pristine solution and executed and failed on the mutant. Execution proves the suite does not distinguish these complete implementations; the frozen "
                         + "rule and independent review explain why that difference matters. Add or adapt a discriminating test for the counterexample; the environment will "
                         + "accept any executed test that kills the mutant, so preserve stronger or more idiomatic coverage rather than copying a method mechanically. "
-                        + "Plausible misconception: " + mutant.counterexample().wrongBehavior() + "\n" + mutant.counterexample().code());
+                        + "Plausible misconception: " + mutant.counterexample().wrongBehavior() + "\n" + mutant.counterexample().code(),
+                changedSolutionLines(mutant));
+    }
+
+    /** The reference lines the mutant replaces: execution proved the graded suite does not distinguish this code from the mutant's version of it. */
+    static SpecFidelityReport.Location changedSolutionLines(SemanticMutant mutant) {
+        List<String> original = mutant.originalSolutionSource().lines().toList();
+        List<String> replacement = mutant.mutantSource().lines().toList();
+        int prefix = 0;
+        while (prefix < original.size() && prefix < replacement.size() && original.get(prefix).equals(replacement.get(prefix))) {
+            prefix++;
+        }
+        int suffix = 0;
+        while (suffix < original.size() - prefix && suffix < replacement.size() - prefix
+                && original.get(original.size() - 1 - suffix).equals(replacement.get(replacement.size() - 1 - suffix))) {
+            suffix++;
+        }
+        // A pure insertion replaces no original line; anchor it at the original line after the insertion point, clamped to the file.
+        int lastLine = Math.max(1, original.size());
+        int start = Math.min(prefix + 1, lastLine);
+        int end = Math.max(start, Math.min(original.size() - suffix, lastLine));
+        return new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, mutant.solutionPath(), start, end);
     }
 
     static List<SpecFidelityReport.Finding> withPriorSemanticMutants(List<SpecFidelityReport.Finding> findings, List<SemanticMutant> mutants) {
@@ -249,9 +270,8 @@ final class GenerationReviewSupport {
             return report;
         }
         List<SpecFidelityReport.Finding> reclassified = report.findings().stream()
-                .map(finding -> demandsUngradeableTechnique(finding)
-                        ? new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, finding.requirement(),
-                                "No assertion through the public API can observe this, so it cannot be repaired by strengthening the tests: " + finding.detail())
+                .map(finding -> demandsUngradeableTechnique(finding) ? new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, finding.requirement(),
+                        "No assertion through the public API can observe this, so it cannot be repaired by strengthening the tests: " + finding.detail(), finding.location())
                         : finding)
                 .toList();
         return new SpecFidelityReport(reclassified);

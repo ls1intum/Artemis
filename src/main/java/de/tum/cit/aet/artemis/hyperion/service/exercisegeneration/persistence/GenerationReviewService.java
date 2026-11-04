@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -117,9 +118,21 @@ public class GenerationReviewService {
                 case CONCEPT_ADMISSION_FINDING -> "The concept review did not approve the concept this exercise was built from: " + finding.requirement();
             };
             Severity severity = finding.isBlocking() ? Severity.HIGH : Severity.MEDIUM;
-            ArtifactLocationDTO location = new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", ANCHOR_LINE, ANCHOR_LINE);
-            findings.add(new ConsistencyIssueDTO(severity, REVIEW_CATEGORY, title, finding.detail(), List.of(location)));
+            findings.add(new ConsistencyIssueDTO(severity, REVIEW_CATEGORY, title, finding.detail(), List.of(anchor(finding.location()))));
         }
         return findings;
+    }
+
+    /** Anchors a finding where its producer located it; a finding without a location is about the exercise as a whole and anchors at the problem statement. */
+    private static ArtifactLocationDTO anchor(SpecFidelityReport.@Nullable Location location) {
+        if (location == null) {
+            return new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", ANCHOR_LINE, ANCHOR_LINE);
+        }
+        ArtifactType type = switch (location.repository()) {
+            case TEMPLATE -> ArtifactType.TEMPLATE_REPOSITORY;
+            case SOLUTION -> ArtifactType.SOLUTION_REPOSITORY;
+            case TESTS -> ArtifactType.TESTS_REPOSITORY;
+        };
+        return new ArtifactLocationDTO(type, location.path(), location.startLine(), location.endLine());
     }
 }

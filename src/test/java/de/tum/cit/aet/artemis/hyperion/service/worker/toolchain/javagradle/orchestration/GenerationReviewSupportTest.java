@@ -25,6 +25,19 @@ class GenerationReviewSupportTest {
     }
 
     @Test
+    void anExecutedSurvivorIsLocatedAtTheReferenceLinesItReplaces() {
+        ContractWitness witness = new ContractWitness("R1", "boundary", "@Test void boundary() {}", "off by one");
+        String original = "class Grader {\n  int grade(int score) {\n    return score >= 50 ? 1 : 0;\n  }\n}\n";
+        SemanticMutant changed = new SemanticMutant("R1", "src/Grader.java", original, original.replace("score >= 50", "score > 50"), witness);
+        SemanticMutant inserted = new SemanticMutant("R1", "src/Grader.java", original, original.replace("  }\n}", "  }\n  int extra;\n}"), witness);
+
+        assertThat(GenerationReviewSupport.semanticMutantFinding(changed).location())
+                .isEqualTo(new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, "src/Grader.java", 3, 3));
+        assertThat(GenerationReviewSupport.changedSolutionLines(inserted))
+                .isEqualTo(new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, "src/Grader.java", 5, 5));
+    }
+
+    @Test
     void priorExecutedMutantsAreIncludedInTheNextAuthoringContext() {
         SpecFidelityReport.Finding staticRisk = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "boundary", "check the boundary");
         SemanticMutant executed = mutant("hardCodedThresholds", "uses fixed thresholds");

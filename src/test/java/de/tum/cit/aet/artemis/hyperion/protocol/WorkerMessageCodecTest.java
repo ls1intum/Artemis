@@ -157,6 +157,23 @@ class WorkerMessageCodecTest {
         assertThatThrownBy(() -> wire.decodeCommand(mapper.writeValueAsString(command))).isInstanceOf(RuntimeException.class);
     }
 
+    @Test
+    void findingLocationsRoundTripAndUnlocatedFindingsKeepTheirWireShape() {
+        var id = identity();
+        var located = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Survivor", "Add a test",
+                new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, "src/de/test/Sorter.java", 4, 6));
+        var unlocated = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "Contradiction", "Review edge cases");
+        var output = new GenerationOutput(new WorkspaceSnapshot(List.of()), new VerificationResult(false, false, false, 0, List.of()), null,
+                new SpecFidelityReport(List.of(located, unlocated)), "RUN_FAILED", null, GenerationOutput.AccountingState.INCOMPLETE, "standard");
+        var event = new WorkerEvent(WorkerCommand.PROTOCOL_VERSION, id.workerId(), id.workerIncarnation(), 1, Instant.now(), WorkerEvent.Type.FINISHED, id, false, IMAGE, null,
+                null, output);
+
+        assertThat(decodeEvent(encode(event))).isEqualTo(event);
+        var json = expandPayload(encode(event));
+        assertThat(json.at("/payload/review/findings/0/location/path").asString()).isEqualTo("src/de/test/Sorter.java");
+        assertThat(json.at("/payload/review/findings/1").has("location")).isFalse();
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
     void rejectsMissingOrNullFindingKindBeforeReviewEvaluation(boolean omitted) {
