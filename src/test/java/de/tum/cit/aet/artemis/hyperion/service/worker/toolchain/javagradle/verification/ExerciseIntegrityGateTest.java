@@ -19,6 +19,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ClassPathResource;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 
 /**
  * Deterministic unit tests for the sandbox-free correctness gates: harness immutability, the Java/Ares conventions, the approved specification and test plan, the solution-leak
@@ -1290,6 +1291,44 @@ class ExerciseIntegrityGateTest {
         Map<String, String> ownerMentionedOnlyInAComment = Map.of("src/Helper.java", "// class Mage would own this\nclass Helper { // TODO: delegate\n}");
         assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, ownerMentionedOnlyInAComment, Map.of()))
                 .anySatisfy(reason -> assertThat(reason).contains("declaring source", "Mage"));
+    }
+
+    @Test
+    void sourceReadingTests_rejectTestsThatReadStudentSourcesThroughAPathBuiltElsewhere() {
+        String observed = """
+                package de.example;
+                import java.nio.file.Files;
+                import java.nio.file.Path;
+                class ClientSourceUsageTest {
+                    private static String readClientSource() throws java.io.IOException {
+                        Path source = Path.of("#studentWorkingDirectory#", "de", "example", "Client.java");
+                        return Files.readString(source);
+                    }
+                    @Test void clientUsesTheMachine() throws Exception { assertTrue(readClientSource().contains("new TicketMachine(")); }
+                }
+                """;
+        String literalPath = "class T { @Test void t() throws Exception { String s = java.nio.file.Files.readString(java.nio.file.Path.of(\"assignment/src/de/example/Client.java\")); } }";
+        String resource = "class T { @Test void t() { var in = getClass().getResourceAsStream(\"/de/example/Client.java\"); assertNotNull(in); } }";
+
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/de/example/ClientSourceUsageTest.java", observed))).singleElement().asString()
+                .contains("ClientSourceUsageTest.java", "Client.java", "Tests must not read source files", AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE);
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", literalPath))).singleElement().asString().contains("assignment/src/de/example/Client.java");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", resource))).singleElement().asString().contains("/de/example/Client.java");
+    }
+
+    @Test
+    void sourceReadingTests_acceptTestsThatCaptureOutputCallMethodsOrReadTheirOwnData() {
+        String capture = """
+                class ClientTest {
+                    private final java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                    @BeforeEach void capture() { System.setOut(new java.io.PrintStream(out)); }
+                    @Test void printsInventory() { Client.run(new TicketMachine(3, 4)); assertEquals("3\\n2\\n", out.toString(), "Implement run in Client.java"); }
+                }
+                """;
+        String ownData = "class T { @Test void t() throws Exception { var in = getClass().getResourceAsStream(\"tickets.csv\"); assertNotNull(in); } }";
+        String commentedOut = "class T {\n // String s = Files.readString(Path.of(\"src/Client.java\"));\n @Test void t() { assertEquals(2, new Machine().count()); } }";
+
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ClientTest.java", capture, "test/T.java", ownData, "test/U.java", commentedOut))).isEmpty();
     }
 
     @Test

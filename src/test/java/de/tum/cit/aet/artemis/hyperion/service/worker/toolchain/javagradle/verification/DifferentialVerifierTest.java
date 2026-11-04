@@ -1515,6 +1515,33 @@ class DifferentialVerifierTest {
         }
 
         @Test
+        void theTestsStageRejectsATestThatReadsAStudentSourceFileBeforeAnyRepair() {
+            String names = "sortsUnsortedArray";
+            String readsSource = """
+                    package de.test;
+                    import org.junit.jupiter.api.Test;
+                    import de.tum.cit.ase.ares.api.Policy;
+                    import de.tum.cit.ase.ares.api.StrictTimeout;
+                    import de.tum.cit.ase.ares.api.jupiter.Public;
+                    @Public @Policy(value = "SecurityPolicy.yaml")
+                    class SortTest {
+                        @Test @StrictTimeout(1) void sortsUnsortedArray() throws Exception {
+                            String source = java.nio.file.Files.readString(java.nio.file.Path.of("assignment/src/de/test/Sorter.java"));
+                        }
+                    }
+                    """;
+            ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, List.of(names), List.of()), resultWithFails(1, List.of(names), List.of(names)),
+                    PROBLEM_STATEMENT_WITH_TASK).withRepositories(Map.of("src/de/test/Sorter.java", "package de.test; public class Sorter {}"),
+                            Map.of("src/de/test/Sorter.java", "package de.test; public class Sorter {}"), withHarness(Map.of("test/de/test/SortTest.java", readsSource)));
+            GenerationInput javaExercise = new GenerationInput(input().id(), "de.test", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
+
+            AgentVerifyReport report = newVerifier().selfCheckTestsStage(sandbox, "s", javaExercise, Map.of(), SeededStructuralTests.EMPTY);
+
+            assertThat(report.wouldBeAccepted()).isFalse();
+            assertThat(report.blockingReasons()).anyMatch(reason -> reason.contains("read source files") && reason.contains("SortTest.java"));
+        }
+
+        @Test
         void ownerAwareTodoVerdictMatchesTheFinalGateBeforeSubmission() {
             String spec = """
                     ## Design

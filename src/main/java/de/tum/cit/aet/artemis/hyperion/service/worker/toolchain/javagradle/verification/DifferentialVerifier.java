@@ -192,6 +192,9 @@ public class DifferentialVerifier {
         List<String> nondeterministicTestReasons = ExerciseIntegrityGate.nondeterministicGradedTestReasons(request.producedTestsFiles());
         boolean gradedTestsDeterministic = nondeterministicTestReasons.isEmpty();
         reasons.addAll(nondeterministicTestReasons);
+        List<String> sourceReadingTestReasons = ExerciseIntegrityGate.sourceReadingTestReasons(request.producedTestsFiles());
+        boolean testsReadNoSources = sourceReadingTestReasons.isEmpty();
+        reasons.addAll(sourceReadingTestReasons);
         List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
         boolean noSolutionLeak = solutionLeakReasons.isEmpty();
         reasons.addAll(solutionLeakReasons);
@@ -241,15 +244,15 @@ public class DifferentialVerifier {
 
         boolean mechanicallyVerified = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noGradingContextSniffing && javaAresConventionsHold
                 && javaSourceLayoutIntact && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold && extractionSound
-                && statementTasksHaveInstructions && noAdaptWipe && gradedTestsDeterministic;
+                && statementTasksHaveInstructions && noAdaptWipe && gradedTestsDeterministic && testsReadNoSources;
         if (!mechanicallyVerified) {
             log.info(
                     "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, "
                             + "javaAresConventionsHold={}, javaSourceLayoutIntact={}, approvedSpecificationHolds={}, approvedTestPlanHolds={}, statementTraceabilityHolds={}, "
-                            + "statementTasksHaveInstructions={}, templateTodoSeamsHold={}, extractionSound={}, noAdaptWipe={}, gradedTestsDeterministic={}",
+                            + "statementTasksHaveInstructions={}, templateTodoSeamsHold={}, extractionSound={}, noAdaptWipe={}, gradedTestsDeterministic={}, testsReadNoSources={}",
                     solution, template, analysis.actionableGatesPass(), harnessIntact, noSolutionLeak, javaAresConventionsHold, javaSourceLayoutIntact, approvedSpecificationHolds,
                     approvedTestPlanHolds, statementTraceabilityHolds, statementTasksHaveInstructions, templateTodoSeamsHold, extractionSound, noAdaptWipe,
-                    gradedTestsDeterministic);
+                    gradedTestsDeterministic, testsReadNoSources);
         }
         return new VerificationResult(mechanicallyVerified, analysis.solutionPassed(), analysis.templateFailed(), solution.tests(), reasons,
                 template.failureEvidence().stream().map(evidence -> new VerificationResult.TestFailureEvidence(evidence.testName(), evidence.message())).toList());
@@ -300,6 +303,10 @@ public class DifferentialVerifier {
         }
         boolean javaAresConventionsHold = javaAresConventionReasons.isEmpty();
         reasons.addAll(javaAresConventionReasons);
+        // Checked in the self-check too, so the tests stage rejects source-reading tests before any repair attempt is spent on them.
+        List<String> sourceReadingTestReasons = ExerciseIntegrityGate.sourceReadingTestReasons(testsRepositoryFiles);
+        boolean testsReadNoSources = sourceReadingTestReasons.isEmpty();
+        reasons.addAll(sourceReadingTestReasons);
 
         List<String> contractSpecifications = contractSpecifications(sandbox, sessionId);
         List<String> approvedSpecificationReasons = contractSpecifications.stream()
@@ -324,8 +331,8 @@ public class DifferentialVerifier {
         return new AgentVerifyReport(solution.tests(), solutionPassed, List.copyOf(solution.testFailedNames()), solution.failureEvidence(), template.tests(), templateCompiled,
                 analysis.templateFailed(), template.failureEvidence(), templateWronglyPassing, List.copyOf(solution.testNames()),
                 includeStatementChecks ? analysis.unresolvedTaskBindings() : List.of(), analysis.possiblyDeadFiles(),
-                (includeStatementChecks ? analysis.actionableGatesPass() : analysis.testArtifactGatesPass()) && javaAresConventionsHold && approvedSpecificationHolds
-                        && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold,
+                (includeStatementChecks ? analysis.actionableGatesPass() : analysis.testArtifactGatesPass()) && javaAresConventionsHold && testsReadNoSources
+                        && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold,
                 reasons, List.copyOf(readHiddenTestNames(sandbox, sessionId, baselineHiddenTestNames)), solution.buildDiagnostic(), template.buildDiagnostic(),
                 analysis.preservationTestNames());
     }
