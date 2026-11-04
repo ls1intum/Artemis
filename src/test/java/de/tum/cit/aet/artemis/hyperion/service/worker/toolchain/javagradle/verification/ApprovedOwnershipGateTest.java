@@ -515,6 +515,20 @@ class ApprovedOwnershipGateTest {
         assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, honest, unfinishedTests)).singleElement().asString().contains("graded tests contain TODOs",
                 "test/MageTest.java");
 
+        // The TODO's enclosing declaration decides, not the file: a given type beside a stubbed one in the same file still ships complete.
+        Map<String, String> givenTodoBesideStubbedOwner = Map.of("src/Mage.java",
+                "class Mage {\n  int level;\n}\ninterface Spell {\n  // TODO: create FireSpell\n  int cast();\n}");
+        assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, givenTodoBesideStubbedOwner, Map.of())).hasSize(2)
+                .anySatisfy(reason -> assertThat(reason).contains("TODOs in given types", "src/Mage.java"))
+                .anySatisfy(reason -> assertThat(reason).contains("stubbed owner Mage", "declaring source"));
+
+        // Text in a string literal is not a TODO comment.
+        Map<String, String> todoOnlyInALiteral = Map.of("src/Mage.java", "class Mage { String hint = \"// TODO: delegate\"; }", "src/Spell.java",
+                "interface Spell { int cast(); }");
+        assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, todoOnlyInALiteral, Map.of())).singleElement().asString().contains("stubbed owner Mage");
+        assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, honest,
+                Map.of("test/MageTest.java", "class MageTest { @Test void hints() { assertEquals(\"// TODO: delegate\", new Mage().hint); } }"))).isEmpty();
+
         Map<String, String> ownerMentionedOnlyInAComment = Map.of("src/Helper.java", "// class Mage would own this\nclass Helper { // TODO: delegate\n}");
         assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, ownerMentionedOnlyInAComment, Map.of()))
                 .anySatisfy(reason -> assertThat(reason).contains("declaring source", "Mage"));

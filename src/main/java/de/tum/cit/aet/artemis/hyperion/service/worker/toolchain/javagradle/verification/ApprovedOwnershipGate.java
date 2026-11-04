@@ -33,6 +33,9 @@ public final class ApprovedOwnershipGate {
     /** A TODO comment: a line comment, a block or doc comment opening, or a continuation line of one. */
     private static final Pattern TODO_COMMENT = Pattern.compile("(?m)(?://|/\\*+|^\\s*\\*)\\s*TODO\\b");
 
+    /** A type declaration header on masked source; its body starts at the next opening brace. */
+    private static final Pattern TYPE_DECLARATION = Pattern.compile("(?<![\\w$])(?:class|interface|enum|record)\\s+([A-Za-z_$][\\w$]*)");
+
     /** A TODO labelled with an internal seam ID, such as {@code TODO S1:} or {@code TODO (S1)}. */
     private static final Pattern TODO_SEAM_LABEL = Pattern.compile("\\bTODO\\s*[-\\[(:]?\\s*S[1-9][0-9]*\\b");
 
@@ -285,14 +288,24 @@ public final class ApprovedOwnershipGate {
             reasons.add("the template labels TODOs with internal seam IDs in " + labelledFiles + ". Students never see these IDs defined, so write each as '// TODO: <task "
                     + "wording>' without the ID; the approved Testing Strategy already links every seam to its owner.");
         }
-        Set<String> todoFiles = javaFiles.entrySet().stream().filter(entry -> TODO_COMMENT.matcher(entry.getValue()).find()).map(Map.Entry::getKey)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<String> stubbedTypes = typesWithStatus(statusByType, "stubbed");
+        Set<String> givenTypes = typesWithStatus(statusByType, "given");
+        Set<String> designTypes = new LinkedHashSet<>(stubbedTypes);
+        designTypes.addAll(givenTypes);
+        // Each TODO comment belongs to the innermost given or stubbed declaration around it; one outside every such declaration belongs to the whole file.
+        Map<String, List<Set<String>>> todoOwnersByFile = new LinkedHashMap<>();
+        javaFiles.forEach((path, source) -> {
+            List<Set<String>> owners = todoOwners(source, designTypes);
+            if (!owners.isEmpty()) {
+                todoOwnersByFile.put(path, owners);
+            }
+        });
         for (StageChecks.TestingStrategyRow row : rows) {
             if (!"stubbed".equals(statusByType.get(row.ownerType()))) {
                 continue; // a student-created owner is absent; a malformed owner/status is rejected by the specification gate
             }
-            boolean anchored = javaFiles.entrySet().stream()
-                    .anyMatch(entry -> todoFiles.contains(entry.getKey()) && JavaSourceInspector.sourceDeclaresType(entry.getValue(), row.ownerType()));
+            boolean anchored = todoOwnersByFile.entrySet().stream().anyMatch(entry -> JavaSourceInspector.sourceDeclaresType(javaFiles.get(entry.getKey()), row.ownerType())
+                    && entry.getValue().stream().anyMatch(owners -> owners.contains(row.ownerType()) || owners.isEmpty()));
             if (!anchored) {
                 reasons.add("the stubbed owner " + row.ownerType() + " of seam " + row.seamId() + " has no '// TODO: ...' in its declaring source. Put the TODO at the "
                         + "unfinished student work inside that source. If its student-owned members cannot be declared without an omitted student-created type, keep a "
@@ -300,22 +313,78 @@ public final class ApprovedOwnershipGate {
                         + "SPEC.md.");
             }
         }
-        Set<String> stubbedTypes = typesWithStatus(statusByType, "stubbed");
-        Set<String> givenTypes = typesWithStatus(statusByType, "given");
-        List<String> givenFiles = todoFiles.stream().filter(path -> givenTypes.stream().anyMatch(type -> JavaSourceInspector.sourceDeclaresType(javaFiles.get(path), type)))
-                .filter(path -> stubbedTypes.stream().noneMatch(type -> JavaSourceInspector.sourceDeclaresType(javaFiles.get(path), type))).sorted().toList();
+        List<String> givenFiles = todoOwnersByFile.entrySet().stream().filter(entry -> entry.getValue().stream().anyMatch(owners -> {
+            Set<String> fileTypes = owners.isEmpty()
+                    ? designTypes.stream().filter(type -> JavaSourceInspector.sourceDeclaresType(javaFiles.get(entry.getKey()), type)).collect(Collectors.toSet())
+                    : owners;
+            return fileTypes.stream().anyMatch(givenTypes::contains) && fileTypes.stream().noneMatch(stubbedTypes::contains);
+        })).map(Map.Entry::getKey).sorted().toList();
         if (!givenFiles.isEmpty()) {
             reasons.add("the template has TODOs in given types: " + givenFiles + ". Given types ship complete, so a TODO there points students at work that does not exist; "
                     + "remove it, or move it to the stubbed owner the work belongs to. A student-created type's work is anchored by its statement task and tests instead.");
         }
         List<String> testTodoFiles = testsFiles == null ? List.of()
                 : testsFiles.entrySet().stream().filter(entry -> JavaSourceInspector.isJavaSource(entry.getKey()) && entry.getValue() != null)
-                        .filter(entry -> TODO_COMMENT.matcher(entry.getValue()).find()).map(Map.Entry::getKey).sorted().toList();
+                        .filter(entry -> TODO_COMMENT.matcher(commentsOnly(entry.getValue())).find()).map(Map.Entry::getKey).sorted().toList();
         if (!testTodoFiles.isEmpty()) {
             reasons.add(
                     "the graded tests contain TODOs: " + testTodoFiles + ". The tests are finished grading code, not student work; complete or remove what each TODO " + "marks.");
         }
         return List.copyOf(reasons);
+    }
+
+    /**
+     * The owners of each TODO comment in a source: the innermost given or stubbed type whose declaration body contains it, as a singleton, or an empty set when the TODO lies
+     * outside every such declaration. A TODO-like text inside a string literal is not a comment and is not counted.
+     */
+    private static List<Set<String>> todoOwners(String source, Set<String> designTypes) {
+        List<Integer> todoPositions = TODO_COMMENT.matcher(commentsOnly(source)).results().map(java.util.regex.MatchResult::start).toList();
+        if (todoPositions.isEmpty()) {
+            return List.of();
+        }
+        String masked = JavaSourceInspector.maskCommentsAndLiterals(source);
+        List<DeclarationBody> bodies = new ArrayList<>();
+        Matcher declaration = TYPE_DECLARATION.matcher(masked);
+        while (declaration.find()) {
+            int open = masked.indexOf('{', declaration.end());
+            if (designTypes.contains(declaration.group(1)) && open >= 0) {
+                int close = matchingBrace(masked, open);
+                bodies.add(new DeclarationBody(declaration.group(1), open, close < 0 ? masked.length() : close));
+            }
+        }
+        return todoPositions.stream().map(position -> bodies.stream().filter(body -> body.open() < position && position < body.close())
+                .max(java.util.Comparator.comparingInt(DeclarationBody::open)).map(body -> Set.of(body.type())).orElse(Set.of())).toList();
+    }
+
+    private record DeclarationBody(String type, int open, int close) {
+    }
+
+    /** The source with everything but its comments blanked, keeping positions and line breaks, so a TODO inside a string literal is not taken for a comment. */
+    private static String commentsOnly(String source) {
+        String code = JavaSourceInspector.stripJavaComments(source);
+        if (code.length() != source.length()) {
+            return source;
+        }
+        StringBuilder comments = new StringBuilder(source.length());
+        for (int index = 0; index < source.length(); index++) {
+            char current = source.charAt(index);
+            comments.append(current == '\n' || current == '\r' || current != code.charAt(index) ? current : ' ');
+        }
+        return comments.toString();
+    }
+
+    private static int matchingBrace(String masked, int open) {
+        int depth = 0;
+        for (int index = open; index < masked.length(); index++) {
+            char current = masked.charAt(index);
+            if (current == '{') {
+                depth++;
+            }
+            else if (current == '}' && --depth == 0) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     private static Set<String> typesWithStatus(Map<String, String> statusByType, String status) {
