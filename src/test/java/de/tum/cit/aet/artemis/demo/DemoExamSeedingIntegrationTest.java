@@ -172,6 +172,9 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(gradingScale.getGradeType()).as("the exam is graded with grades").isEqualTo(GradeType.GRADE);
         assertThat(gradingScale.getGradeSteps()).as("the exam has the thirteen grade steps of the course, from 5.0 to 1.0").hasSize(13).extracting(GradeStep::getGradeName)
                 .contains("5.0", "4.0", "1.0");
+        assertThat(gradingScale.getGradeSteps()).as("the grade steps cover 0 to 100 percent, and the first passing grade 4.0 starts at 50 percent")
+                .extracting(GradeStep::getGradeName, GradeStep::getLowerBoundPercentage, GradeStep::getUpperBoundPercentage)
+                .contains(tuple("5.0", 0.0, 40.0), tuple("4.0", 50.0, 55.0), tuple("3.7", 55.0, 60.0), tuple("1.0", 95.0, 100.0));
         assertThat(gradingScale.getGradeSteps()).as("grades from 4.0 on are passing").filteredOn(GradeStep::getIsPassingGrade).extracting(GradeStep::getGradeName)
                 .doesNotContain("5.0", "4.7", "4.3").contains("4.0", "1.0");
 
@@ -184,6 +187,40 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(testRun.getUser().getLogin()).as("the demo instructor is its author").isEqualTo(UserDemoService.DEMO_INSTRUCTOR_LOGIN);
         assertThat(testRun.getExercises()).as("the test run holds the exercises of the exam").extracting(DomainObject::getId)
                 .containsExactlyElementsOf(exercisesOf(exam).stream().map(DomainObject::getId).toList());
+        assertThat(testRun.getExercises()).as("every exercise of the test run has a participation of the instructor with a submission to work in")
+                .allSatisfy(exercise -> assertThat(exercise.getStudentParticipations())
+                        .filteredOn(participation -> participation.getStudent().filter(student -> UserDemoService.DEMO_INSTRUCTOR_LOGIN.equals(student.getLogin())).isPresent())
+                        .as("%s has the participation of the instructor", exercise.getTitle()).isNotEmpty()
+                        .allSatisfy(participation -> assertThat(participation.getSubmissions()).as("%s has a submission to work in", exercise.getTitle()).isNotEmpty()));
+    }
+
+    @Test
+    void recreatesTheDeletedTestRunWithTheWorkingTimeOfTheExam() throws Exception {
+        seed();
+        Exam exam = demoExam().orElseThrow();
+        int originalWorkingTime = exam.getWorkingTime();
+        long courseId = exam.getCourse().getId();
+        userUtilService.changeUser(UserDemoService.DEMO_INSTRUCTOR_LOGIN);
+        try {
+            exam.setWorkingTime(originalWorkingTime / 2);
+            examRepository.save(exam);
+            for (StudentExam testRun : studentExamRepository.findAllTestRunsByExamId(exam.getId())) {
+                request.delete("/api/exam/courses/" + courseId + "/exams/" + exam.getId() + "/test-runs/" + testRun.getId(), HttpStatus.OK);
+            }
+            assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).as("the instructor deleted the test run").isEmpty();
+
+            seed();
+
+            assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId()))
+                    .as("the test run is created again, with one exercise per exercise group and the working time the exam has now").singleElement().satisfies(testRun -> {
+                        assertThat(testRun.getWorkingTime()).isEqualTo(originalWorkingTime / 2);
+                        assertThat(studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRun.getId(), true).orElseThrow().getExercises()).hasSize(3);
+                    });
+        }
+        finally {
+            exam.setWorkingTime(originalWorkingTime);
+            examRepository.save(exam);
+        }
     }
 
     @Test

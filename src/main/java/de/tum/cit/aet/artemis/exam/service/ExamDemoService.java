@@ -129,12 +129,15 @@ public class ExamDemoService {
             log.debug("Demo test exam '{}' has a test run already, skipping creation", TEST_EXAM_TITLE);
             return;
         }
-        List<Long> exerciseIds = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId()).getExerciseGroups().stream()
-                .flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).map(Exercise::getId).toList();
+        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+        // One exercise per group, like every student exam of the exam: the test run is the exam as a student gets it.
+        List<Long> exerciseIds = examWithExercises.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream().limit(1)).map(Exercise::getId)
+                .toList();
         if (exerciseIds.isEmpty()) {
             return;
         }
-        studentExamService.createTestRun(exam, exerciseIds, WORKING_TIME_SECONDS);
+        // The working time of the exam as it is now, which an instructor may have changed, like the attempts of the students.
+        studentExamService.createTestRun(examWithExercises, exerciseIds, examWithExercises.getWorkingTime());
         log.info("Created the test run of demo test exam '{}'", TEST_EXAM_TITLE);
     }
 
