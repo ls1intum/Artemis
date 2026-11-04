@@ -601,7 +601,7 @@ class GenerationAttemptLoop {
         }
     }
 
-    /** Checkpoints the first verified candidate; later semantic repairs are promoted only after their review completes. */
+    /** Checkpoints the first verified candidate; a later semantic repair is promoted only once its review has run, see {@link #promoteReviewedCandidate}. */
     private void checkpointMechanicallyVerifiedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         CandidateSnapshot mechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
                 SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the mechanically verified candidate received its full-artifact review."),
@@ -700,8 +700,10 @@ class GenerationAttemptLoop {
     }
 
     /**
-     * Promotes the candidate only after its review and executable probes have completed. Clearing the repair predecessor here is part of the invariant: a later deadline must
-     * preserve the candidate that was just verified and reviewed, while {@link #applySemanticRepair} records it again if another repair actually starts.
+     * Promotes the candidate once its review and executable probes have run. A repair whose primary review did not return a verdict is promoted only if it killed a surviving
+     * mutant, because the older checkpoint provably grades less; such a candidate is mechanically verified, not fully reviewed, and carries the unavailable review as a
+     * finding. Clearing the repair predecessor here is part of the invariant: a later deadline must preserve the candidate that was just verified and reviewed, while
+     * {@link #applySemanticRepair} records it again if another repair actually starts.
      */
     private void promoteReviewedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         // A repair that killed a surviving mutant is promoted even without a primary verdict: the older checkpoint provably grades less.
@@ -748,7 +750,7 @@ class GenerationAttemptLoop {
             repairScheduler.markWitnessAdoptionAttempted();
         }
         if (reviewUnavailable && repairBatch.isEmpty() && executableEvidence.hasMutantsAwaitingRecheck()) {
-            emit("Executable semantic evidence remains inconclusive; keeping the last fully reviewed candidate for instructor review.");
+            emit("Executable semantic evidence remains inconclusive; keeping the latest mechanically verified candidate for instructor review.");
             terminationReason = TerminationReason.REVIEW_UNAVAILABLE;
             return LoopStep.STOP;
         }
