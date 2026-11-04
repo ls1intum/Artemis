@@ -75,7 +75,7 @@ export class ExternalSubmissionStudentSearchComponent {
     private readonly totalMatches = signal(0);
     protected readonly errorKey = signal<string | undefined>(undefined);
 
-    /** The hint below the field: how many characters are needed, that nothing matched, or that only the first matches are shown. */
+    /** The hint below the field: how many characters are needed, or that nothing matched. */
     protected readonly hint = computed((): Hint | undefined => {
         if (this.query().trim().length < this.minLength) {
             return { key: 'artemisApp.externalSubmission.searchTooShort', params: { min: this.minLength } };
@@ -83,6 +83,11 @@ export class ExternalSubmissionStudentSearchComponent {
         if (this.searchCompleted() && this.suggestions().length === 0) {
             return { key: 'artemisApp.externalSubmission.noResults' };
         }
+        return undefined;
+    });
+
+    /** Shown at the bottom of the suggestion list rather than as the hint, which the open list would cover. */
+    protected readonly moreResults = computed((): Hint | undefined => {
         if (this.searchCompleted() && this.totalMatches() > this.suggestions().length) {
             return { key: 'artemisApp.externalSubmission.moreResults', params: { shown: this.suggestions().length, total: this.totalMatches() } };
         }

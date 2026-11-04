@@ -28,6 +28,7 @@
                 [optionTemplate]="optionTemplate"
                 [minLength]="minLength"
                 [debounceMs]="debounceMs"
+                [footerMessage]="moreResults()?.key | artemisTranslate: moreResults()?.params"
                 [emptyMessage]="errorKey() ?? (searchCompleted() ? 'artemisApp.externalSubmission.noResults' : 'global.search.searching') | artemisTranslate"
                 [placeholder]="'artemisApp.externalSubmission.searchPlaceholder' | artemisTranslate"
                 (searchRequested)="requestSearch($event.query)"

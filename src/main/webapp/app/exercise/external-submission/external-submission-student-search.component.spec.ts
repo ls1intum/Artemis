@@ -26,6 +26,7 @@ describe('ExternalSubmissionStudentSearchComponent', () => {
 
     const input = (): HTMLInputElement => fixture.nativeElement.querySelector('input[role="combobox"]');
     const options = (): HTMLElement[] => Array.from(document.querySelectorAll('[role="option"]'));
+    const footer = (): HTMLElement | null => document.querySelector('.tumaet-ui-autocomplete-footer');
     const hint = (): HTMLElement | null => fixture.nativeElement.querySelector('.tumaet-ui-form-field-hint');
     const errorRegion = (): HTMLElement => fixture.nativeElement.querySelector('.tumaet-ui-form-field-error');
     const chip = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="external-submission-selected-student"]');
@@ -138,7 +139,9 @@ describe('ExternalSubmissionStudentSearchComponent', () => {
         await type('jane');
 
         expect(options()).toHaveLength(10);
-        expect(hint()?.textContent).toContain('artemisApp.externalSubmission.moreResults');
+        // the open suggestion list would cover the hint below the field, so the message ends the list instead
+        expect(footer()?.textContent).toContain('artemisApp.externalSubmission.moreResults');
+        expect(hint()).toBeNull();
         expect(translate).toHaveBeenCalledWith('artemisApp.externalSubmission.moreResults', { shown: 10, total: 25 });
     });
 
@@ -148,6 +151,7 @@ describe('ExternalSubmissionStudentSearchComponent', () => {
         await type('jane');
 
         expect(hint()).toBeNull();
+        expect(footer()).toBeNull();
     });
 
     it('removes the suggestions as soon as the text changes, so a student of the previous search cannot be selected', async () => {
