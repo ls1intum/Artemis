@@ -58,8 +58,9 @@ public class AgentLoopRunner {
     private static final int MAX_CONSECUTIVE_TOOL_FAILURES = 5;
 
     /**
-     * The occurrence of an identical rejected tool call (same tool, same arguments) that is answered with an explicit escalation instead of the bare rejection. From then on every
-     * further identical rejection counts toward {@link #MAX_CONSECUTIVE_TOOL_FAILURES} for the whole session, because successful calls in between do not make it succeed.
+     * The occurrence of an identical tool call that is answered with an explicit escalation instead of its result: the same tool and arguments when it was rejected, or the same
+     * tool, arguments and result when it succeeded. From then on every further repeat counts toward {@link #MAX_CONSECUTIVE_TOOL_FAILURES} for the whole session, because
+     * neither a refused call nor a call whose result did not change can make progress by being repeated.
      */
     static final int REPEATED_REJECTION_ESCALATION = 3;
 
@@ -312,7 +313,7 @@ public class AgentLoopRunner {
         String lastAssistantText = "";
         int consecutiveToolFailures = 0;
         int consecutiveRejectedActions = 0;
-        Map<String, Integer> rejectedCallCounts = new HashMap<>();
+        Map<String, Integer> repeatedCallCounts = new HashMap<>();
         int repeatedRejections = 0;
         long lastPromptTokens = 0;
         int messagesAtLastCall = 0;
@@ -440,13 +441,13 @@ public class AgentLoopRunner {
                     emit(stepListener, "The build environment stopped responding.");
                     return failed(turn, lastAssistantText, conversation, "The build environment stopped responding on turn " + turn + ".");
                 }
-                int repeatedThisTurn = escalateRepeatedRejections(conversation, toolCalls, rejectedCallCounts);
+                int repeatedThisTurn = escalateRepeatedRejections(conversation, toolCalls, repeatedCallCounts);
                 if (repeatedThisTurn > 0) {
                     repeatedRejections += repeatedThisTurn;
-                    log.warn("Agent loop repeated an identical rejected tool call on turn {} (repeated rejections this session: {})", turn, repeatedRejections);
+                    log.warn("Agent loop repeated an identical tool call on turn {} (repeats this session: {})", turn, repeatedRejections);
                     if (repeatedRejections >= MAX_CONSECUTIVE_TOOL_FAILURES) {
-                        return failed(turn, lastAssistantText, conversation, "The agent repeated identical rejected tool calls " + repeatedRejections
-                                + " times after being told they " + "would keep failing. Last rejection: " + lastRejection(conversation));
+                        return failed(turn, lastAssistantText, conversation, "The agent repeated identical tool calls " + repeatedRejections
+                                + " times after being told they would not change anything. Last repeat: " + lastRejection(conversation));
                     }
                 }
                 if (hasRejectedToolAction(conversation)) {
@@ -551,35 +552,41 @@ public class AgentLoopRunner {
     }
 
     /**
-     * Counts every rejected call of the latest tool batch by tool name and arguments, and replaces the rejection of each call made {@link #REPEATED_REJECTION_ESCALATION} or
-     * more times with an explicit observation that it will keep failing. A model that interleaves the same refused command with successful calls never trips the consecutive
-     * limit, so without this it can spend a whole session repeating it.
+     * Counts the calls of the latest tool batch and replaces the result of each call repeated {@link #REPEATED_REJECTION_ESCALATION} or more times with an explicit observation
+     * that repeating it changes nothing. A rejected call is identified by tool and arguments; a successful call also by its result, so re-reading a file after an edit is not a
+     * repeat. A model that interleaves the same call with other calls never trips the consecutive limit, so without this it can spend a whole session repeating it.
      *
      * @return how many calls of the batch were such repeats
      */
-    private static int escalateRepeatedRejections(List<Message> conversation, List<AssistantMessage.ToolCall> toolCalls, Map<String, Integer> rejectedCallCounts) {
+    private static int escalateRepeatedRejections(List<Message> conversation, List<AssistantMessage.ToolCall> toolCalls, Map<String, Integer> repeatedCallCounts) {
         for (int i = conversation.size() - 1; i >= 0; i--) {
             if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
                 int repeated = 0;
                 List<ToolResponseMessage.ToolResponse> responses = new ArrayList<>(toolResponse.getResponses().size());
                 for (ToolResponseMessage.ToolResponse response : toolResponse.getResponses()) {
-                    if ("verify".equals(response.name()) || !isErrorResponse(response.responseData())) {
+                    if ("verify".equals(response.name()) || SUBMIT_TOOL_NAME.equals(response.name())) {
                         responses.add(response);
                         continue;
                     }
+                    boolean rejected = isErrorResponse(response.responseData());
                     String arguments = toolCalls.stream().filter(call -> call.id() != null && call.id().equals(response.id())).map(AssistantMessage.ToolCall::arguments).findFirst()
                             .orElse("");
-                    int occurrences = rejectedCallCounts.merge(response.name() + '\n' + arguments, 1, Integer::sum);
+                    String key = response.name() + '\n' + arguments + (rejected ? "" : '\n' + response.responseData());
+                    int occurrences = repeatedCallCounts.merge(key, 1, Integer::sum);
                     if (occurrences < REPEATED_REJECTION_ESCALATION) {
                         responses.add(response);
                         continue;
                     }
                     repeated++;
-                    String rejection = excerpt(response.responseData().strip());
-                    responses.add(new ToolResponseMessage.ToolResponse(response.id(), response.name(),
-                            "ERROR: this exact " + response.name() + " call has now been rejected " + occurrences
+                    String observation = excerpt(response.responseData().strip());
+                    String escalation = rejected
+                            ? "ERROR: this exact " + response.name() + " call has now been rejected " + occurrences
                                     + " times and will be rejected every time. Do not repeat it; take a different action. Each further repeat counts toward ending this "
-                                    + "session. The rejection was: " + rejection));
+                                    + "session. The rejection was: " + observation
+                            : "ERROR: this exact " + response.name() + " call has now returned the same result " + occurrences
+                                    + " times. Repeating it cannot change anything until you change the workspace; take a different action. Each further repeat counts "
+                                    + "toward ending this session. The unchanged result was: " + observation;
+                    responses.add(new ToolResponseMessage.ToolResponse(response.id(), response.name(), escalation));
                 }
                 if (repeated > 0) {
                     conversation.set(i, ToolResponseMessage.builder().responses(responses).metadata(toolResponse.getMetadata()).build());

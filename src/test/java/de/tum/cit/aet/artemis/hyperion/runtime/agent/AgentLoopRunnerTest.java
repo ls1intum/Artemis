@@ -351,7 +351,7 @@ class AgentLoopRunnerTest {
         when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
             int current = turn.incrementAndGet();
             String name = current % 2 == 1 ? "shell" : "write";
-            String arguments = current % 2 == 1 ? "{\"command\":\"ls -la /root/.gradle\"}" : "{}";
+            String arguments = current % 2 == 1 ? "{\"command\":\"ls -la /root/.gradle\"}" : "{\"path\":\"A" + current + ".java\"}";
             var call = new AssistantMessage.ToolCall("call-" + current, "function", name, arguments);
             return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
         });
@@ -369,8 +369,87 @@ class AgentLoopRunnerTest {
         assertThat(shellResults).hasSize(lastAllowedRepeat);
         assertThat(shellResults.subList(0, 2)).allSatisfy(result -> assertThat(result).contains("the command was not run").doesNotContain("this exact shell call"));
         assertThat(shellResults.get(2)).contains("this exact shell call has now been rejected 3 times", "Do not repeat it", "the command was not run");
-        assertThat(session.result().stopCause()).startsWith("The agent session stopped: The agent repeated identical rejected tool calls 5 times")
+        assertThat(session.result().stopCause()).startsWith("The agent session stopped: The agent repeated identical tool calls 5 times")
                 .contains("shell: ERROR: this exact shell call");
+    }
+
+    /**
+     * A command whose result never changes is just as unproductive as a refused one: one staged session ran the same {@code git status} 31 times. The third identical call with
+     * an identical result is answered explicitly, and every repeat from then on counts toward ending the session.
+     */
+    @Test
+    void anIdenticalSuccessfulCallWithAnUnchangedResultIsEscalatedAndEndsTheSession() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            String name = current % 2 == 1 ? "status" : "write";
+            String arguments = current % 2 == 1 ? "{}" : "{\"path\":\"A" + current + ".java\"}";
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", name, arguments);
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
+        });
+
+        var session = runner(model).runSession("system", null, "brief", new UnchangingTools(), 60, () -> false, null, null);
+
+        int lastAllowedRepeat = AgentLoopRunner.REPEATED_REJECTION_ESCALATION - 1 + 5;
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(session.result().turns()).isEqualTo(2 * lastAllowedRepeat - 1);
+        List<String> statusResults = session.conversation().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
+                .flatMap(message -> message.getResponses().stream()).filter(response -> response.name().equals("status")).map(ToolResponseMessage.ToolResponse::responseData)
+                .toList();
+        assertThat(statusResults.subList(0, 2)).allSatisfy(result -> assertThat(result).contains("not a git repository").doesNotContain("this exact"));
+        assertThat(statusResults.get(2)).contains("this exact status call has now returned the same result 3 times", "not a git repository");
+        assertThat(session.result().stopCause()).startsWith("The agent session stopped: The agent repeated identical tool calls 5 times");
+    }
+
+    @Test
+    void anIdenticalCallWhoseResultChangesIsNotARepeat() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            if (current > 8) {
+                return text("finished");
+            }
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", "read", "{}");
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
+        });
+
+        var session = runner(model).runSession("system", null, "brief", new UnchangingTools(), 60, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(session.conversation().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
+                .flatMap(message -> message.getResponses().stream())).noneMatch(response -> response.responseData().contains("this exact"));
+    }
+
+    static class UnchangingTools implements SubmitVetoAware {
+
+        int reads;
+
+        @Tool(description = "Show the version control status")
+        public String status() {
+            return "fatal: not a git repository (or any of the parent directories): .git";
+        }
+
+        @Tool(description = "Read a file that changes between reads")
+        public String read() {
+            return "revision " + ++reads;
+        }
+
+        @Tool(description = "Record an edit")
+        public String write(@org.springframework.ai.tool.annotation.ToolParam(description = "the path") String path) {
+            return "written " + path;
+        }
+
+        @Override
+        public boolean consumeSubmitVeto() {
+            return false;
+        }
+
+        @Override
+        public boolean isSandboxSessionTerminated() {
+            return false;
+        }
     }
 
     @Test
@@ -401,7 +480,7 @@ class AgentLoopRunnerTest {
                 return text("finished");
             }
             String name = current % 2 == 1 ? "shell" : "write";
-            String arguments = current % 2 == 1 ? "{\"command\":\"ls /root/.gradle/" + current + "\"}" : "{}";
+            String arguments = current % 2 == 1 ? "{\"command\":\"ls /root/.gradle/" + current + "\"}" : "{\"path\":\"A" + current + ".java\"}";
             var call = new AssistantMessage.ToolCall("call-" + current, "function", name, arguments);
             return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
         });
@@ -424,8 +503,8 @@ class AgentLoopRunnerTest {
         }
 
         @Tool(description = "Record an edit")
-        public String write() {
-            return "written";
+        public String write(@org.springframework.ai.tool.annotation.ToolParam(description = "the path") String path) {
+            return "written " + path;
         }
 
         @Override
@@ -465,10 +544,11 @@ class AgentLoopRunnerTest {
 
         boolean throwSubmit;
 
+        /** Each recorded edit changes the workspace, so its result differs from the previous one, as a real write's does. */
         @Tool(description = "Record an edit")
         public String write() {
             actions.add("write");
-            return "written";
+            return "written " + actions.size();
         }
 
         @Tool(description = "Submit the current workspace")
