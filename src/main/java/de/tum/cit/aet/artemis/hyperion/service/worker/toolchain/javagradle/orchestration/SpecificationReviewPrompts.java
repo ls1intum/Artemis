@@ -52,6 +52,18 @@ final class SpecificationReviewPrompts {
         return review.riskHistory().stream().map(finding -> "Unresolved specification-review hypothesis from grounded evidence: " + finding).toList();
     }
 
+    static String assessmentRedesignPrompt(String executedEvidence) {
+        return executedEvidence + """
+
+                The server has reopened SPEC.md because an executed counterexample disproved the declared assessment. Revise the coherent contract before rebuilding its artifacts.
+                Preserve the instructor brief, learner responsibilities and prerequisites. Choose runtime observations of the learner-owned behavior that the supported harness can
+                execute; tests of supplied collaborators alone cannot establish student integration. A supplied observation facility may expose otherwise-local operations without
+                adding learner work. Do not require source or bytecode inspection, introduce untaught syntax, remove a learning objective, or replace it with output transcription.
+                Remove incidental normative constraints that the brief does not require. Reconcile Rules, Public API, Design, Testing Strategy and risk partitions together.
+                The revised specification receives the normal consistency and semantic review; the runtime counterexample is checked again before statement authoring.
+                """;
+    }
+
     static String semanticSpecRefinementPrompt(String reviewFeedback) {
         return reviewFeedback + """
 

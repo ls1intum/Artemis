@@ -51,11 +51,14 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SeededStructuralTests;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome.Disposition;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
 
@@ -233,6 +236,126 @@ class StagedGenerationRunnerTest {
 
     private AgentLoopResult run(BooleanSupplier cancelled, Supplier<SeededStructuralTests> structuralSeedHook) {
         return runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", cancelled, null, null, structuralSeedHook).result();
+    }
+
+    @Test
+    void executedAssessmentFailureReopensAndReapprovesTheContractBeforeStatementAuthoring() {
+        var reviewer = mock(SpecFidelityCritic.class);
+        when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(new SpecFidelityCritic.SpecificationReview(true, List.of()));
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
+        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
+        AtomicInteger calls = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            if (calls.incrementAndGet() == 3) {
+                assertThat(approvedSpecs.approved("s")).isEmpty();
+                assertThat(invocation.<String>getArgument(1)).contains("executed counterexample", "Preserve the instructor brief");
+                sandbox.specMarkdown = VALID_SPEC_DOCUMENT.replace("computes a result", "computes an observable result");
+            }
+            return completed(1, "done");
+        });
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(calls).hasValue(5);
+        assertThat(approvedSpecs.approved("s")).hasValue(sandbox.specMarkdown);
+        verify(reviewer, times(2)).reviewSpecification(anyString(), anyString(), any(), any());
+        InOrder stages = inOrder(baseTools);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void repeatedExecutedAssessmentFailureStopsBeforeStatementOrOuterRepairs() {
+        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(result.finalMessage()).contains("no further contract redesign");
+        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+        verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void assessmentRedesignCannotExceedTheSharedTurnBudget() {
+        var settings = new HyperionGenerationSettings("small", null, 24, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, null);
+        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> completed(invocation.getArgument(3), "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(result.turns()).isLessThanOrEqualTo(24);
+        verify(agentLoopRunner, times(2)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void cancellationAfterAssessmentPreservesTheExistingApprovalAndDoesNotStartRedesign() {
+        AtomicBoolean cancelled = new AtomicBoolean();
+        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any())).thenAnswer(invocation -> {
+            cancelled.set(true);
+            return List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE));
+        });
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+
+        AgentLoopResult result = run(cancelled::get, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.CANCELLED);
+        assertThat(approvedSpecs.approved("s")).hasValue(VALID_SPEC_DOCUMENT);
+        verify(agentLoopRunner, times(2)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void anUnbuiltRedesignCannotReachTheStatementOrEscapeIntoOrdinaryRepair() {
+        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"), failingReport(), failingReport());
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(result.stopCause()).contains("redesigned contract has not passed");
+        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+        verify(agentLoopRunner, times(5)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void assessmentRedesignDiscardsTheRejectedContinuousConversation() {
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "CONTINUOUS");
+        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any()))
+                .thenReturn(new AgentLoopRunner.AgentLoopSession(completed(1, "done"), List.of(new UserMessage("rejected artifact trajectory"))));
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Message>> conversations = ArgumentCaptor.forClass(List.class);
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        verify(agentLoopRunner, times(5)).runSession(anyString(), conversations.capture(), anyString(), any(), anyInt(), any(), any(), any());
+        assertThat(conversations.getAllValues()).containsOnlyNulls();
     }
 
     @Test

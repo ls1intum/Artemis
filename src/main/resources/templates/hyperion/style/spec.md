@@ -157,12 +157,11 @@ behaviour, `1` for edge polish; every planned test for the seam carries that tie
 grades silently and is never bound to a task in the statement. Every row is required graded student work; keep
 optional enrichment outside this table, the test plan, and the Artemis tasks.
 
-When students write a program or method that uses given types, the graded student code receives the objects,
-configuration, or inputs it works on, for example a static method that main calls with the objects it creates,
-or a method taking the API object or values as parameters, so tests can call it with different objects or
-values and a hard-coded output fails; main may stay a thin, ungraded demo. Tests grade behavior through those
-parameters, returned values, object state, or output captured for varied inputs, never by reading source or
-bytecode.
+Grade the learner-owned operation through runtime evidence that distinguishes a plausible bypass from the required work. Choose the observation mechanism together with
+its Public API, before the specification freezes. Vary inputs when behavior depends on them; observe state or interactions when the objective is API use. Supplied runtime
+observation may expose operations on objects a beginner creates locally without making them write new abstractions. Tests of the supplied API alone do not grade the student's
+integration. Keep the student's prerequisites and responsibilities intact. Do not invent normative call counts, allocation counts or syntax restrictions merely to help a test.
+Source and bytecode inspection are not supported grading mechanisms.
 
 For modification exercises, separate the pre-change behavior from the assigned extension before freezing.
 Describe unchanged successful cases and retained guards as supplied behavior outside the seam and risk

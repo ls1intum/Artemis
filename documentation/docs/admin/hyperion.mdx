@@ -293,6 +293,16 @@ model authoring starts. The worker receives a frozen, bounded repository snapsho
 against that snapshot before persisting them, and checks repository heads and
 exercise metadata again before writing.
 
+Before statement authoring, whole-exercise generation runs an executable assessment
+check on eligible student-owned `main` methods. It replaces the method body with
+statements printing the reference transcript and runs the weighted tests. If those
+tests still pass, the staged controller can reopen the exact specification once,
+review a coherent redesign, and rebuild the artifacts under the existing shared
+turn and time limits. The agent cannot reopen the contract itself. A second proven
+bypass, or insufficient budget for redesign, stops generation before publication;
+infrastructure failures do not authorize a contract change. This check supplements
+the later quality review and does not establish overall teaching suitability.
+
 Configure exactly one AI Worker identity for generation. Use the same distributed-data
 provider on generation-capable core nodes and that worker. Core reserves one job
 per exercise with an atomic operation on the shared job map. A second generation

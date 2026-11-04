@@ -9,15 +9,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * Every later gate derives from the specification — which types the template must omit, whether the statement needs a diagram — but SPEC.md lives in the workspace and the agent
  * may write it, so reading the live file at gate time would let the agent dissolve the contract it is judged against by downgrading its own ownership decisions until the
- * artifacts it already has pass. This snapshot is unreachable from the sandbox and is every downstream gate's sole authority; when implementation exposes a conflict, the
- * executable artifacts are what must be restructured.
+ * artifacts it already has pass. This snapshot is unreachable from the sandbox and is every downstream gate's sole authority. An executed assessment counterexample can
+ * authorize the staged controller to revoke its exact approval and repeat specification review within the existing budget; the agent cannot revoke it.
  */
 public class ApprovedSpecRegistry {
 
     private final Map<String, String> approvedBySession = new ConcurrentHashMap<>();
 
     /**
-     * Records the specification a session's spec gate approved. Approval is immutable: repeating the same value is harmless, a different second value is a lifecycle bug.
+     * Records the specification a session's spec gate approved. Approval stays immutable until the server explicitly reopens assessment review: repeating the same value is
+     * harmless, a different value without revocation is a lifecycle bug.
      *
      * @param sessionId the sandbox session the specification belongs to
      * @param spec      the approved SPEC.md content
@@ -54,6 +55,17 @@ public class ApprovedSpecRegistry {
      */
     public Optional<String> approved(String sessionId) {
         return sessionId == null ? Optional.empty() : Optional.ofNullable(approvedBySession.get(sessionId));
+    }
+
+    /**
+     * Revokes only the exact contract disproved by an executed assessment check, before a bounded server-controlled redesign.
+     *
+     * @param sessionId the sandbox session whose contract is being reviewed
+     * @param expected  the exact approved specification that the counterexample challenged
+     * @return whether that approval was revoked; false when a different contract is current
+     */
+    public boolean reopenForAssessment(String sessionId, String expected) {
+        return approvedBySession.remove(sessionId, expected);
     }
 
     public void forget(String sessionId) {

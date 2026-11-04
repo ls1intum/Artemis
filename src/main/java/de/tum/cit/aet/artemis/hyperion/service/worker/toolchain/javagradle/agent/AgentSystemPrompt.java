@@ -179,12 +179,8 @@ public class AgentSystemPrompt {
 
             """;
 
-    /**
-     * How student code that uses given types stays gradable. A program that only prints a fixed result can be passed by printing that result, and reading its source is
-     * neither allowed in the grading sandbox nor graded behavior, so the graded code must take what it works on. Shared verbatim by the specification stage, the style
-     * guides, the source-reading test gate, and the print-only main finding.
-     */
-    public static final String TESTABLE_STUDENT_CODE_RULE = "When students write a program or method that uses given types, the graded student code receives the objects, configuration, or inputs it works on, for example a static method that main calls with the objects it creates, or a method taking the API object or values as parameters, so tests can call it with different objects or values and a hard-coded output fails; main may stay a thin, ungraded demo. Tests grade behavior through those parameters, returned values, object state, or output captured for varied inputs, never by reading source or bytecode.";
+    /** Supported runtime assessment mechanisms, shared by the specification guidance, style references and executed-bypass finding. */
+    public static final String TESTABLE_STUDENT_CODE_RULE = "Grade the learner-owned operation through runtime evidence that distinguishes a plausible bypass from the required work. Choose the observation mechanism together with its Public API, before the specification freezes. Vary inputs when behavior depends on them; observe state or interactions when the objective is API use. Supplied runtime observation may expose operations on objects a beginner creates locally without making them write new abstractions. Tests of the supplied API alone do not grade the student's integration. Keep the student's prerequisites and responsibilities intact. Do not invent normative call counts, allocation counts or syntax restrictions merely to help a test. Source and bytecode inspection are not supported grading mechanisms.";
 
     /**
      * When the final statement must contain a class diagram and what it shows. Artemis derives the requirement from the approved design, so the specification author no longer

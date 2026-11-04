@@ -501,6 +501,86 @@ class DockerGradleBuildTest {
         });
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void assessmentGateDistinguishesTranscriptGradingFromSuppliedRuntimeObservation(boolean observeInteraction) throws IOException {
+        String sourcePath = "src/de/tum/cit/aet/reference/ScoreCalculator.java";
+        String reference = """
+                package de.tum.cit.aet.reference;
+                public class ScoreCalculator {
+                    public static void main(String[] args) {
+                        Counter counter = new Counter();
+                        counter.increment();
+                        System.out.println(counter.value());
+                    }
+                }
+                """;
+        String supplied = """
+                package de.tum.cit.aet.reference;
+                public class Counter {
+                    private static Counter observed;
+                    private int value;
+                    public Counter() { observed = this; }
+                    public void increment() { value++; }
+                    public int value() { return value; }
+                    public static Counter lastCreated() { return observed; }
+                }
+                """;
+        String testSource = """
+                package de.tum.cit.aet.reference;
+                import static org.junit.jupiter.api.Assertions.*;
+                import java.io.ByteArrayOutputStream;
+                import java.io.PrintStream;
+                import org.junit.jupiter.api.Test;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+                @Public @Policy("SecurityPolicy.yaml")
+                @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)
+                class ScoreCalculatorTest {
+                    @Test @StrictTimeout(5)
+                    void testDemo() {
+                        PrintStream previous = System.out;
+                        ByteArrayOutputStream output = new ByteArrayOutputStream();
+                        try {
+                            System.setOut(new PrintStream(output));
+                            ScoreCalculator.main(new String[0]);
+                        } finally { System.setOut(previous); }
+                        assertEquals("1", output.toString().strip());
+                        %s
+                    }
+                }
+                """.formatted(observeInteraction ? "assertNotNull(Counter.lastCreated()); assertEquals(1, Counter.lastCreated().value());" : "");
+        List<WorkspaceFile> files = new ArrayList<>();
+        snapshot().files().stream().filter(file -> file.path().startsWith("tests/") && !file.path().endsWith(".java")).forEach(files::add);
+        files.add(new WorkspaceFile("solution/" + sourcePath, reference.getBytes(StandardCharsets.UTF_8), false));
+        files.add(new WorkspaceFile("template/" + sourcePath, reference.replace("Counter counter = new Counter();", "").replace("counter.increment();", "")
+                .replace("System.out.println(counter.value());", "").getBytes(StandardCharsets.UTF_8), false));
+        for (String lane : List.of("solution", "template")) {
+            files.add(new WorkspaceFile(lane + "/src/de/tum/cit/aet/reference/Counter.java", supplied.getBytes(StandardCharsets.UTF_8), false));
+        }
+        files.add(new WorkspaceFile("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", testSource.getBytes(StandardCharsets.UTF_8), false));
+        String plan = "{\"tests\":[{\"name\":\"testDemo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+        files.add(new WorkspaceFile("test-plan.json", plan.getBytes(StandardCharsets.UTF_8), false));
+        String session = sandbox.createSession();
+        workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, new WorkspaceSnapshot(files), true);
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+        assertThat(build(session, "solution").failures()).isZero();
+        assertThat(build(session, "template").testFailedNames()).contains("testDemo");
+
+        var failure = StageAssessmentCheck.failure(new DifferentialVerifier(commands), sandbox, session, exercise, SeededStructuralTests.EMPTY,
+                org.mockito.Mockito.mock(AgentVerifyReport.class));
+
+        if (observeInteraction) {
+            assertThat(failure).isEmpty();
+        }
+        else {
+            assertThat(failure).hasValueSatisfying(result -> assertThat(result.contractRedesignRequired()).isTrue());
+        }
+        assertThat(sandbox.exec(session, Duration.ofSeconds(10), "cat", "/workspace/solution/" + sourcePath).stdout()).isEqualTo(reference);
+    }
+
     @Test
     void pristineSolutionPassesAndTemplateFailsWithFreshParsedReports() throws IOException {
         String session = sandbox.createSession();
