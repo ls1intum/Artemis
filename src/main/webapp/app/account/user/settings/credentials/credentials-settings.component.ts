@@ -31,7 +31,7 @@ export class CredentialsSettingsComponent {
     private readonly vcsAccessTokenOverview = viewChild(VcsAccessTokenOverviewComponent);
 
     readonly isPasskeyAvailable = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
-    readonly isVcsTokenAvailable = () => this.accountService.isAtLeastTutor();
+    readonly isVcsTokenAvailable = this.accountService.isAtLeastTutor;
     readonly isAgentAccessAvailable = () => this.profileService.isModuleFeatureActive(MODULE_FEATURE_AGENT_ACCESS) && this.accountService.mayCreateAgentTokens();
 
     onCredentialsRevoked(choice: CredentialRevocationChoice): void {

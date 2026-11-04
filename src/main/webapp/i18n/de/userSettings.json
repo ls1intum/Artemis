@@ -8,6 +8,7 @@
                 "profile": "Profil",
                 "credentials": "Zugangsdaten",
                 "learning": "Lernen",
+                "aiExperience": "KI-Erfahrung",
                 "exercises": "Übungen",
                 "collapse": "Einstellungsmenü einklappen",
                 "expand": "Einstellungsmenü ausklappen"
@@ -325,7 +326,6 @@
                 "viewSshKeySettings": "SSH-Schlüssel-Einstellungen anzeigen",
                 "updateSuccess": "Benachrichtigungseinstellung erfolgreich aktualisiert."
             },
-            "aiExperience": "KI-Erfahrung",
             "aiExperienceSettingsPage": {
                 "description": "Lege fest, wie Artemis KI einsetzt, um dein Lernen zu unterstützen – einschließlich Iris-Tutorium, automatischem Feedback und weiteren KI-gestützten Funktionen.",
                 "yourAiMode": "Dein KI-Modus",

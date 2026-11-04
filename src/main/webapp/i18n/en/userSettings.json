@@ -8,6 +8,7 @@
                 "profile": "Profile",
                 "credentials": "Credentials",
                 "learning": "Learning",
+                "aiExperience": "AI Experience",
                 "exercises": "Exercises",
                 "collapse": "Collapse settings menu",
                 "expand": "Expand settings menu"
@@ -325,7 +326,6 @@
                 "viewSshKeySettings": "View SSH Key Settings",
                 "updateSuccess": "Notification setting updated successfully."
             },
-            "aiExperience": "AI Experience",
             "aiExperienceSettingsPage": {
                 "description": "Control how Artemis uses AI to support your learning, including Iris tutoring, automated feedback, and other AI-powered features.",
                 "yourAiMode": "Your AI Mode",

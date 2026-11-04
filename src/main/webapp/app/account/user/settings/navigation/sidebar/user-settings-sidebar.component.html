@@ -3,7 +3,7 @@
         @for (item of navigationItems(); track item.routerLink) {
             <li>
                 <a
-                    class="group flex w-full items-center px-2 py-2 whitespace-nowrap text-(--p-text-color)! no-underline hover:bg-(--link-item-bg)! hover:text-(--link-item-color)! hover:no-underline!"
+                    class="group flex w-full items-center px-2 py-2 whitespace-nowrap text-text! no-underline hover:bg-(--link-item-bg)! hover:text-(--link-item-color)! hover:no-underline!"
                     [class.justify-center]="isCollapsed() || !canExpand()"
                     [routerLink]="item.routerLink"
                     routerLinkActive="bg-(--link-item-bg)! text-(--link-item-color)!"

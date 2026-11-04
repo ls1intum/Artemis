@@ -72,7 +72,7 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('app/account/user/settings/ai-experience/ai-experience-settings/ai-experience-settings.component').then((m) => m.AiExperienceSettingsComponent),
                 data: {
-                    pageTitle: 'artemisApp.userSettings.aiExperience',
+                    pageTitle: 'artemisApp.userSettings.navigation.aiExperience',
                 },
                 canActivate: [DataGuard],
             },

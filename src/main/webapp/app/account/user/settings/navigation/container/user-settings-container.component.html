@@ -15,7 +15,7 @@
     <div class="ms-divider flex min-w-0 flex-auto flex-col overflow-hidden print:ms-0 print:w-full" data-testid="user-settings-content-column">
         <jhi-user-settings-title-bar [pageTitle]="pageTitle()" />
         <main class="module-bg min-h-0 flex-1 overflow-y-auto rounded-lg p-4!" data-testid="user-settings-content">
-            <router-outlet (activate)="updatePageTitle()" />
+            <router-outlet />
         </main>
     </div>
 </div>

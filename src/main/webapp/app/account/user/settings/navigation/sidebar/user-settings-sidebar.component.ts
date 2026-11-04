@@ -34,6 +34,7 @@ export class UserSettingsSidebarComponent {
     readonly navigationItems = computed<UserSettingsNavigationItem[]>(() => this.computeNavigationItems());
 
     private computeCanExpand(): boolean {
+        // Track breakpoint changes so this computed value is reevaluated when the layout changes.
         this.activeBreakpoints();
         return this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable);
     }
@@ -64,7 +65,7 @@ export class UserSettingsSidebarComponent {
             items.push({
                 routerLink: '/user-settings/ai-experience',
                 icon: faWandMagicSparkles,
-                translation: 'artemisApp.userSettings.aiExperience',
+                translation: 'artemisApp.userSettings.navigation.aiExperience',
             });
         }
 

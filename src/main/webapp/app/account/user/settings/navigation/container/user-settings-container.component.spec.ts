@@ -44,4 +44,8 @@ describe('UserSettingsContainerComponent', () => {
         component.toggleSidebar();
         expect(component.isSidebarCollapsed()).toBe(true);
     });
+
+    it('provides a non-empty title before the child route is activated', () => {
+        expect(component.pageTitle()).toBe('artemisApp.userSettings.navigation.profile');
+    });
 });
