@@ -1,25 +1,20 @@
 name: Documentation Screenshots
 
 # Screenshots go stale without anybody touching a page: a component changes its layout and the image keeps showing the old one. This
-# workflow renders the screenshots that documentation/screenshots/manifest.json describes against a running Artemis with the `demo`
-# profile, compares them with the checked-in images and keeps one open issue that lists the images that differ. It never commits an
-# image and never fails a pull request. A maintainer replaces an image after looking at the artifact (see "Screenshots" in
+# workflow renders the screenshots that documentation/screenshots/manifest.json describes from the demo data, compares them with the
+# checked-in images and keeps one open issue that lists the images that differ. It never commits an image and never fails a pull request.
+# A maintainer replaces an image after looking at the artifact (see "Generated screenshots" in
 # documentation/docs/developer/guidelines/documentation.mdx).
 #
-# The workflow does not start Artemis. It renders against the instance in the repository variable DOCS_SCREENSHOT_BASE_URL (or the
-# `base_url` input of a manual run), which has to run with the profiles listed in the guideline, so that the demo course exists. As long
-# as neither is set, the scheduled run does nothing.
+# The workflow starts everything itself with supporting_scripts/e2e/render-docs-screenshots.sh: a PostgreSQL container, the server with the
+# `demo` profile, the client, and a Playwright container as the browser. The browser is the one of the script's default, which is also the
+# one that rendered the checked-in images, so fonts and anti-aliasing do not differ between the runner and a developer's machine.
+# It does not run in a pull request: a cold start (Gradle build of the server, development server of the client) takes more than half an hour.
 
 on:
   schedule:
     - cron: '0 4 * * 2'
   workflow_dispatch:
-    inputs:
-      base_url:
-        description: 'Artemis client that runs with the demo profile. Defaults to the repository variable DOCS_SCREENSHOT_BASE_URL.'
-        required: false
-        default: ''
-        type: string
 
 permissions: {}
 
@@ -27,60 +22,59 @@ concurrency:
   group: docs-screenshots
   cancel-in-progress: false
 
+env:
+  node: 24
+  java: 25
+
 jobs:
   render:
     name: Render the screenshots
     if: github.repository == 'ls1intum/Artemis'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    # The image of the Playwright version in src/test/playwright/package.json: browsers and fonts are the same for every run, which
-    # keeps the text of the images from changing with the runner.
-    container: mcr.microsoft.com/playwright:v1.64.1-noble
+    timeout-minutes: 90
     permissions:
       contents: read
-    env:
-      BASE_URL: ${{ inputs.base_url || vars.DOCS_SCREENSHOT_BASE_URL }}
-    outputs:
-      rendered: ${{ steps.render.outputs.rendered }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Node.js
-        if: ${{ env.BASE_URL != '' }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          run_install: false
+      - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
-      - name: Install the Playwright dependencies
-        if: ${{ env.BASE_URL != '' }}
-        working-directory: src/test/playwright
-        run: |
-          corepack enable
-          pnpm install --frozen-lockfile
+          node-version: '${{ env.node }}'
+          cache: 'pnpm'
+      - name: Setup Java
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
       - name: Render
-        id: render
-        run: |
-          set -Eeuo pipefail
-          if [ -z "${BASE_URL}" ]; then
-            echo "DOCS_SCREENSHOT_BASE_URL is not set and no base_url was given, nothing to render."
-            echo "rendered=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          cd src/test/playwright
-          DOCS_SCREENSHOT_DIR="${GITHUB_WORKSPACE}/build/docs-screenshots" pnpm exec playwright test --config docs-screenshots/playwright.config.ts
-          echo "rendered=true" >> "$GITHUB_OUTPUT"
+        run: ./supporting_scripts/e2e/render-docs-screenshots.sh --render-only
       - name: Upload the rendered images
-        if: ${{ steps.render.outputs.rendered == 'true' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: docs-screenshots-rendered
           path: build/docs-screenshots
           if-no-files-found: error
           retention-days: 30
+      - name: Upload the logs of the server and the client
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docs-screenshots-logs
+          path: build/docs-screenshots-stack/*.log
+          if-no-files-found: ignore
+          retention-days: 7
 
   compare:
     name: Compare with the checked-in images
     needs: render
-    if: github.repository == 'ls1intum/Artemis' && needs.render.outputs.rendered == 'true'
+    if: github.repository == 'ls1intum/Artemis'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -128,7 +122,7 @@ jobs:
             echo "### Images whose component or translations changed after the image"
             cat "${RUNNER_TEMP}/stale.md"
             echo
-            echo "The rendered images are the artifact \`docs-screenshots-rendered\` of [this run](${RUN_URL}). Look at the difference first: a changed demo course is not a change of the page. To replace an image, run the steps of \"Screenshots\" in the documentation guideline."
+            echo "The rendered images are the artifact \`docs-screenshots-rendered\` of [this run](${RUN_URL}). Look at the difference first: a changed demo course is not a change of the page. To replace the images, run \`./supporting_scripts/e2e/render-docs-screenshots.sh --update\` and review the changed files, as described in \"Generated screenshots\" in the documentation guideline."
             echo "This issue is kept up to date by \`.github/workflows/docs-screenshots.yml\`."
           } > "${RUNNER_TEMP}/body.md"
           if [ -n "$existing" ]; then

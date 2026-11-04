@@ -164,33 +164,46 @@ accumulate invisibly; they are never noticed until someone measures.
 ### Generated screenshots
 
 A screenshot that can be rendered again from the demo course does not have to be recaptured by hand.
-`documentation/screenshots/manifest.json` describes such a screenshot: the image below `documentation/docs`, the pages that show it,
-the user (a demo user), the route with the placeholder `{courseId}`, the viewport, optional `mask` entries (the `data-testid` of an
-element with volatile content, such as a time stamp) and the `source` paths of the components and translations that the image shows.
-`src/test/playwright/docs-screenshots` renders every entry in a light theme, in English and with reduced motion, and
-`supporting_scripts/check_docs_screenshots.py` validates the manifest, compares rendered images with the checked-in ones and lists
-the images whose `source` changed after the image.
+`documentation/screenshots/manifest.json` describes such a screenshot, and `src/test/playwright/docs-screenshots` renders every entry in a
+light theme, in English and with reduced motion. An entry has these fields:
 
-To render the screenshots against a local instance:
+| Field | Meaning |
+| --- | --- |
+| `image`, `pages` | The image below `documentation/docs` and the pages that show it. |
+| `user` | A demo user: `student`, `tutor` or `instructor`. |
+| `route` | The route, with `{courseId}` for the demo course and `{exercise:Title}`, `{exam:Title}` or `{lecture:Title}` for the id of the item of the demo course with that title. |
+| `viewport`, `deviceScaleFactor` | The size of the browser window and its pixel density. |
+| `selector` or `clip` | A crop of the page: the element that the image shows (a CSS selector), or a box `{x, y, width, height}` in CSS pixels. Without either, the image is the whole window. |
+| `waitFor` | A CSS selector that has to be visible before the image is taken, for content that loads late. |
+| `mask`, `maskSelector` | The `data-testid` values or CSS selectors of elements with content that changes on every run. They are painted over. |
+| `threshold`, `note` | A share of changed pixels (0 to 1) that is tolerated for this image alone, and the `note` that says why the image varies, such as a graph with a random layout. |
+| `source` | The paths of the components and translations that the image shows. `--stale` lists the image when one of them changed after it. |
 
-1. Start Artemis with the `demo` profile in addition to `core` and `scheduling`, as described in [Demo data](/developer/setup#demo-data-optional).
-   The demo users log in with the password `demo1234`.
-2. In `src/test/playwright`, run `BASE_URL=http://localhost:9000 pnpm exec playwright test --config docs-screenshots/playwright.config.ts`.
-   The images land in `build/docs-screenshots`. `DOCS_SCREENSHOT_ONLY=calendar-month-desktop` renders one entry.
-3. Compare them with `python3 supporting_scripts/check_docs_screenshots.py --compare build/docs-screenshots`. If the page really changed,
-   run the step 2 again with `DOCS_SCREENSHOT_UPDATE=true`, which replaces the checked-in images, look at them, and commit them.
+Before an image is taken, the renderer postpones the passkey reminder, skips the first-visit introduction of the competency management, hides the
+development ribbon and the footer (they show the instance, not the page), waits for chart animations, and replaces relative time stamps such as
+"Today, 12:10" and "5 minutes ago" by constants. Absolute dates stay: they belong to the demo data, which is created relative to the day of the run,
+so images with dates and the calendar differ a little from one day to the next, which the threshold of the comparison tolerates.
 
-The renderer postpones the passkey reminder, skips the first-visit introduction of the competency management and hides the
-development ribbon and the footer, which show the instance and not the page. Two renderings of the same instance are identical.
-The images that were checked in before the manifest were captured from other data and often as a crop of the page, so every entry
-differs from its image until someone reviews the rendering and commits it with `DOCS_SCREENSHOT_UPDATE=true`. From then on a
-difference means that the screen changed. Time stamps such as "Today, 12:10" come from the time at which the demo data was created,
-so compare images of the same demo data only.
+**One command.** `./supporting_scripts/e2e/render-docs-screenshots.sh` starts a PostgreSQL container, a server with the `demo` profile and the client
+on ports of its own (18080, 19000, 17921 and 15432, changeable with `DOCS_SHOTS_*_PORT`), renders the entries, compares the images with the
+checked-in ones and stops everything it started. It never stops a process that it did not start, so it can run next to a development environment.
+It needs Docker, Java 25 and Node. Options:
 
-To add a screenshot, add an entry with the viewport of the image, check it with `python3 supporting_scripts/check_docs_screenshots.py`,
-and render it. The workflow `docs-screenshots.yml` renders the manifest weekly against the instance in the repository variable
-`DOCS_SCREENSHOT_BASE_URL`, and keeps one issue that lists the images that differ. It never commits an image.
-Interactions such as an open dialog are not part of the manifest yet; such screenshots stay manual and keep the rules above.
+* `--update` replaces the checked-in images with the rendered ones. Look at them with `git status` and the image diff of your tool, and commit what you keep.
+* `--only calendar-month-desktop,student-faq` renders only these entries.
+* `--browser host` uses the Playwright browsers of the machine. The default `container` runs the browser in the Playwright image of the weekly workflow,
+  so the text of an image is rendered the same way on every machine. Images that you update on another browser differ from the ones of the workflow.
+* `--keep` leaves the stack running for repeated renderings, and `--stop` stops it.
+
+**Comparison.** `python3 supporting_scripts/check_docs_screenshots.py --compare build/docs-screenshots --all` prints the similarity of every image.
+A size that differs by up to two pixels is compared on the area that both images have, and an image counts as different when more than 1 percent of the
+pixels (`--threshold`) differ. `--stale` lists the images whose `source` changed after the image.
+
+To add a screenshot, add an entry with the viewport of the image, check the manifest with `python3 supporting_scripts/check_docs_screenshots.py`,
+render it with `--only`, look at the image, and commit it. The workflow `docs-screenshots.yml` runs the script weekly on a GitHub runner, uploads the
+rendered images and keeps one issue that lists the images that differ. It never commits an image.
+Interactions such as an open dialog, and screens that need data the demo course does not have (a programming exercise with builds, a started exam),
+are not part of the manifest; such screenshots stay manual and keep the rules above.
 
 ## Screencasts
 

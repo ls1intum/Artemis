@@ -38,11 +38,16 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DOCS_ROOT = REPO_ROOT / "documentation" / "docs"
 MANIFEST = REPO_ROOT / "documentation" / "screenshots" / "manifest.json"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
-PLACEHOLDERS = {"courseId"}
+# {courseId} is the demo course. {exercise:Title}, {exam:Title} and {lecture:Title} are the id of the item of the demo course with that title.
+PLACEHOLDERS = {"courseId": False, "exercise": True, "exam": True, "lecture": True}
+PLACEHOLDER = re.compile(r"\{([A-Za-z]+)(?::([^}]*))?\}")
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 # A channel value may differ by this much before a pixel counts as changed: anti-aliasing differs between machines.
 CHANNEL_TOLERANCE = 8
 DEFAULT_THRESHOLD = 0.01
+# A browser rounds the size of an element to whole pixels, and the images that were cropped by hand are often one pixel off. A size that
+# differs by at most this many pixels is compared on the area that both images have.
+SIZE_TOLERANCE = 2
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -108,11 +113,15 @@ def validate(manifest: dict, repo_root: Path, docs_root: Path) -> list[str]:
             problems.append(f"{label}: unknown user `{entry['user']}`")
         route = entry.get("route")
         if isinstance(route, str):
-            if not route.startswith("/") or re.search(r"\s", route):
-                problems.append(f"{label}: `route` must start with / and contain no spaces")
-            for name in re.findall(r"\{([^}]*)\}", route):
+            if not route.startswith("/") or re.search(r"\s", PLACEHOLDER.sub("", route)):
+                problems.append(f"{label}: `route` must start with / and contain no spaces outside a placeholder")
+            for name, argument in PLACEHOLDER.findall(route):
                 if name not in PLACEHOLDERS:
                     problems.append(f"{label}: unknown placeholder {{{name}}} in the route")
+                elif PLACEHOLDERS[name] and not argument:
+                    problems.append(f"{label}: placeholder {{{name}}} needs the title of the item, as in {{{name}:Title}}")
+                elif not PLACEHOLDERS[name] and argument:
+                    problems.append(f"{label}: placeholder {{{name}}} takes no title")
         for key in ("viewport",):
             viewport = entry.get(key)
             if viewport is not None and not (isinstance(viewport, dict) and all(isinstance(viewport.get(side), int) and viewport[side] > 0 for side in ("width", "height"))):
@@ -120,7 +129,20 @@ def validate(manifest: dict, repo_root: Path, docs_root: Path) -> list[str]:
         scale = entry.get("deviceScaleFactor")
         if scale is not None and (not isinstance(scale, (int, float)) or scale <= 0):
             problems.append(f"{label}: `deviceScaleFactor` must be positive")
-        for key in ("source", "mask"):
+        clip = entry.get("clip")
+        if clip is not None and not (isinstance(clip, dict) and set(clip) == {"x", "y", "width", "height"} and all(isinstance(v, int) and v >= 0 for v in clip.values()) and clip["width"] > 0 and clip["height"] > 0):
+            problems.append(f"{label}: `clip` needs the integers x, y, width and height")
+        if clip is not None and entry.get("selector"):
+            problems.append(f"{label}: use `selector` or `clip`, not both")
+        limit = entry.get("threshold")
+        if limit is not None and not (isinstance(limit, (int, float)) and 0 < limit <= 1):
+            problems.append(f"{label}: `threshold` must be a share of the pixels between 0 and 1")
+        if limit is not None and not str(entry.get("note", "")).strip():
+            problems.append(f"{label}: a `threshold` of its own needs a `note` that says why the image varies")
+        for key in ("selector", "waitFor"):
+            if key in entry and not (isinstance(entry[key], str) and entry[key].strip()):
+                problems.append(f"{label}: `{key}` must be a CSS selector")
+        for key in ("source", "mask", "maskSelector"):
             values = entry.get(key, [])
             if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
                 problems.append(f"{label}: `{key}` must be a list of strings")
@@ -218,34 +240,56 @@ def decode_png(data: bytes) -> tuple[int, int, int, list[bytes]]:
     return width, height, channels, rows
 
 
-def changed_share(old: bytes, new: bytes) -> float | str:
-    """The share of pixels that differ, or a text when the images cannot be compared pixel by pixel."""
+def to_rgb(rows: list[bytes], channels: int) -> list[bytes]:
+    """Rows of grey, grey with alpha, RGB or RGBA pixels as rows of RGB pixels. Transparency is ignored."""
+    if channels == 3:
+        return rows
+    converted = []
+    for row in rows:
+        out = bytearray()
+        for start in range(0, len(row), channels):
+            if channels >= 3:
+                out += row[start : start + 3]
+            else:
+                out += bytes((row[start],)) * 3
+        converted.append(bytes(out))
+    return converted
+
+
+def changed_share(old: bytes, new: bytes, size_tolerance: int = SIZE_TOLERANCE) -> float | str:
+    """The share of pixels that differ, or a text when the images cannot be compared pixel by pixel.
+
+    Sizes that differ by at most `size_tolerance` pixels in each direction are compared on the overlap, and the pixels outside it count as changed."""
     if old == new:
         return 0.0
     old_size, new_size = png_size(old), png_size(new)
-    if old_size != new_size:
-        return f"size {old_size[0]}x{old_size[1]} instead of {new_size[0]}x{new_size[1]}"
+    if abs(old_size[0] - new_size[0]) > size_tolerance or abs(old_size[1] - new_size[1]) > size_tolerance:
+        return f"size {new_size[0]}x{new_size[1]} instead of {old_size[0]}x{old_size[1]}"
     try:
-        width, height, old_channels, old_rows = decode_png(old)
-        _, _, new_channels, new_rows = decode_png(new)
+        old_width, old_height, old_channels, old_rows = decode_png(old)
+        new_width, new_height, new_channels, new_rows = decode_png(new)
     except (ValueError, zlib.error) as error:
         return f"not comparable ({error})"
-    if old_channels != new_channels:
-        return "colour layout differs"
+    # A screenshot tool writes RGB, an image editor RGBA or grey: compare the colours only.
+    old_rows, new_rows = to_rgb(old_rows, old_channels), to_rgb(new_rows, new_channels)
+    width, height = min(old_width, new_width), min(old_height, new_height)
     changed = 0
-    for old_row, new_row in zip(old_rows, new_rows):
-        if old_row == new_row:
+    for old_row, new_row in zip(old_rows[:height], new_rows[:height]):
+        if old_row[: width * 3] == new_row[: width * 3]:
             continue
-        for start in range(0, len(old_row), old_channels):
-            for channel in range(old_channels):
+        for start in range(0, width * 3, 3):
+            for channel in range(3):
                 if abs(old_row[start + channel] - new_row[start + channel]) > CHANNEL_TOLERANCE:
                     changed += 1
                     break
-    return changed / (width * height)
+    union = max(old_width, new_width) * max(old_height, new_height)
+    return (changed + union - width * height) / union
 
 
-def compare(manifest: dict, rendered: Path, docs_root: Path, threshold: float) -> tuple[list[str], int]:
-    """Returns the Markdown lines about the images that differ and the number of images that were compared."""
+def compare(manifest: dict, rendered: Path, docs_root: Path, threshold: float, show_all: bool = False) -> tuple[list[str], int]:
+    """Returns the Markdown lines about the images that differ and the number of images that were compared.
+
+    With `show_all` every compared image gets a line with its similarity, which is what a review of the thresholds needs."""
     lines: list[str] = []
     compared = 0
     for entry in manifest["screenshots"]:
@@ -257,10 +301,13 @@ def compare(manifest: dict, rendered: Path, docs_root: Path, threshold: float) -
         compared += 1
         result = changed_share(old_path.read_bytes(), new_path.read_bytes())
         pages = ", ".join(f"`{page}`" for page in entry["pages"])
+        limit = max(threshold, entry.get("threshold", 0))
         if isinstance(result, str):
             lines.append(f"- `{entry['image']}` ({pages}): {result}")
-        elif result > threshold:
-            lines.append(f"- `{entry['image']}` ({pages}): {result:.1%} of the pixels changed")
+        elif result > limit:
+            lines.append(f"- `{entry['image']}` ({pages}): similarity {1 - result:.1%}, {result:.1%} of the pixels changed")
+        elif show_all:
+            lines.append(f"- `{entry['image']}` ({pages}): similarity {1 - result:.1%}, within the threshold of {limit:.1%}")
     return lines, compared
 
 
@@ -346,7 +393,11 @@ def self_test() -> None:
     assert abs(changed_share(same, one_pixel) - 1 / 200) < 1e-9
     nearly = make_png(20, 10, lambda x, y: tuple(min(255, value + 3) for value in gradient(x, y)))
     assert changed_share(same, nearly) == 0.0, "differences inside the tolerance are anti-aliasing"
-    assert isinstance(changed_share(same, make_png(21, 10, gradient)), str), "a different size is reported as text"
+    assert changed_share(same, make_png(20, 10, lambda x, y: (*gradient(x, y), 255), color=6)) == 0.0, "RGBA and RGB images are compared by their colours"
+    assert changed_share(make_png(4, 4, lambda x, y: (200,), color=0), make_png(4, 4, lambda x, y: (200, 200, 200))) == 0.0, "grey and RGB images are compared by their colours"
+    assert isinstance(changed_share(same, make_png(30, 10, gradient)), str), "a very different size is reported as text"
+    one_wider = changed_share(same, make_png(21, 10, gradient))
+    assert isinstance(one_wider, float) and abs(one_wider - 10 / 210) < 1e-9, "a size that is one pixel off is compared on the overlap"
 
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
@@ -369,6 +420,15 @@ def self_test() -> None:
         assert any("page `nope.mdx` does not exist" in problem for problem in broken(pages=["nope.mdx"]))
         assert any("unknown user" in problem for problem in broken(user="admin"))
         assert any("unknown placeholder" in problem for problem in broken(route="/courses/{exerciseId}"))
+        assert any("needs the title" in problem for problem in broken(route="/courses/{courseId}/exercises/{exercise}"))
+        assert any("takes no title" in problem for problem in broken(route="/courses/{courseId:x}"))
+        assert broken(route="/courses/{courseId}/exercises/{exercise:Essay: The Value}") == []
+        assert any("`clip`" in problem for problem in broken(clip={"x": 0, "y": 0}))
+        assert any("not both" in problem for problem in broken(clip={"x": 0, "y": 0, "width": 5, "height": 5}, selector="main"))
+        assert broken(selector="main", maskSelector=[".time"]) == []
+        assert any("between 0 and 1" in problem for problem in broken(threshold=2, note="x"))
+        assert any("needs a `note`" in problem for problem in broken(threshold=0.05))
+        assert broken(threshold=0.05, note="a graph with a random layout") == []
         assert any("must start with /" in problem for problem in broken(route="courses/1"))
         assert any("source `gone` does not exist" in problem for problem in broken(source=["gone"]))
         assert any("viewport" in problem for problem in broken(viewport={"width": 0, "height": 5}))
@@ -391,6 +451,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--compare", metavar="DIR", help="compare the images rendered into DIR with the checked-in ones")
     parser.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD, help="share of changed pixels that counts as a difference (default 0.01)")
+    parser.add_argument("--all", action="store_true", help="with --compare: also list the images that are within the threshold, with their similarity")
     parser.add_argument("--stale", action="store_true", help="list images whose source files changed after the image")
     parser.add_argument("--self-test", action="store_true", help="run the built-in tests")
     args = parser.parse_args()
@@ -399,8 +460,9 @@ def main() -> int:
         return 0
     manifest = load_manifest(MANIFEST)
     if args.compare:
-        lines, compared = compare(manifest, Path(args.compare), DOCS_ROOT, args.threshold)
-        print(f"{len(lines)} of {compared} compared screenshot(s) differ")
+        lines, compared = compare(manifest, Path(args.compare), DOCS_ROOT, args.threshold, args.all)
+        differing = [line for line in lines if "within the threshold" not in line]
+        print(f"{len(differing)} of {compared} compared screenshot(s) differ (threshold {args.threshold:.1%} of the pixels)")
         print("\n".join(lines))
         return 0
     if args.stale:

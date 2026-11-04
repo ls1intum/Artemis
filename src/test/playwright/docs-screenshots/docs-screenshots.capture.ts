@@ -1,4 +1,4 @@
-import { Page, expect, test } from '@playwright/test';
+import { APIRequestContext, Page, expect, request, test } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -9,6 +9,7 @@ import * as path from 'path';
  *   BASE_URL                       Artemis client, default http://localhost:9000
  *   DOCS_SCREENSHOT_DIR            output directory, default build/docs-screenshots (relative to the repository root)
  *   DOCS_SCREENSHOT_UPDATE=true    write the images into documentation/docs instead, replacing the checked-in ones
+ *   DOCS_SCREENSHOT_SETTLE_MS      milliseconds to wait for chart animations before the image is taken, default 1500
  *   DOCS_SCREENSHOT_ONLY           comma separated ids, to render only those entries
  *   DOCS_SCREENSHOT_FIXED_TIME     ISO time, freezes the clock of the client. Off by default: the demo data is created relative to the
  *                                  clock of the server, so a frozen client clock that differs from it shows deadlines in the wrong state.
@@ -25,8 +26,16 @@ interface ManifestEntry {
     viewport?: { width: number; height: number };
     deviceScaleFactor?: number;
     fullPage?: boolean;
-    /** `data-testid` values of elements whose content changes on every run, such as time stamps. */
+    /** CSS selector of the element that the image shows, for a crop of the page such as its main card. The image is the size of the element. */
+    selector?: string;
+    /** A box of the page in CSS pixels, for a crop that has no element of its own. Not combined with `selector`. */
+    clip?: { x: number; y: number; width: number; height: number };
+    /** CSS selector that has to be visible before the image is taken, for content that loads after the page. */
+    waitFor?: string;
+    /** `data-testid` values of elements whose content changes on every run. They are painted over. */
     mask?: string[];
+    /** CSS selectors of elements whose content changes on every run. They are painted over. */
+    maskSelector?: string[];
 }
 
 interface Manifest {
@@ -44,6 +53,11 @@ const VOLATILE_STYLES = [
     '*, *::before, *::after { transition: none !important; animation: none !important; caret-color: transparent !important; }',
     'jhi-page-ribbon, jhi-footer { display: none !important; }',
 ].join('\n');
+// Relative time stamps depend on the minute in which the demo data was created, so their text is replaced by a constant before the image is taken.
+// A time stamp that the page prints as an absolute date is part of the demo data and stays.
+const RELATIVE_TIME = /\b(Today|Yesterday|Tomorrow), \d{1,2}:\d{2}( ?[AP]M)?/g;
+const RELATIVE_AGO = /\b\d+ (second|minute|hour|day|week|month)s? ago\b/g;
+const CHART_SETTLE_MS = Number(process.env.DOCS_SCREENSHOT_SETTLE_MS ?? 1500);
 const DEMO_PASSWORD = 'demo1234';
 const DEMO_COURSE_TITLE = 'Introduction to Software Engineering';
 
@@ -69,6 +83,42 @@ async function demoCourseId(page: Page): Promise<number> {
     const course = courses.find((candidate) => candidate.title === DEMO_COURSE_TITLE);
     expect(course, `the demo course "${DEMO_COURSE_TITLE}" does not exist, start Artemis with the demo profile`).toBeDefined();
     return course!.id;
+}
+
+/** Looks up the id of the item of the demo course with the given title. The instructor is allowed to list every kind of item, whoever the screenshot is for. */
+async function itemId(api: APIRequestContext, kind: string, title: string, courseId: number): Promise<number> {
+    const listings: Record<string, string> = {
+        exercise: `api/course/courses/${courseId}/with-exercises`,
+        exam: `api/exam/courses/${courseId}/exams`,
+        lecture: `api/lecture/courses/${courseId}/lectures`,
+    };
+    const response = await api.get(listings[kind]);
+    expect(response.ok(), `the ${kind} list of the demo course could not be loaded`).toBe(true);
+    const body = await response.json();
+    const items: { id: number; title: string }[] = kind === 'exercise' ? body.exercises : body;
+    const item = items.find((candidate) => candidate.title === title);
+    expect(item, `the demo course has no ${kind} "${title}"`).toBeDefined();
+    return item!.id;
+}
+
+/** Replaces {courseId} and the {exercise:Title}, {exam:Title} and {lecture:Title} placeholders of a route by the ids of the demo course. */
+async function resolveRoute(baseURL: string | undefined, route: string, courseId: number): Promise<string> {
+    let resolved = route.replace('{courseId}', String(courseId));
+    const placeholders = Array.from(route.matchAll(/\{(exercise|exam|lecture):([^}]+)\}/g));
+    if (placeholders.length === 0) {
+        return resolved;
+    }
+    const api = await request.newContext({ baseURL });
+    try {
+        const response = await api.post('api/core/public/authenticate', { data: { username: manifest.users.instructor, password: DEMO_PASSWORD, rememberMe: true } });
+        expect(response.status(), 'login of the instructor failed').toBe(200);
+        for (const [placeholder, kind, title] of placeholders) {
+            resolved = resolved.replace(placeholder, String(await itemId(api, kind, title, courseId)));
+        }
+    } finally {
+        await api.dispose();
+    }
+    return resolved;
 }
 
 for (const entry of manifest.screenshots.filter((candidate) => only.length === 0 || only.includes(candidate.id))) {
@@ -101,19 +151,33 @@ for (const entry of manifest.screenshots.filter((candidate) => only.length === 0
         await login(page, username);
         const courseId = await demoCourseId(page);
 
-        await page.goto(entry.route.replace('{courseId}', String(courseId)));
+        await page.goto(await resolveRoute(baseURL, entry.route, courseId));
         await page.waitForLoadState('networkidle');
+        if (entry.waitFor) {
+            await expect(page.locator(entry.waitFor).first()).toBeVisible();
+        }
         // Transitions and the caret would make two renderings of the same page differ.
         await page.addStyleTag({ content: VOLATILE_STYLES });
+        // Charts draw themselves with a script animation that no style can switch off, so the image waits until they have finished.
+        await page.waitForTimeout(CHART_SETTLE_MS);
+        await page.evaluate(
+            ([time, ago]) => {
+                const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+                for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+                    node.nodeValue = (node.nodeValue ?? '').replace(new RegExp(time, 'g'), '$1, 10:00').replace(new RegExp(ago, 'g'), '5 $1s ago');
+                }
+            },
+            [RELATIVE_TIME.source, RELATIVE_AGO.source],
+        );
 
         const target = update ? path.join(DOCS_ROOT, entry.image) : path.join(outputRoot, entry.image);
         fs.mkdirSync(path.dirname(target), { recursive: true });
-        await page.screenshot({
-            path: target,
-            fullPage: entry.fullPage ?? false,
-            animations: 'disabled',
-            mask: (entry.mask ?? []).map((testId) => page.getByTestId(testId)),
-        });
+        const mask = [...(entry.mask ?? []).map((testId) => page.getByTestId(testId)), ...(entry.maskSelector ?? []).map((selector) => page.locator(selector))];
+        if (entry.selector) {
+            await page.locator(entry.selector).first().screenshot({ path: target, animations: 'disabled', mask });
+        } else {
+            await page.screenshot({ path: target, fullPage: entry.fullPage ?? false, clip: entry.clip, animations: 'disabled', mask });
+        }
         await context.close();
     });
 }
