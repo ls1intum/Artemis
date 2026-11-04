@@ -44,7 +44,7 @@
                                 }
                                 <!-- In a course the exercise details panel asks for the rating; an exam summary has no such panel. -->
                                 @if (isOwnerOfParticipation() && isExamSummary()) {
-                                    <jhi-rating class="d-block mt-2 alert alert-info" [result]="result()" [participation]="participation()" />
+                                    <jhi-rating class="d-block mt-2" [result]="result()" [participation]="participation()" />
                                 }
                             </jhi-assessment-submission-panel>
                         } @else {

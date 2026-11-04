@@ -369,6 +369,26 @@ describe('FileUploadSubmissionComponent', () => {
             expect(component.participation()).toEqual(participation);
         });
 
+        it('should render the rating of an exam summary without an alert box', async () => {
+            const exercise = createExercise();
+            const submission = createSubmission(exercise);
+            fixture.componentRef.setInput('inputExercise', exercise);
+            fixture.componentRef.setInput('inputSubmission', submission);
+            fixture.componentRef.setInput('inputParticipation', getParticipation(submission));
+            fixture.componentRef.setInput('displayedInExamSummary', true);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            component.result.set({ id: 1, feedbacks: [{ id: 1, text: 'Good' }] });
+            component.isOwnerOfParticipation.set(true);
+            fixture.detectChanges();
+
+            const rating: HTMLElement = fixture.nativeElement.querySelector('jhi-rating');
+            expect(rating).toBeTruthy();
+            expect(rating.classList).not.toContain('alert');
+            expect(rating.classList).not.toContain('alert-info');
+        });
+
         it('should set up component with submitted file when submission is submitted', async () => {
             const exercise = createExercise();
             const submission = createSubmittedSubmission(exercise);
