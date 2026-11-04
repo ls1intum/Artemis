@@ -17,6 +17,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
+// REMOVE_IN_ARTEMIS_11 (Jenkins): test infrastructure for the Jenkins setup, delete with Jenkins support
 /**
  * Batch test class for JenkinsLocalVC tests - runs in parallel with AbstractSpringIntegrationJenkinsLocalVCTest.
  * This class contains the larger/slower test classes to improve parallel test execution time.

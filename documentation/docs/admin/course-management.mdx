@@ -86,7 +86,9 @@ course-archive.zip
 │   └── [exam exports with student exams...]
 ├── student-data/
 │   ├── course-scores.csv
+│   ├── course-grade-distribution.csv
 │   ├── exam-scores-{examId}-{examTitle}.csv
+│   ├── exam-{examId}-{examTitle}-grade-distribution.csv
 │   ├── participation-results.csv
 │   ├── posts.csv
 │   ├── competency-progress.csv
@@ -117,6 +119,7 @@ Every repository of a programming exercise is stored as its own ZIP inside the e
 | | Exam exercises | All exam exercise submissions |
 | **Scores** | `student-data/course-scores.csv` | Aggregated student scores for all course exercises |
 | | `student-data/exam-scores-*.csv` | Aggregated student scores per exam (one file per exam) |
+| | `student-data/course-grade-distribution.csv`, `student-data/exam-*-grade-distribution.csv` | Grade and score interval distribution of the course and of each exam (only if a grading scale exists) |
 | **Student Data** | `student-data/participation-results.csv` | Latest submission and result per participation with feedback |
 | | `student-data/posts.csv` | All posts and answer posts from conversations |
 | | `student-data/competency-progress.csv` | Student competency progress records |
@@ -148,27 +151,31 @@ Every repository of a programming exercise is stored as its own ZIP inside the e
 
 #### course-scores.csv
 
-Contains aggregated course scores for all students. Uses the same calculation as the course statistics UI:
+Contains aggregated course scores with one row per student, followed by summary rows (maximum, average, median, standard
+deviation and the number of participants). Uses the same calculation as the course statistics UI. The columns are:
 
 | Column | Description |
 |--------|-------------|
-| StudentId | Unique identifier of the student |
-| StudentLogin | Student's login username |
-| PointsAchieved | Total points achieved across all exercises |
-| ScoreAchieved | Percentage score achieved (0-100) |
-| RegularPointsAchievable | Maximum achievable points |
+| Name, Username, Email, RegistrationNumber | The student |
+| `<exercise title> Points`, `<exercise title> Score` | Two columns for every exercise that counts towards the overall score |
+| Presentation Score | Only if presentation points are configured for the course |
+| Overall Points, Overall Score, Max Points | Total points, percentage score and maximum achievable points |
+| Grade, Passed | Only if the course has a grading scale |
 
 #### exam-scores-\{examId\}-\{examTitle\}.csv
 
-Contains aggregated exam scores for each exam (one file per exam). Uses the same calculation as the exam statistics UI:
+Contains aggregated exam scores for each exam (one file per exam) with one row per student, followed by summary rows.
+Uses the same calculation as the exam statistics UI. The columns are:
 
 | Column | Description |
 |--------|-------------|
-| StudentId | Unique identifier of the student |
-| StudentLogin | Student's login username |
-| PointsAchieved | Total points achieved in the exam |
-| ScoreAchieved | Percentage score achieved (0-100) |
-| RegularPointsAchievable | Maximum achievable points in the exam |
+| Name, Username, Email, RegistrationNumber, Submitted | The student and whether they submitted |
+| `<exercise group title> Exercise`, `... Points`, `... Score` | Three columns for every exercise group |
+| Overall Points, Overall Score, Max Points | Total points, percentage score and maximum achievable points |
+| Grade, Passed | Only if grades are available |
+| First Correction Points, First Correction Grade | Only if a second correction has started |
+| Bonus Source Points, Bonus Grade, Final Grade | Only if a bonus is configured |
+| Plagiarism Verdict | The plagiarism verdict of the student, if any |
 
 #### participation-results.csv
 
@@ -278,6 +285,10 @@ Contains LLM token usage records for AI features:
 | NumOutputTokens | Number of output tokens |
 | CostPerMillionInputTokens | Cost rate for input tokens |
 | CostPerMillionOutputTokens | Cost rate for output tokens |
+| NumCachedInputTokens | Number of cached input tokens |
+| CostPerMillionCachedInputTokens | Cost rate for cached input tokens |
+| NumCacheWriteInputTokens | Number of input tokens written to the cache |
+| CostPerMillionCacheWriteInputTokens | Cost rate for cache write tokens |
 
 ## Best Practices
 
