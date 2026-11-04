@@ -35,12 +35,16 @@ export class ExamResultsPage {
         await expect(textExercise.locator('span', { hasText: submissionText })).toBeVisible();
     }
 
-    /** Every exercise type renders its general feedback in the same `jhi-general-feedback` section of `jhi-unified-feedback` cards. */
+    /**
+     * Text and file upload render `jhi-general-feedback`, programming still renders `jhi-unified-feedback` behind
+     * `#additional-feedback`, and modeling the feedback list of its own assessment view there. All are matched so the
+     * same assertion serves every exercise type on the exam results page.
+     */
     async checkAdditionalFeedback(exerciseId: number, points: number, feedback: string) {
         const exercise = getExercise(this.page, exerciseId);
-        const feedbackElement = exercise.getByTestId('general-feedback');
-        await expect(feedbackElement.locator('.unified-feedback-points', { hasText: points.toString() })).toBeVisible();
-        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
+        const feedbackElement = exercise.locator('[data-testid="general-feedback"], #additional-feedback');
+        await expect(feedbackElement.locator('.unified-feedback-points, .feedback-row__score', { hasText: points.toString() })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-text, .feedback-row__text', { hasText: feedback })).toBeVisible();
     }
 
     async checkProgrammingExerciseAssessments(exerciseId: number, resultType: string, count: number) {
@@ -98,11 +102,11 @@ export class ExamResultsPage {
         const exercise = getExercise(this.page, exerciseId);
         const componentFeedbacks = exercise.locator('[data-testid="component-feedback-table"]');
         const feedbackElement = componentFeedbacks
-            .locator('.unified-feedback')
-            .filter({ has: this.page.locator('.unified-feedback-reference-text', { hasText: element }) })
-            .filter({ has: this.page.locator('.unified-feedback-points', { hasText: points.toString() }) });
+            .locator('.unified-feedback, .feedback-row')
+            .filter({ has: this.page.locator('.unified-feedback-reference-text, .feedback-row__name', { hasText: element }) })
+            .filter({ has: this.page.locator('.unified-feedback-points, .feedback-row__score', { hasText: points.toString() }) });
         await expect(feedbackElement).toBeVisible({ timeout: 30000 });
-        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-text, .feedback-row__text', { hasText: feedback })).toBeVisible();
     }
 }
 
