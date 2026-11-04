@@ -113,11 +113,12 @@ roles:
 (`va0` or `vt0`) means the position could not be verified against the run snapshot. Only a positioned citation is stamped — one naming neither a
 page nor a start time stays as it came. A version is recognized only by its leading `va` or `vt` tag, because the
 summary is everything up to the closing bracket and may itself end in a number. Citations stored before versioning
-have no field and still navigate directly.
+have no field and still navigate directly. The one exception is an old summary whose last colon-separated field happens
+to look like `va<digits>` or `vt<digits>`: the client reads it as a pin, so the citation may open without its position.
 
-The version is Artemis's, not the model's. A citation that already arrives with a version field — the model echoing
+The version is Artemis's, not the model's. A positioned citation that already arrives with a version field — the model echoing
 an older answer — has it stripped and is stamped with version `0`, so a pin can only come from the snapshot of the run that
-produced the citation.
+produced the citation. An unpositioned citation is not stamped, so it keeps such a field unchanged.
 
 This format is the contract between three codebases: the Pyris pipeline that emits it, the server pattern in
 `IrisCitationService`, and the client pattern in `iris-citation-text.model.ts`. The two Artemis patterns carry
