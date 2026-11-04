@@ -47,6 +47,7 @@ public class ParserPolicy {
             case RUBOCOP -> new SarifParser(StaticCodeAnalysisTool.RUBOCOP, new RubocopCategorizer(), new RubocopMessageProcessor());
             case RUFF -> new SarifParser(StaticCodeAnalysisTool.RUFF, new RuffCategorizer());
             case SPOTBUGS -> new SpotbugsParser();
+            case SWIFTLINT -> new SwiftLintParser();
             default -> throw new UnsupportedToolException("Tool " + tool + " is not supported");
         };
     }

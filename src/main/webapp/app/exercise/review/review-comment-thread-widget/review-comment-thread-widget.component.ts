@@ -1,23 +1,37 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiInputDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+} from '@tumaet/ui-angular';
+
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ButtonDirective } from 'primeng/button';
-import { ConfirmationService, MenuItem } from 'primeng/api';
-import { Menu, MenuModule } from 'primeng/menu';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpRightFromSquare, faChevronDown, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
-import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
+import { CommentContent, CommentContentType, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { consistencyIssueContentOf, sortCommentsByCreatedDateThenId, threadLocationLabel } from 'app/exercise/review/review-comment-utils';
 import { MonacoDiffEditorComponent } from 'app/editor/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/editor/monaco-editor/model/languages/monaco-custom-markdown.language';
+
+interface ReviewMenuItem {
+    id: string;
+    label: string;
+}
 
 interface RelatedThreadLocation {
     threadId: number;
@@ -32,18 +46,29 @@ interface RelatedThreadLocation {
     // Monaco view zones render outside Angular's host tree, so styles must stay global.
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [FormsModule, ButtonDirective, MenuModule, ConfirmDialogModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent, MonacoDiffEditorComponent],
-    providers: [ConfirmationService],
+    imports: [
+        TumAetUiConfirmDialogComponent,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiButtonDirective,
+        TumAetUiInputDirective,
+        FormsModule,
+        ArtemisTranslatePipe,
+        ArtemisDatePipe,
+        FaIconComponent,
+        MonacoDiffEditorComponent,
+    ],
+    providers: [TumAetUiConfirmationService],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private readonly reviewCommentService = inject(ExerciseReviewCommentService);
-    private readonly confirmationService = inject(ConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
 
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
-    readonly showFeedbackAction = input<boolean>(false);
 
     readonly onToggleCollapse = output<boolean>();
     readonly onNavigateToLocation = output<ReviewThreadLocation>();
@@ -56,16 +81,17 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     protected readonly faTrash = faTrash;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     protected readonly faChevronDown = faChevronDown;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
     readonly showThreadBody = signal(true);
     readonly languageVersion = signal(0);
     readonly editingCommentId = signal<number | undefined>(undefined);
     readonly editingCommentType = signal<CommentType | undefined>(undefined);
     readonly editText = signal('');
-    readonly userCommentMenuItems = signal<MenuItem[]>([]);
-    readonly nonUserCommentMenuItems = signal<MenuItem[]>([]);
-    readonly resolveGroupMenuItems = signal<MenuItem[]>([]);
-    readonly commentMenus = viewChildren<Menu>('commentMenu');
-    readonly resolveGroupMenu = viewChild<Menu>('resolveGroupMenu');
+    readonly userCommentMenuItems = signal<ReviewMenuItem[]>([]);
+    readonly nonUserCommentMenuItems = signal<ReviewMenuItem[]>([]);
+    readonly resolveGroupMenuItems = signal<ReviewMenuItem[]>([]);
+    readonly commentMenus = viewChildren('commentMenu', { read: TumAetUiMenuTriggerDirective });
+    readonly resolveGroupMenu = viewChild('resolveGroupMenu', { read: TumAetUiMenuTriggerDirective });
     readonly suggestedInlineFixDiffEditor = viewChild(MonacoDiffEditorComponent);
 
     private readonly destroyed$ = new Subject<void>();
@@ -79,19 +105,15 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             displayText: this.formatReviewCommentText(comment),
         }));
     });
+    readonly adaptBlockedReason = computed(() => this.reviewCommentService.adaptationBlockedReason());
     readonly isSelectedAsFeedback = computed(() => this.reviewCommentService.isThreadSelectedAsFeedback(this.thread().id));
+    /**
+     * Whether this thread can feed an AI adaptation: the editor offers adaptation (see {@link ExerciseReviewCommentService.connectAdaptation}) and the thread sits in
+     * a repository the adaptation writes to. Auxiliary repositories are outside what it changes.
+     */
+    readonly showFeedbackAction = computed(() => this.reviewCommentService.feedbackSelectionOffered() && this.thread().targetType !== CommentThreadLocationType.AUXILIARY_REPO);
     readonly firstComment = computed(() => this.orderedComments()[0]);
-    readonly firstConsistencyIssueContent = computed<ConsistencyIssueCommentContent | undefined>(() => {
-        const firstComment = this.firstComment();
-        if (!firstComment || !this.isConsistencyCheckComment(firstComment)) {
-            return undefined;
-        }
-        const content = firstComment.content as CommentContent | undefined;
-        if (!content || content.contentType !== CommentContentType.CONSISTENCY_CHECK) {
-            return undefined;
-        }
-        return content;
-    });
+    readonly firstConsistencyIssueContent = computed(() => consistencyIssueContentOf(this.firstComment()));
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
     readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.getValidSuggestedInlineFix(this.firstConsistencyIssueContent()?.suggestedFix));
     readonly showInlineFixOutdatedWarning = signal(false);
@@ -125,7 +147,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
                 continue;
             }
 
-            const locationLabel = this.getThreadLocationLabel(groupedThread);
+            const locationLabel = threadLocationLabel(groupedThread, this.translateService);
             if (!locationLabel) {
                 continue;
             }
@@ -172,7 +194,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             key: this.deleteCommentDialogKey(),
             header: this.translateService.instant('artemisApp.review.deleteCommentConfirmTitle'),
             message: this.translateService.instant('artemisApp.review.deleteCommentConfirmText'),
-            acceptButtonStyleClass: 'p-button-danger',
+            acceptSeverity: 'danger',
+            acceptLabel: this.translateService.instant('entity.action.delete'),
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
             accept: () => this.reviewCommentService.deleteCommentInContext(commentId),
         });
     }
@@ -414,9 +438,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      */
     hideAllCommentMenus(): void {
         for (const menu of this.commentMenus()) {
-            menu.hide();
+            menu.close();
         }
-        this.resolveGroupMenu()?.hide();
+        this.resolveGroupMenu()?.close();
     }
 
     /**
@@ -445,7 +469,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             { id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') },
         ]);
         this.nonUserCommentMenuItems.set([{ id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') }]);
-        const resolveGroupMenuItems: MenuItem[] = [];
+        const resolveGroupMenuItems: ReviewMenuItem[] = [];
         if (this.canResolveGroup()) {
             resolveGroupMenuItems.push({ id: 'resolve-group', label: this.translateService.instant('artemisApp.review.resolveThreadGroup') });
         }
@@ -455,45 +479,14 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         this.resolveGroupMenuItems.set(resolveGroupMenuItems);
     }
 
-    private readonly hideOpenMenus = (): void => {
+    private readonly hideOpenMenus = (event: Event): void => {
+        // Focusing an Aria menu item can scroll its overlay. That does not move the editor anchor,
+        // and closing here would dismiss the menu before the user can choose an action.
+        if (event.target instanceof Element && event.target.closest('tumaet-ui-menu')) {
+            return;
+        }
         this.hideAllCommentMenus();
     };
-
-    private getThreadLocationLabel(thread: CommentThread): string | undefined {
-        const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
-        if (!lineNumber || lineNumber < 1) {
-            return undefined;
-        }
-
-        const repositoryLabel = this.getRepositoryLabel(thread.targetType);
-        if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
-            return `${repositoryLabel}:${lineNumber}`;
-        }
-
-        const filePath = thread.filePath ?? thread.initialFilePath;
-        if (!filePath) {
-            return undefined;
-        }
-
-        return `${repositoryLabel}: ${filePath}:${lineNumber}`;
-    }
-
-    private getRepositoryLabel(targetType: CommentThreadLocationType): string {
-        switch (targetType) {
-            case CommentThreadLocationType.PROBLEM_STATEMENT:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.problemStatement');
-            case CommentThreadLocationType.TEMPLATE_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.template');
-            case CommentThreadLocationType.SOLUTION_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.solution');
-            case CommentThreadLocationType.TEST_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.tests');
-            case CommentThreadLocationType.AUXILIARY_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.auxiliary');
-            default:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.repository');
-        }
-    }
 
     private getInlineFixDiffFileName(thread: CommentThread): string {
         if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {

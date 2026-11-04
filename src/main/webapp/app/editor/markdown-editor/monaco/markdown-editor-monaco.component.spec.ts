@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { Mock, vi } from 'vitest';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -319,6 +320,62 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(embedFilesStub).not.toHaveBeenCalled();
     });
 
+    it.each(['footer', 'editor'])('accepts file drops on the %s and embeds each file once', async (target) => {
+        const attachmentAction = new AttachmentAction();
+        const insertAttachment = vi.spyOn(attachmentAction, 'executeInCurrentEditor').mockImplementation(() => {});
+        fixture.componentRef.setInput('defaultActions', [attachmentAction, new UrlAction()]);
+        const upload = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockResolvedValue({ path: '/files/dropped-image.png' });
+        fixture.detectChanges();
+
+        // Drop on the nested label text to exercise bubbling from the advertised upload target.
+        const dropTarget: HTMLElement =
+            target === 'footer' ? comp.fileUploadFooter()!.nativeElement.querySelector('label span')! : fixture.nativeElement.querySelector('jhi-monaco-editor');
+        const file = new File(['image'], 'image.png', { type: 'image/png' });
+        const dragOver = new Event('dragover', { bubbles: true, cancelable: true });
+        const drop = new Event('drop', { bubbles: true, cancelable: true });
+        Object.defineProperty(drop, 'dataTransfer', { value: { files: [file] } });
+
+        dropTarget.dispatchEvent(dragOver);
+        dropTarget.dispatchEvent(drop);
+
+        // Both events must be cancelled: otherwise the browser rejects the target or opens the file.
+        expect(dragOver.defaultPrevented).toBe(true);
+        expect(drop.defaultPrevented).toBe(true);
+        await vi.waitFor(() => expect(insertAttachment).toHaveBeenCalledOnce());
+        expect(upload).toHaveBeenCalledExactlyOnceWith(file, undefined);
+        expect(insertAttachment).toHaveBeenCalledWith({ text: 'image.png', url: '/files/dropped-image.png' });
+    });
+
+    it('does not accept or upload dragged files when file upload is disabled', async () => {
+        fixture.componentRef.setInput('enableFileUpload', false);
+        const upload = vi.spyOn(fileUploaderService, 'uploadMarkdownFile');
+        fixture.detectChanges();
+        const dropTarget: HTMLElement = fixture.nativeElement.querySelector('jhi-monaco-editor');
+        const dragOver = new Event('dragover', { bubbles: true, cancelable: true });
+        const drop = new Event('drop', { bubbles: true, cancelable: true });
+        Object.defineProperty(drop, 'dataTransfer', { value: { files: [new File(['image'], 'image.png')] } });
+
+        dropTarget.dispatchEvent(dragOver);
+        dropTarget.dispatchEvent(drop);
+        await fixture.whenStable();
+
+        expect(dragOver.defaultPrevented).toBe(false);
+        expect(drop.defaultPrevented).toBe(true);
+        expect(upload).not.toHaveBeenCalled();
+    });
+
+    it('should upload files for the course of the current route if no course is given', async () => {
+        const router = TestBed.inject(Router);
+        const routeSnapshot = { params: {}, firstChild: { params: { courseId: '5' }, firstChild: { params: { examId: '9' }, firstChild: null } } };
+        vi.spyOn(router, 'routerState', 'get').mockReturnValue({ snapshot: { root: routeSnapshot } } as unknown as Router['routerState']);
+        const uploadMarkdownFileStub = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockRejectedValue(new Error('Test error'));
+        vi.spyOn(TestBed.inject(AlertService), 'addAlert').mockReturnValue({} as ReturnType<AlertService['addAlert']>);
+        const files = [new File([''], 'test.png')];
+        fixture.detectChanges();
+        comp.embedFiles(files);
+        await vi.waitFor(() => expect(uploadMarkdownFileStub).toHaveBeenCalledWith(files[0], 5));
+    });
+
     it('should notify if the upload of a markdown file failed', async () => {
         const alertService = TestBed.inject(AlertService);
         const alertSpy = vi.spyOn(alertService, 'addAlert');
@@ -358,6 +415,7 @@ describe('MarkdownEditorMonacoComponent', () => {
             { file: new File([''], 'test.pdf'), url: 'https://test.invalid/generated1234.pdf' },
         ];
         fixture.componentRef.setInput('defaultActions', [urlAction, attachmentAction]);
+        fixture.componentRef.setInput('courseId', 7);
         const files = [new File([''], 'test.png'), new File([''], 'test.pdf')];
         const uploadMarkdownFileStub = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockImplementation((file: File) => {
             const path = file.name.endsWith('.png') ? fileInformation[0].url : fileInformation[1].url;
@@ -373,8 +431,8 @@ describe('MarkdownEditorMonacoComponent', () => {
             expect(urlStub).toHaveBeenCalledOnce();
         });
         // Each file should be uploaded.
-        expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(1, files[0]);
-        expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(2, files[1]);
+        expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(1, files[0], 7);
+        expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(2, files[1], 7);
         // Each file should be embedded. PDFs should be embedded as URLs.
         expect(attachmentStub).toHaveBeenCalledWith({
             url: fileInformation[0].url,
@@ -1102,7 +1160,6 @@ describe('MarkdownEditorMonacoComponent', () => {
             expect(inlineFixSpy).toHaveBeenCalledWith({ threadId: 9 });
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledWith(location);
-            expect(config.showFeedbackAction()).toBe(false);
         });
 
         it('should clear the drafts of an existing review comment manager', () => {

@@ -30,7 +30,7 @@ class HyperionFaqRewriteResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testRewriteFaq_Success() throws Exception {
         RewriteFaqRequestDTO faqRequest = new RewriteFaqRequestDTO("Old FAQ Text");
 
@@ -47,7 +47,7 @@ class HyperionFaqRewriteResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testRewriteFaq_BadRequest_InvalidNullInput() throws Exception {
         RewriteFaqRequestDTO invalidFaqRequest = new RewriteFaqRequestDTO(null);
 
@@ -55,7 +55,7 @@ class HyperionFaqRewriteResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testRewriteFaq_BadRequest_InvalidBlankInput() throws Exception {
         RewriteFaqRequestDTO invalidFaqRequest = new RewriteFaqRequestDTO("");
 

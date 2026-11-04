@@ -465,7 +465,7 @@ public class ProgrammingExerciseFactory {
             case CLIPPY -> "Style";
             case DART_ANALYZE -> "LINT";
             case PMD_CPD -> "Copy/Paste Detection";
-            case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
+            case SWIFTLINT -> "style";
             case GCC -> "Memory";
             case RUFF -> "Pylint";
             case OTHER -> "Other";

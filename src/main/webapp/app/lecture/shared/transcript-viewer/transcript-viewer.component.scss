@@ -14,7 +14,7 @@
     overflow: hidden;
     padding-left: 0.5rem;
     background-color: transparent;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -41,7 +41,7 @@
 .search-icon {
     position: absolute;
     left: 0.75rem;
-    color: var(--gray-600);
+    color: var(--text-body-secondary);
     pointer-events: none;
 }
 
@@ -51,14 +51,14 @@
     border: 1px solid var(--border-color);
     border-radius: 0.25rem;
     background-color: transparent;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     font-size: 0.9rem;
     transition: border-color 0.2s;
 
     &:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+        box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--primary) 25%, transparent);
     }
 }
 
@@ -67,7 +67,7 @@
     right: 0.5rem;
     background: none;
     border: none;
-    color: var(--gray-600);
+    color: var(--text-body-secondary);
     cursor: pointer;
     padding: 0.25rem;
     display: flex;
@@ -94,7 +94,7 @@
 }
 
 .search-results {
-    color: var(--gray-600);
+    color: var(--text-body-secondary);
     min-width: 4rem;
 }
 
@@ -111,8 +111,8 @@
     transition: all 0.2s;
 
     &:hover:not(:disabled) {
-        background-color: var(--gray-100);
-        border-color: var(--gray-500);
+        background-color: var(--module-bg);
+        border-color: var(--text-body-secondary);
     }
 
     &:disabled {
@@ -147,7 +147,7 @@
 
     /* Highlight marks */
     ::ng-deep mark {
-        background-color: var(--bs-warning-bg-subtle);
+        background-color: color-mix(in srgb, var(--warning) 15%, transparent);
         color: inherit;
         padding: 0.1rem 0.2rem;
         border-radius: 0.125rem;
@@ -156,7 +156,7 @@
 }
 
 .transcript-line:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: color-mix(in srgb, var(--lecture-scrim-color) 5%, transparent);
 }
 
 .transcript-line.active {
@@ -166,14 +166,14 @@
 }
 
 .transcript-line.search-result {
-    background-color: rgba(var(--bs-primary-rgb), 0.15);
+    background-color: color-mix(in srgb, var(--primary) 15%, transparent);
     border-left: 3px solid var(--primary);
     padding-left: calc(0.5rem - 3px);
 }
 
 .no-results {
     text-align: center;
-    color: var(--gray-600);
+    color: var(--text-body-secondary);
     font-style: italic;
     padding: 2rem 1rem;
 }

@@ -93,14 +93,15 @@ public class GenerationOrchestrationService {
             GenerationProgressSink progress, Consumer<GenerationFileUpdate> files, Consumer<ChatResponse> usage, @Nullable String sourceBrief, Instant deadline,
             @Nullable HyperionGenerationSettings settings) {
         HyperionGenerationSettings resolved = settings == null ? profiles.resolve(null) : settings;
-        var seed = seeds.capture(exercise);
+        var capturedSeed = seeds.capture(exercise);
+        var seed = new GenerationSeedService.Seed(capturedSeed.snapshot().forMode(ExerciseBrief.Mode.valueOf(mode.name())), capturedSeed.heads(), capturedSeed.gradingContext());
         var latest = new AtomicReference<GenerationOutput>();
         var terminal = new AtomicReference<WorkerEvent>();
         Set<Long> processed = new HashSet<>();
         String statement = seed.snapshot().files().stream().filter(file -> file.path().equals("problem-statement.md"))
                 .map(file -> new String(file.content(), StandardCharsets.UTF_8)).findFirst().orElse("");
         var brief = new ExerciseBrief(exercise.getTitle(), exercise.getShortName(), exercise.getPackageName(), statement, prompt, ExerciseBrief.Mode.valueOf(mode.name()),
-                sourceBrief, LanguageGenerationProfile.toolchainFor(exercise));
+                sourceBrief, LanguageGenerationProfile.toolchainFor(exercise), LanguageGenerationProfile.buildToolFor(exercise));
         var parameters = parameters(resolved);
         var claim = workers.claim(jobId, exercise.getId(), brief.toolchain());
         boolean accountingComplete = false;

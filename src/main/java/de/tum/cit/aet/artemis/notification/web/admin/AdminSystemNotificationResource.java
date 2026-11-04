@@ -4,12 +4,18 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,12 +26,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationUpdateDTO;
@@ -57,6 +66,33 @@ public class AdminSystemNotificationResource {
     public AdminSystemNotificationResource(SystemNotificationRepository systemNotificationRepository, SystemNotificationService systemNotificationService) {
         this.systemNotificationRepository = systemNotificationRepository;
         this.systemNotificationService = systemNotificationService;
+    }
+
+    /**
+     * GET /system-notifications : get all system notifications for administration purposes.
+     *
+     * @param pageable instance of the pageable interface to enable paging
+     * @return the list of system notifications
+     */
+    @GetMapping("system-notifications")
+    public ResponseEntity<List<SystemNotificationDTO>> getAllSystemNotifications(Pageable pageable) {
+        log.debug("REST request to get all SystemNotifications");
+        final Page<SystemNotification> page = systemNotificationRepository.findAll(pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent().stream().map(SystemNotificationDTO::from).toList(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET /system-notifications/:notificationId : get the "id" system notification.
+     *
+     * @param notificationId the id of the system notification to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
+     */
+    @GetMapping("system-notifications/{notificationId}")
+    public ResponseEntity<SystemNotificationDTO> getSystemNotification(@PathVariable Long notificationId) {
+        log.debug("REST request to get SystemNotification : {}", notificationId);
+        Optional<SystemNotificationDTO> systemNotification = systemNotificationRepository.findById(notificationId).map(SystemNotificationDTO::from);
+        return ResponseUtil.wrapOrNotFound(systemNotification);
     }
 
     /**

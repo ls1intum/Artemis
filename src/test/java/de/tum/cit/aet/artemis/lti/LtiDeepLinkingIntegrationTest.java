@@ -60,13 +60,13 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deepLinkingFailsWithoutContentIdAndType() throws Exception {
         request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deepLinkingFailsWithoutContentIdForExercise() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resourceType", DeepLinkingType.EXERCISE.toString());
@@ -77,7 +77,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deepLinkingFailsWithoutContentIdForLecture() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resourceType", DeepLinkingType.LECTURE.toString());
@@ -88,7 +88,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deepLinkingFailsForNonOnlineCourse() throws Exception {
         course.setOnlineCourse(false);
         courseRepository.save(course);
@@ -99,7 +99,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deepLinkingAsInstructor() throws Exception {
         String jwkJsonString = """
                 {
@@ -119,7 +119,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deepLinkingSuccessAsInstructor() throws Exception {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         keyPairGenerator.initialize(2048);
@@ -134,7 +134,7 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void deepLinkingFailsWithInvalidResourceType() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("resourceType", "INVALID_RESOURCE_TYPE");

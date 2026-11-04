@@ -90,12 +90,12 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     constructor() {
         effect(() => {
             const selectedRoomIds: number[] = this.selectedRooms().map((room) => room.id);
-            this.studentsRoomDistributionService.updateCapacityData(selectedRoomIds, this.reserveFactor());
+            this.studentsRoomDistributionService.updateCapacityData(this.courseId(), this.exam().id!, selectedRoomIds, this.reserveFactor());
         });
     }
 
     ngOnInit(): void {
-        this.studentsRoomDistributionService.loadRoomData();
+        this.studentsRoomDistributionService.loadRoomData(this.courseId(), this.exam().id!);
     }
 
     private computeSeatInfo(): CapacityDisplayDTO {

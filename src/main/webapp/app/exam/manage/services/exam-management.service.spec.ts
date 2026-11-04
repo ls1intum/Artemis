@@ -67,6 +67,13 @@ describe('Exam Management Service Tests', () => {
         httpMock.verify();
     });
 
+    it('should choose instructor statistics explicitly before requesting', () => {
+        service.getExamStatistics(1, 2, 'instructor').subscribe();
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush({ numberOfGeneratedStudentExams: 3 });
+        expect(req.request.url).toBe('api/exam/courses/1/exams/2/statistics/for-instructor');
+    });
+
     it('should create an exam', async () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
@@ -196,6 +203,29 @@ describe('Exam Management Service Tests', () => {
         // CLEANUP
         req.flush(expected);
         await Promise.resolve();
+    });
+
+    it('should convert every date of a found exam to dayjs', async () => {
+        const dateFields = [
+            'visibleDate',
+            'startDate',
+            'endDate',
+            'publishResultsDate',
+            'examStudentReviewStart',
+            'examStudentReviewEnd',
+            'exampleSolutionPublicationDate',
+            'examSummaryPublicationDate',
+        ] as const;
+        const serverExam = { id: 1, ...Object.fromEntries(dateFields.map((field) => [field, '2026-10-28T08:00:00Z'])) };
+        let found: Exam | undefined;
+
+        service.find(course.id!, 1).subscribe((res) => (found = res.body!));
+
+        httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${course.id!}/exams/1?withExerciseGroups=false` }).flush(serverExam);
+        await Promise.resolve();
+
+        // The date picker of the exam form calls dayjs methods on these, so a plain ISO string breaks the form.
+        dateFields.forEach((field) => expect(dayjs.isDayjs(found![field]), field).toBe(true));
     });
 
     it('should get exam scores', async () => {
@@ -922,5 +952,19 @@ describe('Exam Management Service Tests', () => {
 
             expect(capturedContent).toEqual([]);
         });
+    });
+    it('loads tutor statistics by default with the returned checklist data', () => {
+        service.getExamStatistics(1, 2).subscribe((response) => expect(response.body?.numberOfGeneratedStudentExams).toBe(3));
+        httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/2/statistics' }).flush({ numberOfGeneratedStudentExams: 3 });
+    });
+
+    it('creates an announcement and converts its publication date', () => {
+        service.createAnnouncement(1, 2, 'Exam starts soon').subscribe((event) => {
+            expect(dayjs.isDayjs(event.createdDate)).toBe(true);
+            expect(event.createdDate.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+        });
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/exam/courses/1/exams/2/announcements' });
+        expect(req.request.body).toBe('Exam starts soon');
+        req.flush({ id: 3, createdDate: '2026-10-25T08:00:00Z' });
     });
 });

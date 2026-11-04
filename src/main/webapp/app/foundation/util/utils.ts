@@ -1,5 +1,5 @@
 import { omit, sum } from 'lodash-es';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';

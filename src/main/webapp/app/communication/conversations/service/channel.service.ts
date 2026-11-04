@@ -19,6 +19,14 @@ export class ChannelService {
         });
     }
 
+    getChannelsOfCourseForStaff(courseId: number): Observable<HttpResponse<ChannelDTO[]>> {
+        return this.http.get<ChannelDTO[]>(`${this.resourceUrl}${courseId}/channels/overview/for-staff`, { observe: 'response' });
+    }
+
+    getChannelsOfCourseForInstructor(courseId: number): Observable<HttpResponse<ChannelDTO[]>> {
+        return this.http.get<ChannelDTO[]>(`${this.resourceUrl}${courseId}/channels/overview/for-instructor`, { observe: 'response' });
+    }
+
     getPublicChannelsOfCourse(courseId: number): Observable<HttpResponse<ChannelIdAndNameDTO[]>> {
         return this.http.get<ChannelIdAndNameDTO[]>(`${this.resourceUrl}${courseId}/channels/public-overview`, {
             observe: 'response',

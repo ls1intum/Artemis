@@ -19,122 +19,143 @@
         </div>
     }
 
+    @if (loadingFailed()) {
+        <div class="text-state-danger mb-4!" role="alert">
+            <span jhiTranslate="artemisApp.result.detailsLoadingFailed"></span>
+            <button type="button" tumAetUiButton variant="outlined" size="small" data-testid="retry-feedback-details" (click)="loadFeedbackDetails()">
+                {{ 'entity.action.retry' | artemisTranslate }}
+            </button>
+        </div>
+    }
     <!-- Loading state -->
     @if (isLoading()) {
         <div class="text-muted-color flex justify-center" data-testid="result-detail-spinner">
             <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
         </div>
-    } @else {
-        @if (!loadingFailed() && feedbackItemNodes()?.length) {
-            <div class="result-detail-container">
-                @if (!isExamReviewPage()) {
-                    <div>
-                        <div class="flex justify-between items-start">
-                            <h4>
-                                @if (result().assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
-                                    <span jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></span>
-                                } @else {
-                                    @if (!resolvedExercise()?.maxPoints) {
+    }
+    @if (feedbackItemNodes()?.length) {
+        <div class="result-detail-container">
+            @if (!isExamReviewPage()) {
+                <div>
+                    <div class="flex justify-between items-start">
+                        <h4>
+                            @if (result().assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+                                <span jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></span>
+                            } @else {
+                                @if (!resolvedExercise()?.maxPoints) {
+                                    <span
+                                        jhiTranslate="artemisApp.result.score"
+                                        [translateValues]="{ score: roundValueSpecifiedByCourseSettings(result().score, course()) }"
+                                    ></span>
+                                } @else if (resolvedExercise(); as exercise) {
+                                    @if (exercise.maxPoints) {
                                         <span
-                                            jhiTranslate="artemisApp.result.score"
-                                            [translateValues]="{ score: roundValueSpecifiedByCourseSettings(result().score, course()) }"
+                                            jhiTranslate="artemisApp.result.scoreWithPoints"
+                                            [translateValues]="{
+                                                score: roundValueSpecifiedByCourseSettings(result().score ?? 0, course()),
+                                                points: roundValueSpecifiedByCourseSettings(((result().score ?? 0) * exercise.maxPoints) / 100, course()),
+                                            }"
                                         ></span>
-                                    } @else if (resolvedExercise(); as exercise) {
-                                        @if (exercise.maxPoints) {
-                                            <span
-                                                jhiTranslate="artemisApp.result.scoreWithPoints"
-                                                [translateValues]="{
-                                                    score: roundValueSpecifiedByCourseSettings(result().score ?? 0, course()),
-                                                    points: roundValueSpecifiedByCourseSettings(((result().score ?? 0) * exercise.maxPoints) / 100, course()),
-                                                }"
-                                            ></span>
-                                        }
                                     }
                                 }
-                            </h4>
-
-                            @if (badge(); as badge) {
-                                <p-tag
-                                    id="result-score-badge"
-                                    [severity]="badge.severity"
-                                    [value]="badge.text | artemisTranslate | uppercase"
-                                    [pTooltip]="badge.tooltip | artemisTranslate"
-                                />
                             }
-                        </div>
+                        </h4>
 
-                        <!-- Show and link to the commit hash in case of programming exercise results -->
-                        @if (exerciseType() === ExerciseType.PROGRAMMING && result().submission) {
-                            <p>
-                                {{ 'artemisApp.feedback.modal.submitted' | artemisTranslate }}
-                                <span [pTooltip]="result().submission!.submissionDate | artemisDate">
-                                    {{ result().submission!.submissionDate | artemisTimeAgo }}
-                                </span>
-                                - {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
-                                <!-- TODO Link to repository view -->
-                                {{ commitHash() }}
-                            </p>
-                        }
-                    </div>
-                }
-
-                @if (scoreChartVisible() && resolvedExercise()) {
-                    <div class="mb-12">
-                        <div data-testid="feedback-chart" class="chart-space h-20">
-                            <tumaet-ui-bar-chart
-                                [labels]="scoreChartData().labels"
-                                [series]="scoreChartData().series"
-                                [config]="scoreChartConfig()"
-                                [ariaLabel]="'artemisApp.feedback.modal.scoreChartAriaLabel' | artemisTranslate"
+                        @if (badge(); as badge) {
+                            <tumaet-ui-tag
+                                id="result-score-badge"
+                                [severity]="badge.severity"
+                                [value]="badge.text | artemisTranslate | uppercase"
+                                [tumAetUiTooltip]="badge.tooltip | artemisTranslate"
                             />
-                        </div>
-                    </div>
-                }
-
-                @if (!isExamReviewPage()) {
-                    <hr />
-                }
-
-                <!-- Always show failed build logs first -->
-                <ng-container *ngTemplateOutlet="buildLogs()?.length ? buildLogsContainer : null" />
-
-                @if (buildLogs()?.length) {
-                    <hr />
-                }
-
-                @if (!loadingFailed() && resultIsPreliminary(result(), participation(), resolvedExercise())) {
-                    <div>
-                        <div class="flex justify-end m-1">
-                            <p-tag severity="warn" [value]="'artemisApp.result.preliminary' | artemisTranslate | uppercase" />
-                        </div>
-                        @if (result()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
-                            <p jhiTranslate="artemisApp.result.preliminaryTooltipAthena"></p>
-                        } @else {
-                            @if (resolvedExercise()?.assessmentType !== AssessmentType.AUTOMATIC) {
-                                <p jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
-                            }
-                            @if (resolvedExercise()?.assessmentType === AssessmentType.AUTOMATIC) {
-                                <p jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
-                            }
                         }
                     </div>
-                }
 
-                <div class="feedback-list">
-                    @for (feedbackItemNode of feedbackItemNodes(); track feedbackItemNode) {
-                        <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course()" [isPrinting]="isPrinting()" />
+                    <!-- Show and link to the commit hash in case of programming exercise results -->
+                    @if (exerciseType() === ExerciseType.PROGRAMMING && result().submission) {
+                        <p>
+                            {{ 'artemisApp.feedback.modal.submitted' | artemisTranslate }}
+                            <span [tumAetUiTooltip]="result().submission!.submissionDate | artemisDate">
+                                {{ result().submission!.submissionDate | artemisTimeAgo }}
+                            </span>
+                            - {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
+                            <!-- TODO Link to repository view -->
+                            {{ commitHash() }}
+                        </p>
                     }
                 </div>
-            </div>
-        } @else {
+            }
+
+            @if (scoreChartVisible() && resolvedExercise()) {
+                <div class="mb-12">
+                    <div data-testid="feedback-chart" class="chart-space h-20">
+                        <tumaet-ui-bar-chart
+                            [labels]="scoreChartData().labels"
+                            [series]="scoreChartData().series"
+                            [config]="scoreChartConfig()"
+                            [ariaLabel]="'artemisApp.feedback.modal.scoreChartAriaLabel' | artemisTranslate"
+                        />
+                    </div>
+                </div>
+            }
+
+            @if (!isExamReviewPage()) {
+                <hr />
+            }
+
+            <!-- Always show failed build logs first -->
             <ng-container [ngTemplateOutlet]="buildLogsContainer" />
-        }
+
+            @if (buildLogs()?.length) {
+                <hr />
+            }
+
+            @if (!loadingFailed() && resultIsPreliminary(result(), participation(), resolvedExercise())) {
+                <div>
+                    <div class="flex justify-end m-1">
+                        <tumaet-ui-tag severity="warn" [value]="'artemisApp.result.preliminary' | artemisTranslate | uppercase" />
+                    </div>
+                    @if (result()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+                        <p jhiTranslate="artemisApp.result.preliminaryTooltipAthena"></p>
+                    } @else {
+                        @if (resolvedExercise()?.assessmentType !== AssessmentType.AUTOMATIC) {
+                            <p jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
+                        }
+                        @if (resolvedExercise()?.assessmentType === AssessmentType.AUTOMATIC) {
+                            <p jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
+                        }
+                    }
+                </div>
+            }
+
+            <div class="feedback-list">
+                @for (feedbackItemNode of feedbackItemNodes(); track feedbackItemNode) {
+                    <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course()" [isPrinting]="isPrinting()" />
+                }
+            </div>
+        </div>
+    } @else {
+        <ng-container [ngTemplateOutlet]="buildLogsContainer" />
     }
 
     <!-- Feedbacks container -->
 
     <!-- Build logs container -->
     <ng-template #buildLogsContainer>
+        @if (buildLogsLoading()) {
+            <div class="text-muted-color flex justify-center" data-testid="build-log-spinner">
+                <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
+                <span jhiTranslate="artemisApp.result.buildLogsLoading"></span>
+            </div>
+        }
+        @if (buildLogsFailed()) {
+            <div class="text-state-danger mb-4!" role="alert">
+                <span jhiTranslate="artemisApp.result.buildLogsLoadingFailed"></span>
+                <button type="button" tumAetUiButton variant="outlined" size="small" data-testid="retry-build-logs" (click)="loadBuildLogs()">
+                    {{ 'entity.action.retry' | artemisTranslate }}
+                </button>
+            </div>
+        }
         @if (buildLogs()?.length) {
             <h4 jhiTranslate="artemisApp.result.buildError"></h4>
             <dl class="buildoutput">
@@ -152,7 +173,7 @@
                     </dd>
                 }
             </dl>
-        } @else {
+        } @else if (!isLoading() && !loadingFailed() && !buildLogsLoading() && !buildLogsFailed() && !feedbackItemNodes()?.length) {
             <!-- No content fallback -->
             @if (!isExamReviewPage()) {
                 <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>
@@ -167,6 +188,8 @@
 </div>
 <div class="flex justify-end min-w-full">
     @if (dialogRef) {
-        <p-button id="feedback-close" severity="secondary" [outlined]="true" size="small" (onClick)="dialogRef.close()" [label]="'entity.action.close' | artemisTranslate" />
+        <tumaet-ui-button id="feedback-close" severity="secondary" variant="outlined" size="small" (clicked)="dialogRef.close()">{{
+            'entity.action.close' | artemisTranslate
+        }}</tumaet-ui-button>
     }
 </div>

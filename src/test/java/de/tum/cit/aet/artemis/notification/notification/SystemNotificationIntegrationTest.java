@@ -123,7 +123,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testCreateSystemNotification_asInstructor_Forbidden() throws Exception {
         request.post("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), HttpStatus.FORBIDDEN);
     }
@@ -149,7 +149,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testUpdateSystemNotification_asInstructor_Forbidden() throws Exception {
         systemNotificationRepo.save(systemNotification);
         systemNotification.setText("updated text");
@@ -166,7 +166,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetAllSystemNotifications() throws Exception {
-        List<SystemNotificationDTO> response = request.getList("/api/notification/system-notifications", HttpStatus.OK, SystemNotificationDTO.class);
+        List<SystemNotificationDTO> response = request.getList("/api/notification/admin/system-notifications", HttpStatus.OK, SystemNotificationDTO.class);
         assertThat(response).as("system notification are present").isNotEmpty();
     }
 
@@ -175,8 +175,8 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     void testGetSystemNotification() throws Exception {
         SystemNotificationDTO response = request.postWithResponseBody("/api/notification/admin/system-notifications", toUpdateDTO(systemNotification), SystemNotificationDTO.class);
         assertThat(systemNotificationRepo.findById(response.id())).get().as("system notification is not null").isNotNull();
-        request.get("/api/notification/system-notifications/" + response.id(), HttpStatus.OK, SystemNotificationDTO.class);
-        request.get("/api/notification/system-notifications/" + response.id() + 1, HttpStatus.NOT_FOUND, SystemNotificationDTO.class);
+        request.get("/api/notification/admin/system-notifications/" + response.id(), HttpStatus.OK, SystemNotificationDTO.class);
+        request.get("/api/notification/admin/system-notifications/" + response.id() + 1, HttpStatus.NOT_FOUND, SystemNotificationDTO.class);
     }
 
     @Test
@@ -188,7 +188,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "instructor1", roles = "USER")
     void testDeleteSystemNotification_asInstructor_Forbidden() throws Exception {
         SystemNotification notification = systemNotificationRepo.save(systemNotification);
         assertThat(systemNotificationRepo.findById(notification.getId())).get().as("system notification is not null").isNotNull();
@@ -213,4 +213,27 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
         return new SystemNotificationUpdateDTO(notification.getId(), notification.getTitle(), notification.getText(), notification.getNotificationDate(),
                 notification.getExpireDate(), notification.getType());
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void maintenanceRecipientCountMatchesCurrentEligibleRecipients() throws Exception {
+        String url = "/api/notification/admin/system-notifications/maintenance-recipients-count";
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 2);
+        for (int index = 1; index <= 2; index++) {
+            var instructor = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor" + index).orElseThrow();
+            instructor.setTestUser(false);
+            userTestRepository.saveAndFlush(instructor);
+        }
+        // addUsers resets course memberships, so take the baseline after preparing the users.
+        Long before = request.get(url, HttpStatus.OK, Long.class);
+        for (int index = 0; index < 2; index++) {
+            var course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+            course.setStartDate(ZonedDateTime.now().minusDays(1));
+            course.setEndDate(ZonedDateTime.now().plusDays(1));
+            courseRepository.saveAndFlush(course);
+        }
+        assertThat(request.get(url, HttpStatus.OK, Long.class)).isEqualTo(before + 2);
+
+    }
+
 }

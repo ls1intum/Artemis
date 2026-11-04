@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -24,7 +25,9 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.protocol.GradingContext;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
+import de.tum.cit.aet.artemis.hyperion.runtime.verification.AresTestHarness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
@@ -44,6 +47,8 @@ public class GenerationSeedService {
 
     private final GitService gitService;
 
+    private final BareGitRepositoryService bareRepositories;
+
     private final TempFileUtilService temporaryFiles;
 
     private final GenerationRequestService requests;
@@ -56,9 +61,10 @@ public class GenerationSeedService {
 
     public GenerationSeedService(ProgrammingExerciseBuildConfigRepository buildConfigRepository, GitService gitService, TempFileUtilService temporaryFiles,
             GenerationRequestService requests, ProgrammingExerciseTestCaseRepository testCases, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            @Value("${artemis.version-control.default-branch:main}") String branch) {
+            BareGitRepositoryService bareRepositories, @Value("${artemis.version-control.default-branch:main}") String branch) {
         this.buildConfigRepository = buildConfigRepository;
         this.gitService = gitService;
+        this.bareRepositories = bareRepositories;
         this.temporaryFiles = temporaryFiles;
         this.requests = requests;
         this.testCases = testCases;
@@ -81,11 +87,55 @@ public class GenerationSeedService {
         ProgrammingExercise readable = withTestIdsRenderedAsNames(exercise);
         String statement = requests.isAuthoritativeProblemStatement(readable) ? readable.getProblemStatement() : "";
         files.add(new WorkspaceFile("problem-statement.md", statement.getBytes(StandardCharsets.UTF_8), false));
-        var baseline = testCases.findByExerciseId(exercise.getId()).stream().filter(test -> Boolean.TRUE.equals(test.isActive()) && !test.isInvisible())
+        var savedTests = testCases.findByExerciseId(exercise.getId());
+        var baseline = savedTests.stream().filter(test -> Boolean.TRUE.equals(test.isActive()) && !test.isInvisible())
                 .filter(test -> test.getType() != ProgrammingExerciseTestCaseType.STRUCTURAL)
                 .filter(test -> test.getBonusPoints() > 0 || (test.getWeight() != null && test.getWeight() > 0 && test.getBonusMultiplier() > 0)).map(test -> test.getTestName())
                 .filter(name -> name != null && !name.isBlank()).collect(Collectors.toSet());
-        return new Seed(new WorkspaceSnapshot(files), Map.copyOf(heads), new GradingContext(exercise.getDueDate() != null, baseline));
+        var hidden = savedTests.stream().filter(test -> Boolean.TRUE.equals(test.isActive()) && test.isAfterDueDate())
+                .filter(test -> test.getType() != ProgrammingExerciseTestCaseType.STRUCTURAL).map(test -> test.getTestName()).filter(name -> name != null && !name.isBlank())
+                .collect(Collectors.toSet());
+        return new Seed(new WorkspaceSnapshot(files), Map.copyOf(heads), new GradingContext(exercise.getDueDate() != null, baseline, hidden));
+    }
+
+    /**
+     * Reads only three trusted blobs at the configured tests branch, without cloning or checking out any repository.
+     *
+     * @param exercise authorized source
+     * @return bounded committed harness files; missing or unsupported paths remain absent for fail-closed validation
+     */
+    public Map<String, String> readTestHarness(ProgrammingExercise exercise) {
+        String configuredBranch = buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
+        String repositoryBranch = configuredBranch == null || configuredBranch.isBlank() ? branch : configuredBranch;
+        try {
+            var uri = exercise.getRepositoryURI(RepositoryType.TESTS);
+            if (uri == null) {
+                throw new IllegalStateException("Missing generation tests repository");
+            }
+            try (Repository repository = bareRepositories.getExistingBareRepository(uri, repositoryBranch); RevWalk commits = new RevWalk(repository)) {
+                var ref = repository.exactRef(Constants.R_HEADS + repositoryBranch);
+                if (ref == null) {
+                    throw new IllegalStateException("Missing generation tests branch");
+                }
+                var commit = commits.parseCommit(ref.getObjectId());
+                Map<String, String> files = new LinkedHashMap<>();
+                for (String path : AresTestHarness.PATHS) {
+                    try (TreeWalk tree = TreeWalk.forPath(repository, path, commit.getTree())) {
+                        if (tree == null || (!tree.getFileMode(0).equals(FileMode.REGULAR_FILE) && !tree.getFileMode(0).equals(FileMode.EXECUTABLE_FILE))) {
+                            continue;
+                        }
+                        var blob = repository.open(tree.getObjectId(0), Constants.OBJ_BLOB);
+                        if (blob.getSize() <= WorkspaceFile.MAX_FILE_BYTES) {
+                            files.put(path, new String(blob.getBytes(WorkspaceFile.MAX_FILE_BYTES), StandardCharsets.UTF_8));
+                        }
+                    }
+                }
+                return Map.copyOf(files);
+            }
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Could not read the tests harness for generation", e);
+        }
     }
 
     /**

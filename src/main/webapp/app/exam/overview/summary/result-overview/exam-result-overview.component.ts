@@ -10,7 +10,7 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CollapsibleCardComponent } from '../collapsible-card/collapsible-card.component';
@@ -46,6 +46,7 @@ export class ExamResultOverviewComponent implements OnInit {
     readonly isBonusGradingKeyCollapsed = input(true);
     readonly exerciseInfos = input<Record<number, ExerciseInfo>>(undefined!);
     readonly isTestRun = input(false);
+    readonly gradingKeyPurpose = input<'student' | 'management'>('student');
 
     // Derived from the (async) studentExamWithGrade input — computed so the grading-key card renders under zoneless
     // once the grade DTO arrives (previously set only in ngOnInit via setExamGrade + a manual detectChanges).

@@ -5,6 +5,7 @@
     border-radius: 0.75rem;
     border: 1px solid color-mix(in srgb, var(--bs-primary) 18%, transparent);
     background: color-mix(in srgb, var(--bs-primary) 4.5%, transparent);
+
     /* border-color/background stay undelayed — they only ever animate for is-quiet, a separate, earlier
        moment (the note settling in) unrelated to dismissing it. border-width/margin are the outer half
        of the dismiss motion: synced to the SAME duration, with NO delay, as the header and body height
@@ -54,13 +55,16 @@
 
 .iris-card-header {
     padding: 0.5rem 0.75rem;
+
     /* Transparent while the card is a strip: a divider under a collapsed body is a line to nowhere. */
     border-bottom: 1px solid transparent;
     border-radius: 0.75rem 0.75rem 0 0;
+
     /* Generous bound for a single row of logo + label + badge + status text — not measured, just large
        enough to never clip it, so `is-dismissed` can animate it away without a JS height read. */
     max-height: 2.5rem;
     overflow: hidden;
+
     /* max-height/padding-block run on the exact same duration/easing, with no delay, as the body's own
        collapse below and the outer border-width/margin above, so the header, body and outer shape all
        reach zero together as one motion. border-color stays on its own separate transition: it only
@@ -121,7 +125,7 @@
 
 .iris-quiet-note {
     padding: 0.5rem 0.75rem 0.625rem;
-    font-size: 0.78125rem;
+    font-size: 0.7813rem;
     line-height: 1.5;
     color: var(--bs-secondary-color);
 }
@@ -133,13 +137,13 @@
 }
 
 .iris-quiet-sub {
-    font-size: 0.71875rem;
+    font-size: 0.7188rem;
     color: color-mix(in srgb, var(--bs-secondary-color) 70%, transparent);
 }
 
 .iris-retry-btn {
     margin-top: 0.15rem;
-    font-size: 0.71875rem;
+    font-size: 0.7188rem;
     color: var(--bs-primary);
     cursor: pointer;
 

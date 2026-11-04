@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNot
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationDeliveryPolicy;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewPostNotification;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingPresetEntryDTO;
 import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingSpecificationEntryDTO;
 import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloadDTO;
@@ -207,10 +208,10 @@ class CourseNotificationSettingServiceTest {
                 .thenReturn(List.of(new UserCourseNotificationSettingSpecificationEntryDTO(1L, notificationTypeId, false, false, true),
                         new UserCourseNotificationSettingSpecificationEntryDTO(2L, notificationTypeId, true, true, false)));
 
-        List<User> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.WEBAPP);
+        List<CourseNotificationRecipientDTO> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.WEBAPP);
 
         assertThat(filteredRecipients).hasSize(1);
-        assertThat(filteredRecipients).containsExactly(user1);
+        assertThat(filteredRecipients).containsExactly(CourseNotificationRecipientDTO.from(user1));
     }
 
     @Test
@@ -226,10 +227,10 @@ class CourseNotificationSettingServiceTest {
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), eq(NotificationChannelOption.PUSH))).thenReturn(true);
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(2), any(), eq(NotificationChannelOption.PUSH))).thenReturn(false);
 
-        List<User> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.PUSH);
+        List<CourseNotificationRecipientDTO> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.PUSH);
 
         assertThat(filteredRecipients).hasSize(1);
-        assertThat(filteredRecipients).containsExactly(user1);
+        assertThat(filteredRecipients).containsExactly(CourseNotificationRecipientDTO.from(user1));
     }
 
     @Test
@@ -248,7 +249,7 @@ class CourseNotificationSettingServiceTest {
                 .thenReturn(List.of(new UserCourseNotificationSettingSpecificationEntryDTO(1L, notificationTypeId, false, true, true),
                         new UserCourseNotificationSettingSpecificationEntryDTO(2L, notificationTypeId, false, true, true)));
 
-        List<User> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.EMAIL);
+        List<CourseNotificationRecipientDTO> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.EMAIL);
 
         assertThat(filteredRecipients).isEmpty();
     }
@@ -271,7 +272,7 @@ class CourseNotificationSettingServiceTest {
         // A custom preset with no specification row for this type must fall back to the default preset (id 1) value.
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), eq(NotificationChannelOption.WEBAPP))).thenReturn(false);
 
-        List<User> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.WEBAPP);
+        List<CourseNotificationRecipientDTO> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.WEBAPP);
 
         assertThat(filteredRecipients).isEmpty();
     }
@@ -293,9 +294,9 @@ class CourseNotificationSettingServiceTest {
         // The default preset enables this notification for WEBAPP, so the recipient must be kept.
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), eq(NotificationChannelOption.WEBAPP))).thenReturn(true);
 
-        List<User> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.WEBAPP);
+        List<CourseNotificationRecipientDTO> filteredRecipients = filterWithLoadedSettings(notification, recipients, NotificationChannelOption.WEBAPP);
 
-        assertThat(filteredRecipients).containsExactly(user);
+        assertThat(filteredRecipients).containsExactly(CourseNotificationRecipientDTO.from(user));
     }
 
     /**
@@ -313,9 +314,9 @@ class CourseNotificationSettingServiceTest {
         when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdsAndCourseId(anySet(), eq(123L))).thenReturn(List.of());
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), any())).thenReturn(true);
 
-        var settings = courseNotificationSettingService.loadSettingsFor(notification.courseId, recipients);
+        var settings = courseNotificationSettingService.loadSettingsFor(notification.courseId, toRecipientDTOs(recipients));
         for (NotificationChannelOption channel : NotificationChannelOption.values()) {
-            assertThat(courseNotificationSettingService.filterRecipientsBy(notification, recipients, channel, settings)).hasSize(250);
+            assertThat(courseNotificationSettingService.filterRecipientsBy(notification, toRecipientDTOs(recipients), channel, settings)).hasSize(250);
         }
 
         verify(userCourseNotificationSettingPresetRepository, times(1)).findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L));
@@ -335,7 +336,7 @@ class CourseNotificationSettingServiceTest {
         when(userCourseNotificationSettingPresetRepository.findSettingPresetsByUserIdsAndCourseId(anySet(), eq(123L)))
                 .thenReturn(List.of(new UserCourseNotificationSettingPresetEntryDTO(1L, (short) 1), new UserCourseNotificationSettingPresetEntryDTO(2L, (short) 2)));
 
-        courseNotificationSettingService.loadSettingsFor(notification.courseId, recipients);
+        courseNotificationSettingService.loadSettingsFor(notification.courseId, toRecipientDTOs(recipients));
 
         verify(userCourseNotificationSettingSpecificationRepository, never()).findAllByUserIdsAndCourseId(anySet(), anyLong());
     }
@@ -352,9 +353,10 @@ class CourseNotificationSettingServiceTest {
         List<User> recipients = List.of(testAccount, regularUser);
 
         // Nothing is configured, so the default preset applies to the regular user and "off" applies to the test account.
-        assertThat(filterWithLoadedSettings(notification, recipients, NotificationChannelOption.EMAIL)).containsExactly(regularUser);
+        assertThat(filterWithLoadedSettings(notification, recipients, NotificationChannelOption.EMAIL)).containsExactly(CourseNotificationRecipientDTO.from(regularUser));
         // The other channels are not what a shared SMTP account limits, so they keep the default.
-        assertThat(filterWithLoadedSettings(notification, recipients, NotificationChannelOption.WEBAPP)).containsExactly(testAccount, regularUser);
+        assertThat(filterWithLoadedSettings(notification, recipients, NotificationChannelOption.WEBAPP)).containsExactly(CourseNotificationRecipientDTO.from(testAccount),
+                CourseNotificationRecipientDTO.from(regularUser));
     }
 
     @Test
@@ -366,7 +368,7 @@ class CourseNotificationSettingServiceTest {
                 .thenReturn(List.of(new UserCourseNotificationSettingPresetEntryDTO(1L, (short) 2)));
         when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(2), any(), eq(NotificationChannelOption.EMAIL))).thenReturn(true);
 
-        assertThat(filterWithLoadedSettings(notification, List.of(testAccount), NotificationChannelOption.EMAIL)).containsExactly(testAccount);
+        assertThat(filterWithLoadedSettings(notification, List.of(testAccount), NotificationChannelOption.EMAIL)).containsExactly(CourseNotificationRecipientDTO.from(testAccount));
     }
 
     @Test
@@ -379,7 +381,7 @@ class CourseNotificationSettingServiceTest {
         when(userCourseNotificationSettingSpecificationRepository.findAllByUserIdsAndCourseId(anySet(), eq(123L)))
                 .thenReturn(List.of(new UserCourseNotificationSettingSpecificationEntryDTO(1L, notificationTypeId, true, false, false)));
 
-        assertThat(filterWithLoadedSettings(notification, List.of(testAccount), NotificationChannelOption.EMAIL)).containsExactly(testAccount);
+        assertThat(filterWithLoadedSettings(notification, List.of(testAccount), NotificationChannelOption.EMAIL)).containsExactly(CourseNotificationRecipientDTO.from(testAccount));
     }
 
     @Test
@@ -479,9 +481,9 @@ class CourseNotificationSettingServiceTest {
     /**
      * Reads the recipients' settings the way the send path does, then filters with them.
      */
-    private List<User> filterWithLoadedSettings(TestNotification notification, List<User> recipients, NotificationChannelOption channel) {
-        var settings = courseNotificationSettingService.loadSettingsFor(notification.courseId, recipients);
-        return courseNotificationSettingService.filterRecipientsBy(notification, recipients, channel, settings);
+    private List<CourseNotificationRecipientDTO> filterWithLoadedSettings(TestNotification notification, List<User> recipients, NotificationChannelOption channel) {
+        var settings = courseNotificationSettingService.loadSettingsFor(notification.courseId, toRecipientDTOs(recipients));
+        return courseNotificationSettingService.filterRecipientsBy(notification, toRecipientDTOs(recipients), channel, settings);
     }
 
     private static UserCourseNotificationSettingPresetEntryDTO customPreset(long userId) {
@@ -549,4 +551,9 @@ class CourseNotificationSettingServiceTest {
             return new ExerciseOpenForPracticePayloadDTO(1L, "Test Exercise");
         }
     }
+
+    private static List<CourseNotificationRecipientDTO> toRecipientDTOs(List<User> recipients) {
+        return recipients.stream().map(CourseNotificationRecipientDTO::from).toList();
+    }
+
 }

@@ -90,8 +90,7 @@ describe('ExerciseActionBarComponent', () => {
     });
 
     describe('disabled tooltip', () => {
-        const tooltipTextOf = (): string | readonly string[] =>
-            fixture.debugElement.query(By.css('a[data-testid="exercise-action-a"]')).injector.get(TumAetUiTooltipDirective).content();
+        const tooltipTextOf = () => fixture.debugElement.query(By.css('a[data-testid="exercise-action-a"]')).injector.get(TumAetUiTooltipDirective).content();
 
         it('shows the disabled tooltip only while the action is disabled', () => {
             const action: ActionItem = { ...buildActions(['a'])[0], disabledTooltip: 'tooltip.key' };
@@ -105,6 +104,23 @@ describe('ExerciseActionBarComponent', () => {
             fixture.detectChanges();
             expect(tooltipTextOf()).toBe('');
         });
+    });
+
+    it('disables the native action button while pending and restores its callback when enabled', () => {
+        const onClick = vi.fn();
+        const action: ActionItem = { id: 'variant', labelKey: 'label.variant', icon: faTable, severity: 'warn', kind: 'button', onClick };
+        fixture.componentRef.setInput('items', [{ ...action, disabled: true }]);
+        fixture.detectChanges();
+        const button: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="exercise-action-variant"]');
+        expect(button.disabled).toBe(true);
+        button.click();
+        expect(onClick).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('items', [{ ...action, disabled: false }]);
+        fixture.detectChanges();
+        expect(button.disabled).toBe(false);
+        button.click();
+        expect(onClick).toHaveBeenCalledExactlyOnceWith();
     });
 
     describe('menu interactions', () => {
