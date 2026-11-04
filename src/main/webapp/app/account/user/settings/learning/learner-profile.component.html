@@ -1,7 +1,12 @@
 @if (atlasEnabled()) {
-    <jhi-feedback-learner-profile />
-    @if (coursePanelEnabled()) {
-        <hr />
-        <jhi-course-learner-profile />
-    }
+    <div class="flex flex-col gap-10" data-testid="learning-settings-sections">
+        <section>
+            <jhi-feedback-learner-profile />
+        </section>
+        @if (coursePanelEnabled()) {
+            <section>
+                <jhi-course-learner-profile />
+            </section>
+        }
+    </div>
 }

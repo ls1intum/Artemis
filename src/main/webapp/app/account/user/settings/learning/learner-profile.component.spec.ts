@@ -68,11 +68,7 @@ describe('LearnerProfileComponent', () => {
 
         const query = (selector: string) => fixture.nativeElement.querySelector(selector);
 
-        /**
-         * Counts only the separators this template emits between its own sections. The section components render
-         * separators of their own, so a plain `hr` query would count those too.
-         */
-        const separatorCount = () => [...fixture.nativeElement.children].filter((element: Element) => element.tagName === 'HR').length;
+        const sectionSeparator = () => query('[data-testid="learning-settings-sections"] > hr');
 
         it('should not request the learner profile nor render the atlas sections when the atlas module is inactive', async () => {
             const getLearnerProfile = vi.spyOn(learnerProfileApiService, 'getLearnerProfileForCurrentUser');
@@ -85,7 +81,7 @@ describe('LearnerProfileComponent', () => {
             expect(getLearnerProfile).not.toHaveBeenCalled();
             expect(query('jhi-feedback-learner-profile')).toBeFalsy();
             expect(query('jhi-course-learner-profile')).toBeFalsy();
-            expect(separatorCount()).toBe(0);
+            expect(sectionSeparator()).toBeFalsy();
         });
 
         it('should request the learner profile and render every section when the atlas module is active', async () => {
@@ -100,8 +96,7 @@ describe('LearnerProfileComponent', () => {
             expect(getLearnerProfile).toHaveBeenCalled();
             expect(query('jhi-feedback-learner-profile')).toBeTruthy();
             expect(query('jhi-course-learner-profile')).toBeTruthy();
-            // feedback, separator, course
-            expect(separatorCount()).toBe(1);
+            expect(sectionSeparator()).toBeFalsy();
         });
 
         it('should report a failing atlas request as information and still open the course panel', async () => {
