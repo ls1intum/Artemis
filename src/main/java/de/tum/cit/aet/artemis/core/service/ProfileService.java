@@ -65,6 +65,7 @@ public class ProfileService {
      *
      * @return true if the jenkins profile is active, false otherwise
      */
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): remove together with the jenkins profile and every caller
     public boolean isJenkinsActive() {
         return isProfileActive("jenkins");
     }

@@ -96,11 +96,12 @@ For deployments with multiple Artemis nodes, see
 
 | Area | Expectation |
 | --- | --- |
-| Database | PostgreSQL and MySQL are supported. Migrations run automatically at startup through Liquibase. |
+| Database | PostgreSQL and MySQL are supported. MySQL is deprecated and removed in Artemis 11, which supports PostgreSQL only. Migrations run automatically at startup through Liquibase. |
 | REST API | The API is documented through an [OpenAPI specification](/developer/openapi) generated from the server. It is primarily an interface for the Artemis clients and can change between releases. |
 | Mobile apps | The [Android app](https://github.com/ls1intum/artemis-android) and the iOS app live in their own repositories and are released separately. Artemis CI runs the Android app's tests against server changes. |
 | AI services | Artemis integrates with the [EduTelligence](https://github.com/ls1intum/edutelligence) services. Their [compatibility matrix](https://github.com/ls1intum/edutelligence#-artemis-compatibility) states which service versions match which Artemis versions. |
 | Build agents | Build agents run the same Artemis artifact and are expected to be upgraded together with the server. |
+| Continuous integration | LocalCI is the supported continuous integration system. Jenkins is deprecated and removed in Artemis 11. |
 
 ## Deprecations and migrations
 

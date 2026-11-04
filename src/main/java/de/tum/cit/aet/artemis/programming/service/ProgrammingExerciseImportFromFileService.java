@@ -147,6 +147,7 @@ public class ProgrammingExerciseImportFromFileService {
             copyEmbeddedFiles(pathToDirectoryWithImportedContent);
             programmingExerciseImportRepositoryService.importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, user);
 
+            // REMOVE_IN_ARTEMIS_11 (Jenkins): drop the Jenkins build plan import branch
             Optional<String> importedJenkinsBuildPlan = Optional.empty();
             if (profileService.isJenkinsActive()) {
                 importedJenkinsBuildPlan = readBuildPlanIfExisting(pathToDirectoryWithImportedContent);

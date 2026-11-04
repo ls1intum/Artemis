@@ -128,7 +128,7 @@ from a growing community. See [About Artemis](https://docs.artemis.tum.de/about)
 ## Deployment
 
 Artemis is self-hosted. A production deployment consists of the Artemis server and client, a database
-(PostgreSQL or MySQL), and, for programming exercises, one or more build agents. For smaller
+(PostgreSQL; MySQL is deprecated and removed in Artemis 11), and, for programming exercises, one or more build agents. For smaller
 deployments such as schools, and for institutions that want to try Artemis before running it
 themselves, the Artemis team at TUM can host an instance; write to `artemis@xcit.tum.de`.
 
@@ -145,7 +145,8 @@ Follow the [setup guide](https://docs.artemis.tum.de/developer/setup). For progr
 recommend the
 [integrated code lifecycle setup](https://docs.artemis.tum.de/admin/production-setup/integrated-code-lifecycle-setup);
 Artemis can alternatively be run with
-[LocalVC and Jenkins](https://docs.artemis.tum.de/admin/jenkins-localvc).
+[LocalVC and Jenkins](https://docs.artemis.tum.de/admin/jenkins-localvc), which is deprecated and removed
+in Artemis 11.
 
 ### Building for production
 
@@ -174,7 +175,7 @@ The following command automates deployment to a test server:
 | Directory | Contents |
 | --- | --- |
 | `src/` | Application sources, resources, and tests |
-| `packages/` | Shared packages, including TUM UI |
+| `packages/` | Shared packages, including TUM AET UI |
 | `config/` | Quality-tool settings, client configs, dependency patches, and the OpenAPI specification |
 | `deployment/` | Docker Compose setups, Helm charts, deployment CLI, and Kubernetes runners |
 | `supporting_scripts/` | Developer tooling, CI helpers, client prebuild, and local E2E runners |
@@ -188,11 +189,18 @@ setup guide specifies another working directory.
 ## Architecture
 
 Artemis is decomposed into an application client (Angular) and an application server (Spring Boot).
-For programming exercises, the server integrates version control and continuous integration, either
-through the built-in integrated code lifecycle or through external systems. Authentication can be
-delegated to an external user management system.
+For programming exercises, the server contains its own version control (**LocalVC**, an integrated Git
+server) and continuous integration (**LocalCI**, a build queue whose jobs run in Docker containers on
+horizontally scalable build agents). No external version control or CI system is needed. Shared state of
+a multi-node installation goes through a distributed data provider (Hazelcast or Redis), and data is
+stored in PostgreSQL. Authentication can be delegated to an external user management system.
 
-![Top-Level Design](documentation/docs/developer/assets/system-design/TopLevelDesign.png 'Top-Level Design')
+![Top-Level Design](documentation/docs/developer/assets/system-design/TopLevelDesign.svg 'Top-Level Design')
+
+> **Deprecated, removed in Artemis 11 (planned for March 2027):** Jenkins, the only external CI system
+> Artemis still supports, and MySQL as a database. Use LocalCI and PostgreSQL for new installations and
+> plan the migration of existing ones. See the [roadmap](https://docs.artemis.tum.de/about/roadmap#planned-removals-in-artemis-11)
+> and the [upgrade guide](https://docs.artemis.tum.de/admin/upgrade-guide#planned-removals-in-artemis-11).
 
 The [system design documentation](https://docs.artemis.tum.de/developer/system-design) contains the
 server architecture, the deployment view, and the data model.
