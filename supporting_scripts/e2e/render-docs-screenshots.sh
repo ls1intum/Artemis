@@ -53,6 +53,10 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
+if [ "$UPDATE" = true ] && [ "$RENDER_ONLY" = true ]; then
+    echo "--update replaces the checked-in images and --render-only leaves them alone: use one of them." >&2
+    exit 1
+fi
 if [[ "$BROWSER" != "container" && "$BROWSER" != "host" ]]; then
     echo "--browser must be container or host" >&2
     exit 1
@@ -73,22 +77,24 @@ mkdir -p "$STATE_DIR"
 # The repositories of the demo programming exercise live below the state directory, so that a repository of an earlier run (or of a development
 # server that was started in this directory) cannot make the seeding fail with "Project already exists". A kept stack (--keep) keeps them.
 REPO_DIR="$STATE_DIR/repositories"
-if [ "$STOP" = false ]; then
-    rm -rf "$REPO_DIR"
-    mkdir -p "$REPO_DIR"
-fi
 
 log() { echo "[docs-screenshots] $*"; }
 
-# Stops what this script started: the processes that listen on its own ports and its database container.
-stop_stack() {
-    local port pid
-    for port in "$CLIENT_PORT" "$SERVER_PORT" "$SSH_PORT"; do
-        # Only a process that this script started can listen here, because the ports were free when it began.
-        for pid in $(lsof -nP -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true); do
-            kill "$pid" 2>/dev/null || true
-        done
+# The processes that listen on a port and belong to this checkout: their command line names the checkout (the class path of the server, the
+# node modules of the client). A process of someone else on one of the ports is never touched, and is reported instead.
+owned_listeners() {
+    local pid
+    for pid in $(lsof -nP -tiTCP:"$1" -sTCP:LISTEN 2>/dev/null || true); do
+        if ps -o command= -p "$pid" 2>/dev/null | grep -qF "$ROOT"; then
+            echo "$pid"
+        fi
     done
+}
+
+# Stops what this script started: the launchers it recorded, the processes of this checkout that listen on its ports, and its database container
+# (which carries a label of this checkout, so that a container of the same name that someone else created stays).
+stop_stack() {
+    local port pid container
     if [ -f "$STATE_DIR/gradle.pid" ]; then
         kill "$(cat "$STATE_DIR/gradle.pid")" 2>/dev/null || true
         rm -f "$STATE_DIR/gradle.pid"
@@ -97,12 +103,24 @@ stop_stack() {
         kill "$(cat "$STATE_DIR/client.pid")" 2>/dev/null || true
         rm -f "$STATE_DIR/client.pid"
     fi
-    docker rm -f "$DB_CONTAINER" >/dev/null 2>&1 || true
+    for port in "$CLIENT_PORT" "$SERVER_PORT" "$SSH_PORT"; do
+        for pid in $(owned_listeners "$port"); do
+            kill "$pid" 2>/dev/null || true
+        done
+    done
+    for container in $(docker ps -aq --filter "name=^${DB_CONTAINER}\$" --filter "label=docs-shots-owner=${ROOT}" 2>/dev/null || true); do
+        docker rm -f "$container" >/dev/null 2>&1 || true
+    done
     sleep 3
     for port in "$SERVER_PORT" "$SSH_PORT"; do
-        for pid in $(lsof -nP -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true); do
+        for pid in $(owned_listeners "$port"); do
             kill -9 "$pid" 2>/dev/null || true
         done
+    done
+    for port in "$CLIENT_PORT" "$SERVER_PORT" "$SSH_PORT"; do
+        if lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
+            echo "Port $port is still in use by a process that this script did not start, or did not manage to stop. It was left alone." >&2
+        fi
     done
 }
 
@@ -119,9 +137,13 @@ for port in "$SERVER_PORT" "$CLIENT_PORT" "$SSH_PORT" "$DB_PORT"; do
     fi
 done
 if docker ps -a --format '{{.Names}}' | grep -qx "$DB_CONTAINER"; then
-    echo "The container $DB_CONTAINER exists already. Run with --stop if it is a leftover of this script." >&2
+    echo "The container $DB_CONTAINER exists already. Run with --stop if it is a leftover of this script in this checkout, otherwise remove it yourself." >&2
     exit 1
 fi
+
+# A refused run (a port or the container above) has left everything as it was, so only now are the repositories of an earlier run discarded.
+rm -rf "$REPO_DIR"
+mkdir -p "$REPO_DIR"
 
 if [ "$KEEP" = false ]; then
     trap stop_stack EXIT
@@ -138,7 +160,7 @@ pnpm run prebuild -- --develop
 
 # -----------------------------------------------------------------------------
 log "Starting PostgreSQL on port $DB_PORT"
-docker run -d --name "$DB_CONTAINER" -p "127.0.0.1:${DB_PORT}:5432" -e POSTGRES_USER=Artemis -e POSTGRES_DB=Artemis -e POSTGRES_HOST_AUTH_METHOD=trust \
+docker run -d --name "$DB_CONTAINER" --label "docs-shots-owner=${ROOT}" -p "127.0.0.1:${DB_PORT}:5432" -e POSTGRES_USER=Artemis -e POSTGRES_DB=Artemis -e POSTGRES_HOST_AUTH_METHOD=trust \
     "postgres:$(sed -n 's/^POSTGRES_VERSION=//p' .env | head -n 1)-alpine" >/dev/null
 for _ in $(seq 1 60); do
     if docker exec "$DB_CONTAINER" pg_isready -U Artemis >/dev/null 2>&1; then break; fi
@@ -154,9 +176,15 @@ else
     DOCKER_SOCK="/var/run/docker.sock"
 fi
 
+# The admin account of the demo server exists only for this run and has a password of its own, so that the proxy of the client does not give
+# access to a known login while it listens for the browser container.
+ADMIN_PASSWORD="$(openssl rand -hex 16)"
+
 log "Starting the server on port $SERVER_PORT (log: build/docs-screenshots-stack/server.log)"
 (
     export SERVER_PORT
+    # Only the client (through its proxy) and the processes of this machine need the server.
+    export SERVER_ADDRESS="127.0.0.1"
     export SPRING_PROFILES_ACTIVE="artemis,scheduling,localvc,localci,buildagent,core,dev,local,demo"
     export SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:${DB_PORT}/Artemis?sslmode=disable"
     export SPRING_DATASOURCE_USERNAME="Artemis"
@@ -164,13 +192,13 @@ log "Starting the server on port $SERVER_PORT (log: build/docs-screenshots-stack
     export SPRING_LIQUIBASE_CONTEXTS="dev"
     export ARTEMIS_BCRYPTSALTROUNDS="4"
     export ARTEMIS_USERMANAGEMENT_INTERNALADMIN_USERNAME="artemis_admin"
-    export ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD="artemis_admin"
+    export ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD="$ADMIN_PASSWORD"
     export ARTEMIS_USERMANAGEMENT_USEEXTERNAL="false"
     export ARTEMIS_USERMANAGEMENT_PASSKEY_ENABLED="true"
     export ARTEMIS_USERMANAGEMENT_PASSKEY_ADDITIONALALLOWEDORIGINS="http://localhost:${CLIENT_PORT}"
     export ARTEMIS_VERSIONCONTROL_URL="http://localhost:${SERVER_PORT}"
     export ARTEMIS_VERSIONCONTROL_USER="artemis_admin"
-    export ARTEMIS_VERSIONCONTROL_PASSWORD="artemis_admin"
+    export ARTEMIS_VERSIONCONTROL_PASSWORD="$ADMIN_PASSWORD"
     export ARTEMIS_VERSIONCONTROL_SSHPORT="$SSH_PORT"
     export ARTEMIS_VERSIONCONTROL_SSHHOSTKEYPATH="$ROOT/src/test/playwright/ssh-keys"
     export ARTEMIS_CONTINUOUSINTEGRATION_EMPTYCOMMITNECESSARY="true"
@@ -244,6 +272,8 @@ until curl -sf "http://localhost:${CLIENT_PORT}" >/dev/null 2>&1; do
 done
 
 # -----------------------------------------------------------------------------
+# An inherited value must not decide where the images go or which ones are rendered.
+unset DOCS_SCREENSHOT_UPDATE DOCS_SCREENSHOT_ONLY
 if [ "$UPDATE" = true ]; then
     export DOCS_SCREENSHOT_UPDATE=true
 else
@@ -274,5 +304,5 @@ elif [ "$UPDATE" = true ]; then
     log "The images below documentation/docs were replaced. Review them with git status and git diff --stat, then commit what you want to keep."
     git status --short documentation/docs | head -40
 else
-    python3 supporting_scripts/check_docs_screenshots.py --compare "$OUTPUT_DIR" --all --threshold "$THRESHOLD"
+    python3 supporting_scripts/check_docs_screenshots.py --compare "$OUTPUT_DIR" --all --threshold "$THRESHOLD" ${ONLY:+--only "$ONLY"}
 fi

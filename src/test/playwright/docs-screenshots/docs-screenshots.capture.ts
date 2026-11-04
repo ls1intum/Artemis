@@ -154,7 +154,10 @@ for (const entry of manifest.screenshots.filter((candidate) => only.length === 0
 
         await page.goto(await resolveRoute(baseURL, entry.route, courseId));
         // A page with a websocket or a poll may never be idle, so the wait is bounded; `waitFor` and the settle time below decide when the page is ready.
-        await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => undefined);
+        // A timeout is reported in the output, so that an image of a page that is still loading is looked at before it is committed.
+        await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {
+            console.warn(`${entry.id}: the network was not idle after 20 seconds, check the image${entry.waitFor ? '' : ' or add a `waitFor` to the entry'}`);
+        });
         if (entry.waitFor) {
             await expect(page.locator(entry.waitFor).first()).toBeVisible();
         }
