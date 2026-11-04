@@ -69,9 +69,9 @@ public final class ApprovedOwnershipGate {
     }
 
     /**
-     * Whether the reference solution declares exactly the approved Java Public API, each type in the exercise package. The server derives its structural checks from that same
-     * contract and looks the types up in the exercise package, so a structural check that fails on such a solution exposes a server seeding defect rather than an authoring
-     * error.
+     * Whether the reference solution declares exactly the approved Java Public API, each type in the exercise package, and would pass the structural oracle written from that
+     * contract. The server derives its structural checks from that oracle and looks the types up in the exercise package, so a structural check that fails on such a solution
+     * exposes a server seeding defect rather than an authoring error.
      *
      * @param exercisePackage the package the structural checks expect every Design type in
      */
@@ -82,8 +82,11 @@ public final class ApprovedOwnershipGate {
         Set<String> designTypes = StageChecks.designTableRows(approvedSpec).stream().map(StageChecks.DesignRow::type).collect(Collectors.toSet());
         ApprovedStructuralContract.ParseResult structuralContract = ApprovedStructuralContract.parse(approvedSpec, designTypes,
                 Set.copyOf(StageChecks.specStudentCreatedTypes(approvedSpec)));
+        String expectedPackage = Objects.requireNonNullElse(exercisePackage, "");
+        // The seeded checks compare what the oracle lists, annotations and modifiers included, so the solution is judged against that oracle rather than signatures alone.
         return structuralContract.valid() && structuralContract.contract().solutionSurfaceReasons(producedSolutionFiles).isEmpty()
-                && designTypes.stream().allMatch(type -> declaredInPackage(producedSolutionFiles, type, Objects.requireNonNullElse(exercisePackage, "")));
+                && structuralContract.contract().solutionOracleMismatches(producedSolutionFiles, expectedPackage).isEmpty()
+                && designTypes.stream().allMatch(type -> declaredInPackage(producedSolutionFiles, type, expectedPackage));
     }
 
     /** Whether a source of the package declares the type; a generic Design cell such as {@code Stack<T>} names the type {@code Stack}. */

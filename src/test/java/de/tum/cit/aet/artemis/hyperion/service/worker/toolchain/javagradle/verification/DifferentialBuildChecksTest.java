@@ -41,8 +41,39 @@ class DifferentialBuildChecksTest {
     @Test
     void aStructuralCheckFailingBecauseTheCandidateClassCannotInitializeIsNotAServerDefect() {
         for (String message : List.of("java.lang.ExceptionInInitializerError", "java.lang.NoClassDefFoundError: Could not initialize class de.test.Level")) {
-            assertThat(DifferentialBuildChecks.structuralSeedingDefectReasons(failing(message), Set.of(STRUCTURAL), List.of(SPEC), CONFORMING, "de.test", true)).as(message).isEmpty();
+            assertThat(DifferentialBuildChecks.structuralSeedingDefectReasons(failing(message), Set.of(STRUCTURAL), List.of(SPEC), CONFORMING, "de.test", true)).as(message)
+                    .isEmpty();
         }
+    }
+
+    /**
+     * Students write JUnit tests: the oracle lists no annotations, so Ares expects none on testNullInput and fails testMethods on the solution's @Test, although the signatures
+     * match the approved API. The seeded check is then right about the solution, so this is no server defect.
+     */
+    @Test
+    void anAnnotationTheStructuralOracleDoesNotListIsNotAServerDefect() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | CommandLineValidatorTest | tests students write | stubbed |
+                ## Public API
+                ### CommandLineValidatorTest
+                ```java
+                public class CommandLineValidatorTest { public void testNullInput() {} }
+                ```
+                """;
+        String structural = "testMethods[CommandLineValidatorTest]";
+        BuildSummary solution = new BuildSummary(1, 1, 1, false, List.of(structural), List.of(structural), List.of(new AgentVerifyReport.TestFailureEvidence(structural,
+                "org.opentest4j.AssertionFailedError: The annotation(s) of the expected method 'testNullInput' are not implemented as expected.")), "");
+        Map<String, String> annotated = Map.of("src/de/test/CommandLineValidatorTest.java",
+                "package de.test; import org.junit.jupiter.api.Test; public class CommandLineValidatorTest { @Test public void testNullInput() {} }");
+        Map<String, String> plain = Map.of("src/de/test/CommandLineValidatorTest.java",
+                "package de.test; public class CommandLineValidatorTest { @SuppressWarnings(\"unused\") public void testNullInput() {} }");
+
+        assertThat(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, Set.of(structural), List.of(spec), annotated, "de.test", true)).isEmpty();
+        assertThat(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, Set.of(structural), List.of(spec), plain, "de.test", true)).as("only source-level annotations")
+                .singleElement().asString().startsWith(VerificationResult.SERVER_DEFECT_PREFIX);
     }
 
     @Test
@@ -62,8 +93,8 @@ class DifferentialBuildChecksTest {
                 "");
 
         // The initialization failure is the candidate's to repair, so the remaining structural failure is reported but cannot end the run.
-        assertThat(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, Set.of(STRUCTURAL, other), List.of(SPEC), CONFORMING, "de.test", true)).singleElement().asString()
-                .startsWith("Possible server defect, reported for information").contains(other).doesNotContain(STRUCTURAL);
+        assertThat(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, Set.of(STRUCTURAL, other), List.of(SPEC), CONFORMING, "de.test", true)).singleElement()
+                .asString().startsWith("Possible server defect, reported for information").contains(other).doesNotContain(STRUCTURAL);
     }
 
     @Test
