@@ -1457,7 +1457,7 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(comp.complaint()).toBeUndefined();
         });
 
-        it.each([ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])('should load the latest rated result of a %s exercise for the details panel', (type) => {
+        it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])('should load the latest rated result of a %s exercise for the details panel', (type) => {
             comp.exercise = { ...exercise, type } as unknown as Exercise;
             vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as unknown as EntityResponseType));
 

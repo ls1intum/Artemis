@@ -791,11 +791,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             },
         });
 
-        // The details panel offers the rating and the complaint from this result; the modeling editor still renders both itself.
-        if (this.exercise!.type === ExerciseType.MODELING) {
-            return;
-        }
-
         const ratedResults = getAllResultsOfAllSubmissions(graded?.submissions)
             ?.filter((result: Result) => result.rated)
             .sort(this.resultSortFunction);
