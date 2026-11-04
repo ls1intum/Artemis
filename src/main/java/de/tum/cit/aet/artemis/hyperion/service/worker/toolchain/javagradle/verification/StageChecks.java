@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.WorkspaceArchive;
@@ -55,7 +56,7 @@ public class StageChecks {
     private static final Logger log = LoggerFactory.getLogger(StageChecks.class);
 
     private static final List<String> REQUIRED_SPEC_HEADINGS = List.of("## Rules", "## Worked Examples", "## Design", "## Public API", "## Testing Strategy",
-            "## Contract Risk Inventory", "## Diagram");
+            "## Contract Risk Inventory");
 
     /** The only template-status tokens a SPEC.md '## Design' data row may carry; 'student-creates' additionally arms the template omit-gate. */
     private static final Set<String> TEMPLATE_STATUS_TOKENS = Set.of("given", "stubbed", "student-creates");
@@ -194,8 +195,7 @@ public class StageChecks {
         String spec = Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "SPEC.md"), "");
         if (spec.isBlank()) {
             return StageCheckResult.failed("SPEC.md is missing or empty. Write /workspace/SPEC.md with '## Rules' (numbered R1..Rn), a '## Worked Examples' "
-                    + "table, a '## Design' table, a compact '## Public API' contract, a '## Testing Strategy', a '## Contract Risk Inventory', and a '## Diagram' decision "
-                    + "before continuing.");
+                    + "table, a '## Design' table, a compact '## Public API' contract, a '## Testing Strategy', and a '## Contract Risk Inventory' before " + "continuing.");
         }
         Set<String> exactSpecLines = spec.lines().map(String::strip).collect(Collectors.toSet());
         List<String> missingSpecSections = REQUIRED_SPEC_HEADINGS.stream().filter(heading -> !exactSpecLines.contains(heading)).toList();
@@ -891,10 +891,8 @@ public class StageChecks {
                     + "frame the goal as \"we\" and the work as \"you\" with imperative tasks ('Define ...', 'Implement ...').");
         }
         String authoritativeSpec = authoritativeSpec(sandbox, sessionId);
-        boolean diagramPromised = ProblemStatementBindingChecker.specPromisesDiagram(authoritativeSpec);
-        if (diagramPromised && !statement.contains("@startuml")) {
-            return StageCheckResult.failed("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
-                    + "the tasks it illustrates (with testsColor links). The accepted diagram decision cannot be revoked after the specification gate.");
+        if (ExerciseIntegrityGate.diagramRequired(authoritativeSpec) && !statement.contains("@startuml")) {
+            return StageCheckResult.failed("The statement contains no @startuml class diagram, but this exercise requires one. " + AgentSystemPrompt.DIAGRAM_REQUIREMENT_RULE);
         }
         List<String> duplicateHeadings = ProblemStatementBindingChecker.duplicateHeadings(statement);
         if (!duplicateHeadings.isEmpty()) {

@@ -522,6 +522,18 @@ final class ApprovedStructuralContract {
         return message == null ? "unknown parser error" : message.replace('\n', ' ').replace('\r', ' ').strip();
     }
 
+    /**
+     * Whether one of the given types extends or implements another of them, as declared in the approved Public API.
+     *
+     * @param typeNames simple names of the exercise's own types
+     * @return whether an inheritance or implementation relation connects two of them
+     */
+    boolean relatesAnyOf(Set<String> typeNames) {
+        return types.values().stream().filter(type -> typeNames.contains(type.getSimpleName()))
+                .anyMatch(type -> java.util.stream.Stream.concat(java.util.stream.Stream.ofNullable(type.getSuperJavaClass()), type.getInterfaces().stream())
+                        .map(JavaClass::getSimpleName).anyMatch(supertype -> !supertype.equals(type.getSimpleName()) && typeNames.contains(supertype)));
+    }
+
     record ParseResult(ApprovedStructuralContract contract, List<String> errors) {
 
         boolean valid() {

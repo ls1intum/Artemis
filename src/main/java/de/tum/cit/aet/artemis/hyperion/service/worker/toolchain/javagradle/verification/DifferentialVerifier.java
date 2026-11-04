@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.CollectedReports;
@@ -560,13 +561,11 @@ public class DifferentialVerifier {
         if (!headingsUnique) {
             statementReasons.add("The statement repeats these headings verbatim: " + duplicateHeadings + ". Merge or remove the duplicate sections.");
         }
-        // The approved specification, never the live file: rewriting '## Diagram' from yes to no under gate pressure must not make this pass vacuously.
-        boolean diagramPromised = approvedSpecs.approved(sessionId).filter(ProblemStatementBindingChecker::specPromisesDiagram).isPresent();
-        boolean statementHonoursDiagramPromise = !(diagramPromised && !problemStatement.contains("@startuml"));
+        // Derived from the approved specification, never the live file, so editing the design under gate pressure cannot make this pass vacuously.
+        boolean diagramRequired = approvedSpecs.approved(sessionId).filter(ExerciseIntegrityGate::diagramRequired).isPresent();
+        boolean statementHonoursDiagramPromise = !(diagramRequired && !problemStatement.contains("@startuml"));
         if (!statementHonoursDiagramPromise) {
-            statementReasons
-                    .add("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram (with testsColor links) after "
-                            + "the tasks it illustrates. The accepted diagram decision cannot be revoked after the specification gate.");
+            statementReasons.add("The statement contains no @startuml class diagram, but this exercise requires one. " + AgentSystemPrompt.DIAGRAM_REQUIREMENT_RULE);
         }
 
         boolean testArtifactGatesPass = laneResultsSound && solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0;

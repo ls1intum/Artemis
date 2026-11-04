@@ -231,6 +231,30 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
+     * Whether the statement must show a class diagram, decided from the approved design rather than by the specification author, for whom declining is always cheaper: the
+     * exercise's own Design-table types extend or implement one another, or at least two of them are student-owned (stubbed or student-created). A single student-owned type
+     * without relations among the exercise's types needs no overview.
+     *
+     * @param approvedSpec the approved specification
+     * @return whether the final statement must contain a PlantUML class diagram
+     */
+    public static boolean diagramRequired(@Nullable String approvedSpec) {
+        if (approvedSpec == null || approvedSpec.isBlank()) {
+            return false;
+        }
+        List<StageChecks.DesignRow> rows = StageChecks.designTableRows(approvedSpec);
+        long studentOwned = rows.stream().filter(row -> "stubbed".equals(row.status()) || "student-creates".equals(row.status())).map(StageChecks.DesignRow::type).distinct()
+                .count();
+        if (studentOwned >= 2) {
+            return true;
+        }
+        Set<String> designTypes = rows.stream().map(StageChecks.DesignRow::type).collect(Collectors.toSet());
+        ApprovedStructuralContract.ParseResult contract = ApprovedStructuralContract.parse(approvedSpec, designTypes,
+                Set.copyOf(StageChecks.specStudentCreatedTypes(approvedSpec)));
+        return contract.valid() && contract.contract().relatesAnyOf(designTypes);
+    }
+
+    /**
      * Whether the reference solution declares exactly the approved Java Public API. The server derives its structural checks from that same contract, so a structural check
      * that fails on such a solution exposes a server seeding defect rather than an authoring error.
      */

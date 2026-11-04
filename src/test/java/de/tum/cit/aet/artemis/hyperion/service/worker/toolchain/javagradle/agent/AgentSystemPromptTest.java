@@ -114,17 +114,17 @@ class AgentSystemPromptTest {
     }
 
     @Test
-    void specificationPromptCarriesTheDiagramDefaultOfTheStyleGuideItCannotRead() throws IOException {
-        String styleGuide;
-        try (InputStream input = new GenerationResources().getResource(Path.of("templates/hyperion/style/spec.md")).getInputStream()) {
-            styleGuide = normalizeWhitespace(new String(input.readAllBytes(), StandardCharsets.UTF_8));
-        }
-        String section = styleGuide.substring(styleGuide.indexOf("## Diagram"));
-        String defaultRule = section.substring(section.indexOf("yes when"), section.indexOf("carries the work.") + "carries the work.".length());
+    void theServerOwnsTheDiagramDecisionAndTheStatementStageReceivesItsRule() throws IOException {
+        String rule = normalizeWhitespace(AgentSystemPrompt.DIAGRAM_REQUIREMENT_RULE);
 
-        assertThat(normalizeWhitespace(prompts.buildStage(input(false), GenerationStage.SPEC))).contains(defaultRule, "A yes obliges the statement to include a class diagram.");
-        assertThat(normalizeWhitespace(prompts.buildStage(input(false), GenerationStage.STATEMENT)))
-                .contains("When the approved `## Diagram` says yes, the statement must contain one PlantUML", "the gate rejects a statement without it");
+        assertThat(prompts.buildStage(input(false), GenerationStage.SPEC)).doesNotContain("`## Diagram`:").contains("Artemis decides from the Design table and Public API");
+        assertThat(normalizeWhitespace(prompts.buildStage(input(false), GenerationStage.STATEMENT))).contains(rule, "The handoff states whether this exercise requires a diagram.");
+        try (InputStream input = new GenerationResources().getResource(Path.of("templates/hyperion/style/final-statement.md")).getInputStream()) {
+            assertThat(normalizeWhitespace(new String(input.readAllBytes(), StandardCharsets.UTF_8))).contains(rule);
+        }
+        try (InputStream input = new GenerationResources().getResource(Path.of("templates/hyperion/style/spec.md")).getInputStream()) {
+            assertThat(new String(input.readAllBytes(), StandardCharsets.UTF_8)).doesNotContain("## Diagram");
+        }
     }
 
     private static String normalizeWhitespace(String text) {

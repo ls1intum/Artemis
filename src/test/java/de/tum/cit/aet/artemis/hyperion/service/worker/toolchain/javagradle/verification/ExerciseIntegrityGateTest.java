@@ -1331,6 +1331,34 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ClientTest.java", capture, "test/T.java", ownData, "test/U.java", commentedOut))).isEmpty();
     }
 
+    private static String designAndApi(String designRows, String... declarations) {
+        StringBuilder api = new StringBuilder();
+        for (String declaration : declarations) {
+            String type = declaration.replaceFirst("^.*?(?:class|interface|enum|record)\\s+(\\w+).*$", "$1");
+            api.append("### ").append(type).append("\n```java\n").append(declaration).append("\n```\n");
+        }
+        return "## Design\n| Type | Role | Template status |\n|---|---|---|\n" + designRows + "\n## Public API\n" + api;
+    }
+
+    @Test
+    void diagramRequired_derivesFromRelationsAmongExerciseTypesAndStudentOwnedTypes() {
+        String hierarchy = designAndApi("| Shape | base | given |\n| Circle | shape | stubbed |\n", "public abstract class Shape { public abstract double area(); }",
+                "public class Circle extends Shape { public double area(); }");
+        String implementation = designAndApi("| Strategy | policy | given |\n| Doubling | policy | stubbed |\n", "public interface Strategy { int apply(int value); }",
+                "public class Doubling implements Strategy { public int apply(int value); }");
+        String twoStudentOwned = designAndApi("| Account | balance | stubbed |\n| Bank | accounts | student-creates |\n", "public class Account { public int balance(); }",
+                "public class Bank { public int total(); }");
+        String singleClass = designAndApi("| Calculator | computes | stubbed |\n| Printer | prints | given |\n",
+                "public class Calculator implements Comparable<Calculator> { public int compareTo(Calculator other); }", "public class Printer { public void print(int value); }");
+
+        assertThat(ExerciseIntegrityGate.diagramRequired(hierarchy)).as("a class hierarchy among exercise types").isTrue();
+        assertThat(ExerciseIntegrityGate.diagramRequired(implementation)).as("an exercise type implementing another").isTrue();
+        assertThat(ExerciseIntegrityGate.diagramRequired(twoStudentOwned)).as("two student-owned types").isTrue();
+        assertThat(ExerciseIntegrityGate.diagramRequired(singleClass)).as("one student-owned class whose only supertype is a library type").isFalse();
+        assertThat(ExerciseIntegrityGate.diagramRequired(singleClass + "\n## Diagram\nyes — the author asked for one\n")).as("the author's answer has no say").isFalse();
+        assertThat(ExerciseIntegrityGate.diagramRequired(null)).isFalse();
+    }
+
     @Test
     void statementTasks_requireInstructionTextBeforeTheNextTask() {
         assertThat(ExerciseIntegrityGate.statementTaskInstructionReasons("[task][First](one)\n[task][Second](two)\n")).singleElement().asString().contains("First", "Second",

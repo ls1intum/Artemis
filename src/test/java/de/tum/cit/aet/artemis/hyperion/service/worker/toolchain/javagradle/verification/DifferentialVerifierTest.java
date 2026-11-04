@@ -1771,8 +1771,10 @@ class DifferentialVerifierTest {
                             Set.<String>of(), PROBLEM_STATEMENT_WITH_TASK + "hide empty fields\n@startuml\nclass Sorter\n@enduml\n", null, "render as stray text"),
                     Arguments.of("a heading repeated verbatim duplicates a section", Map.<String, String>of(), Map.<String, String>of(), Set.<String>of(),
                             PROBLEM_STATEMENT_WITH_TASK + "# Sort\nMore about sorting.\n", null, "repeats these headings verbatim"),
-                    Arguments.of("a diagram promised by the approved specification cannot be dropped from the statement", Map.<String, String>of(), Map.<String, String>of(),
-                            Set.<String>of(), PROBLEM_STATEMENT_WITH_TASK, "## Diagram\nyes — several collaborating types\n", "'## Diagram' section says yes"));
+                    Arguments.of("a diagram the approved design requires cannot be dropped from the statement", Map.<String, String>of(),
+                            Map.of("src/de/test/Sorter.java", "package de.test; public class Sorter {}", "src/de/test/Order.java", "package de.test; public class Order {}"),
+                            Set.<String>of(), PROBLEM_STATEMENT_WITH_TASK,
+                            "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Sorter | sorts | stubbed |\n| Order | orders | stubbed |\n", "requires one"));
         }
 
         @ParameterizedTest(name = "{0}")

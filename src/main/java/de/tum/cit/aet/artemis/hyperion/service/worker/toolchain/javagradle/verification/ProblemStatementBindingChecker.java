@@ -22,10 +22,6 @@ import net.sourceforge.plantuml.security.SecurityUtils;
 /** Parses and validates problem-statement {@code [task][title](testName)} bindings and detects grader-internal prose leaks. */
 final class ProblemStatementBindingChecker {
 
-    private static final Pattern YES_DECISION = Pattern.compile("(?i)^yes(?:$|\\s|[—–:-]).*");
-
-    private static final Pattern LIST_MARKER = Pattern.compile("^[-*+]\\s+");
-
     private static final Pattern PLANTUML_BLOCK = Pattern.compile("@startuml\\b.*?(?:@enduml|\\z)", Pattern.DOTALL);
 
     /**
@@ -112,22 +108,6 @@ final class ProblemStatementBindingChecker {
             }
         }
         return false;
-    }
-
-    /** Whether the first non-blank line of the specification's bounded {@code ## Diagram} section declares "yes". */
-    static boolean specPromisesDiagram(String spec) {
-        int index = spec.indexOf("## Diagram");
-        if (index < 0) {
-            return false;
-        }
-        String section = spec.substring(index + "## Diagram".length());
-        int nextHeading = section.indexOf("## ");
-        if (nextHeading >= 0) {
-            section = section.substring(0, nextHeading);
-        }
-        String firstLine = section.lines().map(String::strip).filter(line -> !line.isBlank()).findFirst().orElse("");
-        String decision = LIST_MARKER.matcher(firstLine).replaceFirst("").replace("*", "").replace("_", "").strip();
-        return YES_DECISION.matcher(decision).matches();
     }
 
     /** Task bindings followed only by another task, a heading, or the end of the statement, with no instruction in between. */

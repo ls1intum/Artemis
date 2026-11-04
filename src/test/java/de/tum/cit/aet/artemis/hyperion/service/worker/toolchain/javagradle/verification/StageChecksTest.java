@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 
 /**
@@ -718,37 +719,21 @@ class StageChecksTest {
         }
 
         @Test
-        void fails_whenTheSpecSaysDiagramYesButTheStatementHasNone() {
-            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise",
-                    "## Diagram\nYes – strategies collaborate with the context");
+        void fails_whenTheDesignRequiresADiagramButTheStatementHasNone() {
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n| Formatter | formats | student-creates |\n");
             sandbox.problemStatement = "# T\nImplement the strategy.\n";
 
             StageCheckResult result = check(GenerationStage.STATEMENT, null);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("no @startuml diagram");
+            assertThat(result.observation()).contains("no @startuml class diagram", "requires one", AgentSystemPrompt.DIAGRAM_REQUIREMENT_RULE);
         }
 
         @Test
-        void fails_whenTheBoldDiagramDecisionSaysYesButTheStatementHasNone() {
-            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise",
-                    "## Diagram\n**Yes** – strategies collaborate with the context");
-            sandbox.problemStatement = "# T\nImplement the strategy.\n";
-
-            StageCheckResult result = check(GenerationStage.STATEMENT, null);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("no @startuml diagram");
-        }
-
-        @Test
-        void doesNotTreatYesterdayOrYesSlashNoAsADiagramPromise() {
-            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise",
-                    "## Diagram\nYesterday we considered one\n\n## Later\nyes");
+        void ignoresTheAuthorsDiagramAnswerWhenTheDesignNeedsNoDiagram() {
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise", "## Diagram\nYes – please draw one");
             sandbox.problemStatement = "# T\nExplain the result.\n";
-            assertThat(check(GenerationStage.STATEMENT, null).passed()).isTrue();
 
-            sandbox.spec = sandbox.spec.replace("Yesterday we considered one", "yes/no undecided");
             assertThat(check(GenerationStage.STATEMENT, null).passed()).isTrue();
         }
 
@@ -847,16 +832,15 @@ class StageChecksTest {
     class ApprovedSpecification {
 
         @Test
-        void keepsTheApprovedDiagramPromise_afterTheLiveSpecRevokesIt() {
-            approvedSpecs.approve("s",
-                    specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise", "## Diagram\nYes – several collaborating types"));
+        void derivesTheDiagramRequirementFromTheApprovedDesign_notTheLiveSpec() {
+            approvedSpecs.approve("s", specWithDesign("| Calculator | computes | stubbed |\n| Formatter | formats | student-creates |\n"));
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n");
             sandbox.problemStatement = "# T\nImplement it.\n";
 
             StageCheckResult result = check(GenerationStage.STATEMENT, null);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("no @startuml diagram");
+            assertThat(result.observation()).contains("no @startuml class diagram", "requires one");
         }
     }
 
@@ -1355,7 +1339,7 @@ class StageChecksTest {
 
             assertThat(result.passed()).isFalse();
             assertThat(result.observation()).contains("missing required section(s)").contains("## Rules").contains("## Worked Examples").contains("## Design")
-                    .contains("## Public API").contains("## Testing Strategy").contains("## Contract Risk Inventory").contains("## Diagram");
+                    .contains("## Public API").contains("## Testing Strategy").contains("## Contract Risk Inventory").doesNotContain("## Diagram");
         }
 
         @Test

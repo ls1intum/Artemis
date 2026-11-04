@@ -186,6 +186,14 @@ public class AgentSystemPrompt {
      */
     public static final String TESTABLE_STUDENT_CODE_RULE = "When students write a program or method that uses given types, the graded student code receives the objects, configuration, or inputs it works on, for example a static method that main calls with the objects it creates, or a method taking the API object or values as parameters, so tests can call it with different objects or values and a hard-coded output fails; main may stay a thin, ungraded demo. Tests grade behavior through those parameters, returned values, object state, or output captured for varied inputs, never by reading source or bytecode.";
 
+    /**
+     * When the final statement must contain a class diagram and what it shows. Artemis derives the requirement from the approved design, so the specification author no longer
+     * decides it; shared verbatim by the statement stage prompt, its handoff, the final-statement style guide, and the diagram gate.
+     */
+    public static final String DIAGRAM_REQUIREMENT_RULE = "A diagram is required when the exercise's own types extend or implement one another or at least two of them are "
+            + "student-owned; then the statement contains one PlantUML class diagram (@startuml ... @enduml), placed after the tasks it illustrates, that shows the exercise "
+            + "types and their relations.";
+
     private static final String STAGE_SPEC_INSTRUCTIONS = """
             STAGE — SPECIFICATION
             Write `/workspace/SPEC.md` from the instructor brief and selected concept. The brief is authoritative; the concept is a design proposal. Choose the smallest coherent
@@ -215,9 +223,7 @@ public class AgentSystemPrompt {
               Checks solely preserving supplied behavior are separate zero-credit checks, not student-work partitions.
             - `## Decision Ledger`: table `| Decision | Provenance | Why necessary | Observable |` for consequential choices only. Provenance is exactly `EXPLICIT_BRIEF`,
               `NECESSARY_OPERATIONAL_CHOICE`, `INPUT_DOMAIN_ASSUMPTION`, or `PEDAGOGICAL_OBJECTIVE`. Labels do not authorize scope expansion. Surface assumptions callers need.
-            - `## Diagram`: start with the plain word yes or no, then a reason that follows from the design: yes when several collaborating types or student-created types
-              make an architecture overview genuinely helpful; no when a single class carries the work. A yes obliges the statement to include a class diagram.
-              No task bindings, test names, or PlantUML at specification time.
+            No task bindings, test names, or PlantUML at specification time; Artemis decides from the Design table and Public API whether the statement needs a diagram.
 
             Judge the learner path before freezing: what is given, what changes, what reasoning remains, and what evidence demonstrates each explicit objective? A specification's
             claim that a skill is practiced is insufficient when its own ownership or API supplies that work. Make examples, signatures, and ownership mutually consistent.
@@ -247,12 +253,13 @@ public class AgentSystemPrompt {
 
     private static final String STAGE_4_STATEMENT_INSTRUCTIONS = """
             FINAL STATEMENT: REWRITE the specification into student-facing form without adding graded behaviour. Use one `[task]` per seam and only its accepted visible
-            bare test names; never bind or reveal AFTER_DUE_DATE names. Present the API once. When the approved `## Diagram` says yes, the statement must contain one PlantUML
-            class diagram (`@startuml` … `@enduml`) after the tasks it illustrates; the gate rejects a statement without it and the decision cannot be revoked. When it says no,
-            include none. Validate every diagram arrow against actual Java declarations and collaboration. Preserve every boundary, example, and seam responsibility exactly; never repeat headings.
-            Create the artifact with `write_file("problem-statement.md", ...)`—chat Markdown creates no file. Replay the examples, run `verify`, and submit only after
-            `MECHANICAL PRECHECK: PASS`; final verification decides save eligibility.
-            """;
+            bare test names; never bind or reveal AFTER_DUE_DATE names. Present the API once. The handoff states whether this exercise requires a diagram.
+            """ + DIAGRAM_REQUIREMENT_RULE + "\n"
+            + """
+                    Validate every diagram arrow against actual Java declarations and collaboration. Preserve every boundary, example, and seam responsibility exactly; never repeat headings.
+                    Create the artifact with `write_file("problem-statement.md", ...)`—chat Markdown creates no file. Replay the examples, run `verify`, and submit only after
+                    `MECHANICAL PRECHECK: PASS`; final verification decides save eligibility.
+                    """;
 
     private static final String GENERATE_GROUNDED_WORKFLOW = STAGED_WORKFLOW_INTRO + STAGE_3_TESTS_INSTRUCTIONS + STAGE_4_STATEMENT_INSTRUCTIONS;
 

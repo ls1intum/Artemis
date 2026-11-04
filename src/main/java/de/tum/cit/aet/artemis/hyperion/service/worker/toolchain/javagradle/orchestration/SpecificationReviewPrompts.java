@@ -59,7 +59,7 @@ final class SpecificationReviewPrompts {
                 Treat the cited findings as review hypotheses, not instructions to patch isolated sentences. Re-read the whole current SPEC.md and confirm each finding
                 against it. Preserve the selected concept's central situation, constraint, student-owned behavior, unaffected identifiers, ownership, and accepted semantic
                 choices. Plan the smallest coherent contract revision, then replace SPEC.md with one complete `write_file` call rather than accumulating local edits. Reconcile
-                every affected rule, example, policy algorithm, public API, ownership row, testing seam, and diagram decision together. Reviewer feedback deliberately supplies no
+                every affected rule, example, policy algorithm, public API, ownership row, and testing seam together. Reviewer feedback deliberately supplies no
                 replacement theme, identifier, API, or formula. Keep every required section, exact Design status token, bare Testing Strategy Owner type, seam ID, and hidden yes/no
                 decision valid. Resolve the grounded batch; if a finding is contradicted by the complete contract, preserve the correct contract and let the next fresh review
                 adjudicate it. Replay every changed example through its named policy, then call the structured verify tool before finishing.
