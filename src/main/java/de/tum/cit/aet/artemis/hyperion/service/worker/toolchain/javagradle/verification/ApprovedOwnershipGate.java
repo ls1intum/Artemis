@@ -69,17 +69,28 @@ public final class ApprovedOwnershipGate {
     }
 
     /**
-     * Whether the reference solution declares exactly the approved Java Public API. The server derives its structural checks from that same contract, so a structural check
-     * that fails on such a solution exposes a server seeding defect rather than an authoring error.
+     * Whether the reference solution declares exactly the approved Java Public API, each type in the exercise package. The server derives its structural checks from that same
+     * contract and looks the types up in the exercise package, so a structural check that fails on such a solution exposes a server seeding defect rather than an authoring
+     * error.
+     *
+     * @param exercisePackage the package the structural checks expect every Design type in
      */
-    static boolean solutionMatchesApprovedApi(String approvedSpec, Map<String, String> producedSolutionFiles) {
+    static boolean solutionMatchesApprovedApi(String approvedSpec, Map<String, String> producedSolutionFiles, @Nullable String exercisePackage) {
         if (approvedSpec == null || !approvedSpec.contains("## Public API")) {
             return false;
         }
         Set<String> designTypes = StageChecks.designTableRows(approvedSpec).stream().map(StageChecks.DesignRow::type).collect(Collectors.toSet());
         ApprovedStructuralContract.ParseResult structuralContract = ApprovedStructuralContract.parse(approvedSpec, designTypes,
                 Set.copyOf(StageChecks.specStudentCreatedTypes(approvedSpec)));
-        return structuralContract.valid() && structuralContract.contract().solutionSurfaceReasons(producedSolutionFiles).isEmpty();
+        return structuralContract.valid() && structuralContract.contract().solutionSurfaceReasons(producedSolutionFiles).isEmpty()
+                && designTypes.stream().allMatch(type -> declaredInPackage(producedSolutionFiles, type, Objects.requireNonNullElse(exercisePackage, "")));
+    }
+
+    /** Whether a source of the package declares the type; a generic Design cell such as {@code Stack<T>} names the type {@code Stack}. */
+    private static boolean declaredInPackage(Map<String, String> files, String designType, String expectedPackage) {
+        String type = designType.contains("<") ? designType.substring(0, designType.indexOf('<')).strip() : designType.strip();
+        return !JAVA_IDENTIFIER.matcher(type).matches() || files.values().stream().filter(Objects::nonNull).anyMatch(
+                source -> JavaSourceInspector.sourceDeclaresType(source, type) && expectedPackage.equals(javaPackage(JavaSourceInspector.maskCommentsAndLiterals(source))));
     }
 
     /**

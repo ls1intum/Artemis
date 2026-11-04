@@ -219,8 +219,8 @@ public class DifferentialVerifier {
                 .toList();
         boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
         reasons.addAll(approvedSpecificationReasons);
-        reasons.addAll(
-                DifferentialBuildChecks.structuralSeedingDefectReasons(solution, request.seededStructuralTestNames(), contractSpecifications, request.producedSolutionFiles()));
+        reasons.addAll(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, request.seededStructuralTestNames(), contractSpecifications,
+                request.producedSolutionFiles(), exercise.packageName()));
         String approvedSpec = String.join("\n\n", contractSpecifications);
         List<String> approvedTestPlanReasons = ExerciseIntegrityGate.approvedTestPlanReasons(approvedSpec, request.producedTestPlan(), solution.testNames(), exercise.hasDueDate(),
                 request.seededStructuralTestNames(), baselineHiddenTestNames);
@@ -315,7 +315,7 @@ public class DifferentialVerifier {
                 .flatMap(spec -> ApprovedOwnershipGate.approvedSpecificationReasons(spec, templateFiles, solutionFiles).stream()).distinct().toList();
         boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
         reasons.addAll(approvedSpecificationReasons);
-        reasons.addAll(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, seededStructuralTestNames, contractSpecifications, solutionFiles));
+        reasons.addAll(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, seededStructuralTestNames, contractSpecifications, solutionFiles, exercise.packageName()));
         List<String> approvedTestPlanReasons = includeStatementChecks
                 ? ExerciseIntegrityGate.approvedTestPlanReasons(String.join("\n\n", contractSpecifications), testPlanJson, solution.testNames(), exercise.hasDueDate(),
                         seededStructuralTestNames, baselineHiddenTestNames)

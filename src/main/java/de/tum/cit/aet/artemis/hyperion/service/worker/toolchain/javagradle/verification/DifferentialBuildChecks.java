@@ -54,21 +54,20 @@ final class DifferentialBuildChecks {
     }
 
     /**
-     * Names server-owned structural checks that fail on a reference solution matching the approved Public API. The server derived them from that contract, so the failure is a
-     * seeding defect the agent cannot repair. The checks still fail verification; this only keeps the diagnostic from presenting the defect as an authoring error. A check that
-     * failed because initializing a candidate class threw is not one: the candidate's own code failed, and it can repair that. Only the other failing checks are named, and
-     * only they can make the build a server defect.
+     * Names server-owned structural checks that fail on a reference solution matching the approved Public API in the exercise package. The server derived them from that contract,
+     * so the failure is a seeding defect the agent cannot repair. The checks still fail verification; this only keeps the diagnostic from presenting the defect as an authoring
+     * error. A check that failed because initializing a candidate class threw is not one: the candidate's own code failed, and it can repair that. Only the other failing checks
+     * are named, and only they can make the build a server defect.
      */
     static List<String> structuralSeedingDefectReasons(BuildSummary solution, Set<String> seededStructuralTestNames, List<String> contractSpecifications,
-            Map<String, String> solutionFiles) {
+            Map<String, String> solutionFiles, String exercisePackage) {
         Set<String> seeded = seededStructuralTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
-        Set<String> candidateInitializationFailures = solution.failureEvidence().stream()
-                .filter(evidence -> CANDIDATE_INITIALIZATION_FAILURE.matcher(evidence.message()).find())
+        Set<String> candidateInitializationFailures = solution.failureEvidence().stream().filter(evidence -> CANDIDATE_INITIALIZATION_FAILURE.matcher(evidence.message()).find())
                 .map(evidence -> ProblemStatementBindingChecker.normalizeTestName(evidence.testName())).collect(Collectors.toSet());
         List<String> failingSeeded = solution.testFailedNames().stream().map(ProblemStatementBindingChecker::normalizeTestName)
                 .filter(name -> seeded.contains(name) && !candidateInitializationFailures.contains(name)).distinct().sorted().toList();
         if (failingSeeded.isEmpty() || contractSpecifications.isEmpty()
-                || !contractSpecifications.stream().allMatch(spec -> ApprovedOwnershipGate.solutionMatchesApprovedApi(spec, solutionFiles))) {
+                || !contractSpecifications.stream().allMatch(spec -> ApprovedOwnershipGate.solutionMatchesApprovedApi(spec, solutionFiles, exercisePackage))) {
             return List.of();
         }
         return List.of(VerificationResult.SERVER_DEFECT_PREFIX + " the server-owned structural check(s) " + failingSeeded + " fail on the reference solution although it "
