@@ -135,7 +135,7 @@ final class GenerationReviewSupport {
         // A pure insertion replaces no original line; anchor it at the original line after the insertion point, clamped to the file.
         int lastLine = Math.max(1, original.size());
         int start = Math.min(prefix + 1, lastLine);
-        int end = Math.clamp(original.size() - suffix, start, lastLine);
+        int end = Math.clamp((long) original.size() - suffix, start, lastLine);
         return new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, mutant.solutionPath(), start, end);
     }
 
