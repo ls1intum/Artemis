@@ -949,6 +949,42 @@ class GenerationAttemptLoopTest {
         assertThat(loop.lastMechanicallyVerifiedCandidate().problemStatement()).isEqualTo("PROBLEM STATEMENT 1");
     }
 
+    static Stream<Arguments> repairedSolutionsWithoutAVerdict() {
+        // The repair either changes the survivor's file, so its recheck is inconclusive, or deletes it, so there is nothing to execute.
+        return Stream.of(Arguments.of("changed file", Map.of("src/Scheduler.java", "class Scheduler { int contractFix; }")),
+                Arguments.of("deleted file", Map.of("src/Planner.java", "class Planner {}")));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("repairedSolutionsWithoutAVerdict")
+    void aSurvivorWithoutAVerdictStaysInTheReviewWhenTheRepairResolvesAnotherBlocker(String scenario, Map<String, String> repairedSolution) {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | honor every prerequisite |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any()))
+                .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any())).thenReturn(
+                new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false),
+                new GenerationWorkspace.RepositoryExtraction(repairedSolution, false));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), SpecFidelityReport.empty());
+        SemanticMutant survivor = mutant("R1", "allPrerequisites", "honors only the first prerequisite");
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(survivor), List.of());
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(survivor, Disposition.SURVIVED_GRADED_SUITE)), List.of());
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> checked = invocation.getArgument(5);
+            return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE)).toList();
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
+        // The contract blocker is gone, so the repaired candidate is kept; the survivor it never resolved must still be reported rather than vanish with the old file.
+        assertThat(loop.lastMechanicallyVerifiedCandidate().problemStatement()).isEqualTo("PROBLEM STATEMENT 2");
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE
+                && finding.detail().contains("R1") && finding.detail().contains("allPrerequisites") && finding.detail().contains("remains unresolved"));
+        assertThat(loop.terminationReason()).isNotEqualTo(TerminationReason.CONVERGED);
+    }
+
     /** R1 survives the first review and is killed by the first oracle repair; a fresh R2 then survives and is targeted by the second. */
     private void stubKilledThenFreshSurvivor(SemanticMutant first, SemanticMutant second) {
         stubSchedulerFixture();

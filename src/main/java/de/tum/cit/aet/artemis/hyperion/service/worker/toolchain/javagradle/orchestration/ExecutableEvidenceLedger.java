@@ -88,8 +88,9 @@ final class ExecutableEvidenceLedger {
     private List<SemanticMutant> semanticMutantsKilledByRepair = List.of();
 
     /**
-     * Prior survivors the latest executable review could not give a verdict: rechecks that were inconclusive, including those keyed to a changed source. They are neither
-     * killed nor drained, so the repair-progress comparison still counts them.
+     * Prior survivors the latest executable review could not give a verdict: rechecks that were inconclusive, including those keyed to a changed source, and survivors whose
+     * file was deleted. They are neither killed nor drained: the repair-progress comparison counts them, and the review reports them as unavailable evidence until an executed
+     * recheck resolves them.
      */
     private List<SemanticMutant> survivorsWithoutVerdict = List.of();
 
@@ -220,8 +221,8 @@ final class ExecutableEvidenceLedger {
         List<SemanticMutant> unexecutableStaleMutants = stalePendingMutants.stream().filter(mutant -> !mutant.printsTranscriptOnly())
                 .filter(mutant -> solutionFiles.get(mutant.solutionPath()) == null).toList();
         if (!rekeyedWithoutVerdict.isEmpty() || !unexecutableStaleMutants.isEmpty()) {
-            emitter.accept("Retired " + (rekeyedWithoutVerdict.size() + unexecutableStaleMutants.size()) + " pending semantic mutant(s) that no longer execute against the changed "
-                    + "reference source; they still count as unresolved, and the executable reviewer will propose replacements against the current solution.");
+            emitter.accept("Kept " + (rekeyedWithoutVerdict.size() + unexecutableStaleMutants.size()) + " pending semantic mutant(s) that no longer execute against the changed "
+                    + "reference source as unresolved evidence; the executable reviewer will propose replacements against the current solution.");
         }
         // Deterministic and model-free, so it runs on every reviewed candidate; a pending probe of the same class was just rechecked above, and a class probed against
         // these exact sources and tests reuses its verdict.
@@ -252,11 +253,12 @@ final class ExecutableEvidenceLedger {
         List<SemanticMutant> validatedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE)
                 .map(SemanticMutantOutcome::mutant).distinct().toList();
         List<SemanticMutant> inconclusivePendingMutants = pendingMutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)
-                .map(SemanticMutantOutcome::mutant).filter(mutant -> !rekeyedWithoutVerdict.contains(mutant)).toList();
-        survivorsWithoutVerdict = java.util.stream.Stream.of(inconclusivePendingMutants, rekeyedWithoutVerdict, unexecutableStaleMutants).flatMap(List::stream).distinct().toList();
+                .map(SemanticMutantOutcome::mutant).toList();
+        survivorsWithoutVerdict = java.util.stream.Stream.of(inconclusivePendingMutants, unexecutableStaleMutants).flatMap(List::stream).distinct().toList();
         semanticMutantsPendingRepair = validatedMutants;
-        // Preserve inconclusive rechecks as historical unavailable evidence; never upgrade them to current survivors.
-        semanticMutantsAwaitingRecheck = inconclusivePendingMutants;
+        // Preserve every prior survivor without a verdict, including one keyed to a changed or deleted source, as unavailable evidence until an executed recheck resolves it;
+        // never upgrade it to a current survivor.
+        semanticMutantsAwaitingRecheck = survivorsWithoutVerdict;
         inconclusiveMutantProbes = (int) mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE).count();
 
         Set<String> pendingWitnessNames = referenceWitnessesAwaitingPass.stream().map(ContractWitness::testName).collect(Collectors.toSet());
@@ -292,7 +294,7 @@ final class ExecutableEvidenceLedger {
                 .map(GenerationReviewSupport::approvedContractWitnessAvailable).forEach(combined::add);
         GenerationReviewSupport.addReferenceUnavailability(combined, witnessState.omittedReferenceAdjudication().size(), witnessState.pendingPassInconclusive().size(),
                 witnessState.referenceAdjudicationInconclusive().size());
-        inconclusivePendingMutants.forEach(mutant -> combined.add(GenerationReviewSupport.semanticMutantRecheckUnavailable(mutant)));
+        survivorsWithoutVerdict.forEach(mutant -> combined.add(GenerationReviewSupport.semanticMutantRecheckUnavailable(mutant)));
         witnessState.stillFailing().forEach(witness -> combined.add(GenerationReviewSupport.referenceDefectStillFailing(witness)));
         validatedMutants.forEach(mutant -> combined.add(GenerationReviewSupport.semanticMutantFinding(mutant)));
         positiveWitnessesAwaitingAdjudication.stream().map(GenerationReviewSupport::positiveWitnessAdjudicationUnavailable).filter(finding -> !combined.contains(finding))
