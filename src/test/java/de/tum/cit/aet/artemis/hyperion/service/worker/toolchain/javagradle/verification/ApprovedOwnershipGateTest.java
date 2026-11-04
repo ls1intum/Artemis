@@ -522,6 +522,11 @@ class ApprovedOwnershipGateTest {
                 .anySatisfy(reason -> assertThat(reason).contains("TODOs in given types", "src/Mage.java"))
                 .anySatisfy(reason -> assertThat(reason).contains("stubbed owner Mage", "declaring source"));
 
+        // A TODO outside the owner's body anchors nothing: above the class it could stand for any type of the file.
+        Map<String, String> todoAboveTheOwner = Map.of("src/Mage.java", "// TODO: delegate and switch\nclass Mage {\n}", "src/Spell.java", "interface Spell { int cast(); }");
+        assertThat(ApprovedOwnershipGate.templateTodoSeamReasons(spec, todoAboveTheOwner, Map.of())).singleElement().asString().contains("stubbed owner Mage",
+                "inside its declaration");
+
         // Text in a string literal is not a TODO comment.
         Map<String, String> todoOnlyInALiteral = Map.of("src/Mage.java", "class Mage { String hint = \"// TODO: delegate\"; }", "src/Spell.java",
                 "interface Spell { int cast(); }");

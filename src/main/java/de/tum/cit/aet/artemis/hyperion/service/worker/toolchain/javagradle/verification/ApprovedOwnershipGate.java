@@ -304,11 +304,11 @@ public final class ApprovedOwnershipGate {
             if (!"stubbed".equals(statusByType.get(row.ownerType()))) {
                 continue; // a student-created owner is absent; a malformed owner/status is rejected by the specification gate
             }
-            boolean anchored = todoOwnersByFile.entrySet().stream().anyMatch(entry -> JavaSourceInspector.sourceDeclaresType(javaFiles.get(entry.getKey()), row.ownerType())
-                    && entry.getValue().stream().anyMatch(owners -> owners.contains(row.ownerType()) || owners.isEmpty()));
+            // Only a TODO inside the owner's own body anchors it; one outside every declaration could stand for any type of the file.
+            boolean anchored = todoOwnersByFile.values().stream().flatMap(List::stream).anyMatch(owners -> owners.contains(row.ownerType()));
             if (!anchored) {
-                reasons.add("the stubbed owner " + row.ownerType() + " of seam " + row.seamId() + " has no '// TODO: ...' in its declaring source. Put the TODO at the "
-                        + "unfinished student work inside that source. If its student-owned members cannot be declared without an omitted student-created type, keep a "
+                reasons.add("the stubbed owner " + row.ownerType() + " of seam " + row.seamId() + " has no '// TODO: ...' inside its declaration in its declaring source. Put "
+                        + "the TODO at the unfinished student work inside the owner's body. If its student-owned members cannot be declared without an omitted student-created type, keep a "
                         + "compile-safe empty owner class and put the TODO once in the class body where those members will be added; do not restore the absent type or change "
                         + "SPEC.md.");
             }
