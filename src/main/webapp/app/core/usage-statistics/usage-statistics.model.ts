@@ -21,9 +21,17 @@ export interface UsageSemester {
     label: string;
     courses: number;
     students: number;
+    /** Student enrolments, not unique: a student of several courses is counted once per course. Absent in responses of a server that predates it. */
+    enrollments?: number;
+    /** Unique people with the instructor role in these courses. Absent in responses of a server that predates it. */
+    instructors?: number;
+    /** Unique people with the tutor or editor role in these courses. Absent in responses of a server that predates it. */
+    tutors?: number;
     activeStudents: number;
     submissions: number;
     lectures: number;
+    /** Units of these lectures. Absent in responses of a server that predates it. */
+    lectureUnits?: number;
     /** Number of exercises keyed by exercise type, every type is present. */
     exercisesByType: Record<string, number>;
     /** Absent for a semester that started before build jobs are deleted, and in responses of a server that predates the builds. */
@@ -34,6 +42,14 @@ export interface UsageSemester {
     irisMessages?: number;
     /** Tutorial groups, absent if tutorial groups are not enabled on this instance. */
     tutorialGroups?: number;
+    /** Real exams (no test exams, no titles starting with test or mock), absent if exams are not enabled on this instance. */
+    exams?: number;
+    /** Registrations of students for these exams, not unique: a student registered for several exams is counted once per exam. Absent if exams are not enabled. */
+    examRegistrations?: number;
+    /** Started exams of students in these exams, not unique: a student who took several exams is counted once per exam. Absent if exams are not enabled. */
+    examParticipations?: number;
+    /** Competencies without prerequisites, absent if the atlas module is not enabled on this instance. */
+    competencies?: number;
 }
 
 export interface PublicUsageStatistics {

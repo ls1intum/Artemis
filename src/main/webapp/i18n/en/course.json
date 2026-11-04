@@ -252,15 +252,15 @@
                     "label": "Formative feedback requests",
                     "enabledLabel": "Formative feedback requests are enabled",
                     "disabledLabel": "Formative feedback requests are disabled",
-                    "enabledHint": "Students can request preliminary feedback on their text, programming, and modeling submissions before the due date.",
-                    "disabledHint": "Students cannot request preliminary feedback in this course. Once enabled, you can optionally set a feedback style for text exercises."
+                    "enabledHint": "Students can request preliminary AI feedback on their submissions before the due date.",
+                    "disabledHint": "Students cannot request preliminary AI feedback in this course. Once enabled, you can optionally set a feedback style for text exercises."
                 },
                 "gradingFeedbackEnabled": {
                     "label": "Grading feedback suggestions",
                     "enabledLabel": "Grading feedback suggestions are enabled",
                     "disabledLabel": "Grading feedback suggestions are disabled",
-                    "enabledHint": "Tutors get feedback suggestions while assessing text, programming, and modeling submissions.",
-                    "disabledHint": "Tutors assess submissions in this course without feedback suggestions."
+                    "enabledHint": "Tutors see Athena feedback suggestions while assessing text, programming, and modeling submissions.",
+                    "disabledHint": "Tutors assess submissions in this course without Athena feedback suggestions."
                 },
                 "feedbackStyle": {
                     "title": "Preliminary Feedback Style for Text Exercises",

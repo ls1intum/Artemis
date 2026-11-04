@@ -73,7 +73,7 @@ This overrides the default mail settings from `application-dev.yml` to route all
 When running Artemis as a Docker container, combine the Mailpit compose file with your Artemis compose file:
 
 ```bash
-docker compose --env-file .env -f deployment/docker/artemis-dev-mysql.yml -f deployment/docker/mailpit.yml up
+docker compose --env-file .env -f deployment/docker/artemis-dev-postgres.yml -f deployment/docker/mailpit.yml up
 ```
 
 Then uncomment the `artemis-app` service section in `deployment/docker/mailpit.yml` to inject the mail settings into the Artemis container:

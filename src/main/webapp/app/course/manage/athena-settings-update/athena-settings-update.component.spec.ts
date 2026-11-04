@@ -122,8 +122,8 @@ describe('AthenaSettingsUpdateComponent', () => {
 
         const toggles = fixture.debugElement.queryAll(By.directive(TumAetUiToggleSwitchComponent)).map((toggle) => toggle.componentInstance as TumAetUiToggleSwitchComponent);
         expect(toggles.map((toggle) => toggle.ariaLabel())).toEqual([
-            'artemisApp.course.athenaConfig.gradingFeedbackEnabled.label',
             'artemisApp.course.athenaConfig.formativeFeedbackEnabled.label',
+            'artemisApp.course.athenaConfig.gradingFeedbackEnabled.label',
         ]);
     });
 

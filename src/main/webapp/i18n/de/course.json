@@ -252,15 +252,15 @@
                     "label": "Formative Feedbackanfragen",
                     "enabledLabel": "Formative Feedbackanfragen sind aktiviert",
                     "disabledLabel": "Formative Feedbackanfragen sind deaktiviert",
-                    "enabledHint": "Studierende können vor dem Abgabedatum vorläufiges Feedback zu ihren Text-, Programmier- und Modellierungsabgaben anfordern.",
-                    "disabledHint": "Studierende können in diesem Kurs kein vorläufiges Feedback anfordern. Nach dem Aktivieren kannst du optional einen Feedback-Stil für Textaufgaben festlegen."
+                    "enabledHint": "Studierende können vor dem Abgabedatum vorläufiges KI-Feedback zu ihren Abgaben anfordern.",
+                    "disabledHint": "Studierende können in diesem Kurs kein vorläufiges KI-Feedback anfordern. Nach dem Aktivieren kannst du optional einen Feedback-Stil für Textaufgaben festlegen."
                 },
                 "gradingFeedbackEnabled": {
                     "label": "Feedbackvorschläge zur Bewertung",
                     "enabledLabel": "Feedbackvorschläge zur Bewertung sind aktiviert",
                     "disabledLabel": "Feedbackvorschläge zur Bewertung sind deaktiviert",
-                    "enabledHint": "Tutor:innen erhalten beim Bewerten von Text-, Programmier- und Modellierungsabgaben Feedbackvorschläge.",
-                    "disabledHint": "Tutor:innen bewerten Abgaben in diesem Kurs ohne Feedbackvorschläge."
+                    "enabledHint": "Tutor:innen sehen beim Bewerten von Text-, Programmier- und Modellierungsabgaben Feedbackvorschläge von Athena.",
+                    "disabledHint": "Tutor:innen bewerten Abgaben in diesem Kurs ohne Feedbackvorschläge von Athena."
                 },
                 "feedbackStyle": {
                     "title": "Stil des vorläufigen Feedbacks für Textaufgaben",
