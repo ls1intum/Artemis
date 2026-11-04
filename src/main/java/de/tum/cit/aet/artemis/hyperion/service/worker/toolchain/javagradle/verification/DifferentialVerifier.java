@@ -886,6 +886,51 @@ public class DifferentialVerifier {
                 (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate));
     }
 
+    /**
+     * Probes whether the graded tests observe a student-owned {@code main} only through its printed transcript: the reference {@code main} runs once without arguments or input,
+     * and the graded suite runs against a variant whose {@code main} only prints that transcript. A passing suite yields a survivor with the same recheck, kill, and regression
+     * accounting as an executed semantic mutant; a reference run that is not deterministic and bounded yields nothing.
+     *
+     * @param sandbox               active generation sandbox
+     * @param sessionId             active sandbox session
+     * @param exercise              exercise whose build recipe is used
+     * @param producedTestsFiles    mechanically verified graded tests
+     * @param producedTemplateFiles the student starter, which decides which classes are student-owned
+     * @param producedSolutionFiles pristine reference-solution sources
+     * @param seededStructuralTests the exact server-owned structural authority
+     * @param pendingSolutionPaths  classes whose probe is already pending and is rechecked by {@link #checkSemanticMutants}
+     * @param restoreCandidate      restores the verified candidate between probes
+     * @return one executed outcome per probed class
+     */
+    public List<SemanticMutantOutcome> probeOutputOnlyMains(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> producedTestsFiles,
+            Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, SeededStructuralTests seededStructuralTests, Set<String> pendingSolutionPaths,
+            Runnable restoreCandidate) {
+        List<SemanticMutantOutcome> outcomes = OutputOnlyMainProbe.evaluate(producedTestsFiles, producedTemplateFiles, producedSolutionFiles, pendingSolutionPaths, target -> {
+            restoreCandidate.run();
+            SandboxExecResultDTO capture;
+            try {
+                capture = sandbox.exec(sessionId, OutputOnlyMainProbe.CAPTURE_TIMEOUT, "sh", "-c", OutputOnlyMainProbe.captureCommand(target));
+            }
+            catch (RuntimeException exception) {
+                throw new VerificationInfrastructureException("The output-only probe could not run the reference main of " + target.simpleName(), exception);
+            }
+            if (capture.timedOut()) {
+                throw VerificationInfrastructureException.sessionLost("The output-only probe of " + target.simpleName() + " exceeded its sandbox deadline");
+            }
+            Optional<String> transcript = OutputOnlyMainProbe.transcript(capture);
+            if (transcript.isEmpty()) {
+                log.info("Output-only probe for exercise {} skipped {}: its reference main did not finish deterministically within its bounds (exit {})", exercise.id(),
+                        target.simpleName(), capture.exitCode());
+            }
+            return transcript;
+        }, (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate));
+        if (!outcomes.isEmpty()) {
+            log.info("Output-only probe for exercise {}: {}", exercise.id(),
+                    outcomes.stream().map(outcome -> outcome.mutant().ruleId() + "=" + outcome.disposition()).collect(Collectors.joining(", ")));
+        }
+        return outcomes;
+    }
+
     private BuildSummary runSemanticMutantProbe(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, SeededStructuralTests seededStructuralTests,
             @Nullable SemanticMutant mutant, @Nullable Map<String, String> counterexampleProbe, Runnable restoreCandidate) {
         return SemanticMutantWorkspaceProbe.run(sandbox, sessionId, mutant, counterexampleProbe, restoreCandidate,

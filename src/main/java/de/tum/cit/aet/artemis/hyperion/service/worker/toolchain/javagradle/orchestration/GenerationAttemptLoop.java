@@ -854,17 +854,23 @@ class GenerationAttemptLoop {
             }
             List<SemanticMutantOutcome> pendingMutantOutcomes = applicablePendingMutants.isEmpty() ? List.of()
                     : verifier.checkSemanticMutants(sandbox, sessionId, exercise, solutionFiles, seededStructuralTests, applicablePendingMutants, restoreCandidate);
-            int freshCapacity = MAX_TRACKED_SEMANTIC_MUTANTS
-                    - (int) pendingMutantOutcomes.stream().filter(outcome -> outcome.disposition() != Disposition.KILLED_BY_GRADED_SUITE).count();
+            // Deterministic and model-free, so it runs on every reviewed candidate; a pending probe of the same class was just rechecked above.
+            Set<String> pendingTranscriptProbes = applicablePendingMutants.stream().filter(SemanticMutant::printsTranscriptOnly).map(SemanticMutant::solutionPath)
+                    .collect(Collectors.toUnmodifiableSet());
+            List<SemanticMutantOutcome> transcriptOutcomes = verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, testsFiles,
+                    producedFilesByType.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), solutionFiles, seededStructuralTests, pendingTranscriptProbes, restoreCandidate);
+            int freshCapacity = Math.max(0, MAX_TRACKED_SEMANTIC_MUTANTS - (int) java.util.stream.Stream.concat(pendingMutantOutcomes.stream(), transcriptOutcomes.stream())
+                    .filter(outcome -> outcome.disposition() != Disposition.KILLED_BY_GRADED_SUITE).count());
+            List<SemanticMutant> authoredPendingMutants = applicablePendingMutants.stream().filter(mutant -> !mutant.printsTranscriptOnly()).toList();
             List<SemanticMutant> freshMutantCandidates = freshCapacity == 0 ? List.of()
                     : specFidelityCritic
-                            .authorSemanticMutants(specDocumentSnapshot, solutionFiles,
-                                    GenerationReviewSupport.withPriorSemanticMutants(report.findings(), applicablePendingMutants), semanticMutantHistory, usageSink, cancelled)
+                            .authorSemanticMutants(specDocumentSnapshot, solutionFiles, GenerationReviewSupport.withPriorSemanticMutants(report.findings(), authoredPendingMutants),
+                                    semanticMutantHistory, usageSink, cancelled)
                             .stream().filter(candidate -> !applicablePendingMutants.contains(candidate)).limit(freshCapacity).toList();
             List<SemanticMutantOutcome> freshMutantOutcomes = freshMutantCandidates.isEmpty() ? List.of()
                     : verifier.evaluateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, seededStructuralTests, freshMutantCandidates, restoreCandidate);
             semanticMutantHistory = GenerationReviewSupport.rememberExecutedMutants(semanticMutantHistory, freshMutantOutcomes);
-            List<SemanticMutantOutcome> mutantOutcomes = java.util.stream.Stream.concat(pendingMutantOutcomes.stream(), freshMutantOutcomes.stream()).toList();
+            List<SemanticMutantOutcome> mutantOutcomes = java.util.stream.Stream.of(pendingMutantOutcomes, transcriptOutcomes, freshMutantOutcomes).flatMap(List::stream).toList();
             List<SemanticMutant> validatedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE)
                     .map(SemanticMutantOutcome::mutant).distinct().toList();
             List<SemanticMutant> inconclusivePendingMutants = pendingMutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)

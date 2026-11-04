@@ -96,6 +96,16 @@ final class GenerationReviewSupport {
     }
 
     static SpecFidelityReport.Finding semanticMutantFinding(SemanticMutant mutant) {
+        if (mutant.printsTranscriptOnly()) {
+            return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
+                    "The graded tests accept a " + mutant.ruleId() + " that only prints the expected output",
+                    "The environment ran the reference " + mutant.ruleId() + " without arguments or input, then replaced only the body of that method in " + mutant.solutionPath()
+                            + " with statements printing the captured output, leaving every other member unchanged. The graded suite still passed, so "
+                            + "the tests calling main compare only the printed transcript and a student passes without using the program's objects. Observe object state or "
+                            + "interactions, not only the printed transcript: assert on the objects main creates and the collaborators it calls, or test that behavior through "
+                            + "the public API. The environment accepts any executed graded test that fails on the print-only main.",
+                    changedSolutionLines(mutant));
+        }
         return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
                 "Rule " + mutant.ruleId() + " has an environment-proven surviving semantic mutant",
                 "The existing graded suite passed this complete replacement for " + mutant.solutionPath() + ", while the counterexample below executed and passed on the "
@@ -149,6 +159,10 @@ final class GenerationReviewSupport {
                 return "The environment could not conclusively recheck the previously proven semantic mutant for rule " + mutant.ruleId()
                         + "; no kill is inferred from a timeout, compilation failure, or missing executed-test report.";
             }
+            if (mutant.printsTranscriptOnly()) {
+                return "The graded suite still passes a " + mutant.ruleId() + " that only prints the expected output. Add an assertion that observes object state or "
+                        + "interactions, not only the printed transcript; keep the verified solution unchanged.";
+            }
             return "The graded suite still passes the environment-proven semantic mutant for rule " + mutant.ruleId() + " (" + mutant.counterexample().wrongBehavior()
                     + "). Add a focused assertion that kills this plausible wrong implementation; keep the verified solution unchanged.";
         }).toList();
@@ -156,6 +170,12 @@ final class GenerationReviewSupport {
     }
 
     static SpecFidelityReport.Finding semanticMutantRecheckUnavailable(SemanticMutant mutant) {
+        if (mutant.printsTranscriptOnly()) {
+            return SpecFidelityReport
+                    .executableEvidenceUnavailable("The environment could not conclusively recheck whether the graded suite still accepts a " + mutant.ruleId() + " in "
+                            + mutant.solutionPath() + " that only prints the expected output. It remains unresolved until an executed graded test fails on it.")
+                    .findings().getFirst();
+        }
         return SpecFidelityReport.executableEvidenceUnavailable("The environment could not conclusively recheck the previously proven semantic mutant for rule " + mutant.ruleId()
                 + " at " + mutant.solutionPath() + " (counterexample " + mutant.counterexample().testName() + ", misconception: " + mutant.counterexample().wrongBehavior()
                 + "). It remains unresolved until an executed graded test kills it.").findings().getFirst();

@@ -782,6 +782,27 @@ class GenerationAttemptLoopTest {
         assertThat(progressLines).anyMatch(line -> line.contains("previously killed mutant(s) survive again"));
     }
 
+    @Test
+    void aPrintOnlyMainSurvivorIsRepairedAndItsKillCountsAsProgressLikeAnExecutedMutant() {
+        stubSchedulerFixture();
+        SemanticMutant printOnly = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(printOnly, Disposition.SURVIVED_GRADED_SUITE)), List.of());
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> checked = invocation.getArgument(5);
+            return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)).toList();
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
+        assertThat(enteredRepairScopes()).containsExactly(Set.of("tests", "test-plan.json", "problem-statement.md"));
+        verify(verifier).checkSemanticMutants(any(), anyString(), any(), any(), any(), Mockito.eq(List.of(printOnly)), any());
+        assertThat(progressLines).anyMatch(line -> line.contains("The repair killed 1 environment-proven mutant(s)"));
+        assertThat(loop.specFidelityReport().findings()).noneMatch(SpecFidelityReport.Finding::isBlocking);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+    }
+
     /** A specification, a tests repository the probes can host in, and a solution file the scheduler mutants were authored against. */
     private void stubSchedulerFixture() {
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | honor every prerequisite |\n| R2 | break ties lexically |");

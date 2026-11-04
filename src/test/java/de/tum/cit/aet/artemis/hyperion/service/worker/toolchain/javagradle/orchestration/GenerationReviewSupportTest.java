@@ -38,6 +38,24 @@ class GenerationReviewSupportTest {
     }
 
     @Test
+    void aSurvivingPrintOnlyMainAsksForAssertionsOnObjectStateOrInteractions() {
+        String original = "class Library {\n  public static void main(String[] args) {\n    new Library();\n    System.out.println(\"1\");\n  }\n}\n";
+        String variant = "class Library {\n  public static void main(String[] args) { System.out.print(\"1\\n\"); System.out.flush(); }\n}\n";
+        SemanticMutant printOnly = SemanticMutant.printedTranscript("src/Library.java", original, variant, "Library");
+
+        SpecFidelityReport.Finding finding = GenerationReviewSupport.semanticMutantFinding(printOnly);
+
+        assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        assertThat(finding.isBlocking()).isTrue();
+        assertThat(SemanticRepairBatch.surfaceFor(finding.kind())).isEqualTo(RepairSurface.ORACLE);
+        assertThat(finding.requirement()).contains("Library.main", "only prints the expected output");
+        assertThat(finding.detail()).contains("Observe object state or interactions, not only the printed transcript").doesNotContain("counterexample");
+        assertThat(finding.location()).isEqualTo(new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, "src/Library.java", 2, 5));
+        assertThat(GenerationReviewSupport.semanticMutantRecheck(List.of(new SemanticMutantOutcome(printOnly, Disposition.SURVIVED_GRADED_SUITE))).failureReasons()).singleElement()
+                .asString().contains("only prints the expected output", "observes object state or interactions");
+    }
+
+    @Test
     void priorExecutedMutantsAreIncludedInTheNextAuthoringContext() {
         SpecFidelityReport.Finding staticRisk = new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "boundary", "check the boundary");
         SemanticMutant executed = mutant("hardCodedThresholds", "uses fixed thresholds");
