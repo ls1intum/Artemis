@@ -50,6 +50,23 @@ class ProgrammingExerciseSequentialSettingsValidationTest {
     }
 
     @Test
+    void rejectsSequentialTestRunsWithoutProjectTypeForSwift() {
+        var exercise = exercise(ProgrammingLanguage.SWIFT, null);
+        var feature = feature(ProgrammingLanguage.SWIFT, true, true, List.of(ProjectType.PLAIN));
+
+        assertThatThrownBy(() -> exercise.validateStaticCodeAnalysisSettings(feature, buildConfig(true))).isInstanceOf(BadRequestAlertException.class)
+                .extracting(exception -> ((BadRequestAlertException) exception).getErrorKey()).isEqualTo("sequentialTestRunsRequireProjectType");
+    }
+
+    @Test
+    void acceptsSequentialTestRunsWithoutProjectTypeForJava() {
+        var exercise = exercise(ProgrammingLanguage.JAVA, null);
+        var feature = feature(ProgrammingLanguage.JAVA, true, true, List.of(ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_BLACKBOX));
+
+        assertThatCode(() -> exercise.validateStaticCodeAnalysisSettings(feature, buildConfig(true))).doesNotThrowAnyException();
+    }
+
+    @Test
     void acceptsSequentialTestRunsWhereTheLanguageSupportsThem() {
         var exercise = exercise(ProgrammingLanguage.PYTHON, null);
         var feature = feature(ProgrammingLanguage.PYTHON, true, true, List.of());

@@ -139,7 +139,7 @@ Not all templates support the same feature set. **L** = Local CI, **J** = Jenkin
 
 Artemis can generate a build plan which first executes structural and then behavioral tests. Structural tests check that the expected classes and method signatures exist; behavioral tests check that they do the right thing. Only if the structural tests pass do the behavioral ones run, so students are not buried under failures caused by something they have not written yet.
 
-Cannot be combined with static code analysis, and cannot be changed after the exercise is created.
+Cannot be combined with static code analysis, and cannot be changed after the exercise is created. Java exercises with the Maven black-box project type do not support sequential test runs, because their DejaGnu tests are a single suite. For Swift, a project type has to be selected.
 
 #### Package Name
 
