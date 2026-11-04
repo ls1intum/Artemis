@@ -177,7 +177,7 @@ jobs:
             fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
             const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
             const latest = data.artifacts
-              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
+              .filter((a) => !a.expired && a.workflow_run && a.id === 13185960699)
               .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
             if (!latest) {
               core.info('No develop baseline available yet; the report will not classify findings as new.');
@@ -199,6 +199,16 @@ jobs:
         with:
           name: Slow Query Report Phase 1
           path: slow-query-report.html
+          if-no-files-found: warn
+
+      - name: Upload slow-query baseline (demo, Phase 1)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        continue-on-error: true
+        with:
+          name: Slow Query Baseline
+          path: slow-query-keys.json
+          retention-days: 90
           if-no-files-found: warn
 
       - name: E2E Teardown
@@ -423,7 +433,7 @@ jobs:
             fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
             const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
             const latest = data.artifacts
-              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
+              .filter((a) => !a.expired && a.workflow_run && a.id === 13185960699)
               .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
             if (!latest) {
               core.info('No develop baseline available yet; the report will not classify findings as new.');
@@ -659,7 +669,7 @@ jobs:
             fs.rmSync('slow-query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
             const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Slow Query Baseline', per_page: 50 });
             const latest = data.artifacts
-              .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
+              .filter((a) => !a.expired && a.workflow_run && a.id === 13185960699)
               .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
             if (!latest) {
               core.info('No develop baseline available yet; the report will not classify findings as new.');
@@ -681,6 +691,16 @@ jobs:
         with:
           name: Slow Query Report All PR
           path: slow-query-report.html
+          if-no-files-found: warn
+
+      - name: Upload slow-query baseline (demo, All PR)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        continue-on-error: true
+        with:
+          name: Slow Query Baseline
+          path: slow-query-keys.json
+          retention-days: 90
           if-no-files-found: warn
 
       - name: E2E Teardown
