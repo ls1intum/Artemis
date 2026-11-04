@@ -180,10 +180,16 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
         uploadRepository.recordPendingStream(unit.getId(), ref("first"), 55);
         uploadRepository.attachPending(unit.getId(), ref("first"), WATCH_PAGE, now);
 
-        uploadRepository.forgetCurrentUnlessShown(unit.getId(), 55L);
+        uploadRepository.forgetCurrentUnlessShown(unit.getId(), WATCH_PAGE, 55L);
         assertThat(uploadRepository.findUploadedUnitsByCourseId(courseId())).as("the link still shows the upload").hasSize(1);
 
-        uploadRepository.forgetCurrentUnlessShown(unit.getId(), null);
+        // An edit to another link that a later edit already undid: the unit shows the upload again, so it stays.
+        uploadRepository.forgetCurrentUnlessShown(unit.getId(), YOUTUBE, null);
+        assertThat(uploadRepository.findUploadedUnitsByCourseId(courseId())).hasSize(1);
+
+        unit.setVideoSource(YOUTUBE);
+        unit = attachmentVideoUnitRepository.saveWithVideoSource(unit);
+        uploadRepository.forgetCurrentUnlessShown(unit.getId(), YOUTUBE, null);
         assertThat(uploadRepository.findUploadedUnitsByCourseId(courseId())).isEmpty();
         assertThat(uploadRepository.findByLectureUnitId(unit.getId()).orElseThrow().getCurrentRef()).isNull();
         assertThat(queued(ref("first"))).as("the recording stays in TUM.Live").isFalse();
@@ -312,7 +318,9 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
         uploadRepository.attachPending(unit.getId(), ref("first"), WATCH_PAGE, now);
         attachmentVideoUnitRepository.deleteById(unit.getId());
 
-        uploadRepository.deleteWithoutUnitAndPendingUpload();
+        var found = uploadRepository.findIdsWithoutUnitAndPendingUpload();
+        assertThat(found).contains(uploadRepository.findByLectureUnitId(unit.getId()).orElseThrow().getId());
+        uploadRepository.deleteWithoutUnitAndPendingUploadByIdIn(found);
 
         assertThat(uploadRepository.findByLectureUnitId(unit.getId())).isEmpty();
     }

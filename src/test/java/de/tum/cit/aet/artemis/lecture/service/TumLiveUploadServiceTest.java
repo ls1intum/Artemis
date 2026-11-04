@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -211,7 +212,21 @@ class TumLiveUploadServiceTest {
 
         verify(api).deleteUpload(23, REF);
         verify(cleanupRepository).deleteConfirmed(5L);
-        verify(uploadRepository).deleteWithoutUnitAndPendingUpload();
+    }
+
+    @Test
+    void rowsOfDeletedUnitsAreRemovedOnlyWhenTheRunBeforeFoundThemToo() {
+        // Row 1 is released by its unit's deletion in between; rows 2 and 3 stay.
+        when(uploadRepository.findIdsWithoutUnitAndPendingUpload()).thenReturn(Set.of(1L, 2L)).thenReturn(Set.of(2L, 3L)).thenReturn(Set.of(3L));
+
+        service.processCleanups();
+        verify(uploadRepository, never()).deleteWithoutUnitAndPendingUploadByIdIn(any());
+
+        service.processCleanups();
+        verify(uploadRepository).deleteWithoutUnitAndPendingUploadByIdIn(Set.of(2L));
+
+        service.processCleanups();
+        verify(uploadRepository).deleteWithoutUnitAndPendingUploadByIdIn(Set.of(3L));
     }
 
     @ParameterizedTest
@@ -251,8 +266,8 @@ class TumLiveUploadServiceTest {
         service.forgetUploadUnlessShown(UNIT_ID, "https://www.youtube.com/watch?v=x");
         service.forgetUploadUnlessShown(UNIT_ID, "https://tum.live/w/algo/55");
 
-        verify(uploadRepository).forgetCurrentUnlessShown(UNIT_ID, null);
-        verify(uploadRepository).forgetCurrentUnlessShown(UNIT_ID, 55L);
+        verify(uploadRepository).forgetCurrentUnlessShown(UNIT_ID, "https://www.youtube.com/watch?v=x", null);
+        verify(uploadRepository).forgetCurrentUnlessShown(UNIT_ID, "https://tum.live/w/algo/55", 55L);
     }
 
     @Test

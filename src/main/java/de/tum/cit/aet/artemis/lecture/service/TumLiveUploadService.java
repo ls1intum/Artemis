@@ -5,7 +5,10 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +68,9 @@ public class TumLiveUploadService {
     private final Optional<LectureContentProcessingService> contentProcessingService;
 
     private final Duration maxAge;
+
+    /** The rows of deleted units that the previous cleanup run found; see {@link #purgeRowsOfDeletedUnits()}. */
+    private volatile Set<Long> rowsOfDeletedUnitsFoundBefore = Set.of();
 
     public TumLiveUploadService(TumLiveUnitUploadRepository uploadRepository, TumLiveRecordingCleanupRepository cleanupRepository,
             AttachmentVideoUnitRepository attachmentVideoUnitRepository, Optional<GocastBindingApi> gocastBindingApi,
@@ -148,7 +154,7 @@ public class TumLiveUploadService {
      * @param newVideoSource the unit's video link now
      */
     public void forgetUploadUnlessShown(long lectureUnitId, String newVideoSource) {
-        gocastBindingApi.ifPresent(api -> uploadRepository.forgetCurrentUnlessShown(lectureUnitId, api.findStreamId(newVideoSource).orElse(null)));
+        gocastBindingApi.ifPresent(api -> uploadRepository.forgetCurrentUnlessShown(lectureUnitId, newVideoSource, api.findStreamId(newVideoSource).orElse(null)));
     }
 
     /**
@@ -254,7 +260,21 @@ public class TumLiveUploadService {
                 }
             }
         }
-        uploadRepository.deleteWithoutUnitAndPendingUpload();
+        purgeRowsOfDeletedUnits();
+    }
+
+    /**
+     * Removes the rows of deleted units, but only those this node also found in its previous run: a unit's deletion releases its row right after the unit is
+     * gone, and removing the row before would lose the instructor's choice to delete the recording in TUM.Live.
+     */
+    private void purgeRowsOfDeletedUnits() {
+        Set<Long> found = new HashSet<>(uploadRepository.findIdsWithoutUnitAndPendingUpload());
+        Set<Long> foundBefore = found.stream().filter(rowsOfDeletedUnitsFoundBefore::contains).collect(Collectors.toSet());
+        if (!foundBefore.isEmpty()) {
+            uploadRepository.deleteWithoutUnitAndPendingUploadByIdIn(foundBefore);
+        }
+        found.removeAll(foundBefore);
+        rowsOfDeletedUnitsFoundBefore = found;
     }
 
     private void deleteUpload(GocastBindingApi api, TumLiveRecordingCleanup cleanup) {

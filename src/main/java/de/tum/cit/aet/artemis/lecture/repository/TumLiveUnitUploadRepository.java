@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.persistence.LockModeType;
 
@@ -97,18 +99,33 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
             @Param("nextAttemptAt") ZonedDateTime nextAttemptAt);
 
     /**
-     * Rows of units that were deleted without asking about TUM.Live (for example with their course). Their recordings stay in TUM.Live.
+     * Rows of units that were deleted, without a pending upload: left by a unit deleted without asking about TUM.Live (for example with its course), or by a
+     * unit whose deletion has not released them yet.
      *
+     * @return the rows
+     */
+    @Query("""
+            SELECT upload.id FROM TumLiveUnitUpload upload
+            WHERE upload.pendingRef IS NULL
+                AND NOT EXISTS (SELECT lectureUnit.id FROM LectureUnit lectureUnit WHERE lectureUnit.id = upload.lectureUnitId)
+            """)
+    Set<Long> findIdsWithoutUnitAndPendingUpload();
+
+    /**
+     * Removes rows of deleted units that are still without a pending upload. Their recordings stay in TUM.Live.
+     *
+     * @param ids the rows, as found by {@link #findIdsWithoutUnitAndPendingUpload()}
      * @return the number of removed rows
      */
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             DELETE FROM TumLiveUnitUpload upload
-            WHERE upload.pendingRef IS NULL
+            WHERE upload.id IN :ids
+                AND upload.pendingRef IS NULL
                 AND NOT EXISTS (SELECT lectureUnit.id FROM LectureUnit lectureUnit WHERE lectureUnit.id = upload.lectureUnitId)
             """)
-    int deleteWithoutUnitAndPendingUpload();
+    int deleteWithoutUnitAndPendingUploadByIdIn(@Param("ids") Collection<Long> ids);
 
     /**
      * Starts an upload for a unit, or returns the one that is pending: a unit has at most one pending upload, and repeating the start must not leave the first
@@ -231,12 +248,16 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
      * Forgets the attached upload of a unit whose video link an editor changed to another video, so deleting the unit no longer offers to delete it in TUM.Live.
      * The recording stays there, as the editor did not ask to delete it.
      *
-     * @param lectureUnitId the attachment video unit
-     * @param shownStreamId the TUM.Live lecture the unit's new link shows, or null if it shows none
+     * @param lectureUnitId  the attachment video unit
+     * @param newVideoSource the link the edit wrote; nothing happens if the unit has another one by now, since a later edit decides then
+     * @param shownStreamId  the TUM.Live lecture that link shows, or null if it shows none
      */
     @Transactional
-    default void forgetCurrentUnlessShown(long lectureUnitId, Long shownStreamId) {
-        findAttachmentVideoUnitForUpdateById(lectureUnitId);
+    default void forgetCurrentUnlessShown(long lectureUnitId, String newVideoSource, Long shownStreamId) {
+        Optional<AttachmentVideoUnit> unit = findAttachmentVideoUnitForUpdateById(lectureUnitId);
+        if (unit.isEmpty() || !Objects.equals(unit.get().getVideoSource(), newVideoSource)) {
+            return;
+        }
         findForUpdateByLectureUnitId(lectureUnitId).filter(upload -> upload.getCurrentRef() != null && !Objects.equals(upload.getCurrentStreamId(), shownStreamId))
                 .ifPresent(upload -> {
                     upload.clearCurrent();
