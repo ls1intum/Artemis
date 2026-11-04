@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-05
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -301,7 +301,12 @@ unchanged template, the staged controller can reopen the exact specification onc
 review a coherent redesign, and rebuild the artifacts under the existing shared
 turn and time limits. The agent cannot reopen the contract itself. A second proven
 bypass, or insufficient budget for redesign, stops generation before publication;
-infrastructure failures do not authorize a contract change. This check supplements
+infrastructure failures do not authorize a contract change. If the approved redesign
+exhausts an authoring attempt before its executable stage passes, that stage can
+resume once in the next existing authoring attempt. It keeps the current workspace,
+exact approval and original authoring deadline; it does not repeat concept or SPEC
+work, raise configured limits or allow another contract redesign. No statement is
+authored until that assessment passes. This check supplements
 the later quality review and does not establish overall teaching suitability.
 
 Configure exactly one AI Worker identity for generation. Use the same distributed-data

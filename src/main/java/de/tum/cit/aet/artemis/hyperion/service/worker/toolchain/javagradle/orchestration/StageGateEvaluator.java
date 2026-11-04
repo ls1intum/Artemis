@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
@@ -14,6 +17,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 
 /** Evaluates official stage boundaries against current structural authority, mechanical results and executed assessment evidence. */
 final class StageGateEvaluator {
@@ -75,4 +79,68 @@ final class StageGateEvaluator {
                 + "Reconsider how the contract exposes the student-owned operations; tests that perform those operations themselves only verify supplied support.\n"
                 + result.observation(), report);
     }
+
+    /** A line that states something worked cannot be the reason a gate failed, however early it appears in the report. */
+    private static boolean readsAsPassing(String line) {
+        String lower = line.toLowerCase(Locale.ROOT);
+        return lower.contains("tests pass.") || lower.contains("all required gradable tests fail") || lower.startsWith("the differential passed");
+    }
+
+    static String firstLineBounded(@Nullable String text, int maxChars) {
+        if (text == null) {
+            return "";
+        }
+        // A header line ending in ':' carries no information on its own, so fold the first content line in and the instructor-visible event actually says what went wrong.
+        String[] lines = text.strip().split("\n");
+        String firstLine = lines[0].strip();
+        if (firstLine.endsWith(":")) {
+            // The report leads with whichever lane it describes first, and that lane may be the one that succeeded: a template that wrongly passes produces a report opening
+            // "Solution: 9/9 tests pass." Folding that in makes a failure read as a success and tells the instructor nothing, so skip past the lines that state something worked.
+            String candidate = "";
+            for (int i = 1; i < lines.length; i++) {
+                String line = lines[i].strip();
+                if (line.isEmpty()) {
+                    continue;
+                }
+                if (candidate.isEmpty()) {
+                    candidate = line;
+                }
+                if (!readsAsPassing(line)) {
+                    candidate = line;
+                    break;
+                }
+            }
+            if (!candidate.isEmpty()) {
+                firstLine = firstLine + " " + candidate;
+            }
+        }
+        if (firstLine.codePointCount(0, firstLine.length()) <= maxChars) {
+            return firstLine;
+        }
+        int end = firstLine.offsetByCodePoints(0, maxChars);
+        return firstLine.substring(0, end) + "…";
+    }
+
+    /**
+     * Models occasionally return the complete requested specification in their final text instead of invoking {@code write_file}. Preserve that authored content verbatim and
+     * still subject it to the normal mechanical and semantic gates rather than spending a full retry merely moving the same bytes into the workspace.
+     */
+    static void materializeReturnedSpecification(SandboxAgentTools baseTools, InteractiveSandbox sandbox, String sessionId, @Nullable String finalMessage) {
+        if (!Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "SPEC.md"), "").isBlank() || finalMessage == null) {
+            return;
+        }
+        int heading = finalMessage.indexOf("# SPEC.md");
+        if (heading < 0) {
+            return;
+        }
+        String specification = finalMessage.substring(heading).strip();
+        if (specification.endsWith("```")) {
+            specification = specification.substring(0, specification.length() - 3).stripTrailing();
+        }
+        String result = baseTools.writeFile("SPEC.md", specification);
+        if (result != null && !result.startsWith("ERROR")) {
+            LoggerFactory.getLogger(StageGateEvaluator.class).info("Materialized SPEC.md from the agent's returned artifact before applying the normal specification gates");
+        }
+    }
+
 }

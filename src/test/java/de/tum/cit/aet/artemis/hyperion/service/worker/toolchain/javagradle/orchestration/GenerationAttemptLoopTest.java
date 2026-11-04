@@ -333,6 +333,45 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void completingAnApprovedAssessmentUsesTheNextExistingAttemptBeforeAnyVerification() {
+        var continuation = stubExecutableContinuation();
+        ProviderUsageSink accounting = mock(ProviderUsageSink.class);
+        usageSink = accounting;
+        when(stagedGenerationRunner.resume(Mockito.eq(continuation), any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(),
+                anyBoolean(), anyBoolean(), any(), any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+
+        GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 2, 0, true);
+        loop.run();
+
+        verify(accounting, times(2)).recordAttempt();
+        verify(verifier, times(1)).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
+        verify(agentLoopRunner, never()).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+    }
+
+    @Test
+    void anExecutableContinuationCannotExceedTheExistingAttemptCap() {
+        stubExecutableContinuation();
+
+        GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 1, 0, true);
+        loop.run();
+
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.ATTEMPT_CAP_REACHED);
+        verify(stagedGenerationRunner, never()).resume(any(), any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(),
+                anyBoolean(), any(), any());
+        verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
+    }
+
+    private StagedAssessmentContinuation stubExecutableContinuation() {
+        var continuation = new StagedAssessmentContinuation(java.time.Instant.now(), 0, "approved SPEC", "complete current artifacts", List.of(), List.of());
+        var paused = new StagedGenerationRunner.StagedRunOutcome(new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 60, "current workspace"), null, List.of(), null,
+                List.of(), continuation);
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(paused);
+        return continuation;
+    }
+
+    @Test
     void aServerDefectStopsTheRunInsteadOfAskingForAnotherRepair() {
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class)))
                 .thenReturn(rejected(VerificationResult.SERVER_DEFECT_PREFIX + " the server-owned structural check(s) [testClass[Stack]] fail on the reference solution."));

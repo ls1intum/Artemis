@@ -41,11 +41,12 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.works
  * Runs one Java/{@code GENERATE} agent attempt in three enforced phases — specification, coherent executable build, and student-facing statement — each with its own system prompt
  * ({@link AgentSystemPrompt#buildStage}), its own bounded turn budget, and a mechanical gate that must pass before the next stage starts. It stands in for a single
  * {@code agentLoopRunner.run(...)} call: the aggregated {@link AgentLoopResult} it returns is consumed exactly like a single-call result, so workspace seeding, mechanical
- * verification, spec-fidelity review, and the outer repair-attempt loop are unaffected by the staging.
+ * verification and spec-fidelity review keep their normal authority. An unfinished approved redesign can continue TESTS once in another existing authoring attempt.
  * <p>
  * Phase file tools enforce write scope: specification is frozen after approval; the executable builder owns solution, template, tests, and grading plan together; the final
  * projection owns only the statement. An executed assessment counterexample can reopen specification review once before statement authoring; the replacement consumes the
- * same shared budget and must pass both gates again. Other failures use their ordinary bounded stage re-entry.
+ * existing attempt and job budgets and must pass both gates again. A continuation keeps the original authoring deadline and exact approval. Other failures use their ordinary
+ * bounded stage re-entry.
  * <p>
  * {@code artemis.hyperion.agent.staged-context} ({@link StagedContext}, default {@code CONTINUOUS}) controls conversation continuity across stages. Either way, a stage's first
  * gate failure buys one re-entry (same stage, gate feedback fed back in) while the shared pool still holds at least {@link #MIN_STAGE_BUDGET} turns and the run has not spent its
@@ -68,7 +69,8 @@ public class StagedGenerationRunner {
     private static final int[] STAGE_BASE_BUDGETS = { 7, 54, 7 };
 
     /**
-     * Hard ceiling on authoring-agent turns spent across all generation phases. A stage (or re-entry) is only started while at least {@link #MIN_STAGE_BUDGET} turns remain, so
+     * Hard ceiling on authoring-agent turns across the phases of one staged authoring attempt. A stage (or re-entry) is only started while at least {@link #MIN_STAGE_BUDGET} turns
+     * remain, so
      * the cap holds. Concept discovery shares this pool; resolved settings may narrow it further.
      */
     private static final int POOL_HARD_CAP = 83;
@@ -213,15 +215,20 @@ public class StagedGenerationRunner {
     }
 
     /**
-     * The staged run's aggregated loop result together with the conversation it produced ({@code null} under {@link StagedContext#FRESH}), so the outer repair-attempt loop can
-     * continue the same logical conversation instead of starting each repair blind.
+     * The staged attempt's result, audit conversation and unresolved design findings. A worker-local continuation preserves an approved redesign's unfinished executable stage
+     * across the existing outer authoring attempts; ordinary repairs rebuild context from current durable artifacts.
      */
     public record StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings,
-            @Nullable TerminationReason terminationReason, List<String> unresolvedConceptFindings) {
+            @Nullable TerminationReason terminationReason, List<String> unresolvedConceptFindings, @Nullable StagedAssessmentContinuation assessmentContinuation) {
 
         public StagedRunOutcome {
             unresolvedSpecificationFindings = List.copyOf(unresolvedSpecificationFindings);
             unresolvedConceptFindings = List.copyOf(unresolvedConceptFindings);
+        }
+
+        public StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings,
+                @Nullable TerminationReason terminationReason, List<String> unresolvedConceptFindings) {
+            this(result, conversation, unresolvedSpecificationFindings, terminationReason, unresolvedConceptFindings, null);
         }
 
         public StagedRunOutcome(AgentLoopResult result, @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings,
@@ -242,7 +249,7 @@ public class StagedGenerationRunner {
             if (conceptFindings.isEmpty()) {
                 return this;
             }
-            return new StagedRunOutcome(result, conversation, unresolvedSpecificationFindings, terminationReason, conceptFindings);
+            return new StagedRunOutcome(result, conversation, unresolvedSpecificationFindings, terminationReason, conceptFindings, assessmentContinuation);
         }
     }
 
@@ -305,19 +312,28 @@ public class StagedGenerationRunner {
             Map<String, String> seedTestsFiles, InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable Consumer<String> progress, Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies,
             @Nullable Consumer<String> specSink, @Nullable Consumer<GenerationStage> stageBoundarySink) {
+        return resume(null, exercise, baseTools, tools, briefPrompt, sourceBrief, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook,
+                specStageApplies, conceptSelectionApplies, specSink, stageBoundarySink);
+    }
+
+    StagedRunOutcome resume(@Nullable StagedAssessmentContinuation continuation, GenerationInput exercise, SandboxAgentTools baseTools, SubmitVetoAware tools, String briefPrompt,
+            String sourceBrief, Map<String, String> seedTestsFiles, InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled,
+            @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress, Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies,
+            boolean conceptSelectionApplies, @Nullable Consumer<String> specSink, @Nullable Consumer<GenerationStage> stageBoundarySink) {
         // Owned here rather than threaded through the stage machine below, so that objections raised against a concept the run proceeded with anyway leave through every exit:
         // gate failure, wall clock, cancellation, or a clean finish.
-        List<String> conceptFindings = new ArrayList<>();
+        List<String> conceptFindings = new ArrayList<>(continuation == null ? List.of() : continuation.conceptFindings());
         StagedRunOutcome outcome = runStages(exercise, baseTools, tools, briefPrompt, sourceBrief, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress,
-                structuralSeedHook, specStageApplies, conceptSelectionApplies, specSink, stageBoundarySink, conceptFindings);
+                structuralSeedHook, specStageApplies, conceptSelectionApplies, specSink, stageBoundarySink, conceptFindings, continuation);
         return conceptFindings.isEmpty() ? outcome : outcome.withConceptFindings(conceptFindings);
     }
 
     private StagedRunOutcome runStages(GenerationInput exercise, SandboxAgentTools baseTools, SubmitVetoAware tools, String briefPrompt, String sourceBrief,
             Map<String, String> seedTestsFiles, InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable Consumer<String> progress, Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies,
-            @Nullable Consumer<String> specSink, @Nullable Consumer<GenerationStage> stageBoundarySink, List<String> conceptFindings) {
-        Instant startedAt = clock.get();
+            @Nullable Consumer<String> specSink, @Nullable Consumer<GenerationStage> stageBoundarySink, List<String> conceptFindings,
+            @Nullable StagedAssessmentContinuation continuation) {
+        Instant startedAt = continuation == null ? clock.get() : continuation.startedAt();
         boolean continuous = stagedContext == StagedContext.CONTINUOUS;
         int remainingPool = maxTurns;
         int rollover = 0;
@@ -325,19 +341,20 @@ public class StagedGenerationRunner {
         String lastFinalMessage = "";
         AgentLoopResult.Status lastStatus = AgentLoopResult.Status.COMPLETED;
         AgentVerifyReport lastTestsReport = null;
+        String lastTestsFeedback = "";
         // Stays null for the whole run under FRESH, which is what makes every stage there start a brand-new conversation via the plain run() call.
         List<Message> conversation = null;
         List<Message> archivedConversation = new ArrayList<>();
-        int reentriesRemaining = MAX_TOTAL_REENTRIES;
+        int reentriesRemaining = continuation == null ? MAX_TOTAL_REENTRIES : continuation.reentriesRemaining();
         int semanticSpecRefinementsUsed = 0;
         // The best specification this concept has produced, and how many findings it drew. Refinement is not monotonic, so a later draft can be worse than an earlier one and the
         // loop keeps the best rather than the most recent. Reset whenever the concept is replaced: a specification written for a rejected concept must never come back.
         String bestSpecSnapshot = null;
         // The approved specification as last handed to the spec sink, so a server-side ownership correction during TESTS is published as well.
-        String publishedSpec = null;
+        String publishedSpec = continuation == null ? null : continuation.approvedSpecification();
         List<String> bestSpecFindings = List.of();
         int bestSpecFindingCount = Integer.MAX_VALUE;
-        List<String> unresolvedSpecificationFindings = List.of();
+        List<String> unresolvedSpecificationFindings = continuation == null ? List.of() : continuation.specificationFindings();
         String semanticSpecFeedback = null;
         SpecFidelityCritic.SpecificationReview previousSpecificationReview = null;
         String previousRejectedLearningFitDirection = null;
@@ -347,12 +364,16 @@ public class StagedGenerationRunner {
         boolean conceptReplacementUnavailable = false;
         String selectedConcept = null;
         int specificationReviewNumber = 0;
-        boolean assessmentRedesignUsed = false;
+        boolean assessmentRedesignUsed = continuation != null;
         boolean assessmentVerified = false;
         String assessmentRedesignFeedback = null;
         baseTools.configureStructuralOracleRefresh(structuralSeedHook);
 
-        if (conceptSelectionApplies && conceptSelector != null) {
+        if (continuation != null && !approvedSpecs.approved(sessionId).filter(continuation.approvedSpecification()::equals).isPresent()) {
+            return finishWithCause(exercise, AgentLoopResult.Status.ERROR, 0, "", "The approved contract changed before its executable continuation.", archivedConversation,
+                    conversation, unresolvedSpecificationFindings);
+        }
+        if (continuation == null && conceptSelectionApplies && conceptSelector != null) {
             ExerciseConceptSelector.ConceptSelection selection = conceptSelector.select(sourceBrief, "", remainingPool, cancelled, usageSink, progress);
             totalTurns += selection.turns();
             remainingPool = Math.max(0, remainingPool - selection.turns());
@@ -388,7 +409,7 @@ public class StagedGenerationRunner {
             }
         }
 
-        for (int index = 0; index < STAGE_ORDER.size(); index++) {
+        for (int index = continuation == null ? 0 : STAGE_ORDER.indexOf(GenerationStage.TESTS); index < STAGE_ORDER.size(); index++) {
             GenerationStage stage = STAGE_ORDER.get(index);
             if (stage == GenerationStage.STATEMENT && assessmentRedesignUsed && !assessmentVerified) {
                 return finishWithCause(exercise, AgentLoopResult.Status.ERROR, totalTurns, lastFinalMessage,
@@ -425,7 +446,8 @@ public class StagedGenerationRunner {
             baseTools.enterStage(stage);
             String systemPrompt = systemPromptService.buildStage(exercise, stage);
 
-            String gateFeedback = stage == GenerationStage.SPEC ? assessmentRedesignFeedback : null;
+            String gateFeedback = stage == GenerationStage.SPEC ? assessmentRedesignFeedback
+                    : continuation != null && stage == GenerationStage.TESTS ? continuation.feedback() : null;
             if (stage == GenerationStage.SPEC) {
                 assessmentRedesignFeedback = null;
             }
@@ -491,7 +513,7 @@ public class StagedGenerationRunner {
                 lastStatus = result.status();
 
                 if (stage == GenerationStage.SPEC) {
-                    materializeReturnedSpecification(baseTools, sandbox, sessionId, result.finalMessage());
+                    StageGateEvaluator.materializeReturnedSpecification(baseTools, sandbox, sessionId, result.finalMessage());
                 }
                 StageGateEvaluator.Result gateEvaluation = StageGateEvaluator.evaluate(stageCheckService, stage, baseTools, sandbox, sessionId, exercise, seedTestsFiles,
                         lastTestsReport);
@@ -501,6 +523,7 @@ public class StagedGenerationRunner {
                 }
                 if (stage == GenerationStage.TESTS) {
                     lastTestsReport = gate.report();
+                    lastTestsFeedback = gate.observation();
                     // A gate that never went through the tools (a reused cache, or a TESTS turn that never called verify/submit) would leave STATEMENT blind, so the official
                     // gate result is always written back even though the agent's in-loop checks may have recorded it already.
                     baseTools.recordLastTestsReport(gate.report());
@@ -810,6 +833,14 @@ public class StagedGenerationRunner {
             if (stageBoundarySink != null) {
                 stageBoundarySink.accept(stage);
             }
+            if (stage == GenerationStage.TESTS && assessmentRedesignUsed && !assessmentVerified && continuation == null && !wallClockExceeded(startedAt)
+                    && allocatablePool(stage, remainingPool) < MIN_STAGE_BUDGET && approvedSpecs.approved(sessionId).isPresent()) {
+                StagedRunOutcome paused = finish(exercise, AgentLoopResult.Status.BUDGET_EXHAUSTED, totalTurns, lastFinalMessage, archivedConversation, conversation,
+                        unresolvedSpecificationFindings);
+                return new StagedRunOutcome(paused.result(), paused.conversation(), paused.unresolvedSpecificationFindings(), null, conceptFindings,
+                        new StagedAssessmentContinuation(startedAt, reentriesRemaining, approvedSpecs.approved(sessionId).orElseThrow(), lastTestsFeedback,
+                                unresolvedSpecificationFindings, conceptFindings));
+            }
         }
         if (assessmentRedesignUsed && !assessmentVerified) {
             return finishWithCause(exercise, AgentLoopResult.Status.ERROR, totalTurns, lastFinalMessage,
@@ -864,45 +895,8 @@ public class StagedGenerationRunner {
         return reused ? prefix + "passed (reused in-stage check)" : prefix + "passed";
     }
 
-    /** A line that states something worked cannot be the reason a gate failed, however early it appears in the report. */
-    private static boolean readsAsPassing(String line) {
-        String lower = line.toLowerCase(Locale.ROOT);
-        return lower.contains("tests pass.") || lower.contains("all required gradable tests fail") || lower.startsWith("the differential passed");
-    }
-
     static String firstLineBounded(@Nullable String text, int maxChars) {
-        if (text == null) {
-            return "";
-        }
-        // A header line ending in ':' carries no information on its own, so fold the first content line in and the instructor-visible event actually says what went wrong.
-        String[] lines = text.strip().split("\n");
-        String firstLine = lines[0].strip();
-        if (firstLine.endsWith(":")) {
-            // The report leads with whichever lane it describes first, and that lane may be the one that succeeded: a template that wrongly passes produces a report opening
-            // "Solution: 9/9 tests pass." Folding that in makes a failure read as a success and tells the instructor nothing, so skip past the lines that state something worked.
-            String candidate = "";
-            for (int i = 1; i < lines.length; i++) {
-                String line = lines[i].strip();
-                if (line.isEmpty()) {
-                    continue;
-                }
-                if (candidate.isEmpty()) {
-                    candidate = line;
-                }
-                if (!readsAsPassing(line)) {
-                    candidate = line;
-                    break;
-                }
-            }
-            if (!candidate.isEmpty()) {
-                firstLine = firstLine + " " + candidate;
-            }
-        }
-        if (firstLine.codePointCount(0, firstLine.length()) <= maxChars) {
-            return firstLine;
-        }
-        int end = firstLine.offsetByCodePoints(0, maxChars);
-        return firstLine.substring(0, end) + "…";
+        return StageGateEvaluator.firstLineBounded(text, maxChars);
     }
 
     /**
@@ -919,28 +913,6 @@ public class StagedGenerationRunner {
 
     private boolean wallClockExceeded(Instant startedAt) {
         return Duration.between(startedAt, clock.get()).compareTo(authoringBudget) > 0;
-    }
-
-    /**
-     * Models occasionally return the complete requested specification in their final text instead of invoking {@code write_file}. Preserve that authored content verbatim and
-     * still subject it to the normal mechanical and semantic gates rather than spending a full retry merely moving the same bytes into the workspace.
-     */
-    private void materializeReturnedSpecification(SandboxAgentTools baseTools, InteractiveSandbox sandbox, String sessionId, @Nullable String finalMessage) {
-        if (!Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "SPEC.md"), "").isBlank() || finalMessage == null) {
-            return;
-        }
-        int heading = finalMessage.indexOf("# SPEC.md");
-        if (heading < 0) {
-            return;
-        }
-        String specification = finalMessage.substring(heading).strip();
-        if (specification.endsWith("```")) {
-            specification = specification.substring(0, specification.length() - 3).stripTrailing();
-        }
-        String result = baseTools.writeFile("SPEC.md", specification);
-        if (result != null && !result.startsWith("ERROR")) {
-            log.info("Materialized SPEC.md from the agent's returned artifact before applying the normal specification gates");
-        }
     }
 
     private static String appendGateReport(String finalMessage, String gateReport) {

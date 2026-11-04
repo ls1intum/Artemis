@@ -307,6 +307,120 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void anApprovedRedesignResumesOnlyItsExecutableStageWithinAnotherExistingAttempt() {
+        StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
+        assertThat(approvedSpecs.approved("s")).hasValue(continuation.approvedSpecification());
+        continuation = new StagedAssessmentContinuation(continuation.startedAt(), continuation.reentriesRemaining(), continuation.approvedSpecification(), continuation.feedback(),
+                List.of("retained specification objection"), List.of("retained concept objection"));
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(resumed.result().turns()).isLessThanOrEqualTo(40);
+        assertThat(resumed.assessmentContinuation()).isNull();
+        assertThat(resumed.unresolvedSpecificationFindings()).containsExactly("retained specification objection");
+        assertThat(resumed.unresolvedConceptFindings()).containsExactly("retained concept objection");
+        InOrder stages = inOrder(baseTools);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void aContinuationCannotReopenTheContractAgainWhenItsTestsStillAcceptABypass() {
+        StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
+        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(resumed.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
+        assertThat(resumed.assessmentContinuation()).isNull();
+        verify(baseTools, times(2)).enterStage(GenerationStage.SPEC);
+        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void anExecutableContinuationCannotResetTheOriginalAuthoringDeadline() {
+        var beginning = java.time.Instant.parse("2026-01-01T00:00:00Z");
+        runner.setClockForTests(() -> beginning);
+        StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
+        runner.setClockForTests(() -> beginning.plus(Duration.ofHours(1)));
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(resumed.result().turns()).isZero();
+        assertThat(resumed.assessmentContinuation()).isNull();
+        verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void anExecutableContinuationRequiresItsExactApprovedSpecification() {
+        StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
+        assertThat(approvedSpecs.reopenForAssessment("s", continuation.approvedSpecification())).isTrue();
+        approvedSpecs.approve("s", "replacement approval");
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(resumed.result().stopCause()).contains("approved contract changed");
+        verify(agentLoopRunner, times(4)).run(anyString(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @Test
+    void anUnfinishedContinuationCannotCreateAnotherContinuationOrReachStatement() {
+        StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
+        doAnswer(invocation -> new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, invocation.getArgument(3), "still incomplete")).when(agentLoopRunner).run(anyString(),
+                anyString(), any(), anyInt(), any(), any(), any());
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(failingReport());
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(resumed.assessmentContinuation()).isNull();
+        verify(baseTools, never()).enterStage(GenerationStage.STATEMENT);
+    }
+
+    private StagedAssessmentContinuation exhaustRedesignedAssessment() {
+        var settings = new HyperionGenerationSettings("small", null, 40, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, null);
+        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"), failingReport(), passingReport("testFoo"));
+        AtomicInteger calls = new AtomicInteger();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            int budget = invocation.getArgument(3);
+            int call = calls.incrementAndGet();
+            int used = switch (call) {
+                case 1 -> 3;
+                case 2 -> 15;
+                case 3 -> 5;
+                case 4 -> budget;
+                default -> 1;
+            };
+            assertThat(used).isLessThanOrEqualTo(budget);
+            return new AgentLoopResult(call == 4 ? AgentLoopResult.Status.BUDGET_EXHAUSTED : AgentLoopResult.Status.COMPLETED, used, "current artifacts");
+        });
+        var paused = runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY);
+        assertThat(paused.result().status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
+        assertThat(paused.result().turns()).isLessThanOrEqualTo(40);
+        assertThat(paused.assessmentContinuation()).isNotNull();
+        return paused.assessmentContinuation();
+    }
+
+    private StagedGenerationRunner.StagedRunOutcome resume(StagedAssessmentContinuation continuation) {
+        return runner.resume(continuation, exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY,
+                true, false, null, null);
+    }
+
+    @Test
     void assessmentRedesignCannotExceedTheSharedTurnBudget() {
         var settings = new HyperionGenerationSettings("small", null, 24, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
         runner = runner.forSettings(settings, agentLoopRunner, null);

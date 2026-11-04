@@ -193,6 +193,9 @@ class GenerationAttemptLoop {
     private TerminationReason stagedTerminationReason;
 
     @Nullable
+    private StagedAssessmentContinuation stagedContinuation;
+
+    @Nullable
     private List<Message> carriedConversation;
 
     private int totalAgentTurns;
@@ -296,6 +299,19 @@ class GenerationAttemptLoop {
     GenerationOutcome run() {
         for (int attempt = 1; attempt <= maxGenerationAttempts; attempt++) {
             runAttempt(attempt);
+            if (stagedContinuation != null) {
+                if (cancelled.getAsBoolean()) {
+                    return cancelledOutcome(cancelledResult(loopResult));
+                }
+                if (attempt == maxGenerationAttempts || ++mechanicalAttemptsBeforeAnyRepair >= MAX_MECHANICAL_ATTEMPTS) {
+                    stagedTerminationReason = attempt == maxGenerationAttempts ? TerminationReason.ATTEMPT_CAP_REACHED : TerminationReason.MECHANICAL_REPAIR_EXHAUSTED;
+                    loopResult = new AgentLoopResult(AgentLoopResult.Status.ERROR, loopResult.turns(), loopResult.finalMessage(),
+                            "No existing authoring attempt remains to complete the redesigned executable assessment.");
+                    return outcomeIfAgentStopped();
+                }
+                emit("The redesigned executable stage reached this attempt's turn limit; continuing its current workspace in the next existing authoring attempt.");
+                continue;
+            }
             GenerationOutcome stoppedOutcome = outcomeIfAgentStopped();
             if (stoppedOutcome != null) {
                 return stoppedOutcome;
@@ -443,15 +459,23 @@ class GenerationAttemptLoop {
             activity.attempt(attempt);
             activity.step(null);
         }
-        boolean stagedAttempt = useStagedGeneration && attempt == 1;
+        boolean stagedAttempt = useStagedGeneration && (attempt == 1 || stagedContinuation != null);
         if (stagedAttempt) {
-            emitPhase(Phase.DESIGNING, "Designing the learning task and creating the specification, code, and tests");
-            StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot, sandbox,
-                    sessionId, cancelled, usageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies,
-                    conceptSelectionApplies, spec -> {
-                        specSnapshot.set(spec);
-                        specObserver.accept(spec);
-                    }, capture::recordStageBoundary);
+            emitPhase(stagedContinuation == null ? Phase.DESIGNING : Phase.REPAIRING,
+                    stagedContinuation == null ? "Designing the learning task and creating the specification, code, and tests"
+                            : "Completing the approved redesigned assessment from its current workspace");
+            Consumer<String> publishSpec = spec -> {
+                specSnapshot.set(spec);
+                specObserver.accept(spec);
+            };
+            StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedContinuation == null
+                    ? stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot, sandbox, sessionId, cancelled, usageSink, progress,
+                            () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies, conceptSelectionApplies, publishSpec,
+                            capture::recordStageBoundary)
+                    : stagedGenerationRunner.resume(stagedContinuation, exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot, sandbox, sessionId, cancelled,
+                            usageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies, conceptSelectionApplies,
+                            publishSpec, capture::recordStageBoundary);
+            stagedContinuation = stagedOutcome.assessmentContinuation();
             loopResult = stagedOutcome.result();
             stagedTerminationReason = stagedOutcome.terminationReason();
             carriedConversation = stagedOutcome.conversation();
