@@ -45,6 +45,18 @@ class DifferentialBuildChecksTest {
         }
     }
 
+    @Test
+    void onlyTheCheckThatFailedOnInitializationIsExcludedFromTheServerDefect() {
+        String other = "testClass[GenericApi:Board]";
+        BuildSummary solution = new BuildSummary(3, 2, 1, false, List.of(STRUCTURAL, other, "behaves"), List.of(STRUCTURAL, other),
+                List.of(new AgentVerifyReport.TestFailureEvidence(STRUCTURAL, "java.lang.ExceptionInInitializerError"),
+                        new AgentVerifyReport.TestFailureEvidence(other, "org.opentest4j.AssertionFailedError: Declare the required class type parameters")),
+                "");
+
+        assertThat(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, Set.of(STRUCTURAL, other), List.of(SPEC), CONFORMING)).singleElement().asString()
+                .startsWith(VerificationResult.SERVER_DEFECT_PREFIX).contains(other).doesNotContain(STRUCTURAL);
+    }
+
     private static BuildSummary failing(String message) {
         return new BuildSummary(2, 1, 1, false, List.of(STRUCTURAL, "behaves"), List.of(STRUCTURAL), List.of(new AgentVerifyReport.TestFailureEvidence(STRUCTURAL, message)), "");
     }

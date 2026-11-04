@@ -56,17 +56,18 @@ final class DifferentialBuildChecks {
     /**
      * Names server-owned structural checks that fail on a reference solution matching the approved Public API. The server derived them from that contract, so the failure is a
      * seeding defect the agent cannot repair. The checks still fail verification; this only keeps the diagnostic from presenting the defect as an authoring error. A check that
-     * failed because initializing a candidate class threw is not one: the candidate's own code failed, and it can repair that.
+     * failed because initializing a candidate class threw is not one: the candidate's own code failed, and it can repair that. Only the other failing checks are named, and
+     * only they can make the build a server defect.
      */
     static List<String> structuralSeedingDefectReasons(BuildSummary solution, Set<String> seededStructuralTestNames, List<String> contractSpecifications,
             Map<String, String> solutionFiles) {
         Set<String> seeded = seededStructuralTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
-        List<String> failingSeeded = solution.testFailedNames().stream().filter(name -> seeded.contains(ProblemStatementBindingChecker.normalizeTestName(name))).distinct().sorted()
-                .toList();
-        boolean candidateInitializationFailed = solution.failureEvidence().stream()
-                .anyMatch(evidence -> seeded.contains(ProblemStatementBindingChecker.normalizeTestName(evidence.testName()))
-                        && CANDIDATE_INITIALIZATION_FAILURE.matcher(evidence.message()).find());
-        if (failingSeeded.isEmpty() || candidateInitializationFailed || contractSpecifications.isEmpty()
+        Set<String> candidateInitializationFailures = solution.failureEvidence().stream()
+                .filter(evidence -> CANDIDATE_INITIALIZATION_FAILURE.matcher(evidence.message()).find())
+                .map(evidence -> ProblemStatementBindingChecker.normalizeTestName(evidence.testName())).collect(Collectors.toSet());
+        List<String> failingSeeded = solution.testFailedNames().stream().map(ProblemStatementBindingChecker::normalizeTestName)
+                .filter(name -> seeded.contains(name) && !candidateInitializationFailures.contains(name)).distinct().sorted().toList();
+        if (failingSeeded.isEmpty() || contractSpecifications.isEmpty()
                 || !contractSpecifications.stream().allMatch(spec -> ApprovedOwnershipGate.solutionMatchesApprovedApi(spec, solutionFiles))) {
             return List.of();
         }
