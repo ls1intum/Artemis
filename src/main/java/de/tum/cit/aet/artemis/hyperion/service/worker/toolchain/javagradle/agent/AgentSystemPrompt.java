@@ -179,6 +179,13 @@ public class AgentSystemPrompt {
 
             """;
 
+    /**
+     * How student code that uses given types stays gradable. A program that only prints a fixed result can be passed by printing that result, and reading its source is
+     * neither allowed in the grading sandbox nor graded behavior, so the graded code must take what it works on. Shared verbatim by the specification stage, the style
+     * guides, the source-reading test gate, and the print-only main finding.
+     */
+    public static final String TESTABLE_STUDENT_CODE_RULE = "When students write a program or method that uses given types, the graded student code receives the objects, configuration, or inputs it works on, for example a static method that main calls with the objects it creates, or a method taking the API object or values as parameters, so tests can call it with different objects or values and a hard-coded output fails; main may stay a thin, ungraded demo. Tests grade behavior through those parameters, returned values, object state, or output captured for varied inputs, never by reading source or bytecode.";
+
     private static final String STAGE_SPEC_INSTRUCTIONS = """
             STAGE — SPECIFICATION
             Write `/workspace/SPEC.md` from the instructor brief and selected concept. The brief is authoritative; the concept is a design proposal. Choose the smallest coherent
@@ -214,7 +221,8 @@ public class AgentSystemPrompt {
 
             Judge the learner path before freezing: what is given, what changes, what reasoning remains, and what evidence demonstrates each explicit objective? A specification's
             claim that a skill is practiced is insufficient when its own ownership or API supplies that work. Make examples, signatures, and ownership mutually consistent.
-            """;
+            """
+            + TESTABLE_STUDENT_CODE_RULE + "\n";
 
     private static final String STAGE_3_TESTS_INSTRUCTIONS = """
             EXECUTABLE BUILD

@@ -130,4 +130,16 @@ class AgentSystemPromptTest {
     private static String normalizeWhitespace(String text) {
         return text.replaceAll("\\s+", " ");
     }
+
+    @Test
+    void theTestableStudentCodeRuleIsOneTextAcrossTheSpecificationPromptAndTheStyleGuides() throws IOException {
+        String rule = normalizeWhitespace(AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE);
+
+        assertThat(normalizeWhitespace(prompts.buildStage(input(false), GenerationStage.SPEC))).contains(rule);
+        for (String guide : List.of("spec.md", "tests.md")) {
+            try (InputStream input = new GenerationResources().getResource(Path.of("templates/hyperion/style/" + guide)).getInputStream()) {
+                assertThat(normalizeWhitespace(new String(input.readAllBytes(), StandardCharsets.UTF_8))).as(guide).contains(rule);
+            }
+        }
+    }
 }

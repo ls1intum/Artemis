@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome;
@@ -103,10 +104,9 @@ final class GenerationReviewSupport {
                     "The environment ran the reference " + mutant.ruleId() + " without arguments or input, then replaced only the body of that method in " + mutant.solutionPath()
                             + " with statements printing the captured output, leaving every other member unchanged. The graded suite still passed, so "
                             + "a graded test compares only the printed transcript, and a student passes it by hard-coding that output without using the program's objects. "
-                            + "Grade the behavior main is responsible for through object state or interactions (for example the objects it creates and the collaborators it "
-                            + "calls), or vary the inputs or given data the test runs main with, so a hard-coded transcript fails. A pure transcript check may stay only "
-                            + "ungraded: as a zero-weight PRESERVATION entry in test-plan.json when it also passes on the template, otherwise remove it. Testing other members through the public API cannot resolve this, because "
-                            + "they are unchanged in the print-only version; the finding clears once no graded test compares the transcript alone.",
+                            + AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE + " A pure transcript check may stay only ungraded: as a zero-weight PRESERVATION entry in "
+                            + "test-plan.json when it also passes on the template, otherwise remove it. Testing other members through the public API cannot resolve this, "
+                            + "because they are unchanged in the print-only version; the finding clears once no graded test compares the transcript alone.",
                     changedSolutionLines(mutant));
         }
         return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
@@ -172,9 +172,8 @@ final class GenerationReviewSupport {
                         + "; no kill is inferred from a timeout, compilation failure, or missing executed-test report.";
             }
             if (mutant.printsTranscriptOnly()) {
-                return "The graded suite still passes a " + mutant.ruleId() + " that only prints the expected output. Grade what main does through object state or "
-                        + "interactions, or vary its inputs or given data so a hard-coded transcript fails; a pure transcript check may stay only ungraded (zero-weight "
-                        + "PRESERVATION when it passes on the template) or must go. Keep the verified solution unchanged.";
+                return "The graded suite still passes a " + mutant.ruleId() + " that only prints the expected output. " + AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE
+                        + " A pure transcript check may stay only ungraded (zero-weight PRESERVATION when it passes on the template) or must go.";
             }
             return "The graded suite still passes the environment-proven semantic mutant for rule " + mutant.ruleId() + " (" + mutant.counterexample().wrongBehavior()
                     + "). Add a focused assertion that kills this plausible wrong implementation; keep the verified solution unchanged.";

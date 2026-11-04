@@ -7,6 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome;
@@ -38,7 +39,7 @@ class GenerationReviewSupportTest {
     }
 
     @Test
-    void aSurvivingPrintOnlyMainAsksForAssertionsOnObjectStateOrInteractions() {
+    void aSurvivingPrintOnlyMainGivesTheSharedTestableStudentCodeRule() {
         String original = "class Library {\n  public static void main(String[] args) {\n    new Library();\n    System.out.println(\"1\");\n  }\n}\n";
         String variant = "class Library {\n  public static void main(String[] args) { System.out.print(\"1\\n\"); System.out.flush(); }\n}\n";
         SemanticMutant printOnly = SemanticMutant.printedTranscript("src/Library.java", original, variant, "Library");
@@ -49,13 +50,10 @@ class GenerationReviewSupportTest {
         assertThat(finding.isBlocking()).isTrue();
         assertThat(SemanticRepairBatch.surfaceFor(finding.kind())).isEqualTo(RepairSurface.ORACLE);
         assertThat(finding.requirement()).contains("Library.main", "only prints the expected output");
-        assertThat(finding.detail())
-                .contains("Grade the behavior main is responsible for through object state or interactions",
-                        "vary the inputs or given data the test runs main with, so a hard-coded transcript fails", "ungraded", "cannot resolve this")
-                .doesNotContain("counterexample");
+        assertThat(finding.detail()).contains(AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE, "ungraded", "cannot resolve this").doesNotContain("counterexample");
         assertThat(finding.location()).isEqualTo(new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, "src/Library.java", 2, 5));
         assertThat(GenerationReviewSupport.semanticMutantRecheck(List.of(new SemanticMutantOutcome(printOnly, Disposition.SURVIVED_GRADED_SUITE))).failureReasons()).singleElement()
-                .asString().contains("only prints the expected output", "through object state or interactions", "may stay only ungraded");
+                .asString().contains("only prints the expected output", AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE, "may stay only ungraded");
     }
 
     @Test

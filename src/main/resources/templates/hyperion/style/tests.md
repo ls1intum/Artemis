@@ -53,6 +53,15 @@ Assert exception TYPES, never message strings, unless the statement itself fixes
 message-string assertion turns wording into a graded contract nobody stated. Write assertion messages that
 tell a student what rule failed and why; the message is part of the pedagogy.
 
+## Gradable student programs
+
+When students write a program or method that uses given types, the graded student code receives the objects,
+configuration, or inputs it works on, for example a static method that main calls with the objects it creates,
+or a method taking the API object or values as parameters, so tests can call it with different objects or
+values and a hard-coded output fails; main may stay a thin, ungraded demo. Tests grade behavior through those
+parameters, returned values, object state, or output captured for varied inputs, never by reading source or
+bytecode. A test that reads a source file is rejected before verification.
+
 ## Harness conventions (Java/Ares)
 
 Use Java 25 and the current Ares 2 harness. Use `org.junit.jupiter.api.Test`, `de.tum.cit.ase.ares.api.jupiter.Public`,

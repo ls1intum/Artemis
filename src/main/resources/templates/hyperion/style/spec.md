@@ -155,6 +155,13 @@ behaviour, `1` for edge polish; every planned test for the seam carries that tie
 grades silently and is never bound to a task in the statement. Every row is required graded student work; keep
 optional enrichment outside this table, the test plan, and the Artemis tasks.
 
+When students write a program or method that uses given types, the graded student code receives the objects,
+configuration, or inputs it works on, for example a static method that main calls with the objects it creates,
+or a method taking the API object or values as parameters, so tests can call it with different objects or
+values and a hard-coded output fails; main may stay a thin, ungraded demo. Tests grade behavior through those
+parameters, returned values, object state, or output captured for varied inputs, never by reading source or
+bytecode.
+
 For modification exercises, separate the pre-change behavior from the assigned extension before freezing.
 Describe unchanged successful cases and retained guards as supplied behavior outside the seam and risk
 inventory tables. They get preservation checks, not a seam, a weight tier, a student-work partition, or a
