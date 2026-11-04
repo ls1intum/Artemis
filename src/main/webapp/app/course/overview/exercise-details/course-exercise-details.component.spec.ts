@@ -1457,13 +1457,13 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(comp.complaint()).toBeUndefined();
         });
 
-        it('should not look for the latest rated result of a text exercise', () => {
-            comp.exercise = { ...exercise, type: ExerciseType.TEXT } as unknown as Exercise;
+        it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])('should load the latest rated result of a %s exercise for the details panel', (type) => {
+            comp.exercise = { ...exercise, type } as unknown as Exercise;
             vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as unknown as EntityResponseType));
 
             comp.loadComplaintAndLatestRatedResult();
 
-            expect(comp.latestRatedResult()).toBeUndefined();
+            expect(comp.latestRatedResult()?.id).toBe(2);
         });
 
         it('should load nothing without a graded submission or results to show', () => {

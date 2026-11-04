@@ -791,10 +791,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             },
         });
 
-        if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return;
-        }
-
         const ratedResults = getAllResultsOfAllSubmissions(graded?.submissions)
             ?.filter((result: Result) => result.rated)
             .sort(this.resultSortFunction);
