@@ -274,9 +274,9 @@ export class AttachmentVideoUnitFormComponent {
     readonly nextFileVersion = computed(() => (this.currentFileVersion() ?? 0) + 1);
     readonly hasSavedVideoSource = computed(() => !!this.savedVideoSource());
 
-    /** A unit may be saved without a file and a video, so its video can be uploaded to TUM.Live afterwards. */
+    /** A unit may be saved without a file and a video, so its video can be uploaded to TUM.Live afterwards; a file of a type the server rejects is not taken. */
     isFormValid = computed(() => {
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.isReleaseDateTextValid();
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && !this.isFileTypeUnsupported() && this.isReleaseDateTextValid();
     });
 
     /** Whether the details that an item edited in place saves automatically can be saved; a new video link or its helper do not count. */
@@ -381,6 +381,12 @@ export class AttachmentVideoUnitFormComponent {
      * @param videoSource the item's video link now
      */
     applyServerVideoSource(videoSource: string | undefined): void {
+        const typed = this.videoSourceControl?.value || undefined;
+        if (typed !== (this.savedVideoSource() || undefined) && typed !== (videoSource || undefined)) {
+            // The user entered another link and did not save it yet: it stays, now as a change of the new link.
+            this.savedVideoSource.set(videoSource);
+            return;
+        }
         this.applyingFormData = true;
         this.videoSourceControl?.setValue(videoSource);
         this.applyingFormData = false;

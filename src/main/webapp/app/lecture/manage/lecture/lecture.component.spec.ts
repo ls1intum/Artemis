@@ -15,6 +15,7 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
+import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
@@ -233,6 +234,16 @@ describe('Lecture', () => {
         lectureComponent.deleteLecture(pastLecture.id!, { deleteTumLiveRecordings: true });
 
         expect(deleteSpy).toHaveBeenCalledWith(pastLecture.id!, true);
+    });
+
+    it('reports a failed lookup of the uploaded TUM.Live videos instead of acting as if there were none', async () => {
+        vi.spyOn(TestBed.inject(TumLiveUploadService), 'getUploadedUnits').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        lectureComponent.ngOnInit();
+        await lectureComponentFixture.whenStable();
+
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
     });
 
     it('should import lecture', async () => {

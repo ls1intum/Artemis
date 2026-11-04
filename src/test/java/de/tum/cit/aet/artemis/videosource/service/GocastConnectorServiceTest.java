@@ -230,7 +230,8 @@ class GocastConnectorServiceTest {
 
         String watchUrl = connector.watchUrl("algorithmen-üben", 55);
 
-        assertThat(watchUrl).isEqualTo("http://localhost:18081/w/algorithmen-%C3%BCben/55");
+        // Only the video, like a TUM.Live link an editor enters, so the edit form accepts it.
+        assertThat(watchUrl).isEqualTo("http://localhost:18081/w/algorithmen-%C3%BCben/55?video_only=1");
         assertThat(tumLiveService.findWatchPage(watchUrl)).hasValueSatisfying(page -> assertThat(page.streamId()).isEqualTo("55"));
     }
 

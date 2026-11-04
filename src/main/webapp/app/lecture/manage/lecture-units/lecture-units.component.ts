@@ -925,7 +925,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentVideoUnit.releaseDate = releaseDate || undefined;
         attachmentVideoUnit.competencyLinks = this.competencyLinksToSend(competencyLinks);
         attachmentVideoUnit.videoSource = options.withVideoSource ? videoSource || undefined : savedUnit.videoSource;
-        attachmentVideoUnit.loadedVideoSource = savedUnit.videoSource;
+        // An empty loaded link is sent as '': without the field the server compares with the link the unit has now.
+        attachmentVideoUnit.loadedVideoSource = savedUnit.videoSource ?? '';
         attachmentVideoUnit.attachmentUpdateIntent = withUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE;
 
         const formData = new FormData();

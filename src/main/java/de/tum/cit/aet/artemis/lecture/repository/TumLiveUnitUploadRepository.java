@@ -64,12 +64,19 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
     @Query("UPDATE TumLiveUnitUpload upload SET upload.pendingCheckedAt = :now WHERE upload.id = :id AND upload.pendingRef = :ref")
     void markPendingChecked(@Param("id") long id, @Param("ref") String ref, @Param("now") ZonedDateTime now);
 
+    /**
+     * The units of a course with a video uploaded to TUM.Live, attached or still pending: a pending one may be attached before the unit is deleted, so its delete
+     * dialog asks about it too.
+     *
+     * @param courseId the course
+     * @return the units and their lectures
+     */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadedUnitDTO(lectureUnit.lecture.id, lectureUnit.id)
             FROM TumLiveUnitUpload upload, LectureUnit lectureUnit
             WHERE lectureUnit.id = upload.lectureUnitId
                 AND lectureUnit.lecture.course.id = :courseId
-                AND upload.currentRef IS NOT NULL
+                AND (upload.currentRef IS NOT NULL OR upload.pendingRef IS NOT NULL)
             """)
     List<TumLiveUploadedUnitDTO> findUploadedUnitsByCourseId(@Param("courseId") long courseId);
 
@@ -218,6 +225,23 @@ public interface TumLiveUnitUploadRepository extends ArtemisJpaRepository<TumLiv
         upload.setLastError(null);
         saveAndFlush(upload);
         return true;
+    }
+
+    /**
+     * Forgets the attached upload of a unit whose video link an editor changed to another video, so deleting the unit no longer offers to delete it in TUM.Live.
+     * The recording stays there, as the editor did not ask to delete it.
+     *
+     * @param lectureUnitId the attachment video unit
+     * @param shownStreamId the TUM.Live lecture the unit's new link shows, or null if it shows none
+     */
+    @Transactional
+    default void forgetCurrentUnlessShown(long lectureUnitId, Long shownStreamId) {
+        findAttachmentVideoUnitForUpdateById(lectureUnitId);
+        findForUpdateByLectureUnitId(lectureUnitId).filter(upload -> upload.getCurrentRef() != null && !Objects.equals(upload.getCurrentStreamId(), shownStreamId))
+                .ifPresent(upload -> {
+                    upload.clearCurrent();
+                    saveAndFlush(upload);
+                });
     }
 
     /**

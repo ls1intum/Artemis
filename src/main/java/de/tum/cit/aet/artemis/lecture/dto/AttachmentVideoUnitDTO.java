@@ -25,8 +25,8 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
  * (additionally carrying the mapped {@link AttachmentDTO} and {@link SlideDTO}s). Lazy associations are mapped defensively so the DTO can also
  * be created right after persisting, before all associations are initialized.
  * <p>
- * On update, {@code loadedVideoSource} is the video URL the client's form was loaded with. The unit's video URL changes only if {@code videoSource} differs
- * from it, and only if the unit still has it.
+ * On update, {@code loadedVideoSource} is the video URL the client's form was loaded with, {@code ""} if it had none. The unit's video URL changes only if
+ * {@code videoSource} differs from it, and only if the unit still has it. A request without {@code loadedVideoSource} compares with the URL the unit has.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

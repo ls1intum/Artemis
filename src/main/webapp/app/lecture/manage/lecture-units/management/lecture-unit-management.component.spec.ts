@@ -32,7 +32,7 @@ import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
+import { TumLiveUploadService, TumLiveUploadedUnit } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { throwError } from 'rxjs';
 import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
@@ -194,6 +194,27 @@ describe('LectureUnitManagementComponent', () => {
 
         expect(deleteLectureUnitSpy).toHaveBeenCalledWith(3, expect.any(Number), true);
         expect(deleteLectureUnitSpy).toHaveBeenCalledWith(1, expect.any(Number), false);
+    });
+
+    it('reads the uploaded TUM.Live videos again on request, ignores an older answer, and keeps them when reading fails', () => {
+        const tumLiveUploadService = TestBed.inject(TumLiveUploadService);
+        const older = new Subject<TumLiveUploadedUnit[]>();
+        const newer = new Subject<TumLiveUploadedUnit[]>();
+        vi.spyOn(tumLiveUploadService, 'getUploadedUnits').mockReturnValueOnce(older).mockReturnValueOnce(newer);
+
+        lectureUnitManagementComponent.refreshTumLiveUploads();
+        lectureUnitManagementComponent.refreshTumLiveUploads();
+        newer.next([{ lectureId: 1, lectureUnitId: 4 }]);
+        older.next([]);
+
+        expect(lectureUnitManagementComponent.tumLiveUploadedUnitIds()).toEqual(new Set([4]));
+
+        const errorSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(tumLiveUploadService, 'getUploadedUnits').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        lectureUnitManagementComponent.refreshTumLiveUploads();
+
+        expect(lectureUnitManagementComponent.tumLiveUploadedUnitIds()).toEqual(new Set([4]));
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
     });
 
     it('should show loadData on delete', () => {

@@ -49,6 +49,9 @@ public class TumLiveUploadService {
 
     private static final Duration BLOCKED_RETRY = Duration.ofDays(1);
 
+    /** When a deletion is tried again after TUM.Live could not be reached, so a failing entry does not keep the entries after it from being tried. */
+    private static final Duration UNAVAILABLE_RETRY = Duration.ofMinutes(5);
+
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final TumLiveUnitUploadRepository uploadRepository;
@@ -139,6 +142,16 @@ public class TumLiveUploadService {
     }
 
     /**
+     * Forgets the attached upload of a unit after an editor changed its video link to another video. The recording stays in TUM.Live.
+     *
+     * @param lectureUnitId  the unit
+     * @param newVideoSource the unit's video link now
+     */
+    public void forgetUploadUnlessShown(long lectureUnitId, String newVideoSource) {
+        gocastBindingApi.ifPresent(api -> uploadRepository.forgetCurrentUnlessShown(lectureUnitId, api.findStreamId(newVideoSource).orElse(null)));
+    }
+
+    /**
      * Prepares units for deletion: their pending uploads are deleted in TUM.Live, their attached recordings only if the instructor chose so.
      *
      * @param lectureUnitIds   the units about to be deleted
@@ -170,13 +183,12 @@ public class TumLiveUploadService {
         long unitId = upload.getLectureUnitId();
         String ref = upload.getPendingRef();
         ZonedDateTime now = ZonedDateTime.now();
-        if (upload.getPendingSince().plus(maxAge).isBefore(now)) {
-            uploadRepository.discardPending(unitId, ref, "The upload did not finish in time.", now);
-            return;
-        }
+        // A recording that is ready is attached even after the maximum age, which also counts the time the browser took to send the file.
+        boolean overdue = upload.getPendingSince().plus(maxAge).isBefore(now);
         uploadRepository.markPendingChecked(upload.getId(), ref, now);
         if (upload.getPendingStreamId() == null) {
-            // Starting it did not finish; the maximum age gives it up.
+            // Starting it did not finish.
+            giveUpIfOverdue(unitId, ref, overdue, now);
             return;
         }
         GocastRecordingDTO recording;
@@ -187,6 +199,9 @@ public class TumLiveUploadService {
             if (exception.getUpstreamStatus().isSameCodeAs(HttpStatus.NOT_FOUND)) {
                 uploadRepository.discardPending(unitId, ref, "The lecture in TUM.Live no longer exists.", now);
             }
+            else {
+                giveUpIfOverdue(unitId, ref, overdue, now);
+            }
             return;
         }
         if (recording.failed()) {
@@ -194,6 +209,7 @@ public class TumLiveUploadService {
             return;
         }
         if (!recording.ready()) {
+            giveUpIfOverdue(unitId, ref, overdue, now);
             return;
         }
         // The slug of the connection the upload was made through: the course may be connected to another TUM.Live course by now.
@@ -202,6 +218,12 @@ public class TumLiveUploadService {
             // Read again: the processing compares the stored video URL, which the attachment just changed.
             attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId)
                     .ifPresent(attached -> contentProcessingService.ifPresent(service -> service.triggerProcessing(attached)));
+        }
+    }
+
+    private void giveUpIfOverdue(long unitId, String ref, boolean overdue, ZonedDateTime now) {
+        if (overdue) {
+            uploadRepository.discardPending(unitId, ref, "The upload did not finish in time.", now);
         }
     }
 
@@ -226,7 +248,10 @@ public class TumLiveUploadService {
                     log.warn("TUM.Live refused to delete the uploaded lecture {} of grant {}: {}; retrying daily", cleanup.getExternalRef(), cleanup.getGrantId(), status);
                     cleanupRepository.postpone(cleanup.getId(), now.plus(BLOCKED_RETRY), "TUM.Live answered " + status);
                 }
-                // Anything else is TUM.Live being unavailable: the entry stays due and is retried on the next run.
+                else {
+                    // TUM.Live is unavailable: try again soon, after the entries that come next.
+                    cleanupRepository.postpone(cleanup.getId(), now.plus(UNAVAILABLE_RETRY), cleanup.getBlockedReason());
+                }
             }
         }
         uploadRepository.deleteWithoutUnitAndPendingUpload();
@@ -249,7 +274,8 @@ public class TumLiveUploadService {
 
     /**
      * Before a course is disconnected from TUM.Live, deletes there what its uploads through this grant left unattached, while the grant still works: pending
-     * uploads and the queued deletions. Attached recordings stay. A failure is logged and does not stop the disconnection; the queue keeps what is left.
+     * uploads and the queued deletions, at most 50 of these so the disconnection does not wait long. Attached recordings stay. A failure is logged and does not
+     * stop the disconnection; the queue keeps what is left.
      *
      * @param event the grant about to be revoked
      */
@@ -263,7 +289,7 @@ public class TumLiveUploadService {
             for (TumLiveUnitUpload upload : uploadRepository.findByCourseIdAndPendingGrantId(event.courseId(), event.grantId())) {
                 uploadRepository.discardPending(upload.getLectureUnitId(), upload.getPendingRef(), "The course was disconnected from TUM.Live.", now);
             }
-            for (TumLiveRecordingCleanup cleanup : cleanupRepository.findByGrantId(event.grantId())) {
+            for (TumLiveRecordingCleanup cleanup : cleanupRepository.findTop50ByGrantIdOrderByNextAttemptAtAsc(event.grantId())) {
                 try {
                     gocastBindingApi.get().deleteUpload(event.grantId(), cleanup.getExternalRef());
                     cleanupRepository.deleteConfirmed(cleanup.getId());

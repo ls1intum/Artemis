@@ -50,7 +50,7 @@ public class GocastRecordingService {
      *         (another course, a private or deleted lecture, a revoked grant); the caller then uses the public lookup
      */
     public Optional<TumLivePlaylistLookup> lookUpConnectedPlaylist(long courseId, String videoSource) {
-        Optional<Long> streamId = tumLiveService.findWatchPage(videoSource).flatMap(page -> parseId(page.streamId()));
+        Optional<Long> streamId = findStreamId(videoSource);
         if (streamId.isEmpty()) {
             return Optional.empty();
         }
@@ -99,6 +99,16 @@ public class GocastRecordingService {
 
     public String watchUrl(String courseSlug, long streamId) {
         return connectorService.watchUrl(courseSlug, streamId);
+    }
+
+    /**
+     * The TUM.Live lecture a video URL shows, without calling TUM.Live.
+     *
+     * @param videoSource the video URL
+     * @return the lecture, or empty if the URL is not a TUM Live watch page
+     */
+    public Optional<Long> findStreamId(String videoSource) {
+        return videoSource == null ? Optional.empty() : tumLiveService.findWatchPage(videoSource).flatMap(page -> parseId(page.streamId()));
     }
 
     private static Optional<Long> parseId(String digits) {

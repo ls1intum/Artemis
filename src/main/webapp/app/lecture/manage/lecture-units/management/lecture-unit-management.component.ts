@@ -299,16 +299,34 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
-    /** The units that show a video Artemis uploaded to TUM.Live; deleting one asks whether to delete the video there too. */
+    /** The units with a video Artemis uploaded to TUM.Live, also one that still converts; deleting one asks whether to delete the video there too. */
     readonly tumLiveUploadedUnitIds = signal<Set<number>>(new Set());
+
+    /** Identifies the latest request for the uploaded units, so an older answer that arrives later does not replace a newer one. */
+    private tumLiveUploadsSequence = 0;
+
+    /** Reads again which units have a video uploaded to TUM.Live, for example after a file was sent there. */
+    refreshTumLiveUploads() {
+        this.loadTumLiveUploads(this.lecture()?.course?.id);
+    }
 
     private loadTumLiveUploads(courseId: number | undefined) {
         if (courseId === undefined) {
             return;
         }
+        const sequence = ++this.tumLiveUploadsSequence;
         this.tumLiveUploadService.getUploadedUnits(courseId).subscribe({
-            next: (units) => this.tumLiveUploadedUnitIds.set(new Set(units.map((unit) => unit.lectureUnitId))),
-            error: () => this.tumLiveUploadedUnitIds.set(new Set()),
+            next: (units) => {
+                if (sequence === this.tumLiveUploadsSequence) {
+                    this.tumLiveUploadedUnitIds.set(new Set(units.map((unit) => unit.lectureUnitId)));
+                }
+            },
+            // Keep what is known and say so: an empty set would delete units without asking about their videos in TUM.Live.
+            error: (errorResponse: HttpErrorResponse) => {
+                if (sequence === this.tumLiveUploadsSequence) {
+                    onError(this.alertService, errorResponse);
+                }
+            },
         });
     }
 

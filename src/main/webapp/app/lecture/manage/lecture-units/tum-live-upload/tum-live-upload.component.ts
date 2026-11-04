@@ -4,7 +4,7 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressBarC
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumLiveUploadService, TumLiveUploadState } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
-import { EMPTY, Subscription, catchError, interval, switchMap } from 'rxjs';
+import { EMPTY, Subscription, catchError, interval, switchMap, timer } from 'rxjs';
 
 /** How often the state of an upload that TUM.Live converts is read again. */
 const POLL_INTERVAL_MS = 15_000;
@@ -26,6 +26,8 @@ export class TumLiveUploadComponent {
     readonly lectureUnitId = input.required<number>();
     /** Emits when an upload of this page was attached to the unit, so the page can show the unit's new video link. */
     readonly attached = output<void>();
+    /** Emits when this page sent a file to TUM.Live, so the page knows the unit has a video there now, also if it is left before the video is attached. */
+    readonly transferred = output<void>();
 
     readonly state = signal<TumLiveUploadState | undefined>(undefined);
     readonly file = signal<File | undefined>(undefined);
@@ -38,6 +40,8 @@ export class TumLiveUploadComponent {
 
     private transfer?: Subscription;
     private poll?: Subscription;
+    /** Reads the state again after reading it failed, so the section comes back without opening the editor again. */
+    private retry?: Subscription;
     /** The reference of the upload this page is sending, once the server named it, and the unit it is for. */
     private activeRef?: string;
     private activeUnitId?: number;
@@ -54,6 +58,11 @@ export class TumLiveUploadComponent {
         this.destroyRef.onDestroy(() => {
             this.transfer?.unsubscribe();
             this.poll?.unsubscribe();
+            this.retry?.unsubscribe();
+            // Leaving the page stops the transfer, so its upload cannot finish: give it up rather than leave it waiting. Not bound to this component, which is gone.
+            if (this.activeRef !== undefined && this.activeUnitId !== undefined) {
+                this.tumLiveUploadService.discard(this.activeUnitId, this.activeRef).subscribe();
+            }
         });
     }
 
@@ -94,6 +103,7 @@ export class TumLiveUploadComponent {
                             this.activeRef = undefined;
                             this.transferProgress.set(undefined);
                             this.file.set(undefined);
+                            this.transferred.emit();
                             this.load(this.lectureUnitId());
                         },
                         error: (error: Error) => this.giveUp(unitId, target.ref, error.message),
@@ -161,10 +171,20 @@ export class TumLiveUploadComponent {
     }
 
     private load(lectureUnitId: number): void {
+        this.retry?.unsubscribe();
+        this.retry = undefined;
         this.tumLiveUploadService
             .getState(lectureUnitId)
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({ next: (state) => this.apply(state), error: () => this.state.set(undefined) });
+            .subscribe({
+                next: (state) => this.apply(state),
+                error: () => {
+                    // The section stays as it was and reads the state again later; an upload that is attached meanwhile is then still recognised.
+                    this.retry = timer(POLL_INTERVAL_MS)
+                        .pipe(takeUntilDestroyed(this.destroyRef))
+                        .subscribe(() => this.load(this.lectureUnitId()));
+                },
+            });
     }
 
     private apply(state: TumLiveUploadState): void {

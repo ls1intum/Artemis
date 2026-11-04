@@ -217,7 +217,8 @@ public class GocastConnectorService {
     }
 
     /**
-     * The TUM.Live watch page of a lecture, in the form Artemis resolves as a TUM Live video.
+     * The TUM.Live watch page of a lecture, in the form Artemis resolves as a TUM Live video. It shows only the video ({@code video_only=1}), like a TUM.Live
+     * link an editor enters, so the unit's edit form accepts it.
      *
      * @param courseSlug the TUM.Live course slug
      * @param streamId   the TUM.Live lecture
@@ -225,7 +226,7 @@ public class GocastConnectorService {
      */
     public String watchUrl(String courseSlug, long streamId) {
         requireId(streamId, "streamId");
-        return webBaseUri.resolve("/w/" + UriUtils.encodePathSegment(courseSlug, StandardCharsets.UTF_8) + "/" + streamId).toString();
+        return webBaseUri.resolve("/w/" + UriUtils.encodePathSegment(courseSlug, StandardCharsets.UTF_8) + "/" + streamId + "?video_only=1").toString();
     }
 
     private static void requireReference(String externalRef) {

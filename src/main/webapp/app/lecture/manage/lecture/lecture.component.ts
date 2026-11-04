@@ -170,13 +170,26 @@ export class LectureComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** The lectures with units that show a video Artemis uploaded to TUM.Live; deleting one asks whether to delete the videos there too. */
+    /** The lectures with units that have a video Artemis uploaded to TUM.Live, also one that still converts; deleting one asks whether to delete the videos there too. */
     readonly tumLiveUploadLectureIds = signal<Set<number>>(new Set());
 
+    /** Identifies the latest request for the uploaded units, so an older answer that arrives later does not replace a newer one. */
+    private tumLiveUploadsSequence = 0;
+
     private loadTumLiveUploads() {
+        const sequence = ++this.tumLiveUploadsSequence;
         this.tumLiveUploadService.getUploadedUnits(this.courseId).subscribe({
-            next: (units) => this.tumLiveUploadLectureIds.set(new Set(units.map((unit) => unit.lectureId))),
-            error: () => this.tumLiveUploadLectureIds.set(new Set()),
+            next: (units) => {
+                if (sequence === this.tumLiveUploadsSequence) {
+                    this.tumLiveUploadLectureIds.set(new Set(units.map((unit) => unit.lectureId)));
+                }
+            },
+            // Say so instead of acting as if there were none: deleting a lecture would then not ask about its videos in TUM.Live.
+            error: (error: HttpErrorResponse) => {
+                if (sequence === this.tumLiveUploadsSequence) {
+                    onError(this.alertService, error);
+                }
+            },
         });
     }
 

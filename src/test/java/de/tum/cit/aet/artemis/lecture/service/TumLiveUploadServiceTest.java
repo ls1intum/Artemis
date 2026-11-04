@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -162,6 +161,29 @@ class TumLiveUploadServiceTest {
     }
 
     @Test
+    void anOverdueUploadThatIsReadyIsStillAttached() {
+        when(uploadRepository.findTop50ByPendingRefIsNotNullOrderByPendingCheckedAtAsc()).thenReturn(List.of(pending(ZonedDateTime.now().minusHours(7), 55L)));
+        when(api.getRecording(23, 55)).thenReturn(new GocastRecordingDTO("https://edge/p.m3u8?jwt=x", false, 0, false, null));
+        when(api.watchUrl("algo", 55)).thenReturn("https://tum.live/w/algo/55?video_only=1");
+
+        service.processPendingUploads();
+
+        verify(uploadRepository).attachPending(eq(UNIT_ID), eq(REF), eq("https://tum.live/w/algo/55?video_only=1"), any());
+        verify(uploadRepository, never()).discardPending(anyLong(), anyString(), any(), any());
+    }
+
+    @Test
+    void anOverdueUploadThatIsStillConvertingIsGivenUp() {
+        when(uploadRepository.findTop50ByPendingRefIsNotNullOrderByPendingCheckedAtAsc()).thenReturn(List.of(pending(ZonedDateTime.now().minusHours(7), 55L)));
+        when(api.getRecording(23, 55)).thenReturn(new GocastRecordingDTO(null, true, 40, false, null));
+
+        service.processPendingUploads();
+
+        verify(uploadRepository).discardPending(eq(UNIT_ID), eq(REF), eq("The upload did not finish in time."), any());
+        verify(uploadRepository, never()).attachPending(anyLong(), anyString(), anyString(), any());
+    }
+
+    @Test
     void unreachableTumLiveLeavesPendingUploadsAlone() {
         when(uploadRepository.findTop50ByPendingRefIsNotNullOrderByPendingCheckedAtAsc()).thenReturn(List.of(pending(ZonedDateTime.now(), 55L)));
         when(api.getRecording(23, 55)).thenThrow(new GocastIntegrationException("down", HttpStatus.SERVICE_UNAVAILABLE));
@@ -206,15 +228,31 @@ class TumLiveUploadServiceTest {
     }
 
     @Test
-    void unavailableTumLiveRetriesCleanupOnTheNextRun() {
-        when(cleanupRepository.findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(any())).thenReturn(List.of(cleanup()));
+    void unavailableTumLiveRetriesCleanupSoonAfterTheNextEntries() {
+        var blockedBefore = cleanup();
+        ReflectionTestUtils.setField(blockedBefore, "blockedReason", "TUM.Live answered 409 CONFLICT");
+        when(cleanupRepository.findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(any())).thenReturn(List.of(blockedBefore));
         doThrow(new GocastIntegrationException("down", HttpStatus.SERVICE_UNAVAILABLE)).when(api).deleteUpload(23, REF);
+        var before = ZonedDateTime.now();
 
         service.processCleanups();
 
         verify(cleanupRepository, never()).deleteConfirmed(anyLong());
-        verify(cleanupRepository, never()).postpone(anyLong(), any(), isNull());
-        verify(cleanupRepository, never()).postpone(anyLong(), any(), anyString());
+        // Moved behind the entries that are due now, keeping the reason of its earlier refusal.
+        verify(cleanupRepository).postpone(eq(5L), argThat(next -> next.isAfter(before.plusMinutes(4)) && next.isBefore(before.plusHours(1))),
+                eq("TUM.Live answered 409 CONFLICT"));
+    }
+
+    @Test
+    void anUploadIsForgottenWhenTheUnitsLinkShowsAnotherVideo() {
+        when(api.findStreamId("https://www.youtube.com/watch?v=x")).thenReturn(Optional.empty());
+        when(api.findStreamId("https://tum.live/w/algo/55")).thenReturn(Optional.of(55L));
+
+        service.forgetUploadUnlessShown(UNIT_ID, "https://www.youtube.com/watch?v=x");
+        service.forgetUploadUnlessShown(UNIT_ID, "https://tum.live/w/algo/55");
+
+        verify(uploadRepository).forgetCurrentUnlessShown(UNIT_ID, null);
+        verify(uploadRepository).forgetCurrentUnlessShown(UNIT_ID, 55L);
     }
 
     @Test
@@ -244,7 +282,7 @@ class TumLiveUploadServiceTest {
     @Test
     void beforeTheGrantIsRevokedItsUnattachedUploadsAreDeleted() {
         when(uploadRepository.findByCourseIdAndPendingGrantId(7L, 23L)).thenReturn(List.of(pending(ZonedDateTime.now(), 55L)));
-        when(cleanupRepository.findByGrantId(23L)).thenReturn(List.of(cleanup()));
+        when(cleanupRepository.findTop50ByGrantIdOrderByNextAttemptAtAsc(23L)).thenReturn(List.of(cleanup()));
 
         service.deleteUnattachedUploadsBeforeRevocation(new GocastGrantRevokingEvent(7, 17, 23));
 
@@ -256,7 +294,7 @@ class TumLiveUploadServiceTest {
     @Test
     void aFailureBeforeTheRevocationIsOnlyLogged() {
         when(uploadRepository.findByCourseIdAndPendingGrantId(7L, 23L)).thenReturn(List.of());
-        when(cleanupRepository.findByGrantId(23L)).thenReturn(List.of(cleanup()));
+        when(cleanupRepository.findTop50ByGrantIdOrderByNextAttemptAtAsc(23L)).thenReturn(List.of(cleanup()));
         doThrow(new GocastIntegrationException("down", HttpStatus.SERVICE_UNAVAILABLE)).when(api).deleteUpload(23, REF);
 
         assertThatCode(() -> service.deleteUnattachedUploadsBeforeRevocation(new GocastGrantRevokingEvent(7, 17, 23))).doesNotThrowAnyException();
@@ -270,7 +308,7 @@ class TumLiveUploadServiceTest {
         second.setId(6L);
         ReflectionTestUtils.setField(second, "externalRef", "reference-b-0000");
         when(uploadRepository.findByCourseIdAndPendingGrantId(7L, 23L)).thenReturn(List.of());
-        when(cleanupRepository.findByGrantId(23L)).thenReturn(List.of(cleanup(), second));
+        when(cleanupRepository.findTop50ByGrantIdOrderByNextAttemptAtAsc(23L)).thenReturn(List.of(cleanup(), second));
         doThrow(new GocastIntegrationException("down", HttpStatus.SERVICE_UNAVAILABLE)).when(api).deleteUpload(23, REF);
 
         service.deleteUnattachedUploadsBeforeRevocation(new GocastGrantRevokingEvent(7, 17, 23));

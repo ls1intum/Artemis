@@ -106,6 +106,16 @@ public class GocastBindingApi implements AbstractApi {
     }
 
     /**
+     * The TUM.Live lecture a video URL shows, without calling TUM.Live.
+     *
+     * @param videoSource the video URL
+     * @return the lecture, or empty if the URL is not a TUM Live watch page
+     */
+    public Optional<Long> findStreamId(String videoSource) {
+        return gocastRecordingService.findStreamId(videoSource);
+    }
+
+    /**
      * Disconnects a course before it is deleted, so TUM.Live does not keep access that Artemis can no longer revoke. A failure does not stop the deletion; the
      * remaining access can still be revoked in the TUM.Live course settings.
      *

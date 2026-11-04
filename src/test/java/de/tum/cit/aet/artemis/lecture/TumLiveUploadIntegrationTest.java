@@ -163,6 +163,34 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void anUpdateWithoutTheLoadedLinkEditsAgainstTheCurrentOne() throws Exception {
+        unit.setVideoSource(WATCH_PAGE);
+        unit = attachmentVideoUnitRepository.saveWithVideoSource(unit);
+
+        // A client from before loadedVideoSource does not send it.
+        sendUpdate(mapper.createObjectNode().put("name", "Renamed").put("videoSource", YOUTUBE).put("attachmentUpdateIntent", AttachmentUpdateIntent.NO_FILE_CHANGE.name()));
+
+        assertThat(videoSource()).isEqualTo(YOUTUBE);
+    }
+
+    @Test
+    void anUploadIsForgottenOnlyWhenTheLinkShowsAnotherVideo() {
+        var now = ZonedDateTime.now();
+        uploadRepository.startPending(unit.getId(), 17, 23, "algo", ref("first"), now);
+        uploadRepository.recordPendingStream(unit.getId(), ref("first"), 55);
+        uploadRepository.attachPending(unit.getId(), ref("first"), WATCH_PAGE, now);
+
+        uploadRepository.forgetCurrentUnlessShown(unit.getId(), 55L);
+        assertThat(uploadRepository.findUploadedUnitsByCourseId(courseId())).as("the link still shows the upload").hasSize(1);
+
+        uploadRepository.forgetCurrentUnlessShown(unit.getId(), null);
+        assertThat(uploadRepository.findUploadedUnitsByCourseId(courseId())).isEmpty();
+        assertThat(uploadRepository.findByLectureUnitId(unit.getId()).orElseThrow().getCurrentRef()).isNull();
+        assertThat(queued(ref("first"))).as("the recording stays in TUM.Live").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void aRemovedVideoLinkCanBeReplacedLater() throws Exception {
         updateUnit("Renamed", YOUTUBE, null);
         assertThat(videoSource()).isEqualTo(YOUTUBE);
@@ -199,9 +227,14 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(videoSource()).isEqualTo(WATCH_PAGE);
     }
 
+    /** An update from a form loaded with {@code loadedVideoSource}; the client sends an empty one as "". */
     private void updateUnit(String name, String videoSource, String loadedVideoSource) throws Exception {
-        ObjectNode body = mapper.createObjectNode().put("name", name).put("videoSource", videoSource).put("loadedVideoSource", loadedVideoSource).put("attachmentUpdateIntent",
-                AttachmentUpdateIntent.NO_FILE_CHANGE.name());
+        ObjectNode body = mapper.createObjectNode().put("name", name).put("videoSource", videoSource).put("loadedVideoSource", loadedVideoSource == null ? "" : loadedVideoSource)
+                .put("attachmentUpdateIntent", AttachmentUpdateIntent.NO_FILE_CHANGE.name());
+        sendUpdate(body);
+    }
+
+    private void sendUpdate(ObjectNode body) throws Exception {
         var part = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsBytes(body));
         mockMvc.perform(multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture.getId() + "/attachment-video-units/" + unit.getId()).file(part)
                 .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)).andExpect(status().isOk());
@@ -294,11 +327,14 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
-    void editorsSeeWhichUnitsShowAnUploadedVideo() throws Exception {
+    void editorsSeeWhichUnitsHaveAnUploadedVideo() throws Exception {
         var now = ZonedDateTime.now();
-        uploadRepository.startPending(unit.getId(), 17, 23, "algo", ref("first"), now);
         long courseId = lecture.getCourse().getId();
         mockMvc.perform(get("/api/lecture/courses/" + courseId + "/tumlive-uploads")).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+
+        // Also while it converts: it may be attached before the unit is deleted.
+        uploadRepository.startPending(unit.getId(), 17, 23, "algo", ref("first"), now);
+        mockMvc.perform(get("/api/lecture/courses/" + courseId + "/tumlive-uploads")).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
 
         uploadRepository.attachPending(unit.getId(), ref("first"), WATCH_PAGE, now);
 

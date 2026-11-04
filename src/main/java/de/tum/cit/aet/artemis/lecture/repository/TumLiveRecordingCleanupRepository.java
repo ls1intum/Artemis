@@ -22,14 +22,14 @@ public interface TumLiveRecordingCleanupRepository extends ArtemisJpaRepository<
 
     List<TumLiveRecordingCleanup> findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(ZonedDateTime now);
 
-    List<TumLiveRecordingCleanup> findByGrantId(long grantId);
+    List<TumLiveRecordingCleanup> findTop50ByGrantIdOrderByNextAttemptAtAsc(long grantId);
 
     /**
      * Postpones a deletion TUM.Live could not confirm.
      *
      * @param id            the queue entry
      * @param nextAttemptAt when to try again
-     * @param blockedReason why TUM.Live refused it, or null for a transient failure
+     * @param blockedReason why TUM.Live refused it; after a transient failure the reason of an earlier refusal, if any
      */
     @Transactional // ok because of modifying query
     @Modifying

@@ -181,7 +181,7 @@
         @if (isEditingLectureUnit() && editingUnit()?.id; as unitId) {
             <!-- One instance per unit: switching to another unit must not carry over a running upload. -->
             @for (id of [unitId]; track id) {
-                <jhi-tum-live-upload [lectureUnitId]="id" (attached)="onTumLiveVideoAttached(id)" />
+                <jhi-tum-live-upload [lectureUnitId]="id" (attached)="onTumLiveVideoAttached(id)" (transferred)="unitManagementComponent()?.refreshTumLiveUploads()" />
             }
         }
     }

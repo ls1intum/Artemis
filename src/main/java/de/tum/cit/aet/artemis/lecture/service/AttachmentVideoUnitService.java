@@ -72,11 +72,13 @@ public class AttachmentVideoUnitService {
 
     private final AttachmentService attachmentService;
 
+    private final TumLiveUploadService tumLiveUploadService;
+
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
             Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService,
             LectureContentUpdateClassifierService lectureContentUpdateClassifierService, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService,
-            AttachmentService attachmentService) {
+            AttachmentService attachmentService, TumLiveUploadService tumLiveUploadService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -89,6 +91,7 @@ public class AttachmentVideoUnitService {
         this.lectureUnitService = lectureUnitService;
         this.contentProcessingService = contentProcessingService;
         this.attachmentService = attachmentService;
+        this.tumLiveUploadService = tumLiveUploadService;
     }
 
     /**
@@ -183,8 +186,9 @@ public class AttachmentVideoUnitService {
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
         existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
         // The video URL changes only if the client changed it, and only if the unit still has the URL the client loaded: a TUM.Live upload may have been attached
-        // meanwhile, and a form opened before must not take it away.
-        String formVideoSource = blankToNull(updateUnitDTO.loadedVideoSource());
+        // meanwhile, and a form opened before must not take it away. The client sends an empty loaded URL as "". A client that does not send it at all edits
+        // against the URL the unit has now, as before.
+        String formVideoSource = updateUnitDTO.loadedVideoSource() == null ? existingAttachmentVideoUnit.getVideoSource() : blankToNull(updateUnitDTO.loadedVideoSource());
         boolean videoSourceEdited = !Objects.equals(blankToNull(updateUnitDTO.videoSource()), formVideoSource);
         existingAttachmentVideoUnit.setVideoSource(videoSourceEdited ? blankToNull(updateUnitDTO.videoSource()) : existingAttachmentVideoUnit.getVideoSource());
         boolean hasUploadedFile = updateFile != null && !updateFile.isEmpty();
@@ -206,9 +210,14 @@ public class AttachmentVideoUnitService {
 
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitRepository.save(existingAttachmentVideoUnit);
         // The save does not write the video URL (see AttachmentVideoUnit#videoSource).
-        if (videoSourceEdited
-                && !attachmentVideoUnitRepository.updateVideoSourceIfUnchanged(savedAttachmentVideoUnit.getId(), formVideoSource, savedAttachmentVideoUnit.getVideoSource())) {
-            attachmentVideoUnitRepository.findById(savedAttachmentVideoUnit.getId()).ifPresent(current -> savedAttachmentVideoUnit.setVideoSource(current.getVideoSource()));
+        if (videoSourceEdited) {
+            if (attachmentVideoUnitRepository.updateVideoSourceIfUnchanged(savedAttachmentVideoUnit.getId(), formVideoSource, savedAttachmentVideoUnit.getVideoSource())) {
+                // A link to another video ends what Artemis uploaded to TUM.Live for the unit; deleting the unit no longer offers to delete it there.
+                tumLiveUploadService.forgetUploadUnlessShown(savedAttachmentVideoUnit.getId(), savedAttachmentVideoUnit.getVideoSource());
+            }
+            else {
+                attachmentVideoUnitRepository.findById(savedAttachmentVideoUnit.getId()).ifPresent(current -> savedAttachmentVideoUnit.setVideoSource(current.getVideoSource()));
+            }
         }
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedAttachmentVideoUnit));

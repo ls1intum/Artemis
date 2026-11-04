@@ -229,6 +229,56 @@ describe('TumLiveUploadComponent', () => {
         expect(attached).toHaveBeenCalledOnce();
     });
 
+    it('reads the state again after reading it failed, and then shows the section', () => {
+        vi.useFakeTimers();
+        vi.spyOn(service, 'getState')
+            .mockReturnValueOnce(throwError(() => new Error('offline')))
+            .mockReturnValue(of({ connected: true }));
+        fixture.componentRef.setInput('lectureUnitId', 7);
+        fixture.detectChanges();
+        expect(query('tum-live-upload')).toBeNull();
+
+        vi.advanceTimersByTime(15_000);
+        fixture.detectChanges();
+
+        expect(service.getState).toHaveBeenCalledTimes(2);
+        expect(query('tum-live-upload')).not.toBeNull();
+    });
+
+    it('reports a sent file, and gives up a transfer that leaving the page stops', () => {
+        render({ connected: true });
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: 'https://tum.live/u' }));
+        const transfer = new Subject<TumLiveTransferEvent>();
+        vi.spyOn(service, 'transfer').mockReturnValue(transfer);
+        const discardSpy = vi.spyOn(service, 'discard').mockReturnValue(of(undefined));
+        const transferred = vi.fn();
+        component.transferred.subscribe(transferred);
+        chooseFile();
+        component.upload();
+        transfer.next({ type: 'progress', percent: 40 });
+
+        fixture.destroy();
+
+        expect(discardSpy).toHaveBeenCalledWith(7, 'reference-a-0000');
+        expect(transferred).not.toHaveBeenCalled();
+    });
+
+    it('reports a file that was sent completely and keeps its upload when the page is left', () => {
+        render({ connected: true });
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: 'https://tum.live/u' }));
+        vi.spyOn(service, 'transfer').mockReturnValue(of({ type: 'done' } as TumLiveTransferEvent));
+        const discardSpy = vi.spyOn(service, 'discard').mockReturnValue(of(undefined));
+        const transferred = vi.fn();
+        component.transferred.subscribe(transferred);
+        chooseFile();
+        component.upload();
+
+        fixture.destroy();
+
+        expect(transferred).toHaveBeenCalledOnce();
+        expect(discardSpy).not.toHaveBeenCalled();
+    });
+
     it('polls the conversion and discards a pending upload on request', () => {
         vi.useFakeTimers();
         render({ connected: true, pendingRef: 'reference-a-0000', converting: true, progress: 5 });

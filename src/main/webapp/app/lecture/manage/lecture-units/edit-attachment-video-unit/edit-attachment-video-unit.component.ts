@@ -147,7 +147,8 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             releaseDate,
             competencyLinks,
             videoSource,
-            loadedVideoSource: currentUnit.videoSource,
+            // An empty loaded link is sent as '': without the field the server compares with the link the unit has now.
+            loadedVideoSource: currentUnit.videoSource ?? '',
             attachmentUpdateIntent: hasUpload ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE,
         });
 

@@ -173,6 +173,15 @@ public class TumLiveUnitUpload extends DomainObject {
     }
 
     /**
+     * Forgets the attached upload, after the unit's video link was changed to another video. The recording stays in TUM.Live.
+     */
+    public void clearCurrent() {
+        this.currentRef = null;
+        this.currentGrantId = null;
+        this.currentStreamId = null;
+    }
+
+    /**
      * Forgets the pending upload, after it was attached or handed to cleanup.
      */
     public void clearPending() {
