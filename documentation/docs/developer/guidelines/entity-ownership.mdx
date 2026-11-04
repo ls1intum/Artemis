@@ -2,7 +2,7 @@
 id: entity-ownership
 title: Entity Ownership and Orphans
 sidebar_label: Entity Ownership
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-04
 ---
 
 Every row in the Artemis database belongs to something. A quiz question belongs to its quiz, a
@@ -534,7 +534,8 @@ that a creation which failed half-way left out is added by the next update of it
 `CourseRepository.ensureDefaultConfigurations`, and the update of a programming, text, modeling or file upload exercise calls
 `ensureExistsFor`, through `applyTo` except for the file upload exercise, which calls it directly. The Metis row of a
 programming exercise is the exception: the exercise module has no use for it after the creation, so no update repairs it,
-and a row that a failed creation left out reads as the defaults in the Metis module, which inserts it before it first
+and a row that a failed creation left out, or that a node still running the previous version never wrote because it stored
+the exercise during a rolling deployment, reads as the defaults in the Metis module, which inserts it before it first
 writes one.
 
 Two of them carry a further constraint. `BuildPlan` is shared rather than owned: several
