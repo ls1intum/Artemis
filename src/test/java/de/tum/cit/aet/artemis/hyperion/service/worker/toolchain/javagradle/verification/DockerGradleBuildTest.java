@@ -511,6 +511,7 @@ class DockerGradleBuildTest {
                     public static void main(String[] args) {
                         Counter counter = new Counter();
                         counter.increment();
+                        counter.reset();
                         System.out.println(counter.value());
                     }
                 }
@@ -520,8 +521,13 @@ class DockerGradleBuildTest {
                 public class Counter {
                     private static Counter observed;
                     private int value;
+                    private final int[] observedValues = new int[2];
+                    private int observedChanges;
                     public Counter() { observed = this; }
-                    public void increment() { value++; }
+                    public void increment() { value++; observedValues[observedChanges++] = value; }
+                    public void reset() { value = 0; observedValues[observedChanges++] = value; }
+                    public int observedChanges() { return observedChanges; }
+                    public int valueAfterChange(int index) { return observedValues[index]; }
                     public int value() { return value; }
                     public static Counter lastCreated() { return observed; }
                 }
@@ -546,16 +552,21 @@ class DockerGradleBuildTest {
                             System.setOut(new PrintStream(output));
                             ScoreCalculator.main(new String[0]);
                         } finally { System.setOut(previous); }
-                        assertEquals("1", output.toString().strip());
+                        assertEquals("0", output.toString().strip());
                         %s
                     }
                 }
-                """.formatted(observeInteraction ? "assertNotNull(Counter.lastCreated()); assertEquals(1, Counter.lastCreated().value());" : "");
+                """.formatted(
+                observeInteraction
+                        ? "assertNotNull(Counter.lastCreated()); assertEquals(0, Counter.lastCreated().value()); "
+                                + "assertEquals(2, Counter.lastCreated().observedChanges()); assertEquals(1, Counter.lastCreated().valueAfterChange(0)); "
+                                + "assertEquals(0, Counter.lastCreated().valueAfterChange(1));"
+                        : "");
         List<WorkspaceFile> files = new ArrayList<>();
         snapshot().files().stream().filter(file -> file.path().startsWith("tests/") && !file.path().endsWith(".java")).forEach(files::add);
         files.add(new WorkspaceFile("solution/" + sourcePath, reference.getBytes(StandardCharsets.UTF_8), false));
         files.add(new WorkspaceFile("template/" + sourcePath, reference.replace("Counter counter = new Counter();", "").replace("counter.increment();", "")
-                .replace("System.out.println(counter.value());", "").getBytes(StandardCharsets.UTF_8), false));
+                .replace("counter.reset();", "").replace("System.out.println(counter.value());", "").getBytes(StandardCharsets.UTF_8), false));
         for (String lane : List.of("solution", "template")) {
             files.add(new WorkspaceFile(lane + "/src/de/tum/cit/aet/reference/Counter.java", supplied.getBytes(StandardCharsets.UTF_8), false));
         }
@@ -568,6 +579,17 @@ class DockerGradleBuildTest {
                 WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
         assertThat(build(session, "solution").failures()).isZero();
         assertThat(build(session, "template").testFailedNames()).contains("testDemo");
+
+        // Reset leaves the final value unchanged even when the earlier increment is missing.
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of("solution/" + sourcePath, reference.replace("counter.increment();", "")), Map.of()));
+        var missingEarlierOperation = build(session, "solution");
+        if (observeInteraction) {
+            assertThat(missingEarlierOperation.testFailedNames()).contains("testDemo");
+        }
+        else {
+            assertThat(missingEarlierOperation.failures()).isZero();
+        }
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of("solution/" + sourcePath, reference), Map.of()));
 
         var failure = StageAssessmentCheck.failure(new DifferentialVerifier(commands), sandbox, session, exercise, SeededStructuralTests.EMPTY,
                 org.mockito.Mockito.mock(AgentVerifyReport.class));

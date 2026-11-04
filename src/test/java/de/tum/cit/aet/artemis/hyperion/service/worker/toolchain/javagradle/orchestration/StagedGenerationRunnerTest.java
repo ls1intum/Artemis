@@ -272,6 +272,25 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void aFullyPassingStarterReopensItsContractInsteadOfRepeatingTestOnlyRepairs() {
+        var nondiscriminating = new AgentVerifyReport(1, true, List.of(), List.of(), 1, true, false, List.of(), List.of("testFoo"), List.of("testFoo"), List.of(), List.of(), false,
+                List.of("the starter passes every student test"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminating, passingReport("testFoo"));
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+
+        AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(approvedSpecs.approved("s")).hasValue(sandbox.specMarkdown);
+        InOrder stages = inOrder(baseTools);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
     void repeatedExecutedAssessmentFailureStopsBeforeStatementOrOuterRepairs() {
         var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
         when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))

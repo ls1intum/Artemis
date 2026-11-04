@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -10,6 +11,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.Gener
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
 
@@ -42,6 +44,7 @@ final class StageGateEvaluator {
             // Only this end-of-attempt gate may correct an unsatisfiable given ownership: the correction is irreversible, so it must not fire on a half-written solution.
             Optional<String> ownershipCorrection = stageCheckService.correctGivenOwnership(sandbox, sessionId);
             StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport, baseTools.seededStructuralTests());
+            result = classifyAssessment(result, baseTools.seededStructuralTests());
             if (result.passed() && result.report() != null) {
                 result = stageCheckService.assessmentFailure(sandbox, sessionId, exercise, baseTools.seededStructuralTests(), result.report()).orElse(result);
             }
@@ -57,4 +60,19 @@ final class StageGateEvaluator {
         return new Result(stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport, baseTools.seededStructuralTests()), false);
     }
 
+    /** An unchanged starter that passes every declared student-work test is an executed assessment counterexample, even without output comparisons. */
+    static StageCheckResult classifyAssessment(StageCheckResult result, SeededStructuralTests seeded) {
+        AgentVerifyReport report = result.report();
+        if (report == null || !report.solutionPassed() || !report.templateCompiled() || report.solutionTests() == 0 || report.templateTests() != report.solutionTests()) {
+            return result;
+        }
+        List<String> studentTests = report.exactTestNames().stream().filter(name -> !seeded.testNames().contains(name) && !report.preservationTestNames().contains(name)).toList();
+        if (studentTests.isEmpty() || !report.templateWronglyPassing().containsAll(studentTests)) {
+            return result;
+        }
+        return StageCheckResult.redesignRequired("All " + studentTests.size()
+                + " student-work tests pass on the unchanged template. The executed assessment cannot distinguish the missing learner work from the reference solution. "
+                + "Reconsider how the contract exposes the student-owned operations; tests that perform those operations themselves only verify supplied support.\n"
+                + result.observation(), report);
+    }
 }

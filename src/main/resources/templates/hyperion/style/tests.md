@@ -61,6 +61,13 @@ observation may expose operations on objects a beginner creates locally without 
 integration. For an operation sequence, state when each observation is taken. A final snapshot cannot establish an earlier state erased by a later operation; use supplied intermediate observations where needed. Observation support must record student actions, not perform them. Keep the student's prerequisites and responsibilities intact. Do not invent normative call counts, allocation counts or syntax restrictions merely to help a test.
 Source and bytecode inspection are not supported grading mechanisms.
 
+For a beginner entry point that creates local objects, supplied constructors and methods can record the
+created instances and snapshots at the relevant operation boundaries. Tests reset that supplied recorder,
+invoke the student entry point, then inspect its observations. Recording must not establish the association,
+mutation, or other operation the learner is meant to perform. A final-state accessor alone loses evidence
+when a later operation undoes the earlier state; replaying the sequence inside the test supplies no evidence
+that the student entry point did it.
+
 ## Harness conventions (Java/Ares)
 
 Use Java 25 and the current Ares 2 harness. Use `org.junit.jupiter.api.Test`, `de.tum.cit.ase.ares.api.jupiter.Public`,

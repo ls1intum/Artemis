@@ -553,7 +553,7 @@ public class StagedGenerationRunner {
                     unresolvedSpecificationFindings = List.of();
                     publishedSpec = null;
                     lastTestsReport = null;
-                    emit(progress, "The assessment accepted a print-only replacement. Reopening specification review once, within the remaining authoring budget.");
+                    emit(progress, "The executed assessment does not distinguish the student work. Reopening specification review once, within the remaining authoring budget.");
                     index = -1;
                     break;
                 }
