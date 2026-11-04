@@ -447,6 +447,13 @@ class RepairRoundSchedulerTest {
         }
 
         @Test
+        void inconclusiveProbesAreCountedOnlyWhenThereAreAny() {
+            assertThat(RepairRoundScheduler.inconclusiveProbeNote(0)).isEmpty();
+            assertThat(RepairRoundScheduler.inconclusiveProbeNote(1)).isEqualTo(" 1 mutant probe was inconclusive and proved nothing either way.");
+            assertThat(RepairRoundScheduler.inconclusiveProbeNote(3)).isEqualTo(" 3 mutant probes were inconclusive and proved nothing either way.");
+        }
+
+        @Test
         void aLaterRoundReportsTheDrainRatherThanJustTheTotal() {
             // "3 issues" alone cannot tell a stuck repair loop from a productive one.
             assertThat(RepairRoundScheduler.roundMessage(round(2, 1, 4, 2)))
@@ -512,6 +519,17 @@ class RepairRoundSchedulerTest {
 
             assertThat(RepairRoundScheduler.repairImproved(previous, sameRule, true)).isTrue();
             assertThat(RepairRoundScheduler.repairImproved(previous, otherRule, true)).isFalse();
+        }
+
+        @Test
+        void anUnchangedUnrepairableBlockerDoesNotTurnAWitnessAdoptionIntoARegression() {
+            SpecFidelityReport.Finding contested = finding(SpecFidelityReport.Kind.SPECIFICATION_REVIEW_FINDING, "the review was inconclusive");
+            SpecFidelityReport beforeAdoption = new SpecFidelityReport(List.of(contested, finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE, "Rule R1 witness")));
+            SpecFidelityReport afterAdoption = new SpecFidelityReport(List.of(contested));
+
+            assertThat(RepairRoundScheduler.repairImproved(beforeAdoption, afterAdoption, false)).isTrue();
+            assertThat(RepairRoundScheduler.repairImproved(afterAdoption,
+                    new SpecFidelityReport(List.of(contested, finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, "a new unrepairable blocker"))), false)).isFalse();
         }
 
         @Test

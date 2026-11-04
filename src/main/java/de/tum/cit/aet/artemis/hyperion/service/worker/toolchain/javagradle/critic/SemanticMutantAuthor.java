@@ -150,11 +150,8 @@ class SemanticMutantAuthor {
     }
 
     private static List<SpecFidelityReport.Finding> reviewTargets(List<SpecFidelityReport.Finding> findings) {
-        return findings.stream()
-                .filter(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT
-                        || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE
-                        || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL)
-                .limit(MAX_MUTANTS).toList();
+        return findings.stream().filter(finding -> finding.kind() == SpecFidelityReport.Kind.WEAK_TEST_ORACLE || finding.kind() == SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT
+                || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE).limit(MAX_MUTANTS).toList();
     }
 
     private static SpecFidelityReport.@Nullable Finding reviewTarget(Item item, List<SpecFidelityReport.Finding> targets) {

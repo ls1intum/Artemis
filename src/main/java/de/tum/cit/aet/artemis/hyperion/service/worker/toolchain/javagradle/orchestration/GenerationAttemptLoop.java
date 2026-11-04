@@ -214,8 +214,8 @@ class GenerationAttemptLoop {
 
     /**
      * Objections the concept review raised against the concept this run proceeded with anyway. Kept apart from {@link #unresolvedSpecificationFindings} because the two say
-     * different things to an instructor — a contested exercise idea versus a contested contract for an agreed idea — while gating identically: neither may authorize
-     * autonomously strengthening the graded suite.
+     * different things to an instructor — a contested exercise idea versus a contested contract for an agreed idea. Both stay blocking review notes; neither switches off
+     * executed mutant or witness evidence, which is grounded in the environment rather than in the contested reviewer.
      */
     private List<String> unresolvedConceptFindings = List.of();
 
@@ -225,11 +225,12 @@ class GenerationAttemptLoop {
 
     private List<SemanticMutant> semanticMutantsAwaitingRecheck = List.of();
 
-    private List<SemanticMutant> semanticMutantsPendingSpecApproval = List.of();
-
     private List<SemanticMutant.Exclusion> semanticMutantHistory = List.of();
 
     private SeededStructuralTests seededStructuralTests = SeededStructuralTests.EMPTY;
+
+    /** Mutant probes of the latest executable review that neither survived nor were killed; reported on the next review-round event, never as evidence. */
+    private int inconclusiveMutantProbes;
 
     private List<ContractWitness> referenceWitnessesAwaitingPass = List.of();
 
@@ -388,11 +389,11 @@ class GenerationAttemptLoop {
                 specFidelityReport = SpecFidelityReport.empty();
             }
 
-            // A GENERATE run may spend one otherwise-idle round offering advisory witnesses. An instructor-only blocker must not discard unrelated environment-proven coverage,
-            // but a failed or unapproved specification cannot authorize new grading.
+            // A GENERATE run may spend one otherwise-idle round offering advisory witnesses. An instructor-only blocker, including a contested specification or concept, must
+            // not discard unrelated environment-proven coverage.
             boolean hasSchedulableRepair = repairScheduler.nextRepairBatch(specFidelityReport).isPresent();
             boolean adoptWitnesses = verification.mechanicallyVerified() && !hasSchedulableRepair && !RepairRoundScheduler.hasInstrumentUnavailableFinding(specFidelityReport)
-                    && designAuthorityApproved() && attempt < maxGenerationAttempts && mode == Mode.GENERATE && repairScheduler.witnessAdoption(specFidelityReport).isPresent();
+                    && attempt < maxGenerationAttempts && mode == Mode.GENERATE && repairScheduler.witnessAdoption(specFidelityReport).isPresent();
             if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !adoptWitnesses) {
                 terminationReason = TerminationReason.CONVERGED;
                 break;
@@ -695,15 +696,6 @@ class GenerationAttemptLoop {
         return null;
     }
 
-    /**
-     * Whether both design authorities this run depends on — the concept it builds and the contract it froze — came through their reviews unopposed. Gates every autonomous
-     * strengthening of the graded suite: adopting an execution-proven counterexample under a contested concept or specification would deepen a design choice the reviewer
-     * objected to.
-     */
-    private boolean designAuthorityApproved() {
-        return unresolvedSpecificationFindings.isEmpty() && unresolvedConceptFindings.isEmpty();
-    }
-
     /** Re-attaches both contested-authority states after a fresh review, which only ever reports on artifacts and cannot discharge either. */
     private SpecFidelityReport preserveDesignAuthorityState(SpecFidelityReport report) {
         return GenerationReviewSupport.preserveConceptAdmissionState(GenerationReviewSupport.preserveSpecificationReviewState(report, unresolvedSpecificationFindings),
@@ -734,9 +726,10 @@ class GenerationAttemptLoop {
     /** Hands this review to the round accounting and puts the resulting counts on the round's progress event. */
     private void recordReviewRound(int attempt) {
         RepairRound round = repairScheduler.recordReviewRound(specFidelityReport, attempt);
-        log.info("Exercise {} quality review round {} (attempt {}): {} blocking, {} advisory; {} carried over, {} drained, {} fresh", exercise.id(), round.round(), attempt,
-                round.blocking(), round.advisory(), round.carriedOver(), round.drained(), round.fresh());
-        emitRound(RepairRoundScheduler.roundMessage(round), round);
+        log.info("Exercise {} quality review round {} (attempt {}): {} blocking, {} advisory; {} carried over, {} drained, {} fresh; {} inconclusive mutant probe(s)",
+                exercise.id(), round.round(), attempt, round.blocking(), round.advisory(), round.carriedOver(), round.drained(), round.fresh(), inconclusiveMutantProbes);
+        emitRound(RepairRoundScheduler.roundMessage(round) + RepairRoundScheduler.inconclusiveProbeNote(inconclusiveMutantProbes), round);
+        inconclusiveMutantProbes = 0;
     }
 
     /**
@@ -832,8 +825,7 @@ class GenerationAttemptLoop {
                 workspace.materializeRepositoryFiles(sandbox, sessionId, exercise, mode, candidateFiles, workspaceSeed.repositoryMetadata(), workspaceSeed.repositoryBinaryFiles(),
                         candidateProblemStatement, specDocumentSnapshot, artifacts.testPlanJson());
             };
-            List<SemanticMutant> priorUnresolvedMutants = java.util.stream.Stream
-                    .of(semanticMutantsPendingRepair, semanticMutantsAwaitingRecheck, semanticMutantsPendingSpecApproval).flatMap(List::stream).distinct()
+            List<SemanticMutant> priorUnresolvedMutants = java.util.stream.Stream.of(semanticMutantsPendingRepair, semanticMutantsAwaitingRecheck).flatMap(List::stream).distinct()
                     .limit(MAX_TRACKED_SEMANTIC_MUTANTS).toList();
             List<SemanticMutant> applicablePendingMutants = priorUnresolvedMutants.stream()
                     .filter(mutant -> mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath()))).toList();
@@ -859,11 +851,10 @@ class GenerationAttemptLoop {
                     .map(SemanticMutantOutcome::mutant).distinct().toList();
             List<SemanticMutant> inconclusivePendingMutants = pendingMutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)
                     .map(SemanticMutantOutcome::mutant).toList();
-            boolean specificationApproved = designAuthorityApproved();
-            semanticMutantsPendingRepair = specificationApproved ? validatedMutants : List.of();
-            // Preserve inconclusive rechecks as historical unavailable evidence; never upgrade them to current survivors while specification approval is pending.
+            semanticMutantsPendingRepair = validatedMutants;
+            // Preserve inconclusive rechecks as historical unavailable evidence; never upgrade them to current survivors.
             semanticMutantsAwaitingRecheck = inconclusivePendingMutants;
-            semanticMutantsPendingSpecApproval = specificationApproved ? List.of() : validatedMutants;
+            inconclusiveMutantProbes = (int) mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE).count();
 
             Set<String> pendingWitnessNames = referenceWitnessesAwaitingPass.stream().map(ContractWitness::testName).collect(Collectors.toSet());
             Set<String> pendingReferenceAdjudicationNames = referenceWitnessesAwaitingAdjudication.stream().map(ContractWitness::testName).collect(Collectors.toSet());
@@ -877,12 +868,11 @@ class GenerationAttemptLoop {
                     restoreCandidate);
             List<ContractWitnessOutcome> proposedAdjudications = ReferenceWitnessEvidence.adjudicationCandidates(freshMutantOutcomes, witnessOutcomes, pendingWitnessNames,
                     approvedAdoptionNames, mutatedRules);
-            List<ContractWitnessOutcome> adjudicationCandidates = specificationApproved ? proposedAdjudications : List.of();
-            SpecFidelityCritic.ReferenceWitnessReview referenceReview = adjudicationCandidates
+            SpecFidelityCritic.ReferenceWitnessReview referenceReview = proposedAdjudications
                     .isEmpty()
                             ? SpecFidelityCritic.ReferenceWitnessReview.empty()
                             : Optional.ofNullable(specFidelityCritic.adjudicateReferenceWitnesses(specDocumentSnapshot,
-                                    GenerationReviewSupport.renderArtifactSources(solutionFiles), adjudicationCandidates, usageSink, cancelled))
+                                    GenerationReviewSupport.renderArtifactSources(solutionFiles), proposedAdjudications, usageSink, cancelled))
                                     .orElseGet(SpecFidelityCritic.ReferenceWitnessReview::empty);
             Set<String> alreadySourceApproved = java.util.stream.Stream.concat(pendingWitnessNames.stream(), approvedAdoptionNames.stream())
                     .collect(Collectors.toUnmodifiableSet());
@@ -907,7 +897,7 @@ class GenerationAttemptLoop {
                     witnessState.referenceAdjudicationInconclusive().size());
             inconclusivePendingMutants.forEach(mutant -> combined.add(GenerationReviewSupport.semanticMutantRecheckUnavailable(mutant)));
             witnessState.stillFailing().forEach(witness -> combined.add(GenerationReviewSupport.referenceDefectStillFailing(witness)));
-            validatedMutants.forEach(mutant -> combined.add(GenerationReviewSupport.semanticMutantFinding(mutant, specificationApproved)));
+            validatedMutants.forEach(mutant -> combined.add(GenerationReviewSupport.semanticMutantFinding(mutant)));
             positiveWitnessesAwaitingAdjudication.stream().map(GenerationReviewSupport::positiveWitnessAdjudicationUnavailable).filter(finding -> !combined.contains(finding))
                     .forEach(combined::add);
             return preserveReferenceWitnessState(new SpecFidelityReport(List.copyOf(combined)));
@@ -926,9 +916,7 @@ class GenerationAttemptLoop {
     }
 
     private SpecFidelityReport preserveExecutableEvidenceState(SpecFidelityReport report) {
-        SpecFidelityReport preserved = GenerationReviewSupport.preserveSemanticMutantState(preserveReferenceWitnessState(report), semanticMutantsPendingRepair,
-                semanticMutantsAwaitingRecheck);
-        return GenerationReviewSupport.preservePendingSpecApprovalMutants(preserved, semanticMutantsPendingSpecApproval);
+        return GenerationReviewSupport.preserveSemanticMutantState(preserveReferenceWitnessState(report), semanticMutantsPendingRepair, semanticMutantsAwaitingRecheck);
     }
 
     private SpecFidelityReport preserveReferenceWitnessState(SpecFidelityReport report) {

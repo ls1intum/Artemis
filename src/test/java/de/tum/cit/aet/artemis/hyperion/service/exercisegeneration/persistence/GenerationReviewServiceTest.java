@@ -127,7 +127,6 @@ class GenerationReviewServiceTest {
             "HIDDEN_GRADED_REQUIREMENT|HIGH|Graded requirement is not discoverable by students: \"required behavior\"",
             "WEAK_TEST_ORACLE|MEDIUM|An independent text review suspects the generated tests may allow an incorrect implementation (not execution-proven): \"required behavior\"",
             "EXECUTABLE_WEAK_TEST_ORACLE|HIGH|Execution proved that the generated tests allow an incorrect implementation: \"required behavior\"",
-            "EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL|MEDIUM|Execution found a grading gap, but the rule still requires instructor approval before the tests are strengthened: \"required behavior\"",
             "TEMPLATE_QUALITY_GAP|HIGH|Student task and starter scaffold need alignment: \"required behavior\"",
             "UNENFORCEABLE_TECHNIQUE_RULE|HIGH|Students can pass without using the technique the exercise teaches: required behavior",
             "CONTRACT_WITNESS_AVAILABLE|MEDIUM|A ready-to-adopt test for a specification rule, already passing against the reference solution: required behavior",

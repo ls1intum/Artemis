@@ -15,17 +15,13 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 class GenerationReviewSupportTest {
 
     @Test
-    void pendingSpecificationEvidenceIsGroupedByRuleRatherThanMutationText() {
-        SemanticMutant first = mutant("hardCodedThresholds", "uses fixed thresholds");
-        SemanticMutant second = mutant("roundedThresholds", "rounds fractional thresholds");
+    void anExecutedSurvivorIsBlockingOracleEvidenceThatAsksForADiscriminatingTest() {
+        SpecFidelityReport.Finding finding = GenerationReviewSupport.semanticMutantFinding(mutant("hardCodedThresholds", "uses fixed thresholds"));
 
-        SpecFidelityReport report = GenerationReviewSupport.preservePendingSpecApprovalMutants(SpecFidelityReport.empty(), List.of(first, second));
-
-        assertThat(report.findings()).singleElement().satisfies(finding -> {
-            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL);
-            assertThat(finding.requirement()).contains("Rule R3");
-            assertThat(finding.detail()).contains("uses fixed thresholds", "rounds fractional thresholds", "additional environment-proven variant");
-        });
+        assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        assertThat(finding.isBlocking()).isTrue();
+        assertThat(SemanticRepairBatch.surfaceFor(finding.kind())).isEqualTo(RepairSurface.ORACLE);
+        assertThat(finding.detail()).contains("Add or adapt a discriminating test", "uses fixed thresholds").doesNotContain("instructor adjudication");
     }
 
     @Test
@@ -36,7 +32,7 @@ class GenerationReviewSupportTest {
         List<SpecFidelityReport.Finding> targets = GenerationReviewSupport.withPriorSemanticMutants(List.of(staticRisk), List.of(executed));
 
         assertThat(targets).hasSize(2);
-        assertThat(targets.getFirst().kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL);
+        assertThat(targets.getFirst().kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
         assertThat(targets.getFirst().detail()).contains("uses fixed thresholds");
         assertThat(targets.get(1)).isEqualTo(staticRisk);
     }
@@ -48,7 +44,7 @@ class GenerationReviewSupportTest {
 
         List<SpecFidelityReport.Finding> targets = GenerationReviewSupport.withPriorSemanticMutants(staticRisks, List.of(mutant("hardCodedThresholds", "uses fixed thresholds")));
 
-        assertThat(targets.getFirst().kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL);
+        assertThat(targets.getFirst().kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
         assertThat(targets.subList(0, 4)).extracting(SpecFidelityReport.Finding::requirement).contains("Rule R3 has an environment-proven surviving semantic mutant");
     }
 

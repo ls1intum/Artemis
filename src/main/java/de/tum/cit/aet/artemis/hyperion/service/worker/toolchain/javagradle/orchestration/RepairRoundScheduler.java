@@ -120,6 +120,15 @@ class RepairRoundScheduler {
                 + round.fresh() + " new.";
     }
 
+    /**
+     * Inconclusive mutant probes prove neither a gap nor its absence, so they never become findings; the round event still says how many there were, so a run whose executable
+     * review mostly failed to execute cannot read as a clean one.
+     */
+    static String inconclusiveProbeNote(int inconclusiveMutantProbes) {
+        return inconclusiveMutantProbes == 0 ? ""
+                : " " + inconclusiveMutantProbes + (inconclusiveMutantProbes == 1 ? " mutant probe was" : " mutant probes were") + " inconclusive and proved nothing either way.";
+    }
+
     /** Distinguishes unavailable review evidence, convergence, and missing surface coverage. */
     static TerminationReason reasonForUnschedulableReport(SpecFidelityReport report) {
         if (hasInstrumentUnavailableFinding(report)) {
@@ -162,7 +171,9 @@ class RepairRoundScheduler {
      * Whether a semantic repair made progress. Executed evidence decides first: a repair that killed a surviving mutant, or drained an executed blocker, improved unless the
      * executable review now reports an executed blocker it did not report before. Text-only blockers that appear beside such progress stay on the repaired candidate for later
      * rounds and the instructor: a re-review re-rolls text verdicts, so letting them roll back an environment-proven kill would discard the stronger grading. Without executed
-     * progress, the reviewed blockers must strictly shrink, because text identity is then the only evidence there is.
+     * progress, the reviewed blockers must strictly shrink, because text identity is then the only evidence there is. A blocker no repair surface can address and that is
+     * unchanged on both sides (a contested specification or concept, for example) is ignored there: no repair could have drained it, so it must not turn a round that drained
+     * nothing else, such as a witness adoption, into a regression.
      *
      * @param killedSurvivingMutant whether the repaired suite killed at least one mutant the previous candidate's suite let survive
      */
@@ -174,6 +185,11 @@ class RepairRoundScheduler {
         }
         Set<String> previousBlockers = candidateBlockingFindingIdentities(previous, false);
         Set<String> currentBlockers = candidateBlockingFindingIdentities(current, false);
+        Set<String> persistentUnrepairable = previous.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
+                .filter(finding -> SemanticRepairBatch.surfaceFor(finding.kind()) == null).map(RepairRoundScheduler::findingIdentity).filter(currentBlockers::contains)
+                .collect(Collectors.toSet());
+        previousBlockers.removeAll(persistentUnrepairable);
+        currentBlockers.removeAll(persistentUnrepairable);
         if (previousBlockers.isEmpty()) {
             return currentBlockers.isEmpty();
         }

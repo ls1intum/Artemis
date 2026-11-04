@@ -95,23 +95,18 @@ final class GenerationReviewSupport {
                         + "proposed it for this plausible wrong behavior, which the environment did not execute: " + witness.wrongBehavior() + "\nWitness:\n" + witness.code());
     }
 
-    static SpecFidelityReport.Finding semanticMutantFinding(SemanticMutant mutant, boolean specificationApproved) {
-        return new SpecFidelityReport.Finding(
-                specificationApproved ? SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE : SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL,
+    static SpecFidelityReport.Finding semanticMutantFinding(SemanticMutant mutant) {
+        return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
                 "Rule " + mutant.ruleId() + " has an environment-proven surviving semantic mutant",
                 "The existing graded suite passed this complete replacement for " + mutant.solutionPath() + ", while the counterexample below executed and passed on the "
                         + "pristine solution and executed and failed on the mutant. Execution proves the suite does not distinguish these complete implementations; the frozen "
-                        + "rule and independent review explain why that difference matters. "
-                        + (specificationApproved
-                                ? "Add or adapt a discriminating test for the counterexample; the environment will accept any executed test that kills the mutant, so preserve "
-                                        + "stronger or more idiomatic coverage rather than copying a method mechanically. "
-                                : "Do not autonomously strengthen grading while the specification still has an unresolved pre-freeze review finding; retain this executed evidence "
-                                        + "for instructor adjudication. ")
+                        + "rule and independent review explain why that difference matters. Add or adapt a discriminating test for the counterexample; the environment will "
+                        + "accept any executed test that kills the mutant, so preserve stronger or more idiomatic coverage rather than copying a method mechanically. "
                         + "Plausible misconception: " + mutant.counterexample().wrongBehavior() + "\n" + mutant.counterexample().code());
     }
 
     static List<SpecFidelityReport.Finding> withPriorSemanticMutants(List<SpecFidelityReport.Finding> findings, List<SemanticMutant> mutants) {
-        return java.util.stream.Stream.concat(mutants.stream().map(mutant -> semanticMutantFinding(mutant, false)), findings.stream()).toList();
+        return java.util.stream.Stream.concat(mutants.stream().map(GenerationReviewSupport::semanticMutantFinding), findings.stream()).toList();
     }
 
     static List<SemanticMutant.Exclusion> rememberExecutedMutants(List<SemanticMutant.Exclusion> history, List<SemanticMutantOutcome> freshOutcomes, int limit) {
@@ -183,31 +178,6 @@ final class GenerationReviewSupport {
                         "The independent pre-freeze review did not approve this compiled specification. The exact finding is retained so the saved exercise remains NEEDS_REVIEW "
                                 + "rather than silently treating the contract as approved."))
                 .filter(finding -> !findings.contains(finding)).forEach(findings::add);
-        return new SpecFidelityReport(List.copyOf(findings));
-    }
-
-    static SpecFidelityReport preservePendingSpecApprovalMutants(SpecFidelityReport report, List<SemanticMutant> mutants) {
-        if (mutants.isEmpty()) {
-            return report;
-        }
-        List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>(report.findings());
-        var grouped = mutants.stream().map(mutant -> semanticMutantFinding(mutant, false))
-                .collect(Collectors.groupingBy(finding -> finding.kind() + "\n" + finding.requirement(), java.util.LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
-        grouped.forEach((key, variants) -> {
-            int existingIndex = java.util.stream.IntStream.range(0, findings.size())
-                    .filter(index -> key.equals(findings.get(index).kind() + "\n" + findings.get(index).requirement())).findFirst().orElse(-1);
-            var details = java.util.stream.Stream.concat(existingIndex < 0 ? java.util.stream.Stream.empty() : java.util.stream.Stream.of(findings.get(existingIndex).detail()),
-                    variants.stream().map(SpecFidelityReport.Finding::detail)).distinct().toList();
-            SpecFidelityReport.Finding representative = existingIndex < 0 ? variants.getFirst() : findings.get(existingIndex);
-            SpecFidelityReport.Finding groupedFinding = new SpecFidelityReport.Finding(representative.kind(), representative.requirement(),
-                    String.join("\n\n--- additional environment-proven variant ---\n", details));
-            if (existingIndex < 0) {
-                findings.add(groupedFinding);
-            }
-            else {
-                findings.set(existingIndex, groupedFinding);
-            }
-        });
         return new SpecFidelityReport(List.copyOf(findings));
     }
 

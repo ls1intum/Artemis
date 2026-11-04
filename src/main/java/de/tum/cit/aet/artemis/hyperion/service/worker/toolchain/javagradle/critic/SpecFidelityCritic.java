@@ -916,9 +916,6 @@ public class SpecFidelityCritic {
                     .append(" Change the test setup and assertion first; keep the verified solution unchanged unless the new witness proves it wrong. For delegation, inject a "
                             + "test-controlled fake or recording collaborator that returns one unique sentinel and records the exact input, then assert return propagation and forwarding. "
                             + "Never compare results from two independent production calls or add production caching/state to satisfy such a comparison.");
-            case EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL -> builder.append(
-                    "\n- Preserve this executed grading-gap evidence for instructor review until the frozen specification is approved; do not autonomously add grading for it: \"")
-                    .append(finding.requirement()).append("\". ").append(finding.detail());
             case CONTRACT_WITNESS_AVAILABLE ->
                 builder.append("\n- Optional environment-validated contract witness: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE ->

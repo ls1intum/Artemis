@@ -401,62 +401,60 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
-    void anUnadmittedConceptCannotAuthorizeValidatedWitnessAdoption() {
-        // A contested concept gates autonomous witness adoption like a contested specification: adopting a proven counterexample would deepen a design choice under objection.
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
-                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(), null, List.of("The concept review admitted no candidate.")));
-        sandbox.withFile(SPEC_PATH, "## Rules\nR1. The result is selected cyclically.");
-        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any()))
-                .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("test/CycleTest.java", "class CycleTest {}"), false));
-        ContractWitness witness = new ContractWitness("R1", "wrapsToFirst", "void wrapsToFirst() {}", "stops after the final element");
-        SemanticMutant mutant = new SemanticMutant("R1", "src/Cycle.java", "class Cycle {}", "class Cycle { int stopsEarly; }", witness);
-        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
-        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
-        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
-        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any()))
-                .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(SpecFidelityReport.qualityReviewUnavailable("The first full-artifact review did not complete."), SpecFidelityReport.empty());
+    void aContestedConceptStillRepairsAnExecutedSurvivor() {
+        // The concept reviewer's objection stays a blocking review note, but it qualifies only that reviewer's own finding: executed evidence still drives an oracle repair.
+        GenerationAttemptLoop loop = runWithContestedDesignAuthority(
+                new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(), null, List.of("The concept review admitted no candidate.")));
 
-        GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 3, 2, true);
-        loop.run();
-
-        verify(specFidelityCritic, times(2)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
-        verify(baseTools, never()).enterRepairScope(any());
-        assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL
-                && finding.detail().contains(witness.testName()) && !finding.isBlocking());
-        assertThat(loop.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
+        assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONCEPT_ADMISSION_FINDING);
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONCEPT_ADMITTED_WITH_FINDINGS);
     }
 
     @Test
-    void anUnapprovedSpecificationCannotAuthorizeValidatedWitnessAdoption() {
+    void anInconclusiveSpecificationReviewStillRepairsAnExecutedSurvivor() {
+        GenerationAttemptLoop loop = runWithContestedDesignAuthority(
+                new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
+
+        assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.SPECIFICATION_REVIEW_FINDING);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
+    }
+
+    /** One survivor on the first review, killed by the oracle repair; the contested design authority's finding is the only blocker left afterwards. */
+    private GenerationAttemptLoop runWithContestedDesignAuthority(StagedGenerationRunner.StagedRunOutcome stagedOutcome) {
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
-                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
-        sandbox.withFile(SPEC_PATH, "## Rules\nR1. The result is selected cyclically.");
-        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any()))
-                .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("test/CycleTest.java", "class CycleTest {}"), false));
-        ContractWitness witness = new ContractWitness("R1", "wrapsToFirst", "void wrapsToFirst() {}", "stops after the final element");
-        SemanticMutant mutant = new SemanticMutant("R1", "src/Cycle.java", "class Cycle {}", "class Cycle { int stopsEarly; }", witness);
-        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
+                any())).thenReturn(stagedOutcome);
+        stubSchedulerFixture();
+        SemanticMutant mutant = mutant("R1", "allPrerequisites", "honors only the first prerequisite");
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant), List.of());
         when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
-        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness));
-        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any()))
-                .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
-        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(SpecFidelityReport.qualityReviewUnavailable("The first full-artifact review did not complete."), SpecFidelityReport.empty());
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)));
 
         GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 3, 2, true);
         loop.run();
 
-        verify(specFidelityCritic, times(2)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
-        verify(baseTools, never()).enterRepairScope(any());
-        assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL
-                && finding.detail().contains(witness.testName()) && !finding.isBlocking());
-        assertThat(loop.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
-        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
+        verify(baseTools).enterRepairScope(Set.of("tests", "test-plan.json", "problem-statement.md"));
+        verify(verifier).checkSemanticMutants(any(), anyString(), any(), any(), any(), Mockito.eq(List.of(mutant)), any());
+        assertThat(loop.lastMechanicallyVerifiedCandidate().problemStatement()).isEqualTo("PROBLEM STATEMENT 2");
+        assertThat(loop.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        return loop;
+    }
+
+    @Test
+    void inconclusiveMutantProbesAreCountedOnTheReviewRoundEvent() {
+        stubSchedulerFixture();
+        SemanticMutant inconclusive = mutant("R1", "allPrerequisites", "honors only the first prerequisite");
+        SemanticMutant killed = mutant("R2", "lexicalTie", "uses FIFO insertion order");
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(inconclusive, killed));
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(inconclusive, Disposition.INCONCLUSIVE), new SemanticMutantOutcome(killed, Disposition.KILLED_BY_GRADED_SUITE)));
+
+        GenerationAttemptLoop loop = newGenerateLoop(1, 0);
+        loop.run();
+
+        assertThat(progressLines).contains("Quality review round 1: no issues remain. 1 mutant probe was inconclusive and proved nothing either way.");
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
     }
 
     @Test
@@ -588,8 +586,7 @@ class GenerationAttemptLoopTest {
         assertThat(loop.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE
                 && finding.detail().contains("R1") && finding.detail().contains("src/Scheduler.java") && finding.detail().contains("hyperionMutantGlobalChoice")
                 && finding.detail().contains("remains unresolved"));
-        assertThat(loop.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE
-                || finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL);
+        assertThat(loop.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
     }
 
@@ -819,7 +816,7 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
-    void unapprovedSpecificationCannotAuthorizeASemanticMutantReferenceRepair() {
+    void anInconclusiveSpecificationReviewStillAdjudicatesAnExecutedReferenceFailure() {
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
                 any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
         sandbox.withFile(SPEC_PATH, "## Rules\nR1. Return the mathematically nearest value.");
@@ -835,7 +832,7 @@ class GenerationAttemptLoopTest {
         GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 1, 0, true);
         loop.run();
 
-        verify(specFidelityCritic, never()).adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any());
+        verify(specFidelityCritic).adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any());
         verify(baseTools, never()).enterRepairScope(any());
         assertThat(loop.specFidelityReport().findings())
                 .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE && finding.detail().contains("adjudication"));
@@ -1144,7 +1141,7 @@ class GenerationAttemptLoopTest {
         }
 
         @Test
-        void validatedWitnessSurvivesAnUnrelatedRepairAndIsOfferedBeforeTheReviewedPredecessorIsRetained() {
+        void validatedWitnessSurvivesAnUnrelatedRepairAndItsAdoptionIsKeptBesideAnUnrepairableBlocker() {
             SpecFidelityReport contractRepair = report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
             SpecFidelityReport instructorOnly = report(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE);
             when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(contractRepair, instructorOnly,
@@ -1169,7 +1166,9 @@ class GenerationAttemptLoopTest {
             ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
             verify(agentLoopRunner, times(3)).runSession(anyString(), isNull(), prompts.capture(), any(), anyInt(), any(), any(), any());
             assertThat(prompts.getAllValues()).anySatisfy(prompt -> assertThat(prompt).contains("tests below", witness.testName(), wrongBehavior, witnessCode));
-            assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REPAIR_DID_NOT_IMPROVE);
+            // The unchanged technique blocker is beyond any repair, so it cannot make the adoption a regression; the adopted candidate is kept.
+            assertThat(loop.lastMechanicallyVerifiedCandidate().problemStatement()).isEqualTo("PROBLEM STATEMENT 3");
+            assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
         }
 
         @Test

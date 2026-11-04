@@ -119,7 +119,7 @@ class SemanticMutantAuthorTest {
         List<SpecFidelityReport.Finding> findings = List.of(
                 new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "equality boundary", "a boundary misconception may survive"),
                 new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "state preservation", "no assertion observes the transition"),
-                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, "hard-coded configuration",
+                new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "hard-coded configuration",
                         "the environment already proved fixed thresholds survive"),
                 new SpecFidelityReport.Finding(SpecFidelityReport.Kind.MISSING_FAILURE_MESSAGE, "SchedulerTest.java", "presentation only"));
 
@@ -131,7 +131,7 @@ class SemanticMutantAuthorTest {
     @Test
     void targetCapRetainsPriorExecutedExclusionsPlacedBeforeStaticRisks() {
         List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>();
-        findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL, "executed hard-coded configuration",
+        findings.add(new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "executed hard-coded configuration",
                 "the environment already proved fixed thresholds survive"));
         java.util.stream.IntStream.rangeClosed(1, 6)
                 .mapToObj(index -> new SpecFidelityReport.Finding(SpecFidelityReport.Kind.WEAK_TEST_ORACLE, "static risk " + index, "hypothesis")).forEach(findings::add);
