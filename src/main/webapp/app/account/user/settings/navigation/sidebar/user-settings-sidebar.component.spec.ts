@@ -64,4 +64,19 @@ describe('UserSettingsSidebarComponent', () => {
 
         expect(toggleSpy).toHaveBeenCalledOnce();
     });
+
+    it('labels the collapse button', () => {
+        fixture.detectChanges();
+
+        const collapseButton = fixture.nativeElement.querySelector('[data-testid="user-settings-sidebar-collapse"]');
+        expect(collapseButton.getAttribute('aria-label')).toBe('artemisApp.userSettings.navigation.collapse');
+    });
+
+    it('labels the expand button', () => {
+        fixture.componentRef.setInput('isCollapsed', true);
+        fixture.detectChanges();
+
+        const expandButton = fixture.nativeElement.querySelector('[data-testid="user-settings-sidebar-expand"]');
+        expect(expandButton.getAttribute('aria-label')).toBe('artemisApp.userSettings.navigation.expand');
+    });
 });

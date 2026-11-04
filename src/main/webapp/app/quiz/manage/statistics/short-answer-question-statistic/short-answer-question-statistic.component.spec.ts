@@ -56,8 +56,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
     let comp: ShortAnswerQuestionStatisticComponent;
     let fixture: ComponentFixture<ShortAnswerQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
-    let accountService: AccountService;
-    let accountSpy: any;
+    let accountService: MockAccountService;
     let quizServiceFindSpy: any;
 
     beforeEach(() => {
@@ -80,7 +79,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
                 fixture = TestBed.createComponent(ShortAnswerQuestionStatisticComponent);
                 comp = fixture.componentInstance;
                 quizService = TestBed.inject(QuizExerciseService);
-                accountService = TestBed.inject(AccountService);
+                accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
                 quizServiceFindSpy = vi.spyOn(quizService, 'findQuestionStatistic').mockReturnValue(of(quizExercise));
             });
     });
@@ -101,25 +100,23 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('onInit', () => {
         it('should call functions on Init', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
             comp.websocketChannelForData = '';
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(4, 1);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
             expect(comp.websocketChannelForData).toBe('/topic/statistic/4');
         });
 
         it('should not load Quiz if not authorised', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            accountService.isAtLeastTutor.set(false);
             const loadQuizSpy = vi.spyOn(comp, 'loadQuiz');
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSpy).not.toHaveBeenCalled();
         });
@@ -127,7 +124,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
     describe('loadQuiz', () => {
         it('should call functions from loadQuiz', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            accountService.isAtLeastTutor.set(true);
             const generateStructureSpy = vi.spyOn(comp, 'generateShortAnswerStructure');
             const generateLettersSpy = vi.spyOn(comp, 'generateLettersForSolutions');
             const loadLayoutSpy = vi.spyOn(comp, 'loadLayout');
