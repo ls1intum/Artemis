@@ -219,8 +219,6 @@ public class DifferentialVerifier {
                 .toList();
         boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
         reasons.addAll(approvedSpecificationReasons);
-        reasons.addAll(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, request.seededStructuralTestNames(), contractSpecifications,
-                request.producedSolutionFiles(), exercise.packageName()));
         String approvedSpec = String.join("\n\n", contractSpecifications);
         List<String> approvedTestPlanReasons = ExerciseIntegrityGate.approvedTestPlanReasons(approvedSpec, request.producedTestPlan(), solution.testNames(), exercise.hasDueDate(),
                 request.seededStructuralTestNames(), baselineHiddenTestNames);
@@ -244,9 +242,12 @@ public class DifferentialVerifier {
         boolean noAdaptWipe = adaptWipeReasons.isEmpty();
         reasons.addAll(adaptWipeReasons);
 
-        boolean mechanicallyVerified = analysis.actionableGatesPass() && harnessIntact && noSolutionLeak && noGradingContextSniffing && javaAresConventionsHold
-                && javaSourceLayoutIntact && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold && extractionSound
-                && statementTasksHaveInstructions && noAdaptWipe && gradedTestsDeterministic && testsReadNoSources;
+        boolean gatesApartFromSolutionHold = harnessIntact && noSolutionLeak && noGradingContextSniffing && javaAresConventionsHold && javaSourceLayoutIntact
+                && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds && templateTodoSeamsHold && extractionSound && statementTasksHaveInstructions
+                && noAdaptWipe && gradedTestsDeterministic && testsReadNoSources;
+        boolean mechanicallyVerified = analysis.actionableGatesPass() && gatesApartFromSolutionHold;
+        reasons.addAll(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, request.seededStructuralTestNames(), contractSpecifications,
+                request.producedSolutionFiles(), exercise.packageName(), analysis.actionableGatesPassApartFromSolution() && gatesApartFromSolutionHold));
         if (!mechanicallyVerified) {
             log.info(
                     "Differential verification failed: solution[{}], template[{}], actionableGatesPass={}, harnessIntact={}, noSolutionLeak={}, "
@@ -315,7 +316,6 @@ public class DifferentialVerifier {
                 .flatMap(spec -> ApprovedOwnershipGate.approvedSpecificationReasons(spec, templateFiles, solutionFiles).stream()).distinct().toList();
         boolean approvedSpecificationHolds = approvedSpecificationReasons.isEmpty();
         reasons.addAll(approvedSpecificationReasons);
-        reasons.addAll(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, seededStructuralTestNames, contractSpecifications, solutionFiles, exercise.packageName()));
         List<String> approvedTestPlanReasons = includeStatementChecks
                 ? ExerciseIntegrityGate.approvedTestPlanReasons(String.join("\n\n", contractSpecifications), testPlanJson, solution.testNames(), exercise.hasDueDate(),
                         seededStructuralTestNames, baselineHiddenTestNames)
@@ -329,6 +329,10 @@ public class DifferentialVerifier {
                 .flatMap(spec -> ApprovedOwnershipGate.templateTodoSeamReasons(spec, templateFiles, testsRepositoryFiles).stream()).distinct().toList();
         boolean templateTodoSeamsHold = templateTodoSeamReasons.isEmpty();
         reasons.addAll(templateTodoSeamReasons);
+        boolean gatesApartFromSolutionHold = javaAresConventionsHold && testsReadNoSources && approvedSpecificationHolds && approvedTestPlanHolds && statementTraceabilityHolds
+                && templateTodoSeamsHold;
+        reasons.addAll(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, seededStructuralTestNames, contractSpecifications, solutionFiles, exercise.packageName(),
+                (includeStatementChecks ? analysis.actionableGatesPassApartFromSolution() : analysis.testArtifactGatesPassApartFromSolution()) && gatesApartFromSolutionHold));
 
         return new AgentVerifyReport(solution.tests(), solutionPassed, List.copyOf(solution.testFailedNames()), solution.failureEvidence(), template.tests(), templateCompiled,
                 analysis.templateFailed(), template.failureEvidence(), templateWronglyPassing, List.copyOf(solution.testNames()),
@@ -571,16 +575,20 @@ public class DifferentialVerifier {
             statementReasons.add("The statement contains no @startuml class diagram, but this exercise requires one. " + AgentSystemPrompt.DIAGRAM_REQUIREMENT_RULE);
         }
 
-        boolean testArtifactGatesPass = laneResultsSound && solutionPassed && noDuplicateTestNames && templateFailed && testCount > 0;
-        boolean actionableGatesPass = testArtifactGatesPass && problemStatementHasTasks && !taskBindingHiddenInMarkdownCode && taskKeywordsWellFormed && taskBindingsResolve
-                && noDuplicateTaskBindings && allGradableTestsBound && preservationBindingReasons.isEmpty() && proseHygienic && taskTitlesUnique && statementVoiceOk
-                && diagramLinksResolve && noStrayUmlDirectives && diagramSyntaxValid && headingsUnique && statementHonoursDiagramPromise && noHiddenTestsExposed;
+        // Every test-artifact gate except the solution passing its tests, so a server-owned structural failure can be told apart from other failures.
+        boolean testArtifactGatesPassApartFromSolution = laneResultsSound && noDuplicateTestNames && templateFailed && testCount > 0;
+        boolean testArtifactGatesPass = testArtifactGatesPassApartFromSolution && solutionPassed;
+        boolean statementGatesPass = problemStatementHasTasks && !taskBindingHiddenInMarkdownCode && taskKeywordsWellFormed && taskBindingsResolve && noDuplicateTaskBindings
+                && allGradableTestsBound && preservationBindingReasons.isEmpty() && proseHygienic && taskTitlesUnique && statementVoiceOk && diagramLinksResolve
+                && noStrayUmlDirectives && diagramSyntaxValid && headingsUnique && statementHonoursDiagramPromise && noHiddenTestsExposed;
+        boolean actionableGatesPass = testArtifactGatesPass && statementGatesPass;
 
         List<String> possiblyDeadFiles = possiblyDeadWorkspaceFiles(sandbox, sessionId);
         List<String> actionableReasons = new ArrayList<>(reasons);
         actionableReasons.addAll(statementReasons);
-        return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, testArtifactGatesPass, actionableGatesPass, List.copyOf(reasons),
-                List.copyOf(actionableReasons), unresolvedTaskBindings, possiblyDeadFiles, gradableTestsPassingOnTemplate, preservationTestNames.stream().sorted().toList());
+        return new DifferentialAnalysis(solution, template, solutionPassed, templateFailed, testArtifactGatesPass, actionableGatesPass, testArtifactGatesPassApartFromSolution,
+                testArtifactGatesPassApartFromSolution && statementGatesPass, List.copyOf(reasons), List.copyOf(actionableReasons), unresolvedTaskBindings, possiblyDeadFiles,
+                gradableTestsPassingOnTemplate, preservationTestNames.stream().sorted().toList());
     }
 
     /**
@@ -589,8 +597,9 @@ public class DifferentialVerifier {
      * drives the gate and is reported to the agent, so gate and feedback can never disagree.
      */
     private record DifferentialAnalysis(BuildSummary solution, BuildSummary template, boolean solutionPassed, boolean templateFailed, boolean testArtifactGatesPass,
-            boolean actionableGatesPass, List<String> testArtifactReasons, List<String> actionableReasons, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles,
-            List<String> gradableTestsPassingOnTemplate, List<String> preservationTestNames) {
+            boolean actionableGatesPass, boolean testArtifactGatesPassApartFromSolution, boolean actionableGatesPassApartFromSolution, List<String> testArtifactReasons,
+            List<String> actionableReasons, List<String> unresolvedTaskBindings, List<String> possiblyDeadFiles, List<String> gradableTestsPassingOnTemplate,
+            List<String> preservationTestNames) {
     }
 
     /**

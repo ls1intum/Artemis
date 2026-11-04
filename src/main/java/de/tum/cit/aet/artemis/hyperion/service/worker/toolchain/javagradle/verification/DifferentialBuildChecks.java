@@ -57,10 +57,15 @@ final class DifferentialBuildChecks {
      * Names server-owned structural checks that fail on a reference solution matching the approved Public API in the exercise package. The server derived them from that contract,
      * so the failure is a seeding defect the agent cannot repair. The checks still fail verification; this only keeps the diagnostic from presenting the defect as an authoring
      * error. A check that failed because initializing a candidate class threw is not one: the candidate's own code failed, and it can repair that. Only the other failing checks
-     * are named, and only they can make the build a server defect.
+     * are named.
+     * <p>
+     * The verdict is terminal, a reason opening with {@link VerificationResult#SERVER_DEFECT_PREFIX}, only when these checks are the only failure: every other gate holds and
+     * the solution fails no other test. Otherwise the run can still repair something, so the same finding is reported as information without the prefix.
+     *
+     * @param otherGatesHold whether every verification gate except the solution passing its tests holds
      */
     static List<String> structuralSeedingDefectReasons(BuildSummary solution, Set<String> seededStructuralTestNames, List<String> contractSpecifications,
-            Map<String, String> solutionFiles, String exercisePackage) {
+            Map<String, String> solutionFiles, String exercisePackage, boolean otherGatesHold) {
         Set<String> seeded = seededStructuralTestNames.stream().map(ProblemStatementBindingChecker::normalizeTestName).collect(Collectors.toSet());
         Set<String> candidateInitializationFailures = solution.failureEvidence().stream().filter(evidence -> CANDIDATE_INITIALIZATION_FAILURE.matcher(evidence.message()).find())
                 .map(evidence -> ProblemStatementBindingChecker.normalizeTestName(evidence.testName())).collect(Collectors.toSet());
@@ -70,9 +75,16 @@ final class DifferentialBuildChecks {
                 || !contractSpecifications.stream().allMatch(spec -> ApprovedOwnershipGate.solutionMatchesApprovedApi(spec, solutionFiles, exercisePackage))) {
             return List.of();
         }
+        boolean onlyFailure = otherGatesHold && !solution.timedOut()
+                && solution.testFailedNames().stream().map(ProblemStatementBindingChecker::normalizeTestName).allMatch(failingSeeded::contains);
+        if (!onlyFailure) {
+            return List.of("Possible server defect, reported for information: the server-owned structural check(s) " + failingSeeded + " fail on the reference solution "
+                    + "although it matches the structural oracle derived from the approved Public API. Verification also failed for other reasons; repair those. Generation stops "
+                    + "for the administrators only if these checks remain the only failure.");
+        }
         return List.of(VerificationResult.SERVER_DEFECT_PREFIX + " the server-owned structural check(s) " + failingSeeded + " fail on the reference solution although it "
-                + "declares exactly the approved Public API those checks were derived from. Authoring cannot repair this: do not change the solution, template, tests, or "
-                + "SPEC.md to satisfy them. The exercise cannot be verified until the Artemis administrators fix the structural seeding.");
+                + "matches the structural oracle derived from the approved Public API, and nothing else fails. Authoring cannot repair this: do not change the solution, "
+                + "template, tests, or SPEC.md to satisfy them. The exercise cannot be verified until the Artemis administrators fix the structural seeding.");
     }
 
     /** The bounded build output of a build whose test reports cannot explain its failure, such as one that did not compile. */

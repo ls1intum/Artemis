@@ -1071,7 +1071,7 @@ class DifferentialVerifierTest {
     }
 
     @Test
-    void aSeededStructuralCheckFailingOnAnApiConformingSolutionIsReportedAsAServerDefect() {
+    void aSeededStructuralCheckFailingOnAnApiConformingSolutionBesideOtherFailuresIsReportedWithoutEndingTheRun() {
         String structuralName = "testClass[Level]";
         String spec = """
                 ## Design
@@ -1097,12 +1097,15 @@ class DifferentialVerifierTest {
             VerificationResult result = newVerifier(spec).verify(sandbox, "s", input(), request, NO_RESTORE);
 
             assertThat(result.mechanicallyVerified()).isFalse();
+            // The template lacks the stubbed Level, an ordinary authoring error, so the structural failure is information and the run keeps repairing.
+            assertThat(result.serverDefect()).isFalse();
+            assertThat(result.reasons()).anyMatch(reason -> reason.contains("the template does not declare them"));
             if (request == conforming) {
-                assertThat(result.reasons()).filteredOn(reason -> reason.startsWith("Server defect")).singleElement().asString().contains(structuralName,
-                        "declares exactly the approved Public API", "do not change the solution");
+                assertThat(result.reasons()).filteredOn(reason -> reason.startsWith("Possible server defect")).singleElement().asString().contains(structuralName,
+                        "matches the structural oracle derived from the approved Public API", "repair those");
             }
             else {
-                assertThat(result.reasons()).noneMatch(reason -> reason.startsWith("Server defect"));
+                assertThat(result.reasons()).noneMatch(reason -> reason.contains("server defect") || reason.startsWith("Server defect"));
             }
         }
     }
