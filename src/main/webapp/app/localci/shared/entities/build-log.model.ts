@@ -101,7 +101,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                 // Parse build logs
                 .map(({ log, time }) => {
                     const line = log.split('\n', 1)[0].trim();
-                    return { log: line.length <= BuildLogEntryArray.MAX_PARSED_LINE_LENGTH ? line.match(errorLogRegex) : null, time };
+                    return { log: line.length <= BuildLogEntryArray.MAX_PARSED_LINE_LENGTH ? errorLogRegex.exec(line) : null, time };
                 })
                 // Remove entries that could not be parsed, are too short or not errors
                 .filter((entry: { log: RegExpMatchArray | null; time: string }): entry is { log: ParsedLogEntry; time: string } => {
