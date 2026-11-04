@@ -233,7 +233,7 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
                     Keys expired.
 
                     One of your SSH keys has expired. Renew it in the Artemis settings:
-                    %s/user-settings/ssh
+                    %s/user-settings/credentials
                     """.formatted(artemisServerUrl);
 
             session.disconnect(AUTHENTICATION_FAILED_CODE, keyExpiredErrorMessage);

@@ -1,4 +1,4 @@
-import { Service, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Service, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
@@ -49,6 +49,9 @@ export interface IAccountService {
     isAtLeastInstructorForExercise: (exercise?: Exercise) => boolean;
     isAtLeastInstructorInCourse: (course: Course) => boolean;
     isAtLeastInstructorInCourseWithId: (courseId?: number) => boolean;
+    isAdmin: Signal<boolean>;
+    isSuperAdmin: Signal<boolean>;
+    isAtLeastTutor: Signal<boolean>;
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
@@ -69,6 +72,9 @@ export class AccountService implements IAccountService {
     private prefilledUsernameValue?: string;
 
     readonly authenticated = computed(() => !!this.userIdentity());
+    readonly isAdmin = computed(() => this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN));
+    readonly isSuperAdmin = computed(() => this.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN));
+    readonly isAtLeastTutor = computed(() => this.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR));
 
     readonly askToSetupPasskey = computed(() => this.userIdentity()?.askToSetupPasskey ?? false);
     readonly isLoggedInWithPasskey = computed(() => this.userIdentity()?.loggedInWithPasskey ?? false);
@@ -251,18 +257,6 @@ export class AccountService implements IAccountService {
      */
     isAtLeastInstructorForExercise(exercise?: Exercise): boolean {
         return this.isAtLeastInstructorInCourse(exercise?.course || exercise?.exerciseGroup?.exam?.course);
-    }
-
-    isAdmin(): boolean {
-        return this.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
-    }
-
-    isSuperAdmin(): boolean {
-        return this.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN);
-    }
-
-    isAtLeastTutor(): boolean {
-        return this.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
     }
 
     /**

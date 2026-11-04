@@ -18,6 +18,18 @@ describe('app.routes', () => {
         });
     });
 
+    describe('user settings layout', () => {
+        it('loads only the redesigned settings routes', () => {
+            const settingsRoutes = routes.filter((route) => route.path === '' && route.loadChildren);
+
+            const userSettingsRoutes = settingsRoutes.filter((route) => route.loadChildren?.toString().includes('app/account/user/settings'));
+
+            expect(userSettingsRoutes).toHaveLength(1);
+            expect(userSettingsRoutes[0].loadChildren?.toString()).toContain('app/account/user/settings/user-settings.route');
+            expect(userSettingsRoutes[0].loadChildren?.toString()).not.toContain('settings-v2');
+        });
+    });
+
     describe('legacy course management overview', () => {
         it('redirects at the root with a relative target before loading the management routes', () => {
             const managementRoutes = routes.filter((route) => route.path === 'course-management');
