@@ -7,7 +7,7 @@ import { User } from 'app/account/user/user.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { PresentationAssessmentInstancesTableComponent } from 'app/presentation/manage/presentation-assessment-instances-table.component';
 import { PresentationStudentTableRow } from 'app/presentation/manage/presentation-assessment-management.helper';
-import { PresentationAssessment, PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessment, PresentationAssessmentMode, PresentationGradingMethod } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -65,6 +65,17 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
 
         render([createRow({ assessed: false, instance: { id: 10 } })]);
         expect(query('[data-testid="instance-result"]')).toBeNull();
+    });
+
+    it.each([
+        { gradingMethod: PresentationGradingMethod.PASS_FAIL, instance: { id: 10, passed: false }, expected: 'artemisApp.presentationAssessment.result.failed' },
+        { gradingMethod: PresentationGradingMethod.RUBRIC, instance: { id: 10, rubricScore: 72.5 }, expected: '72.5 %' },
+    ])('should show the result as the grading method $gradingMethod expresses it', ({ gradingMethod, instance, expected }) => {
+        render([createRow({ instance })]);
+        fixture.componentRef.setInput('presentationAssessment', { ...presentationAssessment, gradingMethod, maxPoints: undefined });
+        fixture.detectChanges();
+
+        expect(query('[data-testid="instance-result"]')?.textContent).toContain(expected);
     });
 
     it('should offer the delete button only when deleting is allowed', () => {

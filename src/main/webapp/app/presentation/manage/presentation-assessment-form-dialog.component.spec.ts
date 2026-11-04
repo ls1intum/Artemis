@@ -4,10 +4,11 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { Mock, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentFormDialogComponent, PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
-import { PresentationAssessment, PresentationGradingMethod } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessment, PresentationGradingMethod, PresentationRubricScale } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 
 describe('PresentationAssessmentFormDialogComponent', () => {
@@ -35,10 +36,7 @@ describe('PresentationAssessmentFormDialogComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentFormDialogComponent],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }, provideArtemisTumAetUiTranslator()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PresentationAssessmentFormDialogComponent);
@@ -275,5 +273,207 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
 
         expect(saved).toHaveBeenCalledWith({ presentationAssessment: expect.objectContaining({ title: 'Submitted title' }) });
+    });
+
+    function clickButton(testId: string): void {
+        (byTestId(testId)!.querySelector('button') as HTMLButtonElement).click();
+        fixture.detectChanges();
+    }
+
+    describe('creating a presentation', () => {
+        beforeEach(() => {
+            fixture.componentRef.setInput('presentationAssessment', undefined);
+            fixture.detectChanges();
+        });
+
+        function steps(): HTMLElement[] {
+            return Array.from(byTestId('presentation-steps')!.querySelectorAll('li'));
+        }
+
+        function enterText(selector: string, value: string): void {
+            const input = fixture.nativeElement.querySelector(selector) as HTMLInputElement;
+            input.value = value;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        }
+
+        function chooseMethod(gradingMethod: PresentationGradingMethod): void {
+            (byTestId(`grading-method-${gradingMethod}`)!.querySelector('input') as HTMLInputElement).click();
+            fixture.detectChanges();
+        }
+
+        function goToConfiguration(gradingMethod: PresentationGradingMethod): void {
+            enterText('input#presentation-assessment-title', 'Final presentation');
+            clickButton('continue-presentation-button');
+            chooseMethod(gradingMethod);
+            clickButton('continue-presentation-button');
+        }
+
+        it('should guide through details, method and configuration and skip the configuration for pass/fail', () => {
+            expect(steps()).toHaveLength(3);
+            expect((byTestId('continue-presentation-button')!.querySelector('button') as HTMLButtonElement).disabled).toBe(true);
+
+            enterText('input#presentation-assessment-title', 'Final presentation');
+            clickButton('continue-presentation-button');
+
+            expect(steps()[0].classList).toContain('presentation-assessment-step-complete');
+            expect(steps()[1].getAttribute('aria-current')).toBe('step');
+            expect(Object.values(PresentationGradingMethod).map((method) => byTestId(`grading-method-${method}`)?.querySelector('fa-icon'))).not.toContain(null);
+
+            chooseMethod(PresentationGradingMethod.PASS_FAIL);
+
+            expect(steps()).toHaveLength(2);
+            expect(byTestId('save-presentation-button')).not.toBeNull();
+            expect(byTestId('continue-presentation-button')).toBeNull();
+        });
+
+        it('should not continue without a grading method', () => {
+            enterText('input#presentation-assessment-title', 'Final presentation');
+            clickButton('continue-presentation-button');
+
+            expect((byTestId('continue-presentation-button')!.querySelector('button') as HTMLButtonElement).disabled).toBe(true);
+        });
+
+        it('should stay on the details and show what is missing when they are sent incomplete', () => {
+            // Pressing Enter sends the form even while the continue button is disabled
+            fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+            fixture.detectChanges();
+
+            expect(byTestId('presentation-title-error')).not.toBeNull();
+            expect(steps()[0].getAttribute('aria-current')).toBe('step');
+        });
+
+        it('should stay on the method and ask for one when it is sent without', () => {
+            enterText('input#presentation-assessment-title', 'Final presentation');
+            clickButton('continue-presentation-button');
+
+            fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+            fixture.detectChanges();
+
+            expect(byTestId('presentation-grading-method-error')).not.toBeNull();
+            expect(steps()[1].getAttribute('aria-current')).toBe('step');
+        });
+
+        it('should lock the details and the rubric while saving and unlock them afterwards', () => {
+            goToConfiguration(PresentationGradingMethod.RUBRIC);
+            clickButton('rubric-add-first-criterion');
+
+            fixture.componentRef.setInput('isSaving', true);
+            fixture.detectChanges();
+            expect(component.editForm.disabled).toBe(true);
+            expect((fixture.nativeElement.querySelector('input#rubric-criterion-name-0') as HTMLInputElement).disabled).toBe(true);
+
+            fixture.componentRef.setInput('isSaving', false);
+            fixture.detectChanges();
+            expect(component.editForm.controls.title.enabled).toBe(true);
+            // Only a presentation graded by score has max points
+            expect(component.editForm.controls.maxPoints.disabled).toBe(true);
+        });
+
+        it('should go back to the method from the configuration', () => {
+            goToConfiguration(PresentationGradingMethod.SCORE);
+            expect(fixture.nativeElement.querySelector('input#presentation-assessment-max-points')).not.toBeNull();
+
+            clickButton('back-presentation-button');
+
+            expect(byTestId('grading-method-SCORE')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('input#presentation-assessment-max-points')).toBeNull();
+        });
+
+        it('should widen the dialog only while the rubric is configured', async () => {
+            const wide: boolean[] = [];
+            component.wideChanged.subscribe((value) => wide.push(value));
+
+            goToConfiguration(PresentationGradingMethod.RUBRIC);
+            await fixture.whenStable();
+            expect(wide.at(-1)).toBe(true);
+
+            clickButton('back-presentation-button');
+            await fixture.whenStable();
+            expect(wide.at(-1)).toBe(false);
+        });
+
+        it('should save a presentation graded by pass/fail without points and rubric', () => {
+            enterText('input#presentation-assessment-title', 'Final presentation');
+            clickButton('continue-presentation-button');
+            chooseMethod(PresentationGradingMethod.PASS_FAIL);
+
+            clickButton('save-presentation-button');
+
+            expect(saved).toHaveBeenCalledWith({
+                presentationAssessment: expect.objectContaining({
+                    title: 'Final presentation',
+                    gradingMethod: PresentationGradingMethod.PASS_FAIL,
+                    maxPoints: undefined,
+                    rubricCriteria: undefined,
+                }),
+            });
+        });
+
+        it('should save a presentation graded by score with its maximum and without rubric', () => {
+            goToConfiguration(PresentationGradingMethod.SCORE);
+            typeIntoInputNumber(fixture.nativeElement.querySelector('input#presentation-assessment-max-points'), '15');
+            fixture.detectChanges();
+
+            clickButton('save-presentation-button');
+
+            expect(saved).toHaveBeenCalledWith({
+                presentationAssessment: expect.objectContaining({ gradingMethod: PresentationGradingMethod.SCORE, maxPoints: 15, rubricCriteria: undefined }),
+            });
+        });
+
+        it('should save a presentation graded by rubric with its criteria and without points', () => {
+            goToConfiguration(PresentationGradingMethod.RUBRIC);
+            clickButton('rubric-add-first-criterion');
+            enterText('input#rubric-criterion-name-0', 'Content');
+
+            clickButton('save-presentation-button');
+
+            expect(saved).toHaveBeenCalledWith({
+                presentationAssessment: expect.objectContaining({
+                    gradingMethod: PresentationGradingMethod.RUBRIC,
+                    maxPoints: undefined,
+                    rubricCriteria: [expect.objectContaining({ name: 'Content', weight: 100, scale: PresentationRubricScale.FIVE_POINT })],
+                }),
+            });
+        });
+
+        it('should show the errors of an incomplete rubric and not save it', () => {
+            goToConfiguration(PresentationGradingMethod.RUBRIC);
+            expect(byTestId('rubric-empty-error')).toBeNull();
+
+            clickButton('save-presentation-button');
+
+            expect(saved).not.toHaveBeenCalled();
+            expect(byTestId('rubric-empty-error')).not.toBeNull();
+        });
+    });
+
+    describe('editing a presentation', () => {
+        it('should show the grading method without steps and without letting it change', () => {
+            expect(byTestId('presentation-grading-method')!.textContent).toContain('artemisApp.presentationAssessment.gradingMethod.SCORE');
+            expect(byTestId('presentation-steps')).toBeNull();
+            expect(byTestId('grading-method-SCORE')).toBeNull();
+            expect(component.editForm.controls.gradingMethod.disabled).toBe(true);
+        });
+
+        it('should neither ask for nor send max points of a presentation graded by pass/fail', () => {
+            fixture.componentRef.setInput('presentationAssessment', { ...presentationAssessment, gradingMethod: PresentationGradingMethod.PASS_FAIL, maxPoints: undefined });
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('input#presentation-assessment-max-points')).toBeNull();
+
+            clickButton('save-presentation-button');
+
+            expect(saved).toHaveBeenCalledWith({ presentationAssessment: expect.objectContaining({ gradingMethod: PresentationGradingMethod.PASS_FAIL, maxPoints: undefined }) });
+        });
+
+        it('should not send the rubric, which has its own dialog', () => {
+            fixture.componentRef.setInput('presentationAssessment', { ...presentationAssessment, gradingMethod: PresentationGradingMethod.RUBRIC, maxPoints: undefined });
+            fixture.detectChanges();
+
+            clickButton('save-presentation-button');
+
+            expect(saved).toHaveBeenCalledWith({ presentationAssessment: expect.objectContaining({ gradingMethod: PresentationGradingMethod.RUBRIC, rubricCriteria: undefined }) });
+        });
     });
 });

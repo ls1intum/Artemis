@@ -7,11 +7,13 @@ import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockComponent } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { PresentationAssessmentFormDialogComponent } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
+import { PresentationRubricDialogComponent } from 'app/presentation/manage/presentation-rubric-dialog.component';
 import {
     PresentationAssessmentInstanceFormDialogComponent,
     PresentationAssessmentInstanceFormResult,
@@ -31,6 +33,8 @@ import {
     PresentationAssessmentInstancesCreate,
     PresentationAssessmentMode,
     PresentationAssessmentStudentRow,
+    PresentationGradingMethod,
+    PresentationRubricScale,
 } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
@@ -137,14 +141,17 @@ describe('PresentationAssessmentManagementComponent', () => {
                 },
             ],
         })
-            // The sidebar needs the course shell around it, and both dialogs have specs of their own.
+            // The sidebar needs the course shell around it, and the dialogs have specs of their own.
             .overrideComponent(PresentationAssessmentManagementComponent, {
-                remove: { imports: [SidebarComponent, PresentationAssessmentFormDialogComponent, PresentationAssessmentInstanceFormDialogComponent] },
+                remove: {
+                    imports: [SidebarComponent, PresentationAssessmentFormDialogComponent, PresentationAssessmentInstanceFormDialogComponent, PresentationRubricDialogComponent],
+                },
                 add: {
                     imports: [
                         MockComponent(SidebarComponent),
                         MockComponent(PresentationAssessmentFormDialogComponent),
                         MockComponent(PresentationAssessmentInstanceFormDialogComponent),
+                        MockComponent(PresentationRubricDialogComponent),
                     ],
                 },
             })
@@ -191,6 +198,10 @@ describe('PresentationAssessmentManagementComponent', () => {
 
     function instanceDialog(): PresentationAssessmentInstanceFormDialogComponent {
         return fixture.debugElement.query(By.directive(PresentationAssessmentInstanceFormDialogComponent)).componentInstance;
+    }
+
+    function rubricDialog(): PresentationRubricDialogComponent {
+        return fixture.debugElement.query(By.directive(PresentationRubricDialogComponent)).componentInstance;
     }
 
     afterEach(() => {
@@ -1345,6 +1356,15 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(table.textContent).toContain('18');
     });
 
+    it('should reload the overview sorted by date when the date column is clicked', () => {
+        presentationAssessmentService.findStudentRows.mockClear();
+
+        (query('th[tumAetUiSortableColumn="presentationDate"] button') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(presentationAssessmentService.findStudentRows).toHaveBeenLastCalledWith(courseId, expect.objectContaining({ sortField: 'presentationDate', page: 0 }));
+    });
+
     it('should load the next page of the overview from the paginator', () => {
         // More rows than fit on one page (25), so the paginator offers a next page.
         presentationAssessmentService.findStudentRows.mockReturnValue(
@@ -1480,5 +1500,130 @@ describe('PresentationAssessmentManagementComponent', () => {
         firstVisit.next([{ id: 8, title: 'Stale exercise' }]);
 
         expect(component.exercises()).toEqual(current);
+    });
+
+    describe('grading methods', () => {
+        const rubricPresentation: PresentationAssessment = { ...presentationAssessment, gradingMethod: PresentationGradingMethod.RUBRIC, maxPoints: undefined };
+        const criteria = [{ id: 1, name: 'Content', weight: 100, scale: PresentationRubricScale.THREE_POINT, levels: [{ id: 11 }, { id: 12 }, { id: 13 }] }];
+
+        function openPresentation(presentation: PresentationAssessment, isAtLeastEditor = true): void {
+            component.course.set({ ...course, isAtLeastEditor, isAtLeastInstructor: isAtLeastEditor } as Course);
+            component.presentationAssessments.set([presentation]);
+            routeParamMap.next(convertToParamMap({ courseId, presentationId: presentation.id }));
+            fixture.detectChanges();
+        }
+
+        it('should offer the rubric before editing a presentation graded by rubric', () => {
+            openPresentation(rubricPresentation);
+
+            const rubricButton = query('[data-testid="edit-rubric-button"]')!;
+            expect(rubricButton.compareDocumentPosition(query('[data-testid="edit-presentation-button"]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+            expect(query('[data-testid="presentation-grading-method-tag"]')).toBeNull();
+        });
+
+        it.each([PresentationGradingMethod.PASS_FAIL, PresentationGradingMethod.SCORE])('should show the grading method %s as a badge with its icon', (gradingMethod) => {
+            openPresentation({ ...presentationAssessment, gradingMethod });
+
+            const badge = query('[data-testid="presentation-grading-method-tag"]')!;
+            expect(badge.textContent).toContain(`artemisApp.presentationAssessment.gradingMethod.${gradingMethod}`);
+            expect(badge.querySelector('fa-icon')).not.toBeNull();
+            expect(query('[data-testid="edit-rubric-button"]')).toBeNull();
+        });
+
+        it('should show a tutor the method of a presentation graded by rubric instead of the rubric', () => {
+            openPresentation(rubricPresentation, false);
+
+            expect(query('[data-testid="presentation-grading-method-tag"]')!.textContent).toContain('artemisApp.presentationAssessment.gradingMethod.RUBRIC');
+            expect(query('[data-testid="edit-rubric-button"]')).toBeNull();
+        });
+
+        it('should save the rubric of its dialog and reload the rows', () => {
+            presentationAssessmentService.update.mockReturnValue(of(new HttpResponse({ body: rubricPresentation })));
+            openPresentation(rubricPresentation);
+            clickByTestId('edit-rubric-button');
+            expect(rubricDialog().presentationAssessmentId()).toBe(rubricPresentation.id);
+            presentationAssessmentService.findStudentRows.mockClear();
+
+            rubricDialog().saved.emit(criteria);
+            fixture.detectChanges();
+
+            expect(presentationAssessmentService.update).toHaveBeenCalledWith(courseId, expect.objectContaining({ id: rubricPresentation.id, rubricCriteria: criteria }));
+            expect(alertService.success).toHaveBeenCalledWith('artemisApp.presentationAssessment.rubric.saved');
+            expect(component.rubricDialogVisible()).toBe(false);
+            expect(presentationAssessmentService.findStudentRows).toHaveBeenCalled();
+        });
+
+        it.each([
+            ['should not add a generic alert when the server already reports why the rubric was rejected', { errorKey: 'rubricStructureLocked' }, 0],
+            ['should alert when saving the rubric fails without a server message', undefined, 1],
+        ])('%s', (_description, errorBody, expectedAlerts) => {
+            presentationAssessmentService.update.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, error: errorBody })));
+            openPresentation(rubricPresentation);
+            clickByTestId('edit-rubric-button');
+            alertService.addAlert.mockClear();
+
+            rubricDialog().saved.emit(criteria);
+            fixture.detectChanges();
+
+            expect(alertService.addAlert).toHaveBeenCalledTimes(expectedAlerts);
+            expect(component.rubricDialogVisible()).toBe(true);
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it('should save the rubric only once while a save is running', () => {
+            presentationAssessmentService.update.mockReturnValue(new Subject<HttpResponse<PresentationAssessment>>());
+            openPresentation(rubricPresentation);
+            clickByTestId('edit-rubric-button');
+
+            rubricDialog().saved.emit(criteria);
+            rubricDialog().saved.emit(criteria);
+
+            expect(presentationAssessmentService.update).toHaveBeenCalledOnce();
+        });
+
+        it('should ignore a rubric that was saved for a course left in the meantime', () => {
+            const response = new Subject<HttpResponse<PresentationAssessment>>();
+            presentationAssessmentService.update.mockReturnValue(response);
+            openPresentation(rubricPresentation);
+            clickByTestId('edit-rubric-button');
+            rubricDialog().saved.emit(criteria);
+
+            routeParamMap.next(convertToParamMap({ courseId: 2 }));
+            fixture.detectChanges();
+            response.next(new HttpResponse({ body: rubricPresentation }));
+            response.complete();
+
+            expect(alertService.success).not.toHaveBeenCalledWith('artemisApp.presentationAssessment.rubric.saved');
+        });
+
+        it('should close the rubric dialog when it is cancelled', () => {
+            openPresentation(rubricPresentation);
+            clickByTestId('edit-rubric-button');
+
+            rubricDialog().cancelled.emit();
+            fixture.detectChanges();
+
+            expect(component.rubricDialogVisible()).toBe(false);
+        });
+
+        it('should widen the presentation dialog while its rubric is configured', () => {
+            component.startCreate();
+            fixture.detectChanges();
+            const presentationDialogFrame = () => fixture.debugElement.queryAll(By.directive(TumAetUiDialogComponent))[0].componentInstance as TumAetUiDialogComponent;
+            expect(presentationDialogFrame().size()).toBe('medium');
+
+            // wideChanged comes from a signal and has no emit(), so the event goes through the template binding
+            fixture.debugElement.query(By.directive(PresentationAssessmentFormDialogComponent)).triggerEventHandler('wideChanged', true);
+            fixture.detectChanges();
+
+            expect(presentationDialogFrame().size()).toBe('large');
+        });
+
+        it('should give the grading dialog the course, whose settings round rubric results', () => {
+            component.startCreateInstance(presentationAssessment);
+            fixture.detectChanges();
+
+            expect(instanceDialog().course()).toEqual(course);
+        });
     });
 });
