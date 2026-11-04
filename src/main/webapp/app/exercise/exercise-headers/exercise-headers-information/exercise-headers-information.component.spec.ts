@@ -375,6 +375,13 @@ describe('ExerciseHeadersInformationComponent', () => {
             expect(component.achievedPoints()).toBe(3);
         });
 
+        it('should reflect a result selected in the dropdown of the other placement', () => {
+            fixture.componentRef.setInput('displayedResult', previousResult);
+
+            expect(component.relevantResult()).toEqual(previousResult);
+            expect(component.achievedPoints()).toBe(3);
+        });
+
         it('should show no achieved points for a selected result without a score', () => {
             component.displayedResult.set({ id: 3, rated: true } as Result);
 

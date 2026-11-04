@@ -26,6 +26,7 @@
             />
             <div class="mb-3">
                 <jhi-exercise-headers-information
+                    [(displayedResult)]="displayedResult"
                     [exercise]="exercise()"
                     [studentParticipation]="studentParticipation()"
                     [submissionPolicy]="submissionPolicy()"
@@ -124,6 +125,7 @@
              a quiz always has an editor panel, and panels()[0] becomes the left pane. -->
         <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.details'" [icon]="faCircleInfo">
             <jhi-exercise-headers-information
+                [(displayedResult)]="displayedResult"
                 [exercise]="exercise()"
                 [studentParticipation]="studentParticipation()"
                 [submissionPolicy]="submissionPolicy()"

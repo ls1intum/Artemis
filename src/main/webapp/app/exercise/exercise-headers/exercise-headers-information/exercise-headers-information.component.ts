@@ -1,6 +1,6 @@
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
-import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -183,8 +183,11 @@ export class ExerciseHeadersInformationComponent {
 
     readonly numberOfSubmissions = computed<number>(() => countSubmissions(this.studentParticipation()));
 
-    /** The previous result currently selected in the result-history dropdown, or undefined when the latest result is shown. */
-    readonly displayedResult = signal<Result | undefined>(undefined);
+    /**
+     * The previous result currently selected in the result-history dropdown, or undefined when the latest result is shown.
+     * A model, because the dropdown sits in the status box, which only one placement renders, while the panel always shows the points.
+     */
+    readonly displayedResult = model<Result | undefined>(undefined);
 
     /** The latest result, used by all result-derived boxes when no previous result is selected in the history dropdown. */
     private readonly latestResult = computed<Result | undefined>(() => {

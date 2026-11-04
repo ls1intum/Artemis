@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -122,6 +122,8 @@ export class ExerciseSplitPanelComponent {
     readonly practiceParticipation = input<StudentParticipation>();
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly latestRatedResult = input<Result>();
+    /** The result selected in the history dropdown, shared with the information boxes of the title bar. */
+    readonly displayedResult = model<Result | undefined>(undefined);
     readonly resultWithComplaint = input<Result>();
     readonly allowComplaintsForAutomaticAssessments = input<boolean>(false);
     readonly exampleSolutionInfo = input<ExampleSolutionInfo>();

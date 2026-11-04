@@ -618,6 +618,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * so each of the two facts is stated once on the page rather than twice.
      */
     readonly titleBarShowsPills = signal(false);
+    /** The result selected in the history dropdown of the title bar or the panel; both show the information of this result. */
+    readonly displayedHistoryResult = signal<Result | undefined>(undefined);
 
     /** Handed to the header. Navigates directly, for the same reason the flag above is derived here. */
     readonly continueToLatest = (): void => {
