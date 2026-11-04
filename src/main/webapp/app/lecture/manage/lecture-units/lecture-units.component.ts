@@ -761,7 +761,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
                     const linkBefore = editing?.videoSource;
                     this.lastSavedKey = pending.key;
                     this.editingUnit.set(savedUnit);
-                    this.takeOverSavedContent(pending, savedUnit, linkBefore);
+                    this.takeOverSavedContent(pending, savedUnit, linkBefore, (sentUnit as AttachmentVideoUnit).videoSource);
                     this.lastSavedAt.set(dayjs());
                 }
                 // Also after the form closed because its item was deleted, so the saves of an item opened meanwhile are sent.
@@ -849,7 +849,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         });
     }
 
-    private takeOverSavedContent(pending: PendingUnitSave, savedUnit: AttachmentVideoUnit, linkBefore: string | undefined): void {
+    private takeOverSavedContent(pending: PendingUnitSave, savedUnit: AttachmentVideoUnit, linkBefore: string | undefined, linkSaved: string | undefined): void {
         const form = this.attachmentVideoUnitForm();
         if (pending.confirmed?.confirmed !== 'videoSource' && (savedUnit.videoSource || undefined) !== (linkBefore || undefined)) {
             // Another editor changed the link meanwhile, which the response of this save shows: the form shows it too, and keeps a link the user entered.
@@ -859,7 +859,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
             form?.takeOverSavedFile(savedUnit.attachment?.link, savedUnit.attachment?.version, pending.confirmed.data.fileProperties.file);
         } else if (pending.confirmed?.confirmed === 'videoSource') {
             form?.takeOverSavedVideoSource(savedUnit.videoSource);
-            if ((savedUnit.videoSource || undefined) !== (pending.confirmed.data.formProperties.videoSource || undefined)) {
+            // Compared with the link the server saved, not with a TUM.Live video attached after it, which replaced the saved link.
+            if ((linkSaved || undefined) !== (pending.confirmed.data.formProperties.videoSource || undefined)) {
                 // The link was changed meanwhile, so the server kept that one. The entered link stays in the field as a change of it, to be saved again.
                 this.alertService.warning('artemisApp.lecture.unitEditor.videoSourceChangedMeanwhile');
             }
