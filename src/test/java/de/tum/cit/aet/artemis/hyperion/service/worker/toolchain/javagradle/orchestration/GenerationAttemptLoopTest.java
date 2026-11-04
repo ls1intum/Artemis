@@ -432,6 +432,53 @@ class GenerationAttemptLoopTest {
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
     }
 
+    @Test
+    void aContestedSpecificationAdjudicatesButDoesNotAdoptAReviewerProposedWitness() {
+        ContractWitness witness = contestedSpecificationWithAdoptableWitness();
+
+        GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 3, 2, true);
+        loop.run();
+
+        verify(specFidelityCritic).adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any());
+        verify(baseTools, never()).enterRepairScope(any());
+        assertThat(loop.specFidelityReport().findings())
+                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE && finding.detail().contains(witness.testName()));
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
+    }
+
+    @Test
+    void underAContestedSpecificationAnAdoptableWitnessDoesNotRideAlongWithAnOracleRepair() {
+        ContractWitness witness = contestedSpecificationWithAdoptableWitness();
+        SemanticMutant survivor = mutant("R2", "lexicalTie", "uses FIFO insertion order");
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(survivor), List.of());
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(survivor, Disposition.SURVIVED_GRADED_SUITE)), List.of());
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(survivor, Disposition.KILLED_BY_GRADED_SUITE)));
+
+        GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 2, 1, true);
+        loop.run();
+
+        verify(baseTools).enterRepairScope(Set.of("tests", "test-plan.json", "problem-statement.md"));
+        ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
+        verify(agentLoopRunner).runSession(anyString(), isNull(), prompts.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(prompts.getValue()).contains("lexicalTie").doesNotContain(witness.testName());
+    }
+
+    /** A staged run whose specification review was inconclusive, with one reviewer-proposed witness that independent adjudication approves for adoption. */
+    private ContractWitness contestedSpecificationWithAdoptableWitness() {
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
+        stubSchedulerFixture();
+        ContractWitness witness = new ContractWitness("R1", "handlesExtremeInput", "@Test void handlesExtremeInput() { assertEquals(42, compute(Integer.MAX_VALUE)); }",
+                "narrows the input before computing");
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenReturn(List.of(witness), List.of());
+        when(verifier.evaluateContractWitnesses(any(), anyString(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new ContractWitnessOutcome(witness, ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED, "")));
+        when(specFidelityCritic.adjudicateReferenceWitnesses(anyString(), anyString(), any(), any(), any())).thenReturn(approvedForAdoption(witness));
+        return witness;
+    }
+
     /** One survivor on the first review, killed by the oracle repair; the contested design authority's finding is the only blocker left afterwards. */
     private GenerationAttemptLoop runWithContestedDesignAuthority(StagedGenerationRunner.StagedRunOutcome stagedOutcome) {
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),

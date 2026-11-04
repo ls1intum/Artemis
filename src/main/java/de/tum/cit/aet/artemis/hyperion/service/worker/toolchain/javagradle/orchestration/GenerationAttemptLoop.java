@@ -214,8 +214,8 @@ class GenerationAttemptLoop {
 
     /**
      * Objections the concept review raised against the concept this run proceeded with anyway. Kept apart from {@link #unresolvedSpecificationFindings} because the two say
-     * different things to an instructor — a contested exercise idea versus a contested contract for an agreed idea. Both stay blocking review notes; neither switches off
-     * executed mutant or witness evidence, which is grounded in the environment rather than in the contested reviewer.
+     * different things to an instructor — a contested exercise idea versus a contested contract for an agreed idea. Both stay blocking review notes and both withhold the
+     * adoption of reviewer-proposed witnesses; neither switches off executed mutant evidence or witness adjudication, which are grounded in the environment.
      */
     private List<String> unresolvedConceptFindings = List.of();
 
@@ -407,11 +407,11 @@ class GenerationAttemptLoop {
                 specFidelityReport = SpecFidelityReport.empty();
             }
 
-            // A GENERATE run may spend one otherwise-idle round offering advisory witnesses. An instructor-only blocker, including a contested specification or concept, must
-            // not discard unrelated environment-proven coverage.
-            boolean hasSchedulableRepair = repairScheduler.nextRepairBatch(specFidelityReport).isPresent();
+            // A GENERATE run may spend one otherwise-idle round offering advisory witnesses. An unrelated instructor-only blocker must not discard that coverage, but a contested
+            // specification or concept cannot authorize adopting reviewer-proposed tests.
+            boolean hasSchedulableRepair = repairScheduler.nextRepairBatch(schedulingReport()).isPresent();
             boolean adoptWitnesses = verification.mechanicallyVerified() && !hasSchedulableRepair && !RepairRoundScheduler.hasInstrumentUnavailableFinding(specFidelityReport)
-                    && attempt < maxGenerationAttempts && mode == Mode.GENERATE && repairScheduler.witnessAdoption(specFidelityReport).isPresent();
+                    && designAuthorityApproved() && attempt < maxGenerationAttempts && mode == Mode.GENERATE && repairScheduler.witnessAdoption(specFidelityReport).isPresent();
             if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !adoptWitnesses) {
                 terminationReason = TerminationReason.CONVERGED;
                 break;
@@ -732,6 +732,23 @@ class GenerationAttemptLoop {
         return null;
     }
 
+    /**
+     * Whether both design authorities this run depends on, the concept it builds and the contract it froze, came through their reviews unopposed. Gates only the adoption of
+     * reviewer-proposed contract witnesses: adopting a proposed test under a contested concept or specification would deepen a design choice the reviewer objected to.
+     * Executed mutant evidence and witness adjudication do not depend on it.
+     */
+    private boolean designAuthorityApproved() {
+        return unresolvedSpecificationFindings.isEmpty() && unresolvedConceptFindings.isEmpty();
+    }
+
+    /** The review as repair scheduling sees it: under a contested design authority, adoptable witnesses do not ride along with an oracle repair either. */
+    private SpecFidelityReport schedulingReport() {
+        if (designAuthorityApproved()) {
+            return specFidelityReport;
+        }
+        return new SpecFidelityReport(specFidelityReport.findings().stream().filter(finding -> finding.kind() != SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE).toList());
+    }
+
     /** Re-attaches both contested-authority states after a fresh review, which only ever reports on artifacts and cannot discharge either. */
     private SpecFidelityReport preserveDesignAuthorityState(SpecFidelityReport report) {
         return GenerationReviewSupport.preserveConceptAdmissionState(GenerationReviewSupport.preserveSpecificationReviewState(report, unresolvedSpecificationFindings),
@@ -781,7 +798,7 @@ class GenerationAttemptLoop {
             return LoopStep.STOP;
         }
         boolean reviewUnavailable = RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport);
-        Optional<SemanticRepairBatch> repairBatch = adoptWitnesses ? repairScheduler.witnessAdoption(specFidelityReport) : repairScheduler.nextRepairBatch(specFidelityReport);
+        Optional<SemanticRepairBatch> repairBatch = adoptWitnesses ? repairScheduler.witnessAdoption(specFidelityReport) : repairScheduler.nextRepairBatch(schedulingReport());
         if (adoptWitnesses) {
             repairScheduler.markWitnessAdoptionAttempted();
         }
@@ -804,7 +821,7 @@ class GenerationAttemptLoop {
                 specFidelityReport = preserveExecutableEvidenceState(preserveDesignAuthorityState(specFidelityReport));
                 promoteReviewedCandidate(artifacts, specDocumentSnapshot);
                 recordReviewRound(attempt);
-                repairBatch = repairScheduler.nextRepairBatch(specFidelityReport);
+                repairBatch = repairScheduler.nextRepairBatch(schedulingReport());
             }
             if (repairBatch.isEmpty()) {
                 terminationReason = RepairRoundScheduler.reasonForUnschedulableReport(specFidelityReport);
