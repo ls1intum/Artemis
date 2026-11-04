@@ -12,7 +12,6 @@
                 "collapse": "Einstellungsmenü einklappen",
                 "expand": "Einstellungsmenü ausklappen"
             },
-            "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
             "vcsAccessTokensOverview": {
                 "title": "Zugriffstokens",
@@ -328,7 +327,6 @@
             },
             "aiExperience": "KI-Erfahrung",
             "aiExperienceSettingsPage": {
-                "title": "KI-Erfahrung",
                 "description": "Lege fest, wie Artemis KI einsetzt, um dein Lernen zu unterstützen – einschließlich Iris-Tutorium, automatischem Feedback und weiteren KI-gestützten Funktionen.",
                 "yourAiMode": "Dein KI-Modus",
                 "cloudTitle": "Cloud-KI",

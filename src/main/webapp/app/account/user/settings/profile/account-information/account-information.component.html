@@ -1,5 +1,5 @@
 <div class="mb-3 flex items-center justify-between">
-    <h2 class="mb-0" jhiTranslate="artemisApp.userSettings.accountInformation"></h2>
+    <h2 class="mb-0 text-xl! font-bold!" jhiTranslate="artemisApp.userSettings.accountInformation"></h2>
     @if (currentUser()?.internal) {
         <a tumAetUiButton size="small" [routerLink]="['/account', 'settings']">
             <fa-icon [icon]="faPen" />
