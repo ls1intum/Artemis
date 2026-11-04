@@ -36,7 +36,7 @@ The changelog manifest lies in `src/main/resources/config/liquibase/master.xml`,
 
 #### MySQL and PostgreSQL Compatibility
 
-We support both PostgreSQL and MySQL databases. In case you introduce database changes, carefully check the results of the continuous integration tests run against the different databases to make sure the migration works on both of them.
+We support both PostgreSQL and MySQL databases. MySQL support is deprecated and removed in Artemis 11 (see [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11)); until then, new changes must still work on both. In case you introduce database changes, carefully check the results of the continuous integration tests run against the different databases to make sure the migration works on both of them.
 
 <Callout variant={CalloutVariant.warning}>
   Especially for manually written SQL statements (<code>&lt;sql&gt;…&lt;/sql&gt;</code> blocks in the changelog) you have to make sure they are compatible with both database types.
@@ -93,7 +93,7 @@ The recommended default data type for storing values that involve date and time,
 
 ### Java Migration Changelog
 
-The changelog can be found in `src/main/java/config/migration/MigrationRegistry.java`. To create a new change, follow these steps:
+The changelog can be found in `src/main/java/de/tum/cit/aet/artemis/core/config/migration/MigrationRegistry.java`. To create a new change, follow these steps:
 
 1. Get the current time in the format `YYYYMMDD_HHmmss`.
 2. Create a new file in `/entries` named `MigrationEntry<formatted-time>.java` containing a class extending `MigrationEntry`.

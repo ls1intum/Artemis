@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
@@ -26,7 +27,9 @@ import de.tum.cit.aet.artemis.admin.dto.CommunicationUsageDTO;
 import de.tum.cit.aet.artemis.admin.dto.StudentSubmissionCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.UsageSemesterDTO;
 import de.tum.cit.aet.artemis.admin.repository.PublicUsageStatisticsRepository;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyUsageStatisticsApi;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.exam.api.ExamUsageStatisticsApi;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.iris.api.IrisUsageStatisticsApi;
@@ -55,7 +58,7 @@ class PublicUsageStatisticsServiceTest {
         when(repository.findRealCourseIds(any(ZonedDateTime.class), any(ZonedDateTime.class), anyLong())).thenReturn(Set.of());
         profileService = mock(ProfileService.class);
         when(profileService.isLocalCIActive()).thenReturn(true);
-        service = new PublicUsageStatisticsService(repository, profileService, Optional.empty(), Optional.empty(), BUILD_JOB_RETENTION_DAYS);
+        service = new PublicUsageStatisticsService(repository, profileService, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), BUILD_JOB_RETENTION_DAYS);
     }
 
     @Test
@@ -67,6 +70,37 @@ class PublicUsageStatisticsServiceTest {
 
         assertThat(semester.irisMessages()).isNull();
         assertThat(semester.tutorialGroups()).isNull();
+        assertThat(semester.exams()).isNull();
+        assertThat(semester.examRegistrations()).isNull();
+        assertThat(semester.examParticipations()).isNull();
+        assertThat(semester.competencies()).isNull();
+    }
+
+    @Test
+    void staffAndLectureUnits_comeFromTheRepositoryForTheCoursesOfTheSemester() {
+        givenOnlyTheNewestSemesterHasData();
+        when(repository.countSubmissionsByStudent(any())).thenReturn(List.of());
+        when(repository.countInstructors(THREE_COURSES)).thenReturn(4L);
+        when(repository.countTutors(THREE_COURSES)).thenReturn(11L);
+        when(repository.countLectureUnits(THREE_COURSES)).thenReturn(230L);
+
+        var semester = service.getUsageStatistics().semesters().getFirst();
+
+        assertThat(semester.instructors()).isEqualTo(4);
+        assertThat(semester.tutors()).isEqualTo(11);
+        assertThat(semester.lectureUnits()).isEqualTo(230);
+    }
+
+    @Test
+    void enrollments_areNotUniqueWhileStudentsAre() {
+        givenOnlyTheNewestSemesterHasData();
+        when(repository.countSubmissionsByStudent(any())).thenReturn(List.of());
+        when(repository.countStudentEnrollments(THREE_COURSES)).thenReturn(19L);
+
+        var semester = service.getUsageStatistics().semesters().getFirst();
+
+        assertThat(semester.students()).isEqualTo(7);
+        assertThat(semester.enrollments()).isEqualTo(19);
     }
 
     @Test
@@ -75,14 +109,63 @@ class PublicUsageStatisticsServiceTest {
         when(repository.countSubmissionsByStudent(any())).thenReturn(List.of());
         var irisApi = mock(IrisUsageStatisticsApi.class);
         var tutorialGroupApi = mock(TutorialGroupUsageStatisticsApi.class);
+        var examApi = mock(ExamUsageStatisticsApi.class);
+        var competencyApi = mock(CompetencyUsageStatisticsApi.class);
         when(irisApi.countMessagesInCourses(THREE_COURSES)).thenReturn(120L);
         when(tutorialGroupApi.countTutorialGroups(THREE_COURSES)).thenReturn(9L);
-        service = new PublicUsageStatisticsService(repository, profileService, Optional.of(irisApi), Optional.of(tutorialGroupApi), BUILD_JOB_RETENTION_DAYS);
+        when(examApi.countRealExams(THREE_COURSES)).thenReturn(7L);
+        when(examApi.countRealExamRegistrations(THREE_COURSES)).thenReturn(640L);
+        when(examApi.countRealExamParticipations(THREE_COURSES)).thenReturn(512L);
+        when(competencyApi.countCompetencies(THREE_COURSES)).thenReturn(21L);
+        service = new PublicUsageStatisticsService(repository, profileService, Optional.of(irisApi), Optional.of(tutorialGroupApi), Optional.of(examApi),
+                Optional.of(competencyApi), BUILD_JOB_RETENTION_DAYS);
 
         var semester = service.getUsageStatistics().semesters().getFirst();
 
         assertThat(semester.irisMessages()).isEqualTo(120);
         assertThat(semester.tutorialGroups()).isEqualTo(9);
+        assertThat(semester.exams()).isEqualTo(7);
+        assertThat(semester.examRegistrations()).isEqualTo(640);
+        assertThat(semester.examParticipations()).isEqualTo(512);
+        assertThat(semester.competencies()).isEqualTo(21);
+    }
+
+    @Test
+    void eachModuleIsOmittedOnItsOwn_whileTheOtherOneIsStillPublished() {
+        givenOnlyTheNewestSemesterHasData();
+        when(repository.countSubmissionsByStudent(any())).thenReturn(List.of());
+        var examApi = mock(ExamUsageStatisticsApi.class);
+        var competencyApi = mock(CompetencyUsageStatisticsApi.class);
+        when(examApi.countRealExams(THREE_COURSES)).thenReturn(0L);
+        when(competencyApi.countCompetencies(THREE_COURSES)).thenReturn(5L);
+
+        service = new PublicUsageStatisticsService(repository, profileService, Optional.empty(), Optional.empty(), Optional.of(examApi), Optional.empty(),
+                BUILD_JOB_RETENTION_DAYS);
+        var onlyExams = service.getUsageStatistics().semesters().getFirst();
+        // a module that is enabled without data publishes a real zero, not an absent value
+        assertThat(onlyExams.exams()).isZero();
+        assertThat(onlyExams.examRegistrations()).isZero();
+        assertThat(onlyExams.examParticipations()).isZero();
+        assertThat(onlyExams.competencies()).isNull();
+
+        givenOnlyTheNewestSemesterHasData();
+        service = new PublicUsageStatisticsService(repository, profileService, Optional.empty(), Optional.empty(), Optional.empty(), Optional.of(competencyApi),
+                BUILD_JOB_RETENTION_DAYS);
+        var onlyCompetencies = service.getUsageStatistics().semesters().getFirst();
+        assertThat(onlyCompetencies.exams()).isNull();
+        assertThat(onlyCompetencies.examRegistrations()).isNull();
+        assertThat(onlyCompetencies.competencies()).isEqualTo(5);
+    }
+
+    @Test
+    void semesterBelowTheCourseThreshold_doesNotAskTheModulesForNumbers() {
+        var examApi = mock(ExamUsageStatisticsApi.class);
+        var competencyApi = mock(CompetencyUsageStatisticsApi.class);
+        service = new PublicUsageStatisticsService(repository, profileService, Optional.empty(), Optional.empty(), Optional.of(examApi), Optional.of(competencyApi),
+                BUILD_JOB_RETENTION_DAYS);
+
+        assertThat(service.getUsageStatistics().semesters()).isEmpty();
+        verifyNoInteractions(examApi, competencyApi);
     }
 
     @Test
@@ -117,7 +200,7 @@ class PublicUsageStatisticsServiceTest {
         when(repository.countSubmissionsByStudent(any())).thenReturn(List.of());
         when(repository.summarizeFinishedBuildJobs(THREE_COURSES)).thenReturn(new BuildUsageDTO(100, 42.5));
         // a retention period of zero days deletes every build job that is older than now, so no semester has all of its builds
-        service = new PublicUsageStatisticsService(repository, profileService, Optional.empty(), Optional.empty(), 0);
+        service = new PublicUsageStatisticsService(repository, profileService, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 0);
 
         var semester = service.getUsageStatistics().semesters().getFirst();
 

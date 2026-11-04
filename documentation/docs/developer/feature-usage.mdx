@@ -19,7 +19,7 @@ features users know rather than the controllers that implement them. Nothing tha
   on restart, and there is no history without an external Prometheus.
 * **`StatisticsRepository`** answers "how many submissions over time", not "is this feature used".
 * **Science events** are client-driven, manually instrumented, and per-user.
-* **`@FeatureToggle`** is a kill switch over 14 coarse values, not a usage taxonomy.
+* **`@FeatureToggle`** is a kill switch over the few coarse `Feature` values, not a usage taxonomy.
 
 Two constraints shaped everything below: no measurable cost on the request path, and no personal data.
 

@@ -219,22 +219,27 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     }
 
     /**
-     * Builds the code location of a referenced feedback. References store 0-based editor lines (the code editor
-     * anchors inline feedback on them, and Athena numbers the lines it is shown from 0), while the feedback panel
-     * shows 1-based line numbers, so the lines are shifted by one here.
+     * Builds the code location of a referenced feedback. The feedback panel shows 1-based line numbers, while most
+     * references store 0-based editor lines (the code editor anchors inline feedback on them), so those are shifted by one.
      * @param feedback The feedback whose reference should be resolved.
      */
     private getCodeReference(feedback: Feedback): FeedbackItemCodeReference | undefined {
         const filePath = Feedback.getReferenceFilePath(feedback);
         const lineRange = Feedback.getReferenceLineRange(feedback);
-        if (!filePath || !lineRange) {
+        // A graded feedback suggestion numbers its lines from 1 (the Athena service only creates references with a line above 0).
+        // Every other reference keeps 0-based lines, like the inline feedback of the code editor, so line 0 is its first line.
+        // The panel counts from 1.
+        const firstLine = Feedback.isFeedbackSuggestion(feedback) ? 1 : 0;
+        if (!filePath || !lineRange || lineRange.start < firstLine) {
             return undefined;
         }
         const legacyLineEnd = Feedback.isNonGradedFeedbackSuggestion(feedback) ? this.getLegacyAiFeedbackLineEnd(feedback, filePath, lineRange.start) : undefined;
-        const lineEnd = legacyLineEnd ?? lineRange.end;
-        const codeReference: FeedbackItemCodeReference = { filePath, line: lineRange.start + 1 };
-        if (lineEnd !== lineRange.start) {
-            codeReference.lineEnd = lineEnd + 1;
+        const offset = 1 - firstLine;
+        const line = lineRange.start + offset;
+        const lineEnd = (legacyLineEnd ?? lineRange.end) + offset;
+        const codeReference: FeedbackItemCodeReference = { filePath, line };
+        if (lineEnd !== line) {
+            codeReference.lineEnd = lineEnd;
         }
         return codeReference;
     }
