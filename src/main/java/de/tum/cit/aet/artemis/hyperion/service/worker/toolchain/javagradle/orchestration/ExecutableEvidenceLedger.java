@@ -88,8 +88,10 @@ final class ExecutableEvidenceLedger {
     private int mutantsKilledByCurrentRepair;
 
     /**
-     * Mutants an earlier repair killed, least recently rechecked first. Every later verified repair rechecks them, keyed to the current source, and fails while one survives
-     * again, so a regression is judged on the latest candidate rather than remembered.
+     * Tracked survivors a later candidate's graded suite killed, least recently rechecked first, whichever check found the kill: the acceptance recheck after a verified repair,
+     * the review's recheck of pending survivors (including those keyed to a changed source), a conclusive print-only probe of a class whose earlier survivor went stale, or a
+     * silent-main run that resolved such a survivor. Every later verified repair rechecks them, keyed to the current source, and fails while one survives again, so a
+     * regression is judged on the latest candidate rather than remembered. A mutant that never survived is not tracked.
      */
     private List<SemanticMutant> semanticMutantsKilledByRepair = List.of();
 
@@ -184,7 +186,7 @@ final class ExecutableEvidenceLedger {
         List<SemanticMutant> killed = targetOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).map(SemanticMutantOutcome::mutant)
                 .toList();
         mutantsKilledByCurrentRepair += killed.size();
-        semanticMutantsKilledByRepair = java.util.stream.Stream.concat(semanticMutantsKilledByRepair.stream(), killed.stream()).distinct().toList();
+        rememberKills(killed);
         // A repair that killed a targeted mutant is kept even when others still survive; they become the next round's findings rather than a reason to discard the kill.
         boolean unkilledTargetsBlock = !recheck.unresolvedMutants().isEmpty() && mutantsKilledByCurrentRepair == 0;
         if (regressed.isEmpty() && !unkilledTargetsBlock) {
@@ -280,6 +282,8 @@ final class ExecutableEvidenceLedger {
         List<SemanticMutantOutcome> mutantOutcomes = java.util.stream.Stream.of(pendingMutantOutcomes, transcriptOutcomes, freshMutantOutcomes).flatMap(List::stream).toList();
         List<SemanticMutant> validatedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE)
                 .map(SemanticMutantOutcome::mutant).distinct().toList();
+        // A prior survivor the current suite kills is regression coverage however it was found, so a later repair cannot undo it unchecked.
+        rememberKills(pendingMutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).map(SemanticMutantOutcome::mutant).toList());
         List<SemanticMutant> inconclusivePendingMutants = pendingMutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)
                 .map(SemanticMutantOutcome::mutant).toList();
         survivorsWithoutVerdict = java.util.stream.Stream.of(inconclusivePendingMutants, unexecutableStaleMutants, staleTranscriptWithoutVerdict).flatMap(List::stream).distinct()
@@ -342,20 +346,36 @@ final class ExecutableEvidenceLedger {
             Runnable restoreCandidate) {
         Set<String> conclusivelyProbed = transcriptOutcomes.stream().filter(outcome -> outcome.disposition() != Disposition.INCONCLUSIVE)
                 .map(outcome -> outcome.mutant().solutionPath()).collect(Collectors.toUnmodifiableSet());
-        List<SemanticMutant> unreplaced = stalePendingMutants.stream().filter(SemanticMutant::printsTranscriptOnly)
-                .filter(probe -> !conclusivelyProbed.contains(probe.solutionPath())).toList();
+        List<SemanticMutant> staleTranscriptProbes = stalePendingMutants.stream().filter(SemanticMutant::printsTranscriptOnly).toList();
+        Set<String> stalePaths = staleTranscriptProbes.stream().map(SemanticMutant::solutionPath).collect(Collectors.toUnmodifiableSet());
+        // A current probe that kills the print-only variant of a class whose earlier survivor went stale is that survivor's kill.
+        rememberKills(transcriptOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE)
+                .filter(outcome -> stalePaths.contains(outcome.mutant().solutionPath())).map(SemanticMutantOutcome::mutant).toList());
+        List<SemanticMutant> unreplaced = staleTranscriptProbes.stream().filter(probe -> !conclusivelyProbed.contains(probe.solutionPath())).toList();
         if (unreplaced.isEmpty()) {
             return List.of();
         }
         Set<SemanticMutant> resolved = verifier
                 .resolveStaleOutputOnlyMains(sandbox, sessionId, exercise, testsFiles, solutionFiles, testPlanJson, seededStructuralTests, unreplaced, restoreCandidate).stream()
                 .filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).map(SemanticMutantOutcome::mutant).collect(Collectors.toUnmodifiableSet());
+        // Keyed to the current class, so a later repair's recheck asks again whether a weighted test reads what main prints.
+        rememberKills(unreplaced.stream().filter(resolved::contains).map(probe -> probe.rekeyedTo(solutionFiles.get(probe.solutionPath()))).toList());
         List<SemanticMutant> withoutVerdict = unreplaced.stream().filter(probe -> !resolved.contains(probe)).toList();
         if (!withoutVerdict.isEmpty()) {
             emitter.accept("Kept " + withoutVerdict.size() + " print-only main survivor(s) whose class the repair changed as unresolved evidence: no probe of the current class "
                     + "gave a verdict.");
         }
         return withoutVerdict;
+    }
+
+    /** Adds kills to the regression history; a kill of the same rule, file and misconception replaces the older entry, so a mutant rekeyed to newer source is tracked once. */
+    private void rememberKills(List<SemanticMutant> kills) {
+        if (kills.isEmpty()) {
+            return;
+        }
+        Set<SemanticMutant.Exclusion> replaced = kills.stream().map(SemanticMutant::exclusion).collect(Collectors.toUnmodifiableSet());
+        semanticMutantsKilledByRepair = java.util.stream.Stream
+                .concat(semanticMutantsKilledByRepair.stream().filter(mutant -> !replaced.contains(mutant.exclusion())), kills.stream().distinct()).toList();
     }
 
     /**

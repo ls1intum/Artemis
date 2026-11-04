@@ -868,6 +868,35 @@ class GenerationAttemptLoopTest {
         return rounds;
     }
 
+    /** A contract repair kills a survivor, found only by the review's recheck; a later oracle repair that lets it survive again must still be caught. */
+    @Test
+    void aKillFoundByTheReviewAfterAContractRepairIsRecheckedForRegression() {
+        stubSchedulerFixture();
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), SpecFidelityReport.empty());
+        SemanticMutant contractKill = mutant("R1", "allPrerequisites", "honors only the first prerequisite");
+        SemanticMutant oracleTarget = mutant("R2", "lexicalTie", "uses FIFO insertion order");
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(contractKill, oracleTarget), List.of());
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> evaluated = invocation.getArgument(6);
+            return evaluated.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)).toList();
+        });
+        AtomicInteger rechecks = new AtomicInteger();
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            // The first recheck is the review after the contract repair, which kills only R1; the second is the oracle repair's acceptance check, which kills R2 but not R1.
+            boolean oracleRepair = rechecks.incrementAndGet() == 2;
+            List<SemanticMutant> checked = invocation.getArgument(5);
+            return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant,
+                    mutant.equals(oracleRepair ? contractKill : oracleTarget) ? Disposition.SURVIVED_GRADED_SUITE : Disposition.KILLED_BY_GRADED_SUITE)).toList();
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(5, 3);
+        loop.run();
+
+        assertThat(enteredRepairScopes()).first().isEqualTo(Set.of("solution", "template", "tests", "test-plan.json", "problem-statement.md"));
+        assertThat(progressLines).anyMatch(line -> line.contains("no longer kills the semantic mutant for rule R1"));
+    }
+
     @Test
     void aSeventhKilledMutantIsStillRecheckedForRegression() {
         // Two repairs kill four mutants each; the third repair, aimed at a fresh survivor, lets the seventh kill survive again.
