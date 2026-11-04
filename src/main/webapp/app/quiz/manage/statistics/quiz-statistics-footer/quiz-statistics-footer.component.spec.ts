@@ -30,8 +30,7 @@ describe('QuizStatisticsFooterComponent', () => {
     let comp: QuizStatisticsFooterComponent;
     let fixture: ComponentFixture<QuizStatisticsFooterComponent>;
     let quizService: QuizExerciseService;
-    let accountService: AccountService;
-    let accountSpy: any;
+    let accountService: MockAccountService;
     let routerSpy: any;
     let router: Router;
     let quizServiceFindSpy: any;
@@ -65,10 +64,10 @@ describe('QuizStatisticsFooterComponent', () => {
         fixture = TestBed.createComponent(QuizStatisticsFooterComponent);
         comp = fixture.componentInstance;
         quizService = fixture.debugElement.injector.get(QuizExerciseService);
-        accountService = fixture.debugElement.injector.get(AccountService);
+        accountService = fixture.debugElement.injector.get(AccountService) as unknown as MockAccountService;
         router = fixture.debugElement.injector.get(Router);
         routerSpy = vi.spyOn(router, 'navigateByUrl');
-        accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+        accountService.isAtLeastTutor.set(true);
         quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(quizExercise));
     });
 
@@ -99,7 +98,6 @@ describe('QuizStatisticsFooterComponent', () => {
         vi.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
         // check
-        expect(accountSpy).toHaveBeenCalled();
         expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
         expect(loadSpy).toHaveBeenCalledWith(quizExercise);
         expect(comp.question()).toEqual(question);
@@ -115,7 +113,6 @@ describe('QuizStatisticsFooterComponent', () => {
         comp.loadQuiz(quizExercise);
 
         // check
-        expect(accountSpy).toHaveBeenCalledOnce();
         expect(comp.quizExercise()).toEqual(quizExercise);
         expect(comp.question()).toEqual(question);
         expect(comp.waitingForQuizStart()).toBe(false);

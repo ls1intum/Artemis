@@ -4,7 +4,15 @@
             "saveChanges": "Änderungen speichern",
             "saveSettingsSuccessAlert": "Die Einstellungen wurden erfolgreich gespeichert.",
             "userSettings": "Benutzereinstellungen",
-            "sshSettings": "SSH",
+            "navigation": {
+                "profile": "Profil",
+                "credentials": "Zugangsdaten",
+                "learning": "Lernen",
+                "aiExperience": "KI-Erfahrung",
+                "exercises": "Übungen",
+                "collapse": "Einstellungsmenü einklappen",
+                "expand": "Einstellungsmenü ausklappen"
+            },
             "vcsAccessTokenSettings": "VCS Token",
             "vcsAccessTokensOverview": {
                 "title": "Zugriffstokens",
@@ -318,9 +326,7 @@
                 "viewSshKeySettings": "SSH-Schlüssel-Einstellungen anzeigen",
                 "updateSuccess": "Benachrichtigungseinstellung erfolgreich aktualisiert."
             },
-            "aiExperience": "KI-Erfahrung",
             "aiExperienceSettingsPage": {
-                "title": "KI-Erfahrung",
                 "description": "Lege fest, wie Artemis KI einsetzt, um dein Lernen zu unterstützen – einschließlich Iris-Tutorium, automatischem Feedback und weiteren KI-gestützten Funktionen.",
                 "yourAiMode": "Dein KI-Modus",
                 "cloudTitle": "Cloud-KI",
