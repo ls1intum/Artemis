@@ -17,7 +17,7 @@ export enum FeedbackHighlightColor {
 }
 
 /** The bound the server enforces on the points of a feedback the assessor gives. */
-const MAX_MANUAL_CREDITS = 100;
+export const MAX_MANUAL_CREDITS = 100;
 
 export enum FeedbackType {
     AUTOMATIC = 'AUTOMATIC',
