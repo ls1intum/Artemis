@@ -79,6 +79,60 @@ describe('ExerciseTableComponent', () => {
             expect(component.sortedExercises().map((e) => e.id)).toEqual([1, 4]);
         });
 
+        it('sorts release-only exercises chronologically in both directions', () => {
+            const releasedEarly: Exercise = { id: 4, title: 'Zebra', type: ExerciseType.TEXT, releaseDate: dayjs('2026-01-01T10:00:00Z') } as Exercise;
+            const releasedLate: Exercise = { id: 5, title: 'Alpha', type: ExerciseType.TEXT, releaseDate: dayjs('2026-01-02T10:00:00Z') } as Exercise;
+            fixture.componentRef.setInput('exercises', [releasedLate, undated, releasedEarly]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([4, 5, 3]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([5, 4, 3]);
+        });
+
+        it('uses due dates first, then start dates and release dates for mixed timelines', () => {
+            const due: Exercise = { id: 4, type: ExerciseType.TEXT, releaseDate: dayjs('2026-01-01'), dueDate: dayjs('2026-01-20') } as Exercise;
+            const starting: Exercise = { id: 5, type: ExerciseType.TEXT, releaseDate: dayjs('2026-01-01'), startDate: dayjs('2026-01-10') } as Exercise;
+            const released: Exercise = { id: 6, type: ExerciseType.TEXT, releaseDate: dayjs('2026-01-05') } as Exercise;
+            fixture.componentRef.setInput('exercises', [due, starting, undated, released]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([6, 5, 4, 3]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([4, 5, 6, 3]);
+        });
+
+        it('uses group release dates rather than overridden individual dates', () => {
+            const grouped: Exercise = { id: 4, type: ExerciseType.TEXT, dueDate: dayjs('2026-01-01'), releaseDate: dayjs('2026-01-01') } as Exercise;
+            const group: CourseExerciseGroup = { id: 10, exercises: [grouped], releaseDate: dayjs('2026-01-20') };
+            fixture.componentRef.setInput('exercises', [undated, grouped, dated1]);
+            fixture.componentRef.setInput('groups', [group]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([1, 4, 3]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([4, 1, 3]);
+        });
+
+        it('uses group start dates and keeps fully undated groups last', () => {
+            const starting: Exercise = { id: 4, type: ExerciseType.TEXT } as Exercise;
+            const groupedUndated: Exercise = { id: 5, type: ExerciseType.TEXT, dueDate: dayjs('2026-01-01') } as Exercise;
+            fixture.componentRef.setInput('exercises', [starting, groupedUndated, dated1]);
+            fixture.componentRef.setInput('groups', [
+                { id: 10, exercises: [starting], startDate: dayjs('2026-01-20'), releaseDate: dayjs('2026-01-01') },
+                { id: 11, exercises: [groupedUndated] },
+            ]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([1, 4, 5]);
+
+            component.sortBy('dueDate');
+            expect(component.sortedExercises().map((e) => e.id)).toEqual([4, 1, 5]);
+        });
+
         it('sorts by points and difficulty', () => {
             const easy: Exercise = { id: 1, title: 'a', type: ExerciseType.TEXT, maxPoints: 5, difficulty: DifficultyLevel.EASY } as Exercise;
             const hard: Exercise = { id: 2, title: 'b', type: ExerciseType.TEXT, maxPoints: 1, difficulty: DifficultyLevel.HARD } as Exercise;

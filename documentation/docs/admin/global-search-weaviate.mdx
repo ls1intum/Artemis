@@ -2,6 +2,7 @@
 id: global-search-weaviate
 title: 'Global Search & Weaviate Setup'
 sidebar_label: Global Search (Weaviate)
+last_reviewed: 2026-11-03
 ---
 
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
@@ -305,7 +306,7 @@ is written to the index until it has succeeded; all changes stay queued in the d
 <Callout variant={CalloutVariant.warning}>
 
   The background repair runs only while the feature toggle **Global Search Reconcile** is on
-  (**Server Administration → Feature Toggles**). It is on by default. If it is off, a rebuilt index contains only the
+  (**Administration → Configuration → Features**). It is on by default. If it is off, a rebuilt index contains only the
   items edited after the rebuild.
 
 </Callout>

@@ -2,6 +2,7 @@
 id: e2e-testing-playwright
 title: E2E Testing with Playwright
 sidebar_label: E2E Testing with Playwright
+last_reviewed: 2026-11-03
 ---
 
 import Callout from '../../src/components/Callout/Callout';
@@ -163,8 +164,6 @@ We need to configure Playwright to match our local Artemis setup and user settin
 the `playwright.env` file. The default configuration for an ICL setup looks as follows:
 
 ```text
-PLAYWRIGHT_USERNAME_TEMPLATE=artemis_test_user_
-PLAYWRIGHT_PASSWORD_TEMPLATE=artemis_test_user_
 ADMIN_USERNAME=artemis_admin
 ADMIN_PASSWORD=artemis_admin
 BASE_URL=https://localhost
@@ -195,8 +194,8 @@ setupUsers.sh
 ```
 
 You can configure user IDs and check their corresponding user roles in the `src/test/playwright/support/users.ts` file.
-Usernames are defined automatically by appending the userId to the `PLAYWRIGHT_USERNAME_TEMPLATE`.
-At the moment it is discouraged to change the template string, as the user creation script does not support other names yet.
+Usernames are defined by `support/users.ts`: the user with ID `n` is `artemis_test_user_<n>`, and its password equals its username.
+The user creation script does not support other names.
 
 ### Setup Playwright package and its browser binaries
 
@@ -707,6 +706,12 @@ data provider, so no Hazelcast instance is created. The suite runs once, not onc
 cleanup stops every container on its host. Locally, `run-e2e-tests-local-multinode.sh --middleware redis`
 (or the `-fast` variant) runs the same configuration; the default `hazelcast` middleware uses the embedded cluster.
 
+The isolated E2E stacks exempt their loopback and private Docker client addresses from server-side
+rate limits through `ARTEMIS_RATELIMITING_EXEMPTADDRESSES`. Parallel workers share an address and
+otherwise exhaust the authentication budget, causing HTTP 429 responses during fixture setup. The
+nginx exemption alone does not bypass the server's limiter. These settings belong only to test
+stacks; production deployments retain their configured rate limits.
+
 ### Selective test execution and `e2e-test-mapping.json`
 
 The `determine-tests` CI job reads `supporting_scripts/ci/E2E-tests/e2e-test-mapping.json` to decide which tests to include in Phase 1.
@@ -717,13 +722,13 @@ All spec paths are relative to `src/test/playwright/` (the Playwright test root)
 
 The mapping has five selection inputs:
 
-| Field | Purpose |
-| --- | --- |
-| `mappings.<module>.sourcePaths` | Production paths owned by an eligible module. |
-| `specModules` | Runtime module dependencies for every spec; a new unassigned spec forces a full run. |
-| `catalogModules` | Explicit module ownership for translation catalog filenames; global or unknown catalogs require full validation. |
-| `alwaysRunTests` | Authentication and health smoke specs included in every selection. |
-| `runAllTestsPatterns` / `ignoredPaths` | Global runtime inputs that require all tests, and known non-runtime inputs that do not expand the selection. |
+| Field                                  | Purpose                                                                                                          |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `mappings.<module>.sourcePaths`        | Production paths owned by an eligible module.                                                                    |
+| `specModules`                          | Runtime module dependencies for every spec; a new unassigned spec forces a full run.                             |
+| `catalogModules`                       | Explicit module ownership for translation catalog filenames; global or unknown catalogs require full validation. |
+| `alwaysRunTests`                       | Authentication and health smoke specs included in every selection.                                               |
+| `runAllTestsPatterns` / `ignoredPaths` | Global runtime inputs that require all tests, and known non-runtime inputs that do not expand the selection.     |
 
 Do not infer runtime ownership only from TypeScript type imports or a spec's folder. For example,
 `StudentCompetencyProgressView.spec.ts` consumes lecture and quiz behavior in addition to atlas behavior.

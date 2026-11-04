@@ -1,0 +1,119 @@
+name: Documentation Maintenance
+
+# Documentation also goes stale while nobody changes it: a page is not reviewed for a year, or an external site moves.
+# Neither is the fault of a pull request, so neither fails one. This workflow runs weekly and keeps one open issue
+# per problem, which is closed again when the problem is gone. It lives in its own file because a `schedule:` cron
+# cannot be declared inside a reusable workflow.
+
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: docs-maintenance
+  cancel-in-progress: false
+
+env:
+  # Pages whose last_reviewed date is older than this many days are listed.
+  stale_after_days: 365
+
+jobs:
+  stale-pages:
+    name: Pages that were not reviewed for a year
+    if: github.repository == 'ls1intum/Artemis'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      - name: List the stale pages
+        run: python supporting_scripts/check_docs_freshness.py --stale "${{ env.stale_after_days }}" > "${RUNNER_TEMP}/stale.md"
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: 'Documentation: pages that were not reviewed for a year'
+          LIMIT_DAYS: ${{ env.stale_after_days }}
+        run: |
+          set -Eeuo pipefail
+          existing=$(gh issue list --state open --search "\"${TITLE}\" in:title" --json number,title --jq "[.[] | select(.title == \"${TITLE}\")][0].number // empty")
+          if grep -q '^0 page(s)' "${RUNNER_TEMP}/stale.md"; then
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --comment "Every page was reviewed within the last ${LIMIT_DAYS} days."
+            fi
+            exit 0
+          fi
+          {
+            cat "${RUNNER_TEMP}/stale.md"
+            echo
+            echo "To review a page, compare it with the code, correct it, and set \`last_reviewed\` in its front matter to the date of the review."
+            echo "This issue is kept up to date by \`.github/workflows/docs-maintenance.yml\`."
+          } > "${RUNNER_TEMP}/body.md"
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body-file "${RUNNER_TEMP}/body.md"
+          else
+            gh issue create --title "$TITLE" --body-file "${RUNNER_TEMP}/body.md"
+          fi
+
+  external-links:
+    name: External links that no longer work
+    if: github.repository == 'ls1intum/Artemis'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Only external http(s) links of the documentation and the README files. Internal links and anchors are checked by the
+      # site build, which fails on a broken one. A server that rate limits or blocks bots answers 403 or 429, which is not
+      # a broken link, so those statuses are accepted.
+      - name: Check the links
+        id: lychee
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: >-
+            --no-progress --scheme http --scheme https --max-concurrency 8 --max-retries 3 --retry-wait-time 5 --timeout 30
+            --accept '200..=299,403,429' --exclude-path documentation/docs/developer/assets
+            --exclude '^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0)' --exclude '^https?://[^/]*\.(example|invalid|local)(/|$)'
+            --exclude '^https?://[^/]*example\.(com|org)(/|$)' --exclude '^https?://[^/]*(<|\$|\{)'
+            'documentation/docs/**/*.md' 'documentation/docs/**/*.mdx' 'README.md' 'documentation/README.md'
+          output: ${{ runner.temp }}/lychee.md
+          fail: false
+          jobSummary: true
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: 'Documentation: external links that no longer work'
+          LYCHEE_EXIT: ${{ steps.lychee.outputs.exit_code }}
+        run: |
+          set -Eeuo pipefail
+          existing=$(gh issue list --state open --search "\"${TITLE}\" in:title" --json number,title --jq "[.[] | select(.title == \"${TITLE}\")][0].number // empty")
+          if [ "${LYCHEE_EXIT}" = "0" ]; then
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --comment "All external links work again."
+            fi
+            exit 0
+          fi
+          {
+            echo "The weekly link check found external links that do not work. Replace or remove them in the pages below."
+            echo
+            cat "${RUNNER_TEMP}/lychee.md"
+            echo
+            echo "This issue is kept up to date by \`.github/workflows/docs-maintenance.yml\`. A link that is only unreachable from a runner can be listed in the exclusions of that file."
+          } > "${RUNNER_TEMP}/body.md"
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body-file "${RUNNER_TEMP}/body.md"
+          else
+            gh issue create --title "$TITLE" --body-file "${RUNNER_TEMP}/body.md"
+          fi

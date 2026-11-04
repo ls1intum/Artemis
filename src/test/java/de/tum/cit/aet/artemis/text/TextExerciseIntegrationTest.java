@@ -1199,6 +1199,49 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createImportAndUpdateTextExerciseWithPeriodInTitle() throws Exception {
+        String title = "W01E01 Strategy vs. bridge pattern";
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        TextExercise exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
+        exercise.setTitle(title);
+        TextExerciseResponseDTO created = request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(exercise), TextExerciseResponseDTO.class,
+                HttpStatus.CREATED);
+        assertThat(created.title()).isEqualTo(title);
+
+        TextExercise source = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(created.id());
+        source.setCourse(courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
+        TextExerciseResponseDTO imported = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + created.id(), ImportTextExerciseDTO.of(source),
+                TextExerciseResponseDTO.class, HttpStatus.CREATED);
+        assertThat(imported.title()).isEqualTo(title);
+
+        TextExercise importedExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(imported.id());
+        importedExercise.setProblemStatement("Updated problem statement");
+        TextExerciseResponseDTO updated = request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(importedExercise), TextExerciseResponseDTO.class,
+                HttpStatus.OK);
+        assertThat(updated.title()).isEqualTo(title);
+        assertThat(textExerciseRepository.findByIdElseThrow(imported.id()).getProblemStatement()).isEqualTo("Updated problem statement");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ab", "Strategy/bridge" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createTextExerciseWithInvalidTitleIsRejected(String title) throws Exception {
+        textExercise.setId(null);
+        textExercise.setTitle(title);
+        request.postWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ab", "Strategy/bridge" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void importTextExerciseWithInvalidTitleIsRejected(String title) throws Exception {
+        textExercise.setTitle(title);
+        request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), ImportTextExerciseDTO.of(textExercise),
+                TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void importTextExerciseFromCourseToCourse() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);

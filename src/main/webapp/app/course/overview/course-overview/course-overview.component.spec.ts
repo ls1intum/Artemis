@@ -69,7 +69,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -686,13 +685,9 @@ describe('CourseOverviewComponent', () => {
             body: [{ id: 1 }],
             status: 200,
         });
-        const configurationResponse: HttpResponse<TutorialGroupConfigurationDTO> = new HttpResponse({
-            body: generateExampleTutorialGroupsConfigurationDTO({}),
-            status: 200,
-        });
 
         vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse.body!));
-        vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
+        vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(generateExampleTutorialGroupsConfigurationDTO({})));
 
         getCourseStub.mockReturnValue(course2);
         findCourseForOverviewStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));

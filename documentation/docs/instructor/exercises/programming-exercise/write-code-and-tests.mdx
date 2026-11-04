@@ -2,6 +2,7 @@
 id: write-code-and-tests
 title: Write the Exercise Code and Tests
 sidebar_label: Write the Exercise Code and Tests
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -53,7 +54,7 @@ EXERCISE="$1"
 NAME="${2:-$1}"
 
 # Adapt BASE to your repository URL
-BASE="ssh://git@artemis.tum.de:7999/$EXERCISE/$EXERCISE"
+BASE="ssh://git@artemis.tum.de:7921/$EXERCISE/$EXERCISE"
 
 git clone "$BASE-tests.git" "$NAME" && \
   git clone "$BASE-exercise.git" "$NAME/template" && \
@@ -87,7 +88,7 @@ fi
 EXERCISE="$PREFIX$1"
 NAME="${2:-$1}"
 
-BASE="ssh://git@artemis.tum.de:7999/$EXERCISE/$EXERCISE"
+BASE="ssh://git@artemis.tum.de:7921/$EXERCISE/$EXERCISE"
 
 git clone "$BASE-tests.git" "$NAME/tests"
 git clone "$BASE-exercise.git" "$NAME/template"
