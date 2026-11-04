@@ -363,8 +363,8 @@ def query_counts_label(q: dict) -> str:
     if q["shape"] == "INSERT":
         return f"{q['executions']} rows, one statement each"
     if q["distinct"] <= 1:
-        return f"{q['executions']}× same parameters"
-    label = f"{q['executions']}× · {q['distinct']} distinct"
+        return f"{q['executions']}× with the same parameters"
+    label = f"{q['executions']}× with {q['distinct']} different parameters"
     if q["executions"] > q["distinct"]:
         label += f" (each ~{round(q['executions'] / q['distinct'])}×)"
     return label
@@ -429,7 +429,7 @@ def problem_rows_md(problems: list) -> list:
 
 
 def static_rows_md(findings: list) -> list:
-    lines = ["| Rule | Where | Detail |", "|---|---|---|"]
+    lines = ["| Problem | Where | Detail |", "|---|---|---|"]
     for f in findings:
         where = f.get("member") or (f.get("file") or "").replace("\\", "/").split("/")[-1]
         lines.append(f"| {STATIC_RULE_LABELS.get(f['type'], f['type'])} | `{trunc(where, 90)}` | {trunc(f.get('detail') or '', 140)} |")
@@ -532,7 +532,10 @@ body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
 h1 { margin-bottom: 4px; }
 .muted { color: var(--muted); }
 .ok { color: #16a34a; font-weight: 600; }
-.lead { max-width: 820px; line-height: 1.5; margin: 8px 0 28px; }
+.lead { max-width: 820px; line-height: 1.5; margin: 8px 0 6px; }
+details.how-to-read { margin: 0 0 24px; font-size: 13px; color: var(--muted); }
+details.how-to-read summary { cursor: pointer; }
+details.how-to-read p { margin: 6px 0 0; max-width: 80ch; }
 .stats { display: flex; gap: 16px; margin: 0 0 32px; flex-wrap: wrap; }
 .stat-tile { background: var(--tile-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; min-width: 160px; }
 .stat-value { display: block; font-size: 28px; font-weight: 700; }
@@ -558,6 +561,8 @@ tr.sev-low td:first-child { border-left: 4px solid var(--sev-low); }
 td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 td.code, td.sql-cell code, td.sql-cell pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 td.code { font-size: 12px; word-break: break-word; }
+table.static-table { table-layout: fixed; min-width: 900px; }
+table.static-table td.file { word-break: normal; overflow-wrap: anywhere; }
 td.sql-cell pre { white-space: pre-wrap; word-break: break-word; margin: 6px 0 0; padding: 8px; background: var(--tile-bg); border-radius: 6px; }
 td.sql-cell summary { cursor: pointer; }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
@@ -608,13 +613,15 @@ table.nested-table th, table.nested-table td { padding: 4px 8px; }
 .query-list { list-style: none; margin: 0; padding: 0; }
 .query-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 4px 12px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px; }
 .query-source { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-word; }
+.query-source > span { display: block; margin-top: 3px; word-break: break-word; }
+details.query-source summary { cursor: pointer; }
 .query-sql { min-width: 0; }
 .query-sql summary { cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .query-sql code, .query-sql pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
 .query-sql pre { white-space: pre-wrap; word-break: break-word; margin: 6px 0; padding: 8px; background: var(--tile-bg); border-radius: 6px; }
 .query-counts { white-space: nowrap; }
 .query-avoidable { font-size: 12px; color: var(--muted); white-space: nowrap; }
-.problem-foot { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; }
+.problem-foot { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; }
 .foot-list > code, .foot-list > span, .more-list > code, .more-list > span { display: block; margin-top: 3px; word-break: break-word; }
 details.more-list summary { cursor: pointer; color: var(--new); font-size: 12.5px; margin-top: 3px; }
 td.where-cell summary { cursor: pointer; }
@@ -625,7 +632,7 @@ td.where-cell .query-list, td.where-cell .foot-list { margin-top: 6px; }
 .index-scan { color: var(--sev-high); font-weight: 600; }
 .index-ok-badge { background: rgba(22, 163, 74, .15); color: #16a34a; }
 .index-scan-badge { background: color-mix(in srgb, var(--sev-high) 15%, transparent); color: var(--sev-high); }
-@media (max-width: 640px) { .problem-foot { grid-template-columns: 1fr; } .query-item { grid-template-columns: minmax(0, 1fr) auto; } .query-avoidable { display: none; } }
+@media (max-width: 640px) { .query-item { grid-template-columns: minmax(0, 1fr) auto; } .query-avoidable { display: none; } }
 """
 
 HTML_REPORT_JS = """
@@ -870,9 +877,19 @@ def html_more_list(items: list, shown: int, render) -> str:
     return "".join(render(i) for i in items[:shown]) + more
 
 
+def requests_per_test(requests: list) -> list:
+    """One row per endpoint, test and phase: a test that calls an endpoint several times repeats the query in each
+    request. The row keeps the first request, the most avoidable one."""
+    rows = {}
+    for r in requests:
+        rows.setdefault((r["endpoint"], r.get("test"), r.get("phase")), r)
+    return list(rows.values())
+
+
 def query_requests_html(q: dict) -> str:
-    """The individual requests a query repeated in, the most avoidable executions first."""
-    shown = q["requests"][:MAX_OCCURRENCES_SHOWN]
+    """The tests a query repeated in, one row per endpoint and test, the most avoidable executions first."""
+    per_test = requests_per_test(q["requests"])
+    shown = per_test[:MAX_OCCURRENCES_SHOWN]
     rows = "".join(
         "<tr>"
         f'<td>{html.escape(r["endpoint"])}</td>'
@@ -881,19 +898,26 @@ def query_requests_html(q: dict) -> str:
         f'<td data-sort="{1 if r.get("phase") == "action" else 0}">{html_phase(r.get("phase"))}</td>'
         f'<td>{html.escape(r["test"]) if r.get("test") else "<span class=muted>—</span>"}</td>'
         "</tr>" for r in shown)
-    return ('<div class="table-scroll"><table class="nested-table sortable"><thead><tr><th data-type="string">Endpoint</th><th data-type="number">Executions</th>'
-            '<th data-type="number">Distinct parameters</th><th data-type="number">Phase</th><th data-type="string">Test</th></tr></thead>'
-            f'<tbody>{rows}</tbody></table></div>{capped_note(len(q["requests"]) - len(shown), "requests")}')
+    return ('<div class="table-scroll"><table class="nested-table sortable"><thead><tr><th data-type="string">Endpoint</th>'
+            '<th data-type="number" title="in the request of this test with the most executions">Executions</th>'
+            '<th data-type="number">Different parameters</th>'
+            '<th data-type="number">Phase</th><th data-type="string">Test</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table></div>{capped_note(len(per_test) - len(shown), "tests")}')
 
 
 def query_item_html(q: dict, problem: dict) -> str:
     if problem["kind"] == "insert":
-        source = source_label(q)
+        source_html = f'<div class="query-source">{html.escape(source_label(q))}</div>'
     elif problem["kind"] == "function":
-        source = q["repositoryMethod"] or ""
+        source_html = f'<div class="query-source">{html.escape(q["repositoryMethod"])}</div>' if q["repositoryMethod"] else ""
+    elif len(q["call_sites"]) == 1:
+        source_html = f'<div class="query-source">loaded by {html.escape(next(iter(q["call_sites"])))}</div>'
+    elif q["call_sites"]:
+        # collapsed, one place per line: a cascade like a course deletion loads the same row from dozens of places
+        sites = "".join(f"<span>{html.escape(s)}</span>" for s in sorted(q["call_sites"]))
+        source_html = f'<details class="query-source"><summary>loaded by {len(q["call_sites"])} places</summary>{sites}</details>'
     else:
-        source = "loaded by " + ", ".join(sorted(q["call_sites"])) if q["call_sites"] else ""
-    source_html = f'<div class="query-source">{html.escape(source)}</div>' if source else ""
+        source_html = ""
     return (f'<li class="query-item">{source_html}'
             f'<details class="query-sql"><summary><code>{html.escape(q["summary"])}</code></summary><pre>{highlight_sql(q["sql"])}</pre>{query_requests_html(q)}</details>'
             f'<span class="query-counts">{html.escape(query_counts_label(q))}</span>'
@@ -936,7 +960,6 @@ def problem_attributes(p: dict) -> str:
 
 def problem_card_html(p: dict, rank: int, static_findings: list, has_baseline: bool) -> str:
     anchor_kind = {"function": "Method", "endpoint": "Endpoint", "insert": "Table"}[p["kind"]]
-    tests = f'{len(p["tests"])} test{"" if len(p["tests"]) == 1 else "s"}'
     endpoints = f'Seen at {len(p["endpoints"])} endpoint{"" if len(p["endpoints"]) == 1 else "s"}'
     return (f'<article class="problem problem-card cat-{p["category"]}" {problem_attributes(p)}>'
             f'<div class="problem-head"><span class="problem-rank">#{rank}</span>'
@@ -945,9 +968,7 @@ def problem_card_html(p: dict, rank: int, static_findings: list, has_baseline: b
             f'<div class="problem-tags">{problem_tags_html(p, static_findings, has_baseline)}</div>'
             f'<ul class="query-list">{html_more_list(p["queries"], 4, lambda q: query_item_html(q, p))}</ul>'
             f'<div class="problem-foot"><div><span class="foot-label">{endpoints}</span><div class="foot-list">'
-            f'{html_more_list(p["endpoints"], FOOT_ITEMS_SHOWN, lambda e: f"<code>{html.escape(e)}</code>")}</div></div>'
-            f'<div><span class="foot-label">{tests}</span><div class="foot-list">'
-            f'{html_more_list(p["tests"], FOOT_ITEMS_SHOWN - 1, lambda t: f"<span>{html.escape(t)}</span>")}</div></div></div>'
+            f'{html_more_list(p["endpoints"], FOOT_ITEMS_SHOWN, lambda e: f"<code>{html.escape(e)}</code>")}</div></div></div>'
             '</article>')
 
 
@@ -1051,6 +1072,11 @@ def static_location(f: dict) -> str:
     return f"{location}:{f['line']}" if f.get("line") else location
 
 
+def static_location_html(f: dict) -> str:
+    """The file path, breakable after each '/' so that a narrow column wraps it between packages, not inside a name."""
+    return "/<wbr>".join(html.escape(part) for part in static_location(f).split("/"))
+
+
 def build_static_findings_table_html(static_findings: list, has_baseline: bool) -> str:
     if not static_findings:
         return '<p class="ok">No static findings.</p>'
@@ -1065,13 +1091,15 @@ def build_static_findings_table_html(static_findings: list, has_baseline: bool) 
             f'<td class="code">{html.escape(f.get("member") or f.get("entityClass") or "—")}</td>'
             f"<td>{html.escape(f.get('detail') or '')}</td>"
             f'<td class="sql-cell">{html_sql_cell(f.get("snippet") or "")}</td>'
-            f'<td class="code">{html.escape(location)}</td>'
+            f'<td class="code file" data-sort="{html.escape(location)}">{static_location_html(f)}</td>'
             "</tr>"
         )
     return (
         '<input class="filter-box" type="search" placeholder="Filter by rule, class, method, or file…" data-target="static-findings-table">\n'
-        '<div class="table-scroll"><table class="sortable" id="static-findings-table">\n<thead><tr>'
-        '<th data-type="number">Status</th><th data-type="string">Rule</th><th data-type="string">Where</th><th data-type="string">Detail</th>'
+        '<div class="table-scroll"><table class="sortable static-table" id="static-findings-table">\n'
+        '<colgroup><col style="width:90px"><col style="width:150px"><col style="width:17%"><col style="width:22%"><col><col style="width:22%"></colgroup>\n'
+        "<thead><tr>"
+        '<th data-type="number">Status</th><th data-type="string">Problem</th><th data-type="string">Where</th><th data-type="string">Detail</th>'
         '<th data-type="string">Code</th><th data-type="string">File</th>'
         f"</tr></thead>\n<tbody>{''.join(rows)}</tbody>\n</table></div>"
     )
@@ -1092,9 +1120,10 @@ def build_new_findings_html(problems: list, static_findings: list) -> str:
         rows = "".join(f"<tr><td>{html.escape(STATIC_RULE_LABELS.get(f['type'], f['type']))}</td>"
                        f'<td class="code">{html.escape(f.get("member") or f.get("entityClass") or "—")}</td>'
                        f"<td>{html.escape(f.get('detail') or '')}</td>"
-                       f'<td class="code">{html.escape(static_location(f))}</td></tr>' for _, f in new_static)
+                       f'<td class="code file">{static_location_html(f)}</td></tr>' for _, f in new_static)
         parts.append(f'<h2>New static findings <span class="muted">({len(new_static)})</span></h2>'
-                     '<div class="table-scroll"><table><thead><tr><th>Rule</th><th>Where</th><th>Detail</th><th>File</th></tr></thead>'
+                     '<div class="table-scroll"><table class="static-table">'
+                     '<colgroup><col style="width:180px"><col style="width:24%"><col><col style="width:32%"></colgroup><thead><tr><th>Problem</th><th>Where</th><th>Detail</th><th>File</th></tr></thead>'
                      f"<tbody>{rows}</tbody></table></div>")
     return "\n".join(parts)
 
@@ -1140,12 +1169,13 @@ def build_html_report(report: dict, groups: list, static_findings: list, baselin
 <h1>{html.escape(title)}</h1>
 <p class="muted">Generated at {html.escape(iso_to_human(report.get("generatedAt", "")))}</p>
 {run_link}
-<p class="lead">Every finding is a yes/no rule without a count threshold. <strong>Repeated queries</strong> were observed while the E2E tests ran: a query that ran
+<p class="lead">{comparison}</p>
+<details class="how-to-read"><summary>How to read this</summary><p>Every finding is a yes/no rule without a count threshold. <strong>Repeated queries</strong> were observed while the E2E tests ran: a query that ran
 more than once in one request, either with different parameters (<strong>N+1</strong>) or with the same ones (<strong>duplicate</strong>), or rows inserted one
 statement at a time (<strong>row-by-row insert</strong>). They are grouped by where the fix goes: the method that loops, the endpoint for data that several places
 load again, or the table for inserts. <strong>Static findings</strong> come from scanning the source code. A problem marked 🔍 is flagged by a static rule
 for the very same code. A query marked ⚠ <strong>not indexed</strong> has no index that starts with the columns it filters on, so once the
-table is large every repetition reads all of it; this comes from the database's indexes, not from timing. <strong>Slow queries</strong> are shown for context only: query timing in CI is too noisy to judge a change by. {comparison}</p>
+table is large every repetition reads all of it; this comes from the database's indexes, not from timing. <strong>Slow queries</strong> are shown for context only: query timing in CI is too noisy to judge a change by.</p></details>
 <div class="stats">
 <div class="stat-tile"><span class="stat-value">{n_plus_one}</span><span class="stat-label">N+1</span><span class="stat-sub">a method queries once per item</span></div>
 <div class="stat-tile"><span class="stat-value">{duplicates}</span><span class="stat-label">Duplicate</span><span class="stat-sub">the same data loaded again</span></div>
