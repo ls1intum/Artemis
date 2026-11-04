@@ -335,6 +335,8 @@ public class StagedGenerationRunner {
         // The best specification this concept has produced, and how many findings it drew. Refinement is not monotonic, so a later draft can be worse than an earlier one and the
         // loop keeps the best rather than the most recent. Reset whenever the concept is replaced: a specification written for a rejected concept must never come back.
         String bestSpecSnapshot = null;
+        // The approved specification as last handed to the spec sink, so a server-side ownership correction during TESTS is published as well.
+        String publishedSpec = null;
         List<String> bestSpecFindings = List.of();
         int bestSpecFindingCount = Integer.MAX_VALUE;
         List<String> unresolvedSpecificationFindings = List.of();
@@ -492,6 +494,18 @@ public class StagedGenerationRunner {
                     // A gate that never went through the tools (a reused cache, or a TESTS turn that never called verify/submit) would leave STATEMENT blind, so the official
                     // gate result is always written back even though the agent's in-loop checks may have recorded it already.
                     baseTools.recordLastTestsReport(gate.report());
+                    String correctedSpec = approvedSpecs.approved(sessionId).orElse(null);
+                    if (publishedSpec != null && correctedSpec != null && !correctedSpec.equals(publishedSpec)) {
+                        // The TESTS checks demoted a given type whose code needs a student-created type (see StageChecks#correctGivenOwnership). The correction reaches the
+                        // instructor and the downstream critic grounding through the same sink as the approval itself.
+                        publishedSpec = correctedSpec;
+                        if (specSink != null) {
+                            specSink.accept(correctedSpec);
+                        }
+                        log.info("Exercise {}: published the server-corrected approved specification after the TESTS checks", exercise.id());
+                        emit(progress, "Artemis changed a type the specification marked 'given' to 'stubbed', because its code needs a type students create and an identical "
+                                + "starter copy could never compile.");
+                    }
                 }
 
                 if (gate.passed()) {
@@ -683,6 +697,7 @@ public class StagedGenerationRunner {
                         // Publish the APPROVED specification before anything downstream runs. From here on it is read-only: later stages repair executable artifacts against this
                         // exact contract rather than weakening or expanding it under compile pressure.
                         approvedSpecs.approve(sessionId, specSnapshot);
+                        publishedSpec = specSnapshot;
                         if (specSink != null) {
                             specSink.accept(specSnapshot);
                         }

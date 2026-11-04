@@ -18,4 +18,17 @@ class ApprovedSpecRegistryTest {
         assertThatThrownBy(() -> registry.approve("session", "weaker contract")).isInstanceOf(IllegalStateException.class).hasMessageContaining("different specification");
         assertThat(registry.approved("session")).contains("approved contract");
     }
+
+    @Test
+    void anAmendmentReplacesOnlyTheExactContractItWasDerivedFrom() {
+        ApprovedSpecRegistry registry = new ApprovedSpecRegistry();
+
+        assertThat(registry.amend("session", "approved contract", "corrected contract")).isFalse();
+        registry.approve("session", "approved contract");
+
+        assertThat(registry.amend("session", "stale contract", "corrected contract")).isFalse();
+        assertThat(registry.approved("session")).contains("approved contract");
+        assertThat(registry.amend("session", "approved contract", "corrected contract")).isTrue();
+        assertThat(registry.approved("session")).contains("corrected contract");
+    }
 }

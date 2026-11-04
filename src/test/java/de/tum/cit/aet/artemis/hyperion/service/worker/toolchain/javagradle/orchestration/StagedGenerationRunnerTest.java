@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -783,6 +784,26 @@ class StagedGenerationRunnerTest {
         assertThat(result.stopCause()).startsWith("SPEC.md passed its consistency gate but could not be read back").doesNotContain("spec\n");
         assertThat(approvedSpecs.approved("s")).isEmpty();
         verify(baseTools, never()).enterStage(GenerationStage.TESTS);
+    }
+
+    @Test
+    void aServerOwnershipCorrectionDuringTestsIsPublishedToTheSink() {
+        String corrected = VALID_SPEC_DOCUMENT + "\n<!-- corrected ownership -->\n";
+        stageCheckService = mock(StageChecks.class);
+        when(stageCheckService.check(any(), any(), anyString(), any(), anyMap(), any(), any(SeededStructuralTests.class))).thenAnswer(invocation -> {
+            if (invocation.getArgument(0) == GenerationStage.TESTS) {
+                approvedSpecs.amend("s", VALID_SPEC_DOCUMENT, corrected);
+            }
+            return StageCheckResult.passed("Stage passed");
+        });
+        runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "FRESH");
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(2, "build"),
+                completed(1, "statement"));
+        List<String> published = new ArrayList<>();
+
+        runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY, true, published::add);
+
+        assertThat(published).containsExactly(VALID_SPEC_DOCUMENT, corrected);
     }
 
     @Test

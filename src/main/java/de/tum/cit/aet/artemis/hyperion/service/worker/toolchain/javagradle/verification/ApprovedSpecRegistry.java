@@ -32,6 +32,22 @@ public class ApprovedSpecRegistry {
     }
 
     /**
+     * Replaces the approved specification with a server-derived ownership correction. Narrower than a second approval: the caller must name the exact text it corrects, so a
+     * stale or concurrent amendment is refused rather than overwriting a newer contract. Only the server calls this; the agent can never reach the registry.
+     *
+     * @param sessionId the sandbox session the specification belongs to
+     * @param expected  the currently approved SPEC.md content the correction was derived from
+     * @param amended   the corrected SPEC.md content
+     * @return whether the correction was recorded
+     */
+    public boolean amend(String sessionId, String expected, String amended) {
+        if (sessionId == null || expected == null || amended == null || amended.isBlank()) {
+            return false;
+        }
+        return approvedBySession.replace(sessionId, expected, amended);
+    }
+
+    /**
      * @param sessionId the sandbox session
      * @return the specification this session's spec gate approved, or empty when the spec stage never ran (the instructor's statement IS the specification, an ADAPT run, or a
      *         non-staged language)

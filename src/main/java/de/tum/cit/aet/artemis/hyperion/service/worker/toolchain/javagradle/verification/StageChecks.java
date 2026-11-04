@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -671,6 +672,91 @@ public class StageChecks {
     }
 
     private StageCheckResult checkTests(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> seedTestsFiles,
+            SeededStructuralTests seededStructuralTests) {
+        Optional<String> ownershipCorrection = correctGivenOwnership(sandbox, sessionId);
+        StageCheckResult result = checkTestArtifacts(sandbox, sessionId, exercise, seedTestsFiles, seededStructuralTests);
+        return ownershipCorrection.map(notice -> new StageCheckResult(result.passed(), notice + "\n" + result.observation(), result.report())).orElse(result);
+    }
+
+    /**
+     * Demotes approved {@code given} types whose code uses a student-created type to {@code stubbed}. Such an ownership is objectively unsatisfiable, not a judgement: a given
+     * type ships byte-identical in the template, where the student-created type does not exist, so no template can compile, and the ownership guard rightly rejects every
+     * placeholder for the absent type. {@code stubbed} keeps the type's approved public API in the template and lets the solution keep the complete code, and the
+     * specification gate accepts it for exactly the types it accepted as given, so the correction changes nothing else. The registry, the workspace SPEC.md, and the run's
+     * events record it.
+     *
+     * @return the agent-facing notice, or empty when no correction was needed or it could not be recorded
+     */
+    private Optional<String> correctGivenOwnership(InteractiveSandbox sandbox, String sessionId) {
+        Optional<String> approved = approvedSpecs.approved(sessionId);
+        List<String> studentCreatedTypes = approved.map(StageChecks::specStudentCreatedTypes).orElse(List.of());
+        if (studentCreatedTypes.isEmpty()) {
+            return Optional.empty();
+        }
+        JavaSourceSnapshot sources;
+        try {
+            sources = JavaSourceSnapshot.capture(sandbox, sessionId);
+        }
+        catch (RuntimeException e) {
+            // Fails open: without a source snapshot nothing is corrected, and the approved-specification gate still reports the dependency.
+            log.warn("Could not read the repositories to check given-type ownership for session {} ({})", sessionId, e.getClass().getSimpleName());
+            return Optional.empty();
+        }
+        List<String> dependencies = ExerciseIntegrityGate.givenTypeStudentCreatedDependencies(designTableRows(approved.get()), studentCreatedTypes, sources.templateFiles(),
+                sources.solutionFiles());
+        if (dependencies.isEmpty()) {
+            return Optional.empty();
+        }
+        Set<String> demoted = dependencies.stream().map(dependency -> dependency.substring(0, dependency.indexOf("->"))).collect(Collectors.toCollection(LinkedHashSet::new));
+        String amended = demoteGivenTypes(approved.get(), demoted);
+        if (amended.equals(approved.get()) || !approvedSpecs.amend(sessionId, approved.get(), amended)) {
+            return Optional.empty();
+        }
+        sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(Map.of("SPEC.md", amended), Map.of()));
+        log.info("Corrected the approved specification for session {}: demoted given type(s) {} to stubbed because their code uses student-created types {}", sessionId, demoted,
+                dependencies);
+        return Optional.of("OWNERSHIP CORRECTED: the approved specification marked " + demoted + " as 'given', but their code uses student-created types " + dependencies
+                + ". A given type ships byte-identical in the template, where those types do not exist, so the template could never compile. Artemis changed only these rows "
+                + "to 'stubbed' in SPEC.md. Keep the complete code in the solution. In the template, keep each type's approved public API and replace only the code that needs a "
+                + "student-created type with compilable stub bodies (for example a TODO that throws UnsupportedOperationException). Still do not add student-created types or "
+                + "placeholders for them to the template.");
+    }
+
+    /**
+     * Rewrites the final cell of the named types' '## Design' rows from {@code given} to {@code stubbed}, leaving every other byte of the specification unchanged. Rows are
+     * found exactly as {@link #designTableRows} finds them.
+     */
+    static String demoteGivenTypes(String spec, Set<String> types) {
+        String[] lines = spec.split("\n", -1);
+        boolean inDesign = false;
+        boolean pastHeader = false;
+        for (int index = 0; index < lines.length; index++) {
+            String line = lines[index];
+            String stripped = line.strip();
+            if (stripped.startsWith("## ")) {
+                inDesign = stripped.startsWith("## Design");
+                pastHeader = false;
+                continue;
+            }
+            if (!inDesign || !stripped.startsWith("|")) {
+                continue;
+            }
+            if (!pastHeader) {
+                pastHeader = stripped.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ');
+                continue;
+            }
+            boolean closingPipe = stripped.endsWith("|") && stripped.length() > 1;
+            String[] cells = stripped.substring(1, closingPipe ? stripped.length() - 1 : stripped.length()).split("\\|", -1);
+            if (!types.contains(cells[0].replace("`", "").strip()) || !"given".equals(normalizeTemplateStatus(cells[cells.length - 1]))) {
+                continue;
+            }
+            cells[cells.length - 1] = " stubbed ";
+            lines[index] = line.substring(0, line.indexOf('|')) + "|" + String.join("|", cells) + (closingPipe ? "|" : "") + (line.endsWith("\r") ? "\r" : "");
+        }
+        return String.join("\n", lines);
+    }
+
+    private StageCheckResult checkTestArtifacts(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> seedTestsFiles,
             SeededStructuralTests seededStructuralTests) {
         Set<String> seededStructuralTestNames = seededStructuralTests.testNames();
         AgentVerifyReport report;

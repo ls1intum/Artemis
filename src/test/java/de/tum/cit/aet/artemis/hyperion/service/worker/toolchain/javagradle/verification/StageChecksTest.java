@@ -309,12 +309,53 @@ class StageChecksTest {
         verifyNoInteractions(verifier);
     }
 
+    @Test
+    void demotingAGivenTypeRewritesOnlyItsDesignStatusCell() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Demo` | supplied entry point, not given away | **given** |
+                | Track | supplied data | given |
+                | Player | context | student-creates
+                ## Notes
+                | Demo | elsewhere | given |
+                """;
+
+        String demoted = StageChecks.demoteGivenTypes(spec, Set.of("Demo", "Player"));
+
+        assertThat(demoted).isEqualTo(spec.replace("| `Demo` | supplied entry point, not given away | **given** |", "| `Demo` | supplied entry point, not given away | stubbed |"));
+        assertThat(StageChecks.designTableRows(demoted)).extracting(StageChecks.DesignRow::status).containsExactly("stubbed", "given", "student-creates");
+    }
+
     @Nested
     class Tests {
 
         private AgentVerifyReport report(boolean solutionPassed, boolean templateFailed) {
             return new AgentVerifyReport(5, solutionPassed, solutionPassed ? List.of() : List.of("testFoo"), 5, true, templateFailed, List.of(), List.of("testFoo"), List.of(),
                     List.of(), solutionPassed && templateFailed, solutionPassed && templateFailed ? List.of() : List.of("some blocking reason"));
+        }
+
+        @Test
+        void demotesAGivenTypeWhoseCodeNeedsAStudentCreatedTypeAndRecordsTheCorrectionOnce() {
+            String spec = specWithDesign("| Player | context students create | student-creates |\n| Demo | supplied entry point | given |\n");
+            approvedSpecs.approve("s", spec);
+            sandbox.spec = spec;
+            sandbox.templateRepositoryFiles = Map.of("src/Demo.java", "public class Demo { public int calculate(int input) { return new Player().calculate(input); } }");
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, false));
+
+            StageCheckResult result = check(GenerationStage.TESTS);
+
+            String corrected = approvedSpecs.approved("s").orElseThrow();
+            assertThat(StageChecks.designTableRows(corrected)).extracting(StageChecks.DesignRow::status).containsExactly("student-creates", "stubbed");
+            assertThat(corrected).isEqualTo(spec.replace("| Demo | supplied entry point | given |", "| Demo | supplied entry point | stubbed |"));
+            assertThat(sandbox.files()).containsEntry("/workspace/SPEC.md", corrected);
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).startsWith("OWNERSHIP CORRECTED").contains("[Demo]", "Demo->Player", "'stubbed'", "compilable stub bodies");
+
+            // The corrected contract has no given type left that needs a student-created one, so nothing is corrected twice.
+            assertThat(check(GenerationStage.TESTS).observation()).doesNotContain("OWNERSHIP CORRECTED");
+            assertThat(approvedSpecs.approved("s")).contains(corrected);
         }
 
         @Test
