@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
@@ -40,6 +39,13 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 final class ExecutableEvidenceLedger {
 
     private static final int MAX_TRACKED_SEMANTIC_MUTANTS = 6;
+
+    /**
+     * Earlier kills one verification rechecks for regression. Each costs one mutant build per verified repair, and every repair round can add up to
+     * {@link #MAX_TRACKED_SEMANTIC_MUTANTS} kills, so the cost is bounded at twice the tracked set. The history itself is never truncated: the kills least recently rechecked
+     * go first, and each one not conclusively rechecked against the candidate is reported as unavailable evidence.
+     */
+    private static final int MAX_REGRESSION_CHECKS_PER_VERIFICATION = 2 * MAX_TRACKED_SEMANTIC_MUTANTS;
 
     private final DifferentialVerifier verifier;
 
@@ -82,10 +88,13 @@ final class ExecutableEvidenceLedger {
     private int mutantsKilledByCurrentRepair;
 
     /**
-     * Mutants an earlier repair killed. Every later verification rechecks them, keyed to the current source, and fails while one survives again, so a regression is judged on
-     * the latest candidate rather than remembered.
+     * Mutants an earlier repair killed, least recently rechecked first. Every later verified repair rechecks them, keyed to the current source, and fails while one survives
+     * again, so a regression is judged on the latest candidate rather than remembered.
      */
     private List<SemanticMutant> semanticMutantsKilledByRepair = List.of();
+
+    /** Earlier kills the latest verified repair did not conclusively recheck for regression, deferred by the per-verification bound or without a verdict. */
+    private List<SemanticMutant> regressionChecksWithoutVerdict = List.of();
 
     /**
      * Prior survivors the latest executable review could not give a verdict: rechecks that were inconclusive, including those keyed to a changed source, and survivors whose
@@ -141,10 +150,23 @@ final class ExecutableEvidenceLedger {
             emitter.accept("Kept " + staleTargets.size() + " semantic mutant acceptance check(s) pending because the repair changed their reference source; the executable review "
                     + "rechecks them against the current solution.");
         }
-        List<SemanticMutant> regressionChecks = !repairInFlight ? List.of() : semanticMutantsKilledByRepair.stream().map(mutant -> {
-            String current = currentSolution.get(mutant.solutionPath());
-            return current == null || (mutant.printsTranscriptOnly() && !current.equals(mutant.originalSolutionSource())) ? null : mutant.rekeyedTo(current);
-        }).filter(Objects::nonNull).filter(mutant -> !applicableMutants.contains(mutant)).toList();
+        Map<SemanticMutant, SemanticMutant> eligibleRegressionChecks = new LinkedHashMap<>();
+        if (repairInFlight) {
+            semanticMutantsKilledByRepair.forEach(mutant -> {
+                String current = currentSolution.get(mutant.solutionPath());
+                if (current != null && !(mutant.printsTranscriptOnly() && !current.equals(mutant.originalSolutionSource()))
+                        && !applicableMutants.contains(mutant.rekeyedTo(current))) {
+                    eligibleRegressionChecks.put(mutant, mutant.rekeyedTo(current));
+                }
+            });
+        }
+        List<SemanticMutant> checkedKills = eligibleRegressionChecks.keySet().stream().limit(MAX_REGRESSION_CHECKS_PER_VERIFICATION).toList();
+        List<SemanticMutant> regressionChecks = checkedKills.stream().map(eligibleRegressionChecks::get).toList();
+        List<SemanticMutant> deferredKills = eligibleRegressionChecks.keySet().stream().skip(MAX_REGRESSION_CHECKS_PER_VERIFICATION).toList();
+        // The kills just rechecked move to the back, so the ones deferred now go first next time.
+        semanticMutantsKilledByRepair = java.util.stream.Stream
+                .concat(semanticMutantsKilledByRepair.stream().filter(mutant -> !checkedKills.contains(mutant)), checkedKills.stream()).toList();
+        regressionChecksWithoutVerdict = deferredKills;
         semanticMutantsAwaitingKill = List.of();
         if (applicableMutants.isEmpty() && regressionChecks.isEmpty()) {
             return result;
@@ -154,13 +176,15 @@ final class ExecutableEvidenceLedger {
         // Judged on this recheck alone: a correction that kills a regressed mutant again clears the regression.
         List<SemanticMutant> regressed = allOutcomes.stream().filter(outcome -> regressionChecks.contains(outcome.mutant()))
                 .filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).map(SemanticMutantOutcome::mutant).toList();
+        List<SemanticMutant> inconclusiveRegressionChecks = allOutcomes.stream().filter(outcome -> regressionChecks.contains(outcome.mutant()))
+                .filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE).map(SemanticMutantOutcome::mutant).toList();
+        regressionChecksWithoutVerdict = java.util.stream.Stream.concat(deferredKills.stream(), inconclusiveRegressionChecks.stream()).toList();
         List<SemanticMutantOutcome> targetOutcomes = allOutcomes.stream().filter(outcome -> applicableMutants.contains(outcome.mutant())).toList();
         GenerationReviewSupport.SemanticMutantRecheck recheck = GenerationReviewSupport.semanticMutantRecheck(targetOutcomes);
         List<SemanticMutant> killed = targetOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).map(SemanticMutantOutcome::mutant)
                 .toList();
         mutantsKilledByCurrentRepair += killed.size();
-        semanticMutantsKilledByRepair = java.util.stream.Stream.concat(semanticMutantsKilledByRepair.stream(), killed.stream()).distinct().limit(MAX_TRACKED_SEMANTIC_MUTANTS)
-                .toList();
+        semanticMutantsKilledByRepair = java.util.stream.Stream.concat(semanticMutantsKilledByRepair.stream(), killed.stream()).distinct().toList();
         // A repair that killed a targeted mutant is kept even when others still survive; they become the next round's findings rather than a reason to discard the kill.
         boolean unkilledTargetsBlock = !recheck.unresolvedMutants().isEmpty() && mutantsKilledByCurrentRepair == 0;
         if (regressed.isEmpty() && !unkilledTargetsBlock) {
@@ -300,6 +324,7 @@ final class ExecutableEvidenceLedger {
         GenerationReviewSupport.addReferenceUnavailability(combined, witnessState.omittedReferenceAdjudication().size(), witnessState.pendingPassInconclusive().size(),
                 witnessState.referenceAdjudicationInconclusive().size());
         survivorsWithoutVerdict.forEach(mutant -> combined.add(GenerationReviewSupport.semanticMutantRecheckUnavailable(mutant)));
+        regressionChecksWithoutVerdict.forEach(mutant -> combined.add(GenerationReviewSupport.regressionRecheckUnavailable(mutant)));
         witnessState.stillFailing().forEach(witness -> combined.add(GenerationReviewSupport.referenceDefectStillFailing(witness)));
         validatedMutants.forEach(mutant -> combined.add(GenerationReviewSupport.semanticMutantFinding(mutant)));
         positiveWitnessesAwaitingAdjudication.stream().map(GenerationReviewSupport::positiveWitnessAdjudicationUnavailable).filter(finding -> !combined.contains(finding))
@@ -418,7 +443,14 @@ final class ExecutableEvidenceLedger {
     }
 
     SpecFidelityReport preserveExecutableEvidenceState(SpecFidelityReport report) {
-        return GenerationReviewSupport.preserveSemanticMutantState(preserveReferenceWitnessState(report), semanticMutantsPendingRepair, semanticMutantsAwaitingRecheck);
+        SpecFidelityReport preserved = GenerationReviewSupport.preserveSemanticMutantState(preserveReferenceWitnessState(report), semanticMutantsPendingRepair,
+                semanticMutantsAwaitingRecheck);
+        if (regressionChecksWithoutVerdict.isEmpty()) {
+            return preserved;
+        }
+        List<SpecFidelityReport.Finding> findings = new ArrayList<>(preserved.findings());
+        regressionChecksWithoutVerdict.stream().map(GenerationReviewSupport::regressionRecheckUnavailable).filter(finding -> !findings.contains(finding)).forEach(findings::add);
+        return new SpecFidelityReport(List.copyOf(findings));
     }
 
     private SpecFidelityReport preserveReferenceWitnessState(SpecFidelityReport report) {

@@ -848,6 +848,71 @@ class GenerationAttemptLoopTest {
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
     }
 
+    /** Each oracle repair kills every survivor of its round; the authored rounds are given in order, and each round's mutants are named R{round}_{index}. */
+    private List<List<SemanticMutant>> stubRepairRoundsKillingEverySurvivor(int... survivorsPerRound) {
+        stubSchedulerFixture();
+        List<List<SemanticMutant>> rounds = new ArrayList<>();
+        for (int round = 0; round < survivorsPerRound.length; round++) {
+            int roundNumber = round + 1;
+            rounds.add(java.util.stream.IntStream.range(0, survivorsPerRound[round])
+                    .mapToObj(index -> mutant("R" + roundNumber + "_" + index, "kills" + roundNumber + "x" + index, "wrong " + roundNumber + "/" + index)).toList());
+        }
+        List<List<SemanticMutant>> authored = new ArrayList<>(rounds);
+        authored.add(List.of());
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(authored.getFirst(),
+                authored.subList(1, authored.size()).toArray(List[]::new));
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> evaluated = invocation.getArgument(6);
+            return evaluated.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)).toList();
+        });
+        return rounds;
+    }
+
+    @Test
+    void aSeventhKilledMutantIsStillRecheckedForRegression() {
+        // Two repairs kill four mutants each; the third repair, aimed at a fresh survivor, lets the seventh kill survive again.
+        List<List<SemanticMutant>> rounds = stubRepairRoundsKillingEverySurvivor(4, 4, 1);
+        SemanticMutant seventh = rounds.get(1).get(2);
+        AtomicInteger rechecks = new AtomicInteger();
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            boolean thirdRepair = rechecks.incrementAndGet() == 3;
+            List<SemanticMutant> checked = invocation.getArgument(5);
+            return checked.stream().map(
+                    mutant -> new SemanticMutantOutcome(mutant, thirdRepair && mutant.equals(seventh) ? Disposition.SURVIVED_GRADED_SUITE : Disposition.KILLED_BY_GRADED_SUITE))
+                    .toList();
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(6, 4);
+        loop.run();
+
+        assertThat(progressLines).anyMatch(line -> line.contains("no longer kills the semantic mutant for rule " + seventh.ruleId()));
+    }
+
+    @Test
+    void killsBeyondTheRegressionBoundAreReportedInsteadOfDropped() {
+        // Thirteen kills over three repairs; the fourth repair rechecks twelve of them and reports the thirteenth instead of dropping it.
+        List<List<SemanticMutant>> rounds = stubRepairRoundsKillingEverySurvivor(6, 6, 1, 1);
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> checked = invocation.getArgument(5);
+            return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)).toList();
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(8, 5);
+        loop.run();
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<SemanticMutant>> checked = ArgumentCaptor.forClass(List.class);
+        verify(verifier, Mockito.atLeast(4)).checkSemanticMutants(any(), anyString(), any(), any(), any(), checked.capture(), any());
+        List<SemanticMutant> fourthRepair = checked.getAllValues().get(3);
+        List<SemanticMutant> killedBefore = rounds.subList(0, 3).stream().flatMap(List::stream).toList();
+        // Every kill was confirmed by the third repair, by recheck or by its own kill; the order is then kill order, so the newest kill is the one deferred.
+        SemanticMutant deferred = rounds.get(2).getFirst();
+        assertThat(fourthRepair).hasSize(1 + 12).containsAll(rounds.get(3)).containsAll(killedBefore.subList(0, 12)).doesNotContain(deferred);
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE
+                && finding.detail().contains(deferred.ruleId()) && finding.detail().contains("not conclusively rechecked against this candidate"));
+        assertThat(loop.terminationReason()).isNotEqualTo(TerminationReason.CONVERGED);
+    }
+
     @Test
     void aRegressionThatTheCorrectionDoesNotFixKeepsThePreRepairCheckpoint() {
         SemanticMutant first = mutant("R1", "allPrerequisites", "honors only the first prerequisite");

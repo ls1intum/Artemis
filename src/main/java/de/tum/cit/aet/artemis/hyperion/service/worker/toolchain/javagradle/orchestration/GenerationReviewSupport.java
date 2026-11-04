@@ -193,6 +193,15 @@ final class GenerationReviewSupport {
                 + "). It remains unresolved until an executed graded test kills it.").findings().getFirst();
     }
 
+    /** An earlier repair's kill that this candidate's verification did not conclusively recheck, so a later change may have let the mutant survive again. */
+    static SpecFidelityReport.Finding regressionRecheckUnavailable(SemanticMutant mutant) {
+        return SpecFidelityReport
+                .executableEvidenceUnavailable("The semantic mutant for rule " + mutant.ruleId() + " at " + mutant.solutionPath() + " (counterexample "
+                        + mutant.counterexample().testName() + ", misconception: " + mutant.counterexample().wrongBehavior() + ") that an earlier repair's tests killed was not "
+                        + "conclusively rechecked against this candidate, so a later change may have let it survive again. The next verified repair rechecks it first.")
+                .findings().getFirst();
+    }
+
     /** A text-only or interrupted review cannot discharge executable mutant state; retain exact provenance without asserting a fresh survival result. */
     static SpecFidelityReport preserveSemanticMutantState(SpecFidelityReport report, List<SemanticMutant> pendingRepair, List<SemanticMutant> awaitingRecheck) {
         List<SemanticMutant> unresolved = java.util.stream.Stream.concat(pendingRepair.stream(), awaitingRecheck.stream()).distinct().toList();
