@@ -204,8 +204,9 @@ final class ExecutableEvidenceLedger {
             @Nullable String testPlanJson, String specDocumentSnapshot, SeededStructuralTests seededStructuralTests, Runnable restoreCandidate) {
         Map<String, String> testsFiles = producedFiles.getOrDefault(RepositoryRole.TESTS, Map.of());
         Map<String, String> solutionFiles = producedFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of());
+        // Every prior survivor is kept, never truncated: the capacity bound applies only to fresh proposals, after reserving room for all retained evidence.
         List<SemanticMutant> priorUnresolvedMutants = java.util.stream.Stream.of(semanticMutantsPendingRepair, semanticMutantsAwaitingRecheck).flatMap(List::stream).distinct()
-                .limit(MAX_TRACKED_SEMANTIC_MUTANTS).toList();
+                .toList();
         List<SemanticMutant> applicablePendingMutants = priorUnresolvedMutants.stream()
                 .filter(mutant -> mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath()))).toList();
         // A survivor whose file a repair changed is rechecked against the current source rather than retired: retiring it would read as a drained blocker. A printed-
@@ -238,8 +239,9 @@ final class ExecutableEvidenceLedger {
         List<SemanticMutantOutcome> transcriptOutcomes = java.util.stream.Stream.concat(reusedTranscriptOutcomes.stream(), probedTranscriptOutcomes.stream()).toList();
         List<SemanticMutant> staleTranscriptWithoutVerdict = staleTranscriptProbesWithoutVerdict(stalePendingMutants, transcriptOutcomes, testsFiles, solutionFiles, testPlanJson,
                 seededStructuralTests, restoreCandidate);
-        int freshCapacity = Math.max(0, MAX_TRACKED_SEMANTIC_MUTANTS - (int) java.util.stream.Stream.concat(pendingMutantOutcomes.stream(), transcriptOutcomes.stream())
-                .filter(outcome -> outcome.disposition() != Disposition.KILLED_BY_GRADED_SUITE).count());
+        int retainedEvidence = (int) java.util.stream.Stream.concat(pendingMutantOutcomes.stream(), transcriptOutcomes.stream())
+                .filter(outcome -> outcome.disposition() != Disposition.KILLED_BY_GRADED_SUITE).count() + unexecutableStaleMutants.size() + staleTranscriptWithoutVerdict.size();
+        int freshCapacity = Math.max(0, MAX_TRACKED_SEMANTIC_MUTANTS - retainedEvidence);
         List<SemanticMutant> authoredPendingMutants = applicablePendingMutants.stream().filter(mutant -> !mutant.printsTranscriptOnly()).toList();
         List<SemanticMutant> freshMutantCandidates = freshCapacity == 0 ? List.of()
                 : specFidelityCritic

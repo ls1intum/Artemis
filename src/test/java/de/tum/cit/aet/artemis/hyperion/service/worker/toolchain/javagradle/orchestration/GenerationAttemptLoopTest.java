@@ -985,6 +985,45 @@ class GenerationAttemptLoopTest {
         assertThat(loop.terminationReason()).isNotEqualTo(TerminationReason.CONVERGED);
     }
 
+    @Test
+    void retainedSurvivorsWithoutAVerdictReserveTheirCapacityBeforeFreshProposals() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | honor every prerequisite |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any()))
+                .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        List<String> classes = List.of("A", "B", "C", "D", "E", "F");
+        Map<String, String> allFiles = classes.stream().collect(java.util.stream.Collectors.toMap(name -> "src/" + name + ".java", name -> "class " + name + " {}"));
+        // The contract repair deletes A to D, so their survivors have nothing left to execute; E and F stay and their survivors are killed.
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any())).thenReturn(new GenerationWorkspace.RepositoryExtraction(allFiles, false),
+                new GenerationWorkspace.RepositoryExtraction(Map.of("src/E.java", "class E {}", "src/F.java", "class F {}"), false));
+        when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), SpecFidelityReport.empty());
+        List<SemanticMutant> first = classes.stream().map(name -> new SemanticMutant("R1", "src/" + name + ".java", "class " + name + " {}", "class " + name + " { int wrong; }",
+                new ContractWitness("R1", "kills" + name, "@Test void kills" + name + "() {}", "wrong in " + name))).toList();
+        List<SemanticMutant> fresh = java.util.stream.IntStream.range(0, 6).mapToObj(index -> new SemanticMutant("R1", "src/E.java", "class E {}",
+                "class E { int fresh" + index + "; }", new ContractWitness("R1", "fresh" + index, "@Test void fresh" + index + "() {}", "fresh wrong " + index))).toList();
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(first, fresh);
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> evaluated = invocation.getArgument(6);
+            return evaluated.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)).toList();
+        });
+        when(verifier.checkSemanticMutants(any(), anyString(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> checked = invocation.getArgument(5);
+            return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)).toList();
+        });
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 2);
+        loop.run();
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<SemanticMutant>> evaluated = ArgumentCaptor.forClass(List.class);
+        verify(verifier, Mockito.atLeast(2)).evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), evaluated.capture(), any());
+        // Four deleted-file survivors stay tracked, so only two of the six tracked slots are left for fresh proposals.
+        assertThat(evaluated.getAllValues().get(1)).hasSize(2);
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings())
+                .filteredOn(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE && finding.detail().contains("previously proven semantic mutant"))
+                .hasSize(4);
+    }
+
     /** R1 survives the first review and is killed by the first oracle repair; a fresh R2 then survives and is targeted by the second. */
     private void stubKilledThenFreshSurvivor(SemanticMutant first, SemanticMutant second) {
         stubSchedulerFixture();
