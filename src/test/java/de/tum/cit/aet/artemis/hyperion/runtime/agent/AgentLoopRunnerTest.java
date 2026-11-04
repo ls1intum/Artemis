@@ -435,6 +435,45 @@ class AgentLoopRunnerTest {
         assertThat(session.result().stopCause()).startsWith("The agent session stopped: The agent repeated identical tool calls 5 times");
     }
 
+    /** One session rewrote the same file after other edits had changed it; a write's result does not show that, so identical writes must never end the session. */
+    @Test
+    void identicalSuccessfulWritesAreNotTreatedAsRepeats() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            if (current > 8) {
+                return text("finished");
+            }
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", "write_file", "{\"path\":\"A.java\"}");
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
+        });
+
+        var session = runner(model).runSession("system", null, "brief", new FileTools(), 60, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(session.conversation().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
+                .flatMap(message -> message.getResponses().stream())).noneMatch(response -> response.responseData().contains("this exact"));
+    }
+
+    static class FileTools implements SubmitVetoAware {
+
+        @Tool(name = "write_file", description = "Write a file")
+        public String writeFile(@org.springframework.ai.tool.annotation.ToolParam(description = "the path") String path) {
+            return "Wrote 793 characters to " + path;
+        }
+
+        @Override
+        public boolean consumeSubmitVeto() {
+            return false;
+        }
+
+        @Override
+        public boolean isSandboxSessionTerminated() {
+            return false;
+        }
+    }
+
     @Test
     void anIdenticalCallWhoseResultChangesIsNotARepeat() {
         ChatModel model = mock(ChatModel.class);

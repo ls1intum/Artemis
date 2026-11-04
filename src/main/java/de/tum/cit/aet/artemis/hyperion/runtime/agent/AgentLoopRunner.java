@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -65,6 +66,9 @@ public class AgentLoopRunner {
     static final int REPEATED_REJECTION_ESCALATION = 3;
 
     private static final int MAX_REPEATED_REJECTION_EXCERPT_CHARS = 400;
+
+    /** Tools that change the workspace. Their successful result does not show whether the workspace changed in between, so identical successes are not repeats. */
+    private static final Set<String> WORKSPACE_MUTATING_TOOLS = Set.of("write_file", "edit_file", "delete_file");
 
     private static final String SUBMIT_TOOL_NAME = "submit";
 
@@ -581,6 +585,11 @@ public class AgentLoopRunner {
                         continue;
                     }
                     boolean rejected = isErrorResponse(response.responseData());
+                    if (!rejected && WORKSPACE_MUTATING_TOOLS.contains(response.name())) {
+                        // A write reports only what it wrote, not whether the file had changed since the last identical write, so repeating it is not evidence of a loop.
+                        responses.add(response);
+                        continue;
+                    }
                     String arguments = toolCalls.stream().filter(call -> call.id() != null && call.id().equals(response.id())).map(AssistantMessage.ToolCall::arguments).findFirst()
                             .orElse("");
                     String key = response.name() + '\n' + arguments + (rejected ? "" : '\n' + response.responseData());
