@@ -103,20 +103,20 @@ roles:
 | Field | Meaning |
 | --- | --- |
 | `ENTITY_ID` | The cited lecture unit. Artemis resolves its lecture and unit names for the citation tooltip. |
-| `PAGE` | The 1-based PDF page for a slide citation, or an optional related page for a video citation. |
+| `PAGE` | The 1-based PDF page of a slide citation. Iris leaves it empty for a video citation; Artemis still accepts a related page there, as older answers may carry one. |
 | `START`, `END` | A video segment's times in seconds. An empty `START` makes a positioned citation a slide citation. |
 | `KEYWORD` | The citation chip's short label. |
 | `SUMMARY` | The explanation shown in the chip's tooltip. It may contain colons. |
 
 `IrisCitationService` stamps the version in `stampCitationVersions`, on the incoming answer before it is persisted:
-`va3` pins a slide to attachment version 3, `vt3` pins a video moment to transcription version 3, and `0` means the
-position could not be verified against the run snapshot. Only a positioned citation is stamped — one naming neither a
+`va3` pins a slide to attachment version 3, `vt3` pins a video moment to transcription version 3, and version `0`
+(`va0` or `vt0`) means the position could not be verified against the run snapshot. Only a positioned citation is stamped — one naming neither a
 page nor a start time stays as it came. A version is recognized only by its leading `va` or `vt` tag, because the
 summary is everything up to the closing bracket and may itself end in a number. Citations stored before versioning
 have no field and still navigate directly.
 
 The version is Artemis's, not the model's. A citation that already arrives with a version field — the model echoing
-an older answer — has it stripped and is stamped `0`, so a pin can only come from the snapshot of the run that
+an older answer — has it stripped and is stamped with version `0`, so a pin can only come from the snapshot of the run that
 produced the citation.
 
 This format is the contract between three codebases: the Pyris pipeline that emits it, the server pattern in
@@ -132,7 +132,7 @@ before versioning have no pin and still navigate directly.
 
 `IrisLectureMaterialVersionService` captures the ingested versions of the run's course **before** its request is dispatched, and keeps the snapshot in a distributed expiring map keyed by job id for the lifetime of the job. That snapshot is the only source of a pinned version: a missing, expired or unreadable one yields no verified version, never the latest database revision, so a new command cannot acquire a pin by bypassing the check. `LectureUnitIngestedVersionsDTO` carries the values, and they are reported only once processing reached `DONE` — while a unit is being reprocessed the vector database still serves the previous material, so there is nothing trustworthy to pin. Slides are versioned by `Attachment#version` and videos by the transcription version, because a cited timestamp comes from a transcription segment.
 
-For a positive pinned version, the client reads `GET lecture-units/{lectureUnitId}/material-versions` at click time and compares. A citation pinned to `0` needs no request: it is already unverified, and the client opens the unit without its position. A point-out differs — `navigateToVersionedPointOut` skips the request only for a marker carrying no pin at all, so a pin of `0` still calls the endpoint before the unit is opened without its position. `LectureUnitMaterialVersionsDTO` reports what the unit offers right now, and the comparison has three outcomes that the student is told apart: the material changed, the material is gone, or the material cannot be checked. The third is not a hedge. A missing transcription version has two causes, because the row is deleted and rewritten whenever the video changes, so during that window the video plays while nothing can be compared against it — `hasVideo` is what keeps Artemis from reporting a visibly playing video as removed. In all three cases the lecture still opens and only the exact position is withheld. A point-out may carry both a timestamp and a related page, but its pin covers only one material type: after a successful check, the client applies the timestamp for a video pin or the page for a slide pin and drops the other coordinate.
+For a positive pinned version, the client reads `GET lecture-units/{lectureUnitId}/material-versions` at click time and compares. A citation pinned to `0` needs no request: it is already unverified, and the client opens the unit without its position. A point-out differs — `navigateToVersionedPointOut` skips the request only for a marker carrying no pin at all, so a pin of `0` still calls the endpoint before the unit is opened without its position. `LectureUnitMaterialVersionsDTO` reports what the unit offers right now, and the comparison has three outcomes that the student is told apart: the material changed, the material is gone, or the material cannot be checked. The third is not a hedge. A missing transcription version has two causes, because the row is deleted and rewritten whenever the video changes, so during that window the video plays while nothing can be compared against it — `hasVideo` is what keeps Artemis from reporting a visibly playing video as removed. For a citation and for a saved point-out the student clicks, the lecture still opens in all three cases and only the exact position is withheld. A live point-out is rejected instead: when its pin is `0`, the material changed or is gone, or the version request fails, the client calls `acknowledgeRejectedPointOut` and does not move the view, so the Pyris tool learns that the point-out was not applied. A point-out may carry both a timestamp and a related page, but its pin covers only one material type: after a successful check, the client applies the timestamp for a video pin or the page for a slide pin and drops the other coordinate.
 
 After a successful version check, a citation follows the lecture deep link to its position. A point-out marker
 moves an open combined view in place or opens its lecture with the combined view selected.
