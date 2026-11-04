@@ -392,7 +392,7 @@ class AgentLoopRunnerTest {
 
         var session = runner(model).runSession("system", null, "brief", tools, 60, () -> false, null, null);
 
-        int lastAllowedRepeat = AgentLoopRunner.REPEATED_REJECTION_ESCALATION - 1 + 5;
+        int lastAllowedRepeat = AgentToolBatch.REPEATED_REJECTION_ESCALATION - 1 + 5;
         assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
         assertThat(tools.refusals).isEqualTo(lastAllowedRepeat);
         assertThat(session.result().turns()).isEqualTo(2 * lastAllowedRepeat - 1);
@@ -424,7 +424,7 @@ class AgentLoopRunnerTest {
 
         var session = runner(model).runSession("system", null, "brief", new UnchangingTools(), 60, () -> false, null, null);
 
-        int lastAllowedRepeat = AgentLoopRunner.REPEATED_REJECTION_ESCALATION - 1 + 5;
+        int lastAllowedRepeat = AgentToolBatch.REPEATED_REJECTION_ESCALATION - 1 + 5;
         assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
         assertThat(session.result().turns()).isEqualTo(2 * lastAllowedRepeat - 1);
         List<String> statusResults = session.conversation().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)

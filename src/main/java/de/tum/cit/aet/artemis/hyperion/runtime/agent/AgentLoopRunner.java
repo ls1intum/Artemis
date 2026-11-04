@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -22,7 +21,6 @@ import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingManager;
@@ -32,7 +30,6 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.execution.DefaultToolExecutionExceptionProcessor;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
-import org.springframework.ai.util.JsonHelper;
 
 import de.tum.cit.aet.artemis.aiworker.api.SandboxUnavailableException;
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
@@ -57,22 +54,6 @@ public class AgentLoopRunner {
     private static final Logger log = LoggerFactory.getLogger(AgentLoopRunner.class);
 
     private static final int MAX_CONSECUTIVE_TOOL_FAILURES = 5;
-
-    /**
-     * The occurrence of an identical tool call that is answered with an explicit escalation instead of its result: the same tool and arguments when it was rejected, or the same
-     * tool, arguments and result when it succeeded. From then on every further repeat counts toward {@link #MAX_CONSECUTIVE_TOOL_FAILURES} for the whole session, because
-     * neither a refused call nor a call whose result did not change can make progress by being repeated.
-     */
-    static final int REPEATED_REJECTION_ESCALATION = 3;
-
-    private static final int MAX_REPEATED_REJECTION_EXCERPT_CHARS = 400;
-
-    /** Tools that change the workspace. Their successful result does not show whether the workspace changed in between, so identical successes are not repeats. */
-    private static final Set<String> WORKSPACE_MUTATING_TOOLS = Set.of("write_file", "edit_file", "delete_file");
-
-    private static final String SUBMIT_TOOL_NAME = "submit";
-
-    private static final JsonHelper TOOL_ARGUMENT_JSON = new JsonHelper();
 
     /** Emitted immediately before every provider call; see {@link #emitWaitingOnModel}. */
     static final String WAITING_ON_MODEL_MESSAGE = "Thinking about the next step.";
@@ -356,7 +337,7 @@ public class AgentLoopRunner {
                 return cancelled.getAsBoolean() ? session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation)
                         : failed(turn, lastAssistantText, conversation, "The AI service returned no usable response on turn " + turn + ".");
             }
-            response = normalizeToolNames(response);
+            response = AgentToolBatch.normalizeToolNames(response);
             lastPromptTokens = AgentConversationContext.promptTokensOf(response);
             List<AssistantMessage.ToolCall> toolCalls = response.getResult() != null && response.getResult().getOutput() != null ? response.getResult().getOutput().getToolCalls()
                     : List.of();
@@ -375,7 +356,7 @@ public class AgentLoopRunner {
             }
 
             if (!response.hasToolCalls()) {
-                if (isTruncatedByTokenLimit(response)) {
+                if (AgentToolBatch.isTruncatedByTokenLimit(response)) {
                     emit(stepListener, "The AI response was cut off before it could finish.");
                     if (previousReplyCutOffWithoutAction || turn == maxTurns || toolCallbacks.length == 0) {
                         return failed(turn, lastAssistantText, conversation, "The AI response was cut off at the output token limit on turn " + turn + ".");
@@ -399,15 +380,12 @@ public class AgentLoopRunner {
             previousReplyCutOffWithoutAction = false;
             // A completion cut off by the token limit may carry silently truncated tool arguments (half a file in write_file's content). Executing them would corrupt the
             // workspace while the model believes the calls landed, so every call id is answered with a re-issue instruction instead.
-            if (isTruncatedByTokenLimit(response) && !toolCalls.isEmpty()) {
+            if (AgentToolBatch.isTruncatedByTokenLimit(response) && !toolCalls.isEmpty()) {
                 emit(stepListener, "The response was cut off at the length limit; asking the agent to re-issue its last actions.");
                 conversation.add(response.getResult().getOutput());
-                List<ToolResponseMessage.ToolResponse> truncatedResponses = toolCalls.stream()
-                        .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(),
-                                "ERROR: this tool call was not executed - the response hit the output token limit, so its arguments may be truncated. "
-                                        + "Re-issue the call with complete arguments, splitting large content across smaller calls if needed."))
-                        .toList();
-                conversation.add(ToolResponseMessage.builder().responses(truncatedResponses).build());
+                conversation.add(AgentToolBatch.unexecutedResponses(toolCalls,
+                        "ERROR: this tool call was not executed - the response hit the output token limit, so its arguments may be truncated. "
+                                + "Re-issue the call with complete arguments, splitting large content across smaller calls if needed."));
                 conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
@@ -421,17 +399,15 @@ public class AgentLoopRunner {
                 if (activity != null) {
                     activity.recordToolCall();
                 }
-                if (!SUBMIT_TOOL_NAME.equals(toolCall.name())) {
+                if (!AgentToolBatch.SUBMIT_TOOL_NAME.equals(toolCall.name())) {
                     emit(stepListener, AgentToolProgress.describe(toolCall));
                 }
             }
-            boolean submitRequested = toolCalls.stream().anyMatch(toolCall -> SUBMIT_TOOL_NAME.equals(toolCall.name()));
+            boolean submitRequested = toolCalls.stream().anyMatch(toolCall -> AgentToolBatch.SUBMIT_TOOL_NAME.equals(toolCall.name()));
             if (submitRequested && toolCalls.size() != 1) {
                 conversation.add(response.getResult().getOutput());
-                List<ToolResponseMessage.ToolResponse> rejectedResponses = toolCalls.stream().map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(),
-                        "ERROR: no call in this batch was executed. Submit must be the only tool call in its response. Finish other actions first, then submit separately."))
-                        .toList();
-                conversation.add(ToolResponseMessage.builder().responses(rejectedResponses).build());
+                conversation.add(AgentToolBatch.unexecutedResponses(toolCalls,
+                        "ERROR: no call in this batch was executed. Submit must be the only tool call in its response. Finish other actions first, then submit separately."));
                 conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
@@ -443,7 +419,7 @@ public class AgentLoopRunner {
             ToolExecutionResult toolExecutionResult;
             boolean executionStarted = false;
             try {
-                validateToolBatch(toolCalls, toolCallbacks);
+                AgentToolBatch.validateToolBatch(toolCalls, toolCallbacks);
                 executionStarted = true;
                 toolExecutionResult = toolCallingManager.executeToolCalls(prompt, response);
                 // Preserve the model call and tool results even when a sandbox failure ends the session.
@@ -457,17 +433,17 @@ public class AgentLoopRunner {
                     emit(stepListener, "The build environment stopped responding.");
                     return failed(turn, lastAssistantText, conversation, "The build environment stopped responding on turn " + turn + ".");
                 }
-                int repeatedThisTurn = escalateRepeatedRejections(conversation, toolCalls, repeatedCallCounts);
+                int repeatedThisTurn = AgentToolBatch.escalateRepeatedRejections(conversation, toolCalls, repeatedCallCounts);
                 if (repeatedThisTurn > 0) {
                     repeatedRejections += repeatedThisTurn;
                     log.warn("Agent loop repeated an identical tool call on turn {} (repeats this session: {})", turn, repeatedRejections);
                     if (repeatedRejections >= MAX_CONSECUTIVE_TOOL_FAILURES) {
                         return failed(turn, lastAssistantText, conversation, "The agent repeated identical tool calls " + repeatedRejections
-                                + " times after being told they would not change anything. Last repeat: " + lastRejection(conversation));
+                                + " times after being told they would not change anything. Last repeat: " + AgentToolBatch.lastRejection(conversation));
                     }
                 }
-                if (hasRejectedToolAction(conversation)) {
-                    if (hasOnlyRecoverableFileToolRejections(conversation)) {
+                if (AgentToolBatch.hasRejectedToolAction(conversation)) {
+                    if (AgentToolBatch.hasOnlyRecoverableFileToolRejections(conversation)) {
                         consecutiveRejectedActions++;
                         consecutiveToolFailures = 0;
                         log.warn("Agent loop file-tool action was rejected on turn {} (consecutive recoverable rejections: {})", turn, consecutiveRejectedActions);
@@ -483,7 +459,7 @@ public class AgentLoopRunner {
                         log.warn("Agent loop tool action was rejected on turn {} (consecutive failures: {})", turn, consecutiveToolFailures);
                         if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
                             return failed(turn, lastAssistantText, conversation,
-                                    consecutiveToolFailures + " consecutive tool calls were rejected. Last rejection: " + lastRejection(conversation));
+                                    consecutiveToolFailures + " consecutive tool calls were rejected. Last rejection: " + AgentToolBatch.lastRejection(conversation));
                         }
                     }
                 }
@@ -511,9 +487,7 @@ public class AgentLoopRunner {
                 String outcome = executionStarted
                         ? "ERROR: this batch stopped after execution began. Some calls may have completed. Inspect the workspace before retrying any action."
                         : "ERROR: no call in this batch was executed. Use only available tools with valid JSON object arguments, then retry.";
-                List<ToolResponseMessage.ToolResponse> errorResponses = failedTurn.getToolCalls().stream()
-                        .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(), outcome)).toList();
-                conversation.add(ToolResponseMessage.builder().responses(errorResponses).build());
+                conversation.add(AgentToolBatch.unexecutedResponses(failedTurn.getToolCalls(), outcome));
                 if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
                     return failed(turn, lastAssistantText, conversation,
                             consecutiveToolFailures + " consecutive tool calls could not be executed (last failure: " + e.getClass().getSimpleName() + ").");
@@ -531,7 +505,7 @@ public class AgentLoopRunner {
                 return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
             }
             if (submitRequested) {
-                if (isSubmitVetoed(tools) || hasRejectedToolAction(conversation)) {
+                if (isSubmitVetoed(tools) || AgentToolBatch.hasRejectedToolAction(conversation)) {
                     // The rejection message is already the tool result in `conversation`, so falling through to the ordinary next-turn handling lets the model fix and resubmit.
                     emit(stepListener, "Submit was rejected by the stage check; continuing to address the reported issues.");
                 }
@@ -558,94 +532,6 @@ public class AgentLoopRunner {
         return session(AgentLoopResult.Status.BUDGET_EXHAUSTED, maxTurns, lastAssistantText, conversation);
     }
 
-    private static boolean hasRejectedToolAction(List<Message> conversation) {
-        for (int i = conversation.size() - 1; i >= 0; i--) {
-            if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
-                return toolResponse.getResponses().stream().anyMatch(response -> !"verify".equals(response.name()) && isErrorResponse(response.responseData()));
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Counts the calls of the latest tool batch and replaces the result of each call repeated {@link #REPEATED_REJECTION_ESCALATION} or more times with an explicit observation
-     * that repeating it changes nothing. A rejected call is identified by tool and arguments; a successful call also by its result, so re-reading a file after an edit is not a
-     * repeat. A model that interleaves the same call with other calls never trips the consecutive limit, so without this it can spend a whole session repeating it.
-     *
-     * @return how many calls of the batch were such repeats
-     */
-    private static int escalateRepeatedRejections(List<Message> conversation, List<AssistantMessage.ToolCall> toolCalls, Map<String, Integer> repeatedCallCounts) {
-        for (int i = conversation.size() - 1; i >= 0; i--) {
-            if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
-                int repeated = 0;
-                List<ToolResponseMessage.ToolResponse> responses = new ArrayList<>(toolResponse.getResponses().size());
-                for (ToolResponseMessage.ToolResponse response : toolResponse.getResponses()) {
-                    if ("verify".equals(response.name()) || SUBMIT_TOOL_NAME.equals(response.name())) {
-                        responses.add(response);
-                        continue;
-                    }
-                    boolean rejected = isErrorResponse(response.responseData());
-                    if (!rejected && WORKSPACE_MUTATING_TOOLS.contains(response.name())) {
-                        // A write reports only what it wrote, not whether the file had changed since the last identical write, so repeating it is not evidence of a loop.
-                        responses.add(response);
-                        continue;
-                    }
-                    String arguments = toolCalls.stream().filter(call -> call.id() != null && call.id().equals(response.id())).map(AssistantMessage.ToolCall::arguments).findFirst()
-                            .orElse("");
-                    String key = response.name() + '\n' + arguments + (rejected ? "" : '\n' + response.responseData());
-                    int occurrences = repeatedCallCounts.merge(key, 1, Integer::sum);
-                    if (occurrences < REPEATED_REJECTION_ESCALATION) {
-                        responses.add(response);
-                        continue;
-                    }
-                    repeated++;
-                    String observation = excerpt(response.responseData().strip());
-                    String escalation = rejected
-                            ? "ERROR: this exact " + response.name() + " call has now been rejected " + occurrences
-                                    + " times and will be rejected every time. Do not repeat it; take a different action. Each further repeat counts toward ending this "
-                                    + "session. The rejection was: " + observation
-                            : "ERROR: this exact " + response.name() + " call has now returned the same result " + occurrences
-                                    + " times. Repeating it cannot change anything until you change the workspace; take a different action. Each further repeat counts "
-                                    + "toward ending this session. The unchanged result was: " + observation;
-                    responses.add(new ToolResponseMessage.ToolResponse(response.id(), response.name(), escalation));
-                }
-                if (repeated > 0) {
-                    conversation.set(i, ToolResponseMessage.builder().responses(responses).metadata(toolResponse.getMetadata()).build());
-                }
-                return repeated;
-            }
-        }
-        return 0;
-    }
-
-    private static boolean hasOnlyRecoverableFileToolRejections(List<Message> conversation) {
-        for (int i = conversation.size() - 1; i >= 0; i--) {
-            if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
-                List<ToolResponseMessage.ToolResponse> rejected = toolResponse.getResponses().stream()
-                        .filter(response -> !"verify".equals(response.name()) && isErrorResponse(response.responseData())).toList();
-                return !rejected.isEmpty() && rejected.stream().allMatch(response -> "edit_file".equals(response.name()) || "search".equals(response.name()));
-            }
-        }
-        return false;
-    }
-
-    private static boolean isErrorResponse(@Nullable String responseData) {
-        if (responseData == null) {
-            return false;
-        }
-        String normalized = responseData.stripLeading();
-        // MethodToolCallback serializes String return values as JSON strings, while other callbacks may return plain text.
-        return normalized.startsWith("ERROR:") || normalized.startsWith("\"ERROR:");
-    }
-
-    /** Whether the provider reports this completion was cut off by the output token limit (OpenAI-style finish reason "length"). */
-    private static boolean isTruncatedByTokenLimit(ChatResponse response) {
-        if (response.getResult() == null || response.getResult().getMetadata() == null) {
-            return false;
-        }
-        return "length".equalsIgnoreCase(response.getResult().getMetadata().getFinishReason());
-    }
-
     /** Builds a session result, stripping the leading system message so the returned conversation is ready to pass as {@code priorConversation} to the next call. */
     private static AgentLoopSession session(AgentLoopResult.Status status, int turns, String finalMessage, List<Message> conversation) {
         return session(status, turns, finalMessage, conversation, null);
@@ -659,21 +545,6 @@ public class AgentLoopRunner {
     private static AgentLoopSession session(AgentLoopResult.Status status, int turns, String finalMessage, List<Message> conversation, @Nullable String stopCause) {
         List<Message> withoutSystemMessage = conversation.isEmpty() ? List.of() : new ArrayList<>(conversation.subList(1, conversation.size()));
         return new AgentLoopSession(new AgentLoopResult(status, turns, finalMessage, stopCause), withoutSystemMessage);
-    }
-
-    /** The first rejected tool result of the latest batch, bounded, as evidence for a stop cause. */
-    private static String lastRejection(List<Message> conversation) {
-        for (int i = conversation.size() - 1; i >= 0; i--) {
-            if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
-                return toolResponse.getResponses().stream().filter(response -> isErrorResponse(response.responseData())).findFirst()
-                        .map(response -> response.name() + ": " + excerpt(response.responseData().strip())).orElse("not recorded");
-            }
-        }
-        return "not recorded";
-    }
-
-    private static String excerpt(String text) {
-        return text.length() <= MAX_REPEATED_REJECTION_EXCERPT_CHARS ? text : text.substring(0, MAX_REPEATED_REJECTION_EXCERPT_CHARS) + "…";
     }
 
     private static boolean hasCause(Throwable failure, Class<? extends Throwable> type) {
@@ -691,51 +562,6 @@ public class AgentLoopRunner {
 
     private static boolean isSubmitVetoed(SubmitVetoAware tools) {
         return tools != null && tools.consumeSubmitVeto();
-    }
-
-    /**
-     * Removes leaked harmony control tokens from tool-call names, so a name like {@code bash<|channel|>commentary} dispatches as {@code bash} instead of matching no registered
-     * tool.
-     */
-    private static ChatResponse normalizeToolNames(ChatResponse response) {
-        if (response.getResult() == null || response.getResult().getOutput() == null) {
-            return response;
-        }
-        AssistantMessage output = response.getResult().getOutput();
-        List<AssistantMessage.ToolCall> toolCalls = output.getToolCalls();
-        if (toolCalls == null || toolCalls.isEmpty()) {
-            return response;
-        }
-        boolean changed = false;
-        List<AssistantMessage.ToolCall> normalized = new ArrayList<>(toolCalls.size());
-        for (AssistantMessage.ToolCall toolCall : toolCalls) {
-            String sanitized = sanitizeToolName(toolCall.name());
-            if (!sanitized.equals(toolCall.name())) {
-                changed = true;
-                log.warn("Normalized a leaked model tool name to '{}'", sanitized);
-                normalized.add(new AssistantMessage.ToolCall(toolCall.id(), toolCall.type(), sanitized, toolCall.arguments()));
-            }
-            else {
-                normalized.add(toolCall);
-            }
-        }
-        if (!changed) {
-            return response;
-        }
-        AssistantMessage rebuilt = AssistantMessage.builder().content(output.getText() == null ? "" : output.getText()).properties(output.getMetadata()).media(output.getMedia())
-                .toolCalls(normalized).build();
-        return new ChatResponse(List.of(new Generation(rebuilt, response.getResult().getMetadata())), response.getMetadata());
-    }
-
-    static String sanitizeToolName(String name) {
-        if (name == null || name.isEmpty()) {
-            return "";
-        }
-        if (!name.contains("<|")) {
-            return name.strip();
-        }
-        // Everything before the first control token is the real tool name; the rest is leakage.
-        return name.substring(0, name.indexOf("<|")).strip();
     }
 
     void setEmptyResponseRetryTimingForTests(long baseMillis, long capMillis) {
@@ -1025,22 +851,6 @@ public class AgentLoopRunner {
             return "";
         }
         return response.getResult().getOutput().getText();
-    }
-
-    private static void validateToolBatch(List<AssistantMessage.ToolCall> calls, ToolCallback[] callbacks) {
-        for (AssistantMessage.ToolCall call : calls) {
-            boolean available = false;
-            for (ToolCallback callback : callbacks) {
-                if (callback.getToolDefinition().name().equals(call.name())) {
-                    available = true;
-                    break;
-                }
-            }
-            if (!available || call.arguments() == null || !call.arguments().stripLeading().startsWith("{")) {
-                throw new IllegalArgumentException("Unknown tool or invalid arguments");
-            }
-            TOOL_ARGUMENT_JSON.fromJsonToMap(call.arguments());
-        }
     }
 
     private static void emit(@Nullable Consumer<String> stepListener, String message) {

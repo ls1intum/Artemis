@@ -100,7 +100,7 @@ public class StageChecks {
         if (!path.startsWith("template/")) {
             return Optional.empty();
         }
-        List<String> restoredTypes = specStudentCreatedTypes(approved.get()).stream().filter(type -> ExerciseIntegrityGate.pathOrContentRepresentsType(path, content, type))
+        List<String> restoredTypes = specStudentCreatedTypes(approved.get()).stream().filter(type -> ApprovedOwnershipGate.pathOrContentRepresentsType(path, content, type))
                 .toList();
         if (restoredTypes.isEmpty()) {
             return Optional.empty();
@@ -700,7 +700,7 @@ public class StageChecks {
             log.warn("Could not read the repositories to check given-type ownership for session {} ({})", sessionId, e.getClass().getSimpleName());
             return Optional.empty();
         }
-        List<String> dependencies = ExerciseIntegrityGate.givenTypeStudentCreatedDependencies(designTableRows(approved.get()), studentCreatedTypes, sources.templateFiles(),
+        List<String> dependencies = ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(designTableRows(approved.get()), studentCreatedTypes, sources.templateFiles(),
                 sources.solutionFiles());
         if (dependencies.isEmpty()) {
             return Optional.empty();
@@ -891,7 +891,7 @@ public class StageChecks {
                     + "frame the goal as \"we\" and the work as \"you\" with imperative tasks ('Define ...', 'Implement ...').");
         }
         String authoritativeSpec = authoritativeSpec(sandbox, sessionId);
-        if (ExerciseIntegrityGate.diagramRequired(authoritativeSpec) && !statement.contains("@startuml")) {
+        if (ApprovedOwnershipGate.diagramRequired(authoritativeSpec) && !statement.contains("@startuml")) {
             return StageCheckResult.failed("The statement contains no @startuml class diagram, but this exercise requires one. " + AgentSystemPrompt.DIAGRAM_REQUIREMENT_RULE);
         }
         List<String> duplicateHeadings = ProblemStatementBindingChecker.duplicateHeadings(statement);

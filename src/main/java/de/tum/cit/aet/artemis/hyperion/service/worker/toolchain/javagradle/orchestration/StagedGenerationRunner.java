@@ -33,8 +33,8 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedOwnershipGate;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry;
-import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
@@ -927,7 +927,7 @@ public class StagedGenerationRunner {
             if (!handoff.isBlank()) {
                 prompt.append("\n\n").append(handoff);
             }
-            prompt.append("\n\n").append(StatementHandoffProjection.diagramDirective(ExerciseIntegrityGate.diagramRequired(approvedSpecs.approved(sessionId).orElse(null))));
+            prompt.append("\n\n").append(StatementHandoffProjection.diagramDirective(ApprovedOwnershipGate.diagramRequired(approvedSpecs.approved(sessionId).orElse(null))));
         }
         if (retryFeedback != null && !retryFeedback.isBlank()) {
             prompt.append("\n\n=== GATE FEEDBACK FROM THE PREVIOUS ATTEMPT AT THIS STAGE ===\n").append(retryFeedback).append("\n=== END GATE FEEDBACK ===");

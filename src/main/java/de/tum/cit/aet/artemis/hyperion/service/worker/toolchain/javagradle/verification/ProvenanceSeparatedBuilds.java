@@ -69,7 +69,7 @@ final class ProvenanceSeparatedBuilds {
 
     /** A lane that ran no test did not compile or crashed before its runner, so only its build output can say why. */
     private static String noTestsEvidence(String assignment, BuildSummary lane) {
-        return lane.tests() > 0 ? "" : "\nThe " + assignment + " ran no tests in this lane." + DifferentialVerifier.buildEvidence(lane);
+        return lane.tests() > 0 ? "" : "\nThe " + assignment + " ran no tests in this lane." + DifferentialBuildChecks.buildEvidence(lane);
     }
 
     private static Set<String> normalizedNames(BuildSummary summary) {
