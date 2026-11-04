@@ -155,8 +155,9 @@ final class OutputOnlyMainProbe {
 
     /**
      * Resolves printed-transcript probes proven against an earlier revision of their class, for which a probe of the current class gave no verdict. Their print-only variant
-     * no longer matches the class, so only one question can still be answered: whether any weighted test reads what {@code main} prints. When the source shows no graded
-     * transcript comparison and a {@code main} that prints nothing passes every weighted test, the weakness is gone; otherwise the probe stays unresolved.
+     * no longer matches the class, so only one question can still be answered: whether any weighted test reads what {@code main} prints. When a {@code main} that prints
+     * nothing passes every weighted test, the weakness is gone; otherwise the probe stays unresolved. Execution decides, not the source check, which also matches unrelated
+     * assertions in a test that calls {@code main}.
      *
      * @return one outcome per probe: {@link Disposition#KILLED_BY_GRADED_SUITE} when resolved, otherwise {@link Disposition#INCONCLUSIVE}
      */
@@ -165,8 +166,7 @@ final class OutputOnlyMainProbe {
         Predicate<String> graded = gradedTest(testPlanJson);
         return staleProbes.stream().map(probe -> {
             String current = solutionFiles.get(probe.solutionPath());
-            boolean resolved = current != null && !stillApplies(probe, testFiles, testPlanJson)
-                    && silentMainOutcome(probe.solutionPath(), current, probe, solutionFiles, graded, runner) == Disposition.SURVIVED_GRADED_SUITE;
+            boolean resolved = current != null && silentMainOutcome(probe.solutionPath(), current, probe, solutionFiles, graded, runner) == Disposition.SURVIVED_GRADED_SUITE;
             return new SemanticMutantOutcome(probe, resolved ? Disposition.KILLED_BY_GRADED_SUITE : Disposition.INCONCLUSIVE);
         }).toList();
     }

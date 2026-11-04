@@ -257,9 +257,30 @@ class OutputOnlyMainProbeTest {
         built.clear();
         assertThat(OutputOnlyMainProbe.resolveStale(TESTS, Map.of(PATH, SOLUTION), PLAN, List.of(stale), silentFailsTranscript)).as("the transcript is still weighted")
                 .extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.INCONCLUSIVE);
+        assertThat(built).hasSize(1);
+        built.clear();
         assertThat(OutputOnlyMainProbe.resolveStale(TESTS, Map.of(), transcriptUngraded, List.of(stale), silentFailsTranscript)).as("the class was deleted")
                 .extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.INCONCLUSIVE);
         assertThat(built).isEmpty();
+    }
+
+    /** The source check also matches a test that calls main and asserts something unrelated; execution, not that check, decides whether a weighted test reads the output. */
+    @Test
+    void aStaleProbeIsResolvedByExecutionEvenWhenAnUnrelatedAssertionLooksLikeATranscriptCheck() {
+        String earlier = SOLUTION.replace("library.add(\"Dune\");", "library.add(\"Emma\");");
+        SemanticMutant stale = SemanticMutant.printedTranscript(PATH, earlier, OutputOnlyMainProbe.transcriptOnlyVariant(earlier, "Books: 1\n").orElseThrow(), "Library");
+        Map<String, String> unrelatedAssertion = Map.of("test/example/LibraryTest.java", """
+                class LibraryTest {
+                    private final java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                    @BeforeEach void capture() { System.setOut(new java.io.PrintStream(out)); }
+                    @Test void printsTheSize() { Library.main(new String[0]); assertEquals(1, new Library().size() + 1); }
+                }
+                """);
+        assertThat(OutputOnlyMainProbe.stillApplies(stale, unrelatedAssertion, PLAN)).isTrue();
+        SemanticMutantExecution.ProbeRunner passing = (mutant, ignored) -> new BuildSummary(1, 0, 0, false, List.of("printsTheSize()"), List.of(), List.of(), "");
+
+        assertThat(OutputOnlyMainProbe.resolveStale(unrelatedAssertion, Map.of(PATH, SOLUTION), PLAN, List.of(stale), passing)).extracting(SemanticMutantOutcome::disposition)
+                .containsExactly(Disposition.KILLED_BY_GRADED_SUITE);
     }
 
     /** Only main's body is replaced, so code that static initialization runs could still print the transcript; a passing silent run then proves nothing. */
