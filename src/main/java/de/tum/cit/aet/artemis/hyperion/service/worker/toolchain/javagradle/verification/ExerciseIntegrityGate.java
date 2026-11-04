@@ -166,8 +166,8 @@ public final class ExerciseIntegrityGate {
                 reasons.add("you deleted the seeded harness file " + repository + "/" + path + "; restore it unchanged.");
                 continue;
             }
-            if (repository.equals("tests") && path.equals(AresSecurityPolicy.PATH) && AresSecurityPolicy.onlyTestClassesChanged(seed.getValue(), produced)) {
-                continue;
+            if (repository.equals("tests") && path.equals(AresSecurityPolicy.PATH)) {
+                continue; // Server-owned: securityPolicyReasons requires exactly the policy the server derives from this seed.
             }
             List<String> seedNormalized = normalizedLines(seed.getValue());
             List<String> producedNormalized = normalizedLines(produced);
@@ -611,6 +611,21 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
+     * Requires the tests repository's Ares policy to be exactly the one the server derives from the seeded policy and the produced instructor test sources, so any other change
+     * to it is rejected. A missing policy is reported by {@link #javaAresConventionReasons}.
+     *
+     * @param seedTestsFiles     the tests repository before authoring
+     * @param producedTestsFiles the produced tests repository
+     * @return rejection reasons, empty when there is no policy to check or it is exactly the derived one
+     */
+    static List<String> securityPolicyReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles) {
+        if (producedTestsFiles == null || !producedTestsFiles.containsKey(AresSecurityPolicy.PATH)) {
+            return List.of();
+        }
+        return AresSecurityPolicy.reasons(seedTestsFiles == null ? Map.of() : seedTestsFiles, producedTestsFiles);
+    }
+
+    /**
      * Confines Java generation to exercise-package-scoped source artifacts. Files untouched since the seed stay valid, so an adaptation keeps its legacy tree; a newly added or
      * modified file may not impersonate a dependency, alter repository infrastructure, or escape the exercise package.
      */
@@ -679,7 +694,7 @@ public final class ExerciseIntegrityGate {
         paths.addAll(safeProduced.keySet());
         paths.stream().filter(path -> !Objects.equals(safeSeed.get(path), safeProduced.get(path))).filter(path -> {
             if (repository.equals("tests/") && path.equals(AresSecurityPolicy.PATH)) {
-                return false; // Its sole mutable field is checked against the produced test sources by AresConventions.
+                return false; // Server-owned; securityPolicyReasons checks it against the derived policy.
             }
             boolean inSourceRoot = allowedPrefixes.stream().anyMatch(path::startsWith);
             boolean allowedFile = path.endsWith(".java") || allowStructuralOracle && path.endsWith("/test.json");

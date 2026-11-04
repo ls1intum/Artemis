@@ -237,7 +237,9 @@ class SemanticMutantExecutionTest {
                 if (overlay.containsKey("tests/test/example/HyperionContractWitnessProbeTest.java")) {
                     assertThat(overlay).containsKey("tests/SecurityPolicy.yaml");
                     assertThat(overlay.get("tests/SecurityPolicy.yaml")).contains("    - \"example.HyperionContractWitnessProbeTest\"");
-                    assertThat(AresSecurityPolicy.onlyTestClassesChanged(TESTS.get("SecurityPolicy.yaml"), overlay.get("tests/SecurityPolicy.yaml"))).isTrue();
+                    // Everything but the test-class list stays as seeded.
+                    assertThat(AresSecurityPolicy.derive(overlay.get("tests/SecurityPolicy.yaml"), Map.of()))
+                            .isEqualTo(AresSecurityPolicy.derive(TESTS.get("SecurityPolicy.yaml"), Map.of()));
                 }
             }
             return null;

@@ -198,7 +198,9 @@ public class DifferentialVerifier {
         List<String> gradingContextSniffingReasons = ExerciseIntegrityGate.gradingContextSniffingReasons(request.producedTemplateFiles(), request.producedSolutionFiles());
         boolean noGradingContextSniffing = gradingContextSniffingReasons.isEmpty();
         reasons.addAll(gradingContextSniffingReasons);
-        List<String> javaAresConventionReasons = ExerciseIntegrityGate.javaAresConventionReasons(request.seedTestsFiles(), request.producedTestsFiles(), request.adaptation());
+        List<String> javaAresConventionReasons = new ArrayList<>(
+                ExerciseIntegrityGate.javaAresConventionReasons(request.seedTestsFiles(), request.producedTestsFiles(), request.adaptation()));
+        javaAresConventionReasons.addAll(ExerciseIntegrityGate.securityPolicyReasons(request.seedTestsFiles(), request.producedTestsFiles()));
         boolean javaAresConventionsHold = javaAresConventionReasons.isEmpty();
         reasons.addAll(javaAresConventionReasons);
         List<String> javaSourceLayoutReasons = ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons(exercise.packageName(), request.seedTestsFiles(), request.seedTemplateFiles(),
@@ -285,11 +287,15 @@ public class DifferentialVerifier {
         boolean templateCompiled = !template.timedOut() && template.tests() > 0;
         List<String> templateWronglyPassing = analysis.gradableTestsPassingOnTemplate();
         List<String> reasons = new ArrayList<>(includeStatementChecks ? analysis.actionableReasons() : analysis.testArtifactReasons());
-        boolean javaAresConventionsHold = true;
-        List<String> javaAresConventionReasons = testsRepositoryFiles.isEmpty()
-                ? List.of("Could not inspect the tests repository for Java/Ares conventions; run verify again after ensuring /workspace/tests is readable.")
-                : ExerciseIntegrityGate.javaAresConventionReasons(seedTestsFiles, testsRepositoryFiles, adaptation);
-        javaAresConventionsHold = javaAresConventionReasons.isEmpty();
+        List<String> javaAresConventionReasons = new ArrayList<>();
+        if (testsRepositoryFiles.isEmpty()) {
+            javaAresConventionReasons.add("Could not inspect the tests repository for Java/Ares conventions; run verify again after ensuring /workspace/tests is readable.");
+        }
+        else {
+            javaAresConventionReasons.addAll(ExerciseIntegrityGate.javaAresConventionReasons(seedTestsFiles, testsRepositoryFiles, adaptation));
+            javaAresConventionReasons.addAll(ExerciseIntegrityGate.securityPolicyReasons(seedTestsFiles, testsRepositoryFiles));
+        }
+        boolean javaAresConventionsHold = javaAresConventionReasons.isEmpty();
         reasons.addAll(javaAresConventionReasons);
 
         List<String> contractSpecifications = contractSpecifications(sandbox, sessionId);

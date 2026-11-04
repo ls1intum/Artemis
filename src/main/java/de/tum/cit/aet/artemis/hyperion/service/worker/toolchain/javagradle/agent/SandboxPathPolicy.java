@@ -27,7 +27,7 @@ final class SandboxPathPolicy {
     private static final Pattern MANAGED_BUILD_ROOT = Pattern.compile("(?:tests|solution|template)/");
 
     private static final Pattern MANAGED_BUILD_FILE = Pattern
-            .compile("(?:tests|solution|template)/(?:buildsrc/|gradle/|pom\\.xml|build\\.gradle|settings\\.gradle|gradle\\.properties|"
+            .compile("(?:tests|solution|template)/(?:buildsrc/|gradle/|pom\\.xml|build\\.gradle|settings\\.gradle|gradle\\.properties|securitypolicy\\.yaml|"
                     + "package\\.json|package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|tsconfig\\.json|cargo\\.toml|cargo\\.lock)");
 
     private static final Pattern STDERR_DISCARD = Pattern.compile("(?<!\\S)2\\s*+>\\s*+/dev/null(?=\\s|[;&|]|$)");
@@ -48,10 +48,8 @@ final class SandboxPathPolicy {
     static boolean isManagedBuildInfrastructurePath(String path) {
         for (String repository : List.of("solution/", "template/", "tests/")) {
             if (path.startsWith(repository)) {
+                // Includes tests/SecurityPolicy.yaml: Artemis writes its test-class list itself before every build.
                 String repositoryPath = path.substring(repository.length());
-                if (path.equals("tests/SecurityPolicy.yaml")) {
-                    return false; // Only the instructor test-class list may change; final verification checks the rest against the seed.
-                }
                 return repositoryPath.startsWith("buildSrc/") || repositoryPath.startsWith("gradle/") || repositoryPath.startsWith(".mvn/") || repositoryPath.startsWith(".m2/")
                         || repositoryPath.startsWith("target/") || repositoryPath.startsWith("build/") || ExerciseIntegrityGate.isHarnessFile(repositoryPath);
             }

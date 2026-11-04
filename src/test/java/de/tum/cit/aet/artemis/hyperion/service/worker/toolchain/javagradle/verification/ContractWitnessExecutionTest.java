@@ -179,7 +179,9 @@ class ContractWitnessExecutionTest {
                 Map<String, String> overlay = WorkspaceArchive.readTar(archive, "");
                 assertThat(overlay).containsKeys("tests/test/example/HyperionContractWitnessProbeTest.java", "tests/SecurityPolicy.yaml");
                 assertThat(overlay.get("tests/SecurityPolicy.yaml")).contains("    - \"example.HyperionContractWitnessProbeTest\"");
-                assertThat(AresSecurityPolicy.onlyTestClassesChanged(TESTS.get("SecurityPolicy.yaml"), overlay.get("tests/SecurityPolicy.yaml"))).isTrue();
+                // Everything but the test-class list stays as seeded.
+                assertThat(AresSecurityPolicy.derive(overlay.get("tests/SecurityPolicy.yaml"), Map.of()))
+                        .isEqualTo(AresSecurityPolicy.derive(TESTS.get("SecurityPolicy.yaml"), Map.of()));
             }
             return null;
         }).when(sandbox).copyIn(anyString(), eq("/workspace"), any());

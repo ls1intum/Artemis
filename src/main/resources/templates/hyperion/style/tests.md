@@ -57,8 +57,8 @@ tell a student what rule failed and why; the message is part of the pedagogy.
 
 Use Java 25 and the current Ares 2 harness. Use `org.junit.jupiter.api.Test`, `de.tum.cit.ase.ares.api.jupiter.Public`,
 `de.tum.cit.ase.ares.api.Policy`, and `de.tum.cit.ase.ares.api.StrictTimeout`. Keep an explicit
-`@Policy(value = "SecurityPolicy.yaml")` on every test class. Update only the policy's instructor-test
-class list to match the test source files; never change its supervised package or resource permissions.
+`@Policy(value = "SecurityPolicy.yaml")` on every test class. Artemis manages `SecurityPolicy.yaml` and
+registers every instructor test class in it before each build; never edit it.
 Use `import static de.tum.cit.ase.ares.api.util.ReflectionTestUtils.*;` for reflection helpers.
 Resolve declared signatures with `getClazz`, `getConstructor`, and `getMethod`; cast the Object returned by
 `invokeMethod` to the declared return type. For `assertThrows`, use `invokeMethodRethrowing(instance,

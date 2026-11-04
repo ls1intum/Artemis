@@ -395,6 +395,22 @@ class SandboxAgentToolsTest {
         assertThat(sandbox.execCount()).isZero();
     }
 
+    /** Artemis writes the Ares policy itself before every build, so neither a structured edit nor a shell write may touch it. */
+    @Test
+    void theServerOwnedSecurityPolicyIsNotWritable() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.writeFile("tests/SecurityPolicy.yaml", "theFollowingClassesAreTestClasses: []")).startsWith("ERROR: do not modify tests/SecurityPolicy.yaml");
+        assertThat(tools.deleteFile("tests/SecurityPolicy.yaml")).startsWith("ERROR: do not modify tests/SecurityPolicy.yaml");
+        assertThat(sandbox.execCount()).isZero();
+        sandbox.files().put("/workspace/tests/SecurityPolicy.yaml", "regardingPackageImports: [ ]\n");
+        assertThat(tools.editFile("tests/SecurityPolicy.yaml", "[ ]", "[ x ]")).startsWith("ERROR: do not modify tests/SecurityPolicy.yaml");
+        assertThat(sandbox.files()).containsEntry("/workspace/tests/SecurityPolicy.yaml", "regardingPackageImports: [ ]\n");
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("sed -i 's/a/b/' tests/SecurityPolicy.yaml")).isTrue();
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat tests/SecurityPolicy.yaml")).isFalse();
+    }
+
     @Test
     void writeFile_rejectsWorkspaceBuildInfrastructureOutsideTheExerciseRepositories() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();

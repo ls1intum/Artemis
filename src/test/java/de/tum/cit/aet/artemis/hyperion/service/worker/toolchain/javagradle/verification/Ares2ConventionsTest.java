@@ -48,21 +48,38 @@ class Ares2ConventionsTest {
     }
 
     @Test
-    void canonicalAres2HarnessAllowsOnlyItsInstructorTestListToChange() throws IOException {
+    void theServerDerivedPolicyPassesEveryGate() throws IOException {
         Map<String, String> seed = harness();
         Map<String, String> candidate = candidate();
+        assertThat(AresSecurityPolicy.derive(seed.get(AresSecurityPolicy.PATH), candidate)).isEqualTo(candidate.get(AresSecurityPolicy.PATH));
         assertThat(ExerciseIntegrityGate.harnessTamperingReasons(seed, candidate, true)).isEmpty();
         assertThat(ExerciseIntegrityGate.javaAresConventionReasons(seed, candidate, false)).isEmpty();
+        assertThat(ExerciseIntegrityGate.securityPolicyReasons(seed, candidate)).isEmpty();
         assertThat(ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons("de.test", seed, Map.of(), Map.of(), candidate, Map.of(), Map.of())).isEmpty();
     }
 
+    /** Derivation reads only the seed and the test sources, so a policy the agent rewrote, even dropping comments or entries, is replaced by exactly the seeded form. */
+    @Test
+    void derivationRoundTripsFromTheSeedWhateverTheLivePolicyContains() throws IOException {
+        Map<String, String> seed = harness();
+        Map<String, String> rewritten = candidate();
+        rewritten.put(AresSecurityPolicy.PATH, "theFollowingClassesAreTestClasses: [de.test.StackTest]\n");
+
+        String derived = AresSecurityPolicy.derive(seed.get(AresSecurityPolicy.PATH), rewritten);
+
+        assertThat(derived).isEqualTo(candidate().get(AresSecurityPolicy.PATH)).contains("# Ares 2 security policy", "importTheFollowingPackage: \"org.apache.commons.lang3\"");
+        assertThat(AresSecurityPolicy.derive(derived, rewritten)).isEqualTo(derived);
+        assertThat(ExerciseIntegrityGate.securityPolicyReasons(seed, rewritten)).singleElement().asString().contains("differs from the policy Artemis derives",
+                "de.test.StackTest");
+    }
+
     @ParameterizedTest
-    @ValueSource(strings = { "theSupervisedCodeUsesTheFollowingPackage: \"de.test\"", "regardingNetworkConnections: [ ]", "regardingCommandExecutions: [ ]" })
-    void doesNotAllowTheAgentToChangePermissionsOrSupervisedPackage(String field) throws IOException {
+    @ValueSource(strings = { "theSupervisedCodeUsesTheFollowingPackage: \"de.test\"", "regardingNetworkConnections: [ ]", "regardingCommandExecutions: [ ]",
+            "# Docs: https://ls1intum.github.io/Ares2/instructor/policy-reference" })
+    void rejectsAnyChangeOutsideTheServerOwnedTestClassList(String field) throws IOException {
         var files = candidate();
         files.put(AresSecurityPolicy.PATH, files.get(AresSecurityPolicy.PATH).replace(field, field + " # changed"));
-        assertThat(ExerciseIntegrityGate.harnessTamperingReasons(harness(), files, true)).isNotEmpty();
-        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(harness(), files, false)).isNotEmpty();
+        assertThat(ExerciseIntegrityGate.securityPolicyReasons(harness(), files)).isNotEmpty();
     }
 
     @ParameterizedTest
@@ -70,7 +87,8 @@ class Ares2ConventionsTest {
     void doesNotAllowStudentOrInfrastructureExemptions(String declared) throws IOException {
         var files = candidate();
         files.put(AresSecurityPolicy.PATH, files.get(AresSecurityPolicy.PATH).replace("de.test.StackTest", declared));
-        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(harness(), files, false)).isNotEmpty();
+        assertThat(ExerciseIntegrityGate.securityPolicyReasons(harness(), files)).isNotEmpty();
+        assertThat(ExerciseIntegrityGate.securityPolicyReasons(Map.of(), files)).as("without a seed the produced list is still checked").isNotEmpty();
     }
 
     @ParameterizedTest
@@ -108,9 +126,8 @@ class Ares2ConventionsTest {
         files.put("test/de/test/ClassTest.java", "package de.test; class ClassTest {}");
         String registered = AresSecurityPolicy.registerTestClasses(files);
         assertThat(registered).contains("de.test.ClassTest", "de.test.StackTest");
-        assertThat(AresSecurityPolicy.onlyTestClassesChanged(files.get(AresSecurityPolicy.PATH), registered)).isTrue();
         files.put(AresSecurityPolicy.PATH, registered);
-        assertThat(AresSecurityPolicy.reasons(harness(), files)).isEmpty();
+        assertThat(ExerciseIntegrityGate.securityPolicyReasons(harness(), files)).isEmpty();
     }
 
 }
