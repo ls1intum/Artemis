@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Holds the SPEC.md content that PASSED the specification gate, per sandbox session.
  * <p>
@@ -14,7 +16,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ApprovedSpecRegistry {
 
-    private final Map<String, String> approvedBySession = new ConcurrentHashMap<>();
+    private record Approval(@Nullable String specification, boolean assessmentReopened) {
+    }
+
+    private final Map<String, Approval> approvedBySession = new ConcurrentHashMap<>();
 
     /**
      * Records the specification a session's spec gate approved. Approval stays immutable until the server explicitly reopens assessment review: repeating the same value is
@@ -25,10 +30,12 @@ public class ApprovedSpecRegistry {
      */
     public void approve(String sessionId, String spec) {
         if (sessionId != null && spec != null && !spec.isBlank()) {
-            String existing = approvedBySession.putIfAbsent(sessionId, spec);
-            if (existing != null && !existing.equals(spec)) {
-                throw new IllegalStateException("A different specification is already approved for sandbox session " + sessionId);
-            }
+            approvedBySession.compute(sessionId, (key, existing) -> {
+                if (existing != null && existing.specification() != null && !existing.specification().equals(spec)) {
+                    throw new IllegalStateException("A different specification is already approved for sandbox session " + sessionId);
+                }
+                return new Approval(spec, existing != null && existing.assessmentReopened());
+            });
         }
     }
 
@@ -45,7 +52,8 @@ public class ApprovedSpecRegistry {
         if (sessionId == null || expected == null || amended == null || amended.isBlank()) {
             return false;
         }
-        return approvedBySession.replace(sessionId, expected, amended);
+        Approval current = approvedBySession.get(sessionId);
+        return current != null && expected.equals(current.specification()) && approvedBySession.replace(sessionId, current, new Approval(amended, current.assessmentReopened()));
     }
 
     /**
@@ -54,7 +62,8 @@ public class ApprovedSpecRegistry {
      *         non-staged language)
      */
     public Optional<String> approved(String sessionId) {
-        return sessionId == null ? Optional.empty() : Optional.ofNullable(approvedBySession.get(sessionId));
+        Approval current = sessionId == null ? null : approvedBySession.get(sessionId);
+        return current == null ? Optional.empty() : Optional.ofNullable(current.specification());
     }
 
     /**
@@ -62,10 +71,21 @@ public class ApprovedSpecRegistry {
      *
      * @param sessionId the sandbox session whose contract is being reviewed
      * @param expected  the exact approved specification that the counterexample challenged
-     * @return whether that approval was revoked; false when a different contract is current
+     * @return whether that approval was revoked; false when a different contract is current or this session already used its redesign
      */
     public boolean reopenForAssessment(String sessionId, String expected) {
-        return approvedBySession.remove(sessionId, expected);
+        Approval current = sessionId == null ? null : approvedBySession.get(sessionId);
+        return current != null && !current.assessmentReopened() && expected != null && expected.equals(current.specification())
+                && approvedBySession.replace(sessionId, current, new Approval(null, true));
+    }
+
+    /**
+     * @param sessionId the sandbox session
+     * @return whether this session has already consumed its server-owned assessment redesign, across all authoring attempts
+     */
+    public boolean assessmentReopened(String sessionId) {
+        Approval current = sessionId == null ? null : approvedBySession.get(sessionId);
+        return current != null && current.assessmentReopened();
     }
 
     public void forget(String sessionId) {

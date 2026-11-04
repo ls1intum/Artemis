@@ -301,7 +301,13 @@ unchanged template, the staged controller can reopen the exact specification onc
 review a coherent redesign, and rebuild the artifacts under the existing shared
 turn and time limits. The agent cannot reopen the contract itself. A second proven
 bypass, or insufficient budget for redesign, stops generation before publication;
-infrastructure failures do not authorize a contract change. If the approved redesign
+infrastructure failures do not authorize a contract change. With staged generation
+enabled, authoritative verification repeats the eligible assessment check before
+creating any checkpoint, including candidates authored by later mechanical repairs.
+Before the first checkpoint, a new executed counterexample can use the same single
+session-wide redesign allowance in the next existing authoring attempt. Once that
+allowance is used, or a checkpoint exists, a proven bypass is rejected without
+reopening the contract or replacing the earlier checkpoint. If the approved redesign
 exhausts an authoring attempt before its executable stage passes, that stage can
 resume once in the next existing authoring attempt. It keeps the current workspace,
 exact approval and original authoring deadline; it does not repeat concept or SPEC

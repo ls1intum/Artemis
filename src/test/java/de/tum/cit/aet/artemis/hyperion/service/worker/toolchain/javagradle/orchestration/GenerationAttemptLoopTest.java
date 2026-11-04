@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeI
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentTranscriptWriter;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
@@ -369,6 +370,91 @@ class GenerationAttemptLoopTest {
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
                 any())).thenReturn(paused);
         return continuation;
+    }
+
+    @Test
+    void aTranscriptBypassAuthoredByAMechanicalRetryNeverBecomesACheckpoint() {
+        stubSchedulerFixture();
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("missing executable artifacts"), accepted());
+        var bypass = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.SURVIVED_GRADED_SUITE)));
+
+        GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 2, 0, true);
+        loop.run();
+
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNull();
+        verify(service, never()).preserveCandidate(any(), any(), anyString(), any());
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
+    }
+
+    @Test
+    void anAuthoritativeBypassUsesAnExistingAttemptForSpecReapprovalBeforeTheFirstCheckpoint() {
+        stubSchedulerFixture();
+        AtomicInteger attempts = new AtomicInteger();
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenAnswer(invocation -> {
+                    attempts.set(1);
+                    return new StagedGenerationRunner.StagedRunOutcome(completed(), null);
+                });
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            attempts.set(2);
+            return loopSession(completed());
+        });
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any())).thenAnswer(invocation -> new GenerationWorkspace.RepositoryExtraction(
+                Map.of("test/SchedulerTest.java", "class SchedulerTest { int revision" + attempts.get() + "; }"), false));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("missing executable artifacts"), accepted(),
+                accepted());
+        var bypass = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
+        AtomicInteger executions = new AtomicInteger();
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            Set<String> skipped = invocation.getArgument(8);
+            if (skipped.contains(bypass.solutionPath())) {
+                return List.of();
+            }
+            executions.incrementAndGet();
+            return List.of(new SemanticMutantOutcome(bypass, attempts.get() == 2 ? Disposition.SURVIVED_GRADED_SUITE : Disposition.KILLED_BY_GRADED_SUITE));
+        });
+        var continuation = new StagedAssessmentContinuation(java.time.Instant.now(), 0, "approved", "executed bypass", List.of(), List.of(), GenerationStage.SPEC);
+        when(stagedGenerationRunner.requestAssessmentRedesign(any(), anyString(), any(), anyString(), any())).thenReturn(continuation);
+        when(stagedGenerationRunner.resume(Mockito.eq(continuation), any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(),
+                anyBoolean(), anyBoolean(), any(), any())).thenAnswer(invocation -> {
+                    assertThat(invocation.<String>getArgument(4)).isEqualTo(invocation.<String>getArgument(5));
+                    attempts.set(3);
+                    return new StagedGenerationRunner.StagedRunOutcome(completed(), null);
+                });
+        ProviderUsageSink accounting = mock(ProviderUsageSink.class);
+        usageSink = accounting;
+
+        GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 3, 0, true);
+        loop.run();
+
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+        assertThat(loop.lastMechanicallyVerifiedCandidate().problemStatement()).isEqualTo("PROBLEM STATEMENT 3");
+        assertThat(executions).hasValue(2);
+        verify(accounting, times(3)).recordAttempt();
+    }
+
+    @Test
+    void cancellationDuringAuthoritativeAssessmentCannotRevokeTheApprovedContract() {
+        stubSchedulerFixture();
+        AtomicBoolean cancelled = new AtomicBoolean();
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+        var bypass = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            cancelled.set(true);
+            return List.of(new SemanticMutantOutcome(bypass, Disposition.SURVIVED_GRADED_SUITE));
+        });
+
+        GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 2, 0, true, cancelled::get);
+        loop.run();
+
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CANCELLED);
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNull();
+        verify(stagedGenerationRunner, never()).requestAssessmentRedesign(any(), anyString(), any(), anyString(), any());
     }
 
     @Test

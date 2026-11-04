@@ -328,6 +328,17 @@ public class StagedGenerationRunner {
         return conceptFindings.isEmpty() ? outcome : outcome.withConceptFindings(conceptFindings);
     }
 
+    @Nullable
+    StagedAssessmentContinuation requestAssessmentRedesign(GenerationInput exercise, String sessionId, Instant startedAt, String evidence, List<String> conceptFindings) {
+        String expected = approvedSpecs.approved(sessionId).orElse(null);
+        if (expected == null || !approvedSpecs.reopenForAssessment(sessionId, expected)) {
+            return null;
+        }
+        transcriptWriter.writeAudit(exercise.id(), "assessment-redesign-authoritative", evidence);
+        return new StagedAssessmentContinuation(startedAt, 0, expected, SpecificationReviewPrompts.assessmentRedesignPrompt(evidence), List.of(), conceptFindings,
+                GenerationStage.SPEC);
+    }
+
     private StagedRunOutcome runStages(GenerationInput exercise, SandboxAgentTools baseTools, SubmitVetoAware tools, String briefPrompt, String sourceBrief,
             Map<String, String> seedTestsFiles, InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable Consumer<String> progress, Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies,
@@ -351,7 +362,7 @@ public class StagedGenerationRunner {
         // loop keeps the best rather than the most recent. Reset whenever the concept is replaced: a specification written for a rejected concept must never come back.
         String bestSpecSnapshot = null;
         // The approved specification as last handed to the spec sink, so a server-side ownership correction during TESTS is published as well.
-        String publishedSpec = continuation == null ? null : continuation.approvedSpecification();
+        String publishedSpec = continuation == null || continuation.stage() == GenerationStage.SPEC ? null : continuation.approvedSpecification();
         List<String> bestSpecFindings = List.of();
         int bestSpecFindingCount = Integer.MAX_VALUE;
         List<String> unresolvedSpecificationFindings = continuation == null ? List.of() : continuation.specificationFindings();
@@ -366,10 +377,13 @@ public class StagedGenerationRunner {
         int specificationReviewNumber = 0;
         boolean assessmentRedesignUsed = continuation != null;
         boolean assessmentVerified = false;
-        String assessmentRedesignFeedback = null;
+        String assessmentRedesignFeedback = continuation != null && continuation.stage() == GenerationStage.SPEC ? continuation.feedback() : null;
         baseTools.configureStructuralOracleRefresh(structuralSeedHook);
 
-        if (continuation != null && !approvedSpecs.approved(sessionId).filter(continuation.approvedSpecification()::equals).isPresent()) {
+        boolean continuationApproved = continuation == null
+                || (continuation.stage() == GenerationStage.SPEC ? approvedSpecs.assessmentReopened(sessionId) && approvedSpecs.approved(sessionId).isEmpty()
+                        : approvedSpecs.approved(sessionId).filter(continuation.approvedSpecification()::equals).isPresent());
+        if (!continuationApproved) {
             return finishWithCause(exercise, AgentLoopResult.Status.ERROR, 0, "", "The approved contract changed before its executable continuation.", archivedConversation,
                     conversation, unresolvedSpecificationFindings);
         }
@@ -409,7 +423,7 @@ public class StagedGenerationRunner {
             }
         }
 
-        for (int index = continuation == null ? 0 : STAGE_ORDER.indexOf(GenerationStage.TESTS); index < STAGE_ORDER.size(); index++) {
+        for (int index = continuation == null ? 0 : STAGE_ORDER.indexOf(continuation.stage()); index < STAGE_ORDER.size(); index++) {
             GenerationStage stage = STAGE_ORDER.get(index);
             if (stage == GenerationStage.STATEMENT && assessmentRedesignUsed && !assessmentVerified) {
                 return finishWithCause(exercise, AgentLoopResult.Status.ERROR, totalTurns, lastFinalMessage,
@@ -447,7 +461,7 @@ public class StagedGenerationRunner {
             String systemPrompt = systemPromptService.buildStage(exercise, stage);
 
             String gateFeedback = stage == GenerationStage.SPEC ? assessmentRedesignFeedback
-                    : continuation != null && stage == GenerationStage.TESTS ? continuation.feedback() : null;
+                    : continuation != null && continuation.stage() == GenerationStage.TESTS && stage == GenerationStage.TESTS ? continuation.feedback() : null;
             if (stage == GenerationStage.SPEC) {
                 assessmentRedesignFeedback = null;
             }

@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradl
 import static de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration.GenerationAttemptSupport.copyProducedFiles;
 import static de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration.GenerationAttemptSupport.hasProducedChanges;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.SubmitVetoAware;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentTranscriptWriter;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration.GenerationProgressSink.Phase;
@@ -195,6 +197,8 @@ class GenerationAttemptLoop {
     @Nullable
     private StagedAssessmentContinuation stagedContinuation;
 
+    private final Instant stagedAuthoringStartedAt = Instant.now();
+
     @Nullable
     private List<Message> carriedConversation;
 
@@ -300,16 +304,9 @@ class GenerationAttemptLoop {
         for (int attempt = 1; attempt <= maxGenerationAttempts; attempt++) {
             runAttempt(attempt);
             if (stagedContinuation != null) {
-                if (cancelled.getAsBoolean()) {
-                    return cancelledOutcome(cancelledResult(loopResult));
-                }
-                if (attempt == maxGenerationAttempts || ++mechanicalAttemptsBeforeAnyRepair >= MAX_MECHANICAL_ATTEMPTS) {
-                    stagedTerminationReason = attempt == maxGenerationAttempts ? TerminationReason.ATTEMPT_CAP_REACHED : TerminationReason.MECHANICAL_REPAIR_EXHAUSTED;
-                    loopResult = new AgentLoopResult(AgentLoopResult.Status.ERROR, loopResult.turns(), loopResult.finalMessage(),
-                            "No existing authoring attempt remains to complete the redesigned executable assessment.");
+                if (!canContinueAssessment(attempt)) {
                     return outcomeIfAgentStopped();
                 }
-                emit("The redesigned executable stage reached this attempt's turn limit; continuing its current workspace in the next existing authoring attempt.");
                 continue;
             }
             GenerationOutcome stoppedOutcome = outcomeIfAgentStopped();
@@ -362,7 +359,8 @@ class GenerationAttemptLoop {
                 publishOwnershipCorrection(specDocumentSnapshot);
             }
             emitPhase(Phase.VERIFYING, "Building the solution and starter code against the generated tests");
-            verification = verifyCandidate(artifacts, specDocumentSnapshot);
+            var assessed = verifyCandidate(artifacts, specDocumentSnapshot);
+            verification = assessed.verification();
             if (ownershipCorrection.isPresent() && !verification.mechanicallyVerified()) {
                 // The template still carries the given copy that cannot compile; the notice tells the next attempt what it may now stub.
                 List<String> reasons = new ArrayList<>(List.of(ownershipCorrection.get()));
@@ -371,6 +369,22 @@ class GenerationAttemptLoop {
                         verification.templateFailureEvidence());
             }
             emit(verification.report());
+            if (!assessed.counterexamples().isEmpty()) {
+                if (cancelled.getAsBoolean()) {
+                    return cancelledOutcome(cancelledResult(loopResult));
+                }
+                stagedContinuation = lastMechanicallyVerifiedCandidate == null && attempt < maxGenerationAttempts && mechanicalAttemptsBeforeAnyRepair + 1 < MAX_MECHANICAL_ATTEMPTS
+                        ? stagedGenerationRunner.requestAssessmentRedesign(exercise, sessionId, stagedAuthoringStartedAt, verification.report(), unresolvedConceptFindings)
+                        : null;
+                if (stagedContinuation == null) {
+                    terminationReason = TerminationReason.NO_SCHEDULABLE_SURFACE;
+                    break;
+                }
+                if (!canContinueAssessment(attempt)) {
+                    return outcomeIfAgentStopped();
+                }
+                continue;
+            }
             if (!verification.mechanicallyVerified() && artifacts.extractionFailed().isEmpty()) {
                 lastRejectedVerificationRequest = artifacts.verificationRequest();
             }
@@ -448,6 +462,21 @@ class GenerationAttemptLoop {
         return null;
     }
 
+    private boolean canContinueAssessment(int attempt) {
+        if (cancelled.getAsBoolean()) {
+            loopResult = cancelledResult(loopResult);
+            return false;
+        }
+        if (attempt == maxGenerationAttempts || ++mechanicalAttemptsBeforeAnyRepair >= MAX_MECHANICAL_ATTEMPTS) {
+            stagedTerminationReason = attempt == maxGenerationAttempts ? TerminationReason.ATTEMPT_CAP_REACHED : TerminationReason.MECHANICAL_REPAIR_EXHAUSTED;
+            loopResult = new AgentLoopResult(AgentLoopResult.Status.ERROR, loopResult.turns(), loopResult.finalMessage(),
+                    "No existing authoring attempt remains to complete the redesigned executable assessment.");
+            return false;
+        }
+        emit("Continuing the assessment from its current workspace in the next existing authoring attempt.");
+        return true;
+    }
+
     /** Runs staged authoring for the first attempt and a scoped agent loop for later repairs. */
     private void runAttempt(int attempt) {
         // Pushed before any work: an attempt abandoned at a gate must still be counted, and a count derived from the returned outcome is missing exactly for the runs an
@@ -463,7 +492,8 @@ class GenerationAttemptLoop {
         if (stagedAttempt) {
             emitPhase(stagedContinuation == null ? Phase.DESIGNING : Phase.REPAIRING,
                     stagedContinuation == null ? "Designing the learning task and creating the specification, code, and tests"
-                            : "Completing the approved redesigned assessment from its current workspace");
+                            : stagedContinuation.stage() == GenerationStage.SPEC ? "Revising the assessment contract from executed evidence"
+                                    : "Completing the approved redesigned assessment from its current workspace");
             Consumer<String> publishSpec = spec -> {
                 specSnapshot.set(spec);
                 specObserver.accept(spec);
@@ -472,7 +502,8 @@ class GenerationAttemptLoop {
                     ? stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot, sandbox, sessionId, cancelled, usageSink, progress,
                             () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies, conceptSelectionApplies, publishSpec,
                             capture::recordStageBoundary)
-                    : stagedGenerationRunner.resume(stagedContinuation, exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot, sandbox, sessionId, cancelled,
+                    : stagedGenerationRunner.resume(stagedContinuation, exercise, baseTools, tools,
+                            stagedContinuation.stage() == GenerationStage.SPEC ? reviewBrief : currentPrompt, reviewBrief, testsSeedSnapshot, sandbox, sessionId, cancelled,
                             usageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies, conceptSelectionApplies,
                             publishSpec, capture::recordStageBoundary);
             stagedContinuation = stagedOutcome.assessmentContinuation();
@@ -594,7 +625,7 @@ class GenerationAttemptLoop {
     }
 
     /** Runs the authoritative differential build from fresh directories, restoring the candidate after every sandbox reset. */
-    private VerificationResult verifyCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
+    private ExecutableEvidenceLedger.AssessmentVerdict verifyCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         Map<RepositoryRole, Map<String, String>> candidateFiles = artifacts.candidateFiles();
         String candidateProblemStatement = producedProblemStatement;
         String testPlanSnapshot = artifacts.testPlanJson();
@@ -604,10 +635,13 @@ class GenerationAttemptLoop {
                     candidateProblemStatement, specDocumentSnapshot, testPlanSnapshot);
         };
         VerificationResult result = verifyWithInfrastructureRetry(artifacts.verificationRequest(), restoreCandidate);
-        if (!result.mechanicallyVerified()) {
-            return result;
+        if (result.mechanicallyVerified()) {
+            result = executableEvidence.recheckAfterVerification(result, candidateFiles, testPlanSnapshot, candidateBeforeCurrentRepair != null, seededStructuralTests,
+                    restoreCandidate);
         }
-        return executableEvidence.recheckAfterVerification(result, candidateFiles, testPlanSnapshot, candidateBeforeCurrentRepair != null, seededStructuralTests, restoreCandidate);
+        return useStagedGeneration && result.mechanicallyVerified()
+                ? executableEvidence.assessBeforeCheckpoint(result, candidateFiles, testPlanSnapshot, seededStructuralTests, restoreCandidate)
+                : new ExecutableEvidenceLedger.AssessmentVerdict(result, List.of());
     }
 
     private VerificationResult verifyWithInfrastructureRetry(VerificationRequest request, Runnable restoreCandidate) {

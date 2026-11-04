@@ -307,6 +307,28 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
+    void anAuthoritativeCounterexampleReentersNormalSpecReviewOnlyOncePerSession() {
+        approvedSpecs.approve("s", VALID_SPEC_DOCUMENT);
+        var continuation = runner.requestAssessmentRedesign(exercise, "s", java.time.Instant.now(), "executed print-only bypass", List.of("concept objection"));
+        assertThat(continuation).isNotNull();
+        assertThat(continuation.stage()).isEqualTo(GenerationStage.SPEC);
+        assertThat(approvedSpecs.approved("s")).isEmpty();
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+
+        var resumed = resume(continuation);
+
+        assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(resumed.unresolvedConceptFindings()).containsExactly("concept objection");
+        assertThat(approvedSpecs.approved("s")).hasValue(VALID_SPEC_DOCUMENT);
+        assertThat(runner.requestAssessmentRedesign(exercise, "s", java.time.Instant.now(), "another proof", List.of())).isNull();
+        InOrder stages = inOrder(baseTools);
+        stages.verify(baseTools).enterStage(GenerationStage.SPEC);
+        stages.verify(baseTools).enterStage(GenerationStage.TESTS);
+        stages.verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
     void anApprovedRedesignResumesOnlyItsExecutableStageWithinAnotherExistingAttempt() {
         StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
         assertThat(approvedSpecs.approved("s")).hasValue(continuation.approvedSpecification());
@@ -363,8 +385,7 @@ class StagedGenerationRunnerTest {
     @Test
     void anExecutableContinuationRequiresItsExactApprovedSpecification() {
         StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
-        assertThat(approvedSpecs.reopenForAssessment("s", continuation.approvedSpecification())).isTrue();
-        approvedSpecs.approve("s", "replacement approval");
+        assertThat(approvedSpecs.amend("s", continuation.approvedSpecification(), "replacement approval")).isTrue();
 
         var resumed = resume(continuation);
 

@@ -109,6 +109,36 @@ final class ExecutableEvidenceLedger {
         this.emitter = emitter;
     }
 
+    record AssessmentVerdict(VerificationResult verification, List<SemanticMutant> counterexamples) {
+
+        AssessmentVerdict {
+            counterexamples = List.copyOf(counterexamples);
+        }
+    }
+
+    /** The authoritative checkpoint boundary also checks candidates authored by ordinary mechanical retries, before any verified snapshot can be published. */
+    AssessmentVerdict assessBeforeCheckpoint(VerificationResult result, Map<RepositoryRole, Map<String, String>> candidateFiles, @Nullable String plan,
+            SeededStructuralTests seeded, Runnable restoreCandidate) {
+        Map<String, SemanticMutantOutcome> known = transcriptVerdicts(candidateFiles, plan);
+        List<SemanticMutantOutcome> outcomes = new ArrayList<>(known.values());
+        List<SemanticMutantOutcome> probed = verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryRole.TESTS, Map.of()),
+                candidateFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()), plan, seeded, known.keySet(),
+                restoreCandidate);
+        rememberTranscriptVerdicts(probed);
+        outcomes.addAll(probed);
+        outcomes.forEach(evidence::record);
+        List<SemanticMutant> counterexamples = outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).map(SemanticMutantOutcome::mutant)
+                .toList();
+        if (counterexamples.isEmpty()) {
+            return new AssessmentVerdict(result, List.of());
+        }
+        List<String> reasons = new ArrayList<>(result.reasons());
+        counterexamples.forEach(mutant -> reasons.add("The executed assessment accepts a print-only replacement in " + mutant.solutionPath()
+                + ". The graded tests must distinguish the learner-owned operations before a candidate can become a checkpoint."));
+        return new AssessmentVerdict(new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), reasons, result.templateFailureEvidence()),
+                counterexamples);
+    }
+
     /**
      * Rechecks a mechanically verified candidate against the mutants the in-flight repair must kill and, while a repair is in flight, the earlier kills, each in the form its
      * current source allows. Every outcome goes to {@link MutantEvidence}, from which credit, regressions and unavailable evidence follow. Targets keyed to a changed reference
