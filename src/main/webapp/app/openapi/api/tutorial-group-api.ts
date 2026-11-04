@@ -123,7 +123,7 @@ export class TutorialGroupApi {
      */
     getTitle(tutorialGroupId: number): Observable<string> {
         const url = `${this.basePath}/api/tutorialgroup/tutorial-groups/${tutorialGroupId}/title`;
-        return this.http.get<string>(url);
+        return this.http.get(url, { responseType: 'text' });
     }
 
     /**

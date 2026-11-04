@@ -9,6 +9,7 @@ package de.tum.cit.aet.artemis.localci.config;
  * Picked up automatically by {@code LegacyApiPathDeprecationInterceptor} through the multi-path {@code @RequestMapping} convention, and by
  * {@code FeatureUsageRegistry#canonicalPath}, which counts the endpoint under the canonical prefix, the first entry of the array.
  */
+// REMOVE_IN_ARTEMIS_11 (Jenkins): this prefix is pinned by deployed Jenkins job definitions, remove the class with Jenkins support
 public final class LocalCILegacyRestPaths {
 
     /**

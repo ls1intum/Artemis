@@ -51,14 +51,7 @@ describe('TutorialGroupsChecklistComponent', () => {
                     ),
                 );
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
-                getOneOfCourseSpy = vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(
-                    of(
-                        new HttpResponse({
-                            body: generateExampleTutorialGroupsConfigurationDTO({}),
-                            status: 200,
-                        }),
-                    ),
-                );
+                getOneOfCourseSpy = vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(generateExampleTutorialGroupsConfigurationDTO({})));
             });
     });
 

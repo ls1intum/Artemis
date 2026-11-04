@@ -215,6 +215,7 @@ public class FileUploadExerciseResource {
         FileUploadExercise fileUploadExercise = inputDTO.toEntity();
         // File upload exercises are always assessed manually.
         fileUploadExercise.setAssessmentType(AssessmentType.MANUAL);
+        fileUploadExercise.validateTitle();
         // validates general settings: points, dates
         fileUploadExercise.validateGeneralSettings();
         // Validate the new file upload exercise
