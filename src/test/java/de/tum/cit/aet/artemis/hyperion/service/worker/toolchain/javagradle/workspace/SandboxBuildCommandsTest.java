@@ -7,9 +7,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ByteArrayResource;
@@ -32,6 +36,37 @@ class SandboxBuildCommandsTest {
 
         assertThat(script).doesNotContain("cp -a /root/.gradle/. ").contains("[ \"$entry\" = /root/.gradle/wrapper ] && continue",
                 "for entry in /root/.gradle/wrapper/dists/*/*/*; do", "if [ -d \"$entry\" ]; then ln -s \"$entry\" \"$target\"", "else cp -a \"$entry\" \"$target\"");
+    }
+
+    /** Executes the generated Gradle-home preparation against a fake image home, so a broken loop, quoting, or link target fails here instead of in the sandbox. */
+    @Test
+    void theGeneratedGradleHomePreparationLinksDistributionsAndCopiesEverythingElse(@TempDir Path directory) throws Exception {
+        Assumptions.assumeTrue(Files.isExecutable(Path.of("/bin/sh")), "a POSIX shell is required");
+        String script = new SandboxBuildCommands(new GenerationResources()).verifyScriptContent(input);
+        String preparation = script.substring(script.indexOf("GRADLE_WRAPPERS=$(find"), script.indexOf("if [ \"$LANE\" = \"behavior-isolated\" ]"));
+        Path imageHome = directory.resolve("image-gradle");
+        Path distribution = Files.createDirectories(imageHome.resolve("wrapper/dists/gradle-9-bin/hash/gradle-9"));
+        Files.writeString(distribution.resolve("lib.jar"), "jar");
+        Files.writeString(imageHome.resolve("wrapper/dists/gradle-9-bin/hash/gradle-9-bin.zip.lck"), "lock");
+        Files.createDirectories(imageHome.resolve("caches/modules-2"));
+        Files.writeString(imageHome.resolve("caches/modules-2/entry"), "cached");
+        Path buildDirectory = Files.createDirectories(directory.resolve("build"));
+        Files.writeString(buildDirectory.resolve("gradlew"), "#!/bin/sh\n");
+        Path privateHome = directory.resolve("private-gradle");
+        String command = "BUILD_DIR='" + buildDirectory + "'\n"
+                + preparation.replace("/root/.gradle", imageHome.toString()).replace("/tmp/hyperion-gradle-home", privateHome.toString()) + "\nexit 0\n";
+
+        Process process = new ProcessBuilder("/bin/sh", "-c", command).redirectErrorStream(true).start();
+        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+        assertThat(process.waitFor()).as(output).isZero();
+        Path linked = privateHome.resolve("wrapper/dists/gradle-9-bin/hash/gradle-9");
+        assertThat(Files.isSymbolicLink(linked)).isTrue();
+        assertThat(Files.readSymbolicLink(linked)).isEqualTo(distribution);
+        Path lock = privateHome.resolve("wrapper/dists/gradle-9-bin/hash/gradle-9-bin.zip.lck");
+        assertThat(Files.isRegularFile(lock, java.nio.file.LinkOption.NOFOLLOW_LINKS)).isTrue();
+        assertThat(Files.readString(privateHome.resolve("caches/modules-2/entry"))).isEqualTo("cached");
+        assertThat(Files.isExecutable(buildDirectory.resolve("gradlew"))).isTrue();
     }
 
     @Test
