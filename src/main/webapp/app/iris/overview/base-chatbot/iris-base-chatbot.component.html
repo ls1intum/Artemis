@@ -50,8 +50,8 @@
             @if (isChatHistoryOpen()) {
                 <div class="chat-history-container">
                     <div class="chat-history-top">
-                        <div class="px-2 mt-2 mb-3 d-flex align-items-center gap-2">
-                            <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
+                        <div class="px-2 mt-2 mb-4! flex items-center gap-2">
+                            <jhi-search-filter class="w-full" (newSearchEvent)="setSearchValue($event)" />
                             <jhi-course-sidebar-toggle-button [isCollapsed]="false" (toggleSidebar)="setChatHistoryVisibility(false)" />
                         </div>
 
@@ -177,7 +177,7 @@
                         </div>
                     }
                 }
-                <div class="d-flex gap-2">
+                <div class="flex gap-2">
                     @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
                         <div class="toolbox">
                             <button type="button" [routerLink]="relatedEntityRoute()" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
@@ -249,7 +249,7 @@
                                 [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
                             >
                                 @if (message.sender === IrisSender.USER) {
-                                    <div class="d-flex justify-content-end align-items-center">
+                                    <div class="flex justify-end items-center">
                                         <div class="bubble-right">
                                             @for (content of message.content; track content.id ?? $index) {
                                                 @if (content.type === IrisMessageContentType.TEXT) {
@@ -300,7 +300,7 @@
                                             <div class="rate-message-buttons toolbox">
                                                 <button
                                                     type="button"
-                                                    class="btn btn-sm rate-button-not-clicked"
+                                                    class="rate-button rate-button-not-clicked"
                                                     (click)="copyMessage(message, i)"
                                                     [attr.aria-label]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
                                                     [title]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
@@ -310,7 +310,7 @@
                                                 @if (canRateMessage(message)) {
                                                     <button
                                                         type="button"
-                                                        class="btn btn-sm"
+                                                        class="rate-button"
                                                         [class.thumbs-up-clicked]="(message | as: IrisAssistantMessage).helpful"
                                                         [class.clickable]="!(message | as: IrisAssistantMessage).helpful"
                                                         [class.rate-button-not-clicked]="!(message | as: IrisAssistantMessage).helpful"
@@ -323,7 +323,7 @@
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        class="btn btn-sm"
+                                                        class="rate-button"
                                                         [class.thumbs-down-clicked]="(message | as: IrisAssistantMessage).helpful === false"
                                                         [class.clickable]="(message | as: IrisAssistantMessage).helpful !== false"
                                                         [class.rate-button-not-clicked]="(message | as: IrisAssistantMessage).helpful !== false"
@@ -397,13 +397,13 @@
                     <div class="button-container">
                         <button
                             type="button"
-                            class="btn btn-primary"
+                            tumAetUiButton
                             #acceptButton
                             (click)="acceptPermission(LLMSelectionDecision.CLOUD_AI)"
                             jhiTranslate="artemisApp.exerciseChatbot.accept"
                         ></button>
                         @if (showDeclineButton()) {
-                            <button type="button" class="btn btn-secondary" (click)="closeChat()" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
+                            <button type="button" tumAetUiButton severity="secondary" (click)="closeChat()" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
                         }
                     </div>
                 </div>
@@ -437,7 +437,6 @@
                                 [ngModel]="newMessageTextContent()"
                                 (ngModelChange)="newMessageTextContent.set($event)"
                                 rows="1"
-                                class="form-control"
                                 (input)="onInput()"
                                 (paste)="onPaste()"
                                 (focus)="onTextareaFocus()"

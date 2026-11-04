@@ -356,7 +356,8 @@ export default tseslint.config(
                 'error',
                 {
                     name: 'globalThis',
-                    message: 'Do not use globalThis in production. Use `window` for browser globals, and captureException from the error reporter for diagnostics instead of globalThis.console.',
+                    message:
+                        'Do not use globalThis in production. Use `window` for browser globals, and captureException from the error reporter for diagnostics instead of globalThis.console.',
                 },
             ],
         },
@@ -709,6 +710,7 @@ export default tseslint.config(
             'src/main/webapp/app/admin/**/*.html',
             'src/main/webapp/app/course/request/**/*.html',
             'src/main/webapp/app/iris/manage/settings/**/*.html',
+            'src/main/webapp/app/iris/overview/**/*.html',
             'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
             'src/main/webapp/app/atlas/shared/competency-selection/**/*.html',
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.html',
@@ -792,6 +794,7 @@ export default tseslint.config(
         // here once it is scanned by tailwind.css (`migration-source-coverage` checks this) and its findings are fixed.
         // See client-development.mdx (### Styling).
         files: [
+            'src/main/webapp/app/iris/overview/**/*.html',
             'src/main/webapp/app/course/overview/course-statistics/**/*.html',
             'src/main/webapp/app/exam/overview/**/*.html',
             'src/main/webapp/app/exam/shared/**/*.html',

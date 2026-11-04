@@ -1,10 +1,9 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonSize, ButtonType, getTumAetUiButtonOptions } from 'app/shared-ui/components/buttons/button/button.component';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { NgClass } from '@angular/common';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -14,7 +13,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-iris-logo-button',
     templateUrl: './iris-logo-button.component.html',
-    imports: [NgClass, NgbTooltip, FeatureToggleDirective, FaIconComponent, IrisLogoComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, TumAetUiTooltipDirective, FeatureToggleDirective, FaIconComponent, IrisLogoComponent, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisLogoButtonComponent {
@@ -31,6 +30,8 @@ export class IrisLogoButtonComponent {
     readonly shouldSubmit = input<boolean>(true);
 
     readonly onClick = output<MouseEvent>();
+
+    protected readonly buttonOptions = computed(() => getTumAetUiButtonOptions(this.btnType(), this.btnSize()));
 
     // Icons
     faCircleNotch = faCircleNotch;

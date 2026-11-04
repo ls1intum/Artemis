@@ -50,13 +50,13 @@
     }
 
     &.correct {
-        border-color: var(--bs-success);
-        background: color-mix(in srgb, var(--bs-success) 10%, transparent);
+        border-color: var(--success);
+        background: color-mix(in srgb, var(--success) 10%, transparent);
     }
 
     &.incorrect {
-        border-color: var(--bs-danger);
-        background: color-mix(in srgb, var(--bs-danger) 10%, transparent);
+        border-color: var(--danger);
+        background: color-mix(in srgb, var(--danger) 10%, transparent);
     }
 
     &:disabled {
@@ -114,13 +114,13 @@
     margin-bottom: 0.5rem;
 
     &-correct {
-        background: color-mix(in srgb, var(--bs-success) 15%, transparent);
-        color: var(--bs-success);
+        background: color-mix(in srgb, var(--success) 15%, transparent);
+        color: var(--success);
     }
 
     &-incorrect {
-        background: color-mix(in srgb, var(--bs-danger) 15%, transparent);
-        color: var(--bs-danger);
+        background: color-mix(in srgb, var(--danger) 15%, transparent);
+        color: var(--danger);
     }
 }
 

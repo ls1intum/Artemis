@@ -93,6 +93,7 @@ import { IrisPointOutMarkerComponent } from 'app/iris/overview/point-out-marker/
 import { routeForContext } from 'app/iris/overview/context-selection/iris-context.util';
 import { IrisActivityItem, IrisActivityState, IrisRunState } from 'app/iris/shared/entities/iris-activity.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -154,6 +155,7 @@ const MIN_DISPLAYED_ACTIVITY_DURATION_SECONDS = 0.5 * 10 ** -ACTIVITY_DURATION_D
         IrisContextSwitchDividerComponent,
         IrisPointOutMarkerComponent,
         CourseSidebarToggleButtonComponent,
+        TumAetUiButtonDirective,
     ],
     providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -379,7 +381,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     // ViewChilds
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
     readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
-    readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
+    // read: the TUM AET UI button is a component, so the reference alone would resolve to its instance, not the element.
+    readonly acceptButton = viewChild('acceptButton', { read: ElementRef<HTMLButtonElement> });
 
     // Session switcher (widget layout)
     readonly sessionMenuOpen = signal(false);

@@ -13,7 +13,7 @@
     --onboarding-tooltip-enter-distance: 16px;
     --onboarding-radius: 0.5rem;
     --onboarding-modal-surface: var(--iris-primary-background);
-    --onboarding-border: 1px solid var(--bs-border-color);
+    --onboarding-border: 1px solid var(--border-color);
 }
 
 %absolute-fill {
@@ -46,7 +46,7 @@
     position: relative;
     border: var(--onboarding-border);
     border-radius: var(--onboarding-radius);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 25px 50px color-mix(in srgb, var(--iris-shadow-color) 15%, transparent);
     width: 700px;
     max-width: 90vw;
     height: 450px;
@@ -89,21 +89,21 @@
 
 .chat-widget-preview {
     background: var(--onboarding-modal-surface);
-    border: 0.75px solid var(--bs-border-color);
+    border: 0.75px solid var(--border-color);
     border-radius: var(--onboarding-radius);
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--iris-shadow-color) 10%, transparent);
     width: 90%;
     margin-left: auto; // pushes it to the right inside .chat-preview
 }
 
 .chat-header-preview {
     background: var(--onboarding-modal-surface);
-    border-bottom: 1px solid var(--bs-border-color);
+    border-bottom: 1px solid var(--border-color);
     padding: 0.25rem;
     display: flex;
     justify-content: flex-end;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px color-mix(in srgb, var(--iris-shadow-color) 5%, transparent);
 }
 
 .toolbar-icons {
@@ -130,7 +130,7 @@
 
 .chat-greeting {
     font-size: 1rem;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     margin: 0;
     text-align: center;
 }
@@ -146,14 +146,14 @@
 .chat-input-preview {
     width: 100%;
     background: var(--onboarding-modal-surface);
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--border-color);
     border-radius: var(--onboarding-radius);
     padding: 1rem;
     margin-top: 0.25rem;
 }
 
 .input-placeholder {
-    color: var(--bs-secondary-color);
+    color: var(--text-body-secondary);
     cursor: default;
     font-size: 0.8rem;
 }
@@ -171,7 +171,7 @@
     background: none;
     border: none;
     line-height: 1;
-    color: var(--bs-secondary-color);
+    color: var(--text-body-secondary);
     cursor: pointer;
     padding: 0;
     opacity: 0.7;
@@ -179,7 +179,7 @@
 
     &:hover {
         opacity: 1;
-        color: var(--bs-body-color);
+        color: var(--body-color);
     }
 
     &:focus-visible {
@@ -214,7 +214,7 @@
 .title {
     font-size: 1.35rem;
     font-weight: 700;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     margin: 0;
     line-height: 1.2;
 }
@@ -222,14 +222,14 @@
 .description {
     font-size: 0.9rem;
     line-height: 1.6;
-    color: var(--bs-secondary-color);
+    color: var(--text-body-secondary);
     margin: 0;
 }
 
 .note {
     font-size: 0.75rem;
     line-height: 1.6;
-    color: var(--bs-secondary-color);
+    color: var(--text-body-secondary);
     margin: 0;
 }
 
@@ -279,7 +279,7 @@
     border: var(--onboarding-border);
     border-radius: var(--onboarding-radius);
     padding: 1rem;
-    box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 25px color-mix(in srgb, var(--iris-shadow-color) 10%, transparent);
     width: 280px;
     pointer-events: auto; // Enable clicks on tooltips
     z-index: 1051;
@@ -306,7 +306,7 @@
             top: -10px;
             border-left: 9px solid transparent;
             border-right: 9px solid transparent;
-            border-bottom: 9px solid var(--bs-border-color);
+            border-bottom: 9px solid var(--border-color);
         }
 
         &::after {
@@ -336,7 +336,7 @@
             bottom: -10px;
             border-left: 9px solid transparent;
             border-right: 9px solid transparent;
-            border-top: 9px solid var(--bs-border-color);
+            border-top: 9px solid var(--border-color);
         }
 
         &::after {
@@ -364,7 +364,7 @@
             bottom: -10px;
             border-left: 9px solid transparent;
             border-right: 9px solid transparent;
-            border-top: 9px solid var(--bs-border-color);
+            border-top: 9px solid var(--border-color);
         }
 
         &::after {
@@ -391,7 +391,7 @@
             left: -9px;
             border-top: 9px solid transparent;
             border-bottom: 9px solid transparent;
-            border-right: 9px solid var(--bs-border-color);
+            border-right: 9px solid var(--border-color);
         }
 
         &::after {
@@ -420,7 +420,7 @@
             right: -9px;
             border-top: 9px solid transparent;
             border-bottom: 9px solid transparent;
-            border-left: 9px solid var(--bs-border-color);
+            border-left: 9px solid var(--border-color);
         }
 
         &::after {
@@ -468,7 +468,7 @@
 .tooltip-header-text {
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     margin: 0;
     line-height: 1.4;
     flex: 1;
@@ -477,7 +477,7 @@
 .tooltip-description {
     font-size: 0.875rem;
     font-weight: 400;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     margin: 0;
     line-height: 1.6;
 }

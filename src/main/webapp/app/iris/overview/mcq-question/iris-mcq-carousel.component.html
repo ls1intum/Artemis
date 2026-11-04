@@ -1,6 +1,6 @@
 <div class="mcq-carousel">
     @if (!showScore()) {
-        <div class="carousel-header">
+        <div class="mcq-carousel-header">
             <span>{{ 'artemisApp.iris.mcq.questionOf' | artemisTranslate: { current: currentIndex() + 1, total: totalQuestions() } }}</span>
         </div>
 
@@ -12,13 +12,13 @@
             (answerChanged)="onAnswerChanged($event)"
         />
 
-        <div class="carousel-navigation">
+        <div class="mcq-carousel-navigation">
             <button type="button" class="nav-btn" [disabled]="currentIndex() === 0" (click)="previousQuestion()">
                 <fa-icon [icon]="faChevronLeft" />
             </button>
 
             @if (useDots()) {
-                <div class="carousel-dots">
+                <div class="mcq-carousel-dots">
                     @for (q of mcqSetData().questions; track $index) {
                         <button
                             type="button"
@@ -31,7 +31,7 @@
                     }
                 </div>
             } @else {
-                <span class="carousel-counter">{{ currentIndex() + 1 }} / {{ totalQuestions() }}</span>
+                <span class="mcq-carousel-counter">{{ currentIndex() + 1 }} / {{ totalQuestions() }}</span>
             }
 
             <button type="button" class="nav-btn" [disabled]="currentIndex() === totalQuestions() - 1" (click)="nextQuestion()">
@@ -51,7 +51,7 @@
             <div class="score-label" jhiTranslate="artemisApp.iris.mcq.score"></div>
 
             @if (useDots()) {
-                <div class="carousel-dots score-dots">
+                <div class="mcq-carousel-dots score-dots">
                     @for (q of mcqSetData().questions; track $index) {
                         <button
                             type="button"

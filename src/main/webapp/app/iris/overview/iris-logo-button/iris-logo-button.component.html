@@ -1,7 +1,11 @@
 <button
-    [ngClass]="['jhi-btn', 'btn', btnType(), btnSize()]"
+    tumAetUiButton
+    class="jhi-btn"
+    [severity]="buttonOptions().severity"
+    [size]="buttonOptions().size"
+    [variant]="buttonOptions().variant"
     [type]="shouldSubmit() ? 'submit' : 'button'"
-    ngbTooltip="{{ tooltip() | artemisTranslate }}"
+    [tumAetUiTooltip]="tooltip() | artemisTranslate"
     (click)="onClick.emit($event)"
     [jhiFeatureToggle]="featureToggle() ?? []"
     [forceDisabled]="disabled() || isLoading()"

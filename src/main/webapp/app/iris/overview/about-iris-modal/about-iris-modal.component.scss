@@ -18,7 +18,7 @@
     border: none;
     padding: 0.25rem;
     cursor: pointer;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     line-height: 1;
     z-index: 1;
 
@@ -27,7 +27,7 @@
     }
 }
 
-.modal-content-wrapper {
+.about-iris-content {
     padding: 2.5rem;
     max-height: 40rem; /* 640px */
     overflow-y: auto;
@@ -52,13 +52,13 @@
             margin: 0 0 0.25rem;
             font-size: 1.5rem;
             font-weight: 600;
-            color: var(--bs-body-color);
+            color: var(--body-color);
         }
 
         .subtitle {
             margin: 0 0 0.5rem;
             font-size: 1rem;
-            color: var(--bs-body-color);
+            color: var(--body-color);
         }
 
         .description {
@@ -70,7 +70,7 @@
 }
 
 .divider {
-    border-color: var(--bs-border-color);
+    border-color: var(--border-color);
 
     // Override Bootstrap's default <hr> opacity (0.25), which makes the divider nearly invisible.
     opacity: 1;
@@ -80,7 +80,7 @@
 .section-title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     margin-bottom: 0.75rem;
 }
 
@@ -97,7 +97,7 @@
 }
 
 .icon-wrapper {
-    --icon-accent-bg: rgba(var(--bs-primary-rgb), 0.1);
+    --icon-accent-bg: color-mix(in srgb, var(--primary) 10%, transparent);
     --expect-icon-bg: color-mix(in srgb, var(--iris-tertiary-background) 70%, transparent);
 
     display: flex;
@@ -109,7 +109,7 @@
     margin-top: 4px;
     border-radius: 0.5rem;
     background-color: var(--icon-accent-bg);
-    color: var(--bs-primary);
+    color: var(--primary);
 
     &--expect {
         background-color: var(--expect-icon-bg);
@@ -118,7 +118,7 @@
 
     &--privacy {
         background: none;
-        color: var(--bs-body-color);
+        color: var(--body-color);
         width: 36px;
         min-width: 36px;
         height: 36px;
@@ -126,14 +126,14 @@
     }
 }
 
-.card-title-text {
+.feature-card-title {
     margin: 0 0 0.25rem;
     font-size: 0.875rem;
     font-weight: 400;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
-.card-description {
+.feature-card-description {
     margin: 0;
     font-size: 0.875rem;
     color: var(--iris-label-color);
@@ -158,7 +158,7 @@
 .privacy-disclaimer {
     margin: 0.5rem 0 0;
     font-size: 0.75rem;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
 .try-iris-btn-wrapper {

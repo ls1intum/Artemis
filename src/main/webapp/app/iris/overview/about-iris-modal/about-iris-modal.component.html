@@ -4,7 +4,7 @@
     </button>
 </div>
 
-<div class="modal-content-wrapper" role="document" aria-labelledby="about-iris-title">
+<div class="about-iris-content" role="document" aria-labelledby="about-iris-title">
     <!-- Header: Logo + title + subtexts -->
     <div class="header-section">
         <div class="logo-container">
@@ -28,8 +28,8 @@
                     <fa-icon [icon]="card.icon" />
                 </div>
                 <div>
-                    <p class="card-title-text" [jhiTranslate]="card.titleKey"></p>
-                    <p class="card-description" [jhiTranslate]="card.descKey"></p>
+                    <p class="feature-card-title" [jhiTranslate]="card.titleKey"></p>
+                    <p class="feature-card-description" [jhiTranslate]="card.descKey"></p>
                 </div>
             </div>
         }
@@ -46,8 +46,8 @@
                     <fa-icon [icon]="card.icon" />
                 </div>
                 <div>
-                    <p class="card-title-text" [jhiTranslate]="card.titleKey"></p>
-                    <p class="card-description" [jhiTranslate]="card.descKey"></p>
+                    <p class="feature-card-title" [jhiTranslate]="card.titleKey"></p>
+                    <p class="feature-card-description" [jhiTranslate]="card.descKey"></p>
                 </div>
             </div>
         }
@@ -62,7 +62,7 @@
         </div>
         <div>
             <h3 class="section-title privacy-title" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyTitle"></h3>
-            <p class="card-description" [jhiTranslate]="privacyDescKey()"></p>
+            <p class="feature-card-description" [jhiTranslate]="privacyDescKey()"></p>
             <p class="privacy-disclaimer" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyDisclaimer"></p>
         </div>
     </div>

@@ -19,7 +19,7 @@ jhi-context-selection {
         background-color: transparent;
         border-color: transparent;
         border-radius: 0.5rem;
-        color: var(--bs-body-color);
+        color: var(--body-color);
         transition: background-color 0.15s ease;
 
         &:not(.p-disabled):hover {
@@ -59,7 +59,7 @@ jhi-context-selection {
         border-radius: 9999px;
         padding: 2px 8px;
         gap: 4px;
-        color: var(--bs-body-color);
+        color: var(--body-color);
         flex-wrap: nowrap;
         transition:
             background-color 0.15s ease,
