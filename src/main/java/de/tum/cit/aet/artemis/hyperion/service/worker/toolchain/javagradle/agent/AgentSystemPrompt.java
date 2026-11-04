@@ -213,6 +213,8 @@ public class AgentSystemPrompt {
             - `## Public API`: one `### TypeName` subsection per type, each with a fenced `java` block containing the completed solution's type declaration and exact
               contract-visible signatures, including all final enum constants. This is the final graded contract, not an intermediate starter or an earlier task's API.
               Use `{ ... }` for constructor bodies and semicolons for method signatures. List fields only when deliberately public and graded. Private state is not a reflective API.
+              Write every annotation the code must carry into its declaration, such as `@Test` on each method of a test class students write; structural checks compare
+              annotations exactly.
             - `## Testing Strategy`: table `| Seam | Owner type | Observable responsibility | Weight | Hidden variant |`. S1, S2, ... identify independently actionable units
               of student work, not individual tests. Owner type is one exact, bare Design type that is stubbed or student-created. Describe the test-controlled setup and observed
               result. Independent tasks must be diagnosable without first completing another task; group genuinely cumulative work. Weight is 3 core, 2 supporting, or 1 edge

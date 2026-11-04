@@ -64,8 +64,10 @@ replacement (a swap, reset, or re-registration): tests may only demand what this
 
 After the Design table, add `## Public API` with the exact contract-visible constructors and methods that the
 solution, template, tests, and statement will share, plus only fields deliberately exposed and graded as API.
-List signatures only, grouped by owner type. Do not turn private state into public/reflection API merely because
-the implementation uses it. Later stages copy this contract; they do not invent constructors, validation, or
+List signatures only, grouped by owner type. Write each annotation the code must carry on a type, constructor, method or
+field into its declaration, for example `@Test` on every test method of a test class that students write: the
+structural checks compare annotations exactly, so one missing here fails a correct solution. Do not turn private
+state into public/reflection API merely because the implementation uses it. Later stages copy this contract; they do not invent constructors, validation, or
 alternate signatures after the specification freezes.
 
 Describe the completed solution's API, not an intermediate starter or an earlier task's API. Include all final
