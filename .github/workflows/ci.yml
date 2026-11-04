@@ -383,7 +383,7 @@ jobs:
           F_CLIENT_TESTS: ${{ steps.relevant.outputs.client_tests }}
           F_E2E: ${{ steps.relevant.outputs.e2e_tests }}
           EVENT_NAME: ${{ github.event_name }}
-          IS_DRAFT: ${{ github.event.pull_request.draft || false }}
+          IS_DRAFT: false  # demo: run E2E on this draft pull request
           CHANGED_FILES: ${{ github.event.pull_request.changed_files || 0 }}
         run: |
           set -Eeuo pipefail
@@ -958,7 +958,6 @@ jobs:
     if: >-
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository) &&
-      needs.detect-changes.outputs.tests_deferred != 'true' &&
       needs.detect-changes.outputs.run_e2e != 'false'
     uses: ./.github/workflows/ci-e2e.yml
     permissions:
