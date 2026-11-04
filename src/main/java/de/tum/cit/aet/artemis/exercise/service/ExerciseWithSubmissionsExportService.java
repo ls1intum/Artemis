@@ -17,6 +17,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
+import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -53,8 +56,7 @@ public abstract class ExerciseWithSubmissionsExportService {
     private static final String API_MARKDOWN_FILE_PATH = "%smarkdown/".formatted(ARTEMIS_FILE_PATH_PREFIX);
 
     /**
-     * A link to an uploaded markdown file, in Markdown or HTML syntax, with the file name as group 1. The name ends where the link ends, so
-     * several links on one line are separate matches.
+     * An uploaded markdown file URL, with the file name as group 1. Applied only to rendered link destinations, never to Markdown source.
      */
     private static final Pattern EMBEDDED_FILE = Pattern.compile(Pattern.quote(API_MARKDOWN_FILE_PATH) + "([^\\s()\"'<>]+)");
 
@@ -153,13 +155,22 @@ public abstract class ExerciseWithSubmissionsExportService {
      */
     private void copyEmbeddedFiles(Exercise exercise, Path outputDir, List<Path> pathsToBeZipped, List<String> exportErrors) {
         Set<String> fileNames = new LinkedHashSet<>();
-        Matcher matcher = EMBEDDED_FILE.matcher(exercise.getProblemStatement());
-        while (matcher.find()) {
-            String fileName = matcher.group(1);
-            // Uploaded markdown files lie directly in the markdown directory. A link with a path names none of them, and an editor must not
-            // be able to make the export copy a file from outside that directory.
-            if (!fileName.contains("/") && !fileName.contains("\\") && !fileName.equals("..")) {
-                fileNames.add(fileName);
+        // Rendering escapes code spans and fenced/indented code blocks. Parsing the resulting HTML also distinguishes actual
+        // attributes from comments and literal paths in prose, while supporting reference-style Markdown and raw HTML links.
+        // This HTML is only used to discover files; the exported problem statement remains unchanged.
+        String html = HtmlRenderer.builder().build().render(Parser.builder().build().parse(exercise.getProblemStatement()));
+        for (var element : Jsoup.parseBodyFragment(html).select("img[src], a[href]")) {
+            if (element.closest("pre, code") != null) {
+                continue;
+            }
+            Matcher matcher = EMBEDDED_FILE.matcher(element.attr(element.normalName().equals("img") ? "src" : "href"));
+            if (matcher.find()) {
+                String fileName = matcher.group(1);
+                // Uploaded markdown files lie directly in the markdown directory. A link with a path names none of them, and an editor must not
+                // be able to make the export copy a file from outside that directory.
+                if (!fileName.contains("/") && !fileName.contains("\\") && !fileName.equals("..")) {
+                    fileNames.add(fileName);
+                }
             }
         }
         log.debug("Found embedded files: {} ", fileNames);
