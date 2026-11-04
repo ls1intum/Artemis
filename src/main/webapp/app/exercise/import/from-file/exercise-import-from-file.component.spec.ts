@@ -119,6 +119,52 @@ describe('ExerciseImportFromFileComponent', () => {
         );
     });
 
+    it.each([
+        '```text\n/api/core/files/markdown/A.png\n```',
+        '~~~text\n![example](/api/core/files/markdown/A.png)\n~~~',
+        '    ![example](/api/core/files/markdown/A.png)',
+        '`/api/core/files/markdown/A.png`',
+        '`` ![example](/api/core/files/markdown/A.png) `nested` ``',
+        '<!-- <img src="/api/core/files/markdown/A.png"> -->',
+        '<pre><img src="/api/core/files/markdown/A.png"></pre>',
+        '<code>[example](/api/core/files/markdown/A.png)</code>',
+        'A literal path: /api/core/files/markdown/A.png',
+    ])('should preserve %s when importing an exported archive with the same file embedded elsewhere', async (example) => {
+        const uploadSpy = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockResolvedValue({ path: '/api/core/files/markdown/new_A.png' });
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const exercise = new TextExercise(undefined, undefined);
+        const image = '![image](/api/core/files/markdown/A.png "Original title")';
+        exercise.problemStatement = `${image}\n\n${example}\n\n${image}`;
+        // The export preserves the source statement in the details JSON and Markdown file and includes the genuinely referenced image.
+        const zip = new ZipBuilder();
+        zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
+        zip.file('Problem-Statement-Test.md', exercise.problemStatement);
+        zip.file('files/A.png', 'image');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+
+        await component.uploadExercise();
+
+        const importedImage = '![image](/api/core/files/markdown/new_A.png "Original title")';
+        expect(uploadSpy).toHaveBeenCalledOnce();
+        expect(component.exercise?.problemStatement).toBe(`${importedImage}\n\n${example}\n\n${importedImage}`);
+    });
+
+    it('should not upload an archived file referenced only in code', async () => {
+        const uploadSpy = vi.spyOn(fileUploaderService, 'uploadMarkdownFile');
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.problemStatement = '```text\n/api/core/files/markdown/A.png\n```';
+        const zip = new ZipBuilder();
+        zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
+        zip.file('files/A.png', 'image');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+
+        await component.uploadExercise();
+
+        expect(uploadSpy).not.toHaveBeenCalled();
+        expect(component.exercise?.problemStatement).toBe(exercise.problemStatement);
+    });
+
     it('should not open the editor if a problem statement image cannot be uploaded', async () => {
         vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockRejectedValue(new Error('upload failed'));
         const alertSpy = vi.spyOn(alertService, 'error');

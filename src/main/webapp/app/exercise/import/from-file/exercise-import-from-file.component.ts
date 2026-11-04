@@ -133,24 +133,37 @@ export class ExerciseImportFromFileComponent {
      * @return false if an upload failed, after showing an error
      */
     private async uploadProblemStatementFiles(exercise: Exercise, zipEntries: ZipEntries): Promise<boolean> {
+        const statement = exercise.problemStatement;
+        if (!statement) {
+            return true;
+        }
+        // Load source-aware parsers only when importing a problem statement.
+        const { markdownFileDestinations } = await import('./markdown-file-destinations');
+        const destinations = markdownFileDestinations(statement);
+        const replacements: { start: number; end: number; path: string }[] = [];
         for (const [entryName, data] of Object.entries(zipEntries)) {
             const fileName = entryName.substring(entryName.lastIndexOf('/') + 1);
-            if (!entryName.startsWith('files/') || !fileName || !exercise.problemStatement?.includes(fileName)) {
+            if (!entryName.startsWith('files/') || !fileName) {
+                continue;
+            }
+            const references = destinations.filter((destination) => destination.url.endsWith(`markdown/${fileName}`));
+            if (!references.length) {
                 continue;
             }
             try {
                 const response = await this.fileUploaderService.uploadMarkdownFile(new File([data], fileName), this.selectedCourseId());
-                // Matches the whole link up to the file name, whatever prefix the source server used for its markdown files.
-                const escapedFileName = fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                // The name must end where the link ends, so that A.png does not also match a link to A.png2.
-                // The name of an unquoted HTML attribute, such as src= or href=, follows whitespace inside the tag. It is matched separately and
-                // kept, so a "=" inside a URL, also a relative one such as tenant=old/..., is still replaced.
-                const oldLink = new RegExp(`(?:(?<=\\s)([\\w-]+=))?[^\\s()"'<>]*markdown/${escapedFileName}(?=[\\s()"'<>]|$)`, 'g');
-                exercise.problemStatement = exercise.problemStatement.replace(oldLink, (link, attribute?: string) => (attribute ?? '') + response.path!);
+                for (const reference of references) {
+                    replacements.push({ start: reference.start, end: reference.end, path: response.path! });
+                }
             } catch (error) {
                 this.alertService.error('artemisApp.exercise.importFromFile.imageUploadFailed', { fileName });
                 return false;
             }
+        }
+        // Apply from the end so changing a URL's length cannot shift any remaining source positions.
+        exercise.problemStatement = statement;
+        for (const replacement of replacements.sort((a, b) => b.start - a.start)) {
+            exercise.problemStatement = exercise.problemStatement.slice(0, replacement.start) + replacement.path + exercise.problemStatement.slice(replacement.end);
         }
         return true;
     }
