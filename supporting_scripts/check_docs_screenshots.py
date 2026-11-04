@@ -41,7 +41,8 @@ IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 # {courseId} is the demo course. {exercise:Title}, {exam:Title} and {lecture:Title} are the id of the item of the demo course with that title.
 PLACEHOLDERS = {"courseId": False, "exercise": True, "exam": True, "lecture": True}
 PLACEHOLDER = re.compile(r"\{([A-Za-z]+)(?::([^}]*))?\}")
-PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+IMPORT_PATH = re.compile(r"""(?:from|require\()\s*['"]([^'"]+\.(?:png|jpe?g|gif|webp))['"]""", re.IGNORECASE)
+PNG_SIGNATURE =b"\x89PNG\r\n\x1a\n"
 # A channel value may differ by this much before a pixel counts as changed: anti-aliasing differs between machines.
 CHANNEL_TOLERANCE = 8
 DEFAULT_THRESHOLD = 0.01
@@ -62,6 +63,12 @@ def load_manifest(path: Path) -> dict:
 def page_text(docs_root: Path, page: str) -> str | None:
     path = docs_root / page
     return path.read_text(encoding="utf-8") if path.is_file() else None
+
+
+def page_imports(docs_root: Path, page: str, text: str, image: str) -> bool:
+    """Whether the page imports exactly this image, as in `import shot from './assets/shot.png'`, and not a file of the same name elsewhere or a mention in prose."""
+    target = (docs_root / image).resolve()
+    return any((docs_root / page).parent.joinpath(reference).resolve() == target for reference in IMPORT_PATH.findall(text))
 
 
 def validate(manifest: dict, repo_root: Path, docs_root: Path) -> list[str]:
@@ -85,17 +92,22 @@ def validate(manifest: dict, repo_root: Path, docs_root: Path) -> list[str]:
             if key not in entry:
                 problems.append(f"{label}: missing `{key}`")
         if "id" in entry:
-            if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", str(entry["id"])):
-                problems.append(f"{label}: `id` must be kebab-case")
-            if entry["id"] in ids:
+            if not isinstance(entry["id"], str) or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", entry["id"]):
+                problems.append(f"{label}: `id` must be a kebab-case string")
+            elif entry["id"] in ids:
                 problems.append(f"{label}: duplicate id")
-            ids.add(entry["id"])
+            else:
+                ids.add(entry["id"])
         image = entry.get("image")
+        if "image" in entry and not isinstance(image, str):
+            problems.append(f"{label}: `image` must be a path below documentation/docs")
         if isinstance(image, str):
             if image in images:
                 problems.append(f"{label}: `{image}` is described twice")
             images.add(image)
-            if Path(image).suffix.lower() not in IMAGE_SUFFIXES:
+            if Path(image).is_absolute() or ".." in Path(image).parts:
+                problems.append(f"{label}: `{image}` must be a path below documentation/docs, without `..`")
+            elif Path(image).suffix.lower() not in IMAGE_SUFFIXES:
                 problems.append(f"{label}: `{image}` is not an image file")
             elif not (docs_root / image).is_file():
                 problems.append(f"{label}: image `{image}` does not exist below documentation/docs")
@@ -107,14 +119,19 @@ def validate(manifest: dict, repo_root: Path, docs_root: Path) -> list[str]:
                 text = page_text(docs_root, page)
                 if text is None:
                     problems.append(f"{label}: page `{page}` does not exist")
-                elif Path(image).name not in text:
-                    problems.append(f"{label}: page `{page}` does not show `{Path(image).name}`")
+                elif not page_imports(docs_root, page, text, image):
+                    problems.append(f"{label}: page `{page}` does not import `{image}`")
         if "user" in entry and entry["user"] not in users:
             problems.append(f"{label}: unknown user `{entry['user']}`")
         route = entry.get("route")
+        if "route" in entry and not isinstance(route, str):
+            problems.append(f"{label}: `route` must be a string")
         if isinstance(route, str):
-            if not route.startswith("/") or re.search(r"\s", PLACEHOLDER.sub("", route)):
+            outside_placeholders = PLACEHOLDER.sub("", route)
+            if not route.startswith("/") or re.search(r"\s", outside_placeholders):
                 problems.append(f"{label}: `route` must start with / and contain no spaces outside a placeholder")
+            if "{" in outside_placeholders or "}" in outside_placeholders:
+                problems.append(f"{label}: `route` has a brace that is not part of a placeholder such as {{courseId}}")
             for name, argument in PLACEHOLDER.findall(route):
                 if name not in PLACEHOLDERS:
                     problems.append(f"{label}: unknown placeholder {{{name}}} in the route")
@@ -169,6 +186,8 @@ CHANNELS = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}
 def png_size(data: bytes) -> tuple[int, int]:
     if not data.startswith(PNG_SIGNATURE):
         raise ValueError("not a PNG file")
+    if len(data) < 24:
+        raise ValueError("truncated PNG file")
     return struct.unpack(">II", data[16:24])
 
 
@@ -262,13 +281,16 @@ def changed_share(old: bytes, new: bytes, size_tolerance: int = SIZE_TOLERANCE) 
     Sizes that differ by at most `size_tolerance` pixels in each direction are compared on the overlap, and the pixels outside it count as changed."""
     if old == new:
         return 0.0
-    old_size, new_size = png_size(old), png_size(new)
+    try:
+        old_size, new_size = png_size(old), png_size(new)
+    except (ValueError, struct.error) as error:
+        return f"not comparable ({error})"
     if abs(old_size[0] - new_size[0]) > size_tolerance or abs(old_size[1] - new_size[1]) > size_tolerance:
         return f"size {new_size[0]}x{new_size[1]} instead of {old_size[0]}x{old_size[1]}"
     try:
         old_width, old_height, old_channels, old_rows = decode_png(old)
         new_width, new_height, new_channels, new_rows = decode_png(new)
-    except (ValueError, zlib.error) as error:
+    except (ValueError, struct.error, zlib.error) as error:
         return f"not comparable ({error})"
     # A screenshot tool writes RGB, an image editor RGBA or grey: compare the colours only.
     old_rows, new_rows = to_rgb(old_rows, old_channels), to_rgb(new_rows, new_channels)
@@ -286,13 +308,16 @@ def changed_share(old: bytes, new: bytes, size_tolerance: int = SIZE_TOLERANCE) 
     return (changed + union - width * height) / union
 
 
-def compare(manifest: dict, rendered: Path, docs_root: Path, threshold: float, show_all: bool = False) -> tuple[list[str], int]:
+def compare(manifest: dict, rendered: Path, docs_root: Path, threshold: float, show_all: bool = False, only: set[str] | None = None) -> tuple[list[str], int]:
     """Returns the Markdown lines about the images that differ and the number of images that were compared.
 
-    With `show_all` every compared image gets a line with its similarity, which is what a review of the thresholds needs."""
+    With `show_all` every compared image gets a line with its similarity, which is what a review of the thresholds needs.
+    With `only` the entries of other ids are skipped, as the renderer skipped them too."""
     lines: list[str] = []
     compared = 0
     for entry in manifest["screenshots"]:
+        if only is not None and entry["id"] not in only:
+            continue
         new_path = rendered / entry["image"]
         old_path = docs_root / entry["image"]
         if not new_path.is_file():
@@ -318,6 +343,9 @@ def compare(manifest: dict, rendered: Path, docs_root: Path, threshold: float, s
 
 def last_commit(path: str) -> int | None:
     result = subprocess.run(["git", "log", "-1", "--format=%ct", "--", path], cwd=REPO_ROOT, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        # Without a usable history every image would count as current, which is a wrong answer and not a clean result.
+        raise SystemExit(f"git log failed for {path} (does the checkout have its history?): {result.stderr.strip()}")
     text = result.stdout.strip()
     return int(text) if text else None
 
@@ -416,7 +444,19 @@ def self_test() -> None:
             return validate({"users": good["users"], "screenshots": [{**entry, **changes}]}, root, docs)
 
         assert any("does not exist below" in problem for problem in broken(image="area/assets/missing.png"))
-        assert any("does not show" in problem for problem in broken(image="area/assets/other.png"))
+        assert any("does not import" in problem for problem in broken(image="area/assets/other.png")), "a page that does not import the image fails"
+        (docs / "area" / "prose.mdx").write_text("The picture shot.png is described here, but not shown.\n", encoding="utf-8")
+        assert any("does not import" in problem for problem in broken(pages=["area/prose.mdx"])), "a mention of the file name in prose is not an import"
+        (docs / "elsewhere" / "assets").mkdir(parents=True)
+        (docs / "elsewhere" / "assets" / "shot.png").write_bytes(same)
+        (docs / "elsewhere" / "page.mdx").write_text("import shot from './assets/shot.png';\n", encoding="utf-8")
+        assert any("does not import" in problem for problem in broken(pages=["elsewhere/page.mdx"])), "a file of the same name in another folder is another image"
+        assert any("without `..`" in problem for problem in broken(image="../docs/area/assets/shot.png"))
+        assert any("without `..`" in problem for problem in broken(image=str(docs / "area" / "assets" / "shot.png")))
+        assert any("kebab-case string" in problem for problem in broken(id=["shot"])), "an id that is not hashable is a problem, not a traceback"
+        assert any("`route` must be a string" in problem for problem in broken(route=None))
+        assert any("`route` must be a string" in problem for problem in broken(route=12))
+        assert any("brace" in problem for problem in broken(route="/courses/{course_id}/x"))
         assert any("page `nope.mdx` does not exist" in problem for problem in broken(pages=["nope.mdx"]))
         assert any("unknown user" in problem for problem in broken(user="admin"))
         assert any("unknown placeholder" in problem for problem in broken(route="/courses/{exerciseId}"))
@@ -441,16 +481,52 @@ def self_test() -> None:
         lines, compared = compare(good, rendered, docs, 0.001)
         assert compared == 1 and len(lines) == 1 and "0.5%" in lines[0], lines
         assert compare(good, rendered, docs, 0.01)[0] == []
+        other = {**entry, "id": "other", "image": "area/assets/other.png"}
+        both = {"users": good["users"], "screenshots": [entry, other]}
+        assert "was not rendered" in compare(both, rendered, docs, 0.01)[0][0], "without --only an entry that was not rendered is reported"
+        assert compare(both, rendered, docs, 0.01, only={"shot"}) == ([], 1), "with --only the entries of other ids are skipped"
+        (rendered / "area" / "assets" / "other.png").write_bytes(same[:20])
+        truncated = compare(both, rendered, docs, 0.01, only={"other"})[0]
+        assert len(truncated) == 1 and "not comparable" in truncated[0], "a PNG that is cut off is reported, not raised"
+    with tempfile.TemporaryDirectory() as directory:
+        original_root = globals()["REPO_ROOT"]
+        globals()["REPO_ROOT"] = Path(directory)
+        try:
+            last_commit("anything")
+            raise AssertionError("--stale outside a git checkout must fail instead of reporting nothing")
+        except SystemExit as failure:
+            assert "git log failed" in str(failure)
+        finally:
+            globals()["REPO_ROOT"] = original_root
+    for bad in ("nan","inf", "-0.1", "1.5", "x"):
+        try:
+            share(bad)
+        except argparse.ArgumentTypeError:
+            continue
+        raise AssertionError(f"--threshold {bad} must be rejected")
+    assert share("0.05") == 0.05
     print("check_docs_screenshots self-test passed")
 
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 
+def share(text: str) -> float:
+    """An argparse type for a share of the pixels: a finite number from 0 to 1."""
+    try:
+        value = float(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{text!r} is not a number") from None
+    if not 0 <= value <= 1:
+        raise argparse.ArgumentTypeError(f"{text!r} is not a share between 0 and 1")
+    return value
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--compare", metavar="DIR", help="compare the images rendered into DIR with the checked-in ones")
-    parser.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD, help="share of changed pixels that counts as a difference (default 0.01)")
+    parser.add_argument("--threshold", type=share, default=DEFAULT_THRESHOLD, help="share of changed pixels that counts as a difference (default 0.01)")
+    parser.add_argument("--only", metavar="IDS", help="with --compare: compare only these manifest ids, comma separated, as the renderer rendered only them")
     parser.add_argument("--all", action="store_true", help="with --compare: also list the images that are within the threshold, with their similarity")
     parser.add_argument("--stale", action="store_true", help="list images whose source files changed after the image")
     parser.add_argument("--self-test", action="store_true", help="run the built-in tests")
@@ -460,7 +536,8 @@ def main() -> int:
         return 0
     manifest = load_manifest(MANIFEST)
     if args.compare:
-        lines, compared = compare(manifest, Path(args.compare), DOCS_ROOT, args.threshold, args.all)
+        only = {identifier.strip() for identifier in args.only.split(",") if identifier.strip()} if args.only else None
+        lines, compared = compare(manifest, Path(args.compare), DOCS_ROOT, args.threshold, args.all, only)
         differing = [line for line in lines if "within the threshold" not in line]
         print(f"{len(differing)} of {compared} compared screenshot(s) differ (threshold {args.threshold:.1%} of the pixels)")
         print("\n".join(lines))

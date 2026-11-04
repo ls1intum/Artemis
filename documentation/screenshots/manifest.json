@@ -6,9 +6,7 @@
             "width": 1440,
             "height": 900
         },
-        "deviceScaleFactor": 1,
-        "locale": "en",
-        "theme": "light"
+        "deviceScaleFactor": 1
     },
     "users": {
         "student": "demo_student",
@@ -907,7 +905,8 @@
                 "height": 900
             },
             "source": [
-                "src/main/webapp/app/exam/manage"
+                "src/main/webapp/app/exam/manage",
+                "src/main/java/de/tum/cit/aet/artemis/assessment/service/AssessmentDemoService.java"
             ]
         },
         {
@@ -923,7 +922,8 @@
                 "height": 900
             },
             "source": [
-                "src/main/webapp/app/exam/manage/test-runs"
+                "src/main/webapp/app/exam/manage/test-runs",
+                "src/main/java/de/tum/cit/aet/artemis/exam/service/ExamDemoService.java"
             ]
         }
     ]
