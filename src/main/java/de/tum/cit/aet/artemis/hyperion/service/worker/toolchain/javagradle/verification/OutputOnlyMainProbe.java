@@ -189,8 +189,8 @@ final class OutputOnlyMainProbe {
     }
 
     /**
-     * Whether a graded test compares what {@code simpleName.main} prints: its test class captures standard output, and the test calls {@code main} directly or through a helper
-     * of the same class and makes a comparing assertion.
+     * Whether a graded test compares what {@code simpleName.main} prints: its test class captures standard output, and the test calls {@code main} directly or through a chain
+     * of helpers of the same class and makes a comparing assertion.
      */
     static boolean gradesPrintedOutput(Map<String, String> testFiles, String simpleName, @Nullable Set<String> gradedTestMethods) {
         Pattern mainCall = Pattern.compile("(?<![\\w$])" + Pattern.quote(simpleName) + "\\s*\\.\\s*main\\s*\\(");
@@ -205,12 +205,17 @@ final class OutputOnlyMainProbe {
             Map<String, String> bodies = methodBodies(masked);
             Set<String> callers = bodies.entrySet().stream().filter(method -> mainCall.matcher(method.getValue()).find()).map(Map.Entry::getKey)
                     .collect(Collectors.toCollection(java.util.HashSet::new));
-            Set<String> directCallers = Set.copyOf(callers);
-            bodies.forEach((name, body) -> {
-                if (directCallers.stream().anyMatch(helper -> Pattern.compile("(?<![\\w$.])" + Pattern.quote(helper) + "\\s*\\(").matcher(body).find())) {
-                    callers.add(name);
-                }
-            });
+            // Helpers may call helpers: follow the chain until no method of the class calls a known caller any more.
+            java.util.Deque<String> unexpanded = new java.util.ArrayDeque<>(callers);
+            while (!unexpanded.isEmpty()) {
+                Pattern helperCall = Pattern.compile("(?<![\\w$.])" + Pattern.quote(unexpanded.pop()) + "\\s*\\(");
+                bodies.forEach((name, body) -> {
+                    if (!callers.contains(name) && helperCall.matcher(body).find()) {
+                        callers.add(name);
+                        unexpanded.add(name);
+                    }
+                });
+            }
             boolean compared = callers.stream().filter(name -> gradedTestMethods == null || gradedTestMethods.contains(name))
                     .anyMatch(name -> COMPARING_ASSERTION.matcher(bodies.get(name)).find());
             if (compared) {

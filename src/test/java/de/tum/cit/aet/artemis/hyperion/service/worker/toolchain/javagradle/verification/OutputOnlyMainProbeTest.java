@@ -167,6 +167,20 @@ class OutputOnlyMainProbeTest {
     }
 
     @Test
+    void aTranscriptComparedThroughAChainOfHelpersMakesMainAProbeTarget() {
+        Map<String, String> helperChain = Map.of("test/example/LibraryTest.java", """
+                class LibraryTest {
+                    private final java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                    private void runMain() { Library.main(new String[0]); }
+                    private String capture() { System.setOut(new java.io.PrintStream(out)); runMain(); return out.toString(); }
+                    @Test void printsTheSize() { assertEquals("Books: 1\\n", capture()); }
+                }
+                """);
+
+        assertThat(OutputOnlyMainProbe.targets(helperChain, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), OutputOnlyMainProbe.gradedTestMethods(PLAN))).hasSize(1);
+    }
+
+    @Test
     void theVariantCompilesKeepsEveryOtherMemberAndPrintsExactlyTheTranscript(@TempDir Path directory) throws Exception {
         String transcript = "Books: 1 { \"quoted\" }\n\ttab \\ backslash \u001b[0m é世 😀\r\n" + "x".repeat(1_500) + "\n";
 
