@@ -30,8 +30,10 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
  * <p>
  * The rows are written once, when the exercise is stored, and the exercise module never touches them afterwards: it has no use
  * for them, so neither an update of the exercise nor any other of its paths pays a statement for a module the server may not
- * use. An exercise whose creation failed between storing it and inserting its row is left to the module that owns the row,
- * which reads a missing row as the defaults and adds it before it first writes one.
+ * use. Two kinds of exercise have no row: one whose creation failed between storing it and inserting its row, and one that a
+ * node still running the previous version stored during a rolling deployment, after another node had run the migration that
+ * created the table and gave the existing exercises their rows. Both are left to the module that owns the row, which reads a
+ * missing row as the defaults and adds it before it first writes one.
  * <p>
  * Each statement is a plain, single read or write: no transaction spans them and no lock is held across them. The bound
  * {@link Exercise} type is just the subject the statements share; the inherited CRUD operations are unused.

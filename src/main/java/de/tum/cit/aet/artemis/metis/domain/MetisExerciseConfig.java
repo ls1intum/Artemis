@@ -27,10 +27,11 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
  * the Metis module is enabled on the server. Since the repositories of this module exist only while it is enabled, the
  * exercise module inserts the row with the column defaults when it stores the exercise ({@code ExerciseConfigurationService}
  * through {@code ExerciseDefaultConfigurationsRepository}), and the changelog gave every programming exercise that existed
- * before its row. Nothing in the exercise module touches the row afterwards. An exercise whose creation failed between
- * storing it and inserting the row has none; this module reads a missing row as the defaults and inserts it before it first
- * writes the settings of that exercise. Switching the check on or off only changes {@link #enabled}; a setting never inserts
- * or deletes the row.
+ * before its row. Nothing in the exercise module touches the row afterwards. Two kinds of exercise have none: one whose
+ * creation failed between storing it and inserting the row, and one that a node still running the previous version stored
+ * during a rolling deployment, after the changelog had run on another node. This module reads a missing row as the defaults
+ * and inserts it before it first writes the settings of that exercise. Switching the check on or off only changes
+ * {@link #enabled}; a setting never inserts or deletes the row.
  * The primary key is the exercise id itself, which expresses the one-to-one in the schema and needs no additional unique
  * index; the exercise has no field pointing back here. The row cascades away with its exercise.
  *
