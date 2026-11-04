@@ -65,7 +65,8 @@ Resolve declared signatures with `getClazz`, `getConstructor`, and `getMethod`; 
 getMethod(instance, "withdraw", double.class), amount)` or `newInstanceRethrowing(constructor, arguments...)`.
 The non-rethrowing helpers turn invocation failures into assertion failures, not the student's exception.
 Reflection belongs only in instructor tests. Never import Ares into solution/ or template/; import JUnit there
-only in test classes the exercise asks students to write (Artemis then permits that import). Never use
+only in test classes the exercise asks students to write, declared `student-creates` or `stubbed` in the approved
+Design table (Artemis then permits that import). Never use
 reflective lookup there to evade references to absent student-created classes. Given starter code must compile
 without those classes; learner-owned methods can remain TODO bodies.
 

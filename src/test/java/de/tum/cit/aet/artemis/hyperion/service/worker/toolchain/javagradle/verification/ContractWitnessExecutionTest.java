@@ -180,8 +180,8 @@ class ContractWitnessExecutionTest {
                 assertThat(overlay).containsKeys("tests/test/example/HyperionContractWitnessProbeTest.java", "tests/SecurityPolicy.yaml");
                 assertThat(overlay.get("tests/SecurityPolicy.yaml")).contains("    - \"example.HyperionContractWitnessProbeTest\"");
                 // Everything but the test-class list stays as seeded.
-                assertThat(AresSecurityPolicy.derive(overlay.get("tests/SecurityPolicy.yaml"), Map.of(), Map.of()))
-                        .isEqualTo(AresSecurityPolicy.derive(TESTS.get("SecurityPolicy.yaml"), Map.of(), Map.of()));
+                assertThat(AresSecurityPolicy.derive(overlay.get("tests/SecurityPolicy.yaml"), Map.of(), Map.of(), null))
+                        .isEqualTo(AresSecurityPolicy.derive(TESTS.get("SecurityPolicy.yaml"), Map.of(), Map.of(), null));
             }
             return null;
         }).when(sandbox).copyIn(anyString(), eq("/workspace"), any());

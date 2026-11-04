@@ -200,7 +200,8 @@ public class DifferentialVerifier {
         reasons.addAll(gradingContextSniffingReasons);
         List<String> javaAresConventionReasons = new ArrayList<>(
                 ExerciseIntegrityGate.javaAresConventionReasons(request.seedTestsFiles(), request.producedTestsFiles(), request.adaptation()));
-        javaAresConventionReasons.addAll(ExerciseIntegrityGate.securityPolicyReasons(request.seedTestsFiles(), request.producedTestsFiles(), request.producedSolutionFiles()));
+        javaAresConventionReasons.addAll(ExerciseIntegrityGate.securityPolicyReasons(request.seedTestsFiles(), request.producedTestsFiles(), request.producedSolutionFiles(),
+                approvedSpecs.approved(sessionId).orElse(null)));
         boolean javaAresConventionsHold = javaAresConventionReasons.isEmpty();
         reasons.addAll(javaAresConventionReasons);
         List<String> javaSourceLayoutReasons = ExerciseIntegrityGate.javaGeneratedSourceLayoutReasons(exercise.packageName(), request.seedTestsFiles(), request.seedTemplateFiles(),
@@ -294,7 +295,8 @@ public class DifferentialVerifier {
         }
         else {
             javaAresConventionReasons.addAll(ExerciseIntegrityGate.javaAresConventionReasons(seedTestsFiles, testsRepositoryFiles, adaptation));
-            javaAresConventionReasons.addAll(ExerciseIntegrityGate.securityPolicyReasons(seedTestsFiles, testsRepositoryFiles, solutionFiles));
+            javaAresConventionReasons
+                    .addAll(ExerciseIntegrityGate.securityPolicyReasons(seedTestsFiles, testsRepositoryFiles, solutionFiles, approvedSpecs.approved(sessionId).orElse(null)));
         }
         boolean javaAresConventionsHold = javaAresConventionReasons.isEmpty();
         reasons.addAll(javaAresConventionReasons);

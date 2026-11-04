@@ -581,7 +581,7 @@ public class AgentSystemPrompt {
             For exception assertions, use `invokeMethodRethrowing(instance, getMethod(instance, "withdraw", double.class), amount)` or
             `newInstanceRethrowing(getConstructor(getClazz(ownerName), int.class), value)` so assertThrows sees the student's exception, not a helper assertion failure.
             Reflection belongs only in instructor tests. Never import Ares into solution/ or template/; import JUnit there only in test classes the exercise asks students
-            to write (Artemis then permits that import). Never add reflective class/member lookup there to make references to absent student-created types compile. Keep given starter code independent of those absent types; a learner-owned method can have a TODO body.
+            to write, declared `student-creates` or `stubbed` in the approved Design table (Artemis then permits that import). Never add reflective class/member lookup there to make references to absent student-created types compile. Keep given starter code independent of those absent types; a learner-owned method can have a TODO body.
             Prefer identical solution/template signatures and deliberately incomplete method bodies when structural testing does not serve the learning objective.
             """;
 }

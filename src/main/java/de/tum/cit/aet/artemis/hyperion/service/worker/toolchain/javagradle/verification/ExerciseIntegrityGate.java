@@ -703,13 +703,16 @@ public final class ExerciseIntegrityGate {
      * @param seedTestsFiles        the tests repository before authoring
      * @param producedTestsFiles    the produced tests repository
      * @param producedSolutionFiles the produced reference solution, whose student-written JUnit tests need their import permitted
+     * @param approvedSpec          the approved specification, which must assign those test classes to students, or {@code null} when none was approved
      * @return rejection reasons, empty when there is no policy to check or it is exactly the derived one
      */
-    static List<String> securityPolicyReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedSolutionFiles) {
+    static List<String> securityPolicyReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedSolutionFiles,
+            @Nullable String approvedSpec) {
         if (producedTestsFiles == null || !producedTestsFiles.containsKey(AresSecurityPolicy.PATH)) {
             return List.of();
         }
-        return AresSecurityPolicy.reasons(seedTestsFiles == null ? Map.of() : seedTestsFiles, producedTestsFiles, producedSolutionFiles == null ? Map.of() : producedSolutionFiles);
+        return AresSecurityPolicy.reasons(seedTestsFiles == null ? Map.of() : seedTestsFiles, producedTestsFiles, producedSolutionFiles == null ? Map.of() : producedSolutionFiles,
+                approvedSpec);
     }
 
     /**
