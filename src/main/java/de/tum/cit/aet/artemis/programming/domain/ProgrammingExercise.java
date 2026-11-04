@@ -771,12 +771,13 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Validates the static code analysis settings of the programming exercise
+     * Validates the static code analysis and sequential test run settings of the programming exercise
      * 1. The flag staticCodeAnalysisEnabled must not be null
      * 2. Static code analysis and sequential test runs can't be active at the same time
-     * 3. Static code analysis can only be enabled for supported programming languages
-     * 4. Static code analysis max penalty must only be set if static code analysis is enabled
-     * 5. Static code analysis max penalty must be positive
+     * 3. Sequential test runs can only be enabled for supported programming languages, not for black-box exercises, and need a project type where the language has some
+     * 4. Static code analysis can only be enabled for supported programming languages
+     * 5. Static code analysis max penalty must only be set if static code analysis is enabled
+     * 6. Static code analysis max penalty must be positive
      *
      * @param programmingLanguageFeature describes the features available for the programming language of the programming exercise
      * @param buildConfig                the build configuration of this exercise, which is stored separately and read by the caller
@@ -790,6 +791,22 @@ public class ProgrammingExercise extends Exercise {
         // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
         if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && buildConfig.hasSequentialTestRuns()) {
             throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
+        }
+
+        // Sequential test runs need a build phase template, which only exists for the languages that enable them
+        if (buildConfig.hasSequentialTestRuns() && !programmingLanguageFeature.sequentialTestRuns()) {
+            throw new BadRequestAlertException("Sequential test runs are not supported for this programming language", "Exercise", "sequentialTestRunsNotSupportedForLanguage");
+        }
+
+        // Black-box tests are written in a single DejaGnu suite and cannot be split into a structural and a behavior stage
+        if (buildConfig.hasSequentialTestRuns() && ProjectType.MAVEN_BLACKBOX.equals(getProjectType())) {
+            throw new BadRequestAlertException("Sequential test runs are not supported for black-box exercises", "Exercise", "sequentialTestRunsNotSupportedForBlackbox");
+        }
+
+        // The sequential templates of languages with project types are named after the project type, so a missing type finds no template (Java falls back to Maven)
+        if (buildConfig.hasSequentialTestRuns() && getProjectType() == null && !programmingLanguageFeature.projectTypes().isEmpty()
+                && programmingLanguageFeature.programmingLanguage() != ProgrammingLanguage.JAVA) {
+            throw new BadRequestAlertException("Sequential test runs require a project type for this programming language", "Exercise", "sequentialTestRunsRequireProjectType");
         }
 
         // Check if the programming language supports static code analysis
