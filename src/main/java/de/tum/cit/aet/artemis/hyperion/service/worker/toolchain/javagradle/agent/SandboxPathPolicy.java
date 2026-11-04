@@ -105,9 +105,20 @@ final class SandboxPathPolicy {
     }
 
     static String dependencyArtifactsError() {
-        return "exit=2\nThe dependency cache and dependency JARs are not inspectable: the build is offline and the test harness is immutable, so nothing in there is actionable. "
-                + "The Ares and JUnit API to use (@Public, @Policy, @StrictTimeout, ReflectionTestUtils) is stated in your instructions and shown in "
-                + "reference/style/tests.md. Write the tests against that contract instead.";
+        return deniedCommand("The dependency cache and dependency JARs are not inspectable: the build is offline and the test harness is immutable, so nothing in there is "
+                + "actionable. The Ares and JUnit API to use (@Public, @Policy, @StrictTimeout, ReflectionTestUtils) is stated in your instructions and shown in "
+                + "reference/style/tests.md. Write the tests against that contract instead.");
+    }
+
+    /**
+     * The observation for a shell command refused before it ran. It starts with {@code ERROR:} like every other rejected tool call, so the agent loop counts it as a rejection
+     * and escalates when the same refused command is repeated.
+     *
+     * @param explanation why the command was refused and what to do instead
+     * @return the rejection observation
+     */
+    static String deniedCommand(String explanation) {
+        return "ERROR: the command was not run. " + explanation;
     }
 
     static String invalidPathError(String path) {

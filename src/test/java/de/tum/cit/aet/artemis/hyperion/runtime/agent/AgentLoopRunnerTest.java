@@ -340,6 +340,85 @@ class AgentLoopRunnerTest {
         }
     }
 
+    /**
+     * A refused command interleaved with successful calls never reaches the consecutive-failure limit, so one session repeated the same refused command dozens of times. The
+     * third identical rejection is answered explicitly, and every repeat from then on counts toward ending the session.
+     */
+    @Test
+    void anIdenticalRejectedCallRepeatedBetweenSuccessfulCallsIsEscalatedAndEndsTheSession() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            String name = current % 2 == 1 ? "shell" : "write";
+            String arguments = current % 2 == 1 ? "{\"command\":\"ls -la /root/.gradle\"}" : "{}";
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", name, arguments);
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
+        });
+        RefusingTools tools = new RefusingTools();
+
+        var session = runner(model).runSession("system", null, "brief", tools, 60, () -> false, null, null);
+
+        int lastAllowedRepeat = AgentLoopRunner.REPEATED_REJECTION_ESCALATION - 1 + 5;
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(tools.refusals).isEqualTo(lastAllowedRepeat);
+        assertThat(session.result().turns()).isEqualTo(2 * lastAllowedRepeat - 1);
+        List<String> shellResults = session.conversation().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
+                .flatMap(message -> message.getResponses().stream()).filter(response -> response.name().equals("shell")).map(ToolResponseMessage.ToolResponse::responseData)
+                .toList();
+        assertThat(shellResults).hasSize(lastAllowedRepeat);
+        assertThat(shellResults.subList(0, 2)).allSatisfy(result -> assertThat(result).contains("the command was not run").doesNotContain("this exact shell call"));
+        assertThat(shellResults.get(2)).contains("this exact shell call has now been rejected 3 times", "Do not repeat it", "the command was not run");
+    }
+
+    @Test
+    void differentRejectedCallsAreNotTreatedAsRepeats() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            if (current > 8) {
+                return text("finished");
+            }
+            String name = current % 2 == 1 ? "shell" : "write";
+            String arguments = current % 2 == 1 ? "{\"command\":\"ls /root/.gradle/" + current + "\"}" : "{}";
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", name, arguments);
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
+        });
+
+        var session = runner(model).runSession("system", null, "brief", new RefusingTools(), 60, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(session.conversation().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
+                .flatMap(message -> message.getResponses().stream())).noneMatch(response -> response.responseData().contains("this exact"));
+    }
+
+    static class RefusingTools implements SubmitVetoAware {
+
+        int refusals;
+
+        @Tool(description = "Run a shell command")
+        public String shell(@org.springframework.ai.tool.annotation.ToolParam(description = "the command") String command) {
+            refusals++;
+            return "ERROR: the command was not run. The dependency cache is not inspectable.";
+        }
+
+        @Tool(description = "Record an edit")
+        public String write() {
+            return "written";
+        }
+
+        @Override
+        public boolean consumeSubmitVeto() {
+            return false;
+        }
+
+        @Override
+        public boolean isSandboxSessionTerminated() {
+            return false;
+        }
+    }
+
     private static AgentLoopRunner runner(ChatModel model) {
         return new AgentLoopRunner(List.of(model), 128_000, Duration.ZERO, ProviderFailureCooldown.disabled());
     }

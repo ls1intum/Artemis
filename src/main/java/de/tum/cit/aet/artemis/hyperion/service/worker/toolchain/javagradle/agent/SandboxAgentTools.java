@@ -485,18 +485,20 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Tool(name = "bash", description = AgentToolDescriptions.BASH)
     public String bash(@ToolParam(description = AgentToolDescriptions.BASH_COMMAND) String command) {
         if (command == null || command.isBlank()) {
-            return "exit=64\nNo command provided. Put the shell command in the \"command\" field as a single string, e.g. {\"command\": \"ls -R\"}.";
+            return "ERROR: no command provided. Put the shell command in the \"command\" field as a single string, e.g. {\"command\": \"ls -R\"}.";
         }
         // Rejected up front rather than run: the shell's failure on an argv array reads to the model like a problem with the command, so it retries the same array form.
         if (isRenderedArgvArray(command)) {
-            return "exit=2\nThe command must be a single shell string, e.g. {\"command\":\"ls -R\"}. You sent a JSON array, which I cannot run. Re-send it as one string.";
+            return SandboxPathPolicy
+                    .deniedCommand("The command must be a single shell string, e.g. {\"command\":\"ls -R\"}. You sent a JSON array, which I cannot run. Re-send it as one string.");
         }
         // `apply_patch` is not installed, so the shell would exit 127 and leave the workspace unchanged while the model believes the edit landed. Reject it loudly instead.
         if (isApplyPatchInvocation(command)) {
-            return "exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.";
+            return SandboxPathPolicy.deniedCommand("apply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.");
         }
         if (SandboxPathPolicy.mutatesManagedBuildInfrastructure(command)) {
-            return "exit=2\nDo not modify tests-repository build/harness files such as tests/build.gradle. They are seeded by Artemis and graded verbatim; edit only test source files under tests/test/<package path>/ instead.";
+            return SandboxPathPolicy.deniedCommand("Do not modify tests-repository build/harness files such as tests/build.gradle. They are seeded by Artemis and graded "
+                    + "verbatim; edit only test source files under tests/test/<package path>/ instead.");
         }
         // Refused rather than run: one javap dump of the Ares security implementation is enough to start a run-long bytecode study that never writes a test.
         if (SandboxPathPolicy.inspectsDependencyArtifacts(command)) {

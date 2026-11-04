@@ -646,7 +646,7 @@ class SandboxAgentToolsTest {
     void bash_withNoCommand_returnsHelpfulErrorWithoutTouchingTheSandbox() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "unused"));
         String out = new SandboxAgentTools(sandbox, "s").bash(null);
-        assertThat(out).contains("No command provided").contains("\"command\"");
+        assertThat(out).startsWith("ERROR: no command provided").contains("\"command\"");
         assertThat(sandbox.lastScript()).isNull();
     }
 
@@ -654,7 +654,7 @@ class SandboxAgentToolsTest {
     void bash_mangledJsonArrayCommand_isRejectedLoudlyWithoutTouchingTheSandbox() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "should not run"));
         String out = new SandboxAgentTools(sandbox, "s").bash("[bash, -lc, ls -R]");
-        assertThat(out).startsWith("exit=2\n").contains("must be a single shell string").contains("JSON array");
+        assertThat(out).startsWith("ERROR: the command was not run. ").contains("must be a single shell string").contains("JSON array");
         assertThat(sandbox.lastScript()).isNull();
     }
 
@@ -662,7 +662,7 @@ class SandboxAgentToolsTest {
     void bash_dependencyCacheInspection_isRefusedWithTheHarnessContractWithoutTouchingTheSandbox() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "should not run"));
         String out = new SandboxAgentTools(sandbox, "s").bash("cd /tmp/aresjar && javap -c de/tum/in/test/api/security/ArtemisSecurityManager.class | head -60");
-        assertThat(out).startsWith("exit=2\n").contains("not inspectable").contains("ReflectionTestUtils").contains("reference/style/tests.md");
+        assertThat(out).startsWith("ERROR: the command was not run. ").contains("not inspectable").contains("ReflectionTestUtils").contains("reference/style/tests.md");
         assertThat(sandbox.lastScript()).isNull();
     }
 
@@ -745,7 +745,8 @@ class SandboxAgentToolsTest {
     void bash_applyPatchCommand_shortCircuitsLoudlyWithoutTouchingTheSandbox() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "should not run"));
         String out = new SandboxAgentTools(sandbox, "s").bash("apply_patch");
-        assertThat(out).isEqualTo("exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.");
+        assertThat(out)
+                .isEqualTo("ERROR: the command was not run. apply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.");
         assertThat(sandbox.lastScript()).isNull();
     }
 
@@ -755,7 +756,7 @@ class SandboxAgentToolsTest {
 
         String out = new SandboxAgentTools(sandbox, "s").bash("cat > tests/pom.xml <<'EOF'\n<project/>\nEOF");
 
-        assertThat(out).startsWith("exit=2\n").contains("Do not modify tests-repository build/harness files");
+        assertThat(out).startsWith("ERROR: the command was not run. ").contains("Do not modify tests-repository build/harness files");
         assertThat(sandbox.lastScript()).isNull();
     }
 
@@ -776,7 +777,7 @@ class SandboxAgentToolsTest {
 
         String out = new SandboxAgentTools(sandbox, "s").bash("cat 2>/dev/null > tests/build.gradle");
 
-        assertThat(out).startsWith("exit=2\n").contains("Do not modify tests-repository build/harness files");
+        assertThat(out).startsWith("ERROR: the command was not run. ").contains("Do not modify tests-repository build/harness files");
         assertThat(sandbox.lastScript()).isNull();
     }
 
