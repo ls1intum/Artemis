@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, input, output, signal, viewChild }
 import { FormsModule } from '@angular/forms';
 import { Course, Language } from 'app/course/shared/entities/course.model';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
@@ -42,6 +42,7 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
         IrisLogoComponent,
         EnabledToggleComponent,
         AthenaLogoComponent,
+        TumAetUiMessageComponent,
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
@@ -71,6 +72,9 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly athenaConfig = computed(() => this.athenaState()?.config());
     readonly isAthenaFormativeEnabled = computed(() => this.athenaState()?.formativeFeedbackEnabled() ?? false);
     readonly isAthenaGradingEnabled = computed(() => this.athenaState()?.gradingFeedbackEnabled() ?? false);
+    /** Until the configuration has loaded, "Disabled" is only a fallback, so the Athena toggles cannot be switched yet. */
+    readonly isAthenaLoaded = computed(() => this.athenaState()?.loaded() ?? false);
+    readonly isAthenaLoadFailed = computed(() => this.athenaState()?.loadFailed() ?? false);
 
     /** The two Athena toggle rows, rendered by one @for so the markup stays in a single place. */
     protected readonly athenaFeatures = [

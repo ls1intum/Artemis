@@ -27,7 +27,7 @@ import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
 ### Folder structure
 
-The main application is stored under `/src/main` and separated into modules:
+The main application is stored under `/src/main`. The server features live in modules under `src/main/java/de/tum/cit/aet/artemis/<module>/`, each with the packages listed below plus an `api` package, through which other modules reach it (use `Optional<*Api>` for optional modules, never their repositories):
 
 * resources - scripts, config files and templates.
     * config - different configurations (production, development, etc.) for application.

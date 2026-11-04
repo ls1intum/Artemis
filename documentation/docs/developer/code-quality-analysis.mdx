@@ -18,8 +18,9 @@ the large-class and complex-bean ceilings in `supporting_scripts/analyze_java_fi
 over-fetch detector in `supporting_scripts/find_slow_queries.py`, and the per-module coverage floors
 in `gradle/jacoco.gradle`. This is where a quality problem actually stops you.
 
-**The external grades are signal, not gates.** Neither can block a merge, and neither should be read
-as a summary of the list above.
+**Codacy is signal, not a gate.** It cannot block a merge and should not be read as a summary of the list above.
+SonarQube Cloud is the exception: its new-code quality gate is required for relevant ready pull requests, see
+[SonarQube Cloud](#sonarqube-cloud).
 
 ## Codacy
 
@@ -47,17 +48,19 @@ the root `README.md` is computed and hosted by Artemis instead. See
 
 ## SonarQube Cloud
 
-SonarQube Cloud analyzes the deployed application — server and client in one project — and exists so
-its grade can be compared against Codacy's on exactly the same code. **It currently feeds no badge.**
-The comparison comes first; a badge decision follows from it.
+SonarQube Cloud analyzes the deployed application (server and client in one project), and its grade can be
+compared against Codacy's on the same code. Its **new-code quality gate is a required pre-merge check** for
+relevant ready pull requests: scanner, upload, timeout and quality-gate failures fail **All required CI
+Passed**. Its ratings are shown as badges in the root `README.md`.
 
-The analysis runs from `.github/workflows/ci-sonar.yml` on `develop` pushes after a green `test` job,
-importing the JaCoCo and LCOV reports that job already uploaded, so no test suite is re-run. All
-configuration lives in `gradle/sonar.gradle`.
+The analysis runs from `.github/workflows/ci-sonar.yml`, called from `ci.yml` after the test jobs, importing the
+JaCoCo and LCOV reports they already uploaded, so no test suite is re-run. All configuration lives in
+`gradle/sonar.gradle`. The [workflow reference](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/README.md#the-code-quality-analyses)
+describes the policy, including fork pull requests and recovery.
 
 ### Getting a grade on demand
 
-A full CI run takes around two hours because of the end-to-end tail. To get a grade without waiting,
+A full CI run takes a long time because of the end-to-end tail. To get a grade without waiting,
 dispatch the workflow directly from the **Actions** tab, or from the command line by naming the ref
 you want analysed:
 
@@ -65,10 +68,11 @@ you want analysed:
 gh workflow run ci-sonar.yml --ref develop
 ```
 
-The dispatch takes no inputs: the ref you name is the commit that gets analysed, and a dispatched run
-has no `test` job whose coverage artifacts it could import, so it reports no coverage. The ratings and
-issue counts still come back, which is what the comparison with Codacy turns on. For coverage, use the
-run that a push to `develop` triggers.
+The dispatch takes two optional inputs: `analyze_default_branch` analyzes the repository's default branch with the
+selected workflow revision (recovery mode), and `pull_request_number` scans reviewed code that was promoted to an
+internal `chore/sonar/pr-<number>` branch, where `0` analyzes the selected ref. A dispatched run has no `test` job
+whose coverage artifacts it could import, so unless it can reuse verified coverage of the same revision it reports
+no coverage. The ratings and issue counts still come back. For coverage, use the analysis of a complete CI run.
 
 ### Running it locally
 

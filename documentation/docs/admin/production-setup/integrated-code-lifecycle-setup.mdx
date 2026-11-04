@@ -132,7 +132,7 @@ Please read [Run the server via a run configuration in IntelliJ](/developer/setu
 
 You can now test the setup:
 
-To create a course with registered users, you can use the scripts from `supporting_scripts/course-setup-quickstart`.
+To create a course with registered users, you can use the scripts from `supporting_scripts/course-scripts/quick-course-setup`.
 
 - Create a course and a programming exercise.
 
@@ -151,14 +151,14 @@ For unauthorized access, your Git client will display the respective error messa
 
 ## Setup with Docker Compose
 
-You can also use Docker Compose to set up Integrated Code Lifecycle. Using the following command, you can start the Artemis and MySQL containers:
+You can also use Docker Compose to set up Integrated Code Lifecycle. Using the following command, you can start the Artemis and PostgreSQL containers:
 
 ```bash
-docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-mysql.yml up
+docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml up
 ```
 
 <Callout variant={CalloutVariant.info}>
-  **Unix systems:** When running the Artemis container on a Unix system, you will have to give the user running the container permission to access the Docker socket by adding them to the `docker` group. You can do this by changing the value of `services.artemis-app.group_add` in the `deployment/docker/artemis-dev-local-vc-local-ci-mysql.yml` file to the group ID of the `docker` group on your system. You can find the group ID by running `getent group docker | cut -d: -f3`. The default value is `999`.
+  **Unix systems:** When running the Artemis container on a Linux system with a native Docker daemon, you will have to give the user running the container permission to access the Docker socket. Pass the group ID of the `docker` group of the host in the environment variable `ARTEMIS_DOCKER_GROUP_ID`, which `services.artemis-app.group_add` in `deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml` reads, for example `ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3) docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml up`. The default value is `0`, which works with Docker Desktop on macOS and Windows.
 </Callout>
 
 <Callout variant={CalloutVariant.info}>

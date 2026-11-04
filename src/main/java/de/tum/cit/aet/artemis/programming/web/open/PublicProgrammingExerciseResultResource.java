@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 /**
  * REST controller for receiving build results for external CI systems. At the moment, only Jenkins is supported.
  */
+// REMOVE_IN_ARTEMIS_11 (Jenkins): result webhook for Jenkins, the only external CI provider; remove the controller
 @Profile(PROFILE_JENKINS)
 @Lazy
 @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
