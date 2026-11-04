@@ -12,9 +12,9 @@ _Look at the `notification-settings` directory as a prime **example** for child-
 
 1.  **Add a new route** for the new settings in `user-settings.route.ts` _(under `children:`)_
 
-    Add the new settings page to the `user-settings-container.component.html` _(under `<!-- links to different settings -->`)_
+    Add the new settings page to the navigation items in `navigation/sidebar/user-settings-sidebar.component.ts`.
 
-2.  **Create a new folder** for `childSettings` and **put** `childSettings` specific files into it
+2.  **Create a new folder** for `childSettings` below the owning tab folder (`profile`, `credentials`, `learning`, `ai-experience`, or `exercises`) and **put** `childSettings` specific files into it
 
 3.  a) Use the `notification-settings.component.html`(**copy**) and `user-settings.scss`(**link**) in `child-settings` to **reuse** the same UI (just replace the relevant Setting part)<br>
 
