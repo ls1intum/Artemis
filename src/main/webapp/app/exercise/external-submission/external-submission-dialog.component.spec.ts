@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, throwError } from 'rxjs';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -140,7 +140,6 @@ describe('ExternalSubmissionDialogComponent', () => {
         const student: ExternalSubmissionCandidate = { login: 'ga12abc', name: 'Jane Doe' };
 
         const saveButton = (): HTMLButtonElement => fixture.nativeElement.querySelector('button[type="submit"]');
-        const requiredMessage = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="external-submission-student-required"]');
         const studentSearch = (): ExternalSubmissionStudentSearchComponent => fixture.debugElement.query(By.directive(ExternalSubmissionStudentSearchComponent)).componentInstance;
 
         const render = async () => {
@@ -166,16 +165,28 @@ describe('ExternalSubmissionDialogComponent', () => {
             expect(saveButton().disabled).toBe(true);
         });
 
-        it('shows the required message once the search was left without a selection, and hides it when a student is selected', async () => {
-            expect(requiredMessage()).toBeNull();
+        it('shows the missing student only once under the field, and not when the exercise takes no external submissions yet', async () => {
+            const searchField = (): HTMLInputElement => fixture.nativeElement.querySelector('input[role="combobox"]');
+            const leaveField = async () => {
+                searchField().dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+                await render();
+            };
+            const occurrences = (key: string) => (fixture.nativeElement.textContent as string).split(key).length - 1;
 
-            studentSearch().touched.emit();
-            await render();
-            expect(requiredMessage()).not.toBeNull();
+            await leaveField();
+            expect(occurrences('artemisApp.result.studentLoginRequired')).toBe(1);
 
-            studentSearch().studentSelected.emit(student);
-            await render();
-            expect(requiredMessage()).toBeNull();
+            vi.spyOn(externalSubmissionService, 'searchCandidates').mockReturnValue(
+                throwError(() => new HttpErrorResponse({ status: 400, headers: new HttpHeaders({ 'X-artemisApp-error': 'error.externalSubmissionBeforeDueDate' }) })),
+            );
+            searchField().dispatchEvent(new FocusEvent('focus'));
+            searchField().value = 'jane';
+            searchField().dispatchEvent(new Event('input', { bubbles: true }));
+            await new Promise((resolve) => setTimeout(resolve, 350));
+            await leaveField();
+
+            expect(occurrences('error.externalSubmissionBeforeDueDate')).toBeGreaterThan(0);
+            expect(occurrences('artemisApp.result.studentLoginRequired')).toBe(0);
         });
 
         it('posts the login of the selected student when saving', async () => {

@@ -3,8 +3,8 @@
     required
     controlId="externalSubmissionStudentSearch"
     [hint]="hint()?.key | artemisTranslate: hint()?.params"
-    [invalid]="!!errorKey()"
-    [error]="errorKey() | artemisTranslate"
+    [invalid]="!!shownErrorKey()"
+    [error]="shownErrorKey() | artemisTranslate"
 >
     @if (selected(); as option) {
         <div class="flex items-center gap-2" data-testid="external-submission-selected-student">

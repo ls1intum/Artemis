@@ -49,7 +49,6 @@ export class ExternalSubmissionDialogComponent implements OnInit {
 
     /** The student picked in the search; Save stays disabled until there is one. */
     readonly selectedStudent = signal<ExternalSubmissionCandidate | undefined>(undefined);
-    readonly studentSearchTouched = signal(false);
     // result is a deep two-way [(ngModel)] target (result.score/successful/rated); use a getter/setter facade over a signal.
     private readonly _result = signal<Result>(undefined!);
     get result(): Result {

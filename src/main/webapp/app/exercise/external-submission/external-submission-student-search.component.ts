@@ -59,8 +59,6 @@ export class ExternalSubmissionStudentSearchComponent {
 
     /** The selected student, or undefined once the selection is cleared. */
     readonly studentSelected = output<ExternalSubmissionCandidate | undefined>();
-    /** Emitted once, when the search input loses focus for the first time. */
-    readonly touched = output<void>();
 
     private readonly autocomplete = viewChild<TumAetUiAutoCompleteComponent>('autocomplete');
 
@@ -74,6 +72,14 @@ export class ExternalSubmissionStudentSearchComponent {
     /** How many students match the last search, which can be more than the suggestions show. */
     private readonly totalMatches = signal(0);
     protected readonly errorKey = signal<string | undefined>(undefined);
+    /** Whether the field was left at least once, after which a missing selection counts as an error. */
+    private readonly wasLeft = signal(false);
+
+    /**
+     * The one error the field shows: a failed search or a reason the exercise takes no external submissions comes first, since no student can be selected
+     * then; otherwise that a student is missing, once the field was left without one.
+     */
+    protected readonly shownErrorKey = computed(() => this.errorKey() ?? (this.wasLeft() && !this.selected() ? 'artemisApp.result.studentLoginRequired' : undefined));
 
     /** The hint below the field: how many characters are needed, or that nothing matched. */
     protected readonly hint = computed((): Hint | undefined => {
@@ -95,7 +101,6 @@ export class ExternalSubmissionStudentSearchComponent {
     });
 
     private readonly searchQuery = new Subject<string>();
-    private hasEmittedTouched = false;
 
     constructor() {
         this.searchQuery
@@ -149,10 +154,7 @@ export class ExternalSubmissionStudentSearchComponent {
     }
 
     protected onFocusOut(): void {
-        if (!this.hasEmittedTouched) {
-            this.hasEmittedTouched = true;
-            this.touched.emit();
-        }
+        this.wasLeft.set(true);
     }
 
     /** The full label of an option; the option template receives it untyped. */

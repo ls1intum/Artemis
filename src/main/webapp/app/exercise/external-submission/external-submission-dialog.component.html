@@ -10,10 +10,7 @@
             </div>
         }
         <div class="mb-4!">
-            <jhi-external-submission-student-search [exercise]="exercise()" (studentSelected)="selectedStudent.set($event)" (touched)="studentSearchTouched.set(true)" />
-            @if (studentSearchTouched() && !selectedStudent()) {
-                <span class="text-state-danger" data-testid="external-submission-student-required" jhiTranslate="artemisApp.result.studentLoginRequired"></span>
-            }
+            <jhi-external-submission-student-search [exercise]="exercise()" (studentSelected)="selectedStudent.set($event)" />
         </div>
         <div class="mb-4! grid grid-cols-12 gap-3! items-end">
             <div class="col-span-12 md:col-span-6">

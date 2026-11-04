@@ -236,12 +236,25 @@ describe('ExternalSubmissionStudentSearchComponent', () => {
     });
 
     // U7
-    it('emits touched once, on the first blur of the input', () => {
-        const touched = vi.spyOn(component.touched, 'emit');
+    it('says that a student is missing once the field was left without one, and not before', () => {
+        expect(errorRegion().hidden).toBe(true);
 
         input().dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
-        input().dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+        fixture.detectChanges();
 
-        expect(touched).toHaveBeenCalledOnce();
+        expect(errorRegion().hidden).toBe(false);
+        expect(errorRegion().textContent).toContain('artemisApp.result.studentLoginRequired');
+        expect(input().getAttribute('aria-describedby')).toBe(errorRegion().id);
+    });
+
+    it('shows only the exercise-level message, without the missing student, when the field is left before the due date', async () => {
+        failWith(new HttpErrorResponse({ status: 400, headers: new HttpHeaders({ 'X-artemisApp-error': 'error.externalSubmissionBeforeDueDate' }) }));
+
+        await type('jane');
+        input().dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+        fixture.detectChanges();
+
+        expect(errorRegion().textContent).toContain('error.externalSubmissionBeforeDueDate');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.result.studentLoginRequired');
     });
 });
