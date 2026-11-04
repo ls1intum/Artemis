@@ -20,6 +20,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /** A criterion prepared for display in instructor order, together with its live "applied" counter. */
 export interface SortedGradingCriterion {
@@ -187,8 +188,9 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
             event.preventDefault();
             return;
         }
-        // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
-        event.dataTransfer?.setData('text/plain', JSON.stringify(instruction));
+        // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon, whose linked
+        // criterion chip names the criterion, which an instruction does not carry itself.
+        event.dataTransfer?.setData('text/plain', JSON.stringify(cloneWith(instruction, { criterionTitle: this.selectionService.criterionTitleOf(instruction) })));
     }
     /**
      * disables drag if on readOnly mode

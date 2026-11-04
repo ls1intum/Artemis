@@ -29,7 +29,8 @@ export class StructuredGradingCriterionService {
         event.preventDefault();
         try {
             const data = (event as DragEvent).dataTransfer!.getData('text/plain');
-            const instruction = parseJson<GradingInstruction>(data);
+            // The criterion title is only carried for Apollon's display and must not be saved with the feedback.
+            const { criterionTitle: _criterionTitle, ...instruction } = parseJson<GradingInstruction & { criterionTitle?: string }>(data);
             feedback.gradingInstruction = instruction;
             feedback.credits = instruction.credits;
         } catch (err) {
