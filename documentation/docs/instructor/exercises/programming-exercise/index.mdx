@@ -2,6 +2,7 @@
 id: index
 title: Programming Exercise
 sidebar_label: Programming Exercise
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -12,7 +13,7 @@ import exerciseWorkflow from '../assets/programming/ExerciseWorkflow.png';
 
 In a programming exercise, students write code in a Git repository of their own and Artemis grades it automatically by running your test cases against every push. You provide three repositories — a template students start from, a solution, and the tests — and Artemis takes care of handing out repositories, running builds, and turning test results into scores and feedback.
 
-Artemis supports a wide range of programming languages and is independent of any particular version control or continuous integration system, so you have a lot of freedom in how you set up the test environment.
+Artemis supports a wide range of programming languages. It hosts the repositories and, with Local CI, runs the builds itself ([Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle), Local Version Control and Local CI). Instances that have not migrated yet still run the builds in Jenkins. Jenkins is deprecated and Artemis 11 (planned for March 2027) removes it, so the **Jenkins** columns below only matter for instances that have not yet [migrated to Local CI](/admin/jenkins-to-localci-migration).
 
 For supported unreleased Java exercises built with Gradle or Maven, [AI-assisted authoring with Hyperion](/instructor/exercises/hyperion-generation)
 can create the statement, template, solution, and tests together from a brief.
@@ -110,10 +111,10 @@ Not all templates support the same feature set. **L** = Local CI, **J** = Jenkin
 |  2  | Python     |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  3  | C          |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | FACT, GCC              |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  4  | Haskell    |                L: ✅<br />J: ❌                 |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ✅                               |                  L: ✅<br />J: ❌                   |
-|  5  | Kotlin     |                L: ❌<br />J: ✅                 |                            ❌                            |                    ✅                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  5  | Kotlin     |                       ✅                       |                            ❌                            |                    ✅                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  6  | VHDL       |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  7  | Assembler  |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  8  | Swift      |                       ❌                       |                     L: ❌<br />J: ✅                      |                    ✅                    |               ✅               | Plain                  |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  8  | Swift      |                       ❌                       |                            ✅                            |                    ✅                    |               ✅               | Plain                  |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  9  | OCaml      |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ✅                               |                  L: ✅<br />J: ❌                   |
 | 10  | Rust       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 | 11  | JavaScript |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
@@ -149,7 +150,7 @@ For some languages — Java, Kotlin, Swift, Go and Dart — you can specify the 
 
 Checks out the solution repository alongside the student's submission during the build, so tests can compare the two directly.
 
-Currently supported for OCaml and Haskell only, with both continuous integration systems.
+Currently supported for OCaml and Haskell only.
 
 #### Auxiliary Repositories
 

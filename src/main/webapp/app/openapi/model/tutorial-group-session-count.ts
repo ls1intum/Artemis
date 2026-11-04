@@ -10,6 +10,6 @@
 
 
 export interface TutorialGroupSessionCount {
-    date?: string;
-    count?: number;
+    date: string;
+    count: number;
 }

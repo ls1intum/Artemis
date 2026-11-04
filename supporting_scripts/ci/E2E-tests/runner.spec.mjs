@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'vitest';
 import { parse } from 'yaml';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
@@ -24,11 +24,22 @@ function sandbox() {
 
 const passed = { selected: 1, completed: 1, status: 'passed', errors: 0, unexpected: 0 };
 
-function runTests(execution, { selected = 1, multinodeSelected = selected, collectionExit = 0, multinodeCollectionExit = collectionExit, exit = 0, cluster = '' } = {}) {
+function runTests(
+    execution,
+    { selected = 1, multinodeSelected = selected, collectionExit = 0, multinodeCollectionExit = collectionExit, exit = 0, cluster = '', ownership, signal = '' } = {},
+) {
     const root = sandbox();
     for (const file of ['run-tests.sh', 'completion-reporter.cjs']) {
         const source = join(repository, 'src/test/playwright', file);
         if (existsSync(source)) cpSync(source, join(root, file));
+    }
+    if (ownership) {
+        writeFileSync(join(root, 'bin/id'), `#!/bin/sh\necho ${ownership.uid ?? 0}\n`, { mode: 0o755 });
+        writeFileSync(
+            join(root, 'bin/chown'),
+            `#!/usr/bin/env node\nrequire('node:fs').appendFileSync('ownership-calls', JSON.stringify(process.argv.slice(2)) + '\\n');\nprocess.exit(${ownership.exit ?? 0});\n`,
+            { mode: 0o755 },
+        );
     }
     // Only the external Playwright/coverage commands are replaced. The shell runner and completion verifier are real.
     writeFileSync(
@@ -38,6 +49,17 @@ const fs = require('node:fs');
 const args = process.argv.slice(2);
 if (args.slice(0, 3).join(' ') !== 'exec playwright test') process.exit(0);
 const collection = args.includes('--list');
+if (process.env.OWNERSHIP_PROBE) {
+  for (const output of ['test-reports', 'test-results']) {
+    fs.mkdirSync(output + '/nested', { recursive: true });
+    fs.writeFileSync(output + '/nested/artifact', 'preserve');
+  }
+  fs.writeFileSync('test-reports/.reporter-failed', 'optional reporter failure');
+}
+if (process.env.RUNNER_SIGNAL) {
+  process.kill(process.ppid, process.env.RUNNER_SIGNAL);
+  process.exit(0);
+}
 const selected = process.env.PLAYWRIGHT_TEST_TYPE === 'multinode' ? process.env.MULTINODE_SELECTED : process.env.SELECTED;
 fs.appendFileSync('calls', collection ? 'collect\\n' : 'execute\\n');
 if (collection) {
@@ -65,6 +87,8 @@ process.exit(Number(process.env.EXECUTION_EXIT));
             EXPECTED_CLUSTER_NODE_COUNT: cluster,
             PLAYWRIGHT_REPORT_SERVER_URL: '',
             PLAYWRIGHT_TEST_PATHS: '',
+            OWNERSHIP_PROBE: ownership ? 'true' : '',
+            RUNNER_SIGNAL: signal,
         },
     });
     return { ...result, root };
@@ -90,6 +114,45 @@ test('accepts a complete successful execution', () => {
     const result = runTests(passed);
     assert.equal(result.status, 0, result.stdout + result.stderr);
 });
+
+for (const [name, execution, options, expectedExit] of [
+    ['successful tests', passed, {}, 0],
+    ['failed assertions', { ...passed, status: 'failed', unexpected: 1 }, { exit: 1 }, 1],
+    ['failed collection', null, { collectionExit: 7 }, 1],
+    ['interruption', null, { signal: 'SIGINT' }, 130],
+    ['termination', null, { signal: 'SIGTERM' }, 143],
+]) {
+    test(`restores ownership of output trees after ${name} without removing reporter evidence`, () => {
+        const result = runTests(execution, { ...options, ownership: {} });
+        assert.equal(result.status, expectedExit, result.stdout + result.stderr);
+        assert.equal(existsSync(join(result.root, 'ownership-calls')), true, 'root-created outputs need ownership repair');
+        const calls = readFileSync(join(result.root, 'ownership-calls'), 'utf8').trim().split('\n').map(JSON.parse);
+        assert.equal(calls.length, 2);
+        for (const [index, output] of ['test-reports', 'test-results'].entries()) {
+            assert.ok(calls[index].includes(`--reference=${realpathSync(result.root)}`));
+            assert.ok(calls[index].includes('-R'));
+            assert.ok(calls[index].includes('--no-dereference'));
+            assert.equal(calls[index].at(-1), `./${output}`);
+            assert.equal(readFileSync(join(result.root, output, 'nested/artifact'), 'utf8'), 'preserve');
+        }
+        assert.equal(readFileSync(join(result.root, 'test-reports/.reporter-failed'), 'utf8'), 'optional reporter failure');
+    });
+}
+
+test('does not change output ownership when the runner is not root', () => {
+    const result = runTests(passed, { ownership: { uid: 1001 } });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(existsSync(join(result.root, 'ownership-calls')), false);
+});
+
+for (const exit of [0, 1]) {
+    test(`fails as infrastructure when ownership restoration fails after test exit ${exit}`, () => {
+        const result = runTests(exit ? { ...passed, status: 'failed', unexpected: 1 } : passed, { exit, ownership: { exit: 1 } });
+        assert.equal(result.status, 2, result.stdout + result.stderr);
+        assert.match(result.stdout + result.stderr, /ownership/i);
+        assert.notEqual(readFileSync(join(result.root, 'test-reports/runner-status.env'), 'utf8'), 'exit_code=2\ninfrastructure_failed=false\n');
+    });
+}
 
 test('fails when every selected project is empty', () => {
     const result = runTests(null, { selected: 0, cluster: '3' });
