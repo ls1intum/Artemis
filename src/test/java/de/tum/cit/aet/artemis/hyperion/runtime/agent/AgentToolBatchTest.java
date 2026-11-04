@@ -45,7 +45,9 @@ class AgentToolBatchTest {
         List<Message> conversation = batch(response("1", "search", "ERROR: multiline text"));
 
         assertThat(AgentToolBatch.escalateRepeatedRejections(conversation, calls, counts)).isTrue();
-        assertThat(lastResponse(conversation)).startsWith("ERROR: this exact search call has now been rejected 3 times").endsWith("The rejection was: ERROR: multiline text");
+        // A write in between may have changed what the call sees, so the escalation must not promise that it fails forever.
+        assertThat(lastResponse(conversation)).startsWith("ERROR: this exact search call has now been rejected 3 times").doesNotContain("every time")
+                .endsWith("The rejection was: ERROR: multiline text");
         assertThat(AgentToolBatch.lastRejection(conversation)).startsWith("search: ERROR: this exact search call");
     }
 

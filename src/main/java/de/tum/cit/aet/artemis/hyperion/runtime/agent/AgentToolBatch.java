@@ -174,7 +174,7 @@ final class AgentToolBatch {
                     // result, because a re-read can be legitimate, for example after compaction dropped the earlier one, and a shell command may have changed the workspace.
                     String escalation = rejected
                             ? "ERROR: this exact " + response.name() + " call has now been rejected " + occurrences
-                                    + " times and will be rejected every time. Do not repeat it; take a different action. Each further repeat counts toward ending this "
+                                    + " times. Repeating it unchanged will not help; take a different action. Each further repeat counts toward ending this "
                                     + "session. The rejection was: " + excerpt(response.responseData().strip())
                             : "NOTE: this exact " + response.name() + " call has now returned the same result " + occurrences
                                     + " times. Unless you expect a different result, take a different action instead of repeating it. The result was:\n" + response.responseData();

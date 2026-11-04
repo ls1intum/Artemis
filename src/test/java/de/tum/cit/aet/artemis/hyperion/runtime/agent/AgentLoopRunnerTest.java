@@ -401,7 +401,7 @@ class AgentLoopRunnerTest {
                 .toList();
         assertThat(shellResults).hasSize(lastAllowedRepeat);
         assertThat(shellResults.subList(0, 2)).allSatisfy(result -> assertThat(result).contains("the command was not run").doesNotContain("this exact shell call"));
-        assertThat(shellResults.get(2)).contains("this exact shell call has now been rejected 3 times", "Do not repeat it", "the command was not run");
+        assertThat(shellResults.get(2)).contains("this exact shell call has now been rejected 3 times", "Repeating it unchanged will not help", "the command was not run");
         assertThat(session.result().stopCause()).startsWith("The agent session stopped: The agent repeated identical rejected tool calls 5 times")
                 .contains("shell: ERROR: this exact shell call");
     }
