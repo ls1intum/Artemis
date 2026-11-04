@@ -7,9 +7,15 @@ sidebar_label: Global Search (Weaviate)
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Callout from "../../src/components/Callout/Callout";
 
-Artemis has a search across courses, lectures, lecture units, exercises, exams, FAQs, communication channels and posts.
+Artemis has a search across courses, lectures, lecture units, exercises, exams, FAQs and communication channels.
 It stores a search index in [Weaviate](https://weaviate.io) and is switched on with `artemis.weaviate.enabled`
-(default: **off**). Iris uses the same index to find course content for its answers.
+(default: **off**). Iris uses the same index to find course content for its answers. Posts and answer posts are also
+written to the index, but search does not return them, because the background repair does not keep them up to date.
+For what users see, see [Global Search](/student/getting-started/global-search).
+
+Users only see **Search** in the navigation bar while the feature toggle **Global Search** is on
+(**Server Administration → Feature Toggles**). `artemis.global-search.enable` sets it when the toggle has not been
+stored yet (default: **off**); after that, the toggle decides, without a restart.
 
 This page explains how the search works, how to run Weaviate, how to connect an embedding model, what load Artemis
 puts on that model, and what happens when the index must be rebuilt.
@@ -173,16 +179,18 @@ artemis:
 
   **TUM-internal deployment — not applicable to external deployments**
 
-  TUM-internal Artemis production deployments use Qwen3-Embedding-8B through the OpenAI-compatible endpoint of the TUM
-  GPU cluster, with the query instruction shown above. Example values for TUM-internal use only:
+  TUM-internal Artemis production deployments use Qwen3-Embedding-8B through Logos, the LLM gateway of the AET, with
+  the query instruction shown above. Iris embeds its lecture collections through the same gateway. Logos limits the
+  tokens per minute it accepts, so the [load limits](#load-on-the-embedding-api) below also protect the other services
+  that share it. Example values for TUM-internal use only:
 
   ```yaml
   artemis:
     weaviate:
       vectorizer-module: text2vec-openai
       open-ai-embedding-model: Qwen/Qwen3-Embedding-8B
-      open-ai-base-url: https://gpu.aet.cit.tum.de
-      gpu-api-key: your-tum-gpu-api-key
+      open-ai-base-url: https://logos.aet.cit.tum.de
+      gpu-api-key: your-logos-api-key
   ```
 
   Do not use these hostnames or model identifiers in any other deployment.
@@ -388,6 +396,67 @@ curl -s https://your-embedding-endpoint/v1/embeddings \
 ```
 
 The result is the vector length of the model, for example `4096`.
+
+### Index Dashboard
+
+The index is written in the background, so a course can be partly indexed without anyone noticing. **Index
+Dashboard** under **Monitoring** in the server administration shows, per course, how much of what the database
+expects is actually in Weaviate. It is only listed when `artemis.weaviate.enabled` is on, and only administrators can
+open it. It only reads; it never writes to the index.
+
+{/* SCREENSHOTS for this section go into ./assets/global-search/. Capture them on an instance with several courses
+    that are partly indexed, so the table shows green, red and grey cells; crop to the dashboard content without the
+    admin sidebar. Replace each comment with an <Image> as described in the documentation guideline. */}
+
+**Search index overview** at the top shows whether Weaviate and Iris are reachable, the Weaviate address, and the
+number of objects in each collection: the Artemis collection and the Iris collections for slides, transcripts,
+aligned segments and unit summaries. **Reload overview** reads them again.
+
+{/* SCREENSHOT index-dashboard-overview.png: the Search index overview card with Weaviate reachable, Iris reachable and
+    the Indexed collections table with object counts. Caption: "Services and collections of the search index". */}
+
+**Coverage by course** is a table with one row per course and one column per type. Under **Entity metadata** are
+exercises, lectures, units, exams, FAQs, channels and the course itself; under **Lecture content** are slides,
+transcripts, segment summaries and unit summaries. Each cell shows indexed / expected: green when complete, red when
+items are missing or the index holds orphaned items whose source is gone, grey when nothing is expected. The
+**Status** of a course is **Complete**, **Incomplete**, or **Empty** for a course with nothing to index. You can
+search for a course, filter by status and by whether the course is active, and sort by name, release date, the last
+ingestion, or **Worst first** to see the least complete courses at the top.
+
+{/* SCREENSHOT index-dashboard-coverage.png: Coverage by course sorted Worst first, with the Entity metadata and Lecture
+    content column groups, at least one Incomplete course with red cells, a Complete one and a grey cell, and the
+    Last updated label with Refresh data. Caption: "Coverage of each course, least complete first". */}
+
+The table is stored and shows when it was **Last updated**. Opening the dashboard recomputes it in the background when
+it is older than 15 minutes. **Refresh data** recomputes it for every course at once; on a large instance that takes a
+while and puts load on Weaviate, so use it sparingly.
+
+Clicking a course opens its indexed content in a dialog; the title names how many types are incomplete. On the left,
+pick a metadata type under **Entity metadata**, or drill down through **Browse lectures** from a lecture to a unit to
+one of its collections (**Slides**, **Transcript**, **Aligned segments**, **Unit summary**). On the right, the
+selection shows how many items are indexed, expected, missing and orphaned, lists what is **Expected but not
+indexed**, and shows the stored records with their fields. **Open lecture**, **Open unit** and **Open course** lead to
+the item in the course management. Content of a deleted lecture unit appears under **Orphaned content**.
+
+{/* SCREENSHOT index-dashboard-browser.png: the course dialog with a lecture expanded to a unit and its Slides collection
+    selected: the tree on the left with complete and incomplete dots, the statistics and a few stored page objects on
+    the right. Caption: "The indexed slides of one lecture unit". */}
+
+{/* SCREENSHOT index-dashboard-missing.png (optional): the same dialog with a metadata type such as Exercise selected
+    that has a gap, showing the Missing count and the Expected but not indexed list. Caption: "Items the index is
+    missing". */}
+
+What to do with a gap:
+
+- **Missing metadata** is indexed by the background repair while **Global Search Reconcile** is on. Right after a
+  [rebuild](#rebuild-of-the-index), most items are missing until the repair has caught up.
+- **Orphaned metadata** is removed by **Global Search Reconcile: Remove Orphaned Entries**, which is off by default
+  (`artemis.weaviate.reconcile.orphan-sweep-enabled`). Switch on **Global Search Reconcile** first and observe it
+  before enabling it.
+- **Missing lecture content** is processed by Iris. The lecture ingestion reconciliation queues units whose content
+  is missing or outdated again; see [Artemis Intelligence](/admin/artemis-intelligence). It only catches up on
+  courses within `artemis.iris.ingestion.course-window`, so a course that ended earlier can keep gaps for content that
+  was never processed.
 
 ### Backups
 

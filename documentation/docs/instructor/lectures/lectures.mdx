@@ -18,8 +18,6 @@ import importLecture from './assets/lectures/import-lecture.png';
 import unitsManagementEmpty from './assets/lectures/units-management-empty.png';
 import unitsManagement from './assets/lectures/units-management.png';
 import createAttachmentVideoUnit from './assets/lectures/create-attachment-video-unit.png';
-import sendAllLecturesToIris from './assets/lectures/send-all-lectures-to-iris.png';
-import sendOneUnitIris from './assets/lectures/send-one-unit-iris.png';
 import viewAttachmentUnit from './assets/lectures/view-attachment-unit.png';
 import createExerciseUnit from './assets/lectures/create-exercise-unit.png';
 import createOnlineUnit from './assets/lectures/create-online-unit.png';
@@ -168,24 +166,36 @@ To add a video with automatic transcription:
 1. Create or edit an attachment video unit.
 2. Paste the link of the page that shows the video under **Video page link** and select **Use as video URL**. Artemis turns it into an embeddable video URL.
 3. Save the unit, or select **Save video URL** when you edit it in the lecture editor. Artemis automatically starts generating a transcript in the background — no additional steps are required.
-4. On the lecture management page, status badges show the current progress (e.g. *Transcribing*, *Processing complete*, *Transcription complete*).
+4. On the lecture management page, the unit's status badge shows the progress: **Awaiting Processing**, **Transcribing**, **Indexing** and finally **Indexed**.
 5. Once complete, the transcript is attached to the unit and becomes available to students.
 
 <Callout variant={CalloutVariant.info}>
 
-  Currently, automatic transcription is supported for <strong>TUM-Live</strong> videos. Videos from other platforms can still be embedded as attachment video units, but transcripts for these must be added manually. Your administrator can confirm which video sources are supported on your instance.
+  Automatic transcription is supported for <strong>YouTube</strong> videos, and for <strong>TUM-Live</strong> videos
+  when your administrator has connected TUM-Live. Videos from other platforms can still be embedded as attachment video
+  units, but Iris cannot transcribe them, and a unit that has nothing else is marked **Not indexed**.
 
 </Callout>
 
-#### Iris Integration
+#### Processing for Iris and Global Search
 
-Either all Attachment Video Units of a lecture or specific Attachment Video Units can be sent to Iris, over the ingestion button in the lecture unit overview.
-Those transcriptions can be used to answer students' questions in the Iris chat.
+Artemis sends the slides and the video of every attachment video unit to Iris on its own: when you create the unit,
+replace its file, or change its video link. There is no button for it. A file whose content is unchanged keeps its
+version and is not processed again. Artemis also checks the processed content regularly and sends a unit again when
+it is missing, incomplete or outdated.
 
-<div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap'}}>
-    <Image src={sendAllLecturesToIris} alt="Send All Lectures to Iris" size={ImageSize.large} caption={"Lecture Management Page (with Send All Lectures To Iris Button)"}></Image>
-    <Image src={sendOneUnitIris} alt="Send One Unit to Iris" size={ImageSize.large} caption={"Lecture View (with Send Unit to Iris Button for attachment lecture units)"}></Image>
-</div>
+The status badge on the lecture management page shows each unit's progress, from **Awaiting Processing** through
+steps such as **Reading slides** or **Transcribing** to **Indexed**. If processing fails, the badge shows
+**Processing Failed** with the reason, and **Retry processing** next to the unit starts it again once you have fixed
+the cause.
+
+{/* SCREENSHOT lecture-unit-processing-status.png: the lecture management page with one unit Indexed, one Transcribing
+    and one Processing Failed with the Retry processing button. Caption: "Processing status of lecture units". */}
+
+Processing does not depend on whether Iris is enabled in your course. The Iris chat uses the processed content only
+while Iris is enabled, but students who allowed AI also find it in the
+[global search](/instructor/course-management/global-search), where hidden pages and unreleased units stay hidden
+from them.
 
 #### Attachment Unit Management
 
