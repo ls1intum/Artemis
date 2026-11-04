@@ -550,7 +550,8 @@ public final class ExerciseIntegrityGate {
     /** File and resource reads a test could aim at a source file; matched on comment- and literal-masked code. */
     private static final Pattern FILE_READ = Pattern
             .compile("\\bFiles\\s*\\.\\s*(?:readString|readAllLines|readAllBytes|lines|newBufferedReader|newInputStream|newByteChannel)\\s*\\("
-                    + "|\\bnew\\s+(?:FileReader|FileInputStream|RandomAccessFile)\\s*\\(|\\bnew\\s+Scanner\\s*\\(\\s*(?:new\\s+File\\b|Path\\s*\\.\\s*of\\b|Paths\\s*\\.\\s*get\\b)"
+                    + "|\\bnew\\s+(?:java\\s*\\.\\s*io\\s*\\.\\s*)?(?:FileReader|FileInputStream|RandomAccessFile)\\s*\\("
+                    + "|\\bnew\\s+(?:java\\s*\\.\\s*util\\s*\\.\\s*)?Scanner\\s*\\(\\s*(?:new\\s+(?:java\\s*\\.\\s*io\\s*\\.\\s*)?File\\b|(?:java\\s*\\.\\s*nio\\s*\\.\\s*file\\s*\\.\\s*)?(?:Path\\s*\\.\\s*of|Paths\\s*\\.\\s*get)\\b)"
                     + "|\\bgetResource(?:AsStream)?\\s*\\(|\\bFileUtils\\s*\\.\\s*read\\w*\\s*\\(");
 
     private static final Pattern STRING_LITERAL = Pattern.compile("\"((?:[^\"\\\\\\n]|\\\\.)*)\"");
@@ -561,10 +562,13 @@ public final class ExerciseIntegrityGate {
      */
     private static final Pattern SOURCE_PATH_LITERAL = Pattern.compile("(?i)\\.(?:java|class)$|studentWorkingDirectory|(?:^|[/\\\\])(?:src|assignment)(?:[/\\\\]|$)");
 
+    /** Whitespace inside a literal: a path or path segment of a source tree has none, while an assertion message such as "Implement Parser.java" is prose. */
+    private static final Pattern INNER_WHITESPACE = Pattern.compile("\\s");
+
     /**
      * Rejects graded tests that read a source or class file of the exercise. The grading sandbox forbids the file access, the build layout does not place the sources where a
      * test could find them, and source shape is not graded behavior. A file counts when it both reads a file or resource and names a source path in a string literal, which
-     * catches a path built in one statement and read in another without flagging tests that read their own data files.
+     * catches a path built in one statement and read in another without flagging tests that read their own data files. A literal with whitespace is a message, not a path.
      */
     static List<String> sourceReadingTestReasons(Map<String, String> producedTestsFiles) {
         if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
@@ -576,8 +580,8 @@ public final class ExerciseIntegrityGate {
                     || !FILE_READ.matcher(JavaSourceInspector.maskCommentsAndLiterals(file.getValue())).find()) {
                 continue;
             }
-            List<String> sourcePaths = STRING_LITERAL.matcher(JavaSourceInspector.stripJavaComments(file.getValue())).results().map(literal -> literal.group(1))
-                    .filter(literal -> SOURCE_PATH_LITERAL.matcher(literal.strip()).find()).distinct().toList();
+            List<String> sourcePaths = STRING_LITERAL.matcher(JavaSourceInspector.stripJavaComments(file.getValue())).results().map(literal -> literal.group(1)).map(String::strip)
+                    .filter(literal -> !INNER_WHITESPACE.matcher(literal).find() && SOURCE_PATH_LITERAL.matcher(literal).find()).distinct().toList();
             if (!sourcePaths.isEmpty()) {
                 offending.add(file.getKey() + " (reads " + sourcePaths + ")");
             }

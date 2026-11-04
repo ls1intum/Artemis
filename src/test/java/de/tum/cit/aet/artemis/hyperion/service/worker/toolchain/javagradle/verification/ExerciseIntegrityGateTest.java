@@ -817,11 +817,16 @@ class ExerciseIntegrityGateTest {
                 """;
         String literalPath = "class T { @Test void t() throws Exception { String s = java.nio.file.Files.readString(java.nio.file.Path.of(\"assignment/src/de/example/Client.java\")); } }";
         String resource = "class T { @Test void t() { var in = getClass().getResourceAsStream(\"/de/example/Client.java\"); assertNotNull(in); } }";
+        String qualifiedReader = "class T { @Test void t() throws Exception { var in = new java.io.FileInputStream(\"assignment/src/de/example/Client.java\"); } }";
+        String qualifiedScanner = "class T { @Test void t() throws Exception { var in = new java.util.Scanner(java.nio.file.Path.of(\"src\", \"Client.java\")); } }";
 
         assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/de/example/ClientSourceUsageTest.java", observed))).singleElement().asString()
                 .contains("ClientSourceUsageTest.java", "Client.java", "Tests must not read source files", AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE);
         assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", literalPath))).singleElement().asString().contains("assignment/src/de/example/Client.java");
         assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", resource))).singleElement().asString().contains("/de/example/Client.java");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", qualifiedReader))).singleElement().asString()
+                .contains("assignment/src/de/example/Client.java");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", qualifiedScanner))).singleElement().asString().contains("Client.java");
     }
 
     @Test
@@ -835,8 +840,17 @@ class ExerciseIntegrityGateTest {
                 """;
         String ownData = "class T { @Test void t() throws Exception { var in = getClass().getResourceAsStream(\"tickets.csv\"); assertNotNull(in); } }";
         String commentedOut = "class T {\n // String s = Files.readString(Path.of(\"src/Client.java\"));\n @Test void t() { assertEquals(2, new Machine().count()); } }";
+        String ownDataAndASourceNameInAMessage = """
+                class ParserTest {
+                    @Test void parsesCases() throws Exception {
+                        var in = getClass().getResourceAsStream("cases.csv");
+                        assertEquals(3, new Parser().parse(in).size(), "Implement Parser.java");
+                    }
+                }
+                """;
 
-        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ClientTest.java", capture, "test/T.java", ownData, "test/U.java", commentedOut))).isEmpty();
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(
+                map("test/ClientTest.java", capture, "test/T.java", ownData, "test/U.java", commentedOut, "test/ParserTest.java", ownDataAndASourceNameInAMessage))).isEmpty();
     }
 
     @Test
