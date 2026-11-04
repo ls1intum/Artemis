@@ -277,6 +277,12 @@
         changeSet of its own. These bounds keep every tinyint column of the table far below the 127 that MySQL's tinyint
         holds, and through the question counts the positions of a check's questions as well.
 
+        Two of these checks tie two columns of the row together: the shortest time limit must not exceed the longest,
+        and the threshold has to stay below the top of the scale. The database judges the row as each statement leaves
+        it, so going from seven to five points while the threshold is 5 or 6 is refused, and so are two statements that
+        write such a pair one column after the other in the wrong order. Code that changes a pair therefore validates
+        the new pair first and writes both columns in one statement, as the settings update of the Metis module does.
+
         A question gets what holds for it whatever the settings of its exercise were when it was written: a position
         from 1, a regeneration count and a changed-line count that are not negative, a time limit inside the range any
         configuration allows, and a score on the larger of the two scales, from 1 to 7, or null until the answer is
