@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -565,10 +566,21 @@ public final class ExerciseIntegrityGate {
     /** Whitespace inside a literal: a path or path segment of a source tree has none, while an assertion message such as "Implement Parser.java" is prose. */
     private static final Pattern INNER_WHITESPACE = Pattern.compile("\\s");
 
+    /** A call whose arguments name a file or resource: a read, or a path or file built for one. Matched on masked code; a match ends at the call's opening parenthesis. */
+    private static final Pattern PATH_EXPRESSION = Pattern
+            .compile("\\bFiles\\s*\\.\\s*\\w+\\s*\\(|\\bnew\\s+(?:java\\s*\\.\\s*io\\s*\\.\\s*)?(?:FileReader|FileInputStream|RandomAccessFile|File)\\s*\\("
+                    + "|\\b(?:Path\\s*\\.\\s*of|Paths\\s*\\.\\s*get)\\s*\\(|\\bgetResource(?:AsStream)?\\s*\\(|\\bFileUtils\\s*\\.\\s*\\w+\\s*\\(|\\.\\s*resolve(?:Sibling)?\\s*\\(");
+
+    private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_$][\\w$]*");
+
+    /** An assignment or initialization of a named variable or field, on masked code; its value runs to the next semicolon. */
+    private static final Pattern ASSIGNMENT = Pattern.compile("(?<![\\w$.])([A-Za-z_$][\\w$]*)\\s*=(?!=)");
+
     /**
      * Rejects graded tests that read a source or class file of the exercise. The grading sandbox forbids the file access, the build layout does not place the sources where a
-     * test could find them, and source shape is not graded behavior. A file counts when it both reads a file or resource and names a source path in a string literal, which
-     * catches a path built in one statement and read in another without flagging tests that read their own data files. A literal with whitespace is a message, not a path.
+     * test could find them, and source shape is not graded behavior. A file counts when it reads a file or resource and a string literal naming a source path appears in the
+     * arguments of a path expression or in the value of a variable those arguments use, which catches a path built in one statement and read in another without flagging tests
+     * that read their own data files or compare a file name. A literal with whitespace is a message, not a path.
      */
     static List<String> sourceReadingTestReasons(Map<String, String> producedTestsFiles) {
         if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
@@ -580,8 +592,10 @@ public final class ExerciseIntegrityGate {
                     || !FILE_READ.matcher(JavaSourceInspector.maskCommentsAndLiterals(file.getValue())).find()) {
                 continue;
             }
-            List<String> sourcePaths = STRING_LITERAL.matcher(JavaSourceInspector.stripJavaComments(file.getValue())).results().map(literal -> literal.group(1)).map(String::strip)
-                    .filter(literal -> !INNER_WHITESPACE.matcher(literal).find() && SOURCE_PATH_LITERAL.matcher(literal).find()).distinct().toList();
+            List<SourceRange> pathRanges = pathExpressionRanges(JavaSourceInspector.maskCommentsAndLiterals(file.getValue()));
+            List<String> sourcePaths = STRING_LITERAL.matcher(JavaSourceInspector.stripJavaComments(file.getValue())).results()
+                    .filter(literal -> pathRanges.stream().anyMatch(range -> range.start() <= literal.start() && literal.end() <= range.end())).map(literal -> literal.group(1))
+                    .map(String::strip).filter(literal -> !INNER_WHITESPACE.matcher(literal).find() && SOURCE_PATH_LITERAL.matcher(literal).find()).distinct().toList();
             if (!sourcePaths.isEmpty()) {
                 offending.add(file.getKey() + " (reads " + sourcePaths + ")");
             }
@@ -591,6 +605,56 @@ public final class ExerciseIntegrityGate {
         }
         return List.of("these graded test files read source files: " + offending + ". Tests must not read source files: the grading sandbox forbids it and source shape is "
                 + "not graded behavior. Make the graded code take the objects or inputs it works on so tests can vary them. " + AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE);
+    }
+
+    /**
+     * The source ranges that can contribute to a path a test reads: the arguments of every path expression, and the value of every variable or field named in such a range,
+     * followed until no further variable is named.
+     *
+     * @param masked comment- and literal-masked source, so parentheses inside literals are not counted
+     * @return the ranges, each from its start to its exclusive end
+     */
+    private static List<SourceRange> pathExpressionRanges(String masked) {
+        List<SourceRange> ranges = new ArrayList<>();
+        Matcher call = PATH_EXPRESSION.matcher(masked);
+        while (call.find()) {
+            ranges.add(new SourceRange(call.end() - 1, closingParenthesis(masked, call.end() - 1)));
+        }
+        Set<String> followed = new HashSet<>();
+        for (int index = 0; index < ranges.size(); index++) {
+            SourceRange range = ranges.get(index);
+            Set<String> named = IDENTIFIER.matcher(masked.substring(range.start(), range.end())).results().map(MatchResult::group).filter(followed::add)
+                    .collect(Collectors.toSet());
+            if (named.isEmpty()) {
+                continue;
+            }
+            Matcher assignment = ASSIGNMENT.matcher(masked);
+            while (assignment.find()) {
+                if (named.contains(assignment.group(1))) {
+                    int end = masked.indexOf(';', assignment.end());
+                    ranges.add(new SourceRange(assignment.end(), end < 0 ? masked.length() : end));
+                }
+            }
+        }
+        return ranges;
+    }
+
+    private record SourceRange(int start, int end) {
+    }
+
+    /** The index after the parenthesis closing the one at {@code open}, or the end of the source when it is never closed. */
+    private static int closingParenthesis(String masked, int open) {
+        int depth = 0;
+        for (int index = open; index < masked.length(); index++) {
+            char current = masked.charAt(index);
+            if (current == '(') {
+                depth++;
+            }
+            else if (current == ')' && --depth == 0) {
+                return index + 1;
+            }
+        }
+        return masked.length();
     }
 
     /**
