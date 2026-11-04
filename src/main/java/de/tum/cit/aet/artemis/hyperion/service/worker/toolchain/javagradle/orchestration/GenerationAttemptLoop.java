@@ -253,8 +253,14 @@ class GenerationAttemptLoop {
     @Nullable
     private CandidateSnapshot candidateBeforeCurrentRepair;
 
-    /** Mutants the previous candidate's suite let survive and the in-flight repair's suite killed in an executed recheck; the repair must never be rolled back past them. */
+    /** Mutants the previous candidate's suite let survive and the in-flight repair's suite killed in an executed recheck. */
     private int mutantsKilledByCurrentRepair;
+
+    /** Mutants an earlier repair killed; each later repair rechecks them, so a suite that lets one survive again is caught as a regression. */
+    private List<SemanticMutant> semanticMutantsKilledByRepair = List.of();
+
+    /** Previously killed mutants the in-flight repair's suite lets survive again. */
+    private List<SemanticMutant> mutantsRegressedByCurrentRepair = List.of();
 
     @Nullable
     private SemanticRepairBatch pendingSemanticRepair;
@@ -583,7 +589,7 @@ class GenerationAttemptLoop {
                     candidateProblemStatement, specDocumentSnapshot, testPlanSnapshot);
         };
         VerificationResult result = verifyWithInfrastructureRetry(artifacts.verificationRequest(), restoreCandidate);
-        if (!result.mechanicallyVerified() || semanticMutantsAwaitingKill.isEmpty()) {
+        if (!result.mechanicallyVerified()) {
             return result;
         }
         Map<String, String> currentSolution = candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of());
@@ -594,14 +600,29 @@ class GenerationAttemptLoop {
             emit("Retired " + staleMutants
                     + " semantic mutant acceptance check(s) because a separate repair changed their reference source; the executable review will author fresh mutants against the current solution.");
         }
-        if (applicableMutants.isEmpty()) {
+        List<SemanticMutant> regressionChecks = candidateBeforeCurrentRepair == null ? List.of()
+                : semanticMutantsKilledByRepair.stream().filter(mutant -> mutant.originalSolutionSource().equals(currentSolution.get(mutant.solutionPath())))
+                        .filter(mutant -> !applicableMutants.contains(mutant)).toList();
+        if (applicableMutants.isEmpty() && regressionChecks.isEmpty()) {
             semanticMutantsAwaitingKill = List.of();
             return result;
         }
-        List<SemanticMutantOutcome> outcomes = verifier.checkSemanticMutants(sandbox, sessionId, exercise, currentSolution, seededStructuralTests, applicableMutants,
-                restoreCandidate);
+        List<SemanticMutantOutcome> allOutcomes = verifier.checkSemanticMutants(sandbox, sessionId, exercise, currentSolution, seededStructuralTests,
+                java.util.stream.Stream.concat(applicableMutants.stream(), regressionChecks.stream()).toList(), restoreCandidate);
+        List<SemanticMutant> regressed = allOutcomes.stream().filter(outcome -> regressionChecks.contains(outcome.mutant()))
+                .filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).map(SemanticMutantOutcome::mutant).toList();
+        if (!regressed.isEmpty()) {
+            mutantsRegressedByCurrentRepair = java.util.stream.Stream.concat(mutantsRegressedByCurrentRepair.stream(), regressed.stream()).distinct().toList();
+            semanticMutantsKilledByRepair = semanticMutantsKilledByRepair.stream().filter(mutant -> !regressed.contains(mutant)).toList();
+            // Reported as current survivors by the review that follows, which rechecks pending mutants before authoring fresh ones.
+            semanticMutantsPendingRepair = java.util.stream.Stream.concat(semanticMutantsPendingRepair.stream(), regressed.stream()).distinct().toList();
+        }
+        List<SemanticMutantOutcome> outcomes = allOutcomes.stream().filter(outcome -> applicableMutants.contains(outcome.mutant())).toList();
         GenerationReviewSupport.SemanticMutantRecheck recheck = GenerationReviewSupport.semanticMutantRecheck(outcomes);
-        mutantsKilledByCurrentRepair += (int) outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).count();
+        List<SemanticMutant> killed = outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).map(SemanticMutantOutcome::mutant).toList();
+        mutantsKilledByCurrentRepair += killed.size();
+        semanticMutantsKilledByRepair = java.util.stream.Stream.concat(semanticMutantsKilledByRepair.stream(), killed.stream()).distinct().limit(MAX_TRACKED_SEMANTIC_MUTANTS)
+                .toList();
         semanticMutantsAwaitingKill = recheck.unresolvedMutants();
         if (semanticMutantsAwaitingKill.isEmpty()) {
             return result;
@@ -667,21 +688,16 @@ class GenerationAttemptLoop {
         specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot);
         recordReviewRound(attempt);
         boolean killedSurvivingMutant = candidateBeforeCurrentRepair != null && mutantsKilledByCurrentRepair > 0;
-        if (candidateBeforeCurrentRepair != null && !RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport)
-                && !RepairRoundScheduler.repairImproved(candidateBeforeCurrentRepair.reviewReport(), specFidelityReport, killedSurvivingMutant)) {
-            if (killedSurvivingMutant) {
-                // The older candidate lets a mutant survive that this one kills, so restoring it would ship strictly weaker grading. Keep the repair and stop instead.
-                promoteReviewedCandidate(artifacts, specDocumentSnapshot);
-                terminationReason = TerminationReason.REPAIR_DID_NOT_IMPROVE;
-                emit("The repair killed " + mutantsKilledByCurrentRepair + " environment-proven mutant(s), but the executable review found another surviving one; keeping "
-                        + "the repaired candidate, which grades strictly more, and stopping.");
-                return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
-            }
+        boolean regressedKilledMutant = candidateBeforeCurrentRepair != null && !mutantsRegressedByCurrentRepair.isEmpty();
+        if (candidateBeforeCurrentRepair != null && (regressedKilledMutant || !RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport))
+                && !RepairRoundScheduler.repairImproved(candidateBeforeCurrentRepair.reviewReport(), specFidelityReport, killedSurvivingMutant, regressedKilledMutant)) {
             CandidateSnapshot retained = candidateBeforeCurrentRepair;
             candidateBeforeCurrentRepair = null;
             lastMechanicallyVerifiedCandidate = retained;
             terminationReason = TerminationReason.REPAIR_DID_NOT_IMPROVE;
-            emit("The repair did not reduce the reviewed blockers without introducing another one; retaining the previous reviewed checkpoint.");
+            emit(regressedKilledMutant
+                    ? "The repair let " + mutantsRegressedByCurrentRepair.size() + " previously killed mutant(s) survive again; retaining the previous reviewed checkpoint."
+                    : "The repair did not reduce the reviewed blockers without introducing another one; retaining the previous reviewed checkpoint.");
             return service.preserveCandidate(retained, sandbox, sessionId, workspaceSeed);
         }
         if (killedSurvivingMutant) {
@@ -708,7 +724,8 @@ class GenerationAttemptLoop {
      */
     private void promoteReviewedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         // A repair that killed a surviving mutant is promoted even without a primary verdict: the older checkpoint provably grades less.
-        if (candidateBeforeCurrentRepair != null && mutantsKilledByCurrentRepair == 0 && RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport)) {
+        if (candidateBeforeCurrentRepair != null && (mutantsKilledByCurrentRepair == 0 || !mutantsRegressedByCurrentRepair.isEmpty())
+                && RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport)) {
             emit("The repaired candidate passed mechanical verification, but its primary quality review did not complete; retaining the previously reviewed checkpoint ("
                     + candidateBeforeCurrentRepair.verification().testCount() + " tests).");
             return;
@@ -785,6 +802,7 @@ class GenerationAttemptLoop {
         }
         candidateBeforeCurrentRepair = lastMechanicallyVerifiedCandidate;
         mutantsKilledByCurrentRepair = 0;
+        mutantsRegressedByCurrentRepair = List.of();
         pendingSemanticRepair = repairBatch.get();
         boolean repairsExecutableOracle = pendingSemanticRepair.report().findings().stream()
                 .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);

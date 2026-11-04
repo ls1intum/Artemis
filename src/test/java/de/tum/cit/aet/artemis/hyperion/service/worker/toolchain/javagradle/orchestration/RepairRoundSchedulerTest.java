@@ -472,9 +472,9 @@ class RepairRoundSchedulerTest {
             SpecFidelityReport renamed = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "missing starter guidance"),
                     finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "different contradiction")));
 
-            assertThat(RepairRoundScheduler.repairImproved(first, improved, false)).isTrue();
-            assertThat(RepairRoundScheduler.repairImproved(first, first, false)).isFalse();
-            assertThat(RepairRoundScheduler.repairImproved(first, renamed, false)).isFalse();
+            assertThat(RepairRoundScheduler.repairImproved(first, improved, false, false)).isTrue();
+            assertThat(RepairRoundScheduler.repairImproved(first, first, false, false)).isFalse();
+            assertThat(RepairRoundScheduler.repairImproved(first, renamed, false, false)).isFalse();
         }
 
         @Test
@@ -483,12 +483,12 @@ class RepairRoundSchedulerTest {
             SpecFidelityReport current = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE, "add an example"),
                     SpecFidelityReport.executableEvidenceUnavailable("probe failed").findings().getFirst()));
 
-            assertThat(RepairRoundScheduler.repairImproved(first, current, false)).isTrue();
+            assertThat(RepairRoundScheduler.repairImproved(first, current, false, false)).isTrue();
         }
 
         @Test
         void rejectsARepairThatIntroducesTheFirstCandidateBlocker() {
-            assertThat(RepairRoundScheduler.repairImproved(SpecFidelityReport.empty(), report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), false)).isFalse();
+            assertThat(RepairRoundScheduler.repairImproved(SpecFidelityReport.empty(), report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), false, false)).isFalse();
         }
 
         @Test
@@ -498,9 +498,9 @@ class RepairRoundSchedulerTest {
             SpecFidelityReport previous = new SpecFidelityReport(List.of(survivor, contradiction));
             SpecFidelityReport current = new SpecFidelityReport(List.of(contradiction, finding(SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT, "a re-rolled text verdict")));
 
-            assertThat(RepairRoundScheduler.repairImproved(previous, current, true)).isTrue();
+            assertThat(RepairRoundScheduler.repairImproved(previous, current, true, false)).isTrue();
             // The same reports without an executed kill or drain are a text-only round, judged by the strict-subset rule.
-            assertThat(RepairRoundScheduler.repairImproved(new SpecFidelityReport(List.of(contradiction)), current, false)).isFalse();
+            assertThat(RepairRoundScheduler.repairImproved(new SpecFidelityReport(List.of(contradiction)), current, false, false)).isFalse();
         }
 
         @Test
@@ -508,17 +508,26 @@ class RepairRoundSchedulerTest {
             SpecFidelityReport previous = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Rule R1 survivor")));
             SpecFidelityReport current = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "a new text-only coverage concern")));
 
-            assertThat(RepairRoundScheduler.repairImproved(previous, current, false)).isTrue();
+            assertThat(RepairRoundScheduler.repairImproved(previous, current, false, false)).isTrue();
         }
 
         @Test
-        void aKilledMutantIsNoImprovementWhenTheExecutableReviewReportsANewExecutedBlocker() {
+        void aKilledMutantCountsAsProgressEvenWhenAFreshMutantOnAnotherRuleSurvives() {
             SpecFidelityReport previous = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Rule R1 survivor")));
-            SpecFidelityReport sameRule = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Rule R1 survivor")));
             SpecFidelityReport otherRule = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Rule R2 survivor")));
 
-            assertThat(RepairRoundScheduler.repairImproved(previous, sameRule, true)).isTrue();
-            assertThat(RepairRoundScheduler.repairImproved(previous, otherRule, true)).isFalse();
+            assertThat(RepairRoundScheduler.repairImproved(previous, otherRule, true, false)).isTrue();
+            // Without a kill, trading one executed survivor for another is no progress.
+            assertThat(RepairRoundScheduler.repairImproved(previous, otherRule, false, false)).isFalse();
+        }
+
+        @Test
+        void aPreviouslyKilledMutantSurvivingAgainIsARegressionWhateverElseChanged() {
+            SpecFidelityReport previous = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Rule R2 survivor")));
+            SpecFidelityReport regressed = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Rule R1 survivor")));
+
+            assertThat(RepairRoundScheduler.repairImproved(previous, regressed, true, true)).isFalse();
+            assertThat(RepairRoundScheduler.repairImproved(previous, SpecFidelityReport.empty(), false, true)).isFalse();
         }
 
         @Test
@@ -527,9 +536,10 @@ class RepairRoundSchedulerTest {
             SpecFidelityReport beforeAdoption = new SpecFidelityReport(List.of(contested, finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE, "Rule R1 witness")));
             SpecFidelityReport afterAdoption = new SpecFidelityReport(List.of(contested));
 
-            assertThat(RepairRoundScheduler.repairImproved(beforeAdoption, afterAdoption, false)).isTrue();
+            assertThat(RepairRoundScheduler.repairImproved(beforeAdoption, afterAdoption, false, false)).isTrue();
             assertThat(RepairRoundScheduler.repairImproved(afterAdoption,
-                    new SpecFidelityReport(List.of(contested, finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, "a new unrepairable blocker"))), false)).isFalse();
+                    new SpecFidelityReport(List.of(contested, finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, "a new unrepairable blocker"))), false, false))
+                    .isFalse();
         }
 
         @Test
@@ -537,7 +547,7 @@ class RepairRoundSchedulerTest {
             SpecFidelityReport first = report(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP);
             SpecFidelityReport current = report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
 
-            assertThat(RepairRoundScheduler.repairImproved(first, current, false)).isFalse();
+            assertThat(RepairRoundScheduler.repairImproved(first, current, false, false)).isFalse();
         }
     }
 }

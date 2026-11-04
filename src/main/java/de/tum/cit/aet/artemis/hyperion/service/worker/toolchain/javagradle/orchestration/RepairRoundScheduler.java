@@ -168,20 +168,22 @@ class RepairRoundScheduler {
     }
 
     /**
-     * Whether a semantic repair made progress. Executed evidence decides first: a repair that killed a surviving mutant, or drained an executed blocker, improved unless the
-     * executable review now reports an executed blocker it did not report before. Text-only blockers that appear beside such progress stay on the repaired candidate for later
-     * rounds and the instructor: a re-review re-rolls text verdicts, so letting them roll back an environment-proven kill would discard the stronger grading. Without executed
-     * progress, the reviewed blockers must strictly shrink, because text identity is then the only evidence there is. A blocker no repair surface can address and that is
-     * unchanged on both sides (a contested specification or concept, for example) is ignored there: no repair could have drained it, so it must not turn a round that drained
-     * nothing else, such as a witness adoption, into a regression.
+     * Whether a semantic repair made progress. Executed evidence decides first. A repair whose suite lets a previously killed mutant survive again regressed. A repair that
+     * killed a previously surviving mutant improved, even if a freshly authored mutant now survives: that survivor is new evidence, not a loss, and becomes the next oracle
+     * target within the round budget, while text-only blockers raised beside the kill stay on the repaired candidate, because a re-review re-rolls text verdicts. Fewer
+     * executed blockers is progress too. Otherwise the reviewed blockers must strictly shrink, because text identity is then the only evidence there is. A blocker no repair
+     * surface can address and that is unchanged on both sides (a contested specification or concept, for example) is ignored there: no repair could have drained it, so it
+     * must not turn a round that drained nothing else, such as a witness adoption, into a regression.
      *
      * @param killedSurvivingMutant whether the repaired suite killed at least one mutant the previous candidate's suite let survive
+     * @param regressedKilledMutant whether the repaired suite lets a mutant an earlier repair killed survive again
      */
-    static boolean repairImproved(SpecFidelityReport previous, SpecFidelityReport current, boolean killedSurvivingMutant) {
-        Set<String> previousExecuted = candidateBlockingFindingIdentities(previous, true);
-        Set<String> currentExecuted = candidateBlockingFindingIdentities(current, true);
-        if (killedSurvivingMutant || !currentExecuted.containsAll(previousExecuted)) {
-            return previousExecuted.containsAll(currentExecuted);
+    static boolean repairImproved(SpecFidelityReport previous, SpecFidelityReport current, boolean killedSurvivingMutant, boolean regressedKilledMutant) {
+        if (regressedKilledMutant) {
+            return false;
+        }
+        if (killedSurvivingMutant || candidateBlockingFindingIdentities(current, true).size() < candidateBlockingFindingIdentities(previous, true).size()) {
+            return true;
         }
         Set<String> previousBlockers = candidateBlockingFindingIdentities(previous, false);
         Set<String> currentBlockers = candidateBlockingFindingIdentities(current, false);
