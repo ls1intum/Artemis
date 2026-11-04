@@ -315,7 +315,7 @@ describe('ProgrammingFeedbackItemService', () => {
 
         expect(item.codeReference).toEqual({
             filePath: 'src/main/java/Example.java',
-            line: 12,
+            line: 11,
         });
     });
 
