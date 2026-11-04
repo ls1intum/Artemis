@@ -25,7 +25,7 @@ store.
 Artemis supports two providers and intends to be able to switch between them:
 
 * **Hazelcast** — embedded in every node, no extra container. This is what production runs today.
-* **Redis** — an external server, selected with `artemis.distributed-data.provider: Redis`. With it, no Hazelcast
+* **Redis** — an external Redis or Valkey server, selected with `artemis.distributed-data.provider: Redis`. With it, no Hazelcast
   instance is created at all.
 
 A third, **Local**, keeps everything inside one JVM. It exists for single-node development and has no cross-node
@@ -107,7 +107,7 @@ Spring `@Cacheable` resolves against a `RoutingCacheManager` that splits caches 
 * **Blob caches** (`files`, `plantUmlPng`, `plantUmlSvg`) are per-node Caffeine caches bounded by *bytes*, because their
   values range from kilobytes to tens of megabytes. Pushing those through a shared grid costs a network transfer per
   read, and on Redis it is worse: Redis is single-threaded, so one multi-MB value stalls every other operation including
-  the CI queue. Coherence comes from `BlobCacheEvictionService`, which broadcasts evictions, plus a time-to-live so a
+  the CI queue. Coherence comes from `PerNodeCacheEvictionService`, which broadcasts evictions, plus a time-to-live so a
   dropped broadcast self-corrects.
 * **Everything else** is served by `DistributedDataCacheManager`, which is built on `DistributedDataProvider` and
   therefore behaves the same on every provider.

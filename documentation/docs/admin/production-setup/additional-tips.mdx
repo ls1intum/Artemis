@@ -12,7 +12,7 @@ import { CalloutVariant } from "../../../src/components/Callout/Callout.types";
 Artemis runs an automatic scheduled task every night at 03:00 AM that removes
 
 - old local copies of cloned Git repositories,
-- no longer used build plans on the continuous integration service.
+- no longer used build plans on the continuous integration service (only with Jenkins; LocalCI has no build plans to clean up).
 
 Take this into consideration when scheduling your own automatic jobs like backups, system updates, and reboots.
 
@@ -142,6 +142,8 @@ Do not use `$http_host` for `X-Forwarded-Host`.
 Some nginx versions no longer handle it as before, and users are then redirected to `https://localhost/…` when they log in with SAML2.
 
 ### Jenkins
+
+This template is only needed for [Jenkins with LocalVC](/admin/jenkins-localvc). Jenkins is deprecated and removed in Artemis 11.
 
 ```
 server {
