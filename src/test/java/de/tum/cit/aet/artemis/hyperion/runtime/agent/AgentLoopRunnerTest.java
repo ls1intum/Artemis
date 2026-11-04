@@ -369,6 +369,26 @@ class AgentLoopRunnerTest {
         assertThat(shellResults).hasSize(lastAllowedRepeat);
         assertThat(shellResults.subList(0, 2)).allSatisfy(result -> assertThat(result).contains("the command was not run").doesNotContain("this exact shell call"));
         assertThat(shellResults.get(2)).contains("this exact shell call has now been rejected 3 times", "Do not repeat it", "the command was not run");
+        assertThat(session.result().stopCause()).startsWith("The agent session stopped: The agent repeated identical rejected tool calls 5 times")
+                .contains("shell: ERROR: this exact shell call");
+    }
+
+    @Test
+    void consecutiveRefusedCommandsEndTheSessionWithTheirCause() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", "shell", "{\"command\":\"ls /root/.gradle/" + current + "\"}");
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
+        });
+
+        var session = runner(model).runSession("system", null, "brief", new RefusingTools(), 60, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(session.result().turns()).isEqualTo(5);
+        assertThat(session.result().stopCause()).isEqualTo("The agent session stopped: 5 consecutive tool calls were rejected. Last rejection: shell: "
+                + "\"ERROR: the command was not run. The dependency cache is not inspectable.\"");
     }
 
     @Test

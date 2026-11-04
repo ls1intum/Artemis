@@ -296,6 +296,20 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void anAgentErrorCarriesTheLoopsStopCauseIntoTheOutcome() {
+        String cause = "The agent session stopped: The build environment stopped responding on turn 7.";
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any()))
+                .thenReturn(loopSession(new AgentLoopResult(AgentLoopResult.Status.ERROR, 7, "inspecting", cause)));
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 1);
+        GenerationOutcome outcome = loop.run();
+
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.AGENT_ERROR);
+        assertThat(outcome).isNotNull();
+        assertThat(outcome.errorMessage()).isEqualTo(cause);
+    }
+
+    @Test
     void preservesTheStagedRunnersSpecificFailureReason() {
         AgentLoopResult failed = new AgentLoopResult(AgentLoopResult.Status.ERROR, 2, "No exercise concept passed.");
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),

@@ -423,7 +423,7 @@ public class StagedGenerationRunner {
             while (!stagePassed) {
                 if (wallClockExceeded(startedAt)) {
                     String failure = "Exercise generation reached its wall-clock budget before the next " + stage + " attempt, so no further model work was started.";
-                    return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation, conversation,
+                    return finishWithCause(exercise, AgentLoopResult.Status.ERROR, totalTurns, lastFinalMessage, failure, archivedConversation, conversation,
                             unresolvedSpecificationFindings);
                 }
                 if (continuous && gateFeedback != null) {
@@ -474,7 +474,8 @@ public class StagedGenerationRunner {
                 rollover = Math.max(0, allocation - result.turns());
 
                 if (result.status() == AgentLoopResult.Status.ERROR || result.status() == AgentLoopResult.Status.CANCELLED) {
-                    return finish(exercise, result.status(), totalTurns, lastFinalMessage, archivedConversation, conversation, unresolvedSpecificationFindings);
+                    return finish(exercise, result.status(), totalTurns, lastFinalMessage, archivedConversation, conversation, unresolvedSpecificationFindings, null, List.of(),
+                            result.stopCause());
                 }
                 lastStatus = result.status();
 
@@ -499,13 +500,13 @@ public class StagedGenerationRunner {
                         if (specSnapshot.isBlank()) {
                             String failure = "SPEC.md passed its consistency gate but could not be read back for semantic review and approval. Generation stopped before downstream "
                                     + "artifacts were produced from an unfrozen contract.";
-                            return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation, conversation,
+                            return finishWithCause(exercise, AgentLoopResult.Status.ERROR, totalTurns, lastFinalMessage, failure, archivedConversation, conversation,
                                     unresolvedSpecificationFindings);
                         }
                         if (specificationReviewer != null) {
                             if (wallClockExceeded(startedAt)) {
                                 String failure = "Exercise generation reached its wall-clock budget before specification review, so the contract was not approved.";
-                                return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation, conversation,
+                                return finishWithCause(exercise, AgentLoopResult.Status.ERROR, totalTurns, lastFinalMessage, failure, archivedConversation, conversation,
                                         unresolvedSpecificationFindings);
                             }
                             emit(progress, "Reviewing the specification against the instructor brief");
@@ -585,7 +586,7 @@ public class StagedGenerationRunner {
                                         if (wallClockExceeded(startedAt)) {
                                             String failure = "Exercise generation reached its wall-clock budget before replacement concept discovery, so no new model work "
                                                     + "was started.";
-                                            return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation,
+                                            return finishWithCause(exercise, AgentLoopResult.Status.ERROR, totalTurns, lastFinalMessage, failure, archivedConversation,
                                                     conversation, unresolvedSpecificationFindings);
                                         }
                                         replacement = conceptSelector.select(sourceBrief, CONCEPT_REPLACEMENT_FEEDBACK,
@@ -629,7 +630,7 @@ public class StagedGenerationRunner {
                                         if (clearResult == null || clearResult.startsWith("ERROR")) {
                                             String failure = "Could not clear the rejected specification before concept replacement. Generation stopped to prevent the rejected "
                                                     + "contract from contaminating a fresh attempt." + (clearResult == null ? "" : "\n" + clearResult);
-                                            return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation,
+                                            return finishWithCause(exercise, AgentLoopResult.Status.ERROR, totalTurns, lastFinalMessage, failure, archivedConversation,
                                                     conversation, unresolvedSpecificationFindings);
                                         }
                                         if (replacement != null && replacement.accepted()) {
@@ -711,8 +712,8 @@ public class StagedGenerationRunner {
                 log.info("Staged generation gate failed at stage {} for exercise {}: {}", stage, exercise.id(), gate.observation());
                 if (stage == GenerationStage.SPEC) {
                     if (semanticSpecRefinementsUsed >= MAX_SEMANTIC_SPEC_REFINEMENTS || allocatablePool(stage, remainingPool) < MIN_STAGE_BUDGET) {
-                        return finish(exercise, AgentLoopResult.Status.ERROR, totalTurns, appendGateReport(lastFinalMessage, gate.observation()), archivedConversation,
-                                conversation, unresolvedSpecificationFindings);
+                        return finishWithCause(exercise, AgentLoopResult.Status.ERROR, totalTurns, lastFinalMessage, gate.observation(), archivedConversation, conversation,
+                                unresolvedSpecificationFindings);
                     }
                     semanticSpecRefinementsUsed++;
                     gateFeedback = semanticSpecFeedback == null ? gate.observation()
@@ -732,8 +733,8 @@ public class StagedGenerationRunner {
                         emit(progress, "The executable-build gate is still failing; preserving the reserved statement phase before authoritative repair.");
                         break;
                     }
-                    return finish(exercise, stage == GenerationStage.SPEC ? AgentLoopResult.Status.ERROR : lastStatus, totalTurns,
-                            appendGateReport(lastFinalMessage, gate.observation()), archivedConversation, conversation, unresolvedSpecificationFindings);
+                    return finishWithCause(exercise, stage == GenerationStage.SPEC ? AgentLoopResult.Status.ERROR : lastStatus, totalTurns, lastFinalMessage, gate.observation(),
+                            archivedConversation, conversation, unresolvedSpecificationFindings);
                 }
                 // Cooperative cancellation between the failed attempt and its re-entry (the outer for-loop already checked before this stage's first attempt).
                 if (cancelled.getAsBoolean()) {
@@ -770,13 +771,27 @@ public class StagedGenerationRunner {
     private StagedRunOutcome finish(GenerationInput exercise, AgentLoopResult.Status status, int totalTurns, String finalMessage, List<Message> archivedConversation,
             @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings, @Nullable TerminationReason terminationReason,
             List<String> unresolvedConceptFindings) {
+        return finish(exercise, status, totalTurns, finalMessage, archivedConversation, conversation, unresolvedSpecificationFindings, terminationReason, unresolvedConceptFindings,
+                null);
+    }
+
+    /** Ends the run on a gate or budget failure; when that ends it with an error, the failure becomes the recorded stop cause. */
+    private StagedRunOutcome finishWithCause(GenerationInput exercise, AgentLoopResult.Status status, int totalTurns, String lastFinalMessage, String failure,
+            List<Message> archivedConversation, @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings) {
+        return finish(exercise, status, totalTurns, appendGateReport(lastFinalMessage, failure), archivedConversation, conversation, unresolvedSpecificationFindings, null,
+                List.of(), failure);
+    }
+
+    private StagedRunOutcome finish(GenerationInput exercise, AgentLoopResult.Status status, int totalTurns, String finalMessage, List<Message> archivedConversation,
+            @Nullable List<Message> conversation, List<String> unresolvedSpecificationFindings, @Nullable TerminationReason terminationReason,
+            List<String> unresolvedConceptFindings, @Nullable String stopCause) {
         List<Message> transcriptConversation = new ArrayList<>(archivedConversation);
         if (conversation != null) {
             transcriptConversation.addAll(conversation);
         }
         transcriptWriter.write(exercise.id(), "attempt-1-staged-" + status.name().toLowerCase(Locale.ROOT), transcriptConversation);
-        return new StagedRunOutcome(new AgentLoopResult(status, totalTurns, finalMessage), conversation, unresolvedSpecificationFindings, terminationReason,
-                unresolvedConceptFindings);
+        return new StagedRunOutcome(new AgentLoopResult(status, totalTurns, finalMessage, status == AgentLoopResult.Status.ERROR ? stopCause : null), conversation,
+                unresolvedSpecificationFindings, terminationReason, unresolvedConceptFindings);
     }
 
     /** A gate that reused the tools' cached check instead of re-running it says so, to keep the transcript honest about why it was instant. */

@@ -635,12 +635,14 @@ class StagedGenerationRunnerTest {
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer,
                 rejectingSelectorWithFallback(), "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"),
-                new AgentLoopResult(AgentLoopResult.Status.ERROR, 2, "the provider failed"));
+                new AgentLoopResult(AgentLoopResult.Status.ERROR, 2, "the provider failed", "The agent session stopped: The AI service returned no usable response on turn 2."));
 
         StagedGenerationRunner.StagedRunOutcome outcome = runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null,
                 () -> SeededStructuralTests.EMPTY, true, true, null);
 
         assertThat(outcome.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(outcome.result().stopCause()).as("the stage session's stop cause survives the staged run")
+                .isEqualTo("The agent session stopped: The AI service returned no usable response on turn 2.");
         assertThat(outcome.unresolvedConceptFindings()).isNotEmpty();
     }
 
@@ -777,6 +779,7 @@ class StagedGenerationRunnerTest {
 
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
         assertThat(result.finalMessage()).contains("could not be read back", "unfrozen contract");
+        assertThat(result.stopCause()).startsWith("SPEC.md passed its consistency gate but could not be read back").doesNotContain("spec\n");
         assertThat(approvedSpecs.approved("s")).isEmpty();
         verify(baseTools, never()).enterStage(GenerationStage.TESTS);
     }

@@ -344,10 +344,11 @@ public class AgentLoopRunner {
                 response = callModel(prompt, turn, cancelled, usageSink, stepListener, activity);
             }
             catch (UsageAccountingException | UsageUncertainException failure) {
-                return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                return failed(turn, lastAssistantText, conversation, "The provider usage of a model call could not be accounted for, so no further model call was made.");
             }
             if (response == null) {
-                return session(cancelled.getAsBoolean() ? AgentLoopResult.Status.CANCELLED : AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                return cancelled.getAsBoolean() ? session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation)
+                        : failed(turn, lastAssistantText, conversation, "The AI service returned no usable response on turn " + turn + ".");
             }
             response = normalizeToolNames(response);
             lastPromptTokens = AgentConversationContext.promptTokensOf(response);
@@ -370,7 +371,7 @@ public class AgentLoopRunner {
             if (!response.hasToolCalls()) {
                 if (isTruncatedByTokenLimit(response)) {
                     emit(stepListener, "The AI response was cut off before it could finish.");
-                    return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                    return failed(turn, lastAssistantText, conversation, "The AI response was cut off at the output token limit on turn " + turn + ".");
                 }
                 // Append this closing turn before returning so a caller carrying the conversation forward does not lose it.
                 emit(stepListener, "Preparing the exercise for verification.");
@@ -437,14 +438,15 @@ public class AgentLoopRunner {
                 }
                 if (isSandboxSessionTerminated(tools)) {
                     emit(stepListener, "The build environment stopped responding.");
-                    return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                    return failed(turn, lastAssistantText, conversation, "The build environment stopped responding on turn " + turn + ".");
                 }
                 int repeatedThisTurn = escalateRepeatedRejections(conversation, toolCalls, rejectedCallCounts);
                 if (repeatedThisTurn > 0) {
                     repeatedRejections += repeatedThisTurn;
                     log.warn("Agent loop repeated an identical rejected tool call on turn {} (repeated rejections this session: {})", turn, repeatedRejections);
                     if (repeatedRejections >= MAX_CONSECUTIVE_TOOL_FAILURES) {
-                        return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                        return failed(turn, lastAssistantText, conversation, "The agent repeated identical rejected tool calls " + repeatedRejections
+                                + " times after being told they " + "would keep failing. Last rejection: " + lastRejection(conversation));
                     }
                 }
                 if (hasRejectedToolAction(conversation)) {
@@ -463,7 +465,8 @@ public class AgentLoopRunner {
                         consecutiveToolFailures++;
                         log.warn("Agent loop tool action was rejected on turn {} (consecutive failures: {})", turn, consecutiveToolFailures);
                         if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
-                            return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                            return failed(turn, lastAssistantText, conversation,
+                                    consecutiveToolFailures + " consecutive tool calls were rejected. Last rejection: " + lastRejection(conversation));
                         }
                     }
                 }
@@ -479,7 +482,7 @@ public class AgentLoopRunner {
                 if (hasCause(e, SandboxUnavailableException.class)) {
                     log.warn("Agent loop lost its sandbox on turn {} ({})", turn, e.getClass().getSimpleName());
                     emit(stepListener, "The build environment stopped responding.");
-                    return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                    return failed(turn, lastAssistantText, conversation, "The build environment stopped responding on turn " + turn + ".");
                 }
                 // A preflight rejection changed nothing. A callback failure may have followed successful calls, so do not claim that those calls failed.
                 consecutiveToolFailures++;
@@ -495,7 +498,8 @@ public class AgentLoopRunner {
                         .map(toolCall -> new ToolResponseMessage.ToolResponse(toolCall.id(), toolCall.name(), outcome)).toList();
                 conversation.add(ToolResponseMessage.builder().responses(errorResponses).build());
                 if (consecutiveToolFailures >= MAX_CONSECUTIVE_TOOL_FAILURES) {
-                    return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+                    return failed(turn, lastAssistantText, conversation,
+                            consecutiveToolFailures + " consecutive tool calls could not be executed (last failure: " + e.getClass().getSimpleName() + ").");
                 }
                 conversation = compactIfNeeded(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens, usageSink, cancelled, stepListener);
                 if (cancelled.getAsBoolean()) {
@@ -571,10 +575,7 @@ public class AgentLoopRunner {
                         continue;
                     }
                     repeated++;
-                    String rejection = response.responseData().strip();
-                    if (rejection.length() > MAX_REPEATED_REJECTION_EXCERPT_CHARS) {
-                        rejection = rejection.substring(0, MAX_REPEATED_REJECTION_EXCERPT_CHARS) + "…";
-                    }
+                    String rejection = excerpt(response.responseData().strip());
                     responses.add(new ToolResponseMessage.ToolResponse(response.id(), response.name(),
                             "ERROR: this exact " + response.name() + " call has now been rejected " + occurrences
                                     + " times and will be rejected every time. Do not repeat it; take a different action. Each further repeat counts toward ending this "
@@ -619,8 +620,32 @@ public class AgentLoopRunner {
 
     /** Builds a session result, stripping the leading system message so the returned conversation is ready to pass as {@code priorConversation} to the next call. */
     private static AgentLoopSession session(AgentLoopResult.Status status, int turns, String finalMessage, List<Message> conversation) {
+        return session(status, turns, finalMessage, conversation, null);
+    }
+
+    /** An {@link AgentLoopResult.Status#ERROR} session that records why it stopped, so the run's outcome can name the cause instead of only "not verified". */
+    private static AgentLoopSession failed(int turns, String finalMessage, List<Message> conversation, String stopCause) {
+        return session(AgentLoopResult.Status.ERROR, turns, finalMessage, conversation, "The agent session stopped: " + stopCause);
+    }
+
+    private static AgentLoopSession session(AgentLoopResult.Status status, int turns, String finalMessage, List<Message> conversation, @Nullable String stopCause) {
         List<Message> withoutSystemMessage = conversation.isEmpty() ? List.of() : new ArrayList<>(conversation.subList(1, conversation.size()));
-        return new AgentLoopSession(new AgentLoopResult(status, turns, finalMessage), withoutSystemMessage);
+        return new AgentLoopSession(new AgentLoopResult(status, turns, finalMessage, stopCause), withoutSystemMessage);
+    }
+
+    /** The first rejected tool result of the latest batch, bounded, as evidence for a stop cause. */
+    private static String lastRejection(List<Message> conversation) {
+        for (int i = conversation.size() - 1; i >= 0; i--) {
+            if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
+                return toolResponse.getResponses().stream().filter(response -> isErrorResponse(response.responseData())).findFirst()
+                        .map(response -> response.name() + ": " + excerpt(response.responseData().strip())).orElse("not recorded");
+            }
+        }
+        return "not recorded";
+    }
+
+    private static String excerpt(String text) {
+        return text.length() <= MAX_REPEATED_REJECTION_EXCERPT_CHARS ? text : text.substring(0, MAX_REPEATED_REJECTION_EXCERPT_CHARS) + "…";
     }
 
     private static boolean hasCause(Throwable failure, Class<? extends Throwable> type) {

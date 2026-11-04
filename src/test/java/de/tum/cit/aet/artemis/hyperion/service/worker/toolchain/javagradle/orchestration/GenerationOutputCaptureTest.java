@@ -102,4 +102,21 @@ class GenerationOutputCaptureTest {
         assertThat(terminal.verification().mechanicallyVerified()).isFalse();
         assertThat(terminal.verification().reasons()).containsExactly("build failed");
     }
+
+    /** An agent error that keeps its partial candidate used to report only "The candidate was not verified."; the loop's stop cause is the actionable reason. */
+    @Test
+    void anUnverifiedCandidateFromAFailedAgentLoopReportsTheLoopsStopCause() {
+        String cause = "The agent session stopped: 5 consecutive tool calls were rejected. Last rejection: bash: ERROR: the command was not run.";
+        var failedLoop = new AgentLoopResult(AgentLoopResult.Status.ERROR, 12, "still looking", cause);
+        var partial = new GenerationOutcome(failedLoop, null, Map.of(RepositoryRole.SOLUTION, Map.of("src/Stack.java", "partial")), "statement",
+                SpecFidelityReport.qualityReviewUnavailable("not reviewed"), null, null).withTermination(TerminationReason.AGENT_ERROR);
+
+        var output = GenerationOutputCapture.capture(assignment(), partial, usage(), false);
+
+        assertThat(output.verification().reasons()).containsExactly(cause);
+        assertThat(GenerationOutcome.error(failedLoop).errorMessage()).isEqualTo(cause);
+        assertThat(GenerationOutcome.error(new AgentLoopResult(AgentLoopResult.Status.ERROR, 1, "")).errorMessage()).isEqualTo("The agent loop ended with an error.");
+        assertThat(new GenerationOutcome(failedLoop, new VerificationResult(false, false, false, 0, List.of("rejected")), Map.of(), "statement", SpecFidelityReport.empty(), null,
+                null).errorMessage()).as("a verified result keeps its own reasons").isNull();
+    }
 }
