@@ -183,10 +183,17 @@ public final class ApprovedOwnershipGate {
     }
 
     /**
-     * Whether a source's simple-name use resolves to the given top-level type: the type must be visible (same package, or imported by name or on demand), not shadowed by a
-     * single-type import of another type with that name, and used unqualified, so {@code Map.Entry} never means a student's {@code Entry}.
+     * Whether a source refers to the given top-level type: by its fully qualified name, or by a simple-name use that resolves to it. A simple name must be visible (same package,
+     * or imported by name or on demand), not shadowed by a single-type import of another type with that name, and used unqualified, so {@code Map.Entry} never means a
+     * student's {@code Entry}.
      */
     private static boolean referencesType(String maskedSource, String simpleName, String typePackage) {
+        if (!typePackage.isEmpty()) {
+            List<String> qualifiedNameParts = java.util.Arrays.stream((typePackage + "." + simpleName).split("\\.")).map(Pattern::quote).toList();
+            if (Pattern.compile("(?<![\\w$.])" + String.join("\\s*\\.\\s*", qualifiedNameParts) + "(?![\\w$])").matcher(maskedSource).find()) {
+                return true;
+            }
+        }
         boolean visible = typePackage.equals(javaPackage(maskedSource));
         Matcher imports = IMPORT_DECLARATION.matcher(maskedSource);
         while (imports.find()) {

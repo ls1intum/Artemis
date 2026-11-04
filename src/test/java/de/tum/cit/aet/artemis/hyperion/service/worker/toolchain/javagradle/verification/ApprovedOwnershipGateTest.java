@@ -188,6 +188,10 @@ class ApprovedOwnershipGateTest {
             assertThat(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(rows, List.of("Entry"), Map.of(),
                     map("src/de/test/Entry.java", entry, "src/de/test/Ledger.java", ledger))).as(ledger).containsExactly("Ledger->Entry");
         }
+        // A fully qualified name needs no import and names the student type wherever the given type lives.
+        String fullyQualified = "package de.other;\npublic class Ledger { Object first() { return new de.test.Entry(\"k\"); } }";
+        assertThat(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(rows, List.of("Entry"), Map.of(),
+                map("src/de/test/Entry.java", entry, "src/de/other/Ledger.java", fullyQualified))).containsExactly("Ledger->Entry");
         // Without the student type's declaration nothing can be resolved, so nothing is reported.
         assertThat(ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(rows, List.of("Entry"), Map.of(), map("src/de/test/Ledger.java", samePackage))).isEmpty();
     }
