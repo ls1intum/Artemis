@@ -1,19 +1,7 @@
 <div class="sidebar-container flex h-full min-h-full flex-col justify-between bg-(--module-bg)" [class.collapsed]="isNavbarCollapsed() || !canExpand()" data-testid="admin-sidebar">
     <div class="flex-1 overflow-x-hidden overflow-y-auto">
-        <!-- Admin Header -->
-        <div id="admin-header" class="flex items-center p-3 no-underline">
-            <div class="admin-icon flex h-9 min-w-9 items-center justify-center rounded-full bg-(--course-image-bg) text-color">
-                <fa-icon [icon]="faUserShield" />
-            </div>
-            @if (!isNavbarCollapsed()) {
-                <!-- Short form: the full "Administration" does not fit beside the icon in the rail. -->
-                <div class="auto-collapse mb-0 ms-3 text-base font-bold" jhiTranslate="global.menu.admin.short"></div>
-            }
-        </div>
-
         <!-- NavItems grouped -->
         <div>
-            <hr class="mt-0" />
             <ul class="grow list-none p-0">
                 @for (group of sidebarGroups(); track group.translation; let groupIndex = $index) {
                     <!-- Group Header -->

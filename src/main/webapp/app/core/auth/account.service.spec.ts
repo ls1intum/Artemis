@@ -537,6 +537,26 @@ describe('AccountService', () => {
         });
     });
 
+    it('should update authority signals when the user identity changes', () => {
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.STUDENT] } as User);
+
+        expect(accountService.isAtLeastTutor()).toBe(false);
+        expect(accountService.isAdmin()).toBe(false);
+        expect(accountService.isSuperAdmin()).toBe(false);
+
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: ['TEACHING_ASSISTANT'] }] } as User);
+
+        expect(accountService.isAtLeastTutor()).toBe(true);
+        expect(accountService.isAdmin()).toBe(false);
+        expect(accountService.isSuperAdmin()).toBe(false);
+
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.SUPER_ADMIN] } as User);
+
+        expect(accountService.isAtLeastTutor()).toBe(true);
+        expect(accountService.isAdmin()).toBe(true);
+        expect(accountService.isSuperAdmin()).toBe(true);
+    });
+
     it('should set access rights for referenced course', () => {
         accountService.userIdentity.set({ id: 10, authorities } as User);
 
