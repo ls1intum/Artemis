@@ -72,8 +72,8 @@ export class AthenaSettingsUpdateComponent {
 
     /** The two toggle rows, rendered by one @for so the markup stays in a single place. */
     readonly features = [
-        { key: 'formativeFeedbackEnabled' as const, testId: 'athena-settings-formative-feedback', enabled: this.formativeEnabled },
         { key: 'gradingFeedbackEnabled' as const, testId: 'athena-settings-grading-feedback', enabled: this.gradingEnabled },
+        { key: 'formativeFeedbackEnabled' as const, testId: 'athena-settings-formative-feedback', enabled: this.formativeEnabled },
     ];
 
     private readonly toggles = viewChildren(TumAetUiToggleSwitchComponent);

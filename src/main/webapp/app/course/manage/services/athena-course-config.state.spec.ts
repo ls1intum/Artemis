@@ -224,9 +224,10 @@ describe('AthenaCourseConfigState', () => {
         });
 
         it.each([
-            { name: 'a switch', cached: true, stored: false },
-            { name: 'a switch back', cached: false, stored: true },
-        ])('should show a revalidated feature when $name overlapping the load fails', ({ cached, stored }) => {
+            { name: 'a switch', cached: true, selected: false, stored: false },
+            { name: 'a switch back', cached: false, selected: true, stored: true },
+            { name: 'a switch to something else than what is stored', cached: false, selected: true, stored: false },
+        ])('should show a revalidated feature when $name overlapping the load fails', ({ cached, selected, stored }) => {
             // The cached state comes from an earlier load; another instructor has changed it since.
             load.next({ gradingFeedbackEnabled: cached, formativeFeedbackEnabled: false });
             const revalidation = new Subject<AthenaCourseConfigDTO>();
@@ -234,7 +235,7 @@ describe('AthenaCourseConfigState', () => {
             state.load();
             vi.spyOn(athenaCourseConfigService, 'updateCourseConfig').mockReturnValue(throwError(failure));
 
-            state.setEnabled('gradingFeedbackEnabled', !cached);
+            state.setEnabled('gradingFeedbackEnabled', selected);
             revalidation.next({ gradingFeedbackEnabled: stored, formativeFeedbackEnabled: false });
 
             expect(state.gradingFeedbackEnabled()).toBe(stored);
