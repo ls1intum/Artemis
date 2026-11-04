@@ -486,6 +486,26 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(errorStub).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
     });
 
+    it.each(['save', 'submit'] as const)('should name the bounds once when the server refuses the points on %s', async (action) => {
+        component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+        const unreferencedFeedback = new Feedback();
+        unreferencedFeedback.credits = 5;
+        unreferencedFeedback.detailText = 'gj';
+        unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        component.unreferencedFeedback.set([unreferencedFeedback]);
+        vi.spyOn(component, 'assessmentsAreValid').mockReturnValue(true);
+        vi.spyOn(textAssessmentService, action).mockReturnValue(
+            throwError(() => new HttpErrorResponse({ status: 400, error: { errorKey: 'feedbackCreditsOutOfBounds', skipAlert: true } })),
+        );
+        const errorStub = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        component[action]();
+
+        expect(errorStub).toHaveBeenCalledExactlyOnceWith('error.feedbackCreditsOutOfBounds');
+    });
+
     it('should submit the assessment with correct parameters', async () => {
         component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
         fixture.detectChanges();

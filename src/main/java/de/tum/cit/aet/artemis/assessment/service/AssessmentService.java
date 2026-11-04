@@ -404,7 +404,7 @@ public class AssessmentService {
                 : feedbackRepository.findAllById(feedbackIds).stream().collect(Collectors.toMap(Feedback::getId, Function.identity()));
         if (outOfBounds.stream().anyMatch(feedback -> !hasStoredInstructionCredits(feedback, instructionCredits) && !hasStoredAutomaticCredits(feedback, storedFeedback))) {
             throw new BadRequestAlertException("The points of a feedback must be between -" + Feedback.MAX_MANUAL_CREDITS + " and " + Feedback.MAX_MANUAL_CREDITS, "Feedback",
-                    "feedbackCreditsOutOfBounds");
+                    "feedbackCreditsOutOfBounds", true); // every assessment editor shows this error itself, so the global alert would repeat it
         }
     }
 

@@ -7,6 +7,8 @@ import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.notNull;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -25,6 +27,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -437,7 +440,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         createAssessment(submission, feedbacks, "/assessment", HttpStatus.BAD_REQUEST);
 
         feedbacks.getFirst().setCredits(-Feedback.MAX_MANUAL_CREDITS - 0.5);
-        createAssessment(submission, feedbacks, "/assessment", HttpStatus.BAD_REQUEST);
+        var response = request
+                .performMvcRequest(put(API_MODELING_SUBMISSIONS + submission.getId() + "/results/0/assessment").contentType(MediaType.APPLICATION_JSON)
+                        .content(request.getObjectMapper().writeValueAsString(new ModelingAssessmentDTO(toFeedbackDTOs(feedbacks), "text"))))
+                .andExpect(status().isBadRequest()).andReturn().getResponse();
+        // The assessment editors show this error themselves, so the global alert must not repeat it.
+        assertThat(response.getContentAsString()).contains("\"errorKey\":\"feedbackCreditsOutOfBounds\"").contains("\"skipAlert\":true");
 
         assertThat(resultRepository.findDistinctBySubmissionId(submission.getId())).as("no result is saved for a refused assessment").isNotPresent();
 
