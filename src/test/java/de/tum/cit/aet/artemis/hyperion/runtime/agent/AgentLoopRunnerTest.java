@@ -435,6 +435,20 @@ class AgentLoopRunnerTest {
                 .allSatisfy(result -> assertThat(result).startsWith("NOTE: this exact status call has now returned the same result").contains("not a git repository"));
     }
 
+    /** A discarded cut-off reply must not come back as the final message, which the specification stage would otherwise write to SPEC.md. */
+    @Test
+    void aDiscardedCutOffReplyIsNotTheFinalMessage() {
+        ChatModel model = mock(ChatModel.class);
+        var truncated = new ChatResponse(
+                List.of(new Generation(new AssistantMessage("# SPEC.md\n## Rules\n| R1 | cut o"), ChatGenerationMetadata.builder().finishReason("length").build())));
+        when(model.call(any(Prompt.class))).thenReturn(truncated, calls("1", "write"));
+
+        var result = runner(model).run("system", "brief", new RecordingTools(), 2, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
+        assertThat(result.finalMessage()).doesNotContain("# SPEC.md");
+    }
+
     /** One session rewrote the same file after other edits had changed it; a write's result does not show that, so identical writes must never end the session. */
     @Test
     void identicalSuccessfulWritesAreNotTreatedAsRepeats() {

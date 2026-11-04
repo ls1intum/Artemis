@@ -351,12 +351,14 @@ public class AgentLoopRunner {
             }
 
             String assistantText = extractText(response);
-            if (assistantText != null && !assistantText.isBlank()) {
+            // A text-only reply cut off at the output limit is discarded below, so it must not become the session's final message either.
+            boolean discardedCutOffText = !response.hasToolCalls() && AgentToolBatch.isTruncatedByTokenLimit(response);
+            if (!discardedCutOffText && assistantText != null && !assistantText.isBlank()) {
                 lastAssistantText = assistantText;
             }
 
             if (!response.hasToolCalls()) {
-                if (AgentToolBatch.isTruncatedByTokenLimit(response)) {
+                if (discardedCutOffText) {
                     emit(stepListener, "The AI response was cut off before it could finish.");
                     if (previousReplyCutOffWithoutAction || turn == maxTurns || toolCallbacks.length == 0) {
                         return failed(turn, lastAssistantText, conversation, "The AI response was cut off at the output token limit on turn " + turn + ".");
