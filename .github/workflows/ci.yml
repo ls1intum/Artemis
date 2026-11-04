@@ -274,6 +274,8 @@ jobs:
               - 'config/pnpm/**'
               - 'supporting_scripts/generate-tum-aet-ui-reference-page.mjs'
               - 'supporting_scripts/check_docs_references.py'
+              - 'supporting_scripts/check_docs_freshness.py'
+              - 'supporting_scripts/generate_architecture_diagrams.py'
             has_tum_aet_ui:
               - '.github/workflows/release-tum-aet-ui.yml'
               - '.github/workflows/ci.yml'
@@ -916,6 +918,22 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
+  # The documentation describes code, so a change to the code can make a page wrong without touching it.
+  # These checks are cheap and read the whole tree, so they run for every change, like the terminology check.
+  docs-checks:
+    if: >-
+      (github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')) &&
+      (github.event.action != 'edited' || github.event.changes.base != null)
+    name: Documentation Checks
+    uses: ./.github/workflows/ci-docs-checks.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      pull_request_number: ${{ github.event_name == 'pull_request' && github.event.pull_request.number || '' }}
+      base_sha: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
+
   # Deleting the last caller can orphan code in any area of the repository.
   dead-code:
     if: >-
@@ -1041,6 +1059,7 @@ jobs:
       - bean-instantiations
       - skills
       - terminology
+      - docs-checks
       - dead-code
       - liquibase
       - e2e
@@ -1118,6 +1137,7 @@ jobs:
       - bean-instantiations
       - skills
       - terminology
+      - docs-checks
       - dead-code
       - liquibase
       - e2e
