@@ -160,7 +160,7 @@ def unambiguous_kind(field, entities):
 
 
 def collection_fetches_of_query(jpql, entities, superclass_of):
-    """[(parent alias, field)] for every JOIN FETCH in the query that fetches a collection."""
+    """[(parent alias, field, entity of the parent)] for every JOIN FETCH in the query that fetches a collection."""
     alias_entity = {}
     for entity, alias in FROM_ALIAS_PATTERN.findall(jpql):
         if alias.lower() not in JPQL_KEYWORDS and entity in entities:
@@ -180,13 +180,13 @@ def collection_fetches_of_query(jpql, entities, superclass_of):
         facts = lookup_field(alias_entity[parent], field, entities, superclass_of) if parent in alias_entity else None
         kind = facts[0] if facts else unambiguous_kind(field, entities)
         if kind == 'many':
-            fetches.append((parent, field))
+            fetches.append((parent, field, alias_entity.get(parent)))
     return fetches
 
 
 def collection_fetches_of_entity_graph(paths, root_entity, entities, superclass_of):
-    """[(parent path, field)] for every attributePaths entry that fetches a collection, resolving
-    each dotted segment from the repository's own entity type."""
+    """[(parent path, field, entity of the parent)] for every attributePaths entry that fetches a
+    collection, resolving each dotted segment from the repository's own entity type."""
     fetches = []
     for path in paths:
         entity, parent = root_entity, ''
@@ -195,11 +195,11 @@ def collection_fetches_of_entity_graph(paths, root_entity, entities, superclass_
             facts = lookup_field(entity, segment, entities, superclass_of) if entity else None
             kind = facts[0] if facts else unambiguous_kind(segment, entities)
             if kind == 'many':
-                fetches.append((parent or '<root>', segment))
+                fetches.append((parent or '<root>', segment, entity))
             entity = facts[1] if facts else None
             parent = f"{parent}.{segment}" if parent else segment
     # "a" and "a.b" both name collection a; count each (parent, field) once
-    return sorted(set(fetches))
+    return sorted(set(fetches), key=lambda fetch: fetch[:2])
 
 
 def method_after(content, close_index):
@@ -222,10 +222,12 @@ def method_after(content, close_index):
 
 
 def sibling_groups(fetches):
+    """{parent: (label, fields)} for every parent with two or more fetched collections. The label names
+    the parent's entity where it is known, since an alias or '<root>' means nothing out of context."""
     by_parent = {}
-    for parent, field in fetches:
-        by_parent.setdefault(parent, []).append(field)
-    return {parent: fields for parent, fields in by_parent.items() if len(fields) >= 2}
+    for parent, field, owner in fetches:
+        by_parent.setdefault(parent, (owner or parent, []))[1].append(field)
+    return {parent: group for parent, group in by_parent.items() if len(group[1]) >= 2}
 
 
 def is_paged(declaration):
@@ -263,13 +265,13 @@ def check_query_shapes(file_path, content, entities, superclass_of, findings):
             method, declaration = method_after(content, close_index)
             member = f"{class_name}.{method}" if method else f"{class_name}:{line_of(content, match.start())}"
             line = line_of(content, match.start())
-            for parent, fields in sibling_groups(fetches).items():
-                detail = f"fetches {len(fields)} collections of {parent}: {', '.join(fields)}"
+            for parent, (label, fields) in sibling_groups(fetches).items():
+                detail = f"fetches {len(fields)} collections of {label}: {', '.join(fields)}"
                 print(f"\n[MultipleCollectionFetch] {member} ({file_path}:{line}): {detail}")
                 findings.append({"type": "multiple_collection_fetch", "key": f"multiple_collection_fetch:{member}:{parent}", "file": file_path, "line": line,
                                  "member": member, "entityClass": root_entity, "detail": detail, "snippet": snippet})
             if is_paged(declaration):
-                fields = ', '.join(field for _, field in fetches)
+                fields = ', '.join(field for _, field, _ in fetches)
                 detail = f"paged method fetches collection(s) {fields}; Hibernate pages in memory"
                 print(f"\n[PageableCollectionFetch] {member} ({file_path}:{line}): {detail}")
                 findings.append({"type": "pageable_collection_fetch", "key": f"pageable_collection_fetch:{member}", "file": file_path, "line": line,

@@ -253,6 +253,24 @@ class HtmlTest(unittest.TestCase):
         self.assertEqual(page.count('<article class="problem '), report.TOP_PROBLEMS)
         self.assertEqual(page.count('<tr class="problem"'), 3)
 
+    def test_a_duplicate_from_many_places_folds_them_one_per_line(self):
+        sites = [{"repositoryMethod": f"Repository{i}.load", "callerMethod": f"Service{i}.delete"} for i in range(5)]
+        finding = repeated(type="DUPLICATE", repositoryMethod=None, callerMethod=None, distinctParameterSets=1, callSites=sites)
+        problem = report.build_problems(report.group_repeated_queries([finding]))[0]
+        item = report.query_item_html(problem["queries"][0], problem)
+        self.assertIn('<details class="query-source"><summary>loaded by 5 places</summary><span>Repository0.load ← Service0.delete</span>', item)
+        self.assertEqual(item.count("<span>Repository"), 5)
+
+    def test_requests_of_one_test_share_a_row(self):
+        requests = [
+            {"endpoint": "GET /api/courses", "test": "A", "phase": "action", "executions": 26, "distinct": 26},
+            {"endpoint": "GET /api/courses", "test": "B", "phase": "action", "executions": 26, "distinct": 26},
+            {"endpoint": "GET /api/courses", "test": "A", "phase": "action", "executions": 25, "distinct": 25},
+            {"endpoint": "GET /api/courses", "test": "A", "phase": "setup", "executions": 25, "distinct": 25},
+        ]
+        rows = report.requests_per_test(requests)
+        self.assertEqual([(r["test"], r["phase"], r["executions"]) for r in rows], [("A", "action", 26), ("B", "action", 26), ("A", "setup", 25)])
+
 
 if __name__ == "__main__":
     unittest.main()
