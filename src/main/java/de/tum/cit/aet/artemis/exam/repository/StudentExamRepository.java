@@ -48,6 +48,27 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 @Repository
 public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam, Long> {
 
+    /**
+     * Counts every student exam that was started, so a student who took several exams is counted once per exam. Which exams are real is defined like in
+     * {@link ExamRepository#countRealExamsInCourses}. Test runs of instructors are not counted.
+     *
+     * @param courseIds the courses
+     * @return the number of started student exams of the real exams of these courses, without deleted users and test users
+     */
+    @Query("""
+            SELECT COUNT(se.id)
+            FROM StudentExam se
+            WHERE se.exam.course.id IN :courseIds
+                AND se.exam.testExam = FALSE
+                AND LOWER(se.exam.title) NOT LIKE 'test%'
+                AND LOWER(se.exam.title) NOT LIKE 'mock%'
+                AND se.started = TRUE
+                AND (se.testRun IS NULL OR se.testRun = FALSE)
+                AND se.user.deleted = FALSE
+                AND se.user.isTestUser = FALSE
+            """)
+    long countParticipationsInRealExamsInCourses(@Param("courseIds") Set<Long> courseIds);
+
     @Query("""
             SELECT se
             FROM StudentExam se

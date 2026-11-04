@@ -287,6 +287,33 @@ git add documentation/docs/<audience>/<your-page>.mdx
 python3 supporting_scripts/check_terminology.py
 ```
 
+## Keeping the documentation up to date
+
+Documentation goes stale when the code changes and nobody changes the page. Most of what an audit finds is of a few kinds:
+a moved or deleted file, a renamed button or menu entry, a changed default, a removed setup, and a screenshot of an old user interface.
+The following habits prevent them.
+
+* **Change the page in the same pull request as the code.** A pull request that changes a configuration key or its default,
+  a deployment file under `deployment/docker/`, a command or a Gradle task, a user-facing label or the navigation, or the
+  export format of a file has to update the pages that mention it. Search the documentation for the old name before you open the pull request.
+* **Verify before you write.** Take a label from `src/main/webapp/i18n/en/`, a default from the `application-*.yml` file, and a version
+  from `gradle.properties` or `package.json`. Do not copy them from another page.
+* **Do not hard-code what is generated.** Prefer a link to the source of truth, or a generated page, over a copied list or version number.
+  If a page must carry a snapshot, such as a measurement, put the date next to it.
+* **Mark what is going away.** Code that exists only for a feature that is scheduled for removal carries the marker
+  `REMOVE_IN_ARTEMIS_11` followed by the name of the feature. Do the same for a page or a section, so that the removal pull request can find it.
+* **Recapture screenshots in the same change that restyles the screen.** A screenshot of an old interface is worse than none.
+  Name the file after what it shows, so that a search for the screen finds every image of it.
+
+The pull request check `python3 supporting_scripts/check_docs_references.py` fails when a page is missing from its sidebar or when
+an inline code span names a repository path that does not exist. It does not check labels, defaults or screenshots, so it does not replace the habits above.
+Paths that are expected to be missing in a checkout, such as build output or a file the reader creates, are exempt through git ignore rules
+or the `ALLOWLIST` of the script, which needs a reason for every entry.
+
+Audit every area (admin, developer, instructor, student, about) against the code regularly, for example once per major release.
+Compare labels and defaults with the i18n files and the configuration, check that the pages for removed or deprecated features say so,
+and look at the screenshots of the screens that changed.
+
 ## Related
 
 * [Terminology](/developer/guidelines/terminology) — naming components instead of layers, and the check that
