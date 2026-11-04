@@ -89,11 +89,38 @@ public final class ApprovedOwnershipGate {
                 && designTypes.stream().allMatch(type -> declaredInPackage(producedSolutionFiles, type, expectedPackage));
     }
 
-    /** Whether a source of the package declares the type; a generic Design cell such as {@code Stack<T>} names the type {@code Stack}. */
+    /**
+     * Whether a source of the package declares the type at its top level, where the structural checks load it by package and simple name; a nested type has another binary
+     * name. A generic Design cell such as {@code Stack<T>} names the type {@code Stack}.
+     */
     private static boolean declaredInPackage(Map<String, String> files, String designType, String expectedPackage) {
         String type = designType.contains("<") ? designType.substring(0, designType.indexOf('<')).strip() : designType.strip();
-        return !JAVA_IDENTIFIER.matcher(type).matches() || files.values().stream().filter(Objects::nonNull).anyMatch(
-                source -> JavaSourceInspector.sourceDeclaresType(source, type) && expectedPackage.equals(javaPackage(JavaSourceInspector.maskCommentsAndLiterals(source))));
+        return !JAVA_IDENTIFIER.matcher(type).matches() || files.values().stream().filter(Objects::nonNull).map(JavaSourceInspector::maskCommentsAndLiterals)
+                .anyMatch(masked -> expectedPackage.equals(javaPackage(masked)) && declaresTopLevelType(masked, type));
+    }
+
+    private static boolean declaresTopLevelType(String masked, String type) {
+        Matcher declaration = TYPE_DECLARATION.matcher(masked);
+        while (declaration.find()) {
+            if (declaration.group(1).equals(type) && braceDepth(masked, declaration.start()) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static int braceDepth(String masked, int position) {
+        int depth = 0;
+        for (int index = 0; index < position; index++) {
+            char current = masked.charAt(index);
+            if (current == '{') {
+                depth++;
+            }
+            else if (current == '}') {
+                depth--;
+            }
+        }
+        return depth;
     }
 
     /**

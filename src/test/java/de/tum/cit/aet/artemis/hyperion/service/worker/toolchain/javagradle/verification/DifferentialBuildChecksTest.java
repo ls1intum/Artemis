@@ -85,6 +85,31 @@ class DifferentialBuildChecksTest {
     }
 
     @Test
+    void aMatchingApiNestedInAnotherClassIsNotAServerDefect() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Box | generic container | student-creates |
+                ## Public API
+                ### Box
+                ```java
+                public class Box<T> { public T get(); }
+                ```
+                """;
+        String structural = "testClass[GenericApi:Box]";
+        BuildSummary solution = new BuildSummary(1, 1, 1, false, List.of(structural), List.of(structural),
+                List.of(new AgentVerifyReport.TestFailureEvidence(structural, "java.lang.ClassNotFoundException: de.test.Box")), "");
+        // The structural checks load de.test.Box, but this Box is the nested de.test.Holder$Box.
+        Map<String, String> nested = Map.of("src/de/test/Holder.java", "package de.test; class Holder { public class Box<T> { public T get() { return null; } } }");
+        Map<String, String> topLevel = Map.of("src/de/test/Box.java", "package de.test; public class Box<T> { public T get() { return null; } }");
+
+        assertThat(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, Set.of(structural), List.of(spec), nested, "de.test", true)).isEmpty();
+        assertThat(DifferentialBuildChecks.structuralSeedingDefectReasons(solution, Set.of(structural), List.of(spec), topLevel, "de.test", true)).singleElement().asString()
+                .startsWith(VerificationResult.SERVER_DEFECT_PREFIX);
+    }
+
+    @Test
     void onlyTheCheckThatFailedOnInitializationIsExcludedFromTheServerDefect() {
         String other = "testClass[GenericApi:Board]";
         BuildSummary solution = new BuildSummary(3, 2, 1, false, List.of(STRUCTURAL, other, "behaves"), List.of(STRUCTURAL, other),
