@@ -1,4 +1,5 @@
 import { expect, vi } from 'vitest';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -129,6 +130,19 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeUngraded();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledExactlyOnceWith(initialParticipation.id, true, undefined);
         expect(comp.result()!.id).toBe(ungradedResult2.id);
+    });
+
+    it.each([undefined, true, false])('ignores AI results on load and websocket updates with successful=%s', (successful) => {
+        const official: Result = { id: 20, rated: true, score: 80, completionDate: dayjs().subtract(1, 'minute') };
+        const ai: Result = { id: 21, rated: true, score: successful ? 20 : undefined, successful, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs() };
+        cleanInitializeUngraded({ ...initialParticipation, submissions: [{ results: [official, ai] } as Submission] });
+        expect(comp.result()).toEqual(official);
+
+        subscribeForLatestResultOfParticipationSubject.next(ai);
+        expect(comp.result()).toEqual(official);
+
+        subscribeForLatestResultOfParticipationSubject.next({ ...official, id: 22, score: 90 });
+        expect(comp.result()?.score).toBe(90);
     });
 
     it('should react to rated, but not to unrated results if showUngradedResults is false', () => {

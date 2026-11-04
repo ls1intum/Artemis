@@ -376,7 +376,7 @@ class AthenaFeedbackRequestPersistenceTest extends AbstractSpringIntegrationInde
 
         assertThat(feedbackRequests.completeAthenaFeedbackRequest(retry, 70.0, List.of(), Set.of())).isTrue();
         assertThat(results.findByIdElseThrow(retry.getId()).isRated()).isTrue();
-        assertGradeIntegrity(team, competencyId, retry, 70.0);
+        assertGradeIntegrity(team, competencyId, assessed, 80.0);
 
         // A failed ordinary automatic assessment is a real zero grade, unlike a failed provider request.
         Result failedBuild = saveGrade(AssessmentType.AUTOMATIC, false, 0.0, ZonedDateTime.now().plusSeconds(1));

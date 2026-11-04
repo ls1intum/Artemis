@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackSeverity;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -81,11 +82,12 @@ public record ProgrammingManualResultRequestDTO(Long id, Double score, Boolean s
      * @param visibility          when the feedback becomes visible to the student
      * @param gradingInstruction  the referenced grading instruction
      * @param testCase            the referenced test case
+     * @param severity            the impact of an AI feedback issue; {@code null} when unclassified
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude()
     public record ProgrammingManualFeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive,
-            FeedbackType type, Visibility visibility, GradingInstructionRefDTO gradingInstruction, TestCaseRefDTO testCase) {
+            FeedbackType type, Visibility visibility, GradingInstructionRefDTO gradingInstruction, TestCaseRefDTO testCase, FeedbackSeverity severity) {
 
         /**
          * Builds the feedback entity this item describes.
@@ -119,6 +121,7 @@ public record ProgrammingManualResultRequestDTO(Long id, Double score, Boolean s
             }
             feedback.setReference(reference);
             feedback.setCredits(credits);
+            feedback.setSeverity(severity);
             feedback.setPositive(positive);
             feedback.setType(type);
             feedback.setVisibility(visibility);

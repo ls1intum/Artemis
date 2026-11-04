@@ -37,7 +37,7 @@ class SubmissionResultAccessorTest {
     }
 
     @Test
-    void latestCompletedResultIgnoresFailedAthenaFeedbackButKeepsSuccessfulFeedback() {
+    void latestCompletedResultIgnoresFailedAndSuccessfulAthenaFeedback() {
         Result assessed = result(1L, AssessmentType.MANUAL);
         assessed.setCompletionDate(ZonedDateTime.now().minusHours(1));
         Result athena = result(2L, AssessmentType.AUTOMATIC_ATHENA);
@@ -47,11 +47,11 @@ class SubmissionResultAccessorTest {
 
         assertThat(submission.getLatestCompletedResult()).isEqualTo(assessed);
         athena.setSuccessful(true);
-        assertThat(submission.getLatestCompletedResult()).isEqualTo(athena);
+        assertThat(submission.getLatestCompletedResult()).isEqualTo(assessed);
     }
 
     @Test
-    void latestGradingResultIgnoresUnfinishedAthenaWithoutChangingHistory() {
+    void latestGradingResultIgnoresAthenaWithoutChangingHistory() {
         Result assessed = result(1L, AssessmentType.MANUAL);
         Result athena = result(2L, AssessmentType.AUTOMATIC_ATHENA);
         athena.setCompletionDate(ZonedDateTime.now().plusMinutes(5));
@@ -61,7 +61,7 @@ class SubmissionResultAccessorTest {
         athena.setSuccessful(false);
         assertThat(submission.getLatestGradingResult()).isSameAs(assessed);
         athena.setSuccessful(true);
-        assertThat(submission.getLatestGradingResult()).isSameAs(athena);
+        assertThat(submission.getLatestGradingResult()).isSameAs(assessed);
         assertThat(submission.getLatestResult()).isSameAs(athena);
         assertThat(submission.getResults()).containsExactlyInAnyOrder(assessed, athena, null);
     }
@@ -82,12 +82,14 @@ class SubmissionResultAccessorTest {
     }
 
     @Test
-    void latestGradingResultReturnsNullWhenOnlyUnfinishedAthenaRequestsExist() {
+    void latestGradingResultReturnsNullWhenOnlyAthenaRequestsExist() {
         Result pending = result(1L, AssessmentType.AUTOMATIC_ATHENA);
         Submission submission = submissionWith(pending);
 
         assertThat(submission.getLatestGradingResult()).isNull();
         pending.setSuccessful(false);
+        assertThat(submission.getLatestGradingResult()).isNull();
+        pending.setSuccessful(true);
         assertThat(submission.getLatestGradingResult()).isNull();
     }
 
