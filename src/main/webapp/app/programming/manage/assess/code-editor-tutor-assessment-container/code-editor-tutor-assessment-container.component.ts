@@ -609,6 +609,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     nextSubmission() {
         this.loadingParticipation.set(true);
         this.submission.set(undefined);
+        // The manual result stays in place until the lookup below navigates, so a suggestion response arriving in between
+        // would otherwise still pass as current.
+        this.feedbackSuggestionsRequestGeneration++;
+        this.loadingFeedbackSuggestions.set(false);
         this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exercise().id!, true, this.correctionRound()).subscribe({
             next: (response?: ProgrammingSubmission) => {
                 this.loadingParticipation.set(false);

@@ -1136,6 +1136,24 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.loadingFeedbackSuggestions()).toBe(true);
     });
 
+    it('should ignore a pending feedback-suggestions request once the lookup of the next submission starts', async () => {
+        const suggestions = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValueOnce(suggestions.asObservable());
+        vi.spyOn(comp['programmingSubmissionService'], 'getSubmissionWithoutAssessment').mockReturnValue(NEVER);
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.exercise.set(exercise);
+        comp.submission.set({ id: 42 } as ProgrammingSubmission);
+
+        const pendingRequest = comp['loadFeedbackSuggestions']();
+        comp.nextSubmission();
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+
+        suggestions.error(new Error('network error'));
+        await pendingRequest;
+
+        expect(errorSpy).not.toHaveBeenCalled();
+    });
+
     it('should discard a feedback-suggestions response that arrives while the next assessment is still loading', async () => {
         const params = new BehaviorSubject<{ submissionId: number }>({ submissionId: 123 });
         TestBed.inject(ActivatedRoute).params = params;
