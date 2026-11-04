@@ -417,7 +417,7 @@ def mark_new(groups: list, static_findings: list, baseline: dict):
 # ---------------------------------------------------------------------------
 
 def problem_rows_md(problems: list) -> list:
-    lines = ["| Where to fix | Shape | Avoidable / request | Biggest repeat | Endpoints | Tests |", "|---|---|---|---|---|---|"]
+    lines = ["| Where to fix | Shape | Avoidable queries per request | Biggest repeat | Endpoints | Tests |", "|---|---|---|---|---|---|"]
     for p in problems:
         confirmed = " · 🔍 static rule agrees" if p["static_matches"] else ""
         confirmed += " · ⚠️ not indexed" if p["index_state"] == "scan" else ""
@@ -479,7 +479,7 @@ def build_report(report: dict, groups: list, static_findings: list, baseline: di
               "Every finding is a yes/no rule, without a count threshold. **N+1**: one query per item where one query for all items would do. "
               "**Duplicate**: the same data loaded again within the same request. **Row-by-row insert**: rows written one statement at a time. "
               "Findings are grouped by where the fix goes: the method that loops, or the endpoint for data loaded again by several places. "
-              "**Avoidable / request** is the biggest number of executions one fix would save in a single request. "
+              "**Avoidable queries per request** is the biggest number of queries one fix would save in a single request. "
               "🔍 means a static rule flags that same code. A finding is identified by its shape, endpoint, issuing code and query — not by the test or the "
               "repetition count, which depend on how much data a test creates.", "",
               "See the [performance guidelines](https://docs.artemis.tum.de/developer/guidelines/performance) for remediation patterns.", "", "</details>", "",
@@ -921,7 +921,7 @@ def query_item_html(q: dict, problem: dict) -> str:
     return (f'<li class="query-item">{source_html}'
             f'<details class="query-sql"><summary><code>{html.escape(q["summary"])}</code></summary><pre>{highlight_sql(q["sql"])}</pre>{query_requests_html(q)}</details>'
             f'<span class="query-counts">{html.escape(query_counts_label(q))}</span>'
-            f'<span class="query-avoidable" title="executions one request could have saved">−{q["avoidable"]}</span>{index_tag_html(q["index"])}</li>')
+            f'<span class="query-avoidable" title="queries one request could have saved">−{q["avoidable"]}</span>{index_tag_html(q["index"])}</li>')
 
 
 def index_tag_html(lookup: dict) -> str:
@@ -964,7 +964,7 @@ def problem_card_html(p: dict, rank: int, static_findings: list, has_baseline: b
     return (f'<article class="problem problem-card cat-{p["category"]}" {problem_attributes(p)}>'
             f'<div class="problem-head"><span class="problem-rank">#{rank}</span>'
             f'<div class="problem-anchor"><span class="anchor-kind">{anchor_kind}</span><code>{html.escape(p["anchor"])}</code></div>'
-            f'<div class="problem-impact"><span class="impact-value">{p["avoidable"]}</span><span class="impact-label">avoidable executions<br>per request</span></div></div>'
+            f'<div class="problem-impact"><span class="impact-value">{p["avoidable"]}</span><span class="impact-label">avoidable queries<br>per request</span></div></div>'
             f'<div class="problem-tags">{problem_tags_html(p, static_findings, has_baseline)}</div>'
             f'<ul class="query-list">{html_more_list(p["queries"], 4, lambda q: query_item_html(q, p))}</ul>'
             f'<div class="problem-foot"><div><span class="foot-label">{endpoints}</span><div class="foot-list">'
@@ -991,7 +991,7 @@ def problem_row_html(p: dict, rank: int, static_findings: list, has_baseline: bo
 
 def problem_table_html(problems: list, first_rank: int, static_findings: list, has_baseline: bool) -> str:
     rows = "".join(problem_row_html(p, first_rank + i, static_findings, has_baseline) for i, p in enumerate(problems))
-    return ('<div class="table-scroll"><table class="problem-table"><thead><tr><th>#</th><th title="executions one request could have saved">Avoidable</th>'
+    return ('<div class="table-scroll"><table class="problem-table"><thead><tr><th>#</th><th title="queries one request could have saved">Avoidable queries</th>'
             f'<th>Shape</th><th>Where to fix</th><th>Tests</th></tr></thead><tbody>{rows}</tbody></table></div>')
 
 
