@@ -1616,7 +1616,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         describe('file and video items', () => {
             let updateSpy: MockInstance<AttachmentVideoUnitService['update']>;
-            let formMock: { takeOverSavedFile: Mock; takeOverSavedVideoSource: Mock; hasUnconfirmedContent: Mock };
+            let formMock: { takeOverSavedFile: Mock; takeOverSavedVideoSource: Mock; applyServerVideoSource: Mock; hasUnconfirmedContent: Mock };
 
             function savedFileUnit(): AttachmentVideoUnit {
                 const unit = new AttachmentVideoUnit();
@@ -1644,7 +1644,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
             beforeEach(() => {
                 updateSpy = vi.spyOn(attachmentVideoUnitService, 'update').mockReturnValue(savedResponse());
-                formMock = { takeOverSavedFile: vi.fn(), takeOverSavedVideoSource: vi.fn(), hasUnconfirmedContent: vi.fn(() => false) };
+                formMock = { takeOverSavedFile: vi.fn(), takeOverSavedVideoSource: vi.fn(), applyServerVideoSource: vi.fn(), hasUnconfirmedContent: vi.fn(() => false) };
                 wizardUnitComponent.attachmentVideoUnitForm = signal(formMock as unknown as AttachmentVideoUnitFormComponent).asReadonly() as Signal<
                     AttachmentVideoUnitFormComponent | undefined
                 >;
@@ -1947,6 +1947,21 @@ describe('LectureUpdateUnitsComponent', () => {
                     videoSource: 'https://live.rbg.tum.de/w/new',
                     loadedVideoSource: 'https://live.rbg.tum.de/w/other',
                 });
+            });
+
+            it('should show a video URL another editor saved when a change of the details is saved, and send the next link against it', async () => {
+                // Another editor saved .../other; this editor's name change comes back with it.
+                updateSpy.mockReturnValueOnce(savedResponse('https://live.rbg.tum.de/w/other'));
+
+                wizardUnitComponent.onAttachmentVideoUnitChanged({ data: fileFormData({ name: 'Slides week 1' }), immediate: true, valid: true });
+
+                expect(formMock.applyServerVideoSource).toHaveBeenCalledExactlyOnceWith('https://live.rbg.tum.de/w/other');
+
+                updateSpy.mockReturnValueOnce(savedResponse('https://live.rbg.tum.de/w/new'));
+                wizardUnitComponent.onVideoSourceSaveRequested(fileFormData({ name: 'Slides week 1', videoSource: 'https://live.rbg.tum.de/w/new' }));
+
+                await expect(getAttachmentVideoUnitPayload(updateSpy.mock.calls[1][2])).resolves.toMatchObject({ loadedVideoSource: 'https://live.rbg.tum.de/w/other' });
+                expect(formMock.applyServerVideoSource).toHaveBeenCalledOnce();
             });
 
             it('should count a failed upload and a running change of the details at once', () => {

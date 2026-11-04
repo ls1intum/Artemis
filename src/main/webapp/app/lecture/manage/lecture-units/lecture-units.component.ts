@@ -757,9 +757,11 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 const savedUnit = attachedMeanwhile && editing ? cloneWith(sentUnit as AttachmentVideoUnit, { videoSource: editing.videoSource }) : sentUnit;
                 this.unitManagementComponent()?.replaceLectureUnit(deepClone(savedUnit));
                 if (this.editingUnitId() === unitId) {
+                    // Read before this save is taken over; the unit is still the edited one, as checked above.
+                    const linkBefore = editing?.videoSource;
                     this.lastSavedKey = pending.key;
                     this.editingUnit.set(savedUnit);
-                    this.takeOverSavedContent(pending, savedUnit);
+                    this.takeOverSavedContent(pending, savedUnit, linkBefore);
                     this.lastSavedAt.set(dayjs());
                 }
                 // Also after the form closed because its item was deleted, so the saves of an item opened meanwhile are sent.
@@ -847,8 +849,12 @@ export class LectureUpdateUnitsComponent implements OnInit {
         });
     }
 
-    private takeOverSavedContent(pending: PendingUnitSave, savedUnit: AttachmentVideoUnit): void {
+    private takeOverSavedContent(pending: PendingUnitSave, savedUnit: AttachmentVideoUnit, linkBefore: string | undefined): void {
         const form = this.attachmentVideoUnitForm();
+        if (pending.confirmed?.confirmed !== 'videoSource' && (savedUnit.videoSource || undefined) !== (linkBefore || undefined)) {
+            // Another editor changed the link meanwhile, which the response of this save shows: the form shows it too, and keeps a link the user entered.
+            form?.applyServerVideoSource(savedUnit.videoSource);
+        }
         if (pending.confirmed?.confirmed === 'file') {
             form?.takeOverSavedFile(savedUnit.attachment?.link, savedUnit.attachment?.version, pending.confirmed.data.fileProperties.file);
         } else if (pending.confirmed?.confirmed === 'videoSource') {
