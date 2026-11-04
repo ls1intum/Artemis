@@ -162,7 +162,7 @@ Issues are grouped into categories. The following table shows the category mappi
 
 Other languages use categories defined by their static code analysis tool:
 
-- **JavaScript, TypeScript, C++, R**: Only use the `Lint` category
+- **JavaScript, TypeScript, C++, R, Go**: Only use the `Lint` category
 - **Dart**: Dart's analyzer can generate these categories:
   - `TODO`
   - `HINT`
@@ -174,6 +174,8 @@ Other languages use categories defined by their static code analysis tool:
 - **Python**: Uses [Ruff's tool names](https://docs.astral.sh/ruff/rules/)
 - **Ruby**: Uses [Rubocop's Department names](https://docs.rubocop.org/rubocop/cops.html)
 - **Rust**: Uses [Clippy's lint groups](https://rust-lang.github.io/rust-clippy/stable/index.html)
+- **Kotlin**: Uses the [rule sets of detekt](https://detekt.dev/docs/rules/complexity): `complexity`, `coroutines`, `empty-blocks`, `exceptions`, `naming`, `performance`, `potential-bugs` and `style`. Rules of other rule sets are reported as `other`
+- **C#**: Uses the [categories of the .NET analyzers](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/categories), e.g. `Design`, `Naming`, `Performance` and `Usage`. Compiler warnings are reported as `Compiler`
 
 On the left side of the page, instructors can configure the static code analysis categories:
 
