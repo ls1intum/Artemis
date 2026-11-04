@@ -671,23 +671,20 @@ public class StageChecks {
         return Stream.of(byName, byDeclaration).flatMap(String::lines).map(String::strip).filter(line -> !line.isBlank()).distinct().collect(Collectors.joining("\n"));
     }
 
-    private StageCheckResult checkTests(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> seedTestsFiles,
-            SeededStructuralTests seededStructuralTests) {
-        Optional<String> ownershipCorrection = correctGivenOwnership(sandbox, sessionId);
-        StageCheckResult result = checkTestArtifacts(sandbox, sessionId, exercise, seedTestsFiles, seededStructuralTests);
-        return ownershipCorrection.map(notice -> new StageCheckResult(result.passed(), notice + "\n" + result.observation(), result.report())).orElse(result);
-    }
-
     /**
      * Demotes approved {@code given} types whose code uses a student-created type to {@code stubbed}. Such an ownership is objectively unsatisfiable, not a judgement: a given
      * type ships byte-identical in the template, where the student-created type does not exist, so no template can compile, and the ownership guard rightly rejects every
      * placeholder for the absent type. {@code stubbed} keeps the type's approved public API in the template and lets the solution keep the complete code, and the
      * specification gate accepts it for exactly the types it accepted as given, so the correction changes nothing else. The registry, the workspace SPEC.md, and the run's
      * events record it.
+     * <p>
+     * The correction cannot be undone, so only the TESTS stage gate evaluated when a stage attempt ends calls this, never an in-loop {@code verify} on a half-written solution.
      *
+     * @param sandbox   active generation sandbox
+     * @param sessionId sandbox session whose approved specification is authoritative
      * @return the agent-facing notice, or empty when no correction was needed or it could not be recorded
      */
-    private Optional<String> correctGivenOwnership(InteractiveSandbox sandbox, String sessionId) {
+    public Optional<String> correctGivenOwnership(InteractiveSandbox sandbox, String sessionId) {
         Optional<String> approved = approvedSpecs.approved(sessionId);
         List<String> studentCreatedTypes = approved.map(StageChecks::specStudentCreatedTypes).orElse(List.of());
         if (studentCreatedTypes.isEmpty()) {
@@ -756,7 +753,7 @@ public class StageChecks {
         return String.join("\n", lines);
     }
 
-    private StageCheckResult checkTestArtifacts(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> seedTestsFiles,
+    private StageCheckResult checkTests(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> seedTestsFiles,
             SeededStructuralTests seededStructuralTests) {
         Set<String> seededStructuralTestNames = seededStructuralTests.testNames();
         AgentVerifyReport report;

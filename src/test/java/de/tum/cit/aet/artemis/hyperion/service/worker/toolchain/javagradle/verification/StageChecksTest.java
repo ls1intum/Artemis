@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -343,7 +344,7 @@ class StageChecksTest {
         }
 
         @Test
-        void demotesAGivenTypeWhoseCodeNeedsAStudentCreatedTypeAndRecordsTheCorrectionOnce() {
+        void demotesAGivenTypeWhoseCodeNeedsAStudentCreatedTypeOnlyThroughTheStageGateCorrection() {
             String spec = specWithDesign("| Player | context students create | student-creates |\n| Demo | supplied entry point | given |\n");
             approvedSpecs.approve("s", spec);
             sandbox.spec = spec;
@@ -351,17 +352,20 @@ class StageChecksTest {
             sandbox.solutionRepositoryFiles = Map.of("src/Player.java", "public class Player { public int calculate(int input) { return input; } }");
             when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, false));
 
-            StageCheckResult result = check(GenerationStage.TESTS);
+            // An in-loop verify on a possibly half-written solution never makes the irreversible correction.
+            assertThat(check(GenerationStage.TESTS).observation()).doesNotContain("OWNERSHIP CORRECTED");
+            assertThat(approvedSpecs.approved("s")).contains(spec);
+
+            Optional<String> notice = service.correctGivenOwnership(sandbox, "s");
 
             String corrected = approvedSpecs.approved("s").orElseThrow();
             assertThat(StageChecks.designTableRows(corrected)).extracting(StageChecks.DesignRow::status).containsExactly("student-creates", "stubbed");
             assertThat(corrected).isEqualTo(spec.replace("| Demo | supplied entry point | given |", "| Demo | supplied entry point | stubbed |"));
             assertThat(sandbox.files()).containsEntry("/workspace/SPEC.md", corrected);
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).startsWith("OWNERSHIP CORRECTED").contains("[Demo]", "Demo->Player", "'stubbed'", "compilable stub bodies");
-
+            assertThat(notice)
+                    .hasValueSatisfying(text -> assertThat(text).startsWith("OWNERSHIP CORRECTED").contains("[Demo]", "Demo->Player", "'stubbed'", "compilable stub bodies"));
             // The corrected contract has no given type left that needs a student-created one, so nothing is corrected twice.
-            assertThat(check(GenerationStage.TESTS).observation()).doesNotContain("OWNERSHIP CORRECTED");
+            assertThat(service.correctGivenOwnership(sandbox, "s")).isEmpty();
             assertThat(approvedSpecs.approved("s")).contains(corrected);
         }
 

@@ -496,7 +496,7 @@ public class StagedGenerationRunner {
                     baseTools.recordLastTestsReport(gate.report());
                     String correctedSpec = approvedSpecs.approved(sessionId).orElse(null);
                     if (publishedSpec != null && correctedSpec != null && !correctedSpec.equals(publishedSpec)) {
-                        // The TESTS checks demoted a given type whose code needs a student-created type (see StageChecks#correctGivenOwnership). The correction reaches the
+                        // The TESTS gate demoted a given type whose code needs a student-created type (see StageChecks#correctGivenOwnership). The correction reaches the
                         // instructor and the downstream critic grounding through the same sink as the approval itself.
                         publishedSpec = correctedSpec;
                         if (specSink != null) {
@@ -881,7 +881,11 @@ public class StagedGenerationRunner {
                         + ". Keep every approved student-created type public in the solution and absent from the template; do not edit the server-generated structural test assets."),
                         false);
             }
-            return new GateEvaluation(stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport, baseTools.seededStructuralTests()), false);
+            // Only this end-of-attempt gate may correct an unsatisfiable given ownership: the correction is irreversible, so it must not fire on a half-written solution.
+            Optional<String> ownershipCorrection = stageCheckService.correctGivenOwnership(sandbox, sessionId);
+            StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport, baseTools.seededStructuralTests());
+            return new GateEvaluation(
+                    ownershipCorrection.map(notice -> new StageCheckResult(result.passed(), notice + "\n" + result.observation(), result.report())).orElse(result), false);
         }
         Optional<StageCheckResult> reused = baseTools.reuseCachedPassingCheck(stage);
         if (reused.isPresent()) {

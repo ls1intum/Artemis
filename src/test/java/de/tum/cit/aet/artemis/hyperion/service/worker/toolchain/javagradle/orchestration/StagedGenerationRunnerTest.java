@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -790,11 +791,10 @@ class StagedGenerationRunnerTest {
     void aServerOwnershipCorrectionDuringTestsIsPublishedToTheSink() {
         String corrected = VALID_SPEC_DOCUMENT + "\n<!-- corrected ownership -->\n";
         stageCheckService = mock(StageChecks.class);
-        when(stageCheckService.check(any(), any(), anyString(), any(), anyMap(), any(), any(SeededStructuralTests.class))).thenAnswer(invocation -> {
-            if (invocation.getArgument(0) == GenerationStage.TESTS) {
-                approvedSpecs.amend("s", VALID_SPEC_DOCUMENT, corrected);
-            }
-            return StageCheckResult.passed("Stage passed");
+        when(stageCheckService.check(any(), any(), anyString(), any(), anyMap(), any(), any(SeededStructuralTests.class))).thenReturn(StageCheckResult.passed("Stage passed"));
+        when(stageCheckService.correctGivenOwnership(any(), anyString())).thenAnswer(invocation -> {
+            approvedSpecs.amend("s", VALID_SPEC_DOCUMENT, corrected);
+            return Optional.of("OWNERSHIP CORRECTED: Demo");
         });
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "FRESH");
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(2, "build"),
@@ -804,6 +804,7 @@ class StagedGenerationRunnerTest {
         runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY, true, published::add);
 
         assertThat(published).containsExactly(VALID_SPEC_DOCUMENT, corrected);
+        verify(stageCheckService).correctGivenOwnership(any(), anyString());
     }
 
     @Test
