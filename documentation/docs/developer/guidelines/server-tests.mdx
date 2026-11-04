@@ -23,7 +23,7 @@ You can execute server tests with the following commands:
 
 The code coverage thresholds are defined in [jacoco.gradle](https://github.com/ls1intum/Artemis/blob/develop/gradle/jacoco.gradle).
 
-To run the server tests against MySQL in a Docker test container, use:
+To run the server tests against MySQL in a Docker test container, use the following task. MySQL support is deprecated and removed in Artemis 11 (see [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11)), together with this task:
 
 * Execute tests with MySQL container: `./gradlew testMysql -x webapp`
 
@@ -217,9 +217,9 @@ Only the following abstract base test classes are permitted to define context-af
 | `AbstractSpringIntegrationIndependentTestBase` | N/A | Shared mocks and setup for independent test buckets |
 | `AbstractSpringIntegrationIndependentTest` | `Artemis_independent` | Independent tests without CI/CD integration |
 | `AbstractSpringIntegrationIndependentBatchTest` | `Artemis_independent_batch` | Second independent bucket for balanced parallel execution |
-| `AbstractSpringIntegrationJenkinsLocalVCTest` | `Artemis_jenkins` | Jenkins + LocalVC integration |
-| `AbstractSpringIntegrationJenkinsLocalVCTemplateTest` | `Artemis_jenkins_template` | Jenkins template tests |
-| `AbstractSpringIntegrationJenkinsLocalVCBatchTest` | `Artemis_jenkins_batch` | Jenkins batch tests |
+| `AbstractSpringIntegrationJenkinsLocalVCTest` | `Artemis_jenkins_localvc` | Jenkins + LocalVC integration (deprecated, removed in Artemis 11) |
+| `AbstractSpringIntegrationJenkinsLocalVCTemplateTest` | `Artemis_jenkins_localvc_template` | Jenkins template tests |
+| `AbstractSpringIntegrationJenkinsLocalVCBatchTest` | `Artemis_jenkins_localvc_batch` | Jenkins batch tests |
 | `AbstractSpringIntegrationLocalCILocalVCTestBase` | N/A | Shared mocks and setup for the two local CI + LocalVC buckets |
 | `AbstractSpringIntegrationLocalCILocalVCTest` | `Artemis_localci_localvc` | Local CI + LocalVC integration |
 | `AbstractSpringIntegrationLocalCILocalVCBatchTest` | `Artemis_localci_localvc_batch` | Second local CI + LocalVC bucket for balanced parallel execution |
@@ -302,7 +302,7 @@ By annotating `abstract` base classes with it, we group tests into parallel runn
 @Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 @AutoConfigureEmbeddedDatabase
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_SCHEDULING })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_DEMO })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest { ... }
 ```
