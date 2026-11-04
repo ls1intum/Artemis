@@ -343,6 +343,17 @@ describe('PresentationAssessmentFormDialogComponent', () => {
             expect(steps()[0].getAttribute('aria-current')).toBe('step');
         });
 
+        it('should stay on the details and explain a description that is too long', () => {
+            enterText('#presentation-assessment-title', 'Final presentation');
+            enterText('#presentation-assessment-description', 'x'.repeat(1001));
+
+            expect((byTestId('continue-presentation-button')!.querySelector('button') as HTMLButtonElement).disabled).toBe(true);
+            expect(byTestId('presentation-description-error')).not.toBeNull();
+            fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+            fixture.detectChanges();
+            expect(steps()[0].getAttribute('aria-current')).toBe('step');
+        });
+
         it('should stay on the method and ask for one when it is sent without', () => {
             enterText('input#presentation-assessment-title', 'Final presentation');
             clickButton('continue-presentation-button');

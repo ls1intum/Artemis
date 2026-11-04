@@ -44,7 +44,7 @@
             "gradingMethod": {
                 "label": "Bewertungsmethode",
                 "question": "Wie soll diese Präsentation bewertet werden?",
-                "hint": "Wähle eine Methode. Die Details legst du im nächsten Schritt fest.",
+                "hint": "Wähle eine Methode. Punkte und Rubrik legst du im nächsten Schritt fest.",
                 "PASS_FAIL": "Bestanden / Nicht bestanden",
                 "SCORE": "Punkte",
                 "RUBRIC": "Rubrik",
@@ -79,6 +79,7 @@
             "assessment": "Bewertung",
             "remark": "Anmerkung",
             "remarkTooLong": "Die Anmerkung darf höchstens {{ max }} Zeichen enthalten.",
+            "descriptionTooLong": "Die Beschreibung darf höchstens {{ max }} Zeichen enthalten.",
             "assessed": "Bewertet",
             "pending": "Ausstehend",
             "searchStudent": "Studierende Person suchen",
@@ -190,7 +191,8 @@
                     "weightSum": "Das Gesamtgewicht muss genau 100 % betragen",
                     "weightSumDetail": "Aktuell sind es {{ total }} %. Passe die Gewichte vor dem Speichern an.",
                     "nameRequired": "Bitte gib einen Namen ein.",
-                    "weightRange": "Bitte gib eine ganze Zahl von 1 bis 100 ein."
+                    "weightRange": "Bitte gib eine ganze Zahl von 1 bis 100 ein.",
+                    "levelDescriptionTooLong": "Eine Stufenbeschreibung ist länger als {{ max }} Zeichen. Öffne die Skala, um sie zu kürzen."
                 }
             }
         }

@@ -159,9 +159,10 @@ export class PresentationAssessmentFormDialogComponent {
     readonly continue = (): void => {
         const controls = this.editForm.controls;
         if (this.step() === 'details') {
-            if (controls.title.invalid || controls.exercise.invalid) {
+            if (controls.title.invalid || controls.exercise.invalid || controls.description.invalid) {
                 controls.title.markAsTouched();
                 controls.exercise.markAsTouched();
+                controls.description.markAsTouched();
                 return;
             }
             this.step.set('method');

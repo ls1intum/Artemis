@@ -93,6 +93,11 @@
                     <div class="col-start-2 flex min-w-0 flex-col gap-2 lg:col-start-auto">
                         <label [for]="'rubric-criterion-description-' + index" jhiTranslate="artemisApp.presentationAssessment.rubric.description"></label>
                         <input [tumAetUiInputId]="'rubric-criterion-description-' + index" tumAetUiInput class="w-full" type="text" formControlName="description" />
+                        @if (criterion.controls.description.hasError('maxlength')) {
+                            <tumaet-ui-message severity="error" [attr.data-testid]="'rubric-criterion-description-error-' + index">
+                                <span jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong" [translateValues]="{ max: 1000 }"></span>
+                            </tumaet-ui-message>
+                        }
                     </div>
 
                     <div class="col-start-2 flex w-24 flex-col gap-2 lg:col-start-auto">
@@ -144,6 +149,11 @@
                                 <fa-icon [icon]="isExpanded(criterion) ? faChevronUp : faChevronDown" />
                             </button>
                         </div>
+                        @if (!isExpanded(criterion) && criterion.controls.levels.invalid) {
+                            <tumaet-ui-message severity="error" [attr.data-testid]="'rubric-levels-error-' + index">
+                                <span jhiTranslate="artemisApp.presentationAssessment.rubric.validation.levelDescriptionTooLong" [translateValues]="{ max: 1000 }"></span>
+                            </tumaet-ui-message>
+                        }
                     </div>
 
                     @if (!locked()) {
@@ -191,6 +201,11 @@
                                         [attr.aria-label]="rubricLevelKey(criterion.controls.scale.value, position) | artemisTranslate"
                                         [attr.data-testid]="'rubric-level-description-' + index + '-' + position"
                                     />
+                                    @if (criterion.controls.levels.at(position).controls.description.hasError('maxlength')) {
+                                        <tumaet-ui-message class="col-span-full sm:col-start-3" severity="error">
+                                            <span jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong" [translateValues]="{ max: 1000 }"></span>
+                                        </tumaet-ui-message>
+                                    }
                                 </ng-container>
                             }
                         </div>

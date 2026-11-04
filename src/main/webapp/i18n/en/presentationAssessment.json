@@ -44,7 +44,7 @@
             "gradingMethod": {
                 "label": "Grading method",
                 "question": "How should this presentation be assessed?",
-                "hint": "Choose one method. You can configure its details in the next step.",
+                "hint": "Choose one method. Score and rubric are configured in the next step.",
                 "PASS_FAIL": "Pass / Fail",
                 "SCORE": "Score",
                 "RUBRIC": "Rubric",
@@ -79,6 +79,7 @@
             "assessment": "Assessment",
             "remark": "Remark",
             "remarkTooLong": "The remark must not exceed {{ max }} characters.",
+            "descriptionTooLong": "The description must not exceed {{ max }} characters.",
             "assessed": "Assessed",
             "pending": "Pending",
             "searchStudent": "Search for a student",
@@ -190,7 +191,8 @@
                     "weightSum": "Total weight must equal 100%",
                     "weightSumDetail": "The current total is {{ total }} %. Adjust the weights before saving.",
                     "nameRequired": "Please enter a name.",
-                    "weightRange": "Please enter a whole number from 1 to 100."
+                    "weightRange": "Please enter a whole number from 1 to 100.",
+                    "levelDescriptionTooLong": "A level description exceeds {{ max }} characters. Open the scale to shorten it."
                 }
             }
         }

@@ -53,7 +53,14 @@
                 rows="4"
                 formControlName="description"
                 [placeholder]="'artemisApp.presentationAssessment.placeholder.description' | artemisTranslate"
+                [attr.aria-invalid]="editForm.controls.description.hasError('maxlength')"
+                [attr.aria-describedby]="editForm.controls.description.hasError('maxlength') ? 'presentation-assessment-description-error' : undefined"
             ></textarea>
+            @if (editForm.controls.description.hasError('maxlength')) {
+                <tumaet-ui-message severity="error" id="presentation-assessment-description-error" role="alert" data-testid="presentation-description-error">
+                    <span jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong" [translateValues]="{ max: 1000 }"></span>
+                </tumaet-ui-message>
+            }
         </div>
     </ng-template>
 
@@ -241,7 +248,7 @@
                 <tumaet-ui-button
                     type="submit"
                     data-testid="continue-presentation-button"
-                    [disabled]="step() === 'details' ? editForm.controls.title.invalid : editForm.controls.gradingMethod.invalid"
+                    [disabled]="step() === 'details' ? editForm.controls.title.invalid || editForm.controls.description.invalid : editForm.controls.gradingMethod.invalid"
                 >
                     <span jhiTranslate="entity.action.continue"></span>
                     <fa-icon [icon]="faArrowRight" />

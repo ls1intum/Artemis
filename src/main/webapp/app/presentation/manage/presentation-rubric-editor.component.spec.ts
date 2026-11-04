@@ -150,6 +150,16 @@ describe('PresentationRubricEditorComponent', () => {
         expect(nameError()).not.toBeNull();
     });
 
+    it('should explain descriptions that are too long, also while the scale is collapsed', () => {
+        const form = render(createRubricForm([criterion('Content', 100)]));
+        form.at(0).controls.description.setValue('x'.repeat(1001));
+        form.at(0).controls.levels.at(0).controls.description.setValue('x'.repeat(1001));
+        fixture.detectChanges();
+
+        expect(query('rubric-criterion-description-error-0')).not.toBeNull();
+        expect(query('rubric-levels-error-0')).not.toBeNull();
+    });
+
     it('should show the levels highest first and hide them again', () => {
         render(createRubricForm([criterion('Content', 100)]));
         const levelInputs = () => Array.from(fixture.nativeElement.querySelectorAll('[data-testid^="rubric-level-description-0-"]')) as HTMLElement[];
