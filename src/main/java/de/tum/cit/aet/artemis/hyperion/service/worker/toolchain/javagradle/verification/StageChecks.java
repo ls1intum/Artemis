@@ -678,7 +678,8 @@ public class StageChecks {
      * specification gate accepts it for exactly the types it accepted as given, so the correction changes nothing else. The registry, the workspace SPEC.md, and the run's
      * events record it.
      * <p>
-     * The correction cannot be undone, so only the TESTS stage gate evaluated when a stage attempt ends calls this, never an in-loop {@code verify} on a half-written solution.
+     * The correction cannot be undone, so only complete candidates trigger it: the TESTS stage gate evaluated when a stage attempt ends, and each submitted candidate before its
+     * authoritative verification. An in-loop {@code verify} on a half-written solution never does.
      *
      * @param sandbox   active generation sandbox
      * @param sessionId sandbox session whose approved specification is authoritative

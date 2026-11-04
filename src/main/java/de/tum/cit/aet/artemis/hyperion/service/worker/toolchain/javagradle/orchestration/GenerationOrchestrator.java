@@ -111,7 +111,7 @@ public class GenerationOrchestrator {
         this.stageCheckService = stageCheckService;
         this.approvedSpecs = approvedSpecs;
         int maxGenerationAttempts = GenerationAttemptLoop.MAX_MECHANICAL_ATTEMPTS + maxSemanticRepairs + 1;
-        this.attemptLoopDependencies = new GenerationAttemptLoop.Dependencies(workspace, agentLoopRunner, verifier, structuralOracleSeeder, specFidelityCritic,
+        this.attemptLoopDependencies = new GenerationAttemptLoop.Dependencies(workspace, agentLoopRunner, verifier, structuralOracleSeeder, stageCheckService, specFidelityCritic,
                 stagedGenerationRunner, transcriptWriter, stagedGenerationEnabled, maxTurns, maxGenerationAttempts, maxSemanticRepairs);
     }
 

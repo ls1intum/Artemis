@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome.Disposition;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleSeeder;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.VerificationRequest;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
@@ -88,6 +90,8 @@ class GenerationAttemptLoopTest {
 
     private StructuralOracleSeeder structuralOracleSeeder;
 
+    private StageChecks stageChecks;
+
     private SpecFidelityCritic specFidelityCritic;
 
     private StagedGenerationRunner stagedGenerationRunner;
@@ -97,6 +101,9 @@ class GenerationAttemptLoopTest {
     private FakeInteractiveSandbox sandbox;
 
     private GenerationInput exercise;
+
+    /** Every specification the run published to the instructor, in order. */
+    private final List<String> publishedSpecs = new ArrayList<>();
 
     /** Every instructor-facing progress line the run emitted, in order. */
     private final List<String> progressLines = new ArrayList<>();
@@ -112,12 +119,14 @@ class GenerationAttemptLoopTest {
         agentLoopRunner = mock(AgentLoopRunner.class);
         verifier = mock(DifferentialVerifier.class);
         structuralOracleSeeder = mock(StructuralOracleSeeder.class);
+        stageChecks = mock(StageChecks.class);
         specFidelityCritic = mock(SpecFidelityCritic.class);
         stagedGenerationRunner = mock(StagedGenerationRunner.class);
         // A mock, not the shared fake: the repair scope is a write barrier with no reader, so the call carrying the scheduled surface's roots is the only observable form.
         baseTools = mock(SandboxAgentTools.class);
         sandbox = new FakeInteractiveSandbox();
         progressLines.clear();
+        publishedSpecs.clear();
         usageSink = response -> {
         };
 
@@ -160,15 +169,14 @@ class GenerationAttemptLoopTest {
     }
 
     private GenerationAttemptLoop newLoop(Mode mode, int maxGenerationAttempts, int maxSemanticRepairs, boolean stagedGenerationEnabled, BooleanSupplier cancelled) {
-        GenerationAttemptLoop.Dependencies dependencies = new GenerationAttemptLoop.Dependencies(workspace, agentLoopRunner, verifier, structuralOracleSeeder, specFidelityCritic,
-                stagedGenerationRunner, new AgentTranscriptWriter(""), stagedGenerationEnabled, 100, maxGenerationAttempts, maxSemanticRepairs);
+        GenerationAttemptLoop.Dependencies dependencies = new GenerationAttemptLoop.Dependencies(workspace, agentLoopRunner, verifier, structuralOracleSeeder, stageChecks,
+                specFidelityCritic, stagedGenerationRunner, new AgentTranscriptWriter(""), stagedGenerationEnabled, 100, maxGenerationAttempts, maxSemanticRepairs);
         GenerationWorkspace.WorkspaceSeed workspaceSeed = new GenerationWorkspace.WorkspaceSeed(Map.of(), Map.of(), Map.of(), Map.of());
         AuthoringStageCapture capture = new AuthoringStageCapture(service, workspace, sandbox, SESSION_ID,
                 new SandboxSessionLifecycle(SESSION_ID, () -> service.destroyQuietly(sandbox, SESSION_ID)), workspaceSeed, Map.of(), Map.of(), null);
         GenerationAttemptLoop.RunContext context = new GenerationAttemptLoop.RunContext(exercise, mode, "job-1", sandbox, SESSION_ID, workspaceSeed, Map.of(), Map.of(), Map.of(),
                 null, Set.of(), "Build a bubble sort exercise.", true, true, "SYSTEM_PROMPT", "FIRST_PROMPT", baseTools, baseTools, cancelled, progressLines::add, usageSink,
-                capture, spec -> {
-                }, candidate -> {
+                capture, publishedSpecs::add, candidate -> {
                 });
         return new GenerationAttemptLoop(service, dependencies, context);
     }
@@ -334,6 +342,33 @@ class GenerationAttemptLoopTest {
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.ENVIRONMENT_UNAVAILABLE);
         verify(agentLoopRunner, times(1)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
         assertThat(progressLines).anyMatch(line -> line.contains("server-side defect that no repair can fix"));
+    }
+
+    @Test
+    void aSubmittedCandidateWhoseGivenTypeNeedsAStudentTypeIsCorrectedThenVerifiedAgainstTheCorrection() {
+        // Attempt 1 exposes the unsatisfiable given ownership; the server corrects it before that attempt's verification, which still fails on the identical template copy, and
+        // the next attempt, told what it may now stub, is accepted instead of being rejected for the same given type again.
+        String corrected = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Client | entry point | stubbed |\n| Car | vehicle | student-creates |\n";
+        String notice = "OWNERSHIP CORRECTED: the approved specification marked [Client] as 'given', but their code uses student-created types [Client->Car].";
+        when(stageChecks.correctGivenOwnership(any(), anyString())).thenAnswer(invocation -> {
+            sandbox.withFile(SPEC_PATH, corrected);
+            return Optional.of(notice);
+        }).thenReturn(Optional.empty());
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("The template does not compile: Car"),
+                accepted());
+
+        GenerationAttemptLoop loop = newGenerateLoop(3, 1);
+        loop.run();
+
+        InOrder order = Mockito.inOrder(stageChecks, verifier);
+        order.verify(stageChecks).correctGivenOwnership(any(), anyString());
+        order.verify(verifier).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
+        assertThat(publishedSpecs).containsExactly(corrected);
+        assertThat(progressLines).anyMatch(line -> line.contains("changed a type the specification marked 'given' to 'stubbed'"));
+        ArgumentCaptor<String> prompts = ArgumentCaptor.forClass(String.class);
+        verify(agentLoopRunner, times(2)).runSession(anyString(), any(), prompts.capture(), any(), anyInt(), any(), any(), any());
+        assertThat(prompts.getAllValues().getLast()).contains(notice, "The template does not compile");
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
     }
 
     @Test

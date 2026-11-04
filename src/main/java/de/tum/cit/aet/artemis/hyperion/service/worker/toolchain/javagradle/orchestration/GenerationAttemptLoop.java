@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome.Disposition;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleSeeder;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.VerificationRequest;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
@@ -69,8 +70,8 @@ class GenerationAttemptLoop {
     private static final int MAX_TRACKED_SEMANTIC_MUTANTS = 6;
 
     record Dependencies(GenerationWorkspace workspace, AgentLoopRunner agentLoopRunner, DifferentialVerifier verifier, StructuralOracleSeeder structuralOracleSeeder,
-            SpecFidelityCritic specFidelityCritic, StagedGenerationRunner stagedGenerationRunner, AgentTranscriptWriter transcriptWriter, boolean stagedGenerationEnabled,
-            int maxTurns, int maxGenerationAttempts, int maxSemanticRepairs) {
+            StageChecks stageChecks, SpecFidelityCritic specFidelityCritic, StagedGenerationRunner stagedGenerationRunner, AgentTranscriptWriter transcriptWriter,
+            boolean stagedGenerationEnabled, int maxTurns, int maxGenerationAttempts, int maxSemanticRepairs) {
 
         /** Returns dependencies pinned to the run's model, context, and turn settings. */
         Dependencies forSettings(@Nullable HyperionGenerationSettings settings) {
@@ -80,8 +81,8 @@ class GenerationAttemptLoop {
             AgentLoopRunner profileRunner = agentLoopRunner.forSettings(settings);
             SpecFidelityCritic profileCritic = specFidelityCritic.forSettings(settings);
             StagedGenerationRunner profileStagedRunner = stagedGenerationRunner.forSettings(settings, profileRunner, profileCritic);
-            return new Dependencies(workspace, profileRunner, verifier, structuralOracleSeeder, profileCritic, profileStagedRunner, transcriptWriter, settings.stagedGeneration(),
-                    settings.maxTurns(), maxGenerationAttempts, maxSemanticRepairs);
+            return new Dependencies(workspace, profileRunner, verifier, structuralOracleSeeder, stageChecks, profileCritic, profileStagedRunner, transcriptWriter,
+                    settings.stagedGeneration(), settings.maxTurns(), maxGenerationAttempts, maxSemanticRepairs);
         }
     }
 
@@ -120,6 +121,8 @@ class GenerationAttemptLoop {
     private final DifferentialVerifier verifier;
 
     private final StructuralOracleSeeder structuralOracleSeeder;
+
+    private final StageChecks stageChecks;
 
     private final SpecFidelityCritic specFidelityCritic;
 
@@ -300,6 +303,7 @@ class GenerationAttemptLoop {
         this.agentLoopRunner = dependencies.agentLoopRunner();
         this.verifier = dependencies.verifier();
         this.structuralOracleSeeder = dependencies.structuralOracleSeeder();
+        this.stageChecks = dependencies.stageChecks();
         this.specFidelityCritic = dependencies.specFidelityCritic();
         this.stagedGenerationRunner = dependencies.stagedGenerationRunner();
         this.transcriptWriter = dependencies.transcriptWriter();
@@ -382,10 +386,23 @@ class GenerationAttemptLoop {
                 terminationReason = TerminationReason.UNCHANGED_CANDIDATE_RESUBMITTED;
                 break;
             }
+            // A submitted candidate is complete, so an unsatisfiable given ownership it exposes is corrected before its authoritative verification, which then judges it
+            // against the corrected contract. In-loop verify calls never correct; see StageChecks#correctGivenOwnership.
+            Optional<String> ownershipCorrection = stageChecks.correctGivenOwnership(sandbox, sessionId);
             // Snapshot the approved SPEC.md because each verification restore resets and must re-seed the tmpfs workspace.
             String specDocumentSnapshot = GenerationOrchestrator.readSpecDocument(sandbox, sessionId);
+            if (ownershipCorrection.isPresent()) {
+                publishOwnershipCorrection(specDocumentSnapshot);
+            }
             emitPhase(Phase.VERIFYING, "Building the solution and starter code against the generated tests");
             verification = verifyCandidate(artifacts, specDocumentSnapshot);
+            if (ownershipCorrection.isPresent() && !verification.mechanicallyVerified()) {
+                // The template still carries the given copy that cannot compile; the notice tells the next attempt what it may now stub.
+                List<String> reasons = new ArrayList<>(List.of(ownershipCorrection.get()));
+                reasons.addAll(verification.reasons());
+                verification = new VerificationResult(false, verification.solutionPassed(), verification.templateFailed(), verification.testCount(), reasons,
+                        verification.templateFailureEvidence());
+            }
             emit(verification.report());
             if (!verification.mechanicallyVerified() && artifacts.extractionFailed().isEmpty()) {
                 lastRejectedVerificationRequest = artifacts.verificationRequest();
@@ -758,6 +775,18 @@ class GenerationAttemptLoop {
             return specFidelityReport;
         }
         return new SpecFidelityReport(specFidelityReport.findings().stream().filter(finding -> finding.kind() != SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE).toList());
+    }
+
+    /** Publishes a server-corrected approved specification the way the staged runner publishes its approval: to the critic grounding and the instructor-visible SPEC.md. */
+    private void publishOwnershipCorrection(@Nullable String correctedSpecification) {
+        if (correctedSpecification == null || correctedSpecification.isBlank()) {
+            return;
+        }
+        specSnapshot.set(correctedSpecification);
+        specObserver.accept(correctedSpecification);
+        log.info("Exercise {}: published the server-corrected approved specification before verifying the submitted candidate", exercise.id());
+        emit("Artemis changed a type the specification marked 'given' to 'stubbed', because its code needs a type students create and an identical starter copy could never "
+                + "compile.");
     }
 
     /** Re-attaches both contested-authority states after a fresh review, which only ever reports on artifacts and cannot discharge either. */
