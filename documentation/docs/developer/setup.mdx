@@ -33,9 +33,9 @@ Before installing Artemis, install and configure the following dependencies:
 
 2. **Database Server**
    Artemis uses Hibernate for database interactions and Liquibase for schema migrations.
-   You can either use MySQL or PostgreSQL as the database server. See [Database Setup](#database-setup) for details.
+   PostgreSQL is the default and recommended database server. MySQL is still supported but deprecated and removed in Artemis 11 (see [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11)). See [Database Setup](#database-setup) for details.
 
-3. **Node.js (LTS ≥ 24.18.0 < 25)**
+3. **Node.js (LTS ≥ 24.21.0 < 25)**
    Download from [Node.js](https://nodejs.org/en/download).
    Required for compiling and running the Angular client.
 
@@ -96,6 +96,10 @@ Start by following the [Database Setup](#database-setup) guide, then proceed wit
 ## Database Setup
 
 Artemis supports MySQL and PostgreSQL databases. The required Artemis schema is created or updated automatically when the server application starts.
+
+<Callout variant={CalloutVariant.warning}>
+    MySQL support is deprecated and removed in Artemis 11 (March 2027), which leaves PostgreSQL as the only database. The `dev` profile still defaults to a local MySQL datasource for now. For new setups, use [PostgreSQL](#postgresql-setup). See [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11).
+</Callout>
 
 ### MySQL Setup
 
@@ -187,7 +191,7 @@ spring:
 
     1. **Database**: Ensure a database is running. See [Database Setup](#database-setup) for instructions.
     2. **Configuration**: Create `application-local.yml` in `src/main/resources/config` (see [Configuration Setup](#configuration-setup) below).
-    3. **Deployment**: We recommend deploying **Artemis (Server, LocalVC & LocalCI)** for local development.
+    3. **Deployment**: We recommend deploying **Artemis Server (Dev, BuildAgent+LocalCI)** for local development.
 </Callout>
 
 To start the Artemis application server from the development environment, first import the project into IntelliJ IDEA.
@@ -213,7 +217,7 @@ Instead, follow these best practices:
     - If needed, you can modify values such as database credentials, authentication and application settings.
 
 3. **Set the installation metadata (optional)**
-    - The About page shows who operates the installation. A development server starts without these values; only the production profile, as in the **Artemis (Server, Prod, LocalCI)** run configuration, requires them unless `info.testServer` is `true`. To set them, add them to `application-local.yml`, replacing the examples with your own:
+    - The About page shows who operates the installation. A development server starts without these values; only the production profile, as in the **Artemis Server (Prod, Core, LocalCI)** run configuration, requires them unless `info.testServer` is `true`. To set them, add them to `application-local.yml`, replacing the examples with your own:
 
     ```yaml
     info:
@@ -303,7 +307,7 @@ If you are setting up **programming exercises**, additional configuration is req
 Refer to one of the following guides based on your preferred setup:
 
 - **[Integrated Code Lifecycle Setup](/admin/production-setup/integrated-code-lifecycle-setup) (Recommended)**
-- **[LocalVC + Jenkins Setup](/admin/jenkins-localvc)**
+- **[LocalVC + Jenkins Setup](/admin/jenkins-localvc)** (deprecated, removed in Artemis 11, see [Planned removals in Artemis 11](/about/roadmap#planned-removals-in-artemis-11))
 
 ### Run the server via a run configuration in IntelliJ
 
@@ -313,20 +317,12 @@ When you import the project into IntelliJ the run configurations will also be im
 The recommended way is to run the server and the client separately. This provides fast rebuilds of the server and hot module replacement in the client.
 
 - **Artemis (Client):** Will execute `pnpm install` and `pnpm start`. The client will be available at [http://localhost:9000/](http://localhost:9000/) with hot module replacement enabled (also see [Client Setup](#client-setup)).
-- **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles `dev,artemis,localci,localvc,scheduling,buildagent,core,local`. Enable LDAP via `artemis.user-management.ldap.enabled=true` in your `application-local.yml`.
-- **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles `dev,jenkins,localvc,artemis,scheduling,core,local`.
-- **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,buildagent,core,local`. Enable Athena via `artemis.athena.enabled=true` in your `application-local.yml`.
-- **Artemis (Server, LocalVC & LocalCI, Iris):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,iris,buildagent,core,local`.
-- **Artemis (BuildAgent):** The server will be started separated from the client with the profiles `buildagent,local`. This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
-- **Artemis (Server, Prod, LocalCI):** The server will be started separated from the client with the profiles `prod,core,localvc,localci,scheduling,local`. Enable LDAP via `artemis.user-management.ldap.enabled=true` in your environment config. This configuration is used for production-like testing.
-
-<details>
-<summary>Deprecated Options</summary>
-
-- **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
-- **Artemis (Server & Client):** Will start the server and the client. The client will be available at [http://localhost:8080/](http://localhost:8080/) with hot module replacement disabled.
-
-</details>
+- **Artemis Server (Dev, BuildAgent+LocalCI):** The server will be started separated from the client with the profiles `dev,artemis,localci,localvc,scheduling,buildagent,core,local`. Enable LDAP via `artemis.user-management.ldap.enabled=true` in your `application-local.yml`.
+- **Artemis Server (Dev, Core, Jenkins):** (deprecated, removed in Artemis 11) The server will be started separated from the client with the profiles `dev,jenkins,localvc,artemis,scheduling,core,local`.
+- **Artemis Server (Dev, LocalCI+BuildAgent, Athena):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,buildagent,core,local`. Enable Athena via `artemis.athena.enabled=true` in your `application-local.yml`.
+- **Artemis Server (Dev, LocalCI+BuildAgent, Iris):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,buildagent,core,local` and the VM option `-Dartemis.iris.enabled=true`.
+- **Artemis BuildAgent (Prod):** The server will be started separated from the client with the profiles `buildagent,local`. This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
+- **Artemis Server (Prod, Core, LocalCI):** The server will be started separated from the client with the profiles `prod,core,localvc,localci,scheduling,local`. Enable LDAP via `artemis.user-management.ldap.enabled=true` in your environment config. This configuration is used for production-like testing.
 
 ### Run the server via Docker
 
@@ -352,8 +348,8 @@ You can find the latest Artemis Dockerfile at `deployment/docker/artemis/Dockerf
     - **/opt/artemis/config:**
 
       This can be used to store additional configurations of Artemis in YAML files.
-      The usage is optional, and we recommend using the environment files for overriding your custom configurations instead of using `src/main/resources/application-local.yml` as such an additional configuration file.
-      The other configurations like `src/main/resources/application.yml`, ... are built into the `.war` file and therefore are not needed in this directory.
+      The usage is optional, and we recommend using the environment files for overriding your custom configurations instead of using `src/main/resources/config/application-local.yml` as such an additional configuration file.
+      The other configurations like `src/main/resources/config/application.yml`, ... are built into the `.war` file and therefore are not needed in this directory.
 
       <Callout variant={CalloutVariant.info}>
         Instead of mounting this config directory, you can also use environment variables for the configuration as defined by the [Spring relaxed binding](https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables). You can either place those environment variables directly in the `environment` section, or create a [.env-file](https://docs.docker.com/compose/environment-variables/set-environment-variables/#substitute-with-an-env-file). When starting an Artemis container directly with the Docker-CLI, an .env-file can also be given via the `--env-file` option. To ease the transition of an existing set of YAML configuration files into the environment variable style, a [helper script](https://github.com/b-fein/spring-yaml-to-env) can be used.
@@ -454,25 +450,25 @@ This is possible by setting `suspend=y`.
 The Artemis server should startup by running the main class `de.tum.cit.aet.artemis.ArtemisApp` using Spring Boot.
 
 <Callout variant={CalloutVariant.info}>
-    Artemis uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for Jenkins and LocalVC:
+    Artemis uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for LocalCI and LocalVC:
 </Callout>
 
 ```
---spring.profiles.active=dev,jenkins,localvc,artemis,scheduling
+--spring.profiles.active=dev,artemis,localci,localvc,scheduling,buildagent,core,local
 ```
 
 If you use IntelliJ (Community or Ultimate) you can set the active profiles by:
 
 - Choosing **Run | Edit Configurations...**
 - Going to the **Configuration** tab
-- Expanding the **Environment** section to reveal **VM Options** and setting them to `-Dspring.profiles.active=dev,jenkins,localvc,artemis,scheduling`
+- Expanding the **Environment** section to reveal **VM Options** and setting them to `-Dspring.profiles.active=dev,artemis,localci,localvc,scheduling,buildagent,core,local`
 
 #### Set Spring profiles with IntelliJ Ultimate
 
 If you use IntelliJ Ultimate, add the following entry to the **Active Profiles** field (within **Spring Boot**) in the server run configuration:
 
 ```
-dev,jenkins,localvc,artemis,scheduling
+dev,artemis,localci,localvc,scheduling,buildagent,core,local
 ```
 
 ### Run the server with the command line (Gradle wrapper)
@@ -480,7 +476,7 @@ dev,jenkins,localvc,artemis,scheduling
 If you want to run the application via the command line instead, make sure to pass the active profiles to the `gradlew` command like this:
 
 ```bash
-./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,localvc,artemis,scheduling'
+./gradlew bootRun --args='--spring.profiles.active=dev,artemis,localci,localvc,scheduling,buildagent,core,local'
 ```
 
 ### Demo data (Optional)
@@ -644,7 +640,7 @@ For detailed instructions on setting up Artemis with Helios, refer to the offici
 
 For more advanced setup scenarios and development tools, see the following guides:
 
-- **[Jenkins and LocalVC Setup](/admin/jenkins-localvc)** - Alternative CI/CD setup using Jenkins with LocalVC
+- **[Jenkins and LocalVC Setup](/admin/jenkins-localvc)** - Deprecated CI/CD setup using Jenkins with LocalVC, removed in Artemis 11
 - **[OpenAPI and API-driven Development](/developer/openapi)** - Working with OpenAPI specifications
 - **[Docker Compose Setup](/developer/docker-compose)** - Alternative Docker Compose-based deployment
 - **[Docker Debugging](/developer/docker-debugging)** - Debugging Artemis in Docker containers

@@ -31,6 +31,25 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 @Repository
 public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>, JpaSpecificationExecutor<ExamUser> {
 
+    /**
+     * Counts every registration, so a student registered for several exams is counted once per exam. Which exams are real is defined like in
+     * {@link ExamRepository#countRealExamsInCourses}.
+     *
+     * @param courseIds the courses
+     * @return the number of registrations for the real exams of these courses, without deleted users and test users
+     */
+    @Query("""
+            SELECT COUNT(eu.id)
+            FROM ExamUser eu
+            WHERE eu.exam.course.id IN :courseIds
+                AND eu.exam.testExam = FALSE
+                AND LOWER(eu.exam.title) NOT LIKE 'test%'
+                AND LOWER(eu.exam.title) NOT LIKE 'mock%'
+                AND eu.user.deleted = FALSE
+                AND eu.user.isTestUser = FALSE
+            """)
+    long countRegistrationsForRealExamsInCourses(@Param("courseIds") Set<Long> courseIds);
+
     @Query("""
             SELECT eu
             FROM ExamUser eu

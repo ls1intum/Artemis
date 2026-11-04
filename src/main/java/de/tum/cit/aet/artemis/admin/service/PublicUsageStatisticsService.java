@@ -29,7 +29,9 @@ import de.tum.cit.aet.artemis.admin.dto.PublicUsageStatisticsDTO;
 import de.tum.cit.aet.artemis.admin.dto.StudentSubmissionCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.UsageSemesterDTO;
 import de.tum.cit.aet.artemis.admin.repository.PublicUsageStatisticsRepository;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyUsageStatisticsApi;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.exam.api.ExamUsageStatisticsApi;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.iris.api.IrisUsageStatisticsApi;
@@ -84,6 +86,10 @@ public class PublicUsageStatisticsService {
 
     private final Optional<TutorialGroupUsageStatisticsApi> tutorialGroupUsageStatisticsApi;
 
+    private final Optional<ExamUsageStatisticsApi> examUsageStatisticsApi;
+
+    private final Optional<CompetencyUsageStatisticsApi> competencyUsageStatisticsApi;
+
     private final int buildJobRetentionDays;
 
     /**
@@ -92,11 +98,14 @@ public class PublicUsageStatisticsService {
      */
     public PublicUsageStatisticsService(PublicUsageStatisticsRepository publicUsageStatisticsRepository, ProfileService profileService,
             Optional<IrisUsageStatisticsApi> irisUsageStatisticsApi, Optional<TutorialGroupUsageStatisticsApi> tutorialGroupUsageStatisticsApi,
+            Optional<ExamUsageStatisticsApi> examUsageStatisticsApi, Optional<CompetencyUsageStatisticsApi> competencyUsageStatisticsApi,
             @Value("${artemis.continuous-integration.build-job.retention-period:365}") int buildJobRetentionDays) {
         this.publicUsageStatisticsRepository = publicUsageStatisticsRepository;
         this.profileService = profileService;
         this.irisUsageStatisticsApi = irisUsageStatisticsApi;
         this.tutorialGroupUsageStatisticsApi = tutorialGroupUsageStatisticsApi;
+        this.examUsageStatisticsApi = examUsageStatisticsApi;
+        this.competencyUsageStatisticsApi = competencyUsageStatisticsApi;
         this.buildJobRetentionDays = buildJobRetentionDays;
     }
 
@@ -109,7 +118,7 @@ public class PublicUsageStatisticsService {
     // The key names the shape of the cached records. A change of the shape is therefore compatible without bumping DistributedDataSchema.VERSION: a node only
     // reads the key of its own shape and never an entry that a build with another shape wrote. Increase the key whenever a record component is added, removed
     // or retyped in any record reachable from PublicUsageStatisticsDTO, including BuildUsageDTO and CommunicationUsageDTO.
-    @Cacheable(cacheNames = CACHE_NAME, key = "'usage-2'", sync = true)
+    @Cacheable(cacheNames = CACHE_NAME, key = "'usage-5'", sync = true)
     public PublicUsageStatisticsDTO getUsageStatistics() {
         Instant now = Instant.now();
         ZoneId zone = ZoneId.systemDefault();
@@ -132,9 +141,15 @@ public class PublicUsageStatisticsService {
         long lectures = publicUsageStatisticsRepository.countLectures(courseIds);
         Long irisMessages = irisUsageStatisticsApi.map(api -> api.countMessagesInCourses(courseIds)).orElse(null);
         Long tutorialGroups = tutorialGroupUsageStatisticsApi.map(api -> api.countTutorialGroups(courseIds)).orElse(null);
-        return Optional.of(new UsageSemesterDTO(semester.label(), courseIds.size(), studentIds.size(), activeStudents, submissions, lectures,
-                exercisesByType(publicUsageStatisticsRepository.countExercisesByType(courseIds)), buildUsage(courseIds, semester, zone, now), communicationUsage(courseIds),
-                irisMessages, tutorialGroups));
+        Long exams = examUsageStatisticsApi.map(api -> api.countRealExams(courseIds)).orElse(null);
+        Long examRegistrations = examUsageStatisticsApi.map(api -> api.countRealExamRegistrations(courseIds)).orElse(null);
+        Long examParticipations = examUsageStatisticsApi.map(api -> api.countRealExamParticipations(courseIds)).orElse(null);
+        Long competencies = competencyUsageStatisticsApi.map(api -> api.countCompetencies(courseIds)).orElse(null);
+        return Optional.of(new UsageSemesterDTO(semester.label(), courseIds.size(), studentIds.size(), publicUsageStatisticsRepository.countStudentEnrollments(courseIds),
+                publicUsageStatisticsRepository.countInstructors(courseIds), publicUsageStatisticsRepository.countTutors(courseIds), activeStudents, submissions, lectures,
+                publicUsageStatisticsRepository.countLectureUnits(courseIds), exercisesByType(publicUsageStatisticsRepository.countExercisesByType(courseIds)),
+                buildUsage(courseIds, semester, zone, now), communicationUsage(courseIds), irisMessages, tutorialGroups, exams, examRegistrations, examParticipations,
+                competencies));
     }
 
     /**
