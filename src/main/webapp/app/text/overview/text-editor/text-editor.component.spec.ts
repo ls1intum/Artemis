@@ -590,6 +590,19 @@ describe('TextEditorComponent', () => {
         expect(comp.submission().id).toBe(4);
     });
 
+    it('should render the rating of an exam summary without an alert box', () => {
+        comp.textExercise.set(textExercise);
+        comp.result.set({ id: 1, assessmentType: AssessmentType.MANUAL, feedbacks: [{ id: 1, text: 'Good' }] } as Result);
+        comp.isOwnerOfParticipation.set(true);
+        fixture.componentRef.setInput('isExamSummary', true);
+        fixture.changeDetectorRef.detectChanges();
+
+        const rating: HTMLElement = fixture.nativeElement.querySelector('jhi-rating');
+        expect(rating).toBeTruthy();
+        expect(rating.classList).not.toContain('alert');
+        expect(rating.classList).not.toContain('alert-info');
+    });
+
     it('should hide the textarea when there is an Athena result and isExamSummary is true', () => {
         comp.textExercise.set(textExercise);
         comp.result.set({ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);

@@ -50,12 +50,7 @@
                     <jhi-general-feedback [feedbacks]="unreferencedFeedback()" [course]="course()" [separated]="true" />
                     <!-- In a course the exercise details panel asks for the rating; an exam summary has no such panel. -->
                     @if (isOwnerOfParticipation() && result() && participation() && displayedInExamSummary()) {
-                        <jhi-rating
-                            class="d-block mt-2 alert alert-info"
-                            [result]="result()!"
-                            [participation]="participation()!"
-                            [isOwnerOfParticipation]="isOwnerOfParticipation()"
-                        />
+                        <jhi-rating class="d-block mt-2" [result]="result()!" [participation]="participation()!" [isOwnerOfParticipation]="isOwnerOfParticipation()" />
                     }
                 </jhi-assessment-submission-panel>
             } @else {
