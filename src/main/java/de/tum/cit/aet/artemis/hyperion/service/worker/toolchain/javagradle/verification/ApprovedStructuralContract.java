@@ -219,7 +219,7 @@ final class ApprovedStructuralContract {
             try {
                 builder.addSource(new StringReader(entry.getValue()));
             }
-            catch (RuntimeException exception) {
+            catch (RuntimeException _) {
                 mismatches.add(entry.getKey() + " is not structurally parseable");
             }
         });
@@ -535,7 +535,7 @@ final class ApprovedStructuralContract {
                     return retention != null && retention.value() == RetentionPolicy.RUNTIME;
                 }
             }
-            catch (ClassNotFoundException | LinkageError notAJdkType) {
+            catch (ClassNotFoundException | LinkageError _) {
                 // Not a JDK annotation: keep it.
             }
         }

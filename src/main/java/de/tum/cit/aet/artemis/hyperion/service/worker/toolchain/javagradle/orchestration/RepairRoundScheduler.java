@@ -125,8 +125,11 @@ class RepairRoundScheduler {
      * review mostly failed to execute cannot read as a clean one.
      */
     static String inconclusiveProbeNote(int inconclusiveMutantProbes) {
-        return inconclusiveMutantProbes == 0 ? ""
-                : " " + inconclusiveMutantProbes + (inconclusiveMutantProbes == 1 ? " mutant probe was" : " mutant probes were") + " inconclusive and proved nothing either way.";
+        if (inconclusiveMutantProbes == 0) {
+            return "";
+        }
+        String probes = inconclusiveMutantProbes == 1 ? " mutant probe was" : " mutant probes were";
+        return " " + inconclusiveMutantProbes + probes + " inconclusive and proved nothing either way.";
     }
 
     /** Distinguishes unavailable review evidence, convergence, and missing surface coverage. */

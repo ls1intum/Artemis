@@ -47,17 +47,19 @@ final class SandboxPathPolicy {
      */
     private static final Pattern INSPECTS_DEPENDENCY_ARTIFACTS = Pattern.compile("(?:^|[\\s/~'\"=])\\.(?:gradle|m2)(?=[/\\s'\"]|$)|\\bjavap\\b|\\.jar\\b");
 
+    private static final String TESTS_ROOT = "tests/";
+
     private SandboxPathPolicy() {
     }
 
     static boolean isManagedBuildInfrastructurePath(String path) {
-        for (String repository : List.of("solution/", "template/", "tests/")) {
+        for (String repository : List.of("solution/", "template/", TESTS_ROOT)) {
             if (path.startsWith(repository)) {
                 // Includes tests/SecurityPolicy.yaml: Artemis writes its test-class list itself before every build.
                 String repositoryPath = path.substring(repository.length());
                 return repositoryPath.startsWith("buildSrc/") || repositoryPath.startsWith("gradle/") || repositoryPath.startsWith(".mvn/") || repositoryPath.startsWith(".m2/")
                         || repositoryPath.startsWith("target/") || repositoryPath.startsWith("build/") || ExerciseIntegrityGate.isHarnessFile(repositoryPath)
-                        || (repository.equals("tests/") && isReservedStructuralTestPath(repositoryPath));
+                        || (repository.equals(TESTS_ROOT) && isReservedStructuralTestPath(repositoryPath));
             }
         }
         return false;
@@ -65,7 +67,7 @@ final class SandboxPathPolicy {
 
     static boolean isWritableGenerationPath(String path) {
         return path.equals("SPEC.md") || path.equals("test-plan.json") || path.equals("problem-statement.md") || path.startsWith("solution/") || path.startsWith("template/")
-                || path.startsWith("tests/");
+                || path.startsWith(TESTS_ROOT);
     }
 
     private static boolean isReservedStructuralTestPath(String repositoryPath) {
@@ -73,7 +75,7 @@ final class SandboxPathPolicy {
     }
 
     static String immutableHarnessError(String path) {
-        if (path.startsWith("tests/") && isReservedStructuralTestPath(path.substring("tests/".length()))) {
+        if (path.startsWith(TESTS_ROOT) && isReservedStructuralTestPath(path.substring(TESTS_ROOT.length()))) {
             return "ERROR: do not write " + path + ". Artemis seeds the structural tests (ClassTest, MethodTest, AttributeTest, ConstructorTest, GenericTypeTest, test.json) "
                     + "itself, so these file names are reserved. Put behavioral tests in a test class with a different, descriptive name.";
         }

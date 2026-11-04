@@ -27,6 +27,8 @@ final class AgentToolBatch {
 
     static final String SUBMIT_TOOL_NAME = "submit";
 
+    private static final String VERIFY_TOOL_NAME = "verify";
+
     /**
      * The occurrence of an identical tool call that is answered explicitly: the same tool and arguments when it was rejected, or the same tool, arguments and result when it
      * succeeded. A repeated rejection is replaced by an escalation and counts toward ending the session; a repeated observation keeps its full result behind a note, and the turn
@@ -61,7 +63,7 @@ final class AgentToolBatch {
         }
         AssistantMessage output = response.getResult().getOutput();
         List<AssistantMessage.ToolCall> toolCalls = output.getToolCalls();
-        if (toolCalls == null || toolCalls.isEmpty()) {
+        if (toolCalls.isEmpty()) {
             return response;
         }
         boolean changed = false;
@@ -125,7 +127,7 @@ final class AgentToolBatch {
     static boolean hasRejectedToolAction(List<Message> conversation) {
         for (int i = conversation.size() - 1; i >= 0; i--) {
             if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
-                return toolResponse.getResponses().stream().anyMatch(response -> !"verify".equals(response.name()) && isErrorResponse(response.responseData()));
+                return toolResponse.getResponses().stream().anyMatch(response -> !VERIFY_TOOL_NAME.equals(response.name()) && isErrorResponse(response.responseData()));
             }
         }
         return false;
@@ -149,7 +151,7 @@ final class AgentToolBatch {
                 boolean replaced = false;
                 List<ToolResponseMessage.ToolResponse> responses = new ArrayList<>(toolResponse.getResponses().size());
                 for (ToolResponseMessage.ToolResponse response : toolResponse.getResponses()) {
-                    if ("verify".equals(response.name()) || SUBMIT_TOOL_NAME.equals(response.name())) {
+                    if (VERIFY_TOOL_NAME.equals(response.name()) || SUBMIT_TOOL_NAME.equals(response.name())) {
                         responses.add(response);
                         continue;
                     }
@@ -201,7 +203,7 @@ final class AgentToolBatch {
         for (int i = conversation.size() - 1; i >= 0; i--) {
             if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
                 List<ToolResponseMessage.ToolResponse> rejected = toolResponse.getResponses().stream()
-                        .filter(response -> !"verify".equals(response.name()) && isErrorResponse(response.responseData())).toList();
+                        .filter(response -> !VERIFY_TOOL_NAME.equals(response.name()) && isErrorResponse(response.responseData())).toList();
                 return !rejected.isEmpty() && rejected.stream().allMatch(response -> "edit_file".equals(response.name()) || "search".equals(response.name()));
             }
         }
@@ -219,7 +221,7 @@ final class AgentToolBatch {
 
     /** Whether the provider reports this completion was cut off by the output token limit (OpenAI-style finish reason "length"). */
     static boolean isTruncatedByTokenLimit(ChatResponse response) {
-        if (response.getResult() == null || response.getResult().getMetadata() == null) {
+        if (response.getResult() == null) {
             return false;
         }
         return "length".equalsIgnoreCase(response.getResult().getMetadata().getFinishReason());

@@ -40,6 +40,8 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.works
  */
 public final class ExerciseIntegrityGate {
 
+    private static final String JAVA_SUFFIX = ".java";
+
     private static final Pattern SEAM_ID = Pattern.compile("S[1-9][0-9]*");
 
     private static final Pattern WEIGHT_TIER = Pattern.compile("[123]");
@@ -474,7 +476,7 @@ public final class ExerciseIntegrityGate {
      * @return the canonical rejection reason, or {@code null} when this is not a Java repository source or the write is valid
      */
     public static @Nullable String javaGeneratedSourceWriteReason(String packageName, String path, String content) {
-        if (path == null || !path.endsWith(".java")) {
+        if (path == null || !path.endsWith(JAVA_SUFFIX)) {
             return null;
         }
         List<String> reasons;
@@ -504,8 +506,8 @@ public final class ExerciseIntegrityGate {
                 return false; // Server-owned; securityPolicyReasons checks it against the derived policy.
             }
             boolean inSourceRoot = allowedPrefixes.stream().anyMatch(path::startsWith);
-            boolean allowedFile = path.endsWith(".java") || allowStructuralOracle && path.endsWith("/test.json");
-            boolean packageMatchesPath = !path.endsWith(".java") || !safeProduced.containsKey(path)
+            boolean allowedFile = path.endsWith(JAVA_SUFFIX) || allowStructuralOracle && path.endsWith("/test.json");
+            boolean packageMatchesPath = !path.endsWith(JAVA_SUFFIX) || !safeProduced.containsKey(path)
                     || JavaSourceInspector.declaresPackageMatchingPath(path, safeProduced.get(path), sourceRoots);
             return !inSourceRoot || !allowedFile || !packageMatchesPath;
         }).map(repository::concat).forEach(target::add);
@@ -516,7 +518,7 @@ public final class ExerciseIntegrityGate {
     }
 
     private static boolean isJavaTestSourcePath(String path) {
-        return path.endsWith(".java") && (path.startsWith("test/") || path.startsWith("structural/test/") || path.startsWith("behavior/test/"));
+        return path.endsWith(JAVA_SUFFIX) && (path.startsWith("test/") || path.startsWith("structural/test/") || path.startsWith("behavior/test/"));
     }
 
     /** Minimum normalized length for a body to count as a meaningful source file, so an empty .gitkeep or a one-line marker is never called a leak. */

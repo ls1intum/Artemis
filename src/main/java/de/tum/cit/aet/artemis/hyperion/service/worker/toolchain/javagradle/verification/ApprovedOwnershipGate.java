@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
  * <ul>
  * <li><b>Ownership.</b> Student-created types exist only in the reference solution, stubbed types ship in the template, and given types ship byte-identical in both.</li>
  * <li><b>Given-type dependencies.</b> Given code never references a student-created type, which does not exist in the template it ships in.</li>
- * <li><b>TODO anchors.</b> Every stubbed seam owner carries a TODO, and neither given types nor graded tests carry one.</li>
+ * <li><b>To-do anchors.</b> Every stubbed seam owner carries a to-do comment, and neither given types nor graded tests carry one.</li>
  * <li><b>Diagram requirement.</b> Whether the approved design needs a class diagram in the statement.</li>
  * </ul>
  * Static and side-effect-free like {@link ExerciseIntegrityGate}, so the gates are unit-testable without Docker; the lexical machinery lives in {@link JavaSourceInspector}.
@@ -30,7 +30,7 @@ public final class ApprovedOwnershipGate {
 
     private static final Pattern JAVA_IDENTIFIER = Pattern.compile("[A-Za-z_$][A-Za-z0-9_$]*");
 
-    /** A TODO comment: a line comment, a block or doc comment opening, or a continuation line of one. */
+    /** A to-do comment: a line comment, a block or doc comment opening, or a continuation line of one, whose text starts with the to-do marker. */
     private static final Pattern TODO_COMMENT = Pattern.compile("(?m)(?://|/\\*+|^\\s*\\*)\\s*TODO\\b");
 
     /** A type declaration header on masked source; its body starts at the next opening brace. */
@@ -38,6 +38,12 @@ public final class ApprovedOwnershipGate {
 
     /** A to-do marker labelled with an internal seam ID, such as the marker followed by {@code S1:} or {@code (S1)}. Possessive, so a long blank run cannot backtrack. */
     private static final Pattern TODO_SEAM_LABEL = Pattern.compile("\\bTODO\\s*+(?:[-\\[(:]\\s*+)?S[1-9]\\d*+\\b");
+
+    private static final String STUBBED = "stubbed";
+
+    private static final String GIVEN = "given";
+
+    private static final String JAVA_SUFFIX = ".java";
 
     private static final Set<String> NON_SOURCE_TYPE_FILE_SUFFIXES = Set.of(".class", ".md", ".orig", ".txt");
 
@@ -57,8 +63,7 @@ public final class ApprovedOwnershipGate {
             return false;
         }
         List<StageChecks.DesignRow> rows = StageChecks.designTableRows(approvedSpec);
-        long studentOwned = rows.stream().filter(row -> "stubbed".equals(row.status()) || "student-creates".equals(row.status())).map(StageChecks.DesignRow::type).distinct()
-                .count();
+        long studentOwned = rows.stream().filter(row -> STUBBED.equals(row.status()) || "student-creates".equals(row.status())).map(StageChecks.DesignRow::type).distinct().count();
         if (studentOwned >= 2) {
             return true;
         }
@@ -139,7 +144,7 @@ public final class ApprovedOwnershipGate {
             ApprovedStructuralContract.ParseResult structuralContract = ApprovedStructuralContract.parse(approvedSpec, designTypes, Set.copyOf(studentCreatedTypes));
             if (structuralContract.valid()) {
                 reasons.addAll(structuralContract.contract().solutionSurfaceReasons(producedSolutionFiles));
-                Set<String> templateTypes = designRows.stream().filter(row -> "given".equals(row.status()) || "stubbed".equals(row.status())).map(StageChecks.DesignRow::type)
+                Set<String> templateTypes = designRows.stream().filter(row -> GIVEN.equals(row.status()) || STUBBED.equals(row.status())).map(StageChecks.DesignRow::type)
                         .collect(Collectors.toSet());
                 reasons.addAll(structuralContract.contract().templateSurfaceReasons(producedTemplateFiles, templateTypes));
             }
@@ -174,7 +179,7 @@ public final class ApprovedOwnershipGate {
                     + "job without a student-created type, the ownership is contradictory: that type must be 'stubbed' (its dependent bodies become TODOs) or "
                     + "'student-creates' in the specification.");
         }
-        List<String> divergentGivenTypes = designRows.stream().filter(row -> "given".equals(row.status())).map(StageChecks.DesignRow::type)
+        List<String> divergentGivenTypes = designRows.stream().filter(row -> GIVEN.equals(row.status())).map(StageChecks.DesignRow::type)
                 .filter(type -> !canonicalGivenFileMatches(type, producedTemplateFiles, producedSolutionFiles)).toList();
         if (!divergentGivenTypes.isEmpty()) {
             List<String> firstDifferences = divergentGivenTypes.stream().map(type -> canonicalGivenFileDifference(type, producedTemplateFiles, producedSolutionFiles)).toList();
@@ -203,8 +208,8 @@ public final class ApprovedOwnershipGate {
         studentCreatedTypes.forEach(created -> solutionFiles.values().stream().filter(Objects::nonNull).filter(source -> JavaSourceInspector.sourceDeclaresType(source, created))
                 .findFirst().ifPresent(source -> createdTypePackages.put(created, javaPackage(JavaSourceInspector.maskCommentsAndLiterals(source)))));
         List<String> dependencies = new ArrayList<>();
-        designRows.stream().filter(row -> "given".equals(row.status())).map(StageChecks.DesignRow::type).filter(type -> JAVA_IDENTIFIER.matcher(type).matches()).forEach(given -> {
-            String suffix = "/" + given + ".java";
+        designRows.stream().filter(row -> GIVEN.equals(row.status())).map(StageChecks.DesignRow::type).filter(type -> JAVA_IDENTIFIER.matcher(type).matches()).forEach(given -> {
+            String suffix = "/" + given + JAVA_SUFFIX;
             List<String> sources = java.util.stream.Stream
                     .concat(canonicalJavaFiles(templateFiles, given, suffix).stream(), canonicalJavaFiles(solutionFiles, given, suffix).stream())
                     .map(entry -> JavaSourceInspector.maskCommentsAndLiterals(entry.getValue())).toList();
@@ -262,7 +267,7 @@ public final class ApprovedOwnershipGate {
         if (!JAVA_IDENTIFIER.matcher(type).matches()) {
             return true;
         }
-        String suffix = "/" + type + ".java";
+        String suffix = "/" + type + JAVA_SUFFIX;
         List<Map.Entry<String, String>> templateMatches = canonicalJavaFiles(templateFiles, type, suffix);
         List<Map.Entry<String, String>> solutionMatches = canonicalJavaFiles(solutionFiles, type, suffix);
         return templateMatches.size() == 1 && solutionMatches.size() == 1 && templateMatches.getFirst().getKey().equals(solutionMatches.getFirst().getKey())
@@ -270,7 +275,7 @@ public final class ApprovedOwnershipGate {
     }
 
     private static String canonicalGivenFileDifference(String type, Map<String, String> templateFiles, Map<String, String> solutionFiles) {
-        String suffix = "/" + type + ".java";
+        String suffix = "/" + type + JAVA_SUFFIX;
         List<Map.Entry<String, String>> templateMatches = canonicalJavaFiles(templateFiles, type, suffix);
         List<Map.Entry<String, String>> solutionMatches = canonicalJavaFiles(solutionFiles, type, suffix);
         if (templateMatches.size() != 1 || solutionMatches.size() != 1) {
@@ -303,15 +308,15 @@ public final class ApprovedOwnershipGate {
         }
         return files.entrySet().stream().filter(entry -> {
             String path = entry.getKey().replace('\\', '/');
-            return (path.equals(type + ".java") || path.endsWith(suffix)) && JavaSourceInspector.sourceDeclaresType(entry.getValue(), type);
+            return (path.equals(type + JAVA_SUFFIX) || path.endsWith(suffix)) && JavaSourceInspector.sourceDeclaresType(entry.getValue(), type);
         }).toList();
     }
 
     /**
-     * Verifies the template's TODO anchors against the approved specification. The Testing Strategy, not the comment text, links each seam to its owner type, so a TODO carries
-     * only the task wording: a seam ID would be a label students see but the statement never defines. Every stubbed seam owner carries a TODO in its declaring source. A TODO
-     * in a given type marks work in code that ships complete, and one in the graded tests is an unfinished grader, so both are rejected; other student-facing files, such as
-     * student test skeletons or helpers outside the Design table, may carry TODOs.
+     * Verifies the template's to-do anchors against the approved specification. The Testing Strategy, not the comment text, links each seam to its owner type, so a to-do
+     * comment carries only the task wording: a seam ID would be a label students see but the statement never defines. Every stubbed seam owner carries a to-do comment in its
+     * declaring source. A to-do comment in a given type marks work in code that ships complete, and one in the graded tests is an unfinished grader, so both are rejected; other
+     * student-facing files, such as student test skeletons or helpers outside the Design table, may carry to-do comments.
      */
     static List<String> templateTodoSeamReasons(String specification, Map<String, String> templateFiles, Map<String, String> testsFiles) {
         List<StageChecks.TestingStrategyRow> rows = StageChecks.testingStrategyRows(specification == null ? "" : specification);
@@ -329,11 +334,11 @@ public final class ApprovedOwnershipGate {
             reasons.add("the template labels TODOs with internal seam IDs in " + labelledFiles + ". Students never see these IDs defined, so write each as '// TODO: <task "
                     + "wording>' without the ID; the approved Testing Strategy already links every seam to its owner.");
         }
-        Set<String> stubbedTypes = typesWithStatus(statusByType, "stubbed");
-        Set<String> givenTypes = typesWithStatus(statusByType, "given");
+        Set<String> stubbedTypes = typesWithStatus(statusByType, STUBBED);
+        Set<String> givenTypes = typesWithStatus(statusByType, GIVEN);
         Set<String> designTypes = new LinkedHashSet<>(stubbedTypes);
         designTypes.addAll(givenTypes);
-        // Each TODO comment belongs to the innermost given or stubbed declaration around it; one outside every such declaration belongs to the whole file.
+        // Each to-do comment belongs to the innermost given or stubbed declaration around it; one outside every such declaration belongs to the whole file.
         Map<String, List<Set<String>>> todoOwnersByFile = new LinkedHashMap<>();
         javaFiles.forEach((path, source) -> {
             List<Set<String>> owners = todoOwners(source, designTypes);
@@ -342,10 +347,10 @@ public final class ApprovedOwnershipGate {
             }
         });
         for (StageChecks.TestingStrategyRow row : rows) {
-            if (!"stubbed".equals(statusByType.get(row.ownerType()))) {
+            if (!STUBBED.equals(statusByType.get(row.ownerType()))) {
                 continue; // a student-created owner is absent; a malformed owner/status is rejected by the specification gate
             }
-            // Only a TODO inside the owner's own body anchors it; one outside every declaration could stand for any type of the file.
+            // Only a to-do comment inside the owner's own body anchors it; one outside every declaration could stand for any type of the file.
             boolean anchored = todoOwnersByFile.values().stream().flatMap(List::stream).anyMatch(owners -> owners.contains(row.ownerType()));
             if (!anchored) {
                 reasons.add("the stubbed owner " + row.ownerType() + " of seam " + row.seamId() + " has no '// TODO: ...' inside its declaration in its declaring source. Put "
@@ -375,8 +380,8 @@ public final class ApprovedOwnershipGate {
     }
 
     /**
-     * The owners of each TODO comment in a source: the innermost given or stubbed type whose declaration body contains it, as a singleton, or an empty set when the TODO lies
-     * outside every such declaration. A TODO-like text inside a string literal is not a comment and is not counted.
+     * The owners of each to-do comment in a source: the innermost given or stubbed type whose declaration body contains it, as a singleton, or an empty set when the comment
+     * lies outside every such declaration. To-do text inside a string literal is not a comment and is not counted.
      */
     private static List<Set<String>> todoOwners(String source, Set<String> designTypes) {
         List<Integer> todoPositions = TODO_COMMENT.matcher(commentsOnly(source)).results().map(java.util.regex.MatchResult::start).toList();
@@ -400,7 +405,7 @@ public final class ApprovedOwnershipGate {
     private record DeclarationBody(String type, int open, int close) {
     }
 
-    /** The source with everything but its comments blanked, keeping positions and line breaks, so a TODO inside a string literal is not taken for a comment. */
+    /** The source with everything but its comments blanked, keeping positions and line breaks, so to-do text inside a string literal is not taken for a comment. */
     private static String commentsOnly(String source) {
         String code = JavaSourceInspector.stripJavaComments(source);
         if (code.length() != source.length()) {

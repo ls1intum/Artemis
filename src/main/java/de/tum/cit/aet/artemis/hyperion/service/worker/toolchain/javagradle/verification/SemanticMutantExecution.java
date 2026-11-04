@@ -102,9 +102,7 @@ final class SemanticMutantExecution {
             BuildSummary result = runner.run(mutant, null);
             // The repair may rename, strengthen, or replace the suggested counterexample. Because the candidate already passed mechanical verification immediately before this
             // probe, any test that executes and fails only after installing the mutant is outcome-level evidence that the suite now kills it. Compile failures execute no tests.
-            Disposition disposition = executedTestFailed(result, countedTests) ? Disposition.KILLED_BY_GRADED_SUITE
-                    : passedCountedTests(result, countedTests) ? Disposition.SURVIVED_GRADED_SUITE : Disposition.INCONCLUSIVE;
-            outcomes.add(new SemanticMutantOutcome(mutant, disposition));
+            outcomes.add(new SemanticMutantOutcome(mutant, disposition(result, countedTests)));
         }
         return List.copyOf(outcomes);
     }
@@ -120,6 +118,13 @@ final class SemanticMutantExecution {
 
     private static boolean executedTestFailed(BuildSummary summary) {
         return executedTestFailed(summary, testName -> true);
+    }
+
+    private static Disposition disposition(BuildSummary result, Predicate<String> countedTests) {
+        if (executedTestFailed(result, countedTests)) {
+            return Disposition.KILLED_BY_GRADED_SUITE;
+        }
+        return passedCountedTests(result, countedTests) ? Disposition.SURVIVED_GRADED_SUITE : Disposition.INCONCLUSIVE;
     }
 
     private static boolean executedTestFailed(BuildSummary summary, Predicate<String> countedTests) {

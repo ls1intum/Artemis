@@ -768,7 +768,7 @@ public class DifferentialVerifier {
                     }
                     return transcript;
                 }, (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate));
-        if (!outcomes.isEmpty()) {
+        if (!outcomes.isEmpty() && log.isInfoEnabled()) {
             log.info("Output-only probe for exercise {}: {}", exercise.id(),
                     outcomes.stream().map(outcome -> outcome.mutant().ruleId() + "=" + outcome.disposition()).collect(Collectors.joining(", ")));
         }
@@ -807,7 +807,6 @@ public class DifferentialVerifier {
      * @param sandbox               the active generation sandbox
      * @param sessionId             the active sandbox session
      * @param exercise              the exercise whose build commands should run
-     * @param producedTestsFiles    the current graded tests
      * @param producedSolutionFiles the current reference-solution sources
      * @param testPlanJson          the current grading plan
      * @param seededStructuralTests the exact server-owned structural authority
@@ -815,13 +814,13 @@ public class DifferentialVerifier {
      * @param restoreCandidate      restores the verified candidate between probes
      * @return one outcome per probe, killed when resolved and inconclusive otherwise
      */
-    public List<SemanticMutantOutcome> resolveStaleOutputOnlyMains(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> producedTestsFiles,
+    public List<SemanticMutantOutcome> resolveStaleOutputOnlyMains(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise,
             Map<String, String> producedSolutionFiles, @Nullable String testPlanJson, SeededStructuralTests seededStructuralTests, List<SemanticMutant> staleProbes,
             Runnable restoreCandidate) {
         if (staleProbes.isEmpty()) {
             return List.of();
         }
-        return OutputOnlyMainProbe.resolveStale(producedTestsFiles, producedSolutionFiles, testPlanJson, staleProbes,
+        return OutputOnlyMainProbe.resolveStale(producedSolutionFiles, testPlanJson, staleProbes,
                 (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate));
     }
 

@@ -334,11 +334,8 @@ final class ExecutableEvidenceLedger {
         currentProbes.stream().filter(outcome -> outcome.disposition() != Disposition.INCONCLUSIVE).forEach(outcome -> conclusive.put(outcome.mutant().solutionPath(), outcome));
         List<SemanticMutant> unreplaced = probes.stream().filter(probe -> !conclusive.containsKey(probe.solutionPath())).toList();
         Set<SemanticMutant> resolved = unreplaced.isEmpty() ? Set.of()
-                : verifier
-                        .resolveStaleOutputOnlyMains(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryRole.TESTS, Map.of()), solutionFiles, testPlanJson,
-                                seededStructuralTests, unreplaced, restoreCandidate)
-                        .stream().filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).map(SemanticMutantOutcome::mutant)
-                        .collect(Collectors.toUnmodifiableSet());
+                : verifier.resolveStaleOutputOnlyMains(sandbox, sessionId, exercise, solutionFiles, testPlanJson, seededStructuralTests, unreplaced, restoreCandidate).stream()
+                        .filter(outcome -> outcome.disposition() == Disposition.KILLED_BY_GRADED_SUITE).map(SemanticMutantOutcome::mutant).collect(Collectors.toUnmodifiableSet());
         return probes.stream()
                 .map(probe -> conclusive.containsKey(probe.solutionPath()) ? conclusive.get(probe.solutionPath())
                         : resolved.contains(probe) ? new SemanticMutantOutcome(probe.rekeyedTo(solutionFiles.get(probe.solutionPath())), Disposition.KILLED_BY_GRADED_SUITE)

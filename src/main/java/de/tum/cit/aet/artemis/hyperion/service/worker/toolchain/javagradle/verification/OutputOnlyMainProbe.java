@@ -169,8 +169,8 @@ final class OutputOnlyMainProbe {
      *
      * @return one outcome per probe: {@link Disposition#KILLED_BY_GRADED_SUITE} when resolved, otherwise {@link Disposition#INCONCLUSIVE}
      */
-    static List<SemanticMutantOutcome> resolveStale(Map<String, String> testFiles, Map<String, String> solutionFiles, @Nullable String testPlanJson,
-            List<SemanticMutant> staleProbes, SemanticMutantExecution.ProbeRunner runner) {
+    static List<SemanticMutantOutcome> resolveStale(Map<String, String> solutionFiles, @Nullable String testPlanJson, List<SemanticMutant> staleProbes,
+            SemanticMutantExecution.ProbeRunner runner) {
         Predicate<String> graded = gradedTest(testPlanJson);
         return staleProbes.stream().map(probe -> {
             String current = solutionFiles.get(probe.solutionPath());
@@ -254,7 +254,7 @@ final class OutputOnlyMainProbe {
             return GeneratedTestPlan.parse(testPlanJson).assessmentEntries().stream().filter(entry -> entry.seamWeightTier() > 0).map(entry -> methodName(entry.name()))
                     .collect(Collectors.toUnmodifiableSet());
         }
-        catch (IllegalArgumentException invalidPlan) {
+        catch (IllegalArgumentException _) {
             return null;
         }
     }
@@ -384,7 +384,7 @@ final class OutputOnlyMainProbe {
             }
             return Optional.of(StandardCharsets.UTF_8.newDecoder().decode(ByteBuffer.wrap(bytes)).toString());
         }
-        catch (IllegalArgumentException | CharacterCodingException exception) {
+        catch (IllegalArgumentException | CharacterCodingException _) {
             return Optional.empty();
         }
     }

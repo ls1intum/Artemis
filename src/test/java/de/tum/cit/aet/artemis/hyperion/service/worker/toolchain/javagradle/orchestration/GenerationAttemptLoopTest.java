@@ -956,8 +956,8 @@ class GenerationAttemptLoopTest {
             default -> List.of();
         });
         stubPrintOnlyRecheck(Disposition.KILLED_BY_GRADED_SUITE);
-        when(verifier.resolveStaleOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
-            List<SemanticMutant> stale = invocation.getArgument(7);
+        when(verifier.resolveStaleOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> stale = invocation.getArgument(6);
             return stale.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE)).toList();
         });
 
@@ -1262,15 +1262,15 @@ class GenerationAttemptLoopTest {
                 new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler { int contractFix; }"), false));
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), SpecFidelityReport.empty());
-        when(verifier.resolveStaleOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
-            List<SemanticMutant> stale = invocation.getArgument(7);
+        when(verifier.resolveStaleOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            List<SemanticMutant> stale = invocation.getArgument(6);
             return stale.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE)).toList();
         });
 
         GenerationAttemptLoop loop = newGenerateLoop(3, 2);
         loop.run();
 
-        verify(verifier).resolveStaleOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), Mockito.eq(List.of(printOnly)), any());
+        verify(verifier).resolveStaleOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), Mockito.eq(List.of(printOnly)), any());
         assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE
                 && finding.detail().contains("Scheduler.main") && finding.detail().contains("only prints the expected output"));
         assertThat(loop.terminationReason()).isNotEqualTo(TerminationReason.CONVERGED);

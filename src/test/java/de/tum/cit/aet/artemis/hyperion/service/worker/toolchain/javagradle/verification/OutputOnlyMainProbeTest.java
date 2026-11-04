@@ -279,16 +279,16 @@ class OutputOnlyMainProbeTest {
                  {"name":"countsAddedBooks","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"}]}
                 """;
 
-        assertThat(OutputOnlyMainProbe.resolveStale(TESTS, Map.of(PATH, SOLUTION), transcriptUngraded, List.of(stale), silentFailsTranscript))
+        assertThat(OutputOnlyMainProbe.resolveStale(Map.of(PATH, SOLUTION), transcriptUngraded, List.of(stale), silentFailsTranscript))
                 .extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.KILLED_BY_GRADED_SUITE);
         assertThat(built).singleElement().asString().contains("public int size()").doesNotContain("System.out.print(");
 
         built.clear();
-        assertThat(OutputOnlyMainProbe.resolveStale(TESTS, Map.of(PATH, SOLUTION), PLAN, List.of(stale), silentFailsTranscript)).as("the transcript is still weighted")
+        assertThat(OutputOnlyMainProbe.resolveStale(Map.of(PATH, SOLUTION), PLAN, List.of(stale), silentFailsTranscript)).as("the transcript is still weighted")
                 .extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.INCONCLUSIVE);
         assertThat(built).hasSize(1);
         built.clear();
-        assertThat(OutputOnlyMainProbe.resolveStale(TESTS, Map.of(), transcriptUngraded, List.of(stale), silentFailsTranscript)).as("the class was deleted")
+        assertThat(OutputOnlyMainProbe.resolveStale(Map.of(), transcriptUngraded, List.of(stale), silentFailsTranscript)).as("the class was deleted")
                 .extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.INCONCLUSIVE);
         assertThat(built).isEmpty();
     }
@@ -308,7 +308,7 @@ class OutputOnlyMainProbeTest {
         assertThat(OutputOnlyMainProbe.stillApplies(stale, unrelatedAssertion, PLAN)).isTrue();
         SemanticMutantExecution.ProbeRunner passing = (mutant, ignored) -> new BuildSummary(1, 0, 0, false, List.of("printsTheSize()"), List.of(), List.of(), "");
 
-        assertThat(OutputOnlyMainProbe.resolveStale(unrelatedAssertion, Map.of(PATH, SOLUTION), PLAN, List.of(stale), passing)).extracting(SemanticMutantOutcome::disposition)
+        assertThat(OutputOnlyMainProbe.resolveStale(Map.of(PATH, SOLUTION), PLAN, List.of(stale), passing)).extracting(SemanticMutantOutcome::disposition)
                 .containsExactly(Disposition.KILLED_BY_GRADED_SUITE);
     }
 
@@ -329,7 +329,7 @@ class OutputOnlyMainProbeTest {
         for (String source : List.of(printingOnLoad, callingOnLoad)) {
             SemanticMutant probe = SemanticMutant.printedTranscript(PATH, source, OutputOnlyMainProbe.transcriptOnlyVariant(source, "Books: 1\n").orElseThrow(), "Library");
             SemanticMutant stale = SemanticMutant.printedTranscript(PATH, SOLUTION, probe.mutantSource(), "Library");
-            assertThat(OutputOnlyMainProbe.resolveStale(TESTS, Map.of(PATH, source), transcriptUngraded, List.of(stale), passing)).extracting(SemanticMutantOutcome::disposition)
+            assertThat(OutputOnlyMainProbe.resolveStale(Map.of(PATH, source), transcriptUngraded, List.of(stale), passing)).extracting(SemanticMutantOutcome::disposition)
                     .containsExactly(Disposition.INCONCLUSIVE);
             assertThat(OutputOnlyMainProbe.recheck(TESTS, Map.of(PATH, source), transcriptUngraded, List.of(probe), passing)).extracting(SemanticMutantOutcome::disposition)
                     .containsExactly(Disposition.INCONCLUSIVE);

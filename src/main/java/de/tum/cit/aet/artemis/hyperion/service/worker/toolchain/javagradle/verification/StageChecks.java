@@ -55,8 +55,10 @@ public class StageChecks {
 
     private static final Logger log = LoggerFactory.getLogger(StageChecks.class);
 
+    private static final String CONTRACT_RISK_INVENTORY_HEADING = "## Contract Risk Inventory";
+
     private static final List<String> REQUIRED_SPEC_HEADINGS = List.of("## Rules", "## Worked Examples", "## Design", "## Public API", "## Testing Strategy",
-            "## Contract Risk Inventory");
+            CONTRACT_RISK_INVENTORY_HEADING);
 
     /** The only template-status tokens a SPEC.md '## Design' data row may carry; 'student-creates' additionally arms the template omit-gate. */
     private static final Set<String> TEMPLATE_STATUS_TOKENS = Set.of("given", "stubbed", "student-creates");
@@ -579,14 +581,14 @@ public class StageChecks {
 
     /** Invalid and incomplete rows are retained so the SPEC gate can reject them with their exact seam ID. */
     static List<RiskInventoryRow> riskInventoryRows(String spec) {
-        int start = spec.indexOf("## Contract Risk Inventory");
+        int start = spec.indexOf(CONTRACT_RISK_INVENTORY_HEADING);
         if (start < 0) {
             return List.of();
         }
         List<RiskInventoryRow> rows = new ArrayList<>();
         boolean pastHeader = false;
         for (String line : spec.substring(start).lines().map(String::strip).toList()) {
-            if (line.startsWith("## ") && !line.startsWith("## Contract Risk Inventory")) {
+            if (line.startsWith("## ") && !line.startsWith(CONTRACT_RISK_INVENTORY_HEADING)) {
                 break;
             }
             if (!line.startsWith("|")) {
