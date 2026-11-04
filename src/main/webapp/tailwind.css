@@ -75,6 +75,8 @@
 @source './app/exercise/review';
 @source './app/programming/manage/code-editor/instructor-and-editor-container';
 @source './app/iris/manage/settings';
+@source './app/course/manage/athena-settings-update';
+@source './app/course/manage/control-center/about-athena-modal';
 @source './app/hyperion';
 @source './app/editor/markdown-editor';
 @source './app/communication/message-editor';

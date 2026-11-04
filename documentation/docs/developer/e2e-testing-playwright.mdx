@@ -163,8 +163,6 @@ We need to configure Playwright to match our local Artemis setup and user settin
 the `playwright.env` file. The default configuration for an ICL setup looks as follows:
 
 ```text
-PLAYWRIGHT_USERNAME_TEMPLATE=artemis_test_user_
-PLAYWRIGHT_PASSWORD_TEMPLATE=artemis_test_user_
 ADMIN_USERNAME=artemis_admin
 ADMIN_PASSWORD=artemis_admin
 BASE_URL=https://localhost
@@ -195,8 +193,8 @@ setupUsers.sh
 ```
 
 You can configure user IDs and check their corresponding user roles in the `src/test/playwright/support/users.ts` file.
-Usernames are defined automatically by appending the userId to the `PLAYWRIGHT_USERNAME_TEMPLATE`.
-At the moment it is discouraged to change the template string, as the user creation script does not support other names yet.
+Usernames are defined by `support/users.ts`: the user with ID `n` is `artemis_test_user_<n>`, and its password equals its username.
+The user creation script does not support other names.
 
 ### Setup Playwright package and its browser binaries
 

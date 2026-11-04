@@ -55,6 +55,7 @@ jobs:
       # this runs twice, so a failure on MySQL must not hide the PostgreSQL result or the other way round.
       fail-fast: false
       matrix:
+        # REMOVE_IN_ARTEMIS_11 (MySQL): drop the mysql matrix entry
         database: [postgres, mysql]
     steps:
       - name: Checkout code
