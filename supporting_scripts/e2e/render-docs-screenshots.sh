@@ -232,6 +232,12 @@ until [ "$(curl -s -o /dev/null -w '%{http_code}' -X POST "http://localhost:${SE
     if [ $SECONDS -gt $deadline ]; then echo "The demo data was not created, see build/docs-screenshots-stack/server.log" >&2; exit 1; fi
     sleep 5
 done
+# The users exist long before the rest of the demo course does: the exercises (the programming exercise sets up repositories), lectures,
+# competencies and the exam follow, and an image taken in between shows empty pages.
+until grep -aq "Finished seeding demo data" "$STATE_DIR/server.log"; do
+    if [ $SECONDS -gt $deadline ]; then echo "The demo data was not seeded completely, see build/docs-screenshots-stack/server.log" >&2; exit 1; fi
+    sleep 5
+done
 until curl -sf "http://localhost:${CLIENT_PORT}" >/dev/null 2>&1; do
     if [ $SECONDS -gt $deadline ]; then echo "The client did not start, see build/docs-screenshots-stack/client.log" >&2; exit 1; fi
     sleep 5

@@ -108,16 +108,17 @@
                 "student/communication-support/notifications.mdx"
             ],
             "user": "student",
-            "route": "/user-settings/notifications",
+            "route": "/user-settings/profile",
             "viewport": {
                 "width": 1298,
                 "height": 797
             },
             "deviceScaleFactor": 2,
             "source": [
-                "src/main/webapp/app/account/user/settings/global-notifications-settings",
+                "src/main/webapp/app/account/user/settings/profile/global-notifications-settings",
                 "src/main/webapp/i18n/en/userSettings.json"
-            ]
+            ],
+            "selector": "jhi-email-notifications-settings"
         },
         {
             "id": "competency-management",
@@ -469,21 +470,16 @@
                 "student/communication-support/notifications.mdx"
             ],
             "user": "student",
-            "route": "/user-settings/notifications",
+            "route": "/user-settings/profile",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
             "deviceScaleFactor": 2,
-            "clip": {
-                "x": 66,
-                "y": 70,
-                "width": 350,
-                "height": 670
-            },
             "source": [
-                "src/main/webapp/app/account/user/settings"
-            ]
+                "src/main/webapp/app/account/user/settings/navigation"
+            ],
+            "selector": "jhi-user-settings-sidebar"
         },
         {
             "id": "text-exercise-create",
