@@ -143,7 +143,7 @@
                             jhiTranslate="artemisApp.presentationAssessment.step.number"
                             [translateValues]="{ number: index + 1 }"
                         ></span>
-                        <strong class="whitespace-nowrap" [jhiTranslate]="'artemisApp.presentationAssessment.step.' + candidate"></strong>
+                        <strong class="sm:whitespace-nowrap" [jhiTranslate]="'artemisApp.presentationAssessment.step.' + candidate"></strong>
                     </span>
                 </li>
             }
@@ -248,7 +248,11 @@
                 <tumaet-ui-button
                     type="submit"
                     data-testid="continue-presentation-button"
-                    [disabled]="step() === 'details' ? editForm.controls.title.invalid || editForm.controls.description.invalid : editForm.controls.gradingMethod.invalid"
+                    [disabled]="
+                        step() === 'details'
+                            ? editForm.controls.title.invalid || editForm.controls.exercise.invalid || editForm.controls.description.invalid
+                            : editForm.controls.gradingMethod.invalid
+                    "
                 >
                     <span jhiTranslate="entity.action.continue"></span>
                     <fa-icon [icon]="faArrowRight" />
