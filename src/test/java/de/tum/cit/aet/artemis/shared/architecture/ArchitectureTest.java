@@ -267,6 +267,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutantAuthor.specificationDeclaresRule(java.lang.String, java.lang.String)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedStructuralContract.canonicalTypeName(java.lang.String, java.util.Set, java.lang.String)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedStructuralContract.templateDependencies(java.util.Set, java.util.Set)",
+            // the student-created type name the given type is checked for, which comes from the approved specification
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ExerciseIntegrityGate.referencesType(java.lang.String, java.lang.String, java.lang.String)",
+            // the class whose main the graded tests call and the helper methods that call it, both read from the generated tests
+            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.OutputOnlyMainProbe.gradesPrintedOutput(java.util.Map, java.lang.String, java.util.Set)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessProbe.collidesWithExistingTest(de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness, java.util.Map)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.JavaSourceInspector.hasAnnotation(java.lang.String, java.lang.String)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.JavaSourceInspector.hasBoundedStrictTimeout(java.lang.String, java.lang.String)",

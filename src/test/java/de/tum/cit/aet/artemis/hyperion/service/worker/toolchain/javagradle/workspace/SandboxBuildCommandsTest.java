@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -46,12 +47,12 @@ class SandboxBuildCommandsTest {
         String preparation = script.substring(script.indexOf("GRADLE_WRAPPERS=$(find"), script.indexOf("if [ \"$LANE\" = \"behavior-isolated\" ]"));
         Path imageHome = directory.resolve("image-gradle");
         Path distribution = Files.createDirectories(imageHome.resolve("wrapper/dists/gradle-9-bin/hash/gradle-9"));
-        Files.writeString(distribution.resolve("lib.jar"), "jar");
-        Files.writeString(imageHome.resolve("wrapper/dists/gradle-9-bin/hash/gradle-9-bin.zip.lck"), "lock");
+        FileUtils.writeStringToFile(distribution.resolve("lib.jar").toFile(), "jar", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(imageHome.resolve("wrapper/dists/gradle-9-bin/hash/gradle-9-bin.zip.lck").toFile(), "lock", StandardCharsets.UTF_8);
         Files.createDirectories(imageHome.resolve("caches/modules-2"));
-        Files.writeString(imageHome.resolve("caches/modules-2/entry"), "cached");
+        FileUtils.writeStringToFile(imageHome.resolve("caches/modules-2/entry").toFile(), "cached", StandardCharsets.UTF_8);
         Path buildDirectory = Files.createDirectories(directory.resolve("build"));
-        Files.writeString(buildDirectory.resolve("gradlew"), "#!/bin/sh\n");
+        FileUtils.writeStringToFile(buildDirectory.resolve("gradlew").toFile(), "#!/bin/sh\n", StandardCharsets.UTF_8);
         Path privateHome = directory.resolve("private-gradle");
         String command = "BUILD_DIR='" + buildDirectory + "'\n"
                 + preparation.replace("/root/.gradle", imageHome.toString()).replace("/tmp/hyperion-gradle-home", privateHome.toString()) + "\nexit 0\n";

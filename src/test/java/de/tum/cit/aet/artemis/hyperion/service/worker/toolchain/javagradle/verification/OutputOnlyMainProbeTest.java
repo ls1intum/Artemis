@@ -7,12 +7,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.io.PrintStream;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,6 +23,7 @@ import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -178,17 +174,12 @@ class OutputOnlyMainProbeTest {
 
         assertThat(variant).contains("public void add(String title) {\n        titles.add(title);", "public int size() {").doesNotContain("library.add(\"Dune\")");
         compile(directory, variant);
-        PrintStream original = System.out;
-        ByteArrayOutputStream captured = new ByteArrayOutputStream();
-        try (URLClassLoader loader = new URLClassLoader(new URL[] { directory.toUri().toURL() }, OutputOnlyMainProbeTest.class.getClassLoader())) {
-            Method main = loader.loadClass("example.Library").getMethod("main", String[].class);
-            System.setOut(new PrintStream(captured, true, StandardCharsets.UTF_8));
-            main.invoke(null, (Object) new String[0]);
-        }
-        finally {
-            System.setOut(original);
-        }
-        assertThat(captured.toString(StandardCharsets.UTF_8)).isEqualTo(transcript);
+        // A separate JVM, like the sandbox capture: replacing the shared standard output would race with other tests.
+        Process process = new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java").toString(), "-Dstdout.encoding=UTF-8", "-cp", directory.toString(),
+                "example.Library").redirectError(ProcessBuilder.Redirect.DISCARD).start();
+        byte[] printed = process.getInputStream().readAllBytes();
+        assertThat(process.waitFor()).isZero();
+        assertThat(new String(printed, StandardCharsets.UTF_8)).isEqualTo(transcript);
     }
 
     @Test
@@ -216,10 +207,11 @@ class OutputOnlyMainProbeTest {
             Assumptions.assumeTrue(onPath(tool), tool + " is not installed");
         }
         Files.createDirectories(solution.resolve("src/example"));
-        Files.writeString(solution.resolve(PATH), SOLUTION.replace("\"Books: \"", "\"Bücher: \""), StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(solution.resolve(PATH).toFile(), SOLUTION.replace("\"Books: \"", "\"Bücher: \""), StandardCharsets.UTF_8);
         // A student test needs JUnit, which the probe does not resolve; compiling it would make the whole capture fail.
         Files.createDirectories(solution.resolve("test/example"));
-        Files.writeString(solution.resolve("test/example/LibraryTest.java"), "package example; import org.junit.jupiter.api.Test; class LibraryTest { @Test void t() {} }");
+        FileUtils.writeStringToFile(solution.resolve("test/example/LibraryTest.java").toFile(),
+                "package example; import org.junit.jupiter.api.Test; class LibraryTest { @Test void t() {} }", StandardCharsets.UTF_8);
         String command = OutputOnlyMainProbe.captureCommand(new OutputOnlyMainProbe.Target(PATH, "Library", "example.Library")).replace("'/workspace/solution'",
                 "'" + solution + "'");
 
@@ -299,7 +291,7 @@ class OutputOnlyMainProbeTest {
     private static void compile(Path directory, String source) throws Exception {
         Path file = directory.resolve("example/Library.java");
         Files.createDirectories(file.getParent());
-        Files.writeString(file, source, StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(file.toFile(), source, StandardCharsets.UTF_8);
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         int status = compiler.run(null, null, null, "-encoding", "UTF-8", "-d", directory.toString(), file.toString());
         assertThat(status).as("the variant compiles").isZero();

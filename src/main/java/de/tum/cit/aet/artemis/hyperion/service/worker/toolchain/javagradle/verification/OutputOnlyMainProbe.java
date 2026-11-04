@@ -33,6 +33,11 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.works
  */
 final class OutputOnlyMainProbe {
 
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
+    /** A parameterized or dynamic test name's invocation suffix, such as {@code (int)} or {@code [1]}. */
+    private static final Pattern PARAMETER_SUFFIX = Pattern.compile("[(\\[].*$");
+
     /** The sandbox command compiles the solution and runs one bounded {@code main}; the command's own timeouts keep it well inside this deadline. */
     static final Duration CAPTURE_TIMEOUT = Duration.ofMinutes(3);
 
@@ -139,7 +144,7 @@ final class OutputOnlyMainProbe {
                 continue;
             }
             Matcher packageMatcher = PACKAGE.matcher(masked);
-            String binaryName = packageMatcher.find() ? packageMatcher.group(1).replaceAll("\\s+", "") + "." + simpleName : simpleName;
+            String binaryName = packageMatcher.find() ? WHITESPACE.matcher(packageMatcher.group(1)).replaceAll("") + "." + simpleName : simpleName;
             targets.add(new Target(path, simpleName, binaryName));
             if (targets.size() == MAX_TARGETS) {
                 break;
@@ -179,7 +184,7 @@ final class OutputOnlyMainProbe {
 
     /** {@code Suite.method(args)[1]} and {@code method} both name the method {@code method}. */
     private static String methodName(String testName) {
-        String withoutArguments = testName.strip().replaceFirst("[(\\[].*$", "");
+        String withoutArguments = PARAMETER_SUFFIX.matcher(testName.strip()).replaceFirst("");
         return withoutArguments.substring(withoutArguments.lastIndexOf('.') + 1);
     }
 
