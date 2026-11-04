@@ -438,8 +438,8 @@ public class AgentLoopRunner {
                     repeatedRejections += repeatedThisTurn;
                     log.warn("Agent loop repeated an identical tool call on turn {} (repeats this session: {})", turn, repeatedRejections);
                     if (repeatedRejections >= MAX_CONSECUTIVE_TOOL_FAILURES) {
-                        return failed(turn, lastAssistantText, conversation, "The agent repeated identical tool calls " + repeatedRejections
-                                + " times after being told they would not change anything. Last repeat: " + AgentToolBatch.lastRejection(conversation));
+                        return failed(turn, lastAssistantText, conversation, "The agent repeated identical rejected tool calls " + repeatedRejections
+                                + " times after being told they would keep failing. Last rejection: " + AgentToolBatch.lastRejection(conversation));
                     }
                 }
                 if (AgentToolBatch.hasRejectedToolAction(conversation)) {

@@ -402,37 +402,37 @@ class AgentLoopRunnerTest {
         assertThat(shellResults).hasSize(lastAllowedRepeat);
         assertThat(shellResults.subList(0, 2)).allSatisfy(result -> assertThat(result).contains("the command was not run").doesNotContain("this exact shell call"));
         assertThat(shellResults.get(2)).contains("this exact shell call has now been rejected 3 times", "Do not repeat it", "the command was not run");
-        assertThat(session.result().stopCause()).startsWith("The agent session stopped: The agent repeated identical tool calls 5 times")
+        assertThat(session.result().stopCause()).startsWith("The agent session stopped: The agent repeated identical rejected tool calls 5 times")
                 .contains("shell: ERROR: this exact shell call");
     }
 
     /**
-     * A command whose result never changes is just as unproductive as a refused one: one staged session ran the same {@code git status} 31 times. The third identical call with
-     * an identical result is answered explicitly, and every repeat from then on counts toward ending the session.
+     * A command whose result never changes cannot make progress: one staged session ran the same {@code git status} 31 times. From the third identical call with an identical
+     * result, the result is replaced by a note. The note is not a rejection, so it never ends the session on its own; the turn budget bounds the repeats.
      */
     @Test
-    void anIdenticalSuccessfulCallWithAnUnchangedResultIsEscalatedAndEndsTheSession() {
+    void anIdenticalSuccessfulCallWithAnUnchangedResultIsAnsweredWithANoteButDoesNotEndTheSession() {
         ChatModel model = mock(ChatModel.class);
         AtomicInteger turn = new AtomicInteger();
         when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
             int current = turn.incrementAndGet();
-            String name = current % 2 == 1 ? "status" : "write";
-            String arguments = current % 2 == 1 ? "{}" : "{\"path\":\"A" + current + ".java\"}";
-            var call = new AssistantMessage.ToolCall("call-" + current, "function", name, arguments);
+            if (current > 12) {
+                return text("finished");
+            }
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", "status", "{}");
             return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
         });
 
         var session = runner(model).runSession("system", null, "brief", new UnchangingTools(), 60, () -> false, null, null);
 
-        int lastAllowedRepeat = AgentToolBatch.REPEATED_REJECTION_ESCALATION - 1 + 5;
-        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
-        assertThat(session.result().turns()).isEqualTo(2 * lastAllowedRepeat - 1);
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         List<String> statusResults = session.conversation().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
                 .flatMap(message -> message.getResponses().stream()).filter(response -> response.name().equals("status")).map(ToolResponseMessage.ToolResponse::responseData)
                 .toList();
+        assertThat(statusResults).hasSize(12);
         assertThat(statusResults.subList(0, 2)).allSatisfy(result -> assertThat(result).contains("not a git repository").doesNotContain("this exact"));
-        assertThat(statusResults.get(2)).contains("this exact status call has now returned the same result 3 times", "not a git repository");
-        assertThat(session.result().stopCause()).startsWith("The agent session stopped: The agent repeated identical tool calls 5 times");
+        assertThat(statusResults.subList(2, 12))
+                .allSatisfy(result -> assertThat(result).startsWith("NOTE: this exact status call has now returned the same result").contains("not a git repository"));
     }
 
     /** One session rewrote the same file after other edits had changed it; a write's result does not show that, so identical writes must never end the session. */

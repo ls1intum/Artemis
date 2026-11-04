@@ -28,10 +28,9 @@ final class AgentToolBatch {
     static final String SUBMIT_TOOL_NAME = "submit";
 
     /**
-     * The occurrence of an identical tool call that is answered with an explicit escalation instead of its result: the same tool and arguments when it was rejected, or the same
-     * tool, arguments and result when it succeeded. From then on every further repeat counts toward the consecutive-failure limit of {@link AgentLoopRunner} for the
-     * whole session, because
-     * neither a refused call nor a call whose result did not change can make progress by being repeated.
+     * The occurrence of an identical tool call that is answered with an explicit observation instead of its result: the same tool and arguments when it was rejected, or the same
+     * tool, arguments and result when it succeeded. Neither can make progress by being repeated. Only a repeated rejection counts toward ending the session: a repeated
+     * observation is answered with a note, and the turn budget bounds it.
      */
     static final int REPEATED_REJECTION_ESCALATION = 3;
 
@@ -130,12 +129,13 @@ final class AgentToolBatch {
      * that repeating it changes nothing. A rejected call is identified by tool and arguments; a successful call also by its result, so re-reading a file after an edit is not a
      * repeat. A model that interleaves the same call with other calls never trips the consecutive limit, so without this it can spend a whole session repeating it.
      *
-     * @return how many calls of the batch were such repeats
+     * @return how many calls of the batch were repeated rejections, which count toward ending the session
      */
     static int escalateRepeatedRejections(List<Message> conversation, List<AssistantMessage.ToolCall> toolCalls, Map<String, Integer> repeatedCallCounts) {
         for (int i = conversation.size() - 1; i >= 0; i--) {
             if (conversation.get(i) instanceof ToolResponseMessage toolResponse) {
-                int repeated = 0;
+                int repeatedRejections = 0;
+                boolean replaced = false;
                 List<ToolResponseMessage.ToolResponse> responses = new ArrayList<>(toolResponse.getResponses().size());
                 for (ToolResponseMessage.ToolResponse response : toolResponse.getResponses()) {
                     if ("verify".equals(response.name()) || SUBMIT_TOOL_NAME.equals(response.name())) {
@@ -156,21 +156,25 @@ final class AgentToolBatch {
                         responses.add(response);
                         continue;
                     }
-                    repeated++;
+                    replaced = true;
+                    if (rejected) {
+                        repeatedRejections++;
+                    }
                     String observation = excerpt(response.responseData().strip());
+                    // A repeated observation is not a rejection: the note must not start with ERROR, or it would count toward the consecutive-failure limit.
                     String escalation = rejected
                             ? "ERROR: this exact " + response.name() + " call has now been rejected " + occurrences
                                     + " times and will be rejected every time. Do not repeat it; take a different action. Each further repeat counts toward ending this "
                                     + "session. The rejection was: " + observation
-                            : "ERROR: this exact " + response.name() + " call has now returned the same result " + occurrences
-                                    + " times. Repeating it cannot change anything until you change the workspace; take a different action. Each further repeat counts "
-                                    + "toward ending this session. The unchanged result was: " + observation;
+                            : "NOTE: this exact " + response.name() + " call has now returned the same result " + occurrences
+                                    + " times. Repeating it cannot change anything until you change the workspace; take a different action. The unchanged result was: "
+                                    + observation;
                     responses.add(new ToolResponseMessage.ToolResponse(response.id(), response.name(), escalation));
                 }
-                if (repeated > 0) {
+                if (replaced) {
                     conversation.set(i, ToolResponseMessage.builder().responses(responses).metadata(toolResponse.getMetadata()).build());
                 }
-                return repeated;
+                return repeatedRejections;
             }
         }
         return 0;
