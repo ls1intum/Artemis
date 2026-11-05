@@ -6,7 +6,7 @@ import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { getErrorMessage, onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, exhaustMap, filter, map, take, timeout, timer } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { faArrowLeft, faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -198,32 +198,41 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.route.data.subscribe((data) => {
             if ('attachmentVideoUnit' in data) {
                 this.attachmentVideoUnit.set(data.attachmentVideoUnit);
-                // A unit whose slides were never extracted carries no slides at all, and the response omits empty
-                // collections rather than sending an empty array. An attachment video unit created for an attachment
-                // that used to hang off a lecture directly stays in that state until its file is saved from here, which
-                // is what produces its slides, so the preview has to open on a unit that has none.
-                const slides: Slide[] = data.attachmentVideoUnit.slides ?? [];
-
-                // Store hidden pages information
-                const hiddenPagesMap: HiddenPageMap = Object.fromEntries(
-                    slides
-                        .filter((page: Slide) => page.hidden)
-                        .map((page: Slide) => [
-                            page.id,
-                            {
-                                date: dayjs(page.hidden),
-                                exerciseId: page.exercise?.id ?? undefined,
+                if (data.attachmentVideoUnit.slideMetadataPending) {
+                    this.attachmentVideoUnitSub = timer(0, 1000)
+                        .pipe(
+                            exhaustMap(() => this.attachmentVideoUnitService.findById(data.attachmentVideoUnit.id, data.attachmentVideoUnit.lecture.id)),
+                            map((response) => response.body),
+                            filter((unit): unit is AttachmentVideoUnit => !!unit && !unit.slideMetadataPending),
+                            take(1),
+                            timeout({ first: 60_000 }),
+                        )
+                        .subscribe({
+                            next: (unit) => this.initializeAttachmentVideoUnit(unit),
+                            error: (error) => {
+                                this.isPdfLoading.set(false);
+                                onError(this.alertService, error);
                             },
-                        ]),
-                );
-                this.initialHiddenPages.set(hiddenPagesMap);
-                this.hiddenPages.set(deepClone(hiddenPagesMap));
-
-                this.fetchPdfFile(slides);
+                        });
+                } else {
+                    this.initializeAttachmentVideoUnit(data.attachmentVideoUnit);
+                }
             } else {
                 this.isPdfLoading.set(false);
             }
         });
+    }
+
+    /** Initializes the editor only once its slide metadata belongs to the current PDF revision. */
+    private initializeAttachmentVideoUnit(unit: AttachmentVideoUnit): void {
+        this.attachmentVideoUnit.set(unit);
+        const slides = unit.slides ?? [];
+        const hiddenPagesMap: HiddenPageMap = Object.fromEntries(
+            slides.filter((page) => page.hidden).map((page) => [page.id, { date: dayjs(page.hidden), exerciseId: page.exercise?.id }]),
+        );
+        this.initialHiddenPages.set(hiddenPagesMap);
+        this.hiddenPages.set(deepClone(hiddenPagesMap));
+        this.fetchPdfFile(slides);
     }
 
     /**

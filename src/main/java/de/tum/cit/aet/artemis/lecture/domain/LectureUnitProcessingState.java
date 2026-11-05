@@ -118,9 +118,11 @@ public class LectureUnitProcessingState extends DomainObject {
     private String errorKey;
 
     /**
-     * Current ingestion job token.
-     * Used to validate callbacks - only accept callbacks with matching token.
-     * When a new ingestion job starts, the token is updated, invalidating old callbacks.
+     * Run id of the current ingestion job.
+     * Used as a fencing value: only callbacks and lease renewals for this run are applied.
+     * When a new ingestion job starts, the value is updated, invalidating old callbacks.
+     * It is not a credential: callbacks authenticate with a signed token issued for this run id.
+     * Rows written before the switch to signed tokens may still hold an older value, which no callback can match anymore.
      */
     @Column(name = "ingestion_job_token")
     private String ingestionJobToken;

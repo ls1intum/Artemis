@@ -384,6 +384,27 @@ describe('AccountService', () => {
         });
     });
 
+    describe('hasAdministratorAccess', () => {
+        it.each([
+            { authority: Authority.ADMIN, required: false, loggedInWithPasskey: false, passkeySuperAdminApproved: false, expected: true },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: false, passkeySuperAdminApproved: true, expected: false },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: false, expected: false },
+            { authority: Authority.ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: true },
+            { authority: Authority.SUPER_ADMIN, required: true, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: true },
+            { authority: Authority.INSTRUCTOR, required: false, loggedInWithPasskey: true, passkeySuperAdminApproved: true, expected: false },
+        ])('checks effective administrator rights for $authority (required=$required, passkey=$loggedInWithPasskey, approved=$passkeySuperAdminApproved)', (session) => {
+            vi.spyOn(accountService, 'isPasskeyRequiredForAdministratorFeatures').mockReturnValue(session.required);
+            accountService.userIdentity.set({
+                id: 10,
+                authorities: [session.authority],
+                loggedInWithPasskey: session.loggedInWithPasskey,
+                passkeySuperAdminApproved: session.passkeySuperAdminApproved,
+            } as User);
+
+            expect(accountService.hasAdministratorAccess()).toBe(session.expected);
+        });
+    });
+
     describe('test isAtLeastTutorForExercise', () => {
         it('should return false if user is not tutor', () => {
             accountService.userIdentity.set(user2);
@@ -514,6 +535,26 @@ describe('AccountService', () => {
 
             expect(result).toBe(true);
         });
+    });
+
+    it('should update authority signals when the user identity changes', () => {
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.STUDENT] } as User);
+
+        expect(accountService.isAtLeastTutor()).toBe(false);
+        expect(accountService.isAdmin()).toBe(false);
+        expect(accountService.isSuperAdmin()).toBe(false);
+
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.STUDENT], courseRoles: [{ courseId: 1, roles: ['TEACHING_ASSISTANT'] }] } as User);
+
+        expect(accountService.isAtLeastTutor()).toBe(true);
+        expect(accountService.isAdmin()).toBe(false);
+        expect(accountService.isSuperAdmin()).toBe(false);
+
+        accountService.userIdentity.set({ id: 10, authorities: [Authority.SUPER_ADMIN] } as User);
+
+        expect(accountService.isAtLeastTutor()).toBe(true);
+        expect(accountService.isAdmin()).toBe(true);
+        expect(accountService.isSuperAdmin()).toBe(true);
     });
 
     it('should set access rights for referenced course', () => {

@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.config.cache.BlobCacheConfiguration;
 import de.tum.cit.aet.artemis.core.service.cache.PerNodeCacheEvictionService.PerNodeCacheEviction;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.MapItemEvent;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.QueueItemEvent;
+import de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorGroupState;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectMessage;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionService.ControlAction;
@@ -116,13 +117,17 @@ class DistributedDataSurfaceTest {
             GenerationJobService.JobFileChangeIndex.class, GenerationJobService.JobArtifacts.class, ExerciseGenerationBaseline.class, AuthoringRun.class,
             GenerationRunStoreService.Mutation.class, GenerationRunStoreService.RunReference.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
             AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class, PublicKeyCredentialCreationOptionsDTO.class, QueueItemEvent.class,
-            MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class);
+            MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class, ErrorGroupState.class);
 
     /**
-     * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map} stores them polymorphically, so the
+     * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map-v2} stores them polymorphically, so the
      * walk cannot reach them from a declared type: the map is typed by the interface, and the shape that is encoded is
      * the concrete record's. They are discovered rather than listed so that a job added later is covered without
      * anyone remembering to come back here.
+     * <p>
+     * {@code GlobalSearchAnswerJob} gained {@code invocationId} together with the move from {@code pyris-job-map} to
+     * {@code pyris-job-map-v2}, so no build reads a job another build wrote with the other shape. Older entries in
+     * {@code pyris-job-map} are never read again. The upgrade stops all nodes first (see the PR's rollout notes).
      */
     private static final String PYRIS_JOB_PACKAGE = "de.tum.cit.aet.artemis.iris.service.pyris.job";
 

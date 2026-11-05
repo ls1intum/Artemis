@@ -2,6 +2,7 @@
 id: nightly-ci
 title: Nightly CI Runs
 sidebar_label: Nightly CI Runs
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -188,6 +189,8 @@ Not everything on a schedule is a nightly test run. For completeness:
 | --- | --- | --- |
 | [`codeql-analysis.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/codeql-analysis.yml) | Sundays 16:00 UTC | Full CodeQL scan of Java and TypeScript, beyond the per-pull-request diff |
 | [`scorecard.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/scorecard.yml) | Mondays 05:31 UTC | OpenSSF Scorecard; also runs after successful Gradle wrapper validation on `develop`, so validated wrapper JARs are recognized |
+| [`publish-badges.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/publish-badges.yml) | Daily 05:23 UTC | Refreshes the README badges; also runs on release changes |
+| [`dependency-submission.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/dependency-submission.yml) | Mondays 04:47 UTC | Submits the resolved Gradle dependency graph to GitHub |
 | [`pullrequest-stale.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/pullrequest-stale.yml) | Daily 12:00 UTC | Marks inactive pull requests stale. Housekeeping, not a test |
 
 ## Adding a nightly suite
