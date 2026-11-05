@@ -159,7 +159,19 @@ def validate(manifest: dict, repo_root: Path, docs_root: Path) -> list[str]:
         for key in ("selector", "waitFor"):
             if key in entry and not (isinstance(entry[key], str) and entry[key].strip()):
                 problems.append(f"{label}: `{key}` must be a CSS selector")
-        for key in ("source", "mask", "maskSelector"):
+        padding = entry.get("padding")
+        if padding is not None and (not isinstance(padding, int) or isinstance(padding, bool) or padding <= 0 or not entry.get("selector")):
+            problems.append(f"{label}: `padding` needs a positive integer and a `selector`")
+        steps = entry.get("steps", [])
+        if not isinstance(steps, list):
+            problems.append(f"{label}: `steps` must be a list")
+            steps = []
+        for number, step in enumerate(steps, 1):
+            problems.extend(f"{label}: step {number} {problem}" for problem in step_problems(step))
+            upload = step.get("upload") if isinstance(step, dict) else None
+            if isinstance(upload, dict) and isinstance(upload.get("file"), str) and not (repo_root / upload["file"]).is_file():
+                problems.append(f"{label}: step {number} uploads `{upload['file']}`, which does not exist")
+        for key in ("source", "mask", "maskSelector", "hide"):
             values = entry.get(key, [])
             if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
                 problems.append(f"{label}: `{key}` must be a list of strings")
@@ -167,6 +179,26 @@ def validate(manifest: dict, repo_root: Path, docs_root: Path) -> list[str]:
             if isinstance(source, str) and not (repo_root / source).exists():
                 problems.append(f"{label}: source `{source}` does not exist")
     return problems
+
+
+STEP_FIELDS = {"fill": ("selector", "value"), "select": ("selector", "label"), "click": None, "clickIfPresent": None, "check": None, "upload": ("selector", "file"), "waitFor": None}
+
+
+def step_problems(step: object) -> list[str]:
+    """The problems of one step of an entry: exactly one action, with the strings that it needs."""
+    if not isinstance(step, dict):
+        return ["must be an object"]
+    actions = [key for key in step if key in STEP_FIELDS]
+    if len(actions) != 1 or len(step) != 1:
+        return [f"needs exactly one of {', '.join(STEP_FIELDS)}"]
+    action = actions[0]
+    value = step[action]
+    fields = STEP_FIELDS[action]
+    if fields is None:
+        return [] if isinstance(value, str) and value.strip() else [f"`{action}` must be a selector"]
+    if not isinstance(value, dict) or set(value) != set(fields) or not all(isinstance(value[field], str) and value[field].strip() for field in fields):
+        return [f"`{action}` needs the strings {' and '.join(fields)}"]
+    return []
 
 
 def uncovered_images(manifest: dict, docs_root: Path) -> tuple[int, int]:
@@ -471,6 +503,16 @@ def self_test() -> None:
         assert broken(threshold=0.05, note="a graph with a random layout") == []
         assert any("must start with /" in problem for problem in broken(route="courses/1"))
         assert any("source `gone` does not exist" in problem for problem in broken(source=["gone"]))
+        assert broken(steps=[{"fill": {"selector": "#title", "value": "Demo"}}, {"click": "text=Save"}, {"select": {"selector": "select", "label": "WS26/27"}}, {"waitFor": "main"}]) == []
+        assert any("step 1 needs exactly one" in problem for problem in broken(steps=[{"click": "a", "waitFor": "b"}])), "a step does two things"
+        assert any("step 1 needs exactly one" in problem for problem in broken(steps=[{"hover": "a"}])), "an unknown action is a problem"
+        assert any("step 2 `fill` needs" in problem for problem in broken(steps=[{"click": "a"}, {"fill": {"selector": "a"}}])), "a fill without a value"
+        assert any("`steps` must be a list" in problem for problem in broken(steps="click"))
+        assert any("uploads `gone.png`" in problem for problem in broken(steps=[{"upload": {"selector": "input", "file": "gone.png"}}]))
+        assert any("uploads `src`" in problem for problem in broken(steps=[{"upload": {"selector": "input", "file": "src"}}])), "a directory is not a file"
+        assert broken(selector="main", padding=12) == []
+        assert any("`padding`" in problem for problem in broken(padding=12)), "padding without a selector"
+        assert any("`padding`" in problem for problem in broken(selector="main", padding=0))
         assert any("viewport" in problem for problem in broken(viewport={"width": 0, "height": 5}))
         assert any("kebab-case" in problem for problem in broken(id="Shot_1"))
         assert any("described twice" in problem or "duplicate id" in problem for problem in validate({"users": good["users"], "screenshots": [entry, entry]}, root, docs))

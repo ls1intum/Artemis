@@ -170,11 +170,14 @@ light theme, in English and with reduced motion. An entry has these fields:
 | Field | Meaning |
 | --- | --- |
 | `image`, `pages` | The image below `documentation/docs` and the pages that show it. |
-| `user` | A demo user: `student`, `tutor` or `instructor`. |
+| `user` | A demo user: `student`, `tutor`, `instructor`, or `participant`. The `participant` is a student whom no other image shows, so that an entry can start an exercise or a quiz without changing the pages of the others. |
 | `route` | The route, with `{courseId}` for the demo course and `{exercise:Title}`, `{exam:Title}` or `{lecture:Title}` for the id of the item of the demo course with that title. |
 | `viewport`, `deviceScaleFactor` | The size of the browser window and its pixel density. |
-| `selector` or `clip` | A crop of the page: the element that the image shows (a CSS selector), or a box `{x, y, width, height}` in CSS pixels. Without either, the image is the whole window. |
+| `selector` or `clip` | A crop of the page: the element that the image shows (a CSS selector), or a box `{x, y, width, height}` in CSS pixels. Without either, the image is the whole window. A page that scrolls inside the window shows only the part that fits, so a `selector` of a tall element needs a `viewport` that is tall enough. |
+| `padding` | With `selector`: CSS pixels around the element, so that the border of a field at its edge is not cut off. |
 | `waitFor` | A CSS selector that has to be visible before the image is taken, for content that loads late. |
+| `steps` | What happens before the image is taken, in order: `fill` (`{selector, value}`), `click`, `clickIfPresent` (for an action that exists only the first time, such as starting an exercise), `check`, `select` (`{selector, label}`), `upload` (`{selector, file}`, a file below the repository root, such as one of `documentation/screenshots/fixtures`) and `waitFor`. A selector is a Playwright selector, so `text=Start exercise` works. |
+| `hide` | CSS selectors of elements that cover the content, such as a sticky footer. They become invisible and keep their space. |
 | `mask`, `maskSelector` | The `data-testid` values or CSS selectors of elements with content that changes on every run. They are painted over. |
 | `threshold`, `note` | A share of changed pixels (0 to 1) that is tolerated for this image alone, and the `note` that says why the image varies, such as a graph with a random layout. |
 | `source` | The paths of the components and translations that the image shows. `--stale` lists the image when one of them changed after it. |
@@ -186,7 +189,7 @@ minute of the seeding. The day stays: it belongs to the demo data, which is crea
 differ a little from one day to the next, which the threshold of the comparison tolerates.
 
 **One command.** `./supporting_scripts/e2e/render-docs-screenshots.sh` starts a PostgreSQL container, a server with the `demo` profile and the client
-on ports of its own (18080, 19000, 17921 and 15432, changeable with `DOCS_SHOTS_*_PORT`), renders the entries, compares the images with the
+on ports of its own (18080, 19000, 17921 and 15432, changeable with `DOCS_SHOTS_*_PORT`; give a second checkout that renders at the same time its own `DOCS_SHOTS_DB_CONTAINER`), renders the entries, compares the images with the
 checked-in ones and stops everything it started. It never stops a process that it did not start, so it can run next to a development environment.
 It needs Docker, Java 25 and Node. Options:
 

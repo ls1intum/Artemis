@@ -28,14 +28,34 @@ interface ManifestEntry {
     fullPage?: boolean;
     /** CSS selector of the element that the image shows, for a crop of the page such as its main card. The image is the size of the element. */
     selector?: string;
+    /** With `selector`: CSS pixels of the page that are added around the element on every side, so that borders and shadows of its content are not cut off. The element has to fit into the viewport. */
+    padding?: number;
     /** A box of the page in CSS pixels, for a crop that has no element of its own. Not combined with `selector`. */
     clip?: { x: number; y: number; width: number; height: number };
     /** CSS selector that has to be visible before the image is taken, for content that loads after the page. */
     waitFor?: string;
+    /**
+     * Actions that bring the page into the state that the image shows, run in order after the page has loaded. A step is an object with exactly one of
+     * `fill` ({selector, value}: types the value into the field), `click` (selector of the element to click), `clickIfPresent` (the same, skipped when the element is not there, for an action that a run before has done already), `check` (selector of a checkbox to tick), `upload` ({selector, file}: chooses the file, a path from the repository root, in a file input), `select` ({selector, label}: picks the
+     * option with that label) and `waitFor` (selector that has to be visible). A selector is a Playwright selector, so `text=Start` and `button:has-text("Save")` work.
+     */
+    steps?: ManifestStep[];
     /** `data-testid` values of elements whose content changes on every run. They are painted over. */
     mask?: string[];
     /** CSS selectors of elements whose content changes on every run. They are painted over. */
     maskSelector?: string[];
+    /** CSS selectors of elements that cover the content of the image, such as a sticky footer. They are made invisible and keep their space. */
+    hide?: string[];
+}
+
+interface ManifestStep {
+    fill?: { selector: string; value: string };
+    click?: string;
+    clickIfPresent?: string;
+    check?: string;
+    upload?: { selector: string; file: string };
+    select?: { selector: string; label: string };
+    waitFor?: string;
 }
 
 interface Manifest {
@@ -163,6 +183,30 @@ for (const entry of manifest.screenshots.filter((candidate) => only.length === 0
         }
         // Transitions and the caret would make two renderings of the same page differ.
         await page.addStyleTag({ content: VOLATILE_STYLES });
+        if (entry.hide?.length) {
+            await page.addStyleTag({ content: entry.hide.map((selector) => `${selector} { visibility: hidden !important; }`).join('\n') });
+        }
+        for (const step of entry.steps ?? []) {
+            if (step.fill) {
+                await page.locator(step.fill.selector).first().fill(step.fill.value);
+            } else if (step.click) {
+                await page.locator(step.click).first().click();
+            } else if (step.clickIfPresent) {
+                // For an action that only exists the first time, such as the start of an exercise that a participation of an earlier run has started already.
+                const target = page.locator(step.clickIfPresent).first();
+                if (await target.isVisible({ timeout: 3_000 }).catch(() => false)) {
+                    await target.click();
+                }
+            } else if (step.upload) {
+                await page.locator(step.upload.selector).first().setInputFiles(path.join(REPOSITORY_ROOT, step.upload.file));
+            } else if (step.check) {
+                await page.locator(step.check).first().check();
+            } else if (step.select) {
+                await page.locator(step.select.selector).first().selectOption({ label: step.select.label });
+            } else if (step.waitFor) {
+                await expect(page.locator(step.waitFor).first()).toBeVisible();
+            }
+        }
         // Charts draw themselves with a script animation that no style can switch off, so the image waits until they have finished.
         await page.waitForTimeout(CHART_SETTLE_MS);
         await page.evaluate(
@@ -181,7 +225,19 @@ for (const entry of manifest.screenshots.filter((candidate) => only.length === 0
         const target = update ? path.join(DOCS_ROOT, entry.image) : path.join(outputRoot, entry.image);
         fs.mkdirSync(path.dirname(target), { recursive: true });
         const mask = [...(entry.mask ?? []).map((testId) => page.getByTestId(testId)), ...(entry.maskSelector ?? []).map((selector) => page.locator(selector))];
-        if (entry.selector) {
+        if (entry.selector && entry.padding) {
+            const element = page.locator(entry.selector).first();
+            await element.scrollIntoViewIfNeeded();
+            const box = (await element.boundingBox())!;
+            const x = Math.max(0, box.x - entry.padding);
+            const y = Math.max(0, box.y - entry.padding);
+            await page.screenshot({
+                path: target,
+                clip: { x, y, width: box.x + box.width + entry.padding - x, height: box.y + box.height + entry.padding - y },
+                animations: 'disabled',
+                mask,
+            });
+        } else if (entry.selector) {
             await page.locator(entry.selector).first().screenshot({ path: target, animations: 'disabled', mask });
         } else {
             await page.screenshot({ path: target, fullPage: entry.fullPage ?? false, clip: entry.clip, animations: 'disabled', mask });
