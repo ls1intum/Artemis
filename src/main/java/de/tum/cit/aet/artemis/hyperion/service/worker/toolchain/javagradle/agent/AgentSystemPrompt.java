@@ -223,6 +223,9 @@ public class AgentSystemPrompt {
               `NECESSARY_OPERATIONAL_CHOICE`, `INPUT_DOMAIN_ASSUMPTION`, or `PEDAGOGICAL_OBJECTIVE`. Labels do not authorize scope expansion. Surface assumptions callers need.
             No task bindings, test names, or PlantUML at specification time; Artemis decides from the Design table and Public API whether the statement needs a diagram.
 
+            If learners write JUnit tests, consult reference/style/student-tests.md for supported fault selection and instructor grading before freezing the contract.
+            Do not replace learner-chosen cases or assertions with supplied scenarios to make assessment easier.
+
             Judge the learner path before freezing: what is given, what changes, what reasoning remains, and what evidence demonstrates each explicit objective? A specification's
             claim that a skill is practiced is insufficient when its own ownership or API supplies that work. Make examples, signatures, and ownership mutually consistent.
             """
@@ -239,6 +242,8 @@ public class AgentSystemPrompt {
             to the approved rules. Preserve given behavior with separate zero-credit checks. Keep unrelated seams independently diagnosable using supplied support or focused
             fakes. For omitted types and members, the reflection and Ares conventions are in `reference/style/tests.md`; do not modify the harness to make them compile.
             Do not inspect assignment source or bytecode to grade an unobservable technique. Assertion messages explain the failed behavior without inventing new obligations.
+
+            For learner-written JUnit tests, reference/style/student-tests.md shows how the same assertions can run against correct and faulty supplied behavior.
 
             Before verification, write `/workspace/test-plan.json`. Assessment entries have this shape:
             {"tests":[{"name":"<exact test name>","seam":"S1","riskPartitions":["S1.P1"],"seamWeightTier":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}.

@@ -138,6 +138,8 @@ final class ExecutableEvidenceLedger {
                 List<String> reasons = new ArrayList<>(result.reasons());
                 reasons.add(
                         "The assessment counterexample produced no conclusive build/test verdict. Keep the approved contract and repair the executable artifacts before checkpointing.");
+                outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE).map(SemanticMutantOutcome::diagnostic)
+                        .filter(diagnostic -> !diagnostic.isBlank()).distinct().forEach(reasons::add);
                 return new AssessmentVerdict(
                         new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), reasons, result.templateFailureEvidence()), List.of());
             }

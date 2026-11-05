@@ -30,6 +30,9 @@ Unless instrumentation is an explicit learning objective, learner code must not 
 A conforming learner implementation that follows the statement without those extra calls must pass. Hidden tests cannot make an undeclared recording call mandatory.
 The supplied observer records what the learner actually did; it must neither perform those actions nor trust a learner's claim that an unobserved action happened.
 
+A grading repair must preserve the learner's assigned reasoning. Supplying cases or assertions that the learner was asked to choose or write changes the learning activity;
+calling that an operational choice does not resolve the assessment defect.
+
 When the learner writes tests, assess both sides: the learner tests pass on conforming behavior and fail on representative faulty behavior.
 Merely invoking them against the correct supplied implementation accepts empty test bodies. Put fault-variant selection and result interpretation in supplied instructor support;
 it must not become additional learner work. Grade the effect of the learner's assertions, not their source spelling or an incidental assertion-method count.

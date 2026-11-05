@@ -327,23 +327,38 @@ into the authoring workspace: invoking source-isolated verification directly thr
 shell can remove work without the required restoration. A missing verifier is a
 configuration error; generation must not substitute an unmanaged shell build.
 
-For exercises where students write JUnit tests, the assessment check also tries
-two variants of simple student-owned test classes: empty test bodies, and the
-original bodies with assertion failures suppressed. The weighted grading tests
-must reject both variants. Keeping calls or recorded values while ignoring assertion
-failures does not establish that the learner has written effective tests. Running the learner's tests only against the correct
-supplied implementation does not establish whether their assertions detect faults.
-The specification must declare ordinary Java support that routes the learner's actual calls
-through correct and faulty behavior. Private JDK instrumentation is unavailable; a failed
-grader setup cannot count as a learner assertion detecting a fault.
-Lifecycle hooks, inheritance, constructors and initializers make this simple probe
-inapplicable; these cases still need quality review.
-The full-artifact quality review keeps the complete exercise source. Unchanged build-wrapper
-launchers are identified against their baseline instead of repeated in full. If a repair
-diff would exceed the review bound, the reviewer gets the complete current candidate and
-prior findings with an explicit notice that the duplicate diff was omitted. Required
-evidence that still exceeds the bound leaves the review unavailable. An inconclusive execution cannot
-authorize a contract change or establish that the assessment passed.
+For exercises where students write JUnit tests, the assessment check tries two variants
+of simple student-owned test classes: empty test bodies, and the original bodies with
+assertion failures suppressed. The weighted grading tests must reject both variants.
+Keeping calls or recorded values while ignoring assertion failures does not establish
+that the learner has written effective tests. Running the learner's tests only against
+the correct supplied implementation does not establish whether they detect faults.
+
+The specification must declare ordinary Java support that routes the learner's actual
+calls through correct and faulty behavior. Private JDK instrumentation is unavailable;
+a failed grader setup cannot count as a learner assertion detecting a fault. Lifecycle
+hooks, inheritance, constructors and initializers make this simple probe inapplicable;
+these cases still need quality review. An inconclusive execution cannot authorize a
+contract change or establish that the assessment passed.
+
+Once a learner-test counterexample is confirmed, its source file and probe kind remain
+part of the job's assessment obligations. A later candidate that removes, renames or
+supplies that learner test surface cannot silently retire the evidence: a missing
+applicable probe is inconclusive and blocks a new checkpoint. A successful check
+resolves the current candidate but keeps the obligation for later repairs. Retained
+artifacts remain available when the replacement cannot be verified.
+
+The specification and executable stages can consult a small, non-persisted reference
+for grading learner-written tests against correct and faulty supplied behavior. It
+keeps fault selection in instructor support while leaving case selection and assertions
+to the learner. Supplying those learner decisions changes the task and does not repair
+its grader.
+
+The full-artifact quality review keeps the complete exercise source. Unchanged
+build-wrapper launchers are identified against their baseline instead of repeated in
+full. If a repair diff would exceed the review bound, the reviewer gets the complete
+current candidate and prior findings with an explicit notice that the duplicate diff
+was omitted. Required evidence that still exceeds the bound leaves the review unavailable.
 
 When executed evidence causes redesign, the specification reviewer receives the
 counterexample and must adjudicate it against the replacement contract. That evidence

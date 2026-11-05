@@ -68,6 +68,8 @@ public class DifferentialVerifier {
 
     private final ApprovedSpecRegistry approvedSpecs;
 
+    private final StudentTestAssessmentHistory studentTestAssessmentHistory = new StudentTestAssessmentHistory();
+
     public DifferentialVerifier(SandboxBuildCommands sandboxBuildCommandService, ApprovedSpecRegistry approvedSpecs) {
         this.sandboxBuildCommandService = sandboxBuildCommandService;
         this.approvedSpecs = approvedSpecs;
@@ -798,8 +800,9 @@ public class DifferentialVerifier {
                 JavaSourceInspector.nonFailingJUnitTestBodies(source).ifPresent(variant -> probes.add(SemanticMutant.nonFailingStudentTests(path, source, variant)));
             }
         });
-        return SemanticMutantExecution.recheck(producedSolutionFiles, probes, OutputOnlyMainProbe.gradedTest(testPlanJson),
+        List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.recheck(producedSolutionFiles, probes, OutputOnlyMainProbe.gradedTest(testPlanJson),
                 (mutant, overlay) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, overlay, restoreCandidate));
+        return studentTestAssessmentHistory.complete(sessionId, outcomes);
     }
 
     /**

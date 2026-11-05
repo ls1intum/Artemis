@@ -48,7 +48,10 @@ final class StageAssessmentCheck {
         }
         if (outcomes.stream().anyMatch(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.INCONCLUSIVE)) {
             return Optional.of(new StageCheckResult(false,
-                    "The assessment counterexample produced no conclusive build/test verdict. Keep the contract unchanged and fix the reported executable artifacts.", report));
+                    "The assessment counterexample produced no conclusive build/test verdict. Keep the contract unchanged and fix the reported executable artifacts.\n"
+                            + outcomes.stream().filter(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.INCONCLUSIVE).map(SemanticMutantOutcome::diagnostic)
+                                    .filter(diagnostic -> !diagnostic.isBlank()).distinct().collect(java.util.stream.Collectors.joining("\n")),
+                    report));
         }
         return Optional.empty();
     }

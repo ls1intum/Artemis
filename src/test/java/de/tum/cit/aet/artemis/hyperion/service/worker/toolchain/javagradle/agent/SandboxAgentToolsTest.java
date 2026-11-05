@@ -67,7 +67,8 @@ class SandboxAgentToolsTest {
         // Everything the stage legitimately consults stays readable, including the prior statement an
         // adaptation starts from.
         tools.readFile("problem-statement.md");
-        assertThat(sandbox.copiedPaths()).hasSize(1);
+        tools.readFile("reference/style/student-tests.md");
+        assertThat(sandbox.copiedPaths()).containsExactly("/workspace/problem-statement.md", "/workspace/reference/style/student-tests.md");
     }
 
     @Test

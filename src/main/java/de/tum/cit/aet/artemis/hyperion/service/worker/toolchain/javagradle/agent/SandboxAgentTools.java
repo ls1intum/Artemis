@@ -561,7 +561,8 @@ public class SandboxAgentTools implements SubmitVetoAware {
      * is still there and reading it is still cheap, and a stage budgeted for a handful of turns can
      * spend all of them re-reading a guide it was already given, then fail its gate for a document it
      * never wrote. The later stages have no inline contract and read the same directory legitimately,
-     * which is why this is scoped to one stage rather than removed from the workspace.
+     * which is why this is scoped to one stage rather than removed from the workspace. The learner-test assessment guide remains available because the form contract does not
+     * explain that runtime capability.
      *
      * The refusal names the alternative rather than only forbidding, so the model spends its next turn
      * writing instead of retrying the same read.
@@ -571,11 +572,11 @@ public class SandboxAgentTools implements SubmitVetoAware {
      */
     @Nullable
     private String unreadableInCurrentStage(String path) {
-        if (currentStage != GenerationStage.SPEC || !path.startsWith("reference/")) {
+        if (currentStage != GenerationStage.SPEC || !path.startsWith("reference/") || path.equals("reference/style/student-tests.md")) {
             return null;
         }
         return "REFUSED: '" + path + "' is not readable in the specification stage. The complete SPEC.md section and table contract is in your instructions, "
-                + "so this directory holds nothing you need here. Write /workspace/SPEC.md now.";
+                + "so this file adds no needed form guidance here. Write /workspace/SPEC.md now.";
     }
 
     /**

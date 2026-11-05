@@ -503,6 +503,7 @@ class DockerGradleBuildTest {
     @ValueSource(ints = { 0, 1, 2 })
     void studentWrittenTestsMustRejectFaultyBehaviorRatherThanOnlyRunOnTheCorrectLibrary(int assessment) throws IOException {
         boolean gradeFaults = assessment == 1;
+        var verifier = new DifferentialVerifier(commands);
         String learner = """
                 package de.tum.cit.aet.reference;
                 public class LearnerCheck {
@@ -581,8 +582,8 @@ class DockerGradleBuildTest {
 
         if (assessment == 2) {
             var sources = JavaSourceSnapshot.capture(sandbox, session);
-            var outcomes = new DifferentialVerifier(commands).probeStudentTestAssertions(sandbox, session, exercise, sources.templateFiles(), sources.solutionFiles(), plan,
-                    structural, () -> sources.restore(sandbox, session));
+            var outcomes = verifier.probeStudentTestAssertions(sandbox, session, exercise, sources.templateFiles(), sources.solutionFiles(), plan, structural,
+                    () -> sources.restore(sandbox, session));
             assertThat(outcomes).anySatisfy(outcome -> {
                 assertThat(outcome.mutant().evidence()).isEqualTo(SemanticMutant.Evidence.EMPTY_STUDENT_TESTS);
                 assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE);
@@ -593,7 +594,7 @@ class DockerGradleBuildTest {
         }
         assertThat(sandbox.exec(session, java.time.Duration.ofSeconds(5), "sh", "-c", "test ! -e /workspace/verify.sh").isSuccess())
                 .as("source-destructive verification is available only through server-managed tools").isTrue();
-        var failure = StageAssessmentCheck.failure(new DifferentialVerifier(commands), sandbox, session, exercise, structural, org.mockito.Mockito.mock(AgentVerifyReport.class));
+        var failure = StageAssessmentCheck.failure(verifier, sandbox, session, exercise, structural, org.mockito.Mockito.mock(AgentVerifyReport.class));
 
         if (gradeFaults) {
             assertThat(failure).isEmpty();
@@ -605,9 +606,24 @@ class DockerGradleBuildTest {
             });
         }
         assertThat(JavaSourceSnapshot.capture(sandbox, session).solutionFiles()).containsEntry(path, learner);
+        if (!gradeFaults) {
+            var before = JavaSourceSnapshot.capture(sandbox, session);
+            sandbox.copyIn(session, "/workspace/template", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, learner), Map.of()));
+            try {
+                assertThat(StageAssessmentCheck.failure(verifier, sandbox, session, exercise, structural, org.mockito.Mockito.mock(AgentVerifyReport.class)))
+                        .hasValueSatisfying(unresolved -> {
+                            assertThat(unresolved.passed()).isFalse();
+                            assertThat(unresolved.contractRedesignRequired()).isFalse();
+                            assertThat(unresolved.observation()).contains("previously confirmed", "Preserve the assigned learner work");
+                        });
+            }
+            finally {
+                before.restore(sandbox, session);
+            }
+        }
         if (gradeFaults) {
             var before = JavaSourceSnapshot.capture(sandbox, session);
-            var tools = new SandboxAgentTools(sandbox, session, new DifferentialVerifier(commands), exercise);
+            var tools = new SandboxAgentTools(sandbox, session, verifier, exercise);
             tools.configureStructuralOracleRefresh(() -> structural);
             tools.verify();
             var after = JavaSourceSnapshot.capture(sandbox, session);
