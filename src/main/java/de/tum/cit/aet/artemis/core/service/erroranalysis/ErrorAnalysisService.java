@@ -115,9 +115,12 @@ public class ErrorAnalysisService {
      * <p>
      * What cannot be written, for example while the cluster is not reachable, goes back to the buffer and is written by the next
      * run. A group that was written only in part goes back with just the hours that are missing, so nothing is counted twice.
+     * <p>
+     * While this runs, a group that was taken from the buffer and is not written yet is in neither of them, so a query of this node
+     * waits until the flush is done, see {@link #collectGroups}.
      */
     @Scheduled(fixedRateString = "${artemis.error-analysis.flush-interval:10s}", initialDelayString = "${artemis.error-analysis.flush-interval:10s}")
-    public void flush() {
+    public synchronized void flush() {
         Map<String, PendingGroup> drained = buffer.drain();
         if (drained.isEmpty()) {
             return;
@@ -169,7 +172,7 @@ public class ErrorAnalysisService {
         return new ErrorAnalysisPageDTO(new ArrayList<>(sorted.subList(from, to)), sorted.size(), totalErrors);
     }
 
-    private List<ErrorGroupDTO> collectGroups(ErrorAnalysisSpan span, ErrorLocation location, ErrorSeverity minSeverity) {
+    private synchronized List<ErrorGroupDTO> collectGroups(ErrorAnalysisSpan span, ErrorLocation location, ErrorSeverity minSeverity) {
         boolean boundedByTime = span.isBoundedByTime();
         long sinceMillis = boundedByTime ? clock.millis() - span.getDuration().toMillis() : Long.MIN_VALUE;
         // the hour that contains the start counts completely, so the count can be a little too high but never too low

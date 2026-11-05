@@ -2,9 +2,11 @@ package de.tum.cit.aet.artemis.core.service.erroranalysis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -13,6 +15,10 @@ import static org.mockito.Mockito.spy;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -200,6 +206,35 @@ class ErrorAnalysisServiceTest {
         unreliableNode.flush();
 
         assertThat(errorsOfTheLastDay(node2)).singleElement().extracting(ErrorGroupDTO::count).isEqualTo(2L);
+    }
+
+    @Test
+    void aQueryDuringAFlushStillShowsTheGroupsThatTheFlushIsWriting() throws Exception {
+        DistributedDataProvider slowCluster = spy(cluster);
+        DistributedMap<String, Long> counts = spy(cluster.<String, Long>getExpiringMap("error-analysis-counts", Duration.ofDays(31)));
+        doReturn(counts).when(slowCluster).getExpiringMap(eq("error-analysis-counts"), any());
+        CountDownLatch writing = new CountDownLatch(1);
+        CountDownLatch finishWriting = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            writing.countDown();
+            finishWriting.await(30, TimeUnit.SECONDS);
+            return invocation.callRealMethod();
+        }).when(counts).putIfAbsent(anyString(), any(), any(Duration.class));
+        ErrorAnalysisService slowNode = new ErrorAnalysisService(slowCluster, bufferOfNode1, clock, RELEASE);
+        bufferOfNode1.count(ErrorLocation.SERVER, ErrorSeverity.ERROR, null, "boom");
+
+        CompletableFuture<Void> flush = CompletableFuture.runAsync(slowNode::flush);
+        assertThat(writing.await(30, TimeUnit.SECONDS)).isTrue();
+        // the group has left the buffer and its count is not written yet
+        AtomicReference<List<ErrorGroupDTO>> seen = new AtomicReference<>();
+        Thread query = new Thread(() -> seen.set(errorsOfTheLastDay(slowNode)));
+        query.start();
+        await().until(() -> !query.isAlive() || query.getState() == Thread.State.BLOCKED);
+        finishWriting.countDown();
+        query.join();
+        flush.join();
+
+        assertThat(seen.get()).singleElement().extracting(ErrorGroupDTO::count).isEqualTo(1L);
     }
 
     @Test
