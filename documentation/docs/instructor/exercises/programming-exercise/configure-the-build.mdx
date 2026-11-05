@@ -2,7 +2,7 @@
 id: configure-the-build
 title: Configure the Build
 sidebar_label: Configure the Build
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -21,7 +21,9 @@ Each section below says whether it needs [Integrated Code Lifecycle](/instructor
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
 Instructors can configure the build phases.
-A new exercise starts with a default build plan for its programming language. To adapt it, open the exercise's detail page and click **Edit build plan**. All changes apply to all builds (template, solution, and student submissions).
+A new exercise starts with a default build plan for its programming language. To adapt it, select the exercise title
+in course management, scroll to **Repositories and builds**, and choose **Edit build plan** beside that heading.
+All changes apply to all builds (template, solution, and student submissions).
 The build plan editor shows the template and solution build status next to the configuration, so you can immediately see whether your changes still build. You can also view the configured build plan on the exercise's detail page.
 
 <Image src={buildPlanPhases} alt="Build phases with their scripts and result paths" size={ImageSize.large} caption="The build phases" />
@@ -74,11 +76,13 @@ You can also use a custom Docker image. Make sure to:
 
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
-Preconfigured checkout paths usually don't need changes.
+Preconfigured checkout paths usually don't need changes. They depend on the programming language and project type.
+For a saved exercise, the **Checkout directories** lists in the **Template** and **Solution** panels under
+**Repositories and builds** show where the repositories are placed during each build.
 
-Checkout paths depend on the programming language and project type:
-
-To change checkout paths, click **edit repositories checkout path**:
+To customize these paths while creating an exercise, use advanced mode and enter a valid **Short Name** in
+**General** to show the repository **Preview**. Choose **Edit repositories checkout path** below the preview.
+This control is available during creation, rather than on the saved exercise's details or edit form.
 
 Update the build plan accordingly (see the [Adapt Build Phases](#adapt-build-phases-optional) section).
 
@@ -98,7 +102,8 @@ Update the build plan accordingly (see the [Adapt Build Phases](#adapt-build-pha
 
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
-You edit this on the dedicated build plan editor page, which you open with the **Edit build plan** button on the exercise detail page (see [Adapt Build Phases](#adapt-build-phases-optional)).
+You edit this on the dedicated build plan editor page, which you open with **Edit build plan** beside
+**Repositories and builds** on the exercise detail page (see [Adapt Build Phases](#adapt-build-phases-optional)).
 
 The default maximum build duration (120 seconds) usually doesn't need changes.
 
@@ -110,7 +115,8 @@ Use the slider to adjust the time limit for build plan execution:
 
 **Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
-You edit this on the dedicated build plan editor page, which you open with the **Edit build plan** button on the exercise detail page (see [Adapt Build Phases](#adapt-build-phases-optional)).
+You edit this on the dedicated build plan editor page, which you open with **Edit build plan** beside
+**Repositories and builds** on the exercise detail page (see [Adapt Build Phases](#adapt-build-phases-optional)).
 
 In most cases, the default container configuration does not need to be changed.
 

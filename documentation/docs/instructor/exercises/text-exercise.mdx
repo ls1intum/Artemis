@@ -2,7 +2,7 @@
 id: text-exercise
 title: Text Exercise
 sidebar_label: Text Exercise
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -16,6 +16,7 @@ import createExerciseFormHint from './assets/general/create-exercise-form-hint.p
 import hintIcon from './assets/general/hint-icon.png';
 import importTextExerciseModal from './assets/text/import-text-exercise-modal.png';
 import courseDashboardExerciseText from './assets/text/course-dashboard-exercise-text.png';
+import exerciseDetailsText from './assets/text/exercise-details-text.png';
 import exerciseAssessmentDashboard from './assets/text/exercise-assessment-dashboard-2.png';
 import assessmentModal from './assets/text/assessment-modal.png';
 import feedbackModal from './assets/general/feedback-modal.png';
@@ -91,6 +92,21 @@ assessors train on, **Edit** reopens the form and **Delete** removes it. Whateve
 narrow window moves behind the row's overflow menu. The title opens the exercise itself.
 
 <Image src={courseDashboardExerciseText} alt="Course exercise list with the actions available on a text exercise" size={ImageSize.large} caption="The exercise on the course's exercise list" />
+
+Select the title to open the exercise details. The header shows the saved title and exercise type; **General**
+contains the **Exercise ID**. Section links scroll through the saved configuration, problem statement, solution and
+grading information without hiding the other sections, so browser search works across the page.
+
+The action bar offers **Participations**, **Statistics**, **Assessment Dashboard** and **Example submissions** where
+your role and the exercise context allow them. **Edit** reopens the form. **More actions** contains **Plagiarism**
+when you have Editor access and **Tutor Effort Statistics** for instructors; plagiarism checks also require the
+server's plagiarism feature. Instructors delete the exercise from **Exercise administration** at the bottom, with
+the confirmation required there.
+
+<Image src={exerciseDetailsText} alt="Text exercise details with navigation, editing actions and visible configuration sections" size={ImageSize.large} caption="The text exercise's details" />
+
+See [Exercise Details for Course Staff](/instructor/exercises/intro#exercise-details-for-course-staff) for shared
+navigation and compact-screen behavior.
 
 ## Assess Submissions
 

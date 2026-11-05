@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { CourseManagementExercisesComponent } from 'app/course/manage/exercises/course-management-exercises.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -29,6 +29,12 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ExerciseTableComponent } from 'app/course/manage/exercises/exercise-row/exercise-table.component';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -62,8 +68,14 @@ describe('Course Management Exercises Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 MockProvider(DeleteDialogService),
+                MockProvider(ParticipationWebsocketService, {
+                    subscribeForLatestResultOfParticipation: () => new BehaviorSubject<Result | undefined>(undefined),
+                }),
                 MockProvider(CourseManagementService, {
                     findWithExercises: () => of(new HttpResponse({ body: course })),
+                }),
+                MockProvider(CourseExerciseService, {
+                    findAllProgrammingExercisesForCourse: () => of(new HttpResponse({ body: [] })),
                 }),
                 MockProvider(ExerciseVariantGroupService, {
                     getGroupsForCourse: () => of([]),
@@ -110,6 +122,188 @@ describe('Course Management Exercises Component', () => {
     it('should propagate course permissions onto the loaded exercises', () => {
         comp.ngOnInit();
         expect(comp.exercises().every((e) => e.isAtLeastEditor === true && e.isAtLeastInstructor === true)).toBe(true);
+    });
+
+    it('loads the latest template and solution results in one course request for list warnings', () => {
+        const templateParticipation = { id: 10, submissions: [{ results: [{ id: 20, score: 20 }] }] };
+        const solutionParticipation = { id: 11, submissions: [{ results: [{ id: 21, score: 80 }] }] };
+        const load = vi
+            .spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse')
+            .mockReturnValue(of(new HttpResponse({ body: [{ id: 1, type: ExerciseType.PROGRAMMING, templateParticipation, solutionParticipation }] as ProgrammingExercise[] })));
+
+        comp.ngOnInit();
+
+        expect(load).toHaveBeenCalledExactlyOnceWith(1);
+        const programming = comp.exercises().find((exercise) => exercise.id === 1) as ProgrammingExercise;
+        expect(programming.templateParticipation).toBe(templateParticipation);
+        expect(programming.solutionParticipation).toBe(solutionParticipation);
+        expect(programming.title).toBe('Intro Programming');
+        expect(programming.isAtLeastEditor).toBe(true);
+    });
+
+    it('publishes the exercise list and groups before programming build results arrive', () => {
+        const results = new Subject<HttpResponse<ProgrammingExercise[]>>();
+        vi.spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse').mockReturnValue(results);
+        const groups = vi.spyOn(variantGroupService, 'getGroupsForCourse');
+
+        comp.ngOnInit();
+
+        expect(comp.loaded()).toBe(true);
+        expect(comp.exercises()).toHaveLength(2);
+        expect(comp.cards().flatMap((card) => card.exercises)).toHaveLength(2);
+        expect(groups).toHaveBeenCalledWith(1);
+        expect(comp['loadingBuildResults']()).toBe(true);
+        results.next(new HttpResponse({ body: [] }));
+        expect(comp['loadingBuildResults']()).toBe(false);
+    });
+
+    it('updates build warnings from live results across views and releases observers on navigation and destruction', () => {
+        const templateResults = new BehaviorSubject<Result | undefined>(undefined);
+        const solutionResults = new BehaviorSubject<Result | undefined>(undefined);
+        const websocketService = TestBed.inject(ParticipationWebsocketService);
+        const subscribe = vi.spyOn(websocketService, 'subscribeForLatestResultOfParticipation').mockImplementation((id) => (id === 10 ? templateResults : solutionResults));
+        const unsubscribe = vi.spyOn(websocketService, 'unsubscribeForLatestResultOfParticipation');
+        const routeData = new Subject<{ course: Course }>();
+        (parentRoute as any).data = routeData;
+        vi.spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [{ id: 1, type: ExerciseType.PROGRAMMING, templateParticipation: { id: 10 }, solutionParticipation: { id: 11 } }] as ProgrammingExercise[],
+                }),
+            ),
+        );
+        vi.spyOn(variantGroupService, 'getGroupsForCourse').mockReturnValue(of([{ id: 9, title: 'Variants', exerciseIds: [1] }]));
+        comp.ngOnInit();
+        routeData.next({ course });
+        const oldCards = comp.cards();
+        const table = TestBed.createComponent(ExerciseTableComponent);
+        table.componentRef.setInput('courseId', 1);
+        table.componentRef.setInput('exercises', comp.cards()[0].exercises);
+        expect(table.componentInstance.rows()[0].programmingBuildWarning).toBeUndefined();
+
+        templateResults.next({ id: 30, score: 100 });
+        solutionResults.next({ id: 31, score: 0 });
+
+        expect(subscribe).toHaveBeenCalledTimes(2);
+        expect(subscribe).toHaveBeenCalledWith(10, false, 1);
+        expect(subscribe).toHaveBeenCalledWith(11, false, 1);
+        expect(comp.cards()).not.toBe(oldCards);
+        table.componentRef.setInput('exercises', comp.cards()[0].exercises);
+        expect(table.componentInstance.rows()[0].programmingBuildWarning).toContain('artemisApp.programmingExercise.status.templateFulfillsTest');
+        expect(table.componentInstance.rows()[0].programmingBuildWarning).toContain('artemisApp.programmingExercise.status.solutionFailsTest');
+        comp.onViewChange('group');
+        const programming = comp.cards().find((card) => card.group?.id === 9)?.exercises[0] as ProgrammingExercise;
+        expect(programming.templateParticipation?.submissions?.[0].results?.[0].score).toBe(100);
+        expect(programming.solutionParticipation?.submissions?.[0].results?.[0].score).toBe(0);
+        templateResults.next({ id: 32, score: 0 });
+        solutionResults.next({ id: 33, score: 100 });
+        table.componentRef.setInput('exercises', comp.cards().find((card) => card.group?.id === 9)?.exercises);
+        expect(table.componentInstance.rows()[0].programmingBuildWarning).toBeUndefined();
+
+        const nextCourse = { id: 2, exercises: [] } as Course;
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: nextCourse })));
+        routeData.next({ course: nextCourse });
+        expect(templateResults.observed).toBe(false);
+        expect(solutionResults.observed).toBe(false);
+        expect(unsubscribe).toHaveBeenCalledWith(10, expect.objectContaining({ id: 1 }));
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        routeData.next({ course });
+        expect(templateResults.observed).toBe(true);
+        expect(solutionResults.observed).toBe(true);
+        fixture.destroy();
+        expect(templateResults.observed).toBe(false);
+        expect(solutionResults.observed).toBe(false);
+    });
+
+    it.each(['templateParticipation', 'solutionParticipation'] as const)('preserves a newer HTTP result when %s replays an older cached result', (field) => {
+        const cachedResults = new BehaviorSubject<Result | undefined>({ id: 20, score: 10 });
+        vi.spyOn(TestBed.inject(ParticipationWebsocketService), 'subscribeForLatestResultOfParticipation').mockReturnValue(cachedResults);
+        const programming = new ProgrammingExercise(undefined, undefined);
+        programming.id = 1;
+        programming[field] = { id: 10, submissions: [{ results: [{ id: 30, score: 100 }] }] };
+        vi.spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse').mockReturnValue(of(new HttpResponse({ body: [programming] })));
+
+        comp.ngOnInit();
+
+        const latest = () => (comp.exercises()[0] as ProgrammingExercise)[field]?.submissions?.[0].results?.[0];
+        expect(latest()).toEqual({ id: 30, score: 100 });
+        cachedResults.next({ id: 25, score: 20 });
+        expect(latest()).toEqual({ id: 30, score: 100 });
+        // Assessment updates can change the warning without changing the result identity.
+        cachedResults.next({ id: 30, score: 80 });
+        expect(latest()).toEqual({ id: 30, score: 80 });
+        cachedResults.next({ id: 31, score: 0 });
+        expect(latest()).toEqual({ id: 31, score: 0 });
+    });
+
+    it('keeps the exercise list available if loading build results fails', () => {
+        vi.spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse').mockReturnValue(throwError(() => new Error('Build results unavailable')));
+
+        comp.ngOnInit();
+
+        expect(comp.loaded()).toBe(true);
+        expect(comp.exercises()).toHaveLength(2);
+        expect(comp['loadingBuildResults']()).toBe(false);
+    });
+
+    it('does not request programming results when the course has no programming exercises', () => {
+        course.exercises = [Object.assign(new TextExercise(undefined, undefined), { id: 2 })];
+        const load = vi.spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse');
+        comp.ngOnInit();
+        expect(load).not.toHaveBeenCalled();
+    });
+
+    it('ignores build results from a previous course after navigation', () => {
+        const routeData = new Subject<{ course: Course }>();
+        (parentRoute as any).data = routeData;
+        const oldResults = new Subject<HttpResponse<ProgrammingExercise[]>>();
+        vi.spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse').mockReturnValue(oldResults);
+        comp.ngOnInit();
+        routeData.next({ course });
+        const nextCourse: Course = { id: 2, exercises: [Object.assign(new TextExercise(undefined, undefined), { id: 7 })], isAtLeastEditor: true };
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: nextCourse })));
+        routeData.next({ course: nextCourse });
+        oldResults.next(new HttpResponse({ body: [] }));
+
+        expect(comp.course()?.id).toBe(2);
+        expect(comp.exercises().map((exercise) => exercise.id)).toEqual([7]);
+    });
+
+    it('preserves loaded build results in the group view', () => {
+        vi.spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [
+                        Object.assign(new ProgrammingExercise(undefined, undefined), {
+                            id: 1,
+                            templateParticipation: { id: 10, submissions: [{ results: [{ id: 20, score: 20 }] }] },
+                        }),
+                    ],
+                }),
+            ),
+        );
+        vi.spyOn(variantGroupService, 'getGroupsForCourse').mockReturnValue(of([{ id: 9, title: 'Variants', exerciseIds: [1] }]));
+        comp.ngOnInit();
+        comp.onViewChange('group');
+
+        const member = comp.cards().find((card) => card.group?.id === 9)?.exercises[0] as ProgrammingExercise;
+        expect(member?.templateParticipation?.submissions?.[0].results?.[0].score).toBe(20);
+    });
+
+    it('ignores previous-course group responses after navigation', () => {
+        const routeData = new Subject<{ course: Course }>();
+        (parentRoute as any).data = routeData;
+        const oldGroups = new Subject<ExerciseVariantGroupDTO[]>();
+        vi.spyOn(variantGroupService, 'getGroupsForCourse').mockReturnValue(oldGroups);
+        comp.ngOnInit();
+        routeData.next({ course });
+        const nextCourse: Course = { id: 2, exercises: [Object.assign(new TextExercise(undefined, undefined), { id: 7 })], isAtLeastEditor: false };
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: nextCourse })));
+        routeData.next({ course: nextCourse });
+        oldGroups.next([{ id: 9, title: 'Old group', exerciseIds: [1] }]);
+
+        expect(comp.groups()).toEqual([]);
+        expect(comp.exercises().map((exercise) => exercise.id)).toEqual([7]);
     });
 
     it('should not load groups for tutors (non-editors)', () => {
@@ -321,6 +515,32 @@ describe('Course Management Exercises Component', () => {
             expect(textDelete).toHaveBeenCalledWith(2);
             expect(comp.selectedCount()).toBe(0);
             expect(reloadSpy).toHaveBeenCalled();
+        });
+
+        it('does not reload the previous course or clear the new selection when deletion completes after navigation', () => {
+            const pendingDelete = new Subject<HttpResponse<void>>();
+            programmingDelete.mockReturnValue(pendingDelete);
+            const routeData = new Subject<{ course: Course }>();
+            (parentRoute as any).data = routeData;
+            const nextFixture = TestBed.createComponent(CourseManagementExercisesComponent);
+            const nextComp = nextFixture.componentInstance;
+            nextComp.ngOnInit();
+            routeData.next({ course });
+            nextComp.toggleSelection(1);
+            nextComp.deleteSelectedExercises();
+            const nextCourse = { id: 2, exercises: [{ id: 7, type: ExerciseType.TEXT }] } as Course;
+            const reload = vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: nextCourse })));
+            routeData.next({ course: nextCourse });
+            nextComp.toggleSelection(7);
+            reload.mockClear();
+
+            pendingDelete.next(new HttpResponse<void>());
+            pendingDelete.complete();
+
+            expect(reload).not.toHaveBeenCalled();
+            expect(nextComp.selectedIds()).toEqual(new Set([7]));
+            expect(nextComp.exercises().map((exercise) => exercise.id)).toEqual([7]);
+            nextFixture.destroy();
         });
 
         it('lets remaining deletes settle and surfaces the first error on partial failure', () => {
