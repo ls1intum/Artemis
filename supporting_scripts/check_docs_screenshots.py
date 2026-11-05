@@ -507,6 +507,23 @@ def self_test() -> None:
             assert "--only" in str(failure), bad_selection
             continue
         raise AssertionError(f"--only {bad_selection!r} must be rejected")
+    # A new entry has no image yet: the selection of its id is fine, and only the validation of the manifest reports the missing image.
+    new_entry = {"id": "brand-new", "image": "area/assets/not-rendered-yet.png", "pages": ["area/page.mdx"], "user": "student", "route": "/courses/{courseId}/x", "source": []}
+    with tempfile.TemporaryDirectory() as directory:
+        manifest_file = Path(directory) / "manifest.json"
+        manifest_file.write_text(json.dumps({"users": {"student": "demo_student"}, "screenshots": [new_entry]}), encoding="utf-8")
+        original_manifest, original_argv = globals()["MANIFEST"], sys.argv
+        globals()["MANIFEST"], sys.argv = manifest_file, ["check_docs_screenshots.py", "--only", "brand-new"]
+        try:
+            assert main() == 0, "the preflight of --only <new id> has to pass before the first image exists"
+            sys.argv = ["check_docs_screenshots.py", "--only", "brand-new,brand-nwe"]
+            try:
+                main()
+                raise AssertionError("a misspelled id has to stop the preflight")
+            except SystemExit as failure:
+                assert "brand-nwe" in str(failure)
+        finally:
+            globals()["MANIFEST"], sys.argv = original_manifest, original_argv
     for bad in ("nan","inf", "-0.1", "1.5", "x"):
         try:
             share(bad)
@@ -547,7 +564,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--compare", metavar="DIR", help="compare the images rendered into DIR with the checked-in ones")
     parser.add_argument("--threshold", type=share, default=DEFAULT_THRESHOLD, help="share of changed pixels that counts as a difference (default 0.01)")
-    parser.add_argument("--only", metavar="IDS", help="with --compare: compare only these manifest ids, comma separated, as the renderer rendered only them. A misspelled id is an error.")
+    parser.add_argument("--only", metavar="IDS", help="with --compare: compare only these manifest ids, comma separated, as the renderer rendered only them. A misspelled id is an error. Without --compare or --stale, only the ids are checked (the preflight of render-docs-screenshots.sh).")
     parser.add_argument("--all", action="store_true", help="with --compare: also list the images that are within the threshold, with their similarity")
     parser.add_argument("--stale", action="store_true", help="list images whose source files changed after the image")
     parser.add_argument("--self-test", action="store_true", help="run the built-in tests")
@@ -557,6 +574,11 @@ def main() -> int:
         return 0
     manifest = load_manifest(MANIFEST)
     only = select_ids(manifest, args.only) if args.only is not None else None
+    if only is not None and not args.compare and not args.stale:
+        # The preflight of the render script: only the selection is checked. The images of a new entry do not exist before the first rendering,
+        # so the manifest itself is validated afterwards, by a run without --only.
+        print(f"{len(only)} manifest id(s) selected")
+        return 0
     if args.compare:
         lines, compared = compare(manifest, Path(args.compare), DOCS_ROOT, args.threshold, args.all, only)
         differing = [line for line in lines if "within the threshold" not in line]

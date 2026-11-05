@@ -83,42 +83,6 @@
             ]
         },
         {
-            "id": "tutorial-groups-student-overview",
-            "image": "student/assets/tutorial-groups/students-all-groups.png",
-            "pages": [
-                "student/communication-support/tutorial-groups.mdx"
-            ],
-            "user": "student",
-            "route": "/courses/{courseId}/tutorial-groups",
-            "viewport": {
-                "width": 1502,
-                "height": 716
-            },
-            "source": [
-                "src/main/webapp/app/tutorialgroup/overview",
-                "src/main/webapp/i18n/en/tutorialGroups.json"
-            ]
-        },
-        {
-            "id": "notification-settings",
-            "image": "student/assets/notifications/notification-settings.png",
-            "pages": [
-                "student/communication-support/notifications.mdx"
-            ],
-            "user": "student",
-            "route": "/user-settings/profile",
-            "viewport": {
-                "width": 1298,
-                "height": 797
-            },
-            "deviceScaleFactor": 2,
-            "source": [
-                "src/main/webapp/app/account/user/settings/profile/global-notifications-settings",
-                "src/main/webapp/i18n/en/userSettings.json"
-            ],
-            "selector": "jhi-email-notifications-settings"
-        },
-        {
             "id": "competency-management",
             "image": "instructor/analytics/assets/adaptive-learning/manage-competencies.png",
             "pages": [
@@ -192,45 +156,6 @@
             "note": "The exercise table prints relative dates (\"in a year\") and counts that depend on the time of the run."
         },
         {
-            "id": "exercise-assessment-dashboard",
-            "image": "instructor/assessment-grading/assets/assessment/exercise-dashboard.png",
-            "pages": [
-                "instructor/assessment-grading/assessment.mdx"
-            ],
-            "user": "instructor",
-            "route": "/course-management/{courseId}/assessment-dashboard/{exercise:Essay: The Value of Code Reviews}",
-            "viewport": {
-                "width": 1400,
-                "height": 800
-            },
-            "source": [
-                "src/main/webapp/app/assessment/shared/assessment-dashboard"
-            ]
-        },
-        {
-            "id": "student-statistics-overview",
-            "image": "student/assets/learning-analytics/student-statistics-overview.png",
-            "pages": [
-                "student/progress-analytics/learning-analytics.mdx"
-            ],
-            "user": "student",
-            "route": "/courses/{courseId}/statistics",
-            "viewport": {
-                "width": 1300,
-                "height": 1000
-            },
-            "source": [
-                "src/main/webapp/app/course/overview/course-statistics"
-            ],
-            "clip": {
-                "x": 170,
-                "y": 90,
-                "width": 1112,
-                "height": 905
-            },
-            "waitFor": "[data-testid=total-score-label]"
-        },
-        {
             "id": "student-lecture-details",
             "image": "student/assets/lectures/lecture-details.png",
             "pages": [
@@ -244,22 +169,6 @@
             },
             "source": [
                 "src/main/webapp/app/lecture/overview"
-            ]
-        },
-        {
-            "id": "instructor-lecture-details",
-            "image": "instructor/lectures/assets/lectures/lecture-details.png",
-            "pages": [
-                "instructor/lectures/lectures.mdx"
-            ],
-            "user": "instructor",
-            "route": "/course-management/{courseId}/lectures/{lecture:Software Architecture}",
-            "viewport": {
-                "width": 1300,
-                "height": 700
-            },
-            "source": [
-                "src/main/webapp/app/lecture/manage"
             ]
         },
         {
@@ -362,40 +271,6 @@
             ]
         },
         {
-            "id": "student-modeling-exercise-editor",
-            "image": "student/exercises/assets/modeling/modeling-exercise-students-interface.png",
-            "pages": [
-                "student/exercises/modeling-exercise.mdx"
-            ],
-            "user": "student",
-            "route": "/courses/{courseId}/exercises/{exercise:Class Diagram: Online Shop}",
-            "viewport": {
-                "width": 1440,
-                "height": 900
-            },
-            "source": [
-                "src/main/webapp/app/course/overview/exercise-details",
-                "src/main/webapp/app/modeling"
-            ]
-        },
-        {
-            "id": "student-file-upload-exercise",
-            "image": "student/exercises/assets/file-upload/before-submitting.png",
-            "pages": [
-                "student/exercises/file-upload-exercise.mdx"
-            ],
-            "user": "student",
-            "route": "/courses/{courseId}/exercises/{exercise:Poster: Comparing Sorting Algorithms}",
-            "viewport": {
-                "width": 1440,
-                "height": 900
-            },
-            "source": [
-                "src/main/webapp/app/course/overview/exercise-details",
-                "src/main/webapp/app/fileupload"
-            ]
-        },
-        {
             "id": "student-quiz-exercise",
             "image": "student/exercises/assets/quiz/current-quiz-exercise.png",
             "pages": [
@@ -444,40 +319,6 @@
             "source": [
                 "src/main/webapp/app/atlas"
             ]
-        },
-        {
-            "id": "student-exams-overview",
-            "image": "student/assets/exams/exam_overview.png",
-            "pages": [
-                "student/exams/take-an-exam.mdx"
-            ],
-            "user": "student",
-            "route": "/courses/{courseId}/exams",
-            "viewport": {
-                "width": 1440,
-                "height": 900
-            },
-            "source": [
-                "src/main/webapp/app/exam/overview"
-            ]
-        },
-        {
-            "id": "student-user-settings",
-            "image": "student/assets/notifications/user-settings.png",
-            "pages": [
-                "student/communication-support/notifications.mdx"
-            ],
-            "user": "student",
-            "route": "/user-settings/profile",
-            "viewport": {
-                "width": 1440,
-                "height": 900
-            },
-            "deviceScaleFactor": 2,
-            "source": [
-                "src/main/webapp/app/account/user/settings/navigation"
-            ],
-            "selector": "jhi-user-settings-sidebar"
         },
         {
             "id": "text-exercise-create",
@@ -584,24 +425,6 @@
             ]
         },
         {
-            "id": "modeling-exercises-management",
-            "image": "instructor/exercises/assets/modeling/course-dashboard-exercise-modeling.png",
-            "pages": [
-                "instructor/exercises/modeling-exercise.mdx"
-            ],
-            "user": "instructor",
-            "route": "/course-management/{courseId}/modeling-exercises",
-            "viewport": {
-                "width": 1440,
-                "height": 900
-            },
-            "selector": "tumaet-ui-panel:has(.tumaet-ui-panel-title:has-text(\"Modeling (\"))",
-            "source": [
-                "src/main/webapp/app/modeling",
-                "src/main/webapp/app/exercise/course-exercises"
-            ]
-        },
-        {
             "id": "quiz-exercises-management",
             "image": "instructor/exercises/assets/quiz/course-dashboard-exercise-quiz.png",
             "pages": [
@@ -656,80 +479,60 @@
             ]
         },
         {
-            "id": "exam-management",
-            "image": "instructor/exams/assets/exam_overview.png",
-            "pages": [
-                "instructor/exams/participation-checker.mdx"
-            ],
-            "user": "instructor",
-            "route": "/course-management/{courseId}/exams",
-            "viewport": {
-                "width": 1800,
-                "height": 520
-            },
-            "source": [
-                "src/main/webapp/app/exam/manage/exams"
-            ]
-        },
-        {
             "id": "exam-configuration",
             "image": "instructor/exams/assets/exam_configuration.png",
             "pages": [
                 "instructor/exams/create-an-exam.mdx"
             ],
             "user": "instructor",
-            "route": "/course-management/{courseId}/exams/{exam:Practice Exam: Software Engineering Fundamentals}/edit",
+            "route": "/course-management/{courseId}/exams/new",
             "viewport": {
                 "width": 1440,
-                "height": 900
+                "height": 1500
             },
             "source": [
                 "src/main/webapp/app/exam/manage/exams"
-            ]
+            ],
+            "clip": {
+                "x": 410,
+                "y": 240,
+                "width": 1030,
+                "height": 208
+            }
         },
         {
-            "id": "exam-exercise-groups",
+            "id": "exam-exercises-form",
             "image": "instructor/exams/assets/exam_exercises.png",
             "pages": [
                 "instructor/exams/create-an-exam.mdx"
             ],
             "user": "instructor",
-            "route": "/course-management/{courseId}/exams/{exam:Practice Exam: Software Engineering Fundamentals}/exercise-groups",
+            "route": "/course-management/{courseId}/exams/new",
             "viewport": {
                 "width": 1440,
-                "height": 900
+                "height": 1500
             },
             "source": [
-                "src/main/webapp/app/exam/manage/exercise-groups"
-            ]
-        },
-        {
-            "id": "exam-students",
-            "image": "instructor/exams/assets/student_list_view.png",
-            "pages": [
-                "instructor/exams/participation-checker.mdx"
+                "src/main/webapp/app/exam/manage/exams"
             ],
-            "user": "instructor",
-            "route": "/course-management/{courseId}/exams/{exam:Practice Exam: Software Engineering Fundamentals}/students",
-            "viewport": {
-                "width": 1440,
-                "height": 900
-            },
-            "source": [
-                "src/main/webapp/app/exam/manage/students"
-            ]
+            "clip": {
+                "x": 410,
+                "y": 805,
+                "width": 1030,
+                "height": 180
+            }
         },
         {
-            "id": "exam-checklist",
+            "id": "exam-list",
             "image": "instructor/exams/assets/exam_checklist_overview.png",
             "pages": [
                 "instructor/exams/prepare-and-test.mdx"
             ],
             "user": "instructor",
-            "route": "/course-management/{courseId}/exams/{exam:Practice Exam: Software Engineering Fundamentals}",
+            "route": "/course-management/{courseId}/exams",
             "viewport": {
                 "width": 1800,
-                "height": 1150
+                "height": 520
             },
             "source": [
                 "src/main/webapp/app/exam/manage/exams",
@@ -890,23 +693,6 @@
             },
             "source": [
                 "src/main/webapp/app/course/manage/course-scores"
-            ]
-        },
-        {
-            "id": "exam-grading",
-            "image": "instructor/exams/assets/configure_grading.png",
-            "pages": [
-                "instructor/exams/add-exercises.mdx"
-            ],
-            "user": "instructor",
-            "route": "/course-management/{courseId}/exams/{exam:Practice Exam: Software Engineering Fundamentals}/grading",
-            "viewport": {
-                "width": 1440,
-                "height": 900
-            },
-            "source": [
-                "src/main/webapp/app/exam/manage",
-                "src/main/java/de/tum/cit/aet/artemis/assessment/service/AssessmentDemoService.java"
             ]
         },
         {
