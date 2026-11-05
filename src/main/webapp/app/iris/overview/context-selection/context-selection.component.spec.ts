@@ -13,6 +13,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { By } from '@angular/platform-browser';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 describe('ContextSelectionComponent', () => {
     let component: ContextSelectionComponent;
@@ -136,6 +138,24 @@ describe('ContextSelectionComponent', () => {
 
             expect(lectureServiceMock.findAllByCourseIdForOverview).not.toHaveBeenCalled();
             expect(exerciseServiceMock.getTitlesForAccessibleCourse).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('add context hint', () => {
+        const hint = () => fixture.debugElement.query(By.css('.iris-context-trigger-wrapper')).injector.get(TumAetUiTooltipDirective).content();
+
+        it('should hide the hint while the picker is open and load the options on opening', async () => {
+            await fixture.whenStable();
+            expect(hint()).toBe('artemisApp.iris.contextSelection.addContextTooltip');
+
+            component['onPickerShow']();
+            await fixture.whenStable();
+            expect(hint()).toBeUndefined();
+            expect(lectureServiceMock.findAllByCourseIdForOverview).toHaveBeenCalledExactlyOnceWith(courseId);
+
+            component['isPickerOpen'].set(false);
+            await fixture.whenStable();
+            expect(hint()).toBe('artemisApp.iris.contextSelection.addContextTooltip');
         });
     });
 

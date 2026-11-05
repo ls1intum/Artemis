@@ -1,5 +1,9 @@
 <div class="iris-context-selection flex items-center gap-2">
-    <span class="iris-context-trigger-wrapper" [tumAetUiTooltip]="'artemisApp.iris.contextSelection.addContextTooltip' | artemisTranslate" tumAetUiTooltipPlacement="bottom">
+    <span
+        class="iris-context-trigger-wrapper"
+        [tumAetUiTooltip]="isPickerOpen() ? undefined : ('artemisApp.iris.contextSelection.addContextTooltip' | artemisTranslate)"
+        tumAetUiTooltipPlacement="bottom"
+    >
         <p-select
             [attr.aria-label]="'artemisApp.iris.contextSelection.label' | artemisTranslate"
             [disabled]="disabled()"
@@ -16,7 +20,8 @@
             optionValue="value"
             [ngModel]="selectedValue()"
             (onChange)="onSelectionChange($event.value)"
-            (onShow)="loadContextOptions()"
+            (onShow)="onPickerShow()"
+            (onHide)="isPickerOpen.set(false)"
             [filter]="true"
             filterBy="label"
             [filterPlaceholder]="'artemisApp.iris.contextSelection.search' | artemisTranslate"

@@ -113,6 +113,17 @@ export class ContextSelectionComponent {
     }
 
     /**
+     * Hides the "add context" hint while the dropdown is open: the hint follows hover, so after the opening click it would
+     * otherwise stay over the dropdown, which opens below or above the trigger depending on the space left.
+     */
+    protected readonly isPickerOpen = signal(false);
+
+    protected onPickerShow(): void {
+        this.isPickerOpen.set(true);
+        this.loadContextOptions();
+    }
+
+    /**
      * Loads the pickable lectures and exercises for the course, once per course. Called when the dropdown opens.
      */
     loadContextOptions(): void {

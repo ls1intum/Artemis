@@ -33,8 +33,21 @@ jhi-context-selection {
             cursor: not-allowed;
         }
 
+        // The label carries the combobox role and is the only focusable part of the select, so it stays in the
+        // layout for keyboard users and is only hidden visually; the trigger shows just the "+" icon.
         .p-select-label {
-            display: none;
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
+
+        &:has(.p-select-label:focus-visible) {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
 
         .p-select-dropdown {
