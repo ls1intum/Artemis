@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
-import { DataGuard } from 'app/account/user/settings/data-guard.service';
+import { DataGuard } from 'app/account/user/settings/ai-experience/data-guard.service';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('ProfileService', () => {

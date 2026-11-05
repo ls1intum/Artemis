@@ -2,6 +2,7 @@
 id: course-home-ai
 title: AI Welcomes on Course Home
 sidebar_label: Course Home AI
+last_reviewed: 2026-11-05
 ---
 
 Course **Home** gives students a contextual next step, recent course updates, their questions, and their recent Iris conversations when those features are available. Its welcome works without AI: Artemis selects from 15 situations with three English and German variants each.
@@ -25,7 +26,7 @@ Set `location` to `LOCAL` only when inference takes place within the installatio
 
 When the Home provider is configured, students can open **Account settings → AI experience**, even if no other AI module is enabled. A local provider also makes the local AI option available in the existing selection dialog. Iris interaction counts and deletion controls appear only when Iris is enabled.
 
-The base URL must be an HTTP or HTTPS origin without embedded credentials, query parameters or fragments. Keep API keys in deployment secrets. An incomplete configuration leaves the provider unavailable and deterministic welcomes continue to work.
+The base URL must be an HTTP or HTTPS URL without embedded credentials, query parameters or fragments. Keep API keys in deployment secrets. An incomplete configuration leaves the provider unavailable and deterministic welcomes continue to work.
 
 ## Request limits and fallback
 
