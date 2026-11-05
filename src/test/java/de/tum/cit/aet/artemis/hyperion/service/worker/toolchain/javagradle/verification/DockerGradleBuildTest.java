@@ -274,10 +274,7 @@ class DockerGradleBuildTest {
         assertThat(erased.testFailedNames()).doesNotContain("testMethods[RoastProfile]");
     }
 
-    /**
-     * Ares compares member annotations exactly, so the oracle must carry the annotations the approved API declares. The student sources compile without JUnit in this harness,
-     * so {@code @Deprecated} stands in for a runtime annotation such as {@code @Test}; Ares matches both by simple name.
-     */
+    /** Student-owned JUnit classes compile in the assignment source set, and Ares enforces their approved annotations. */
     @Test
     void specificationDerivedMethodGraderAcceptsTheApprovedAnnotationsAndRejectsTheirAbsence() throws IOException {
         String session = sandbox.createSession();
@@ -294,7 +291,7 @@ class DockerGradleBuildTest {
                 ```java
                 public class ScoreChecks {
                     @java.lang.annotation.Native public static final int LIMIT = 3;
-                    @Deprecated public void checkNullInput();
+                    @org.junit.jupiter.api.Test public void checkNullInput();
                     @Override public String toString();
                 }
                 ```
@@ -309,16 +306,17 @@ class DockerGradleBuildTest {
                 package de.tum.cit.aet.reference;
                 public class ScoreChecks {
                     @java.lang.annotation.Native public static final int LIMIT = 3;
-                    @Deprecated public void checkNullInput() {}
+                    @org.junit.jupiter.api.Test public void checkNullInput() { org.junit.jupiter.api.Assertions.assertTrue(true); }
                     @Override public String toString() { return "checks"; }
                 }
                 """;
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, annotated), Map.of()));
+        seeder.seedIfStructuralDiff(sandbox, session, exercise);
         var correct = build(session, "solution");
         assertThat(correct.exitCode()).as(correct.buildDiagnostic()).isZero();
         assertThat(correct.testNames()).contains("testMethods[ScoreChecks]", "testAttributes[ScoreChecks]");
 
-        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, annotated.replace("@Deprecated ", "")), Map.of()));
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, annotated.replace("@org.junit.jupiter.api.Test ", "")), Map.of()));
         var unannotated = build(session, "solution");
         assertThat(unannotated.exitCode()).isNotZero();
         assertThat(unannotated.testFailedNames()).contains("testMethods[ScoreChecks]");
