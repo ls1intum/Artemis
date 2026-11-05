@@ -13,7 +13,7 @@
     root="$(pwd)"
     cd "${studentParentWorkingDirectoryName}"
     # --path-mode abs makes the paths of the report independent of the working directory, as they are for the other tools
-    golangci-lint run --config "${root}/.golangci.yml" --path-mode abs --issues-exit-code 0 --output.sarif.path "${root}/golangci-lint.sarif"
+    golangci-lint run --config "${root}/${testWorkingDirectory}/.golangci.yml" --path-mode abs --issues-exit-code 0 --output.sarif.path "${root}/golangci-lint.sarif"
   forceRun: true
   resultPaths:
     - golangci-lint.sarif

@@ -117,11 +117,12 @@ class LocalCILanguageFeatureMatrixTest {
     /**
      * The static code analysis phases of these languages read a configuration file from the test repository. Where the file is shipped depends on the setup of the test
      * repository: Kotlin takes it from the staticCodeAnalysisConfig folder like Java, Go from the staticCodeAnalysis folder like the non-JVM languages.
+     * Go checks the test repository out into a subdirectory, so its phase has to address the file through the test working directory.
      */
     private static Stream<Arguments> staticAnalysisConfigurationFiles() {
         return Stream.of(
                 Arguments.of(ProgrammingLanguage.KOTLIN, "templates/kotlin/test/staticCodeAnalysisConfig/detekt-student.yml", "staticCodeAnalysisConfig/detekt-student.yml"),
-                Arguments.of(ProgrammingLanguage.GO, "templates/go/staticCodeAnalysis/test/.golangci.yml", ".golangci.yml"));
+                Arguments.of(ProgrammingLanguage.GO, "templates/go/staticCodeAnalysis/test/.golangci.yml", "${testWorkingDirectory}/.golangci.yml"));
     }
 
     @ParameterizedTest
