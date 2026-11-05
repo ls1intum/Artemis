@@ -16,6 +16,7 @@ export class ExpandableSectionComponent implements OnInit {
     readonly headerKey = input.required<string>();
     readonly hasTranslation = input(true);
     readonly isSubHeader = input(false);
+    readonly initiallyCollapsed = input(false);
 
     readonly isCollapsed = signal<boolean>(undefined!);
     // Icons
@@ -25,7 +26,7 @@ export class ExpandableSectionComponent implements OnInit {
     readonly PREFIX = 'collapsed.';
 
     ngOnInit(): void {
-        this.isCollapsed.set(!!this.localStorageService.retrieve(this.storageKey));
+        this.isCollapsed.set(this.localStorageService.retrieve<boolean>(this.storageKey) ?? this.initiallyCollapsed());
         this.localStorageService.store(this.storageKey, this.isCollapsed());
     }
 

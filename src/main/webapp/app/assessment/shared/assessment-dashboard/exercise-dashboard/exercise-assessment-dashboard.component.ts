@@ -165,6 +165,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly feedbackRequestEnabled = signal(false);
     readonly tutorAssessmentPercentage = signal(0);
     readonly tutorParticipationStatus = signal<TutorParticipationStatus>(undefined!);
+    readonly assessmentInstructionsCollapsed = signal(true);
     // Indexed by correction round (0, 1) — readonly so any in-place mutation is a compile error and updates go through .update() with a new array.
     readonly assessedSubmissionsByRound = signal<readonly (readonly Submission[])[]>([]);
     readonly unassessedSubmissionByRound = signal<readonly (Submission | undefined)[]>([]);
@@ -223,7 +224,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly complaintsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
     readonly moreFeedbackRequestsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
     readonly ratingsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
-
     readonly totalAssessmentSlots = computed(() => this.numberOfSubmissions().total * (this.isExamMode() ? this.correctionRoundIndices().length : 1));
     readonly completedAssessments = computed(() => this.totalNumberOfAssessments());
     readonly inProgressAssessments = computed(() =>
@@ -526,22 +526,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         }, millisecondsUntilNextChange);
     }
 
-    get yourStatusTitle(): string {
-        switch (this.tutorParticipationStatus()) {
-            case TutorParticipationStatus.TRAINED:
-                // If we are in 'TRAINED' state, but never really "trained" on example submissions, display the
-                // 'REVIEWED_INSTRUCTIONS' state text instead.
-                const exampleSubmissions = this.exercise().exampleSubmissions;
-                if (!exampleSubmissions || exampleSubmissions.length === 0) {
-                    return TutorParticipationStatus.REVIEWED_INSTRUCTIONS.toString();
-                }
-
-                return TutorParticipationStatus.TRAINED.toString();
-            default:
-                return this.tutorParticipationStatus().toString();
-        }
-    }
-
     language(submission: Submission): string {
         if (submission.submissionExerciseType === SubmissionExerciseType.TEXT) {
             return (submission as TextSubmission).language || 'UNKNOWN';
@@ -736,6 +720,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                     const dto = res.body!;
                     this.tutorParticipation.set(dto);
                     this.tutorParticipationStatus.set(dto.status);
+                    this.assessmentInstructionsCollapsed.set(false);
                     this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
                 },
                 error: this.onError,

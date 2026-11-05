@@ -13,8 +13,8 @@
 @if (exercise()) {
     <div>
         @if (!isTestRun()) {
-            <div class="assessment-summary mt-2 mb-6! grid grid-cols-1 items-stretch gap-6! lg:grid-cols-[1.1fr_1fr]">
-                <tumaet-ui-panel class="h-full min-w-0">
+            <div class="assessment-summary mt-2 mb-6! grid grid-cols-1 items-start gap-6! lg:grid-cols-[1.1fr_1fr]">
+                <tumaet-ui-panel class="min-w-0">
                     <div tumAetUiPanelHeader class="flex items-center justify-between gap-4">
                         <span class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.progressTitle"></span>
                         @if (!isTestRun()) {
@@ -76,17 +76,19 @@
                             {{ openAssessments() }}
                         </span>
                     </div>
-                    <div class="mt-6! border-t border-surface pt-4! text-sm text-muted-color">
-                        <p class="mb-2! font-semibold text-color">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.title.' + yourStatusTitle | artemisTranslate }}
-                        </p>
-                        <p class="m-0">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation().status!.toString() | artemisTranslate }}
-                        </p>
-                    </div>
+                    @if (tutorParticipationStatus() !== NOT_PARTICIPATED) {
+                        <div class="mt-6! border-t border-surface pt-4!">
+                            <jhi-collapsable-assessment-instructions
+                                [readOnly]="true"
+                                [exercise]="exercise()"
+                                [(collapsed)]="assessmentInstructionsCollapsed"
+                                [showReadCheckmark]="assessmentInstructionsCollapsed()"
+                            />
+                        </div>
+                    }
                 </tumaet-ui-panel>
 
-                <tumaet-ui-panel class="h-full min-w-0 overflow-hidden [&_.tumaet-ui-panel-header]:!hidden">
+                <tumaet-ui-panel class="min-w-0 overflow-hidden [&_.tumaet-ui-panel-header]:!hidden">
                     <div class="-mx-[calc(var(--tumaet-ui-spacing)*4.5)] -mb-[calc(var(--tumaet-ui-spacing)*4.5)] overflow-x-auto">
                         <table class="w-full table-fixed border-collapse text-base text-muted-color" tumAetUiTable data-testid="exercise-assessment-information">
                             <colgroup>
@@ -880,7 +882,6 @@
                         </div>
                     }
                 </div>
-                <jhi-collapsable-assessment-instructions class="collapsable-instructions" [readOnly]="true" [exercise]="exercise()" [collapsed]="true" />
             </div>
         }
 
