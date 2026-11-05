@@ -21,6 +21,11 @@ without using the API. For collaboration, trace the learner-owned selection, inj
 collaborators separately is not evidence of student-owned integration. Do not invent tests that the specification does not describe.
 For an operation sequence, replay the entire declared invocation before checking its postconditions. State when each required observation is available: a final-state
 accessor cannot prove an earlier state erased by a later operation. Intermediate observations must be supported by the declared API or supplied recording behavior.
+Observe the same learner execution that the task grades. A second independently implemented entry point cannot provide evidence for the first.
+If an entry point delegates to a testable operation, declare that delegation and observe the operation reached through that entry point; do not duplicate the scenario.
+A print-only replacement of a graded entry point must lose its behavioral credit even if another helper still returns correct objects.
+For each intermediate action, name the runtime observation that would change if that action were omitted while the final state stayed the same.
+
 Reject incompatible postconditions and tests whose setup performs the learner-owned actions. Do not repair the proposal in your reasoning by inventing an observation hook.
 This is not a requirement to prove syntax through black-box tests. A requested technique can be ungraded pedagogy; objectiveObservable asks whether the learner's
 assigned work has meaningful observable consequences, not whether every behaviorally equivalent implementation can be rejected. Do not require source-pattern checks.

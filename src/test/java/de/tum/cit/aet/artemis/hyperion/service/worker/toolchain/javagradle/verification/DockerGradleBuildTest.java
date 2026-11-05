@@ -500,8 +500,9 @@ class DockerGradleBuildTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    void assessmentGateDistinguishesTranscriptGradingFromSuppliedRuntimeObservation(boolean observeInteraction) throws IOException {
+    @ValueSource(ints = { 0, 1, 2 })
+    void assessmentGateDistinguishesTranscriptGradingFromSuppliedRuntimeObservation(int assessment) throws IOException {
+        boolean observeInteraction = assessment == 1;
         String sourcePath = "src/de/tum/cit/aet/reference/ScoreCalculator.java";
         String reference = """
                 package de.tum.cit.aet.reference;
@@ -514,6 +515,10 @@ class DockerGradleBuildTest {
                     }
                 }
                 """;
+        if (assessment == 2) {
+            reference = reference.replace("public static void main",
+                    "public static Counter runScenario() { Counter c = new Counter(); c.increment(); c.reset(); return c; } public static void main");
+        }
         String supplied = """
                 package de.tum.cit.aet.reference;
                 public class Counter {
@@ -560,6 +565,10 @@ class DockerGradleBuildTest {
                                 + "assertEquals(2, Counter.lastCreated().observedChanges()); assertEquals(1, Counter.lastCreated().valueAfterChange(0)); "
                                 + "assertEquals(0, Counter.lastCreated().valueAfterChange(1));"
                         : "");
+        if (assessment == 2) {
+            testSource = testSource.replace("assertEquals(\"0\", output.toString().strip());",
+                    "assertEquals(\"0\", output.toString().strip()); assertEquals(0, ScoreCalculator.runScenario().value());");
+        }
         List<WorkspaceFile> files = new ArrayList<>();
         snapshot().files().stream().filter(file -> file.path().startsWith("tests/") && !file.path().endsWith(".java")).forEach(files::add);
         files.add(new WorkspaceFile("solution/" + sourcePath, reference.getBytes(StandardCharsets.UTF_8), false));

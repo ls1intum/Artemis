@@ -569,11 +569,6 @@ public final class ExerciseIntegrityGate {
     /** Whitespace inside a literal: a path or path segment of a source tree has none, while an assertion message such as "Implement Parser.java" is prose. */
     private static final Pattern INNER_WHITESPACE = Pattern.compile("\\s");
 
-    /** A call whose arguments name a file or resource: a read, or a path or file built for one. Matched on masked code; a match ends at the call's opening parenthesis. */
-    private static final Pattern PATH_EXPRESSION = Pattern
-            .compile("\\bFiles\\s*\\.\\s*\\w+\\s*\\(|\\bnew\\s+(?:java\\s*\\.\\s*io\\s*\\.\\s*)?(?:FileReader|FileInputStream|RandomAccessFile|File)\\s*\\("
-                    + "|\\b(?:Path\\s*\\.\\s*of|Paths\\s*\\.\\s*get)\\s*\\(|\\bgetResource(?:AsStream)?\\s*\\(|\\bFileUtils\\s*\\.\\s*\\w+\\s*\\(|\\.\\s*resolve(?:Sibling)?\\s*\\(");
-
     private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_$][\\w$]*");
 
     /** An assignment or initialization of a named variable or field, on masked code; its value runs to the next semicolon. */
@@ -611,7 +606,7 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
-     * The source ranges that can contribute to a path a test reads: the arguments of every path expression, and the value of every variable or field named in such a range
+     * The source ranges that can contribute to a path a test reads: the arguments of actual file/resource reads, and the value of every variable or field named in such a range
      * and in scope there, followed until no further variable is named.
      *
      * @param masked comment- and literal-masked source, so parentheses inside literals are not counted
@@ -619,9 +614,10 @@ public final class ExerciseIntegrityGate {
      */
     private static List<SourceRange> pathExpressionRanges(String masked) {
         List<SourceRange> ranges = new ArrayList<>();
-        Matcher call = PATH_EXPRESSION.matcher(masked);
+        Matcher call = FILE_READ.matcher(masked);
         while (call.find()) {
-            ranges.add(new SourceRange(call.end() - 1, closingParenthesis(masked, call.end() - 1)));
+            int open = masked.indexOf('(', call.start());
+            ranges.add(new SourceRange(open, closingParenthesis(masked, open)));
         }
         List<SourceRange> blocks = braceBlocks(masked);
         Set<Integer> followedAssignments = new HashSet<>();

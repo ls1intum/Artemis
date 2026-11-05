@@ -59,6 +59,8 @@ final class SpecificationReviewPrompts {
                 Preserve the instructor brief, learner responsibilities and prerequisites. Choose runtime observations of the learner-owned behavior that the supported harness can
                 execute; tests of supplied collaborators alone cannot establish student integration. A supplied observation facility may expose otherwise-local operations without
                 adding learner work. Do not require source or bytecode inspection, introduce untaught syntax, remove a learning objective, or replace it with output transcription.
+                Observe the same learner execution that each graded entry point performs. A separate helper with an independently implemented scenario cannot prove what
+                another entry point does. Declare one execution path and supported intermediate observations that distinguish omitted actions even when final states agree.
                 Remove incidental normative constraints that the brief does not require. Reconcile Rules, Public API, Design, Testing Strategy and risk partitions together.
                 The revised specification receives the normal consistency and semantic review; the runtime counterexample is checked again before statement authoring.
                 """;

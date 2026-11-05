@@ -61,6 +61,11 @@ observation may expose operations on objects a beginner creates locally without 
 integration. For an operation sequence, state when each observation is taken. A final snapshot cannot establish an earlier state erased by a later operation; use supplied intermediate observations where needed. Observation support must record student actions, not perform them. Keep the student's prerequisites and responsibilities intact. Do not invent normative call counts, allocation counts or syntax restrictions merely to help a test.
 Source and bytecode inspection are not supported grading mechanisms.
 
+Observe the same learner execution that the task grades. A second independently implemented entry point cannot provide evidence for the first.
+If an entry point delegates to a testable operation, declare that delegation and observe the operation reached through that entry point; do not duplicate the scenario.
+A print-only replacement of a graded entry point must lose its behavioral credit even if another helper still returns correct objects.
+For each intermediate action, name the runtime observation that would change if that action were omitted while the final state stayed the same.
+
 For a beginner entry point that creates local objects, supplied constructors and methods can record the
 created instances and snapshots at the relevant operation boundaries. Tests reset that supplied recorder,
 invoke the student entry point, then inspect its observations. Recording must not establish the association,

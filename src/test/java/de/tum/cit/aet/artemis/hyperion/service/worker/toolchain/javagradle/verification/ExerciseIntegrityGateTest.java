@@ -893,6 +893,26 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void sourceReadingTests_followOnlyThePathsConsumedByReads() {
+        String test = """
+                class ParserTest {
+                    @Test void parsesPaths() throws Exception {
+                        var input = getClass().getResourceAsStream("cases.csv");
+                        var parsedPath = new Parser().parse(input);
+                        assertEquals(java.nio.file.Path.of("Parser.java"), parsedPath);
+                        var unused = java.nio.file.Path.of("Unused.java");
+                        java.nio.file.Files.writeString(java.nio.file.Path.of("Generated.java"), "fixture");
+                    }
+                }
+                """;
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", test))).isEmpty();
+        String actualRead = test.replace("var unused =", "var source =").replace("java.nio.file.Files.writeString",
+                "java.nio.file.Files.readString(source); java.nio.file.Files.writeString");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", actualRead))).singleElement().asString().contains("Unused.java")
+                .doesNotContain("Parser.java", "Generated.java");
+    }
+
+    @Test
     void statementTasks_requireInstructionTextBeforeTheNextTask() {
         assertThat(ExerciseIntegrityGate.statementTaskInstructionReasons("[task][First](one)\n[task][Second](two)\n")).singleElement().asString().contains("First", "Second",
                 "no student-facing instruction");
