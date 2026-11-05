@@ -157,7 +157,7 @@ in Artemis 11.
 This produces `build/libs/Artemis-<version>.war`. To run it locally:
 
 ```shell
-java -jar build/libs/*.war --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,atlas
+java -jar build/libs/*.war --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local
 ```
 
 Then open [http://localhost:8080](http://localhost:8080). You may need to copy a configuration YAML
