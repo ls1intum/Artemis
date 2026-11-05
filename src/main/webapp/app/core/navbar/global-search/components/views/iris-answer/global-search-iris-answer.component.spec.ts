@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { TranslateService } from '@ngx-translate/core';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject, throwError } from 'rxjs';
 import { Router, provideRouter } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { faFile, faFilePdf, faFileVideo, faKeyboard, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
@@ -78,8 +77,13 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         mockAsk = vi.fn().mockReturnValue(askSubject.asObservable());
 
         TestBed.configureTestingModule({
-            imports: [GlobalSearchIrisAnswerComponent, MockPipe(ArtemisTranslatePipe), MockDirective(MarkdownDirective)],
+            imports: [GlobalSearchIrisAnswerComponent],
             providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }, { provide: IrisSearchAnswerService, useValue: { ask: mockAsk } }],
+        });
+
+        TestBed.overrideComponent(GlobalSearchIrisAnswerComponent, {
+            remove: { imports: [MarkdownDirective] },
+            add: { imports: [MockDirective(MarkdownDirective)] },
         });
 
         fixture = TestBed.createComponent(GlobalSearchIrisAnswerComponent);
