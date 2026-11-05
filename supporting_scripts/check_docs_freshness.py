@@ -9,6 +9,7 @@ prove that the text is still true. Only a person can, so this script makes that 
     missing, malformed or in the future. Whoever changes a page and checks it against the code updates the date.
   * `--stale DAYS` lists the pages that have not been reviewed for DAYS days, oldest first, as a Markdown table.
     A scheduled workflow turns that list into an issue, so the review is a recurring task and not a one-off audit.
+    The table names the owner of each page from .github/CODEOWNERS, so that the review has an addressee.
   * `--impact` lists the pages that mention a file or a class that the change touched, which is how a
     pull request finds out which pages it may have made wrong. A page is listed when an inline code span names a
     changed repository path or the class of a changed Java file. It is advice, so it never fails.
@@ -91,6 +92,24 @@ def stale(days: int, today: datetime.date) -> list[tuple[datetime.date, Path]]:
     return sorted(result)
 
 
+def owners_of(path: str, codeowners: str | None = None) -> list[str]:
+    """The owners of a file according to .github/CODEOWNERS: the last matching pattern wins, as on GitHub.
+
+    Only the pattern forms that the file uses are understood: `*`, `/directory` or `/file` anchored at the root, and `*.ext`."""
+    if codeowners is None:
+        file = REPO_ROOT / ".github" / "CODEOWNERS"
+        codeowners = file.read_text(encoding="utf-8") if file.exists() else ""
+    owners: list[str] = []
+    for line in codeowners.splitlines():
+        parts = line.split("#")[0].split()
+        if len(parts) < 2:
+            continue
+        pattern = parts[0]
+        if pattern == "*" or (pattern.startswith("/") and (path == pattern[1:] or path.startswith(pattern[1:].rstrip("/") + "/"))) or (pattern.startswith("*.") and path.endswith(pattern[1:])):
+            owners = parts[1:]
+    return owners
+
+
 def git(*args: str) -> str:
     return subprocess.run(["git", *args], cwd=REPO_ROOT, check=True, capture_output=True, text=True).stdout
 
@@ -161,6 +180,11 @@ def self_test() -> None:
     assert reviewed_on("---\nlast_reviewed: '2026-11-03'\n---\n")[0] == datetime.date(2026, 11, 3)
     spans = references_of("See `src/main/Foo.java` and `FooService.run()`.\n```\n`Hidden`\n```\n")
     assert {"src/main/Foo.java", "FooService"} <= spans and "Hidden" not in spans, spans
+    owners = "* @a\n/documentation/docs/admin @b @c\n/documentation/docs/admin/x.mdx @d # comment\n*.png @e\n"
+    assert owners_of("README.md", owners) == ["@a"]
+    assert owners_of("documentation/docs/admin/y.mdx", owners) == ["@b", "@c"]
+    assert owners_of("documentation/docs/admin/x.mdx", owners) == ["@d"], "the last matching pattern wins"
+    assert owners_of("documentation/docs/admin/a.png", owners) == ["@e"]
     print("Self-test passed.")
 
 
@@ -192,9 +216,10 @@ def main() -> int:
         found = stale(args.stale, today)
         print(f"{len(found)} page(s) were not reviewed for {args.stale} days or more.\n")
         if found:
-            print("| Page | Last reviewed |\n| --- | --- |")
+            # the owners are code spans, so that listing them in an issue does not notify anybody every week
+            print("| Page | Last reviewed | Owner |\n| --- | --- | --- |")
             for date, page in found:
-                print(f"| `{rel(page)}` | {date if date != datetime.date.min else 'never'} |")
+                print(f"| `{rel(page)}` | {date if date != datetime.date.min else 'never'} | {' '.join(f'`{o}`' for o in owners_of(rel(page)))} |")
         return 0
     if args.impact:
         found = impact(changed_files(args.base, args.files_from))
