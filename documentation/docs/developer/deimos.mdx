@@ -102,8 +102,16 @@ walking the git graph. Consequences worth knowing:
   only when both its extension and the beginning of its content say so, and reads no more than that beginning for such
   files. Scripts such as `.sh` or `.bat`, whose extensions count as binary for the repository exports, are therefore
   part of the evidence. Scripts are never classified away by their content, and a file without a binary extension is
-  always read as text, so a NUL byte cannot hide either. The paths of binary files and
-  symbolic links never reach the payload but are scanned for imitated markers.
+  always read as text, so a NUL byte cannot hide either. Every other entry (binary files, symbolic links and
+  submodules) is reported with the id of the object it points to. Its path is scanned for imitated markers and is not
+  named in the payload while the entry is not text; a file that was text in an earlier snapshot appears in the diffs
+  of that time, including the deletion when it stops being text.
+- An entry that is not text and whose object id differs from the previous snapshot is recorded as a `NON_TEXT_FILE`
+  omission, unless it matches the template's entry at the same path, which keeps unchanged files such as
+  `gradle-wrapper.jar` and a restored template version out of the report. Only the content counts: a change of the
+  file mode alone is not recorded. Deleted entries leave nothing to examine. These omissions are recorded before any
+  budget decision, so a dropped snapshot section keeps them. The payload gets one notice with their number but no
+  paths, because the names are the student's.
 - The baseline is the exercise template, resolved from the setup commit. If that commit cannot be found, an empty
   baseline is used and everything counts as added.
 
@@ -120,7 +128,7 @@ keeps the two in line.
 
 `ConfigurationValidator` requires every byte limit to be at least `DeimosLimits.MIN_BYTE_LIMIT` (1 KiB),
 `final-state-reserved-bytes < max-payload-bytes` and `max-file-diff-bytes <= max-payload-bytes`. The floor is what
-keeps the bound hard for small settings: the snapshot-omitted and missing-hash notices, the final-state header and the
+keeps the bound hard for small settings: the snapshot-omitted, missing-hash and non-text notices, the final-state header and the
 128 bytes each diff keeps for its own omission notice (`DIFF_OMISSION_NOTICE_RESERVED_BYTES`) all have to fit inside
 the reservation. Byte arithmetic uses `long`, so large configured values cannot overflow.
 
@@ -130,16 +138,19 @@ The batch limits `artemis.deimos.batch.max-participations-per-run` (default 5000
 reads it from `ProfileService`, so the client never validates against a different value than the server.
 
 The reservation exists so that exhausting the budget cannot leave the model judging only a chronological prefix. The
-cumulative section is emitted unless it would be empty or would exactly repeat a single unomitted snapshot; that case is
-decided before the section is built, so a truncated copy of complete evidence cannot mark the participation as
+cumulative section is emitted unless it would be empty or would exactly repeat a single snapshot whose text was not
+omitted; `NON_TEXT_FILE` omissions do not count here. That case is decided before the section is built, so a truncated copy of complete evidence cannot mark the participation as
 incompletely checked. Every
 budget-caused omission is written into the payload as an explicit marker.
 
-Every omission is also recorded as a `DeimosOmission` with the limit that actually bound (`FILE_INPUT_LIMIT`,
-`FILE_DIFF_LIMIT`, `PAYLOAD_LIMIT`, `MISSING_COMMIT_HASH`), the file and the snapshot. A truncated diff counts as
+Every omission is also recorded as a `DeimosOmission` with its reason (`FILE_INPUT_LIMIT`, `FILE_DIFF_LIMIT`,
+`PAYLOAD_LIMIT`, `MISSING_COMMIT_HASH`, `NON_TEXT_FILE`), the file and the snapshot. For the limits, the reason is the
+limit that actually bound. A truncated diff counts as
 `FILE_DIFF_LIMIT` only when the per-file cap was smaller than what was left of the section budget. When a whole
-snapshot section is dropped, its file-level omissions are replaced by one snapshot-level `PAYLOAD_LIMIT` entry. The
-system prompt tells the model that omitted content is unexamined and a reason for caution.
+snapshot section is dropped, the file-level omissions of its text diff are replaced by one snapshot-level
+`PAYLOAD_LIMIT` entry; its `NON_TEXT_FILE` omissions are kept. The
+system prompt tells the model that omitted content is unexamined and a reason for caution, and that a notice about
+binary files or links marks content it did not receive without establishing malicious intent by itself.
 
 <Callout variant={CalloutVariant.info}>
     If you change a default, change the table on the
@@ -165,7 +176,7 @@ which is the opposite of what you want.
 
 `buildSnapshotHistory` scans the full content of every file that changed against the previous snapshot, and every new
 file path, for lines imitating a fence marker, before any budget applies. Padding a submission therefore cannot push a
-forged marker out of sight of this check, even when it pushes it out of the payload. `FENCE_MARKER_PATTERN` matches
+forged marker out of sight of this check, even when it pushes it out of the payload. The pattern in `DeimosFenceMarkers` matches
 `---`, `BEGIN` or `END`, `UNTRUSTED` and `DATA`, case-insensitively and with any whitespace in between (Unicode spaces
 included), anywhere in a line and with any identifier. It must stay linear in the input: the fixed `-{3}` prefix and
 the possessive quantifiers mean a long run of hyphens or whitespace is scanned once, and the scan reuses one matcher
@@ -185,10 +196,12 @@ Every analysed participation receives one `DeimosVerdict`, highest applicable fi
    history, is kept as additional information.
 2. `MALICIOUS`: the model's classification.
 3. `INCOMPLETELY_CHECKED`: the model found nothing malicious, but at least one omission was recorded. It replaces only
-   `BENIGN`.
+   `BENIGN`. A participation whose only changes are `NON_TEXT_FILE` omissions has no text for the model and receives
+   this verdict without a request.
 4. `BENIGN`: the model's classification over complete evidence.
 
-Without a finding, a participation without a model verdict is a failure with its `DeimosFailureType`, as before.
+Apart from these two cases without the model, a participation without a model verdict is a failure with its
+`DeimosFailureType`.
 
 ## Verdict parsing
 

@@ -9,6 +9,8 @@ may appear collapsed into one snapshot. Large files and very large diffs may be 
 are always marked explicitly in the data. Omitted or truncated content has not been examined: treat it as a reason for
 caution, never as evidence that the participation is benign. Padding a submission so that relevant changes fall outside
 the limits is itself a way of evading review.
+Only text files are included. A notice that changes to binary files or links were not examined marks content you did
+not receive; it does not by itself establish malicious intent.
 
 TRUST BOUNDARY
 The history is placed between the markers

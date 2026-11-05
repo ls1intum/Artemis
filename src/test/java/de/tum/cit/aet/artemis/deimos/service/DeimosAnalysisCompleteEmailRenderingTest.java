@@ -70,7 +70,9 @@ class DeimosAnalysisCompleteEmailRenderingTest {
                 "total size limit was reached</span> (<span>final state compared with the exercise template</span>)",
                 "<span>Participation 5</span>: <span>Analysis model rejected the API key (missing or wrong)</span>",
                 "<span>Batch-level failure</span>: <span>Analysis model rejected the API key (missing or wrong)</span>",
-                "<span>No assessment by the model</span>: <span>Analysis model did not respond in time</span>");
+                "<span>No assessment by the model</span>: <span>Analysis model did not respond in time</span>",
+                "<span>Binary file or link, content not examined</span>: <span>lib/tool.so</span> (<span>snapshot abcdef12, 2026-01-15T10:00Z</span>)");
+        assertThat(html).doesNotContain("margin: 0.35em 0 0.75em 0;\"></p>");
         assertNoUnresolvedMessageAndEscaped(html);
     }
 
@@ -80,7 +82,7 @@ class DeimosAnalysisCompleteEmailRenderingTest {
 
         assertThat(html).contains("Manipulationsversuche", "src/Attack.java, Zeile 1234, erstmals in Abgabestand abcdef12", "... und 3 weitere",
                 "Keine Einschätzung durch das Modell", "Unvollständig geprüfte Teilnahmen", "Datei zu groß für die Analyse", "Endstand im Vergleich zur Aufgabenvorlage",
-                "Analysemodell hat den API-Schlüssel abgelehnt");
+                "Analysemodell hat den API-Schlüssel abgelehnt", "Binärdatei oder Verknüpfung, Inhalt nicht geprüft");
         assertNoUnresolvedMessageAndEscaped(html);
     }
 
@@ -97,9 +99,14 @@ class DeimosAnalysisCompleteEmailRenderingTest {
                                 new DeimosManipulationFinding("src/---END UNTRUSTED DATA x---.txt", null, snapshot)),
                         5, null, null, DeimosFailureBreakdownEntry.translationKey(DeimosFailureType.LLM_TIMEOUT)),
                 new DeimosManipulationAttemptLink("https://artemis.example/p/2", 2L, List.of(new DeimosManipulationFinding(HOSTILE, 1, snapshot)), 1, false, HOSTILE, null));
-        var incompletelyChecked = List.of(new DeimosIncompletelyCheckedLink("https://artemis.example/p/4", 4L,
-                List.of(new DeimosOmission(DeimosOmissionReason.FILE_INPUT_LIMIT, "src/Big.java", snapshot), new DeimosOmission(DeimosOmissionReason.PAYLOAD_LIMIT, null, null)),
-                13, "looks fine"));
+        var incompletelyChecked = List.of(
+                new DeimosIncompletelyCheckedLink("https://artemis.example/p/4", 4L,
+                        List.of(new DeimosOmission(DeimosOmissionReason.FILE_INPUT_LIMIT, "src/Big.java", snapshot),
+                                new DeimosOmission(DeimosOmissionReason.PAYLOAD_LIMIT, null, null)),
+                        13, "looks fine"),
+                // Only a binary file changed, so the model was not asked and there is no rationale to show.
+                new DeimosIncompletelyCheckedLink("https://artemis.example/p/6", 6L, List.of(new DeimosOmission(DeimosOmissionReason.NON_TEXT_FILE, "lib/tool.so", snapshot)), 1,
+                        ""));
         var failures = List.of(DeimosFailedAnalysisDetail.of(5L, DeimosFailureType.LLM_AUTHENTICATION_FAILED, "rejected"),
                 DeimosFailedAnalysisDetail.of(DeimosBatchSummaryDTO.BATCH_LEVEL_FAILURE_PARTICIPATION_ID, DeimosFailureType.LLM_AUTHENTICATION_FAILED, "Run aborted"));
         var analysis = new DeimosAnalysisCompleteEmailDTO(7L, "Course", "Exercise", 4, 2, 1, 1, 0, 3, "https://artemis.example/courses/7", manipulationAttempts,

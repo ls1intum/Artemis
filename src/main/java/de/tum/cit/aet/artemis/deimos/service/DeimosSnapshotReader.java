@@ -6,11 +6,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.lib.Constants;
@@ -33,8 +31,8 @@ import de.tum.cit.aet.artemis.deimos.config.DeimosEnabled;
  * The repository exports drop files by extension alone, and {@link BinaryFileExtensionConfiguration} counts shell and
  * batch scripts as binary, although they are exactly where an attack on the build infrastructure would be written. This
  * reader therefore leaves a file out only when both its extension and the beginning of its content mark it as binary,
- * and never leaves out a script. The paths of all entries it does not return as text are reported, so that they can
- * still be checked.
+ * and never leaves out a script. All entries it does not return as text are reported with their object id, so that
+ * their paths can still be checked and a change to their content can be recognised without loading them.
  */
 @Conditional(DeimosEnabled.class)
 @Lazy
@@ -51,9 +49,10 @@ public class DeimosSnapshotReader {
      * The files of one commit, split into text files and everything else.
      *
      * @param textFiles  the text files, repository-relative path to UTF-8 content
-     * @param otherPaths the paths of all other entries: binary files and symbolic links
+     * @param otherFiles all other entries (binary files, symbolic links and submodules), repository-relative path to the
+     *                       id of the object the entry points to
      */
-    public record TextSnapshot(Map<String, String> textFiles, Set<String> otherPaths) {
+    public record TextSnapshot(Map<String, String> textFiles, Map<String, ObjectId> otherFiles) {
     }
 
     /**
@@ -65,17 +64,17 @@ public class DeimosSnapshotReader {
      *
      * @param repository the repository
      * @param commitHash the commit to read
-     * @return the text files and the remaining paths of that commit, both empty if the commit cannot be resolved
+     * @return the text files and the remaining entries of that commit, both empty if the commit cannot be resolved
      * @throws IOException if the repository cannot be read
      */
     public TextSnapshot read(Repository repository, String commitHash) throws IOException {
         ObjectId commitId = repository.resolve(commitHash + "^{commit}");
         if (commitId == null) {
-            return new TextSnapshot(Map.of(), Set.of());
+            return new TextSnapshot(Map.of(), Map.of());
         }
 
         Map<String, String> textFiles = new HashMap<>();
-        Set<String> otherPaths = new HashSet<>();
+        Map<String, ObjectId> otherFiles = new HashMap<>();
         try (RevWalk revWalk = new RevWalk(repository); TreeWalk treeWalk = new TreeWalk(repository)) {
             treeWalk.addTree(revWalk.parseCommit(commitId).getTree());
             treeWalk.setRecursive(true);
@@ -83,12 +82,12 @@ public class DeimosSnapshotReader {
                 String path = treeWalk.getPathString();
                 FileMode fileMode = treeWalk.getFileMode(0);
                 if (fileMode == FileMode.SYMLINK || fileMode.getObjectType() != Constants.OBJ_BLOB) {
-                    otherPaths.add(path);
+                    otherFiles.put(path, treeWalk.getObjectId(0));
                     continue;
                 }
                 ObjectLoader blobLoader = repository.open(treeWalk.getObjectId(0));
                 if (isBinaryFile(path) && !isTextScript(path) && startsWithBinaryContent(blobLoader)) {
-                    otherPaths.add(path);
+                    otherFiles.put(path, treeWalk.getObjectId(0));
                     continue;
                 }
                 try (InputStream inputStream = blobLoader.openStream()) {
@@ -96,7 +95,7 @@ public class DeimosSnapshotReader {
                 }
             }
         }
-        return new TextSnapshot(textFiles, otherPaths);
+        return new TextSnapshot(textFiles, otherFiles);
     }
 
     private static boolean isTextScript(String path) {

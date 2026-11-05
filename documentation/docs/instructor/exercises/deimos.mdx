@@ -75,11 +75,15 @@ unified diffs:
 2. A cumulative diff of the final state against the exercise template. It is usually present, and it is what lets the
    model see where the participation ended up even when intermediate snapshots were dropped. It is left out in two
    cases: when the final state does not differ from the template at all, and when it would exactly repeat a single
-   snapshot that was emitted without any omission or truncation.
+   snapshot whose text was emitted without any omission or truncation.
 
 Diffs contain changed lines with surrounding context, together with file paths, abbreviated commit hashes, and
 submission timestamps. Every text file is included, shell and batch scripts as well. Binary files, such as images or
-archives, are left out; their names are still checked for imitated markers. The model receives this history and classifies the participation as malicious or benign, with a
+archives, symbolic links and submodules are left out; their names are still checked for imitated markers. When the
+student adds such an entry or changes its content, the data the model receives says how many such changes were left
+out, without naming them, and the participation is reported as *incompletely checked* even if the model finds it
+benign. If nothing but such entries changed, the model is not asked at all. An entry that matches the exercise
+template, whether left unchanged or restored, does not count. The model receives this history and classifies the participation as malicious or benign, with a
 short rationale. It is instructed to look for patterns across snapshots, such as incremental probing or escalation,
 not only for a single incriminating line.
 
@@ -113,7 +117,7 @@ Omissions caused by these budgets are marked explicitly in the data the model re
 final state exists so that exhausting the budget cannot leave the model judging only the earliest part of a long
 history. Still, a participation with a very large repository is analysed less completely than a small one. When the
 model finds such a participation benign, the completion email reports it as *incompletely checked* instead, with the
-limit, the file and the snapshot of each omission, so you know which parts nobody has looked at.
+reason, the file and the snapshot of each omission, so you know which parts nobody has looked at.
 
 A submission with a blank commit hash cannot be read. It is marked in the data the model receives and makes an
 otherwise benign participation *incompletely checked* as well. Submissions that carry no commit hash at all are excluded before the

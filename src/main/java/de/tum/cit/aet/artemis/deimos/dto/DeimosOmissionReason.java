@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.deimos.dto;
 
 /**
- * Which limit caused part of a participation's evidence to be left out of the model's payload.
+ * Why part of a participation's evidence was left out of the model's payload.
  */
 public enum DeimosOmissionReason {
 
@@ -24,5 +24,11 @@ public enum DeimosOmissionReason {
     /**
      * The submission carries a blank commit hash, so its snapshot could not be read at all.
      */
-    MISSING_COMMIT_HASH
+    MISSING_COMMIT_HASH,
+
+    /**
+     * A binary file, symbolic link or submodule was added or its content changed. Only text reaches the model, so the
+     * content of such an entry was not examined.
+     */
+    NON_TEXT_FILE
 }

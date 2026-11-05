@@ -316,6 +316,31 @@ class DeimosBatchServiceTest {
     }
 
     @Test
+    void notificationListsAParticipationCheckedWithoutTheModelWithoutRationale() {
+        ZonedDateTime from = FIXED_NOW.minusDays(1);
+        ZonedDateTime to = FIXED_NOW;
+        var omission = new DeimosOmission(DeimosOmissionReason.NON_TEXT_FILE, "lib/tool.so", "abcdef12, 2026-01-15T10:00Z");
+        // Only a binary file changed: no model answer, no rationale and no failure.
+        var incomplete = new DeimosBatchSummaryDTO.ParticipationAnalysis(311L, 55L, DeimosVerdict.INCOMPLETELY_CHECKED, null, null, null, List.of(), 0, List.of(omission), 1);
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(1L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(311L)));
+        when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
+        when(deimosAnalysisService.analyze(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new DeimosBatchSummaryDTO("run-10", "MANUAL", "COURSE", from, to, 1, 1, 0, 0, 1, 0, 0, List.of(incomplete), List.of()));
+
+        deimosBatchService.triggerCourseBatch(7L, new DeimosBatchRequestDTO(from, to), createTriggerUser());
+
+        var emailData = captureEmailData();
+        assertThat(emailData.incompletelyCheckedCount()).isEqualTo(1);
+        assertThat(emailData.incompletelyCheckedLinks()).singleElement().satisfies(link -> {
+            assertThat(link.participationId()).isEqualTo(311L);
+            assertThat(link.omissions()).containsExactly(omission);
+            assertThat(link.rationale()).isEmpty();
+        });
+        assertThat(emailData.failedAnalysisDetails()).isEmpty();
+    }
+
+    @Test
     void configuredLimitsReplaceTheDefaults() throws MalformedURLException {
         var restrictedService = createService(Runnable::run, 10, 7);
         ZonedDateTime to = FIXED_NOW;

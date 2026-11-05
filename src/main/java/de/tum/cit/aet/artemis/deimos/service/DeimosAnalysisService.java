@@ -25,14 +25,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.EditList;
 import org.eclipse.jgit.diff.HistogramDiff;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
+import org.eclipse.jgit.lib.ObjectId;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,21 +106,6 @@ public class DeimosAnalysisService {
     private static final int MAX_REPORTED_PATH_LENGTH = 200;
 
     private static final String TRUNCATION_SUFFIX = "...";
-
-    /**
-     * A line imitating one of the markers that fence the untrusted payload, {@code ---BEGIN UNTRUSTED DATA <id>---} or
-     * {@code ---END UNTRUSTED DATA <id>---}. Any identifier, or none, and any surrounding text are accepted, and case and
-     * whitespace (including Unicode spaces) may differ, so a marker in a comment is caught as well.
-     * <p>
-     * The scan has to stay linear in the size of the submission. The fixed {@code -{3}} prefix makes every start
-     * position fail within three characters unless it reaches the whitespace, and the possessive quantifiers never give
-     * back what they consumed, so a long run of hyphens or whitespace is scanned once rather than once per start
-     * position.
-     */
-    private static final Pattern FENCE_MARKER_PATTERN = Pattern.compile("-{3}[\\s\\p{Z}]*+(?:BEGIN|END)[\\s\\p{Z}]++UNTRUSTED[\\s\\p{Z}]++DATA", Pattern.CASE_INSENSITIVE);
-
-    // Every common line ending, so converting a file between them keeps the identity and number of its lines.
-    private static final Pattern LINE_BREAK_PATTERN = Pattern.compile("\r\n|[\r\n]");
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -264,11 +248,16 @@ public class DeimosAnalysisService {
             String sentinel = generateSentinel();
             SnapshotHistory snapshotHistory = buildSnapshotHistory(participationId, programmingParticipation, sentinel, evidence);
             if (snapshotHistory.payload().isBlank()) {
-                log.info("Skipping Deimos analysis for participation {}: no observed snapshot history", participationId);
+                log.info("Skipping Deimos analysis for participation {}: no observed change to text files", participationId);
                 // An empty file whose name imitates a marker produces no diff, yet it is still a finding.
                 if (evidence.hasFindings()) {
                     return new ParticipationOutcome(
                             toAnalysis(participationId, exerciseId, DeimosVerdict.MANIPULATION_ATTEMPT, null, DeimosFailureType.NO_SNAPSHOT_HISTORY, evidence), null, false);
+                }
+                // Only binary files or links changed: there is nothing the model could read, but the student did submit
+                // content that nobody examined, so the participation must not pass as having nothing to analyse.
+                if (evidence.hasOmissions()) {
+                    return new ParticipationOutcome(toAnalysis(participationId, exerciseId, DeimosVerdict.INCOMPLETELY_CHECKED, null, null, evidence), null, false);
                 }
                 return new ParticipationOutcome(null,
                         new FailedAnalysis(participationId, DeimosFailureType.NO_SNAPSHOT_HISTORY, "No observed submission snapshot history available"), false);
@@ -404,6 +393,14 @@ public class DeimosAnalysisService {
         boolean hasOmissions() {
             return !omissions.isEmpty();
         }
+
+        /**
+         * Whether part of the text evidence was left out, as opposed to the content of binary files and links, which never
+         * reaches the model.
+         */
+        boolean hasTextOmissions() {
+            return omissions.stream().anyMatch(omission -> omission.reason() != DeimosOmissionReason.NON_TEXT_FILE);
+        }
     }
 
     /**
@@ -419,7 +416,7 @@ public class DeimosAnalysisService {
      * An omission as recorded while the history is built. Compared on the raw path and the snapshot identity, so two
      * long paths that only differ after the part kept for display are still counted separately.
      *
-     * @param reason   the limit that caused the omission
+     * @param reason   why the evidence was left out
      * @param rawPath  the affected file, or {@code null} when a whole snapshot is affected
      * @param snapshot the affected snapshot, or {@code null} for the final state
      */
@@ -433,7 +430,7 @@ public class DeimosAnalysisService {
     /**
      * Result of reconstructing a participation's observed snapshot history.
      *
-     * @param payload          the rendered history, empty when there is genuinely nothing to analyse
+     * @param payload          the rendered history, empty when there is nothing the model could analyse
      * @param emittedSnapshots how many snapshots contributed a diff
      */
     private record SnapshotHistory(String payload, int emittedSnapshots) {
@@ -442,8 +439,9 @@ public class DeimosAnalysisService {
     /**
      * Reconstructs the observed submission snapshot history of a participation as unified diffs.
      * <p>
-     * An empty payload means there is genuinely nothing to analyse (no snapshots, or no observed change). Anything that
-     * went wrong throws {@link DeimosSnapshotHistoryException} instead, so a repository failure is never reported as a
+     * An empty payload means there is nothing the model could analyse: no snapshots, no observed change, or changes to
+     * binary files and links alone, which are recorded as omissions. Anything that went wrong throws {@link DeimosSnapshotHistoryException} instead, so a repository failure is
+     * never reported as a
      * clean participation. Imitated fence markers found in the full snapshot contents and every omission caused by a
      * limit are recorded in {@code evidence}.
      *
@@ -473,7 +471,7 @@ public class DeimosAnalysisService {
                 log.warn("No setup commit found for participation {}, falling back to empty template", participationId);
             }
 
-            TextSnapshot template = setupCommitHash != null ? readSnapshot(repository, setupCommitHash) : new TextSnapshot(Map.of(), Set.of());
+            TextSnapshot template = setupCommitHash != null ? readSnapshot(repository, setupCommitHash) : new TextSnapshot(Map.of(), Map.of());
             Map<String, String> templateFiles = template.textFiles();
             var templateMarkerLines = new HashMap<String, Set<String>>();
 
@@ -482,10 +480,11 @@ public class DeimosAnalysisService {
             long usedBytes = 0;
             long incrementalBudget = (long) maxPayloadBytes - finalStateReservedBytes;
             Map<String, String> previousFiles = templateFiles;
-            Set<String> previousOtherPaths = template.otherPaths();
+            Map<String, ObjectId> previousOtherFiles = template.otherFiles();
             int emittedSnapshots = 0;
             int omittedSnapshots = 0;
             int unexaminableSubmissions = 0;
+            int nonTextChanges = 0;
 
             for (ProgrammingSubmission submission : submissions) {
                 var snapshot = new SnapshotRef(submission.getId(), snapshotLabel(submission));
@@ -502,7 +501,9 @@ public class DeimosAnalysisService {
                 Map<String, String> currentFiles = current.textFiles();
                 // Scanned on the full contents before any limit applies, so padding cannot push a forged marker out of
                 // sight of this check, even when it pushes it out of the payload.
-                scanForImitatedMarkers(participationId, template, templateMarkerLines, previousFiles, previousOtherPaths, current, snapshot.label(), sentinel, evidence);
+                scanForImitatedMarkers(participationId, template, templateMarkerLines, previousFiles, previousOtherFiles.keySet(), current, snapshot.label(), sentinel, evidence);
+                // Recorded before any budget decision, so dropping this snapshot's text section cannot drop them as well.
+                nonTextChanges += recordNonTextChanges(template, previousOtherFiles, current, snapshot, evidence);
 
                 // The header is known before the diff, so its bytes can be taken out of the budget the diff may spend.
                 // Handing buildDiff the whole payload budget instead would let it return a section that no longer fits,
@@ -513,7 +514,7 @@ public class DeimosAnalysisService {
 
                 var diffResult = buildDiff(previousFiles, currentFiles, diffBudget, snapshot);
                 previousFiles = currentFiles;
-                previousOtherPaths = current.otherPaths();
+                previousOtherFiles = current.otherFiles();
 
                 if (diffResult.text().isEmpty()) {
                     continue;
@@ -552,22 +553,34 @@ public class DeimosAnalysisService {
 
             // Recomputed against the template so the model always sees where the participation ended up, even when
             // intermediate snapshots were dropped above. The incremental loop stopped at maxPayloadBytes -
-            // finalStateReservedBytes, so what remains is the reservation minus the two notices above and the header
-            // below; the minimum byte limit enforced at startup keeps that positive.
+            // finalStateReservedBytes, so what remains is the reservation minus the notices and the header; the minimum
+            // byte limit enforced at startup keeps that positive.
             String cumulativeHeader = "=== Final state vs. exercise template ===" + System.lineSeparator();
-            long cumulativeBudget = Math.max(0, maxPayloadBytes - usedBytes - utf8Length(cumulativeHeader));
+            // Without paths: the names of binary files and links are the student's, and this notice must not carry them into
+            // the prompt. It is charged before the final state is built, so the final state cannot exceed the payload bound.
+            String nonTextNotice = nonTextChanges > 0
+                    ? "[... %d change(s) to binary files or links were not examined; their content is not included ...]%n%n".formatted(nonTextChanges)
+                    : "";
+            long cumulativeBudget = Math.max(0, maxPayloadBytes - usedBytes - utf8Length(nonTextNotice) - utf8Length(cumulativeHeader));
             // A single complete snapshot already is the change against the template. Building its copy first would let the
             // smaller remaining budget truncate it, and the omissions of a section that is never sent would wrongly mark
-            // a fully examined participation as incompletely checked.
-            boolean cumulativeIsRedundant = emittedSnapshots == 1 && omittedSnapshots == 0 && !evidence.hasOmissions();
+            // a fully examined participation as incompletely checked. Changes to binary files and links say nothing about
+            // whether that text section is complete.
+            boolean cumulativeIsRedundant = emittedSnapshots == 1 && omittedSnapshots == 0 && !evidence.hasTextOmissions();
+            String cumulativeSection = "";
             if (!cumulativeIsRedundant) {
                 var cumulativeResult = buildDiff(templateFiles, previousFiles, cumulativeBudget, null);
                 if (!cumulativeResult.text().isEmpty()) {
                     evidence.omissions.addAll(cumulativeResult.omissions());
-                    sb.append(cumulativeHeader);
-                    sb.append(cumulativeResult.text());
+                    cumulativeSection = cumulativeHeader + cumulativeResult.text();
                 }
             }
+            // Only alongside other content: a history that changed nothing but binary files and links, without any other
+            // notice, is reported without asking the model, so this notice alone must not turn it into a payload.
+            if (!nonTextNotice.isEmpty() && (!sb.isEmpty() || !cumulativeSection.isEmpty())) {
+                sb.append(nonTextNotice);
+            }
+            sb.append(cumulativeSection);
 
             return new SnapshotHistory(sb.toString().stripTrailing(), emittedSnapshots);
         }
@@ -601,9 +614,9 @@ public class DeimosAnalysisService {
             Set<String> previousOtherPaths, TextSnapshot current, String snapshot, String sentinel, ParticipationEvidence evidence) {
         Map<String, String> templateFiles = template.textFiles();
         // Binary files and symbolic links never reach the payload, but their names are the student's as well.
-        for (String path : new TreeSet<>(current.otherPaths())) {
-            boolean inTemplate = templateFiles.containsKey(path) || template.otherPaths().contains(path);
-            if (!previousOtherPaths.contains(path) && !inTemplate && containsFenceMarker(path)) {
+        for (String path : new TreeSet<>(current.otherFiles().keySet())) {
+            boolean inTemplate = templateFiles.containsKey(path) || template.otherFiles().containsKey(path);
+            if (!previousOtherPaths.contains(path) && !inTemplate && DeimosFenceMarkers.containsFenceMarker(path)) {
                 evidence.addFinding("path\0" + path, new DeimosManipulationFinding(displayPath(path), null, snapshot));
             }
         }
@@ -614,7 +627,7 @@ public class DeimosAnalysisService {
                 continue;
             }
 
-            if (!templateFiles.containsKey(path) && !template.otherPaths().contains(path) && containsFenceMarker(path)) {
+            if (!templateFiles.containsKey(path) && !template.otherFiles().containsKey(path) && DeimosFenceMarkers.containsFenceMarker(path)) {
                 evidence.addFinding("path\0" + path, new DeimosManipulationFinding(displayPath(path), null, snapshot));
             }
 
@@ -622,11 +635,11 @@ public class DeimosAnalysisService {
                 String templateContent = templateFiles.get(templatePath);
                 Set<String> lines = new HashSet<>();
                 if (templateContent != null) {
-                    forEachFenceMarkerLine(templateContent, (lineNumber, line) -> lines.add(line));
+                    DeimosFenceMarkers.forEachMarkerLine(templateContent, (lineNumber, line) -> lines.add(line));
                 }
                 return lines;
             });
-            forEachFenceMarkerLine(content, (lineNumber, line) -> {
+            DeimosFenceMarkers.forEachMarkerLine(content, (lineNumber, line) -> {
                 if (!markerLinesInTemplate.contains(line)) {
                     evidence.addFinding("line\0" + path + "\0" + line, new DeimosManipulationFinding(displayPath(path), lineNumber, snapshot));
                 }
@@ -642,44 +655,30 @@ public class DeimosAnalysisService {
     }
 
     /**
-     * Checks a single line, or a file path, for an imitated fence marker.
+     * Records every binary file, symbolic link or submodule whose content a snapshot adds or changes, as recognised by its
+     * object id. Only text reaches the model, so that content is never examined. An entry that matches the exercise
+     * template is the instructor's, also when a student restores it, and a deleted entry leaves nothing to examine.
      *
-     * @param text the text to check, without line breaks
-     * @return whether it contains an imitated fence marker
+     * @param template           the exercise template
+     * @param previousOtherFiles the non-text entries of the previous snapshot
+     * @param current            the snapshot to check
+     * @param snapshot           the snapshot, for the report
+     * @param evidence           collects the omissions
+     * @return how many entries were recorded
      */
-    static boolean containsFenceMarker(CharSequence text) {
-        return FENCE_MARKER_PATTERN.matcher(text).find();
-    }
-
-    @FunctionalInterface
-    private interface MarkerLineConsumer {
-
-        void accept(int lineNumber, String line);
-    }
-
-    /**
-     * Calls {@code consumer} for every line of {@code content} that contains an imitated fence marker.
-     * <p>
-     * One matcher is reused with its region set to each line in turn, so the whole content is scanned in a single linear
-     * pass and a line is only copied when it matches.
-     *
-     * @param content  the text to scan
-     * @param consumer receives the 1-based line number and the text of each matching line, without its line terminator
-     */
-    private static void forEachFenceMarkerLine(String content, MarkerLineConsumer consumer) {
-        Matcher matcher = FENCE_MARKER_PATTERN.matcher(content);
-        Matcher lineBreakMatcher = LINE_BREAK_PATTERN.matcher(content);
-        int lineStart = 0;
-        int lineNumber = 1;
-        while (lineStart <= content.length()) {
-            boolean hasLineBreak = lineBreakMatcher.find(lineStart);
-            int lineEnd = hasLineBreak ? lineBreakMatcher.start() : content.length();
-            if (matcher.region(lineStart, lineEnd).find()) {
-                consumer.accept(lineNumber, content.substring(lineStart, lineEnd));
+    private static int recordNonTextChanges(TextSnapshot template, Map<String, ObjectId> previousOtherFiles, TextSnapshot current, SnapshotRef snapshot,
+            ParticipationEvidence evidence) {
+        int recorded = 0;
+        // Sorted, so the entries shown in the capped report do not depend on hash order.
+        for (Map.Entry<String, ObjectId> entry : new TreeMap<>(current.otherFiles()).entrySet()) {
+            ObjectId objectId = entry.getValue();
+            if (!objectId.equals(previousOtherFiles.get(entry.getKey())) && !objectId.equals(template.otherFiles().get(entry.getKey()))) {
+                if (evidence.omissions.add(new RecordedOmission(DeimosOmissionReason.NON_TEXT_FILE, entry.getKey(), snapshot))) {
+                    recorded++;
+                }
             }
-            lineStart = hasLineBreak ? lineBreakMatcher.end() : content.length() + 1;
-            lineNumber++;
         }
+        return recorded;
     }
 
     /**
@@ -693,7 +692,7 @@ public class DeimosAnalysisService {
      *
      * @param repository the bare repository
      * @param commitHash the commit to read
-     * @return the text files of that commit and the paths of all its other entries
+     * @return the text files of that commit and all its other entries
      * @throws DeimosSnapshotHistoryException if the commit cannot be resolved or read
      */
     private TextSnapshot readSnapshot(Repository repository, String commitHash) {

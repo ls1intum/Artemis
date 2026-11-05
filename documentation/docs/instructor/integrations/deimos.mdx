@@ -49,7 +49,9 @@ Diffs do not necessarily contain the complete source of any file. They contain w
 that amounts to a full file depends on how much of it the student rewrote.
 
 The payload is size-limited, and files or snapshots beyond the budget are omitted or truncated. The exact bounds are
-listed under [what is analysed](/instructor/exercises/deimos#size-limits-and-truncation).
+listed under [what is analysed](/instructor/exercises/deimos#size-limits-and-truncation). The content of binary files,
+symbolic links and submodules is not sent. When such entries change, the payload says how many changed without naming
+them; a file that was text in an earlier snapshot still appears under its name in that snapshot's diff.
 
 ### What is not sent
 
@@ -93,8 +95,8 @@ If you cannot get a clear answer to question 3, do not run the analysis.
 
 ## Cost and load
 
-Every analysed participation is one request to the model, and that request carries the participation's observed
-history up to the size bounds linked above, not only the part inside your chosen window. Two things follow:
+Every analysed participation with changes to text files is one request to the model, and that request carries the
+participation's observed history up to the size bounds linked above, not only the part inside your chosen window. Two things follow:
 
 - A course-wide run over a busy period is a substantial number of requests, and on a paid endpoint a substantial cost
   that is not shown to you anywhere in Artemis.

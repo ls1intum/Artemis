@@ -21,8 +21,10 @@ public enum DeimosVerdict {
     MALICIOUS,
 
     /**
-     * The model found nothing malicious, but part of the evidence was left out to stay within a limit or because a
-     * submission could not be read, so the benign classification only covers what the model actually received.
+     * Part of the evidence was not examined: it was left out to stay within a limit, a submission could not be read, or
+     * a binary file or link was added or changed. If the model was asked, it found nothing malicious, but its benign
+     * classification only covers what it actually received. A participation that changed nothing but binary files and
+     * links receives this verdict without a request to the model.
      */
     INCOMPLETELY_CHECKED,
 

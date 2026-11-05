@@ -17,7 +17,8 @@ workers looks, from the grading perspective, like any other failing submission.
 You start a run manually and choose a time window. Artemis then reconstructs the submission history of every selected
 participation, checks it for text that imitates the markers Deimos uses to fence student code in its prompt, and asks a
 language model to classify it. Participations whose history turns out to be empty, or whose history cannot be
-reconstructed, are reported as failures without ever reaching the model. When the run is done,
+reconstructed, are reported as failures without ever reaching the model. A participation that changed nothing but
+binary files or links does not reach the model either and is reported as *incompletely checked*. When the run is done,
 Artemis sends you an email with the result. There is no progress view and no result page in the user interface: the
 completion email is the entire output.
 
@@ -123,8 +124,10 @@ The run executes asynchronously on a bounded background executor:
 1. Artemis collects the qualifying participation IDs, in pages, for the chosen scope and window.
 2. For each participation, it reconstructs the observed submission snapshot history and builds diffs. While doing so,
    it checks the complete content of every snapshot for imitated fence markers, independently of the size limits.
-3. Each participation whose history could be reconstructed and is not empty is classified individually by the
-   language model. The others are counted as failures without a request being sent.
+3. Each participation whose history could be reconstructed and contains changes to text files is classified
+   individually by the language model, and so is one with a submission that could not be read. A participation that
+   otherwise changed nothing but binary files or links is reported as *incompletely checked* without a request. The
+   others are counted as failures without a request being sent.
 4. If the model endpoint rejects the API key, the run stops at that participation, because every further request
    would be rejected as well.
 5. When the run is over, Artemis sends the completion email **to you**, the person who triggered the run.
@@ -150,7 +153,7 @@ The subject is *Malicious Participation Analysis finished*. The body has up to s
 | Analyzed participations | Participations that received a verdict. Each counts in exactly one of the next four rows. |
 | Manipulation attempts | The submission contains text imitating the markers that separate student code from the instructions to the model. |
 | Malicious | The model classified the participation as malicious. |
-| Incompletely checked | The model found nothing malicious, but part of the evidence was left out to stay within a size limit, or a submission could not be read. |
+| Incompletely checked | Part of the evidence was not examined: it was left out to stay within a size limit, a submission could not be read, or the student added or changed a binary file or link. If the model was asked, it found nothing malicious. |
 | Benign | The model classified the participation as benign and received the complete evidence. |
 | Failed analyses | Participations that produced no verdict at all. |
 
@@ -171,7 +174,7 @@ model was unreachable", and those two lead to opposite conclusions.
 
 | Category | Meaning | What to do |
 | --- | --- | --- |
-| Nothing to analyze | The participation has no submission snapshots, or no observable change against the exercise template. | Nothing. This is a legitimate outcome, not an error. |
+| Nothing to analyze | The participation has no submission snapshots, or no observable change against the exercise template. Deleting a binary file or link leaves nothing to examine either. | Nothing. This is a legitimate outcome, not an error. |
 | Repository could not be read | The repository, a snapshot, or the diff could not be produced. The participation was **not** examined. | Re-run for the affected window. If it persists, report it to your administrator. |
 | Analysis model did not respond in time | The model exceeded the configured timeout, after the transport retries. | Re-run, ideally with a narrower scope or at a quieter time. |
 | Analysis model rate limit reached | The endpoint rejected the request with a rate limit, after the transport retries. | Re-run later with a narrower scope. Tell your administrator if it happens routinely. |
@@ -219,8 +222,8 @@ The entry is then omitted from the link list, which is logged on the server.
 
 ### Incompletely checked participations
 
-For each participation the model found benign while part of its evidence had been left out, the email lists which
-limit caused the omission, the affected file, and the affected snapshot or the final state compared with the exercise
+For each participation part of whose evidence was not examined, and that the model found benign if it was asked, the
+email lists why each part was left out (a size limit, an unreadable submission, or a binary file or link), the affected file, and the affected snapshot or the final state compared with the exercise
 template, again up to ten entries. The benign classification only covers what the model received. Review the omitted
 parts yourself, especially when a participation adds large or many files: padding a submission is a way of pushing
 the relevant change out of the model's view. The [exercise page](/instructor/exercises/deimos#size-limits-and-truncation)

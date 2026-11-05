@@ -48,7 +48,10 @@ No student name, login, email address, or matriculation number is included.
 The payload is size-limited. Individual files above a size threshold are not diffed, very large per-file diffs are
 truncated, and files and snapshots beyond the total budget are dropped. Every omission is marked explicitly in the
 data sent to the model, and a participation the model finds benign despite an omission is reported to the instructor
-as *incompletely checked* rather than benign. The limits are configurable, see [Limits](#limits).
+as *incompletely checked* rather than benign. Binary files, symbolic links and submodules are never sent. When a
+student adds or changes one, the data sent to the model says how many such changes were left out, and the
+participation is reported as *incompletely checked* as well, without a model request if nothing else changed. The
+limits are configurable, see [Limits](#limits).
 
 Deimos reads repositories through Artemis' integrated version control. It reconstructs the history from Artemis
 `ProgrammingSubmission` records rather than by walking the git commit graph, so several commits pushed together can
@@ -198,8 +201,10 @@ Every analysed participation receives exactly one verdict; when several apply, t
    the payload limits. The model is still asked whenever a non-empty history can be built, and its answer is shown as
    additional information; otherwise the email says why there is no model assessment. The verdict holds either way.
 2. *Malicious*: the model classified the participation as malicious.
-3. *Incompletely checked*: the model found nothing malicious, but a limit caused part of the evidence to be omitted,
-   or a submission without a commit hash could not be read. The email names the reason, the file and the snapshot.
+3. *Incompletely checked*: part of the evidence was not examined, because a limit caused it to be omitted, a
+   submission without a commit hash could not be read, or the student added or changed a binary file or link. If the
+   model was asked, it found nothing malicious; if only binary files or links changed, it was not asked. The email names
+   the reason, the file and the snapshot.
 4. *Benign*: the model found nothing malicious in the complete evidence.
 
 Failures are broken down by category, which distinguishes "there was nothing to analyse" from "the model was
