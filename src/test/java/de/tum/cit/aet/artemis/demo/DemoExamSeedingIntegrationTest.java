@@ -187,10 +187,11 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(testRun.getUser().getLogin()).as("the demo instructor is its author").isEqualTo(UserDemoService.DEMO_INSTRUCTOR_LOGIN);
         assertThat(testRun.getExercises()).as("the test run holds the exercises of the exam").extracting(DomainObject::getId)
                 .containsExactlyElementsOf(exercisesOf(exam).stream().map(DomainObject::getId).toList());
-        assertThat(testRun.getExercises()).as("every exercise of the test run has a participation of the instructor with a submission to work in")
+        assertThat(testRun.getExercises()).as("every exercise of the test run has a test run participation of the instructor with a submission to work in")
                 .allSatisfy(exercise -> assertThat(exercise.getStudentParticipations())
-                        .filteredOn(participation -> participation.getStudent().filter(student -> UserDemoService.DEMO_INSTRUCTOR_LOGIN.equals(student.getLogin())).isPresent())
-                        .as("%s has the participation of the instructor", exercise.getTitle()).isNotEmpty()
+                        .filteredOn(participation -> participation.isTestRun()
+                                && participation.getStudent().filter(student -> UserDemoService.DEMO_INSTRUCTOR_LOGIN.equals(student.getLogin())).isPresent())
+                        .as("%s has the test run participation of the instructor", exercise.getTitle()).isNotEmpty()
                         .allSatisfy(participation -> assertThat(participation.getSubmissions()).as("%s has a submission to work in", exercise.getTitle()).isNotEmpty()));
     }
 
@@ -218,8 +219,13 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
                     });
         }
         finally {
+            // The test run that was created again keeps the halved working time, and seeding leaves an existing test run as it is: it is replaced by one with the original time.
             exam.setWorkingTime(originalWorkingTime);
             examRepository.save(exam);
+            for (StudentExam testRun : studentExamRepository.findAllTestRunsByExamId(exam.getId())) {
+                request.delete("/api/exam/courses/" + courseId + "/exams/" + exam.getId() + "/test-runs/" + testRun.getId(), HttpStatus.OK);
+            }
+            seed();
         }
     }
 
