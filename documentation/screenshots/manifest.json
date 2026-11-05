@@ -17,94 +17,67 @@
         {
             "id": "calendar-month-desktop",
             "image": "student/assets/calendar/desktop-month-presentation.png",
-            "pages": [
-                "student/progress-analytics/calendar.mdx"
-            ],
+            "pages": ["student/progress-analytics/calendar.mdx"],
             "user": "student",
             "route": "/courses/{courseId}/calendar",
             "viewport": {
                 "width": 1288,
                 "height": 680
             },
-            "source": [
-                "src/main/webapp/app/calendar",
-                "src/main/webapp/i18n/en/calendar.json"
-            ]
+            "source": ["src/main/webapp/app/calendar", "src/main/webapp/i18n/en/calendar.json"]
         },
         {
             "id": "student-faq",
             "image": "student/assets/faq/student-view.png",
-            "pages": [
-                "student/communication-support/faq.mdx"
-            ],
+            "pages": ["student/communication-support/faq.mdx"],
             "user": "student",
             "route": "/courses/{courseId}/faq",
             "viewport": {
                 "width": 1681,
                 "height": 835
             },
-            "source": [
-                "src/main/webapp/app/communication/faq",
-                "src/main/webapp/i18n/en/faq.json"
-            ]
+            "source": ["src/main/webapp/app/communication/faq", "src/main/webapp/i18n/en/faq.json"]
         },
         {
             "id": "instructor-faq",
             "image": "instructor/communication-support/assets/faq/instructor-view.png",
-            "pages": [
-                "instructor/communication-support/faq.mdx"
-            ],
+            "pages": ["instructor/communication-support/faq.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/faqs",
             "viewport": {
                 "width": 1256,
                 "height": 426
             },
-            "source": [
-                "src/main/webapp/app/communication/faq",
-                "src/main/webapp/i18n/en/faq.json"
-            ]
+            "source": ["src/main/webapp/app/communication/faq", "src/main/webapp/i18n/en/faq.json"]
         },
         {
             "id": "lectures-management",
             "image": "instructor/lectures/assets/lectures/lectures-management.png",
-            "pages": [
-                "instructor/lectures/lectures.mdx"
-            ],
+            "pages": ["instructor/lectures/lectures.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/lectures",
             "viewport": {
                 "width": 1264,
                 "height": 353
             },
-            "source": [
-                "src/main/webapp/app/lecture/manage",
-                "src/main/webapp/i18n/en/lecture.json"
-            ]
+            "source": ["src/main/webapp/app/lecture/manage", "src/main/webapp/i18n/en/lecture.json"]
         },
         {
             "id": "competency-management",
             "image": "instructor/analytics/assets/adaptive-learning/manage-competencies.png",
-            "pages": [
-                "instructor/analytics/adaptive-learning.mdx"
-            ],
+            "pages": ["instructor/analytics/adaptive-learning.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/competency-management",
             "viewport": {
                 "width": 1572,
                 "height": 874
             },
-            "source": [
-                "src/main/webapp/app/atlas/manage/competency-management",
-                "src/main/webapp/i18n/en/competency.json"
-            ]
+            "source": ["src/main/webapp/app/atlas/manage/competency-management", "src/main/webapp/i18n/en/competency.json"]
         },
         {
             "id": "learning-path-management",
             "image": "instructor/analytics/assets/adaptive-learning/learning-path-management.png",
-            "pages": [
-                "instructor/analytics/adaptive-learning.mdx"
-            ],
+            "pages": ["instructor/analytics/adaptive-learning.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/learning-path-management",
             "viewport": {
@@ -112,19 +85,14 @@
                 "height": 758
             },
             "deviceScaleFactor": 2,
-            "source": [
-                "src/main/webapp/app/atlas/manage/learning-path-instructor-page",
-                "src/main/webapp/i18n/en/learningPath.json"
-            ],
+            "source": ["src/main/webapp/app/atlas/manage/learning-path-instructor-page", "src/main/webapp/i18n/en/learningPath.json"],
             "threshold": 0.08,
             "note": "The dependency graph is laid out by a force simulation, so its nodes move a little from run to run."
         },
         {
             "id": "course-communication",
             "image": "student/assets/communication/message-page.png",
-            "pages": [
-                "student/communication-support/communication.mdx"
-            ],
+            "pages": ["student/communication-support/communication.mdx"],
             "user": "student",
             "route": "/courses/{courseId}/communication",
             "viewport": {
@@ -132,68 +100,51 @@
                 "height": 652
             },
             "deviceScaleFactor": 2,
-            "source": [
-                "src/main/webapp/app/communication/course-conversations",
-                "src/main/webapp/i18n/en/conversation.json"
-            ],
+            "source": ["src/main/webapp/app/communication/course-conversations", "src/main/webapp/i18n/en/conversation.json"],
             "waitFor": "text=All Messages"
         },
         {
             "id": "assessment-dashboard",
             "image": "instructor/assessment-grading/assets/assessment/assessment-dashboard.png",
-            "pages": [
-                "instructor/assessment-grading/assessment.mdx"
-            ],
+            "pages": ["instructor/assessment-grading/assessment.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/assessment-dashboard",
             "viewport": {
                 "width": 1400,
                 "height": 800
             },
-            "source": [
-                "src/main/webapp/app/assessment/shared/assessment-dashboard"
-            ],
+            "source": ["src/main/webapp/app/assessment/shared/assessment-dashboard"],
             "threshold": 0.04,
             "note": "The exercise table prints relative dates (\"in a year\") and counts that depend on the time of the run."
         },
         {
             "id": "student-lecture-details",
             "image": "student/assets/lectures/lecture-details.png",
-            "pages": [
-                "student/learning-content/lectures.mdx"
-            ],
+            "pages": ["student/learning-content/lectures.mdx"],
             "user": "student",
             "route": "/courses/{courseId}/lectures/{lecture:Software Architecture}",
             "viewport": {
                 "width": 1400,
                 "height": 800
             },
-            "source": [
-                "src/main/webapp/app/lecture/overview"
-            ]
+            "source": ["src/main/webapp/app/lecture/overview"]
         },
         {
             "id": "lecture-units-management",
             "image": "instructor/lectures/assets/lectures/units-management.png",
-            "pages": [
-                "instructor/lectures/lectures.mdx"
-            ],
+            "pages": ["instructor/lectures/lectures.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/lectures/{lecture:Software Architecture}/unit-management",
             "viewport": {
                 "width": 1300,
                 "height": 800
             },
-            "source": [
-                "src/main/webapp/app/lecture/manage"
-            ]
+            "source": ["src/main/webapp/app/lecture/manage"]
         },
         {
             "id": "student-exercise-overview",
             "image": "student/assets/general/exercise-overview-current.png",
-            "pages": [
-                "student/getting-started/general.mdx"
-            ],
+            "pages": ["student/getting-started/general.mdx"],
             "user": "student",
             "route": "/courses/{courseId}/exercises",
             "viewport": {
@@ -208,17 +159,12 @@
                 "height": 482
             },
             "waitFor": "text=Current (",
-            "source": [
-                "src/main/webapp/app/course/overview/course-exercises",
-                "src/main/webapp/app/exercise/course-exercises"
-            ]
+            "source": ["src/main/webapp/app/course/overview/course-exercises", "src/main/webapp/app/exercise/course-exercises"]
         },
         {
             "id": "student-lecture-overview",
             "image": "student/assets/lectures/lecture-overview-current.png",
-            "pages": [
-                "student/learning-content/lectures.mdx"
-            ],
+            "pages": ["student/learning-content/lectures.mdx"],
             "user": "student",
             "route": "/courses/{courseId}/lectures",
             "viewport": {
@@ -233,67 +179,48 @@
                 "height": 330
             },
             "waitFor": "text=Object-Oriented Modeling",
-            "source": [
-                "src/main/webapp/app/lecture/overview"
-            ]
+            "source": ["src/main/webapp/app/lecture/overview"]
         },
         {
             "id": "student-text-exercise",
             "image": "student/exercises/assets/text/exercise-card.png",
-            "pages": [
-                "student/exercises/text-exercise.mdx"
-            ],
+            "pages": ["student/exercises/text-exercise.mdx"],
             "user": "student",
             "route": "/courses/{courseId}/exercises/{exercise:Essay: Monolith or Microservices?}",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/course/overview/exercise-details",
-                "src/main/webapp/app/text"
-            ]
+            "source": ["src/main/webapp/app/course/overview/exercise-details", "src/main/webapp/app/text"]
         },
         {
             "id": "student-modeling-exercise-card",
             "image": "student/exercises/assets/modeling/modeling-exercise-card-student-view.png",
-            "pages": [
-                "student/exercises/modeling-exercise.mdx"
-            ],
+            "pages": ["student/exercises/modeling-exercise.mdx"],
             "user": "student",
             "route": "/courses/{courseId}/exercises/{exercise:Class Diagram: Library Management System}",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/course/overview/exercise-details",
-                "src/main/webapp/app/modeling"
-            ]
+            "source": ["src/main/webapp/app/course/overview/exercise-details", "src/main/webapp/app/modeling"]
         },
         {
             "id": "student-quiz-exercise",
             "image": "student/exercises/assets/quiz/current-quiz-exercise.png",
-            "pages": [
-                "student/exercises/quiz-exercise.mdx"
-            ],
+            "pages": ["student/exercises/quiz-exercise.mdx"],
             "user": "student",
             "route": "/courses/{courseId}/exercises/{exercise:Quiz: Java Collections and Complexity}",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/course/overview/exercise-details",
-                "src/main/webapp/app/quiz"
-            ]
+            "source": ["src/main/webapp/app/course/overview/exercise-details", "src/main/webapp/app/quiz"]
         },
         {
             "id": "student-quiz-training",
             "image": "student/assets/quiz-training-mode/description.png",
-            "pages": [
-                "student/exercises/quiz-training.mdx"
-            ],
+            "pages": ["student/exercises/quiz-training.mdx"],
             "user": "student",
             "route": "/courses/{courseId}/training",
             "viewport": {
@@ -301,80 +228,60 @@
                 "height": 900
             },
             "selector": "[role=dialog]",
-            "source": [
-                "src/main/webapp/app/quiz"
-            ]
+            "source": ["src/main/webapp/app/quiz"]
         },
         {
             "id": "student-competencies",
             "image": "student/assets/adaptive-learning/students-learning-goals-statistics.png",
-            "pages": [
-                "student/progress-analytics/adaptive-learning.mdx"
-            ],
+            "pages": ["student/progress-analytics/adaptive-learning.mdx"],
             "user": "student",
             "route": "/courses/{courseId}/competencies",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/atlas"
-            ]
+            "source": ["src/main/webapp/app/atlas"]
         },
         {
             "id": "text-exercise-create",
             "image": "instructor/exercises/assets/text/create-form-general.png",
-            "pages": [
-                "instructor/exercises/text-exercise.mdx"
-            ],
+            "pages": ["instructor/exercises/text-exercise.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/text-exercises/new",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/text"
-            ]
+            "source": ["src/main/webapp/app/text"]
         },
         {
             "id": "modeling-exercise-create",
             "image": "instructor/exercises/assets/modeling/create-form-general.png",
-            "pages": [
-                "instructor/exercises/modeling-exercise.mdx"
-            ],
+            "pages": ["instructor/exercises/modeling-exercise.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/modeling-exercises/new",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/modeling"
-            ]
+            "source": ["src/main/webapp/app/modeling"]
         },
         {
             "id": "file-upload-exercise-create",
             "image": "instructor/exercises/assets/file-upload/create-form-general.png",
-            "pages": [
-                "instructor/exercises/file-upload-exercise.mdx"
-            ],
+            "pages": ["instructor/exercises/file-upload-exercise.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/file-upload-exercises/new",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/fileupload"
-            ]
+            "source": ["src/main/webapp/app/fileupload"]
         },
         {
             "id": "quiz-exercise-create",
             "image": "instructor/exercises/assets/quiz/create-a-quiz-form.png",
-            "pages": [
-                "instructor/exercises/quiz-exercise.mdx"
-            ],
+            "pages": ["instructor/exercises/quiz-exercise.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/quiz-exercises/new",
             "viewport": {
@@ -387,113 +294,103 @@
                 "width": 1270,
                 "height": 540
             },
-            "source": [
-                "src/main/webapp/app/quiz"
-            ]
+            "source": ["src/main/webapp/app/quiz"]
         },
         {
             "id": "programming-exercise-create",
             "image": "instructor/exercises/assets/programming/create-form-general.png",
-            "pages": [
-                "instructor/exercises/programming-exercise/create-an-exercise.mdx"
-            ],
+            "pages": ["instructor/exercises/programming-exercise/create-an-exercise.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/programming-exercises/new",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/programming"
-            ]
+            "source": ["src/main/webapp/app/programming"]
         },
         {
             "id": "text-exercises-management",
             "image": "instructor/exercises/assets/text/course-dashboard-exercise-text.png",
-            "pages": [
-                "instructor/exercises/text-exercise.mdx"
-            ],
+            "pages": ["instructor/exercises/text-exercise.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/text-exercises",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "selector": "tumaet-ui-panel:has(.tumaet-ui-panel-title:has-text(\"Text (\"))",
+            "selector": "tumaet-ui-panel:has([tumaetuipanelheader]:has-text(\"Text (\"))",
             "source": [
                 "src/main/webapp/app/text",
-                "src/main/webapp/app/exercise/course-exercises"
+                "src/main/webapp/app/exercise/course-exercises",
+                "src/main/webapp/app/course/manage/exercises",
+                "src/main/webapp/app/exercise/detail"
             ]
         },
         {
             "id": "quiz-exercises-management",
             "image": "instructor/exercises/assets/quiz/course-dashboard-exercise-quiz.png",
-            "pages": [
-                "instructor/exercises/quiz-exercise.mdx"
-            ],
+            "pages": ["instructor/exercises/quiz-exercise.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/quiz-exercises",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "selector": "tumaet-ui-panel:has(.tumaet-ui-panel-title:has-text(\"Quiz (\"))",
+            "selector": "tumaet-ui-panel:has([tumaetuipanelheader]:has-text(\"Quiz (\"))",
             "source": [
                 "src/main/webapp/app/quiz",
-                "src/main/webapp/app/exercise/course-exercises"
+                "src/main/webapp/app/exercise/course-exercises",
+                "src/main/webapp/app/course/manage/exercises",
+                "src/main/webapp/app/exercise/detail"
             ]
         },
         {
             "id": "file-upload-exercises-management",
             "image": "instructor/exercises/assets/file-upload/course-dashboard-exercise-file-upload.png",
-            "pages": [
-                "instructor/exercises/file-upload-exercise.mdx"
-            ],
+            "pages": ["instructor/exercises/file-upload-exercise.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/file-upload-exercises",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "selector": "tumaet-ui-panel:has(.tumaet-ui-panel-title:has-text(\"File Upload (\"))",
+            "selector": "tumaet-ui-panel:has([tumaetuipanelheader]:has-text(\"File Upload (\"))",
             "source": [
                 "src/main/webapp/app/fileupload",
-                "src/main/webapp/app/exercise/course-exercises"
+                "src/main/webapp/app/exercise/course-exercises",
+                "src/main/webapp/app/course/manage/exercises",
+                "src/main/webapp/app/exercise/detail"
             ]
         },
         {
             "id": "programming-exercises-management",
             "image": "instructor/exercises/assets/programming/course-dashboard-exercise-programming.png",
-            "pages": [
-                "instructor/exercises/programming-exercise/create-an-exercise.mdx"
-            ],
+            "pages": ["instructor/exercises/programming-exercise/create-an-exercise.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/programming-exercises",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "selector": "tumaet-ui-panel:has(.tumaet-ui-panel-title:has-text(\"Programming (\"))",
+            "selector": "tumaet-ui-panel:has([tumaetuipanelheader]:has-text(\"Programming (\"))",
             "source": [
                 "src/main/webapp/app/programming",
-                "src/main/webapp/app/exercise/course-exercises"
+                "src/main/webapp/app/exercise/course-exercises",
+                "src/main/webapp/app/course/manage/exercises",
+                "src/main/webapp/app/exercise/detail"
             ]
         },
         {
             "id": "exam-configuration",
             "image": "instructor/exams/assets/exam_configuration.png",
-            "pages": [
-                "instructor/exams/create-an-exam.mdx"
-            ],
+            "pages": ["instructor/exams/create-an-exam.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/exams/new",
             "viewport": {
                 "width": 1440,
                 "height": 1500
             },
-            "source": [
-                "src/main/webapp/app/exam/manage/exams"
-            ],
+            "source": ["src/main/webapp/app/exam/manage/exams"],
             "clip": {
                 "x": 410,
                 "y": 240,
@@ -504,18 +401,14 @@
         {
             "id": "exam-exercises-form",
             "image": "instructor/exams/assets/exam_exercises.png",
-            "pages": [
-                "instructor/exams/create-an-exam.mdx"
-            ],
+            "pages": ["instructor/exams/create-an-exam.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/exams/new",
             "viewport": {
                 "width": 1440,
                 "height": 1500
             },
-            "source": [
-                "src/main/webapp/app/exam/manage/exams"
-            ],
+            "source": ["src/main/webapp/app/exam/manage/exams"],
             "clip": {
                 "x": 410,
                 "y": 805,
@@ -526,42 +419,31 @@
         {
             "id": "exam-list",
             "image": "instructor/exams/assets/exam_checklist_overview.png",
-            "pages": [
-                "instructor/exams/prepare-and-test.mdx"
-            ],
+            "pages": ["instructor/exams/prepare-and-test.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/exams",
             "viewport": {
                 "width": 1800,
                 "height": 520
             },
-            "source": [
-                "src/main/webapp/app/exam/manage/exams",
-                "src/main/webapp/app/exam/manage/exam-status"
-            ]
+            "source": ["src/main/webapp/app/exam/manage/exams", "src/main/webapp/app/exam/manage/exam-status"]
         },
         {
             "id": "course-grading-key",
             "image": "instructor/assessment-grading/assets/grading/course-grading-key.png",
-            "pages": [
-                "instructor/assessment-grading/grading.mdx"
-            ],
+            "pages": ["instructor/assessment-grading/grading.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/grading",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/assessment/manage/grading"
-            ]
+            "source": ["src/main/webapp/app/assessment/manage/grading"]
         },
         {
             "id": "course-statistics",
             "image": "instructor/analytics/assets/learning-analytics/course-statistics.png",
-            "pages": [
-                "instructor/analytics/learning-analytics.mdx"
-            ],
+            "pages": ["instructor/analytics/learning-analytics.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/course-statistics",
             "viewport": {
@@ -574,16 +456,12 @@
                 "width": 1270,
                 "height": 420
             },
-            "source": [
-                "src/main/webapp/app/course/manage/statistics"
-            ]
+            "source": ["src/main/webapp/app/course/manage/statistics"]
         },
         {
             "id": "exercise-statistics",
             "image": "instructor/analytics/assets/learning-analytics/exercise-statistics.png",
-            "pages": [
-                "instructor/analytics/learning-analytics.mdx"
-            ],
+            "pages": ["instructor/analytics/learning-analytics.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/text-exercises/{exercise:Essay: The Value of Code Reviews}/exercise-statistics",
             "viewport": {
@@ -596,121 +474,223 @@
                 "width": 1270,
                 "height": 720
             },
-            "source": [
-                "src/main/webapp/app/exercise"
-            ]
+            "source": ["src/main/webapp/app/exercise"]
         },
         {
             "id": "course-edit",
             "image": "instructor/course-management/assets/course-configuration/general-information.png",
-            "pages": [
-                "instructor/course-management/course-configuration.mdx"
-            ],
+            "pages": ["instructor/course-management/course-configuration.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/settings",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/course/manage/update"
-            ]
+            "source": ["src/main/webapp/app/course/manage/update"]
         },
         {
             "id": "tutorial-groups-management",
             "image": "instructor/communication-support/assets/tutorial-groups/instructors-create-groups.png",
-            "pages": [
-                "instructor/communication-support/tutorial-groups.mdx"
-            ],
+            "pages": ["instructor/communication-support/tutorial-groups.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/tutorial-groups",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/tutorialgroup/manage"
-            ]
+            "source": ["src/main/webapp/app/tutorialgroup/manage"]
         },
         {
             "id": "tutorial-groups-checklist",
             "image": "instructor/communication-support/assets/tutorial-groups/instructors-checklist.png",
-            "pages": [
-                "instructor/communication-support/tutorial-groups.mdx"
-            ],
+            "pages": ["instructor/communication-support/tutorial-groups.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/tutorial-groups-checklist",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/tutorialgroup/manage"
-            ]
+            "source": ["src/main/webapp/app/tutorialgroup/manage"]
         },
         {
             "id": "lecture-create",
             "image": "instructor/lectures/assets/lectures/create-lecture.png",
-            "pages": [
-                "instructor/lectures/lectures.mdx"
-            ],
+            "pages": ["instructor/lectures/lectures.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/lectures/new",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/lecture/manage"
-            ]
+            "source": ["src/main/webapp/app/lecture/manage"]
         },
         {
             "id": "competency-create",
             "image": "instructor/analytics/assets/adaptive-learning/competency-edit.png",
-            "pages": [
-                "instructor/analytics/adaptive-learning.mdx"
-            ],
+            "pages": ["instructor/analytics/adaptive-learning.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/competency-management/create",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/atlas/manage"
-            ]
+            "source": ["src/main/webapp/app/atlas/manage"]
         },
         {
             "id": "course-scores",
             "image": "instructor/course-management/assets/exports/course-scores-export.png",
-            "pages": [
-                "instructor/course-management/exports.mdx"
-            ],
+            "pages": ["instructor/course-management/exports.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/scores",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
-            "source": [
-                "src/main/webapp/app/course/manage/course-scores"
-            ]
+            "source": ["src/main/webapp/app/course/manage/course-scores"]
         },
         {
             "id": "exam-test-runs",
             "image": "instructor/exams/assets/test_run_management.png",
-            "pages": [
-                "instructor/exams/prepare-and-test.mdx"
-            ],
+            "pages": ["instructor/exams/prepare-and-test.mdx"],
             "user": "instructor",
             "route": "/course-management/{courseId}/exams/{exam:Practice Exam: Software Engineering Fundamentals}/test-runs",
             "viewport": {
                 "width": 1440,
                 "height": 900
             },
+            "source": ["src/main/webapp/app/exam/manage/test-runs", "src/main/java/de/tum/cit/aet/artemis/exam/service/ExamDemoService.java"]
+        },
+        {
+            "id": "modeling-exercises-management",
+            "image": "instructor/exercises/assets/modeling/course-dashboard-exercise-modeling.png",
+            "pages": ["instructor/exercises/modeling-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/modeling-exercises",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "selector": "tumaet-ui-panel:has([tumaetuipanelheader]:has-text(\"Modeling (\"))",
+            "source": ["src/main/webapp/app/modeling", "src/main/webapp/app/course/manage/exercises"]
+        },
+        {
+            "id": "programming-exercise-details",
+            "image": "instructor/exercises/assets/general/exercise-details-programming.png",
+            "pages": ["instructor/exercises/intro.mdx", "instructor/exercises/programming-exercise/create-an-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/programming-exercises/{exercise:Sorting Algorithms in Java}",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "clip": {
+                "x": 170,
+                "y": 110,
+                "width": 1270,
+                "height": 525
+            },
+            "waitFor": "jhi-detail-overview-navigation-bar a",
             "source": [
-                "src/main/webapp/app/exam/manage/test-runs",
-                "src/main/java/de/tum/cit/aet/artemis/exam/service/ExamDemoService.java"
+                "src/main/webapp/app/programming/manage",
+                "src/main/webapp/app/exercise/detail",
+                "src/main/webapp/app/shared-ui/detail-overview-navigation-bar",
+                "src/main/webapp/i18n/en/exercise-detail.json"
+            ]
+        },
+        {
+            "id": "quiz-exercise-details",
+            "image": "instructor/exercises/assets/quiz/exercise-details-quiz.png",
+            "pages": ["instructor/exercises/quiz-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/quiz-exercises/{exercise:Quiz: Sorting and Searching}",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "clip": {
+                "x": 170,
+                "y": 110,
+                "width": 1270,
+                "height": 490
+            },
+            "waitFor": "jhi-detail-overview-navigation-bar a",
+            "source": [
+                "src/main/webapp/app/quiz/manage",
+                "src/main/webapp/app/exercise/detail",
+                "src/main/webapp/app/shared-ui/detail-overview-navigation-bar",
+                "src/main/webapp/i18n/en/exercise-detail.json"
+            ]
+        },
+        {
+            "id": "text-exercise-details",
+            "image": "instructor/exercises/assets/text/exercise-details-text.png",
+            "pages": ["instructor/exercises/text-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/text-exercises/{exercise:Essay: The Value of Code Reviews}",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "clip": {
+                "x": 170,
+                "y": 110,
+                "width": 1270,
+                "height": 480
+            },
+            "waitFor": "jhi-detail-overview-navigation-bar a",
+            "source": [
+                "src/main/webapp/app/text/manage",
+                "src/main/webapp/app/exercise/detail",
+                "src/main/webapp/app/shared-ui/detail-overview-navigation-bar",
+                "src/main/webapp/i18n/en/exercise-detail.json"
+            ]
+        },
+        {
+            "id": "modeling-exercise-details",
+            "image": "instructor/exercises/assets/modeling/exercise-details-modeling.png",
+            "pages": ["instructor/exercises/modeling-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/modeling-exercises/{exercise:Class Diagram: Online Shop}",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "clip": {
+                "x": 170,
+                "y": 110,
+                "width": 1270,
+                "height": 480
+            },
+            "waitFor": "jhi-detail-overview-navigation-bar a",
+            "source": [
+                "src/main/webapp/app/modeling/manage",
+                "src/main/webapp/app/exercise/detail",
+                "src/main/webapp/app/shared-ui/detail-overview-navigation-bar",
+                "src/main/webapp/i18n/en/exercise-detail.json"
+            ]
+        },
+        {
+            "id": "file-upload-exercise-details",
+            "image": "instructor/exercises/assets/file-upload/exercise-details-file-upload.png",
+            "pages": ["instructor/exercises/file-upload-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/file-upload-exercises/{exercise:Poster: Comparing Sorting Algorithms}",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "clip": {
+                "x": 170,
+                "y": 110,
+                "width": 1270,
+                "height": 480
+            },
+            "waitFor": "jhi-detail-overview-navigation-bar a",
+            "source": [
+                "src/main/webapp/app/fileupload/manage",
+                "src/main/webapp/app/exercise/detail",
+                "src/main/webapp/app/shared-ui/detail-overview-navigation-bar",
+                "src/main/webapp/i18n/en/exercise-detail.json"
             ]
         }
     ]

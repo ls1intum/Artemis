@@ -356,7 +356,8 @@ export default tseslint.config(
                 'error',
                 {
                     name: 'globalThis',
-                    message: 'Do not use globalThis in production. Use `window` for browser globals, and captureException from the error reporter for diagnostics instead of globalThis.console.',
+                    message:
+                        'Do not use globalThis in production. Use `window` for browser globals, and captureException from the error reporter for diagnostics instead of globalThis.console.',
                 },
             ],
         },
@@ -750,6 +751,13 @@ export default tseslint.config(
             'src/main/webapp/app/quiz/manage/statistics/question-statistics-chart/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
             'src/main/webapp/app/exercise/**/*.html',
+            'src/main/webapp/app/programming/manage/detail/**/*.html',
+            'src/main/webapp/app/quiz/manage/detail/**/*.html',
+            'src/main/webapp/app/quiz/manage/manage-buttons/**/*.html',
+            'src/main/webapp/app/quiz/manage/lifecyle-buttons/**/*.html',
+            'src/main/webapp/app/text/manage/detail/**/*.html',
+            'src/main/webapp/app/modeling/manage/detail/**/*.html',
+            'src/main/webapp/app/fileupload/manage/exercise-details/**/*.html',
             'src/main/webapp/app/assessment/**/*.html',
             'src/main/webapp/app/shared-ui/table-view/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/button/**/*.html',

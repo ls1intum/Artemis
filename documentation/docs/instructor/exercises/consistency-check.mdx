@@ -2,7 +2,7 @@
 id: consistency-check
 title: Consistency Check
 sidebar_label: Consistency Check
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -18,8 +18,14 @@ For the formal definition of the underlying issue types and ontology, see:
 
 ## Triggering a Consistency Check
 
-Instructors with at least **Editor** role can trigger a consistency check in the online code editor: open the exercise with **Edit in editor** and choose **Artemis Intelligence → Check Consistency**. (The **Check Consistency** button on the exercise list and the exercise detail page is a different, unrelated check: it verifies that the exercise's repositories and build plans exist on the version control and CI systems.)
-The check runs synchronously and typically completes within 20–50 seconds.
+Instructors with at least **Editor** role can trigger a consistency check in the online code editor. Open the
+exercise details, scroll to **Repositories and builds**, and choose **Code → Edit in editor** in the **Template**
+or **Solution** panel. In the editor, choose **Artemis Intelligence → Check Consistency**.
+
+The **Check Consistency** control beside the **Repositories and builds** heading, and the corresponding exercise
+list action, perform a different check: they verify that the exercise's repositories and build plans exist on the
+version control and CI systems.
+The AI consistency check runs synchronously and typically completes within 20–50 seconds.
 
 ## Understanding the Report
 
