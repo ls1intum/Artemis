@@ -8,7 +8,9 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -19,6 +21,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -27,10 +30,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -56,6 +62,7 @@ import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
+import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
@@ -70,6 +77,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnswerNotification;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationStatusTestRepository;
@@ -111,6 +120,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private ConversationTestRepository conversationRepository;
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     private List<Post> existingConversationPostsWithAnswers;
 
@@ -244,6 +256,35 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         verifyNewMessageEventSentTo(post, "student2");
         verifyNoNewMessageEventSentTo("student3");
         verifyNoNewMessageEventSentTo("tutor1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void readingReplyDuringNotificationDeliveryDoesNotRestoreUnreadCount() throws Exception {
+        Post post = createThreadInGroupChat();
+        long answersBefore = answerPostRepository.count();
+        var readDuringDelivery = new AtomicBoolean();
+        // Create a local service with real dependencies, replacing only its notification delivery collaborator.
+        // No stubbing is installed on the shared Spring context.
+        var service = applicationContext.getAutowireCapableBeanFactory().createBean(AnswerMessageService.class);
+        var notificationDelivery = mock(CourseNotificationService.class);
+        ReflectionTestUtils.setField(service, "courseNotificationService", notificationDelivery);
+        doAnswer(invocation -> {
+            if (invocation.getArgument(0) instanceof NewAnswerNotification) {
+                // The notification can open the thread while the creating request is still running.
+                // The reply is already committed and visible to that reader.
+                assertThat(answerPostRepository.count()).isEqualTo(answersBefore + 1);
+                conversationParticipantRepository.updateLastRead(student1.getId(), post.getConversation().getId(), ZonedDateTime.now());
+                readDuringDelivery.set(true);
+            }
+            return null;
+        }).when(notificationDelivery).sendCourseNotification(any(), any());
+
+        service.createAnswerMessage(courseId, new CreateAnswerPostDTO("A new reply", new ParentPostDTO(post.getId())));
+
+        assertThat(readDuringDelivery).isTrue();
+        assertThat(unreadMessagesCountOf(post, "student1")).as("a reply already read during delivery must stay read").isZero();
+        assertThat(unreadMessagesCountOf(post, "student2")).as("another thread participant has not read the reply").isEqualTo(1);
     }
 
     @Test
@@ -771,7 +812,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testEditConversationAnswerPost_forbidden() throws Exception {
         // conversation answerPost of student1 must not be editable by tutors
         AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.getFirst().getAnswers().iterator().next();
@@ -864,7 +905,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testDeleteConversationPost_forbidden() throws Exception {
         // conversation post of student1 must not be deletable by tutors
         AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.getFirst().getAnswers().iterator().next();
@@ -1083,7 +1124,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldOnlyNotifyTheUsersMentionedByNameWhenVerifyingAnIrisAnswerThatContainsAtAll() throws Exception {
         User mentionedMember = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         User otherMember = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
@@ -1103,6 +1144,53 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         // Verifying a reply is not the creation of a reply: the token is not expanded to the members of the group chat, only the explicit mention is notified.
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, savedAnswerPost.getId())).containsExactly(mentionedMember.getId()));
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = "Corrected Iris answer")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void shouldPreserveAnswerAndErrorWhenVerificationUsesAnotherCourse(String editedContent) throws Exception {
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
+        Channel channel = conversationUtilService.createCourseWideChannel(otherCourse, "verify-course-guard");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        AnswerPost answer = createAnswerPost(parent);
+        answer.setAuthor(irisBot);
+        answer.setVerified(false);
+        AnswerPost savedAnswer = answerPostRepository.save(answer);
+        String originalContent = savedAnswer.getContent();
+        ZonedDateTime originalUpdatedDate = savedAnswer.getUpdatedDate();
+
+        String wrongCoursePath = "/api/communication/courses/" + courseId + "/answer-messages/" + savedAnswer.getId() + "/verify";
+        var response = request.patchWithoutResponseBody(wrongCoursePath, new VerifyAnswerMessageDTO(editedContent), HttpStatus.BAD_REQUEST);
+        var error = request.getObjectMapper().readTree(response.getContentAsString());
+        assertThat(error.path("errorKey").asString()).isEqualTo("invalidCourse");
+        assertThat(error.path("title").asString()).isEqualTo("Answer message does not belong to the specified course");
+        assertThat(error.path("entityName").asString()).isEqualTo("messages.answerPost");
+
+        AnswerPost unchanged = answerPostRepository.findById(savedAnswer.getId()).orElseThrow();
+        assertThat(unchanged.isVerified()).isFalse();
+        assertThat(unchanged.getVerifiedBy()).isNull();
+        assertThat(unchanged.getVerifiedAt()).isNull();
+        assertThat(unchanged.getContent()).isEqualTo(originalContent);
+        assertThat(unchanged.getUpdatedDate()).isEqualTo(originalUpdatedDate);
+
+        String correctCoursePath = "/api/communication/courses/" + otherCourse.getId() + "/answer-messages/" + savedAnswer.getId() + "/verify";
+        request.patchWithResponseBody(correctCoursePath, new VerifyAnswerMessageDTO(editedContent), AnswerMessageDTO.class, HttpStatus.OK);
+        AnswerPost verified = answerPostRepository.findById(savedAnswer.getId()).orElseThrow();
+        assertThat(verified.isVerified()).isTrue();
+        assertThat(verified.getVerifiedBy()).isNotNull();
+        assertThat(verified.getVerifiedAt()).isNotNull();
+        assertThat(verified.getContent()).isEqualTo(editedContent == null ? originalContent : editedContent);
+        if (editedContent == null) {
+            // reine Freigabe aendert den Inhalt nicht, der Bulk-Update laesst updatedDate unangetastet
+            assertThat(verified.getUpdatedDate()).isEqualTo(originalUpdatedDate);
+        }
+        else {
+            // edit-and-approve setzt content UND updatedDate im selben Statement auf den verifiedAt-Zeitpunkt
+            assertThat(verified.getUpdatedDate()).isEqualTo(verified.getVerifiedAt());
+        }
     }
 
     private Conversation nameGroupChat(Conversation groupChat, String name) {
@@ -1182,7 +1270,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldSendMentionNotificationWhenVerifyingEditedIrisAnswerWithMention() throws Exception {
 
         User mentionedUser = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
@@ -1230,7 +1318,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testVerifyAnswerMessage_contentTooLong_badRequest() throws Exception {
         // approving an Iris answer with edited content beyond the 5000 character limit must be rejected and must not verify or change the answer
         User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
@@ -1257,7 +1345,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testVerifyAnswerMessage_contentAtMaxLength_ok() throws Exception {
         // approving an Iris answer with edited content at exactly the 5000 character limit is accepted and verifies the answer with that content
         User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
@@ -1352,7 +1440,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldExposeUnverifiedIrisReplyThroughSourcePostsToTutor() throws Exception {
         User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -1392,7 +1480,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void shouldExposeUnverifiedIrisReplyThroughSavedPostsToTutor() throws Exception {
         User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
         User tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");

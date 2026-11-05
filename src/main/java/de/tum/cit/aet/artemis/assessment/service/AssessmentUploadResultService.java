@@ -56,6 +56,8 @@ public class AssessmentUploadResultService {
 
     private final ScaFeedbackRepository scaFeedbackRepository;
 
+    private final FeedbackService feedbackService;
+
     /**
      * Creates a service for storing and updating uploaded manual results.
      * <p>
@@ -67,12 +69,13 @@ public class AssessmentUploadResultService {
      * @param resultWebsocketService           websocket service notified about new results
      * @param testCaseFeedbackRepository       repository used to drop the test-case feedback of an overwritten assessment
      * @param scaFeedbackRepository            repository used to drop the static-code-analysis feedback of an overwritten assessment
+     * @param feedbackService                  service used to copy typed automatic feedback onto a new assessment
      * @throws IllegalArgumentException if a parameter is {@code null}
      */
     public AssessmentUploadResultService(final UserRepository userRepository, final AssessmentUploadResultRepository assessmentUploadResultRepository,
             final Optional<LtiApi> ltiApi, final ResultWebsocketService resultWebsocketService, final TestCaseFeedbackRepository testCaseFeedbackRepository,
-            final ScaFeedbackRepository scaFeedbackRepository) {
-        if (Stream.of(userRepository, assessmentUploadResultRepository, ltiApi, resultWebsocketService, testCaseFeedbackRepository, scaFeedbackRepository)
+            final ScaFeedbackRepository scaFeedbackRepository, final FeedbackService feedbackService) {
+        if (Stream.of(userRepository, assessmentUploadResultRepository, ltiApi, resultWebsocketService, testCaseFeedbackRepository, scaFeedbackRepository, feedbackService)
                 .anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload result service dependencies must not be null");
         }
@@ -82,6 +85,38 @@ public class AssessmentUploadResultService {
         this.resultWebsocketService = resultWebsocketService;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
+        this.feedbackService = feedbackService;
+    }
+
+    /**
+     * A result being created and the persisted result whose typed automatic feedback it starts from.
+     *
+     * @param target the result being created
+     * @param source the persisted result its automatic feedback is copied from
+     */
+    public record TypedFeedbackCopy(Result target, Result source) {
+    }
+
+    /**
+     * Copies typed automatic feedback for a batch of new results with one read per feedback table.
+     * The targets are saved after this method returns.
+     *
+     * @param copies the target and source results
+     */
+    public void copyTypedFeedbackToResults(final Collection<TypedFeedbackCopy> copies) {
+        final List<Long> sourceIds = copies.stream().map(copy -> copy.source().getId()).filter(Objects::nonNull).distinct().toList();
+        if (sourceIds.isEmpty()) {
+            return;
+        }
+        final Map<Long, List<TestCaseFeedback>> testCaseFeedbackBySourceId = testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(sourceIds).stream()
+                .collect(Collectors.groupingBy(feedback -> feedback.getResult().getId()));
+        final Map<Long, List<ScaFeedback>> scaFeedbackBySourceId = scaFeedbackRepository.findWithMessageByResultIds(sourceIds).stream()
+                .collect(Collectors.groupingBy(feedback -> feedback.getResult().getId()));
+        for (final TypedFeedbackCopy copy : copies) {
+            final Long sourceId = copy.source().getId();
+            testCaseFeedbackBySourceId.getOrDefault(sourceId, List.of()).stream().map(feedbackService::copyTestCaseFeedback).forEach(copy.target()::addTestCaseFeedback);
+            scaFeedbackBySourceId.getOrDefault(sourceId, List.of()).stream().map(feedbackService::copyScaFeedback).forEach(copy.target()::addScaFeedback);
+        }
     }
 
     /**

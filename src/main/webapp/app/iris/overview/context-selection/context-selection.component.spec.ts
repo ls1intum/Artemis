@@ -24,7 +24,7 @@ describe('ContextSelectionComponent', () => {
         stagePendingContext: ReturnType<typeof vi.fn>;
     };
     let lectureServiceMock: { findAllByCourseIdForOverview: ReturnType<typeof vi.fn> };
-    let exerciseServiceMock: { getTitlesForCourse: ReturnType<typeof vi.fn> };
+    let exerciseServiceMock: { getTitlesForAccessibleCourse: ReturnType<typeof vi.fn> };
     let entityTitleServiceMock: { getTitle: ReturnType<typeof vi.fn> };
 
     const courseId = 42;
@@ -47,7 +47,7 @@ describe('ContextSelectionComponent', () => {
         };
 
         lectureServiceMock = { findAllByCourseIdForOverview: vi.fn().mockReturnValue(of(lectures)) };
-        exerciseServiceMock = { getTitlesForCourse: vi.fn().mockReturnValue(of(exercises)) };
+        exerciseServiceMock = { getTitlesForAccessibleCourse: vi.fn().mockReturnValue(of(exercises)) };
         entityTitleServiceMock = { getTitle: vi.fn().mockReturnValue(of('Resolved Title')) };
 
         await TestBed.configureTestingModule({
@@ -73,7 +73,7 @@ describe('ContextSelectionComponent', () => {
     describe('data loading', () => {
         it('should not load any options until the picker is opened', () => {
             expect(lectureServiceMock.findAllByCourseIdForOverview).not.toHaveBeenCalled();
-            expect(exerciseServiceMock.getTitlesForCourse).not.toHaveBeenCalled();
+            expect(exerciseServiceMock.getTitlesForAccessibleCourse).not.toHaveBeenCalled();
             expect(component.lectures()).toHaveLength(0);
             expect(component.exercises()).toHaveLength(0);
         });
@@ -82,7 +82,7 @@ describe('ContextSelectionComponent', () => {
             component.loadContextOptions();
 
             expect(lectureServiceMock.findAllByCourseIdForOverview).toHaveBeenCalledExactlyOnceWith(courseId);
-            expect(exerciseServiceMock.getTitlesForCourse).toHaveBeenCalledExactlyOnceWith(courseId);
+            expect(exerciseServiceMock.getTitlesForAccessibleCourse).toHaveBeenCalledExactlyOnceWith(courseId);
             expect(component.lectures()).toHaveLength(2);
             expect(component.exercises()).toHaveLength(3);
         });
@@ -92,12 +92,12 @@ describe('ContextSelectionComponent', () => {
             component.loadContextOptions();
 
             expect(lectureServiceMock.findAllByCourseIdForOverview).toHaveBeenCalledOnce();
-            expect(exerciseServiceMock.getTitlesForCourse).toHaveBeenCalledOnce();
+            expect(exerciseServiceMock.getTitlesForAccessibleCourse).toHaveBeenCalledOnce();
         });
 
         it('should leave the options empty when loading fails', () => {
             lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(throwError(() => new Error('network')));
-            exerciseServiceMock.getTitlesForCourse.mockReturnValue(throwError(() => new Error('network')));
+            exerciseServiceMock.getTitlesForAccessibleCourse.mockReturnValue(throwError(() => new Error('network')));
 
             component.loadContextOptions();
 
@@ -109,7 +109,7 @@ describe('ContextSelectionComponent', () => {
             if (failedRequest === 'lectures') {
                 lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(throwError(() => new Error('lecture network')));
             } else {
-                exerciseServiceMock.getTitlesForCourse.mockReturnValue(throwError(() => new Error('exercise network')));
+                exerciseServiceMock.getTitlesForAccessibleCourse.mockReturnValue(throwError(() => new Error('exercise network')));
             }
 
             component.loadContextOptions();
@@ -117,12 +117,12 @@ describe('ContextSelectionComponent', () => {
             expect(component.lectures()).toEqual([]);
             expect(component.exercises()).toEqual([]);
             lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(of(lectures));
-            exerciseServiceMock.getTitlesForCourse.mockReturnValue(of(exercises));
+            exerciseServiceMock.getTitlesForAccessibleCourse.mockReturnValue(of(exercises));
 
             component.loadContextOptions();
 
             expect(lectureServiceMock.findAllByCourseIdForOverview).toHaveBeenCalledTimes(2);
-            expect(exerciseServiceMock.getTitlesForCourse).toHaveBeenCalledTimes(2);
+            expect(exerciseServiceMock.getTitlesForAccessibleCourse).toHaveBeenCalledTimes(2);
             expect(component.lectures()).toEqual(lectures);
             expect(component.exercises()).toEqual(exercises);
         });
@@ -135,7 +135,7 @@ describe('ContextSelectionComponent', () => {
             component.loadContextOptions();
 
             expect(lectureServiceMock.findAllByCourseIdForOverview).not.toHaveBeenCalled();
-            expect(exerciseServiceMock.getTitlesForCourse).not.toHaveBeenCalled();
+            expect(exerciseServiceMock.getTitlesForAccessibleCourse).not.toHaveBeenCalled();
         });
     });
 
@@ -270,7 +270,7 @@ describe('ContextSelectionComponent', () => {
 
         it('should not include exercises group when there are no supported exercises', () => {
             lectureServiceMock.findAllByCourseIdForOverview.mockReturnValue(of([]));
-            exerciseServiceMock.getTitlesForCourse.mockReturnValue(of([{ id: 99, type: ExerciseType.FILE_UPLOAD }]));
+            exerciseServiceMock.getTitlesForAccessibleCourse.mockReturnValue(of([{ id: 99, type: ExerciseType.FILE_UPLOAD }]));
             fixture = TestBed.createComponent(ContextSelectionComponent);
             component = fixture.componentInstance;
             component.loadContextOptions();

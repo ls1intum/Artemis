@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router } from '@angular/router';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -52,12 +52,15 @@ import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-
 import { expectElementToBeEnabled, getElement } from 'test/helpers/utils/general-test.utils';
 import { ProgrammingExerciseGradingTasksTableComponent } from 'app/programming/manage/grading/tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+
+import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
+import { SubmissionPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -67,7 +70,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let route: ActivatedRoute;
     let gradingService: ProgrammingExerciseGradingService;
     let programmingExerciseService: ProgrammingExerciseService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
 
     let updateCategoriesStub: ReturnType<typeof vi.spyOn>;
     let resetCategoriesStub: ReturnType<typeof vi.spyOn>;
@@ -209,7 +212,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
-                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: ProgrammingExerciseService, useFactory: () => Object.assign(new MockProgrammingExerciseService(), { findForExam: vi.fn() }) },
                 { provide: ProgrammingExerciseWebsocketService, useClass: MockProgrammingExerciseWebsocketService },
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
                 { provide: ProgrammingBuildRunService, useClass: MockProgrammingBuildRunService },
@@ -221,7 +224,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -237,7 +240,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const router = fixture.debugElement.injector.get(Router);
         programmingExerciseWebsocketService = fixture.debugElement.injector.get(ProgrammingExerciseWebsocketService);
         programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        dialogService = fixture.debugElement.injector.get(DialogService);
+        dialogService = fixture.debugElement.injector.get(TumAetUiDialogService);
 
         updateCategoriesStub = vi.spyOn(gradingService, 'updateCodeAnalysisCategories');
         resetCategoriesStub = vi.spyOn(gradingService, 'resetCategories');
@@ -249,6 +252,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         routeSubject = new Subject();
         // @ts-ignore
         (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
+        route.snapshot = { paramMap: route.snapshot.paramMap, pathFromRoot: [{ params: {} }] } as ActivatedRouteSnapshot;
 
         testCasesChangedStub = vi.spyOn(programmingExerciseWebsocketService, 'getTestCaseState');
         getExerciseTestCaseStateStub = vi.spyOn(programmingExerciseService, 'getProgrammingExerciseTestCaseState');
@@ -293,6 +297,18 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         (gradingService as unknown as MockProgrammingExerciseGradingService).nextTestCases(testCases);
         (gradingService as unknown as MockProgrammingExerciseGradingService).nextCategories(codeAnalysisCategories1);
     };
+
+    it('loads exam grading details from an ancestor exam route', () => {
+        const examSnapshot = new ActivatedRouteSnapshot();
+        examSnapshot.params = { examId: 7 };
+        vi.spyOn(examSnapshot, 'pathFromRoot', 'get').mockReturnValue([examSnapshot]);
+        route.snapshot = examSnapshot;
+        const examFind = vi.spyOn(programmingExerciseService, 'findForExam').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        initGradingComponent();
+        expect(examFind).toHaveBeenCalledExactlyOnceWith(exerciseId);
+        expect(loadExerciseStub).not.toHaveBeenCalled();
+        expect(comp.programmingExercise).toEqual(exercise);
+    });
 
     it('should show the updatedTests badge when the exercise is released and has student results', () => {
         initGradingComponent();
@@ -384,12 +400,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     });
 
     it('should import a configuration from a different exercise', () => {
-        const onCloseSubject = new Subject<ProgrammingExercise | undefined>();
-        const mockDialogRef = {
-            onClose: onCloseSubject.asObservable(),
-            close: vi.fn(),
-        };
-        const dialogOpenSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as any);
+        const dialogRef = new TumAetUiDialogRef<ProgrammingExercise>(vi.fn(), vi.fn());
+        const dialogOpenSpy = vi.spyOn(dialogService, 'open').mockReturnValue(dialogRef);
 
         initGradingComponent({ tab: 'code-analysis' });
         fixture.changeDetectorRef.detectChanges();
@@ -405,7 +417,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(dialogConfig?.data?.programmingLanguage).toEqual(ProgrammingLanguage.JAVA);
 
         // Simulate dialog closing with a selected exercise
-        onCloseSubject.next({ id: 456 } as ProgrammingExercise);
+        dialogRef.close({ id: 456 } as ProgrammingExercise);
 
         expect(importCategoriesFromExerciseStub).toHaveBeenCalledOnce();
         expect(importCategoriesFromExerciseStub).toHaveBeenCalledWith(exercise.id, 456);
@@ -595,6 +607,76 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             expect(comparator(badPractice, styling)).toBeGreaterThan(0);
             // 0 issues sorts before categories with 5 issues regardless of state.
             expect(comparator(noIssues, badPractice)).toBeLessThan(0);
+        });
+    });
+    describe('submission policy lifecycle', () => {
+        beforeEach(() => {
+            comp.programmingExercise = { ...exercise, submissionPolicy: { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 5, active: false } };
+        });
+
+        it('commits a newly created policy only after the server accepts it', () => {
+            const response = new Subject<SubmissionPolicy>();
+            const policy = comp.programmingExercise.submissionPolicy!;
+            const add = vi.spyOn(TestBed.inject(SubmissionPolicyService), 'addSubmissionPolicyToProgrammingExercise').mockReturnValue(response);
+            comp.hadPolicyBefore.set(false);
+            comp.updateSubmissionPolicy();
+            expect(add).toHaveBeenCalledExactlyOnceWith(policy, 1);
+            expect(comp.isSaving()).toBe(true);
+            expect(comp.hadPolicyBefore()).toBe(false);
+            response.next({ ...policy, id: 9 });
+            expect(comp.programmingExercise.submissionPolicy?.id).toBe(9);
+            expect(comp.hadPolicyBefore()).toBe(true);
+            expect(comp.isSaving()).toBe(false);
+            response.complete();
+        });
+
+        it('removes an existing policy selected as NONE after the server accepts it', () => {
+            comp.programmingExercise.submissionPolicy = { type: SubmissionPolicyType.NONE };
+            comp.hadPolicyBefore.set(true);
+            const response = new Subject<HttpResponse<void>>();
+            const remove = vi.spyOn(TestBed.inject(SubmissionPolicyService), 'removeSubmissionPolicyFromProgrammingExercise').mockReturnValue(response);
+            comp.updateSubmissionPolicy();
+            expect(remove).toHaveBeenCalledExactlyOnceWith(1);
+            expect(comp.programmingExercise.submissionPolicy?.type).toBe(SubmissionPolicyType.NONE);
+            expect(comp.isSaving()).toBe(true);
+            response.next(new HttpResponse<void>());
+            expect(comp.programmingExercise.submissionPolicy).toBeUndefined();
+            expect(comp.hadPolicyBefore()).toBe(false);
+            expect(comp.isSaving()).toBe(false);
+            response.complete();
+        });
+
+        it.each([false, true])('updates an existing policy and releases saving after rejected=%s', (rejected) => {
+            const response = new Subject<SubmissionPolicy>();
+            const policy = comp.programmingExercise.submissionPolicy;
+            const update = vi.spyOn(TestBed.inject(SubmissionPolicyService), 'updateSubmissionPolicyToProgrammingExercise').mockReturnValue(response);
+            comp.hadPolicyBefore.set(true);
+            comp.updateSubmissionPolicy();
+            expect(update).toHaveBeenCalledExactlyOnceWith(policy, 1);
+            expect(comp.isSaving()).toBe(true);
+            if (rejected) response.error(new Error('Rejected'));
+            else {
+                response.next(policy!);
+                response.complete();
+            }
+            expect(comp.isSaving()).toBe(false);
+            expect(comp.programmingExercise.submissionPolicy).toBe(policy);
+            expect(comp.hadPolicyBefore()).toBe(true);
+        });
+
+        it.each([false, true])('changes policy activation only after successful response, initially active=%s', (active) => {
+            comp.programmingExercise.submissionPolicy!.active = active;
+            const response = new Subject<HttpResponse<void>>();
+            const method = active ? 'disableSubmissionPolicyOfProgrammingExercise' : 'enableSubmissionPolicyOfProgrammingExercise';
+            const toggle = vi.spyOn(TestBed.inject(SubmissionPolicyService), method).mockReturnValue(response);
+            comp.toggleSubmissionPolicy();
+            expect(toggle).toHaveBeenCalledExactlyOnceWith(1);
+            expect(comp.isSaving()).toBe(true);
+            expect(comp.programmingExercise.submissionPolicy?.active).toBe(active);
+            response.next(new HttpResponse<void>());
+            expect(comp.programmingExercise.submissionPolicy?.active).toBe(!active);
+            expect(comp.isSaving()).toBe(false);
+            response.complete();
         });
     });
 });

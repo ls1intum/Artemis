@@ -49,6 +49,8 @@ import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -121,25 +123,44 @@ public class ChannelResource extends ConversationManagementResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the list of channels the user is authorized to see
      */
     @GetMapping("{courseId}/channels/overview")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverview(@PathVariable Long courseId) {
-        log.debug("REST request to all channels of course: {}", courseId);
+        return courseChannelsOverview(courseId, true, true);
+    }
+
+    /**
+     * Retrieves released and unreleased channels that are public or joined by the staff member.
+     *
+     * @param courseId the course to inspect
+     * @return the sorted staff overview
+     */
+    @GetMapping("{courseId}/channels/overview/for-staff")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverviewForStaff(@PathVariable Long courseId) {
+        return courseChannelsOverview(courseId, false, true);
+    }
+
+    /**
+     * Retrieves every channel in a course, including private channels without membership.
+     *
+     * @param courseId the course to inspect
+     * @return the sorted instructor overview
+     */
+    @GetMapping("{courseId}/channels/overview/for-instructor")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverviewForInstructor(@PathVariable Long courseId) {
+        return courseChannelsOverview(courseId, false, false);
+    }
+
+    private ResponseEntity<List<ChannelDTO>> courseChannelsOverview(Long courseId, boolean studentVisibility, boolean memberVisibility) {
         checkCommunicationEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithAuthorities();
-        var course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
-        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, requestingUser);
-        var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
         var channels = channelRepository.findChannelsByCourseId(courseId).stream();
-
-        var filteredChannels = isOnlyStudent ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
+        var filteredChannels = studentVisibility ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
         var channelDTOs = filteredChannels.map(channel -> conversationDTOService.convertChannelToDTO(requestingUser, channel));
-
-        // only instructors / system admins can see all channels
-        if (!isAtLeastInstructor) {
+        if (memberVisibility) {
             channelDTOs = filterVisibleChannelsForNonInstructors(channelDTOs);
         }
-
         var sortedChannelDTOs = channelDTOs.sorted(Comparator.comparing(ChannelDTO::getName)).toList();
         conversationDTOService.fillSubTypeReferenceDates(sortedChannelDTOs);
         return ResponseEntity.ok(sortedChannelDTOs);

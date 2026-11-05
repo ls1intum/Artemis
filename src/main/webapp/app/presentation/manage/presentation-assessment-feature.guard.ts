@@ -18,7 +18,7 @@ export const presentationAssessmentFeatureGuard: CanActivateFn = (route) => {
     // setting is taken from there. A stored false is not trusted: courses stored by other pages do not carry the setting and default to false.
     const enabledInCourse = courseStorageService.getCourse(courseId)?.presentationAssessmentsEnabled
         ? of(true)
-        : courseManagementService.find(courseId).pipe(map((response) => !!response.body?.presentationAssessmentsEnabled));
+        : courseManagementService.findForManagement(courseId).pipe(map((response) => !!response.body?.presentationAssessmentsEnabled));
 
     return combineLatest([enabledInCourse, featureToggleService.getFeatureToggleActive(FeatureToggle.PresentationAssessments)]).pipe(
         map(([presentationAssessmentsEnabled, presentationAssessmentsActive]) => {

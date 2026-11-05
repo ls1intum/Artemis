@@ -74,6 +74,7 @@
                     "CREATIVE_DESCRIPTION": "Eine Geschichte trägt die Aufgabe — thematisches Setting, benannte Akteure, erzählerische Beispiele."
                 },
                 "placement": {
+                    "loadFailed": "Die Variantengruppe der Quellaufgabe konnte nicht geladen werden. Versuchen Sie es erneut oder wählen Sie eine eigenständige Variante.",
                     "question": "Wo soll diese Variante platziert werden?",
                     "existingGroup": "Zur Gruppe „{{ title }}“ hinzufügen",
                     "existingGroupHint": "Neben {{ count }} bestehenden Variante(n)",

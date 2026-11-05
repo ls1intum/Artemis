@@ -21,13 +21,14 @@ class PyrisStruggleInterventionExecutionDTOTest {
 
     @Test
     void serializesTopLevelSettingsAndSignal() throws Exception {
-        var settings = new PyrisPipelineExecutionSettingsDTO("job-1", null, "http://localhost:8080", "default", "moderate");
+        var settings = new PyrisPipelineExecutionSettingsDTO("job-1", "token-job-1", null, "http://localhost:8080", "default", "moderate");
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
         // settings is hoisted as a top-level sibling (not nested).
         // empty chatHistory + null exercise are dropped by NON_EMPTY (Pyris defaults them).
         var dto = new PyrisStruggleInterventionPipelineExecutionDTO(signal, null, null, List.of(), null, null, settings, null, null, null);
         JsonNode node = mapper.valueToTree(dto);
-        assertThat(node.get("settings").get("authenticationToken").asString()).isEqualTo("job-1");
+        assertThat(node.get("settings").get("runId").asString()).isEqualTo("job-1");
+        assertThat(node.get("settings").get("authenticationToken").asString()).isEqualTo("token-job-1");
         assertThat(node.get("struggleSignal").get("alert").get("primaryBoundary").asString()).isEqualTo("FM");
         assertThat(node.has("chatHistory")).isFalse();           // NON_EMPTY drops the empty list (Pyris defaults it)
         assertThat(node.has("programmingExercise")).isFalse();   // NON_EMPTY drops null @Nullable fields
@@ -35,7 +36,7 @@ class PyrisStruggleInterventionExecutionDTOTest {
 
     @Test
     void serializesIntentAndEpisodeWithEmptyHintsPresent() throws Exception {
-        var settings = new PyrisPipelineExecutionSettingsDTO("job-2", null, "http://localhost:8080", "default", "moderate");
+        var settings = new PyrisPipelineExecutionSettingsDTO("job-2", "token-job-2", null, "http://localhost:8080", "default", "moderate");
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
         var episode = new StruggleEpisodeDTO("ep-1", true, List.of());
         var dto = new PyrisStruggleInterventionPipelineExecutionDTO(signal, null, null, List.of(), null, null, settings, "decide", episode, "push");
@@ -54,7 +55,7 @@ class PyrisStruggleInterventionExecutionDTOTest {
 
     @Test
     void nullIntentAndEpisodeAreOmittedByNonEmpty() throws Exception {
-        var settings = new PyrisPipelineExecutionSettingsDTO("job-3", null, "http://localhost:8080", "default", "moderate");
+        var settings = new PyrisPipelineExecutionSettingsDTO("job-3", "token-job-3", null, "http://localhost:8080", "default", "moderate");
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
         var dto = new PyrisStruggleInterventionPipelineExecutionDTO(signal, null, null, List.of(), null, null, settings, null, null, null);
         JsonNode node = mapper.valueToTree(dto);

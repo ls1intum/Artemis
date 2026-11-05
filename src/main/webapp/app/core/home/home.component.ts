@@ -14,13 +14,14 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
+import { WebauthnService } from 'app/account/user/settings/credentials/passkey-settings/webauthn.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { HttpClient } from '@angular/common/http';
 import { LoginOptionsDTO } from '../auth/login-options.model';
 import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { NgTemplateOutlet } from '@angular/common';
+import { LtiLoginContinuationService } from 'app/lti/overview/lti13-exercise-launch/lti-login-continuation.service';
 
 // Keep aligned with Constants.SIMPLE_EMAIL_REGEX, used by SecurityUtils.isEmail on the server.
 const SIMPLE_EMAIL_REGEX = '^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$';
@@ -56,6 +57,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     private readonly webauthnService = inject(WebauthnService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly http = inject(HttpClient);
+    private readonly ltiLoginContinuation = inject(LtiLoginContinuationService);
 
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faKey = faKey;
@@ -65,6 +67,7 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     readonly passwordInput = viewChild<ElementRef<HTMLInputElement>>('passwordInput');
 
     private isUsingFallbackIdpName = false;
+    private hasHandledLtiLogin = false;
 
     USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
@@ -397,6 +400,15 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     currentUserCallback(account: User) {
         this.account.set(account);
         if (account) {
+            // Both the initial identity lookup and the login event can finish after navigation. The first
+            // successful handoff owns the redirect; a cancelled pending launch remains eligible for retry.
+            if (this.hasHandledLtiLogin && !this.ltiLoginContinuation.hasPendingLaunch()) {
+                return;
+            }
+            if (this.ltiLoginContinuation.resume()) {
+                this.hasHandledLtiLogin = true;
+                return;
+            }
             // previousState was set in the authExpiredInterceptor before being redirected to the login modal.
             // since login is successful, go to the stored previousState and clear the previousState
             const redirect = this.sessionStorageService.retrieve<string>('previousUrl');

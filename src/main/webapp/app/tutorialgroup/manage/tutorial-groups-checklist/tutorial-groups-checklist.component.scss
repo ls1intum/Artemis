@@ -15,7 +15,7 @@
     align-items: center;
     gap: 1rem;
     padding: 1rem 1.25rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--tumaet-ui-border-color);
     border-radius: 0.5rem;
     background: var(--tumaet-ui-hover-background);
 }
@@ -44,7 +44,7 @@
 
 .checklist-hero-desc {
     margin: 0;
-    color: var(--secondary);
+    color: var(--tumaet-ui-muted-color);
     font-size: 0.875rem;
 }
 
@@ -54,7 +54,7 @@
     align-items: center;
     gap: 1rem;
     padding: 1rem 1.25rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--tumaet-ui-border-color);
     border-radius: 0.5rem;
 }
 
@@ -74,7 +74,7 @@
 .checklist-step-desc {
     margin: 0;
     font-size: 0.875rem;
-    color: var(--secondary);
+    color: var(--tumaet-ui-muted-color);
 }
 
 // On narrow screens the fixed-width status and non-wrapping action would squeeze the text column, so let

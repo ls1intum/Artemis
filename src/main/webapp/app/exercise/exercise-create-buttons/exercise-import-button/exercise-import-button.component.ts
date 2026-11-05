@@ -8,11 +8,11 @@ import { ExerciseManageButtonComponent } from 'app/exercise/exercise-create-butt
 import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
-import { ButtonModule } from 'primeng/button';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exercise-import-button',
-    imports: [TranslateDirective, FaIconComponent, FeatureToggleLinkDirective, ButtonModule],
+    imports: [TranslateDirective, FaIconComponent, FeatureToggleLinkDirective, TumAetUiButtonComponent],
     templateUrl: './exercise-import-button.component.html',
 })
 export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent {
@@ -32,14 +32,12 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
         const componentToOpen: Type<ExerciseImportComponent | ExerciseImportTabsComponent> =
             exerciseType === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
 
-        const dialogRef = this.dialogService.open(componentToOpen, {
+        const dialogRef = this.dialogService.open<ExerciseImportComponent | ExerciseImportTabsComponent, Exercise, ExerciseImportDialogData>(componentToOpen, {
             header: this.translateService.instant(headerKey),
-            width: '50rem',
-            modal: true,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
             data: dialogData,
         });
 
@@ -48,7 +46,9 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
                 if (this.exerciseType() === ExerciseType.PROGRAMMING) {
                     this.handleProgrammingImport(result);
                 } else {
-                    void this.router.navigate(['/course-management', this.course()?.id, this.exerciseType() + '-exercises', result.id, 'import']);
+                    void this.router.navigate(['/course-management', this.course()?.id, this.exerciseType() + '-exercises', result.id, 'import'], {
+                        queryParams: { sourceIsExamExercise: !!result.exerciseGroup },
+                    });
                 }
             }
         });
@@ -63,7 +63,9 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
                 },
             });
         } else {
-            void this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import', result.id]);
+            void this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import', result.id], {
+                queryParams: { sourceIsExamExercise: !!result.exerciseGroup },
+            });
         }
     }
 }

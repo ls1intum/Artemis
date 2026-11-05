@@ -349,6 +349,24 @@ describe('ComplaintService', () => {
         });
     });
 
+    it('uses explicit assessment detail URL', () => {
+        complaintService.findBySubmissionIdForAssessment(42).subscribe();
+        const req = httpMock.expectOne('api/assessment/complaints/for-assessment?submissionId=42');
+        expect(req.request.method).toBe('GET');
+        req.flush(clientComplaint1);
+    });
+
+    it.each(['course', 'exercise'] as const)('uses current-tutor %s scope without an arbitrary tutor ID', (scope) => {
+        if (scope === 'course') {
+            complaintService.findForTutorByCourseId(42, ComplaintType.COMPLAINT).subscribe();
+        } else {
+            complaintService.findForTutorByExerciseId(42, ComplaintType.COMPLAINT).subscribe();
+        }
+        const req = httpMock.expectOne(`api/assessment/complaints/for-tutor?${scope}Id=42&complaintType=COMPLAINT`);
+        expect(req.request.method).toBe('GET');
+        req.flush([]);
+    });
+
     it('findBySubmissionId', () => {
         const submissionId = 1337;
         complaintService.findBySubmissionId(submissionId).subscribe((received) => {
@@ -472,7 +490,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
+        expect(res.request.url).toBe(`api/assessment/complaints/for-tutor?courseId=${courseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
 
         res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });
@@ -486,7 +504,7 @@ describe('ComplaintService', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/assessment/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
+        expect(res.request.url).toBe(`api/assessment/complaints/for-tutor?exerciseId=${exerciseId}&complaintType=${complaintType}&allComplaintsForTutor=true`);
 
         res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });

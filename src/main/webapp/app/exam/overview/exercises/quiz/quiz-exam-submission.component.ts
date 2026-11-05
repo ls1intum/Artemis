@@ -18,7 +18,7 @@ import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-ex
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { captureException } from '@sentry/angular';
+import { captureException } from 'app/core/error-reporting/capture-exception';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';

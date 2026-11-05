@@ -46,12 +46,15 @@ class AssessmentUploadResultServiceUnitTest {
     @Mock
     private ScaFeedbackRepository scaFeedbackRepository;
 
+    @Mock
+    private FeedbackService feedbackService;
+
     private AssessmentUploadResultService assessmentUploadResultService;
 
     @BeforeEach
     void setUp() {
         assessmentUploadResultService = new AssessmentUploadResultService(userRepository, assessmentUploadResultRepository, Optional.empty(), resultWebsocketService,
-                testCaseFeedbackRepository, scaFeedbackRepository);
+                testCaseFeedbackRepository, scaFeedbackRepository, feedbackService);
     }
 
     @Test

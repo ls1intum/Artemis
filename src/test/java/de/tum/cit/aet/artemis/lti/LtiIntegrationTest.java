@@ -87,7 +87,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
         Page<LtiPlatformConfiguration> expectedPlatforms = ltiPlatformConfigurationRepository.findAll(Pageable.unpaged());
 
-        MvcResult mvcResult = request.performMvcRequest(get("/api/lti/lti-platforms")).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = request.performMvcRequest(get("/api/lti/admin/lti-platforms")).andExpect(status().isOk()).andReturn();
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         List<LtiPlatformConfigurationDTO> actualPlatforms = objectMapper.readValue(jsonContent, new TypeReference<>() {
@@ -98,9 +98,9 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
     void getAllConfiguredLtiPlatformsAsStudent() throws Exception {
-        request.get("/api/lti/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
+        request.get("/api/lti/admin/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
     }
 
     @Test
@@ -241,7 +241,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateOnlineCourseConfigurationWithBlankUserPrefix_badRequestWithFieldError() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         Course savedCourse = createOnlineCourseWithConfiguration();
@@ -256,7 +256,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateOnlineCourseConfigurationWithOverLongUserPrefix_badRequestWithFieldError() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         Course savedCourse = createOnlineCourseWithConfiguration();
@@ -271,7 +271,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateOnlineCourseConfigurationAcceptsPlatformReferenceOnly() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
 
@@ -298,7 +298,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateOnlineCourseConfigurationRejectsPlatformReferenceWithoutId() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         Course savedCourse = createOnlineCourseWithConfiguration();

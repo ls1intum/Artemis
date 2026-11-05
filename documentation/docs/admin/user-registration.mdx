@@ -2,6 +2,7 @@
 id: user-registration
 title: User Management
 sidebar_label: User Management
+last_reviewed: 2026-11-03
 ---
 
 This page describes how Artemis accounts come into existence, how the `activated` flag governs whether
@@ -273,8 +274,9 @@ not terminate at this nginx configuration.
 | git credential handshake (`/info/refs`) | `gitauthlimit`, 60 r/m | `AUTHENTICATION`, 30 rpm |
 
 Application-level limits can be overridden per type under `artemis.rate-limiting`, for example
-`artemis.rate-limiting.login-options-requests-per-minute`. Rate limiting as a whole is off unless
-`artemis.rate-limiting.enabled` is `true`.
+`artemis.rate-limiting.login-options-requests-per-minute`. Rate limiting as a whole is on by default and is switched
+off with `artemis.rate-limiting.enabled: false`. The one exception is the limit for [client error reports](/admin/client-error-reports):
+it cannot be switched off, and it applies even then.
 
 If you run your own reverse proxy instead of the shipped nginx configuration, mirror the zones above;
 otherwise only the application-level limits apply — and the SAML2 callback, which has none of its own, is
@@ -292,7 +294,7 @@ records. The entries relevant to account state:
 | `ADMIN_CHANGE_USER_PASSWORD` | An administrator sets a user's password | The acting administrator | Which credential types were revoked |
 
 All three are classified as security events, so they are written to `security_audit_event` and appear under
-the **Security** tab of **Server Administration → Audits** in the admin UI, or through `GET /api/admin/audits`.
+the **Security** tab of **Administration → Monitoring → Audits** in the admin UI, or through `GET /api/admin/audits`.
 `DEACTIVATE_USER` in particular is the only audit record of a wholesale credential revocation, since the
 revocation itself writes none. Retention is configured separately per log; see
 [Cleanup Service](cleanup-service.mdx).

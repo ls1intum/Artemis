@@ -19,7 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -89,7 +90,8 @@ public class ExamRoomDistributionResource {
      * @return 200 (OK) if the distribution was successful
      */
     @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId,
             @RequestParam(defaultValue = "true") boolean useOnlyDefaultLayouts, @RequestParam(defaultValue = "0.0") double reserveFactor, @RequestBody List<Long> examRoomIds) {
         log.debug("REST request to distribute students across rooms for exam : {}", examId);
@@ -113,32 +115,39 @@ public class ExamRoomDistributionResource {
     }
 
     /**
-     * GET /rooms/distribution-data : Retrieves basic room data of all available rooms, required for the instructors to be
+     * GET /courses/{courseId}/exams/{examId}/rooms/distribution-data : Retrieves basic room data of all available rooms, required for the instructors to be
      * able to select the rooms for distribution
      *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam, which has to belong to the course
      * @return 200 (OK) Basic room data of all available rooms
      */
-    @GetMapping("rooms/distribution-data")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Set<ExamRoomForDistributionDTO>> getRoomDataForDistribution() {
-        log.debug("REST request to get room data for a distribution");
+    @GetMapping("courses/{courseId}/exams/{examId}/rooms/distribution-data")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Set<ExamRoomForDistributionDTO>> getRoomDataForDistribution(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get room data for a distribution of exam : {}", examId);
+        examAccessService.checkExamBelongsToCourseElseThrow(courseId, examId);
 
         Set<ExamRoomForDistributionDTO> roomData = examRoomDistributionService.getRoomDataForDistribution();
         return ResponseEntity.ok(roomData);
     }
 
     /**
-     * GET /rooms/distribution-capacities : Retrieves information about the combined default and maximum capacities of
+     * GET /courses/{courseId}/exams/{examId}/rooms/distribution-capacities : Retrieves information about the combined default and maximum capacities of
      * all selected rooms, respecting the given reserve factor
      *
+     * @param courseId      the id of the course
+     * @param examId        the id of the exam, which has to belong to the course
      * @param reserveFactor how much percent of seats should remain unassigned. Defaults to 0%
      * @param examRoomIds   the ids of all the exam rooms we want to distribute the students to
      * @return 200 (OK) Capacity information
      */
-    @GetMapping("rooms/distribution-capacities")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<ExamDistributionCapacityDTO> getDistributionCapacities(@RequestParam double reserveFactor, @RequestParam Set<Long> examRoomIds) {
-        log.debug("REST request to get capacity data for a distribution to room ids '{}' with reserve factor {}", examRoomIds, reserveFactor);
+    @GetMapping("courses/{courseId}/exams/{examId}/rooms/distribution-capacities")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<ExamDistributionCapacityDTO> getDistributionCapacities(@PathVariable long courseId, @PathVariable long examId, @RequestParam double reserveFactor,
+            @RequestParam Set<Long> examRoomIds) {
+        log.debug("REST request to get capacity data for a distribution of exam {} to room ids '{}' with reserve factor {}", examId, examRoomIds, reserveFactor);
+        examAccessService.checkExamBelongsToCourseElseThrow(courseId, examId);
 
         if (reserveFactor < 0 || reserveFactor > 1) {
             throw new BadRequestAlertException("Reserve factor outside of allowed range [0,1]", ENTITY_NAME, "reserveFactorOutOfRange");
@@ -191,15 +200,18 @@ public class ExamRoomDistributionResource {
     }
 
     /**
-     * GET /rooms/{examRoomId}/seats : Gets a list of all seats of this exam room
+     * GET /courses/{courseId}/exams/{examId}/rooms/{examRoomId}/seats : Gets a list of all seats of this exam room
      *
+     * @param courseId   The id of the course
+     * @param examId     The id of the exam, which has to belong to the course
      * @param examRoomId The id of the exam room
      * @return 200 (OK) All seats of the room, if the retrieval was successful
      */
-    @GetMapping("rooms/{roomId}/seats")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<SeatsOfExamRoomDTO> getSeatsOfExamRoom(@PathVariable("roomId") long examRoomId) {
-        log.debug("REST request to get seats of exam room : {}", examRoomId);
+    @GetMapping("courses/{courseId}/exams/{examId}/rooms/{roomId}/seats")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<SeatsOfExamRoomDTO> getSeatsOfExamRoom(@PathVariable long courseId, @PathVariable long examId, @PathVariable("roomId") long examRoomId) {
+        log.debug("REST request to get seats of exam room {} in exam {}", examRoomId, examId);
+        examAccessService.checkExamBelongsToCourseElseThrow(courseId, examId);
 
         var seats = examRoomDistributionService.getSeatsOfExamRoom(examRoomId);
         return ResponseEntity.ok(seats);

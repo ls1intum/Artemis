@@ -198,7 +198,6 @@
             "invalidSeatCondition": "Raum {{ roomNumber }} hat einen unbekannten Sitz-Zustand: '{{ seatCondition }}'",
             "missingLayouts": "Konnte die Layouts von Raum {{ roomNumber }} nicht verarbeiten",
             "malformedLayout": "Layout {{ layoutName }} ist fehlerhaft in Raum {{ roomNumber }}",
-            "unknownLayoutType": "Unbekannter Layout-Typ '{{ layoutType }}' in Layout '{{ layoutName }}' in Raum {{ roomNumber }}",
             "invalidLayout": "Das Layout {{ layoutName }} in Raum {{ roomNumber }} ist fehlerhaft",
             "seatNotFoundFixedSelection": "Der Sitz mit Reihenindex {{ rowIndex }} und Sitzindex {{ seatIndex }} in Raum {{ roomNumber }} existiert nicht",
             "missingDefaultLayout": "Der Raum {{ roomNumber }} hat kein Standardlayout ('default')",
@@ -367,6 +366,9 @@
         "duplicateBuildPhaseNames": "Build-Phasennamen müssen eindeutig sein.",
         "buildPlanConfigurationTooLarge": "Die Build-Plan-Konfiguration ist zu groß, um verarbeitet zu werden. Bitte reduziere die Größe deiner Build-Phasen.",
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
-        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."
+        "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten.",
+        "generationBriefRequired": "Gib eine Aufgabenbeschreibung ein, bevor du eine Aufgabe ohne Problemstellung generierst.",
+        "generationCapacityUnavailable": "Artemis hat gerade keine freie Kapazität für die KI-Generierung. Es wurde nichts generiert — versuche es in ein paar Minuten erneut.",
+        "exerciseGenerationRunning": "Die Aufgabe ist durch einen anderen Vorgang oder eine unvollständige Wiederherstellung gesperrt. Versuche es später erneut; wende dich bei einer erforderlichen Wiederherstellung an die Administration."
     }
 }

@@ -143,7 +143,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
      * Test for methods of {@link ParticipationService} used by {@link ResultResource#createResultForExternalSubmission(Long, String, Result)}.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1");
         participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
@@ -159,7 +159,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetBuildJobsForResultsOfParticipation() throws Exception {
         User student = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         StudentParticipation participation = setupParticipation(programmingExercise, student, SubmissionType.EXTERNAL);
@@ -185,7 +185,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetBuildJobsForResultsOfExamParticipation() throws Exception {
         User student = userRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         ProgrammingExercise examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(TEST_PREFIX);
@@ -249,7 +249,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testStartExercise_overlappingStartOfTheSameSideReusesTheParticipationOfTheFirst() {
         Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         Exercise exercise = course.getExercises().iterator().next();
@@ -274,7 +274,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testStartExercise_newTestRunParticipationIsStoredOnItsSideFromTheFirstInsert() {
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         StudentParticipation gradedParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
@@ -294,7 +294,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testStartExercise_startOfTheOtherSideThatInsertedFirstIsNotAFailure() {
         Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         Exercise exercise = course.getExercises().iterator().next();
@@ -362,7 +362,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIndividualDueDates_returnsOnlyTheParticipationsWhoseDueDateActuallyChanged() {
         ZonedDateTime exerciseDueDate = FIXED_EXERCISE_DUE_DATE;
         programmingExercise.setDueDate(exerciseDueDate);
@@ -389,7 +389,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIndividualDueDates_clearsDatesThatWouldFallBeforeTheExerciseDueDate() {
         ZonedDateTime exerciseDueDate = FIXED_EXERCISE_DUE_DATE;
         programmingExercise.setDueDate(exerciseDueDate);
@@ -411,7 +411,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIndividualDueDates_clearsEveryDateWhenTheExerciseHasNoDueDate() {
         programmingExercise.setDueDate(null);
         programmingExerciseRepository.save(programmingExercise);
@@ -431,7 +431,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIndividualDueDates_ignoresParticipationsThatDoNotExist() {
         programmingExercise.setDueDate(FIXED_EXERCISE_DUE_DATE);
         programmingExerciseRepository.save(programmingExercise);
@@ -446,7 +446,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void getParticipationNamesForExport_forIndividualExercise_returnsStudentNameAndLogin() {
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
@@ -460,7 +460,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void findParticipationsForExercise_describesAnIndividualParticipationWithItsStudentAndSubmissionCount() {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         participationUtilService.addSubmission(participation, new ProgrammingSubmission());
@@ -483,7 +483,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void findParticipationsForExercise_reportsTheScoreOfTheLatestResult() {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
@@ -512,7 +512,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
      * have to be loaded and reported alongside it.
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void teamParticipation_isDescribedByItsTeamAndItsMembers() {
         ProgrammingExercise teamExercise = makeExerciseATeamExercise();
         Team team = teamUtilService.createTeam(
@@ -542,7 +542,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void initializeTeamParticipations_loadsTheMembersOfEveryTeamInOneGo() {
         ProgrammingExercise teamExercise = makeExerciseATeamExercise();
         Team team = teamUtilService.createTeam(Set.of(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1")),
@@ -559,7 +559,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void initializeTeamParticipations_withoutATeamParticipation_queriesNothing() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
@@ -574,7 +574,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void findOneByExerciseAndParticipant_findsTheGradedAndThePracticeParticipationSeparately() {
         var gradedParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
@@ -596,7 +596,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow_withoutAParticipation_saysWhichStudentAndExercise() {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(
                 () -> participationUtilService.findOneByExerciseAndStudentWithEagerResultsElseThrow(programmingExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student3")))
@@ -604,14 +604,14 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void findExerciseParticipationWithLatestSubmissionAndResultElseThrow_withoutAParticipation_throws() {
         assertThatExceptionOfType(EntityNotFoundException.class)
                 .isThrownBy(() -> participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID_THAT_DOES_NOT_EXIST));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateIndividualDueDatesFromDTOs_appliesTheDatesOfTheGivenParticipations() {
         exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), FIXED_EXERCISE_DUE_DATE);
         Exercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());

@@ -22,8 +22,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
  *                      TODO: Remove in the release after 10.1, once no client of 10.0 or earlier can still be open.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CodeGenerationRequestDTO(@Nullable RepositoryType repositoryType, boolean initialAutoGeneration, @Nullable List<Long> selectedFeedbackThreadIds,
-        @Deprecated(forRemoval = true, since = "10.1") @Schema(hidden = true) boolean checkOnly) {
+public record CodeGenerationRequestDTO(@Schema(implementation = String.class, allowableValues = {
+        "TEMPLATE", "SOLUTION", "TESTS", "AUXILIARY", "USER" }) @Nullable RepositoryType repositoryType, boolean initialAutoGeneration,
+        @Nullable List<Long> selectedFeedbackThreadIds, @Deprecated(forRemoval = true, since = "10.1") @Schema(hidden = true) boolean checkOnly){
 
     public CodeGenerationRequestDTO(@Nullable RepositoryType repositoryType) {
         this(repositoryType, false, null);

@@ -1,6 +1,7 @@
 <div>
     @if (exercise()?.studentParticipations?.length && exercise()?.studentParticipations?.[0]?.id) {
         <jhi-file-upload-submission
+            [viewingPurpose]="viewingPurpose()"
             [participationId]="exercise().studentParticipations![0].id"
             [expandProblemStatement]="expandProblemStatement()"
             [displayedInExamSummary]="true"

@@ -50,6 +50,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
+import { HyperionActivityTrayComponent } from 'app/hyperion/activity-tray/hyperion-activity-tray.component';
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
@@ -141,10 +142,18 @@ describe('NavbarComponent', () => {
         })
             .overrideComponent(NavbarComponent, {
                 remove: {
-                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent, ImageComponent, CourseNotificationOverviewComponent],
+                    imports: [
+                        ThemeSwitchComponent,
+                        JhiConnectionWarningComponent,
+                        LoadingNotificationComponent,
+                        ImageComponent,
+                        CourseNotificationOverviewComponent,
+                        HyperionActivityTrayComponent,
+                    ],
                 },
                 add: {
                     imports: [
+                        MockComponent(HyperionActivityTrayComponent),
                         StubThemeSwitchComponent,
                         StubConnectionWarningComponent,
                         StubLoadingNotificationComponent,
@@ -171,16 +180,43 @@ describe('NavbarComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('keeps course enrollment reachable through mobile account navigation', () => {
+        vi.spyOn(TestBed.inject(AccountService), 'isAuthenticated').mockReturnValue(true);
+        fixture.detectChanges();
+        component.currAccount.set({ login: 'student' } as User);
+        component.iconsMovedToMenu.set(true);
+        component.isNavbarCollapsed.set(false);
+        fixture.detectChanges();
+
+        const enrollmentLink: HTMLAnchorElement = fixture.nativeElement.querySelector('[data-testid="mobile-course-enrollment"]');
+        expect(enrollmentLink).toBeTruthy();
+        enrollmentLink.click();
+        expect(router.createUrlTree).toHaveBeenCalledWith(['/courses/enroll'], expect.any(Object));
+        expect(router.navigateByUrl).toHaveBeenCalled();
+        expect(component.isNavbarCollapsed()).toBe(true);
+
+        component.isExamActive.set(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="mobile-course-enrollment"]')).toBeNull();
+    });
+
     it('should initialize component', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
-    it('should not render the variant generation tray host without jobs', () => {
-        TestBed.inject(ExerciseVariantGenerationService).jobs.set([]);
+    it('mounts exactly one AI activity tray for both workflows and hides it during an exam', () => {
         fixture.detectChanges();
-
+        component.currAccount.set({ login: 'editor' } as User);
+        component.hyperionExerciseGenerationEnabled.set(true);
+        TestBed.inject(ExerciseVariantGenerationService).jobs.set([{ jobId: 'quiz', phase: 'TRANSFORMING' }]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('jhi-hyperion-activity-tray')).toHaveLength(1);
         expect(fixture.nativeElement.querySelector('jhi-variant-generation-tray')).toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-hyperion-jobs-indicator')).toBeNull();
+        component.isExamActive.set(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('jhi-hyperion-activity-tray')).toBeNull();
     });
 
     it('should display the current course next to the logo', () => {
@@ -192,6 +228,12 @@ describe('NavbarComponent', () => {
         const titleElement = fixture.debugElement.query(By.css('#test-course-title'));
         expect(titleElement).toBeTruthy();
         expect(titleElement.nativeElement.textContent).toBe('Course1');
+        expect(component.navigationContextIndicatorData()).toEqual({
+            type: 'course',
+            routerLink: ['/courses', 1],
+            title: 'Course1',
+            imagePath: 'path/to/icon.png',
+        });
         expect(fixture.nativeElement.querySelector('jhi-image')).not.toBeNull();
     });
 
@@ -202,6 +244,28 @@ describe('NavbarComponent', () => {
 
         expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
         expect(fixture.nativeElement.querySelector('.course-circle')?.textContent.trim()).toBe('C');
+    });
+
+    it.each([
+        ['/admin/user-management', 'administration', '/admin', 'global.menu.admin.main'],
+        ['/user-settings/credentials', 'userSettings', '/user-settings', 'artemisApp.userSettings.userSettings'],
+    ] as const)('should display the navbar context without an image on %s', (url, type, routerLink, translationKey) => {
+        router.setUrl(url);
+
+        fixture.detectChanges();
+
+        expect(component.navigationContextIndicatorData()).toEqual({ type, routerLink, translationKey });
+        expect(fixture.nativeElement.querySelector('#test-navbar-context-title')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
+    });
+
+    it('should not display a navbar context outside administration and user settings', () => {
+        router.setUrl('/courses');
+
+        fixture.detectChanges();
+
+        expect(component.navigationContextIndicatorData()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('#test-navbar-context-title')).toBeNull();
     });
 
     it('should link the current course to the management overview when in a management route', () => {
@@ -725,16 +789,33 @@ describe('NavbarComponent', () => {
             } as MockBreadcrumb);
         });
 
+        it('should translate the Athena settings breadcrumb', () => {
+            router.setUrl('/course-management/1/athena-settings');
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs()).toHaveLength(3);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual({
+                label: 'artemisApp.course.athenaConfig.settingsPage.title',
+                translate: true,
+                uri: '/course-management/1/athena-settings/',
+            } as MockBreadcrumb);
+        });
+
         it('should show the exercise title and correct exercise link for generic exercise routes', () => {
             const exerciseService = TestBed.inject(ExerciseService);
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: { title: 'Programming Exercise', type: ExerciseType.PROGRAMMING } as Exercise })));
+            vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(
+                of(new HttpResponse({ body: { title: 'Programming Exercise', type: ExerciseType.PROGRAMMING } as Exercise })),
+            );
             const testUrl = '/course-management/1/exercises/2';
             router.setUrl(testUrl);
 
             fixture.detectChanges();
 
-            expect(exerciseService.find).toHaveBeenCalledOnce();
-            expect(exerciseService.find).toHaveBeenCalledWith(2);
+            expect(exerciseService.findForStaff).toHaveBeenCalledOnce();
+            expect(exerciseService.findForStaff).toHaveBeenCalledWith(2);
             expect(component.breadcrumbs()).toHaveLength(4);
             expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Programming Exercise',

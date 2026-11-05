@@ -29,7 +29,8 @@ public sealed interface QuizQuestionRefinementResponseDTO
     @Schema(description = "Successful refinement result containing the refined question and an explanation of the changes")
     record QuizQuestionRefinementSuccessDTO(@NotNull @Valid @Schema(description = "The refined quiz question") GeneratedQuizQuestionDTO question,
             @NotBlank @Schema(description = "Brief explanation of what was changed during refinement") String reasoning,
-            @JsonProperty("type") @Schema(allowableValues = "success", example = "success") String type) implements QuizQuestionRefinementResponseDTO {
+            @JsonProperty("type") @Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = "success", example = "success") String type)
+            implements QuizQuestionRefinementResponseDTO {
 
         public QuizQuestionRefinementSuccessDTO(GeneratedQuizQuestionDTO question, String reasoning) {
             this(question, reasoning, "success");
@@ -39,7 +40,8 @@ public sealed interface QuizQuestionRefinementResponseDTO
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @Schema(description = "Failed refinement result containing an error message")
     record QuizQuestionRefinementFailureDTO(@NotBlank @Schema(description = "Error message describing why the refinement failed") String error,
-            @JsonProperty("type") @Schema(allowableValues = "failure", example = "failure") String type) implements QuizQuestionRefinementResponseDTO {
+            @JsonProperty("type") @Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = "failure", example = "failure") String type)
+            implements QuizQuestionRefinementResponseDTO {
 
         public QuizQuestionRefinementFailureDTO(String error) {
             this(error, "failure");

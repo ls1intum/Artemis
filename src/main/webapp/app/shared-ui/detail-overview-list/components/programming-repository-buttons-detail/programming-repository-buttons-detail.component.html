@@ -1,14 +1,15 @@
-@let data = detail().data;
-@if (data.participation?.repositoryUri && data.exerciseId) {
+@let data = repositoryDataForCodeButton();
+@if (data) {
     <div class="clone-buttons">
         <jhi-code-button
-            [smallButtons]="true"
-            [repositoryUri]="data.participation?.repositoryUri!"
-            [routerLinkForRepositoryView]="['.', 'repository', data.type]"
-            [repositoryType]="data.type"
+            size="small"
+            [allowOnlineIde]="false"
+            [repositoryUri]="data.repositoryUri"
+            [repositoryViewLink]="['.', 'repository', data.repositoryType]"
             [exerciseId]="data.exerciseId"
+            [vcsAccessTokenSourceInfo]="data.vcsAccessTokenData"
         />
-        <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="data.exerciseId" [repositoryType]="data.type" />
+        <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="data.exerciseId" [repositoryType]="data.repositoryType" />
     </div>
 } @else {
     <jhi-no-data />

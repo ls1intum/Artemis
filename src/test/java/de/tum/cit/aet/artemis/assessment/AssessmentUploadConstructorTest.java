@@ -71,7 +71,7 @@ class AssessmentUploadConstructorTest {
     @Test
     void shouldRejectNullAssessmentUploadResultServiceDependencies() {
         final Object[] dependencies = { mock(UserRepository.class), mock(AssessmentUploadResultRepository.class), Optional.<LtiApi>empty(), mock(ResultWebsocketService.class),
-                mock(TestCaseFeedbackRepository.class), mock(ScaFeedbackRepository.class) };
+                mock(TestCaseFeedbackRepository.class), mock(ScaFeedbackRepository.class), mock(FeedbackService.class) };
 
         for (int dependencyIndex = 0; dependencyIndex < dependencies.length; dependencyIndex++) {
             final Object[] dependenciesWithNull = dependencies.clone();
@@ -83,7 +83,7 @@ class AssessmentUploadConstructorTest {
     @SuppressWarnings("unchecked")
     private AssessmentUploadResultService createAssessmentUploadResultService(final Object[] dependencies) {
         return new AssessmentUploadResultService((UserRepository) dependencies[0], (AssessmentUploadResultRepository) dependencies[1], (Optional<LtiApi>) dependencies[2],
-                (ResultWebsocketService) dependencies[3], (TestCaseFeedbackRepository) dependencies[4], (ScaFeedbackRepository) dependencies[5]);
+                (ResultWebsocketService) dependencies[3], (TestCaseFeedbackRepository) dependencies[4], (ScaFeedbackRepository) dependencies[5], (FeedbackService) dependencies[6]);
     }
 
     @Test

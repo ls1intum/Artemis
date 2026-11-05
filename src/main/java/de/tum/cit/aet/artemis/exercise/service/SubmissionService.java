@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
@@ -35,8 +34,6 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
-import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
@@ -418,40 +415,6 @@ public class SubmissionService {
         copyFeedbackToResult(newResult, oldFeedback);
         copyTypedFeedbackToResult(newResult, oldResult);
         return newResult.getFeedbacks();
-    }
-
-    /**
-     * A result being created and the result whose typed automatic feedback it starts from.
-     *
-     * @param target the result being created
-     * @param source the persisted result its automatic feedback is copied from
-     */
-    public record TypedFeedbackCopy(Result target, Result source) {
-    }
-
-    /**
-     * Copies the typed automatic feedback of several source results at once, for a caller creating a batch of results.
-     * <p>
-     * The same work as {@link #copyTypedFeedbackToResult}, with the two reads done once for the whole batch instead of once per result: a batch import creating assessments
-     * for ten thousand participants would otherwise issue twenty thousand selects before writing anything. The targets are expected to be new results that the caller saves
-     * afterwards, so the copies are left to that save rather than inserted here.
-     *
-     * @param copies the results being created, each with the result its automatic feedback comes from
-     */
-    public void copyTypedFeedbackToResults(Collection<TypedFeedbackCopy> copies) {
-        List<Long> sourceIds = copies.stream().map(copy -> copy.source().getId()).filter(Objects::nonNull).distinct().toList();
-        if (sourceIds.isEmpty()) {
-            return;
-        }
-        Map<Long, List<TestCaseFeedback>> testCaseFeedbackBySourceId = testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(sourceIds).stream()
-                .collect(Collectors.groupingBy(feedback -> feedback.getResult().getId()));
-        Map<Long, List<ScaFeedback>> scaFeedbackBySourceId = scaFeedbackRepository.findWithMessageByResultIds(sourceIds).stream()
-                .collect(Collectors.groupingBy(feedback -> feedback.getResult().getId()));
-        for (TypedFeedbackCopy copy : copies) {
-            Long sourceId = copy.source().getId();
-            testCaseFeedbackBySourceId.getOrDefault(sourceId, List.of()).stream().map(feedbackService::copyTestCaseFeedback).forEach(copy.target()::addTestCaseFeedback);
-            scaFeedbackBySourceId.getOrDefault(sourceId, List.of()).stream().map(feedbackService::copyScaFeedback).forEach(copy.target()::addScaFeedback);
-        }
     }
 
     /**
@@ -933,17 +896,17 @@ public class SubmissionService {
     /**
      * This method gets all complaints of an exercise and returns them together with their corresponding submission in a DTO
      *
-     * @param exerciseId          the exerciseId of the exercise of which the complaints are fetched
-     * @param isAtLeastInstructor if the user is an instructor
+     * @param exerciseId      the exerciseId of the exercise of which the complaints are fetched
+     * @param instructorQueue whether the endpoint selects the instructor queue
      * @return a list of DTOs containing a complaint and its submission
      */
-    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, boolean isAtLeastInstructor) {
+    public List<SubmissionWithComplaintDTO> getSubmissionsWithComplaintsForExercise(Long exerciseId, boolean instructorQueue) {
         // get all complaints which belong to the exercise
         List<Complaint> complaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
 
-        if (!isAtLeastInstructor) {
-            complaints = complaints.stream().filter(complaint -> !userRepository.getUser().equals(complaint.getResult().getAssessor())).toList();
-        }
+        User caller = userRepository.getUser();
+        complaints = complaints.stream().filter(complaint -> complaint.getStudent() == null || !complaint.getStudent().equals(complaint.getResult().getAssessor()))
+                .filter(complaint -> instructorQueue || !caller.equals(complaint.getResult().getAssessor())).toList();
 
         return getSubmissionsWithComplaintsFromComplaints(complaints);
     }

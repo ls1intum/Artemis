@@ -22,9 +22,10 @@ export class MockAccountService implements IAccountService {
     fetch = () => of({ body: { id: 99 } as User } as any);
     updateLanguage = (languageKey: string) => of({});
     getImageUrl = () => 'blob';
-    hasAuthority = (authority: string) => Promise.resolve(true);
-    isAtLeastTutor = () => this.hasAnyAuthorityDirect([Authority.TUTOR]);
+    readonly isAtLeastTutor = signal(true);
     hasEditorAccess = () => this.hasAnyAuthorityDirect([Authority.EDITOR]);
+    hasAdministratorAccess = () => this.isAdmin() && (!this.isPasskeyRequiredForAdministratorFeatures() || this.isUserLoggedInWithApprovedPasskey());
+    mayCreateAgentTokens = () => this.hasAnyAuthorityDirect([Authority.EDITOR, Authority.INSTRUCTOR]);
     isPasskeyRequiredForAdministratorFeatures = () => false;
     isAtLeastTutorInCourse = (course: Course) => true;
     isAtLeastTutorInCourseWithId = (courseId?: number) => true;
@@ -41,7 +42,8 @@ export class MockAccountService implements IAccountService {
     setAccessRightsForCourseAndReferencedExercises = (course?: Course) => {};
     isAuthenticated = () => true;
     isOwnerOfParticipation = () => true;
-    isAdmin = () => true;
+    readonly isAdmin = signal(true);
+    readonly isSuperAdmin = signal(true);
     save = (account: any) => ({}) as any;
     getVcsAccessToken = (participationId: number) => of();
     createVcsAccessToken = (participationId: number) => of();

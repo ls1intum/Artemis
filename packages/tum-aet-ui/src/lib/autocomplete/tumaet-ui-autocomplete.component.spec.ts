@@ -52,6 +52,33 @@ describe('TumAetUiAutoCompleteComponent (multiple mode)', () => {
         fixture.detectChanges();
     }
 
+    it('announces disabled suggestions and skips them during keyboard and pointer selection', async () => {
+        fixture.componentRef.setInput('optionLabel', 'label');
+        fixture.componentRef.setInput('optionDisabled', 'disabled');
+        const disabled = { label: 'Assigned student', disabled: true };
+        const enabled = { label: 'Available student', disabled: false };
+        const selected = vi.fn();
+        component.optionSelected.subscribe(selected);
+        await search('student', [disabled, enabled]);
+        expect(options()[0].getAttribute('aria-disabled')).toBe('true');
+        options()[0].click();
+        expect(selected).not.toHaveBeenCalled();
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(selected).toHaveBeenCalledWith(expect.objectContaining({ value: enabled }));
+    });
+
+    it('clears the form value and closes suggestions without reopening from a pending search', async () => {
+        const changed = vi.fn();
+        component.registerOnChange(changed);
+        await search('student', ['student']);
+        component.clear();
+        fixture.detectChanges();
+        expect(input().value).toBe('');
+        expect(listbox()).toBeNull();
+        expect(changed).toHaveBeenLastCalledWith([]);
+    });
+
     it('emits the debounced complete query once rapid keystrokes settle', () => {
         vi.useFakeTimers();
         fixture.componentRef.setInput('debounceMs', 300);
@@ -102,6 +129,32 @@ describe('TumAetUiAutoCompleteComponent (multiple mode)', () => {
         expect(chips()[0].textContent?.trim()).toBe('admin');
         expect(listbox()).toBeNull();
         expect(input().value).toBe('');
+    });
+
+    it.each([false, true])('keeps suggestions closed after selecting before a pending search completes (multiple=%s)', (multiple) => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('multiple', multiple);
+        fixture.componentRef.setInput('completeOnFocus', true);
+        fixture.componentRef.setInput('minLength', 0);
+        fixture.componentRef.setInput('debounceMs', 200);
+        fixture.componentRef.setInput('suggestions', ['5, 5', '5, 1']);
+        fixture.detectChanges();
+        input().focus();
+        fixture.detectChanges();
+        typeQuery('5, 5');
+        fixture.detectChanges();
+
+        const changed = vi.fn();
+        component.registerOnChange(changed);
+        options()[0].click();
+        fixture.detectChanges();
+        expect(listbox()).toBeNull();
+        expect(changed).toHaveBeenLastCalledWith(multiple ? ['5, 5'] : '5, 5');
+
+        vi.advanceTimersByTime(200);
+        fixture.detectChanges();
+        expect(listbox()).toBeNull();
+        expect(input().getAttribute('aria-expanded')).toBe('false');
     });
 
     it('does not add a duplicate suggestion', async () => {

@@ -129,19 +129,19 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testFilterFeedbacksForClientAsTA() {
         this.testFilterFeedbacksForClientAsCurrentUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void testFilterFeedbacksForClientAsEditor() {
         this.testFilterFeedbacksForClientAsCurrentUser();
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testFilterFeedbacksForClientAsInstructor() {
         this.testFilterFeedbacksForClientAsCurrentUser();
     }
@@ -154,7 +154,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAreSortedWithManualFirst() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousFeedbackTypeFeedbacksToResult(result);
@@ -166,7 +166,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInExamsBeforePublish() {
         Exam exam = examStudentParticipation.getExercise().getExam();
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(2));
@@ -180,7 +180,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInExamsAfterPublish() {
         Exam exam = examStudentParticipation.getExercise().getExam();
         exam.setPublishResultsDate(ZonedDateTime.now().minusDays(2));
@@ -194,7 +194,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseBeforeDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
@@ -207,7 +207,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
@@ -220,7 +220,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseBeforeAssessmentDueDateWithNonAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(2));
@@ -237,7 +237,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithNonAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
@@ -253,7 +253,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
@@ -270,7 +270,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudentShouldOnlyFilterAutomaticResultBeforeLastDueDate(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setAssessmentDueDate(null);
@@ -298,7 +298,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterFeedbacksForClientAsStudentShouldNotFilterAfterLatestDueDate(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setAssessmentDueDate(null);
@@ -319,7 +319,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithFeedback_deletesResultAndAllFeedbacks() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
@@ -336,7 +336,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithFeedbackAndLongFeedbackText_deletesAllRelatedEntities() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
 
@@ -371,7 +371,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithRating_deletesResultAndRating() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
@@ -387,7 +387,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithComplaint_deletesResultAndComplaint() {
         Result result = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
@@ -411,7 +411,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithMultipleFeedbacksAndRating_deletesEverything() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
@@ -430,7 +430,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultPreservesOtherResultsOnSameParticipation() {
         var submission1 = programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow();
         Result result1 = participationUtilService.addResultToSubmission(null, null, submission1);
@@ -455,7 +455,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithUninitializedFeedbacks_shouldNotThrowEntityNotFoundException() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
@@ -481,7 +481,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testDeleteResultWithUninitializedFeedbacksAndLongFeedbackText_shouldNotViolateForeignKeyConstraint() {
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
 

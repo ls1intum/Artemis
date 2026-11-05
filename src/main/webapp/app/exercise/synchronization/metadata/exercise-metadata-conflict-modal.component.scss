@@ -16,10 +16,10 @@
         background-color 0.15s ease-in-out;
 
     &:hover:not(.conflict-tile--selected) {
-        border-color: var(--primary);
+        border-color: var(--tumaet-ui-primary-color);
     }
 
     &--selected {
-        border: 1px solid var(--primary);
+        border: 1px solid var(--tumaet-ui-primary-color);
     }
 }

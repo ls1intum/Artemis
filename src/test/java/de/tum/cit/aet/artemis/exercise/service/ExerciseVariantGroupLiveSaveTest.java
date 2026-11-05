@@ -2,16 +2,24 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
@@ -81,6 +89,48 @@ class ExerciseVariantGroupLiveSaveTest {
         }
         service.deleteGroup(7L, 3L);
         verify(groups).delete(group);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void deletionReleasesEveryMemberInReverseOrderWithoutLosingFailures(boolean deletionFails) {
+        var saves = mock(GenerationLiveSaveService.class);
+        when(saves.isCoordinationEnabled()).thenReturn(true);
+        when(saves.claim(1L)).thenReturn("first");
+        when(saves.claim(2L)).thenReturn("second");
+        var groups = mock(ExerciseVariantGroupRepository.class);
+        var group = new ExerciseVariantGroup();
+        var first = new ProgrammingExercise();
+        first.setId(1L);
+        var second = new ProgrammingExercise();
+        second.setId(2L);
+        group.setExercises(Set.of(second, first));
+        when(groups.findByIdAndCourseIdElseThrow(7L, 3L)).thenReturn(group);
+        when(groups.findByIdAndCourseIdWithoutExercisesElseThrow(7L, 3L)).thenReturn(group);
+        var deletionFailure = new IllegalArgumentException("delete failed");
+        if (deletionFails) {
+            doThrow(deletionFailure).when(groups).delete(group);
+        }
+        var firstReleaseFailure = new IllegalStateException("first release failed");
+        var secondReleaseFailure = new IllegalStateException("second release failed");
+        var released = new ArrayList<Long>();
+        doAnswer(invocation -> {
+            long exerciseId = invocation.getArgument(0);
+            released.add(exerciseId);
+            throw exerciseId == 1L ? firstReleaseFailure : secondReleaseFailure;
+        }).when(saves).release(anyLong(), anyString());
+
+        var failure = catchThrowable(() -> service(groups, saves).deleteGroup(7L, 3L));
+
+        assertThat(released).containsExactly(2L, 1L);
+        assertThat(secondReleaseFailure.getSuppressed()).containsExactly(firstReleaseFailure);
+        if (deletionFails) {
+            assertThat(failure).isSameAs(deletionFailure);
+            assertThat(failure.getSuppressed()).containsExactly(secondReleaseFailure);
+        }
+        else {
+            assertThat(failure).isSameAs(secondReleaseFailure);
+        }
     }
 
     private ExerciseVariantGroupService service(ExerciseVariantGroupRepository groups, GenerationLiveSaveService saves) {

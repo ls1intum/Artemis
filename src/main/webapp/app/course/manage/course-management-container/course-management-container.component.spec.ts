@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
@@ -178,7 +178,7 @@ describe('CourseManagementContainerComponent', () => {
         websocketService = TestBed.inject(WebsocketService);
 
         vi.spyOn(websocketService, 'subscribe').mockReturnValue(EMPTY);
-        findSpy = vi.spyOn(courseService, 'find').mockReturnValue(
+        findSpy = vi.spyOn(courseService, 'findForManagement').mockReturnValue(
             of(
                 new HttpResponse({
                     body: course1,
@@ -271,7 +271,7 @@ describe('CourseManagementContainerComponent', () => {
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockImplementation((feature) =>
             feature === FeatureToggle.PresentationAssessments ? presentationToggle : of(true),
         );
-        vi.spyOn(courseService, 'find').mockReturnValue(
+        vi.spyOn(courseService, 'findForManagement').mockReturnValue(
             of(
                 new HttpResponse({
                     body: { ...course1, presentationAssessmentsEnabled: true },
@@ -350,6 +350,7 @@ describe('CourseManagementContainerComponent', () => {
         component.atlasEnabled = true;
         component.ltiEnabled = true;
         component.irisEnabled = true;
+        component.athenaEnabled = true;
         component.tutorialGroupEnabled = true;
         component.gocastEnabled = true;
         const sidebarItems = component.getSidebarItems();
@@ -364,6 +365,7 @@ describe('CourseManagementContainerComponent', () => {
 
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'IRIS Settings')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Athena Settings')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Assessment Dashboard')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Scores')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Statistics')).toBeTruthy();
@@ -871,5 +873,23 @@ describe('CourseManagementContainerComponent', () => {
         await component['initializeCourseManagementContainerComponent']();
 
         expect(subscribeSpy).toHaveBeenCalled();
+    });
+    it('broadcasts a successful course reset and clears the dialog error', () => {
+        vi.spyOn(courseAdminService, 'reset').mockReturnValue(of(new HttpResponse<void>()));
+        const broadcast = vi.spyOn(eventManager, 'broadcast');
+        const message = vi.spyOn(component.dialogErrorSource, 'next');
+        component.resetCourse(1);
+        expect(courseAdminService.reset).toHaveBeenCalledExactlyOnceWith(1);
+        expect(broadcast).toHaveBeenCalledExactlyOnceWith({ name: 'courseModification', content: 'artemisApp.course.reset' });
+        expect(message).toHaveBeenCalledExactlyOnceWith('');
+    });
+
+    it('keeps the reset dialog open with the failed reset message', () => {
+        vi.spyOn(courseAdminService, 'reset').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403, statusText: 'Forbidden' })));
+        const broadcast = vi.spyOn(eventManager, 'broadcast');
+        const message = vi.spyOn(component.dialogErrorSource, 'next');
+        component.resetCourse(1);
+        expect(message).toHaveBeenCalledWith(expect.stringContaining('403'));
+        expect(broadcast).not.toHaveBeenCalled();
     });
 });
