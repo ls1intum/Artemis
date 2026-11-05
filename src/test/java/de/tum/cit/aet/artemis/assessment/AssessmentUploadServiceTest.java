@@ -835,7 +835,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "instructor1")
     void shouldRejectTheUploadRequestItselfWhenManualResultsAreNotAllowed() throws Exception {
         // Re-enabling the disabled button in the browser gets an instructor as far as the request, and no further: the gate lives behind the endpoint, not in front of it.
         userUtilService.enrollPrefixedUsersInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), TEST_PREFIX);
