@@ -188,6 +188,10 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             ];
             await expect(controls[1]).toHaveAccessibleName('Quiz auswerten');
             const checkActions = async () => {
+                for (const name of ['Teilnahmen', 'Statistiken', 'Vorschau', 'Lösung']) {
+                    const navigation = toolbar.getByRole('link', { name, exact: true });
+                    await expect.poll(async () => (await measure(navigation, { name })).width, { message: `${name} remains a compact button` }).toBeLessThanOrEqual(240);
+                }
                 for (const [index, control] of controls.entries()) {
                     const name = ['Re-evaluate', 'Evaluate quiz', 'Create Variant'][index];
                     await expectInside(control, toolbar, ['top', 'right', 'bottom', 'left'], { name: `${name} stays inside the quiz toolbar` });

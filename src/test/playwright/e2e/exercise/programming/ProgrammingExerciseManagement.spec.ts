@@ -91,7 +91,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
         });
     });
 
-    test('Keeps editing actions readable with Create Variant on narrow screens', async ({ login, page, exerciseAPIRequests }) => {
+    test('Keeps detail buttons compact and editing actions readable at every screen width', async ({ login, page, exerciseAPIRequests }) => {
         // The layout must also hold when a deployment exposes generation. This exercises the visible,
         // configuration-disabled C variant action without requiring a generation worker or changing server settings.
         await page.route('**/management/info', async (route) => {
@@ -113,6 +113,10 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             ];
             await expect(controls[2]).toBeVisible();
             const checkActions = async () => {
+                for (const name of ['Participations', 'Statistics']) {
+                    const navigation = toolbar.getByRole('link', { name, exact: true });
+                    await expect.poll(async () => (await measure(navigation, { name })).width, { message: `${name} remains a compact button` }).toBeLessThanOrEqual(240);
+                }
                 for (const [index, control] of controls.entries()) {
                     const name = ['Edit', 'Grading', 'Create Variant'][index];
                     await expectInside(control, toolbar, ['top', 'right', 'bottom', 'left'], { name: `${name} stays inside the action toolbar` });
