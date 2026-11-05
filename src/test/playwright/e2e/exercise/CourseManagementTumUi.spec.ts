@@ -5,7 +5,16 @@ import type { UpdateModelingExerciseDTO } from 'app/modeling/shared/entities/mod
 import { dismissPasskeyReminderIfPresent } from '../../support/dismissPasskeyReminder';
 import { Course } from 'app/course/shared/entities/course.model';
 import { test } from '../../support/fixtures';
-import { expectInside, expectNoOverlap, expectNoHorizontalOverflow, expectNoHorizontalScrollAround, expectWithinViewport, forEachViewport } from '../../support/layout';
+import {
+    expectHeight,
+    expectInside,
+    expectNoOverlap,
+    expectNoHorizontalOverflow,
+    expectNoHorizontalScrollAround,
+    expectWithinViewport,
+    forEachViewport,
+    measure,
+} from '../../support/layout';
 import { admin, studentOne, tutor, UserCredentials, UserRole } from '../../support/users';
 import { dayjsToString, generateUUID } from '../../support/utils';
 
@@ -208,6 +217,33 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
         await page.emulateMedia({ colorScheme: 'light' });
         await page.setViewportSize({ width: 1280, height: 800 });
 
+        async function expectTutorGraphLayout(): Promise<void> {
+            const graph = page.getByTestId('tutor-participation-graph');
+            const instructions = await measure(graph.getByTestId('tutor-instructions-step'));
+            const training = await measure(graph.getByTestId('tutor-training-step'));
+            const firstTrack = await measure(graph.getByTestId('tutor-progress-track').first());
+            const trackCenter = firstTrack.top + firstTrack.height / 2;
+            for (const step of [instructions, training]) {
+                expect(Math.abs(step.top + step.height / 2 - trackCenter), 'step icons and the first progress track share a center line').toBeLessThanOrEqual(0.5);
+            }
+            for (const track of await graph.getByTestId('tutor-progress-track').all()) {
+                await expectHeight(track, 16, { name: 'compact tutor progress track' });
+                expect((await measure(track)).width, 'progress counters retain enough width for their labels').toBeGreaterThanOrEqual(128);
+            }
+            for (const label of await graph.getByTestId('tutor-progress-label').all()) {
+                await expect(label).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+            }
+            for (const branch of await graph.getByTestId('tutor-progress-branch').all()) {
+                const offset = await branch.evaluate((element) => {
+                    const track = element.querySelector('[data-testid="tutor-progress-track"]')!.getBoundingClientRect();
+                    const connector = getComputedStyle(element, '::before');
+                    const center = element.getBoundingClientRect().top + Number.parseFloat(connector.top) + Number.parseFloat(connector.height) / 2;
+                    return Math.abs(center - track.top - track.height / 2);
+                });
+                expect(offset, 'branch connectors meet the center of the progress track').toBeLessThanOrEqual(0.5);
+            }
+        }
+
         async function captureLayouts(screen: string, check: (viewport: { width: number; height: number }) => Promise<void>, afterCapture?: () => Promise<void>): Promise<void> {
             for (const theme of ['light', 'dark'] as const) {
                 await page.emulateMedia({ colorScheme: theme });
@@ -287,7 +323,12 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
             await expect(startAssessment).toBeVisible();
             await expect(startAssessment).not.toHaveAttribute('aria-disabled', 'true');
 
+            await page.goto(`/course-management/${course.id}/assessment-dashboard`);
+            await captureLayouts('course-assessment-graph', expectTutorGraphLayout);
+            await page.goto(dashboardRoute);
+
             await captureLayouts('exercise-assessment-dashboard', async () => {
+                await expectTutorGraphLayout();
                 // The native submission table may scroll inside its explicit wrapper at narrow widths.
                 await expect(page.getByTestId('correction-round-0').getByRole('table')).toBeVisible();
                 await expectNoHorizontalOverflow(page, [], { name: 'exercise assessment dashboard' });

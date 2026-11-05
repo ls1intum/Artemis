@@ -22,10 +22,11 @@ describe('ProgressBarComponent', () => {
     });
 
     it.each([
-        { percentage: 49, severity: 'danger' },
-        { percentage: 99, severity: 'warn' },
-        { percentage: 100, severity: 'success' },
-    ])('uses correct background for percentage $percentage', ({ percentage, severity }) => {
+        { percentage: 0, severity: 'danger', contrast: 'danger', clipPath: 'inset(0 100% 0 0)' },
+        { percentage: 49, severity: 'danger', contrast: 'danger', clipPath: 'inset(0 51% 0 0)' },
+        { percentage: 99, severity: 'warn', contrast: 'warning', clipPath: 'inset(0 1% 0 0)' },
+        { percentage: 100, severity: 'success', contrast: 'success', clipPath: 'inset(0 0% 0 0)' },
+    ])('keeps the label readable on both track segments at $percentage percent', ({ percentage, severity, contrast, clipPath }) => {
         fixture.componentRef.setInput('percentage', percentage);
         fixture.componentRef.setInput('numerator', percentage);
         fixture.componentRef.setInput('denominator', 100);
@@ -33,6 +34,10 @@ describe('ProgressBarComponent', () => {
         const bar = fixture.debugElement.query(By.directive(TumAetUiProgressBarComponent)).componentInstance as TumAetUiProgressBarComponent;
         expect(bar.severity()).toBe(severity);
         expect(fixture.nativeElement.textContent).toContain(`${percentage} / 100 (${percentage}%)`);
+        const filledLabel = fixture.nativeElement.querySelector('[data-testid="tutor-progress-filled-label"]') as HTMLElement;
+        expect(filledLabel?.style.color).toBe(`var(--tumaet-ui-state-${contrast}-contrast)`);
+        expect(filledLabel.style.clipPath).toBe(clipPath);
+        expect(filledLabel.getAttribute('aria-hidden')).toBe('true');
     });
 
     it('returns 0 percentage when both numerator and denominator are zero', () => {
