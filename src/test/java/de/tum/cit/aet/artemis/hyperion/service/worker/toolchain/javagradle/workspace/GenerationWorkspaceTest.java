@@ -30,7 +30,7 @@ class GenerationWorkspaceTest {
 
     private final GenerationResources resources = new GenerationResources();
 
-    private final GenerationWorkspace service = new GenerationWorkspace(new SandboxBuildCommands(resources), resources);
+    private final GenerationWorkspace service = new GenerationWorkspace(resources);
 
     private final GenerationInput exercise = new GenerationInput(1, "de.test", "Existing statement", false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
 
@@ -105,7 +105,7 @@ class GenerationWorkspaceTest {
         service.seedWorkspace(sandbox, "session", exercise, Mode.GENERATE, new WorkspaceSnapshot(List.of()), true);
 
         assertThat(sandbox.contents.textFiles()).containsEntry("problem-statement.md", "Existing statement");
-        assertThat(sandbox.contents.textFiles()).containsKeys("reference/problem-statement.md", "verify.sh");
+        assertThat(sandbox.contents.textFiles()).containsKey("reference/problem-statement.md").doesNotContainKey("verify.sh");
     }
 
     @Test
@@ -131,7 +131,7 @@ class GenerationWorkspaceTest {
                 Map.of(RepositoryRole.TESTS, Map.of("wrapper.jar", new GenerationWorkspace.BinarySeedFile(binary))), "statement", capturedSpec, capturedPlan);
 
         assertThat(sandbox.contents.textFiles()).containsEntry("tests/gradlew", "#!/bin/sh").containsEntry("problem-statement.md", "statement").containsEntry("SPEC.md", spec)
-                .containsEntry("test-plan.json", plan).containsKey("verify.sh");
+                .containsEntry("test-plan.json", plan).doesNotContainKey("verify.sh");
         assertThat(sandbox.contents.binaryDigests()).containsEntry("tests/wrapper.jar", WorkspaceArchive.sha256(binary));
         assertThat(sandbox.contents.executableFiles()).containsExactly("tests/gradlew");
         assertThat(sandbox.contents.textFiles().containsKey("reference/problem-statement.md")).isEqualTo(mode == Mode.GENERATE);

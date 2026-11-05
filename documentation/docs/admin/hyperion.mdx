@@ -321,6 +321,12 @@ Supplied APIs must record learner operations automatically. Grading must not dep
 learner calls to undeclared recorders or callbacks; a mechanically passing reference
 solution alone cannot establish that the student-facing task is sufficient.
 
+Authoring uses the structured `verify` tool. The server isolates sources during testing
+and restores the captured candidate afterward. Its internal build script is not seeded
+into the authoring workspace: invoking source-isolated verification directly through a
+shell can remove work without the required restoration. A missing verifier is a
+configuration error; generation must not substitute an unmanaged shell build.
+
 For exercises where students write JUnit tests, the assessment check also tries
 two variants of simple student-owned test classes: empty test bodies, and the
 original bodies with assertion failures suppressed. The weighted grading tests

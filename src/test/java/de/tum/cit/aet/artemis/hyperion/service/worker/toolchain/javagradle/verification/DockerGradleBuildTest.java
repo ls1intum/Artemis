@@ -55,7 +55,7 @@ class DockerGradleBuildTest {
 
     private final SandboxBuildCommands commands = new SandboxBuildCommands(resources);
 
-    private final GenerationWorkspace workspace = new GenerationWorkspace(commands, resources);
+    private final GenerationWorkspace workspace = new GenerationWorkspace(resources);
 
     private final GenerationInput exercise = new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
 
@@ -591,6 +591,8 @@ class DockerGradleBuildTest {
                 assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
             });
         }
+        assertThat(sandbox.exec(session, java.time.Duration.ofSeconds(5), "sh", "-c", "test ! -e /workspace/verify.sh").isSuccess())
+                .as("source-destructive verification is available only through server-managed tools").isTrue();
         var failure = StageAssessmentCheck.failure(new DifferentialVerifier(commands), sandbox, session, exercise, structural, org.mockito.Mockito.mock(AgentVerifyReport.class));
 
         if (gradeFaults) {
@@ -603,6 +605,16 @@ class DockerGradleBuildTest {
             });
         }
         assertThat(JavaSourceSnapshot.capture(sandbox, session).solutionFiles()).containsEntry(path, learner);
+        if (gradeFaults) {
+            var before = JavaSourceSnapshot.capture(sandbox, session);
+            var tools = new SandboxAgentTools(sandbox, session, new DifferentialVerifier(commands), exercise);
+            tools.configureStructuralOracleRefresh(() -> structural);
+            tools.verify();
+            var after = JavaSourceSnapshot.capture(sandbox, session);
+            assertThat(after.solutionFiles()).isEqualTo(before.solutionFiles());
+            assertThat(after.templateFiles()).isEqualTo(before.templateFiles());
+            assertThat(after.testsFiles()).isEqualTo(before.testsFiles());
+        }
     }
 
     @ParameterizedTest

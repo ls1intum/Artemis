@@ -472,13 +472,14 @@ public class AgentSystemPrompt {
                 - solution/: reference implementation — Java sources go in solution/src/<package-path>/
                 - template/: student starting point — Java sources go in template/src/<package-path>/
                 - tests/: instructor tests and immutable build harness — test sources go in tests/test/<package-path>/
-                - verify.sh: grader-equivalent build recipe
+                - Verification: use the structured `verify` tool. Internal verifier scripts remove source files for isolation and require server-managed restoration; never invoke them through the shell.
                 NEVER create an assignment/ directory in these repos — "assignment/" is only the grader's ephemeral CI checkout.
                 %s
 
                 Programming language: %s%s
 
-                """.formatted(problemStatementGuidance, referenceGuidance, languageName, buildContextSection(exercise));
+                """
+                .formatted(problemStatementGuidance, referenceGuidance, languageName, buildContextSection(exercise));
     }
 
     /**

@@ -876,10 +876,9 @@ class SandboxAgentToolsTest {
     }
 
     @Test
-    void verify_whenVerifierUnavailable_returnsAnActionableFallback() {
-        // No verifier (two-arg ctor): the tool must point at the bash fallback rather than NPE.
+    void verify_whenVerifierUnavailable_failsWithoutOfferingDestructiveShellVerification() {
         String out = new SandboxAgentTools(new FakeInteractiveSandbox(), "s").verify();
-        assertThat(out).startsWith("ERROR: the verify tool is unavailable").contains("sh verify.sh solution");
+        assertThat(out).startsWith("ERROR: the verify tool is unavailable").doesNotContain("sh verify.sh").contains("configuration failure");
     }
 
     // Stage-aware verify()/submit(): a staged session delegates to the wired StageChecks for the CURRENT stage, while an unstaged session runs the full differential

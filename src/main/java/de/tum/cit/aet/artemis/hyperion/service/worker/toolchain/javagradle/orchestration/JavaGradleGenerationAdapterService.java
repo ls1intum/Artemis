@@ -149,7 +149,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         var progress = progressSink(observer);
         var resources = new GenerationResources();
         var commands = new SandboxBuildCommands(resources);
-        var workspace = new GenerationWorkspace(commands, resources);
+        var workspace = new GenerationWorkspace(resources);
         var approvedSpecs = new ApprovedSpecRegistry();
         var verifier = new DifferentialVerifier(commands, approvedSpecs);
         var stageChecks = new StageChecks(verifier, approvedSpecs);

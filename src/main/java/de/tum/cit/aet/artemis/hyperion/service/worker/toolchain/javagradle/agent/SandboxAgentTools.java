@@ -811,7 +811,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
             return screenObservation("tool/verify", formatStageCheckObservation(runStageCheck(stage)));
         }
         if (verifier == null || exercise == null) {
-            return "ERROR: the verify tool is unavailable in this session. Fall back to `sh verify.sh solution` and `sh verify.sh template` via bash.";
+            return "ERROR: the verify tool is unavailable in this session. Stop and report this configuration failure. Internal verification scripts remove sources for isolation and require server-managed restoration; they are not a shell fallback.";
         }
         AgentVerifyReport report = verifier.selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, refreshStructuralOracle());
         return screenObservation("tool/verify", report.toObservation());
