@@ -32,7 +32,7 @@ final class StageAssessmentCheck {
         }
         List<String> ineffectiveTests = outcomes.stream()
                 .filter(outcome -> outcome.mutant().testsLearnerAssertions() && outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE)
-                .map(outcome -> outcome.mutant().solutionPath()).toList();
+                .map(outcome -> outcome.mutant().solutionPath() + " (" + outcome.mutant().ruleId() + ")").distinct().toList();
         if (!ineffectiveTests.isEmpty()) {
             return Optional.of(StageCheckResult.redesignRequired("The graded suite accepts empty learner-written JUnit test bodies or tests that suppress assertion failures in "
                     + ineffectiveTests

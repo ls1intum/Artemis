@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -43,10 +46,12 @@ final class JavaSourceInspector {
 
     private static final Pattern SIMPLE_ANNOTATION_ARGUMENT = Pattern.compile("[0-9]+|\"(?:build|build/classes/java/test)\"");
 
-    private static final Pattern COMPLEX_LEARNER_TEST = Pattern.compile(
-            "@(?:[\\w.]+\\.)?(?:BeforeEach|BeforeAll|AfterEach|AfterAll|TestFactory|TestTemplate|ParameterizedTest|RepeatedTest)\\b|\\bstatic\\s*\\{|\\b(?:extends|implements)\\b");
+    private static final Pattern COMPLEX_LEARNER_TEST = Pattern
+            .compile("@(?:[\\w.]+\\.)?(?:TestFactory|TestTemplate|ParameterizedTest|RepeatedTest)\\b|\\bstatic\\s*\\{|\\b(?:extends|implements)\\b");
 
-    private static final Pattern VOID_TEST_DECLARATION = Pattern.compile("\\bvoid\\s+\\w+\\s*\\(");
+    private static final Pattern LIFECYCLE_ANNOTATION = Pattern.compile("@(?:[\\w.]+\\.)?(?:BeforeEach|BeforeAll|AfterEach|AfterAll)\\b");
+
+    private static final Pattern VOID_TEST_DECLARATION = Pattern.compile("\\bvoid\\s+(\\w+)\\s*\\(\\s*\\)");
 
     private static final Pattern CONSTRUCTOR_NAME = Pattern.compile("(?:^|\\s)(?:(?:public|protected|private)\\s+)?([A-Za-z_$][\\w$]*)\\s*\\(");
 
@@ -70,21 +75,38 @@ final class JavaSourceInspector {
     record JavaTestAnnotationSummary(boolean hasTestMethods, boolean classWithMissingAresAnnotations, boolean testMethodWithoutStrictTimeout, boolean unsupportedAnnotationSyntax) {
     }
 
+    private record JUnitTestBody(String name, int start, int end) {
+    }
+
+    /** One learner-owned method with only its body changed; other methods cannot mask its grading weakness. */
+    record JUnitTestVariant(String method, String empty, String nonFailing) {
+    }
+
     /**
-     * Clears direct JUnit test bodies while preserving their signatures and annotations. Lifecycle hooks, inheritance, constructors, initializers, dynamic/parameterized tests and
-     * Unicode escapes
-     * make this simple counterexample inapplicable: work outside a test body could legitimately carry its assertions, and unsupported syntax is never evidence of a bypass.
+     * Rewrites one changed test body at a time. Supplied examples remain intact. Non-empty lifecycle hooks, inheritance, constructors, initializers and unsupported tests
+     * make this conservative probe inapplicable because assertions may execute outside the rewritten body.
      */
-    static Optional<String> emptyJUnitTestBodies(String source) {
-        return rewriteJUnitTestBodies(source, false);
+    static List<JUnitTestVariant> studentTestVariants(String source, String template) {
+        Map<String, String> suppliedBodies = new LinkedHashMap<>();
+        junitTestBodies(template).ifPresent(bodies -> bodies.forEach(body -> suppliedBodies.put(body.name(), template.substring(body.start(), body.end()))));
+        return junitTestBodies(source).orElse(List.of()).stream().filter(body -> !source.substring(body.start(), body.end()).equals(suppliedBodies.get(body.name())))
+                .map(body -> new JUnitTestVariant(body.name(), rewriteJUnitBodies(source, List.of(body), false), rewriteJUnitBodies(source, List.of(body), true))).toList();
     }
 
-    /** Preserves test actions but prevents an assertion failure from reaching the instructor grader. */
-    static Optional<String> nonFailingJUnitTestBodies(String source) {
-        return rewriteJUnitTestBodies(source, true);
+    private static String rewriteJUnitBodies(String source, List<JUnitTestBody> bodies, boolean suppressAssertionFailures) {
+        StringBuilder variant = new StringBuilder();
+        int copiedThrough = 0;
+        for (JUnitTestBody body : bodies) {
+            variant.append(source, copiedThrough, body.start());
+            if (suppressAssertionFailures) {
+                variant.append("try {").append(source, body.start(), body.end()).append("} catch (java.lang.AssertionError hyperionSuppressedAssertion) {}");
+            }
+            copiedThrough = body.end();
+        }
+        return variant.append(source, copiedThrough, source.length()).toString();
     }
 
-    private static Optional<String> rewriteJUnitTestBodies(String source, boolean suppressAssertionFailures) {
+    private static Optional<List<JUnitTestBody>> junitTestBodies(String source) {
         if (UNICODE_ESCAPE.matcher(source).find() || javaTestAnnotationSummary(source).unsupportedAnnotationSyntax()) {
             return Optional.empty();
         }
@@ -95,8 +117,8 @@ final class JavaSourceInspector {
         String withoutComments = stripJavaComments(source);
         StringBuilder annotations = new StringBuilder();
         StringBuilder declaration = new StringBuilder();
-        StringBuilder variant = new StringBuilder();
-        int copiedThrough = 0;
+        List<JUnitTestBody> bodies = new ArrayList<>();
+        Set<String> names = new HashSet<>();
         int depth = 0;
         var classDepths = new ArrayDeque<Integer>();
         Set<String> classNames = LOCAL_TYPE.matcher(structural).results().map(match -> match.group(1)).collect(Collectors.toSet());
@@ -121,7 +143,11 @@ final class JavaSourceInspector {
                     // Initializers and constructors can legitimately perform assertions before any test method runs.
                     return Optional.empty();
                 }
-                if (current == '{' && hasJUnitTestAnnotation(annotations.toString()) && VOID_TEST_DECLARATION.matcher(declaration).find()) {
+                boolean lifecycle = LIFECYCLE_ANNOTATION.matcher(annotations).find();
+                if (current == '{' && lifecycle && !VOID_TEST_DECLARATION.matcher(declaration).find()) {
+                    return Optional.empty();
+                }
+                if (current == '{' && (hasJUnitTestAnnotation(annotations.toString()) || lifecycle) && VOID_TEST_DECLARATION.matcher(declaration).find()) {
                     int bodyDepth = 1;
                     int close = offset + 1;
                     while (close < structural.length() && bodyDepth > 0) {
@@ -136,12 +162,21 @@ final class JavaSourceInspector {
                     if (bodyDepth != 0) {
                         return Optional.empty();
                     }
-                    variant.append(source, copiedThrough, offset + 1);
-                    if (suppressAssertionFailures) {
-                        variant.append("try {").append(source, offset + 1, close - 1).append("} catch (java.lang.AssertionError hyperionSuppressedAssertion) {}");
+                    if (lifecycle) {
+                        // Empty hooks cannot hide assertions or state changes outside the rewritten test body.
+                        if (!structural.substring(offset + 1, close - 1).isBlank() || hasJUnitTestAnnotation(annotations.toString())) {
+                            return Optional.empty();
+                        }
+                        offset = close - 1;
+                        annotations.setLength(0);
+                        declaration.setLength(0);
+                        continue;
                     }
-                    variant.append('}');
-                    copiedThrough = close;
+                    Matcher method = VOID_TEST_DECLARATION.matcher(declaration);
+                    if (!method.find() || !names.add(method.group(1))) {
+                        return Optional.empty();
+                    }
+                    bodies.add(new JUnitTestBody(method.group(1), offset + 1, close - 1));
                     offset = close - 1;
                 }
                 else if (current == '{') {
@@ -163,7 +198,7 @@ final class JavaSourceInspector {
                 declaration.append(current);
             }
         }
-        return copiedThrough == 0 ? Optional.empty() : Optional.of(variant.append(source, copiedThrough, source.length()).toString());
+        return bodies.isEmpty() ? Optional.empty() : Optional.of(List.copyOf(bodies));
     }
 
     /**

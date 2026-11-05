@@ -75,6 +75,21 @@ public record SemanticMutant(String ruleId, String solutionPath, String original
                 Evidence.NON_FAILING_STUDENT_TESTS);
     }
 
+    /**
+     * Identifies the independently rewritten learner method in diagnostics and retained assessment obligations.
+     *
+     * @param method name of the learner method whose body changed
+     * @return the same probe with method-specific identity and diagnostic
+     */
+    public SemanticMutant forStudentTestMethod(String method) {
+        if (!testsLearnerAssertions()) {
+            throw new IllegalStateException("Only learner-test probes have a student method");
+        }
+        String rule = ruleId + "#" + method;
+        var description = new ContractWitness(rule, "", "", counterexample.wrongBehavior() + " in " + method);
+        return new SemanticMutant(rule, solutionPath, originalSolutionSource, mutantSource, description, reviewTarget, evidence);
+    }
+
     /** Whether this probe tests the effect of learner-owned test assertions. */
     public boolean testsLearnerAssertions() {
         return evidence == Evidence.EMPTY_STUDENT_TESTS || evidence == Evidence.NON_FAILING_STUDENT_TESTS;

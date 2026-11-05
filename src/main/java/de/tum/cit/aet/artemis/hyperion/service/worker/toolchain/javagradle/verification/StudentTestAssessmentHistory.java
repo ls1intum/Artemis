@@ -13,10 +13,10 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 /** Keeps an executed learner-test counterexample binding when a later candidate removes its probe surface. Owned by one generation's verifier. */
 final class StudentTestAssessmentHistory {
 
-    private record Probe(String sessionId, String path, SemanticMutant.Evidence kind) {
+    private record Probe(String sessionId, String path, SemanticMutant.Evidence kind, String rule) {
 
         static Probe of(String sessionId, SemanticMutant mutant) {
-            return new Probe(sessionId, mutant.solutionPath(), mutant.evidence());
+            return new Probe(sessionId, mutant.solutionPath(), mutant.evidence(), mutant.ruleId());
         }
     }
 

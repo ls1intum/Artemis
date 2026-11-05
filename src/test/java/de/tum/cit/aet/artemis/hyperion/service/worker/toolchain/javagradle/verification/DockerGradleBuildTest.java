@@ -502,11 +502,23 @@ class DockerGradleBuildTest {
     @ParameterizedTest
     @ValueSource(ints = { 0, 1, 2 })
     void studentWrittenTestsMustRejectFaultyBehaviorRatherThanOnlyRunOnTheCorrectLibrary(int assessment) throws IOException {
-        boolean gradeFaults = assessment == 1;
+        checkStudentTestAssessment(assessment);
+    }
+
+    @Test
+    void aStronglyGradedMethodCannotMaskAnotherMethodsIneffectiveAssertions() throws IOException {
+        checkStudentTestAssessment(3);
+    }
+
+    private void checkStudentTestAssessment(int assessment) throws IOException {
+        boolean gradeFaults = assessment == 1 || assessment == 3;
         var verifier = new DifferentialVerifier(commands);
         String learner = """
                 package de.tum.cit.aet.reference;
                 public class LearnerCheck {
+                    @org.junit.jupiter.api.BeforeEach
+                    public void setUp() { /* supplied empty setup */ }
+
                     @org.junit.jupiter.api.Test
                     public void verifiesSum() {
                         Toolbox.observations++;
@@ -544,13 +556,32 @@ class DockerGradleBuildTest {
                 """.formatted(gradeFaults
                 ? "faulty.setBoolean(null, true); try { assertThrows(AssertionError.class, () -> new LearnerCheck().verifiesSum()); } finally { faulty.setBoolean(null, false); }"
                 : assessment == 2 ? "assertEquals(1, Toolbox.observations);" : "");
+        if (assessment == 3) {
+            learner = learner.replace("public class LearnerCheck {", """
+                    public class LearnerCheck {
+                        @org.junit.jupiter.api.Test public void checksAnotherCase() {
+                            Toolbox.observations++;
+                            org.junit.jupiter.api.Assertions.assertEquals(1, Toolbox.sum(1, 0));
+                        }
+                    """);
+            instructor = instructor.replace("class ScoreCalculatorTest {", """
+                    class ScoreCalculatorTest {
+                        @Test @StrictTimeout(5) void testOtherLearnerAssertions() {
+                            Toolbox.observations = 0;
+                            assertDoesNotThrow(() -> new LearnerCheck().checksAnotherCase());
+                            assertEquals(1, Toolbox.observations);
+                        }
+                    """);
+        }
         List<WorkspaceFile> files = new ArrayList<>(
                 snapshot().files().stream().filter(file -> !file.path().equals("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java")).toList());
         files.add(new WorkspaceFile("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", instructor.getBytes(StandardCharsets.UTF_8), false));
         String path = "src/de/tum/cit/aet/reference/LearnerCheck.java";
         files.add(new WorkspaceFile("solution/" + path, learner.getBytes(StandardCharsets.UTF_8), false));
-        files.add(new WorkspaceFile("template/" + path, learner
-                .replace("org.junit.jupiter.api.Assertions.assertEquals(5, Toolbox.sum(2, 3));", "throw new UnsupportedOperationException();").getBytes(StandardCharsets.UTF_8),
+        files.add(new WorkspaceFile("template/" + path,
+                learner.replace("org.junit.jupiter.api.Assertions.assertEquals(5, Toolbox.sum(2, 3));", "throw new UnsupportedOperationException();")
+                        .replace("org.junit.jupiter.api.Assertions.assertEquals(1, Toolbox.sum(1, 0));", "throw new UnsupportedOperationException();")
+                        .getBytes(StandardCharsets.UTF_8),
                 false));
         for (String lane : List.of("template", "solution")) {
             files.add(new WorkspaceFile(lane + "/src/de/tum/cit/aet/reference/Toolbox.java", support.getBytes(StandardCharsets.UTF_8), false));
@@ -578,9 +609,12 @@ class DockerGradleBuildTest {
         assertThat(build(session, "solution").exitCode()).isZero();
         assertThat(build(session, "template").testFailedNames()).contains("testLearnerAssertions");
         String plan = "{\"tests\":[{\"name\":\"testLearnerAssertions\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+        if (assessment == 3) {
+            plan = plan.replace("}]}", "},{\"name\":\"testOtherLearnerAssertions\",\"seam\":\"S2\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}");
+        }
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of("test-plan.json", plan), Map.of()));
 
-        if (assessment == 2) {
+        if (assessment == 2 || assessment == 3) {
             var sources = JavaSourceSnapshot.capture(sandbox, session);
             var outcomes = verifier.probeStudentTestAssertions(sandbox, session, exercise, sources.templateFiles(), sources.solutionFiles(), plan, structural,
                     () -> sources.restore(sandbox, session));
@@ -596,17 +630,17 @@ class DockerGradleBuildTest {
                 .as("source-destructive verification is available only through server-managed tools").isTrue();
         var failure = StageAssessmentCheck.failure(verifier, sandbox, session, exercise, structural, org.mockito.Mockito.mock(AgentVerifyReport.class));
 
-        if (gradeFaults) {
+        if (assessment == 1) {
             assertThat(failure).isEmpty();
         }
         else {
             assertThat(failure).hasValueSatisfying(result -> {
                 assertThat(result.contractRedesignRequired()).isTrue();
-                assertThat(result.observation()).contains("empty learner-written JUnit", "LearnerCheck.java");
+                assertThat(result.observation()).contains("LearnerCheck.java");
             });
         }
         assertThat(JavaSourceSnapshot.capture(sandbox, session).solutionFiles()).containsEntry(path, learner);
-        if (!gradeFaults) {
+        if (assessment != 1) {
             var before = JavaSourceSnapshot.capture(sandbox, session);
             sandbox.copyIn(session, "/workspace/template", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, learner), Map.of()));
             try {

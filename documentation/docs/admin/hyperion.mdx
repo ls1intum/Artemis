@@ -328,20 +328,26 @@ shell can remove work without the required restoration. A missing verifier is a
 configuration error; generation must not substitute an unmanaged shell build.
 
 For exercises where students write JUnit tests, the assessment check tries two variants
-of simple student-owned test classes: empty test bodies, and the original bodies with
-assertion failures suppressed. The weighted grading tests must reject both variants.
+of each changed method in simple student-owned test classes: an empty body, and
+the original body with assertion failures suppressed. Other methods stay unchanged;
+a strongly graded method cannot mask an ineffective assertion in another method.
+Unchanged supplied examples are excluded. The weighted grading tests must reject both variants.
 Keeping calls or recorded values while ignoring assertion failures does not establish
 that the learner has written effective tests. Running the learner's tests only against
 the correct supplied implementation does not establish whether they detect faults.
 
 The specification must declare ordinary Java support that routes the learner's actual
 calls through correct and faulty behavior. Private JDK instrumentation is unavailable;
-a failed grader setup cannot count as a learner assertion detecting a fault. Lifecycle
+a failed grader setup cannot count as a learner assertion detecting a fault. Non-empty lifecycle
 hooks, inheritance, constructors and initializers make this simple probe inapplicable;
-these cases still need quality review. An inconclusive execution cannot authorize a
+provably empty lifecycle hooks are preserved and do not disable it.
+Unsupported classes still need quality review. An inconclusive execution cannot authorize a
 contract change or establish that the assessment passed.
+A semantic repair that returns identical artifacts stops further repair and retains the
+previous verified candidate with its existing review findings. It does not repeat
+unchanged work or rerun the reviewer to obtain a different verdict.
 
-Once a learner-test counterexample is confirmed, its source file and probe kind remain
+Once a learner-test counterexample is confirmed, its source file, method and probe kind remain
 part of the job's assessment obligations. A later candidate that removes, renames or
 supplies that learner test surface cannot silently retire the evidence: a missing
 applicable probe is inconclusive and blocks a new checkpoint. A successful check

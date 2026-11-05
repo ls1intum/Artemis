@@ -778,8 +778,10 @@ public class DifferentialVerifier {
     }
 
     /**
-     * Executes empty-body and assertion-suppression counterexamples for simple learner-owned JUnit classes after a passing reference build. Unchanged supplied classes and
-     * complex test lifecycles are excluded. A compilation failure is inconclusive; only the executed weighted grading tests decide whether an ineffective test is accepted.
+     * Executes empty-body and assertion-suppression counterexamples separately for each changed learner-owned JUnit method after a passing reference build. Unchanged supplied
+     * classes and
+     * non-empty test lifecycles are excluded. Other methods remain unchanged so they cannot mask the selected method. A compilation failure is inconclusive; only the executed
+     * weighted grading tests decide whether an ineffective test is accepted.
      *
      * @param sandbox               isolated workspace
      * @param sessionId             active sandbox session
@@ -796,8 +798,10 @@ public class DifferentialVerifier {
         List<SemanticMutant> probes = new ArrayList<>();
         producedSolutionFiles.forEach((path, source) -> {
             if (path.startsWith("src/") && path.endsWith(".java") && !source.equals(producedTemplateFiles.get(path))) {
-                JavaSourceInspector.emptyJUnitTestBodies(source).ifPresent(variant -> probes.add(SemanticMutant.emptyStudentTests(path, source, variant)));
-                JavaSourceInspector.nonFailingJUnitTestBodies(source).ifPresent(variant -> probes.add(SemanticMutant.nonFailingStudentTests(path, source, variant)));
+                for (var variant : JavaSourceInspector.studentTestVariants(source, producedTemplateFiles.getOrDefault(path, ""))) {
+                    probes.add(SemanticMutant.emptyStudentTests(path, source, variant.empty()).forStudentTestMethod(variant.method()));
+                    probes.add(SemanticMutant.nonFailingStudentTests(path, source, variant.nonFailing()).forStudentTestMethod(variant.method()));
+                }
             }
         });
         List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.recheck(producedSolutionFiles, probes, OutputOnlyMainProbe.gradedTest(testPlanJson),

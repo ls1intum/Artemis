@@ -680,8 +680,9 @@ class GenerationAttemptLoop {
             specFidelityReport = candidateBeforeCurrentRepair.reviewReport();
             lastMechanicallyVerifiedCandidate = candidateBeforeCurrentRepair;
             candidateBeforeCurrentRepair = null;
-            emit("The semantic repair made no artifact changes; retaining the previous environment evidence and review instead of re-rolling a verdict on the same candidate.");
-            return null;
+            terminationReason = TerminationReason.REPAIR_DID_NOT_IMPROVE;
+            emit("The semantic repair made no artifact changes; retaining the previous environment evidence and review and stopping further identical repairs.");
+            return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
         }
         @Nullable
         String adaptationChanges = mode == Mode.ADAPT

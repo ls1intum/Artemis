@@ -2006,9 +2006,11 @@ class GenerationAttemptLoopTest {
             loop.run();
 
             verify(specFidelityCritic, times(1)).critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+            verify(agentLoopRunner, times(2)).runSession(anyString(), isNull(), anyString(), any(), anyInt(), any(), any(), any());
+            assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport()).isEqualTo(blocker);
             assertThat(loop.specFidelityReport()).isEqualTo(blocker);
             assertThat(progressLines).anyMatch(line -> line.contains("made no artifact changes") && line.contains("retaining the previous environment evidence"));
-            assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REPAIR_BUDGET_EXHAUSTED);
+            assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REPAIR_DID_NOT_IMPROVE);
         }
 
         @Test

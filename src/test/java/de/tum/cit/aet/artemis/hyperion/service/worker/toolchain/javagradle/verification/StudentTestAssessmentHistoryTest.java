@@ -50,6 +50,18 @@ class StudentTestAssessmentHistoryTest {
     }
 
     @Test
+    void aStrongMethodCannotRetireTheCounterexampleForAnotherMethodInTheSameClass() {
+        var history = new StudentTestAssessmentHistory();
+        var weak = probe.forStudentTestMethod("weak");
+        history.complete("job", List.of(new SemanticMutantOutcome(weak, Disposition.SURVIVED_GRADED_SUITE)));
+        var strong = new SemanticMutantOutcome(probe.forStudentTestMethod("strong"), Disposition.KILLED_BY_GRADED_SUITE);
+        assertThat(history.complete("job", List.of(strong))).contains(strong).anySatisfy(outcome -> {
+            assertThat(outcome.mutant()).isEqualTo(weak);
+            assertThat(outcome.disposition()).isEqualTo(Disposition.INCONCLUSIVE);
+        });
+    }
+
+    @Test
     void unrelatedSessionsAndUnprovenProbeKindsDoNotInheritAnObligation() {
         var history = new StudentTestAssessmentHistory();
         history.complete("job", List.of(new SemanticMutantOutcome(probe, Disposition.SURVIVED_GRADED_SUITE)));

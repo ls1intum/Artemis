@@ -148,7 +148,8 @@ final class ExecutableEvidenceLedger {
         List<String> reasons = new ArrayList<>(result.reasons());
         counterexamples.forEach(mutant -> reasons.add("The executed assessment accepts "
                 + (mutant.testsLearnerAssertions() ? "learner-written JUnit tests without effective assertion failures" : "a print-only replacement") + " in "
-                + mutant.solutionPath() + ". The graded tests must distinguish the learner-owned operations before a candidate can become a checkpoint."));
+                + mutant.solutionPath() + " (" + mutant.ruleId()
+                + "). The graded tests must distinguish the learner-owned operations before a candidate can become a checkpoint."));
         return new AssessmentVerdict(new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), reasons, result.templateFailureEvidence()),
                 counterexamples);
     }
