@@ -29,7 +29,7 @@ import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
-import { IrisSender } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
@@ -1231,6 +1231,30 @@ describe('IrisChatService', () => {
 
             websocketSubject.next(statusFrame('run-1', IrisRunState.RUNNING, { activities: [finishedActivity('act-1'), runningActivity('act-2')], activitySeq: 2 }));
             expect(service.activities.getValue()).toEqual([runningActivity('act-2')]);
+        });
+
+        it('live feed: after a reload mid-run, drops the steps the loaded interim messages show', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            const earlierAnswer = { ...mockWebsocketServerMessage.message!, id: 30, activities: [finishedActivity('act-1')] } as IrisMessage;
+            const loadedInterim = { ...mockWebsocketServerMessage.message!, id: 41, final: false, activities: [finishedActivity('act-1')] } as IrisMessage;
+            service.messages.next([earlierAnswer, mockUserMessageWithContent('question') as IrisMessage, loadedInterim]);
+
+            websocketSubject.next(statusFrame('run-1', IrisRunState.RUNNING, { activities: [finishedActivity('act-1'), runningActivity('act-2')], activitySeq: 5 }));
+
+            expect(service.activities.getValue()).toEqual([runningActivity('act-2')]);
+        });
+
+        it('live feed: interim messages of a finished run do not hide steps of the next run', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            const oldInterim = { ...mockWebsocketServerMessage.message!, id: 41, final: false, activities: [finishedActivity('act-1')] } as IrisMessage;
+            const oldAnswer = { ...mockWebsocketServerMessage.message!, id: 42 } as IrisMessage;
+            service.messages.next([mockUserMessageWithContent('question') as IrisMessage, oldInterim, oldAnswer]);
+
+            websocketSubject.next(statusFrame('run-2', IrisRunState.RUNNING, { activities: [runningActivity('act-1')], activitySeq: 1 }));
+
+            expect(service.activities.getValue()).toEqual([runningActivity('act-1')]);
         });
 
         it('live feed: a new run with reused step ids shows all its steps', async () => {

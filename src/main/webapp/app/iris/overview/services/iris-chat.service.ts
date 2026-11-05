@@ -730,6 +730,10 @@ export class IrisChatService implements OnDestroy {
             return false;
         }
         if (!isKnownRun) {
+            if (!this.pendingRunGeneration()) {
+                // A run this page did not start, for example after a reload while Iris was still answering.
+                this.seedStepsOnLoadedInterimMessages(runId);
+            }
             this.knownRunIds.add(runId);
             this.currentRunId = runId;
             this.closePendingRunGeneration();
@@ -866,6 +870,24 @@ export class IrisChatService implements OnDestroy {
         this.activityIdsOnMessagesByRunId.set(runId, idsOnMessages);
         if (this.lastActivitySnapshot?.runId === runId && !this.finalizedRunIds.has(runId)) {
             this.activities.next(this.stepsNotOnMessages(runId, this.lastActivitySnapshot.activities));
+        }
+    }
+
+    /**
+     * After a reload the run's interim messages come from the session, not from frames of this run. Their steps already show on them,
+     * so the live feed must leave them out too. The run's interim messages are the ones after the last user message or final answer.
+     */
+    private seedStepsOnLoadedInterimMessages(runId: string): void {
+        const messages = this.messages.getValue();
+        const isRunStart = (message: IrisMessage) => message.sender === IrisSender.USER || (message.sender === IrisSender.LLM && message.final !== false);
+        const lastRunStartIndex = messages.findLastIndex(isRunStart);
+        const ids = messages
+            .slice(lastRunStartIndex + 1)
+            .filter((message): message is IrisAssistantMessage => message.sender === IrisSender.LLM && message.final === false)
+            .flatMap((message) => message.activities ?? [])
+            .map((activity) => activity.id);
+        if (ids.length) {
+            this.activityIdsOnMessagesByRunId.set(runId, new Set(ids));
         }
     }
 

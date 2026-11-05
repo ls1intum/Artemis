@@ -246,6 +246,7 @@
                                 [attr.data-message-id]="message.id"
                                 animate.enter="message-entering"
                                 [class.animate-enabled]="message.id !== undefined && animatingMessageIds().has(message.id)"
+                                [class.interim-message]="isIntermediateAssistantMessage(message)"
                                 [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
                             >
                                 @if (message.sender === IrisSender.USER) {

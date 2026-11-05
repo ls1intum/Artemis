@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -270,7 +271,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             }
             var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(result)).orElse(List.of());
             // Only the steps no interim message of the run shows yet; a Pyris without per-message steps sends the whole run.
-            message.setToolActivity(emptyToNull(statusUpdate.messageActivities() != null ? statusUpdate.messageActivities() : statusUpdate.activities()));
+            var steps = statusUpdate.messageActivities() != null ? statusUpdate.messageActivities() : statusUpdate.activities();
+            message.setToolActivity(emptyToNull(withoutStepsOnInterimMessages(steps, session, job)));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             var updatedJob = trackedJob.withAssistantMessageId(savedMessage.getId());
             pyrisJobService.updateJob(updatedJob);
@@ -282,6 +284,23 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
             pyrisJobService.updateJob(updatedJob);
             return updatedJob;
         });
+    }
+
+    /**
+     * Leaves out the steps an interim message of this run already stores. Pyris sends an interim message's steps again with the answer when it did not get
+     * Artemis's reply, although Artemis may have saved that message; without this check those steps would show twice. Activity ids are unique within a run only,
+     * so only the interim messages after the run's user message count. A run without a user message (a proactive one) keeps its steps as sent.
+     */
+    @Nullable
+    private static List<PyrisActivityDTO> withoutStepsOnInterimMessages(@Nullable List<PyrisActivityDTO> steps, IrisSession session, TrackedSessionBasedPyrisJob job) {
+        if (steps == null || steps.isEmpty() || job.userMessageId() == null || session.getMessages() == null) {
+            return steps;
+        }
+        long userMessageId = job.userMessageId();
+        Set<String> idsOnInterimMessages = session.getMessages().stream().filter(
+                message -> message.getId() != null && message.getId() > userMessageId && Boolean.TRUE.equals(message.getIntermediate()) && message.getToolActivity() != null)
+                .flatMap(message -> message.getToolActivity().stream()).map(PyrisActivityDTO::id).collect(Collectors.toSet());
+        return idsOnInterimMessages.isEmpty() ? steps : steps.stream().filter(step -> !idsOnInterimMessages.contains(step.id())).toList();
     }
 
     @Nullable

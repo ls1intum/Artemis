@@ -813,7 +813,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         return deepClone(rawMessages);
     }
 
-    private isIntermediateAssistantMessage(message: IrisMessage | undefined): boolean {
+    protected isIntermediateAssistantMessage(message: IrisMessage | undefined): boolean {
         return message?.sender === IrisSender.LLM && message.final === false;
     }
 

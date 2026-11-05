@@ -322,6 +322,20 @@ jhi-iris-mcq-question {
     margin-bottom: 8px;
 }
 
+// An interim message and the steps after it are parts of one answer, so they sit closer together
+// than separate messages: 16px instead of 48px (paragraph and bubble margins plus the message gap).
+.interim-message {
+    margin-bottom: -8px;
+
+    .bubble-left {
+        margin-bottom: 0;
+
+        ::ng-deep p:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+
 .bubble-left {
     --_d: 0%;
 
