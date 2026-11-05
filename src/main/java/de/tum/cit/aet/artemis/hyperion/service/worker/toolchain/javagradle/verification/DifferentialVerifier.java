@@ -776,8 +776,8 @@ public class DifferentialVerifier {
     }
 
     /**
-     * Executes an empty-body counterexample for simple learner-owned JUnit classes after a passing reference build. Unchanged supplied classes and complex test lifecycles are
-     * excluded. A compilation failure is inconclusive; only the executed weighted grading tests decide whether the empty test bodies are accepted.
+     * Executes empty-body and assertion-suppression counterexamples for simple learner-owned JUnit classes after a passing reference build. Unchanged supplied classes and
+     * complex test lifecycles are excluded. A compilation failure is inconclusive; only the executed weighted grading tests decide whether an ineffective test is accepted.
      *
      * @param sandbox               isolated workspace
      * @param sessionId             active sandbox session
@@ -789,12 +789,13 @@ public class DifferentialVerifier {
      * @param restoreCandidate      restores the pristine candidate around every probe
      * @return executed survivor, kill, or inconclusive outcomes for the applicable learner test classes
      */
-    public List<SemanticMutantOutcome> probeEmptyStudentTests(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> producedTemplateFiles,
+    public List<SemanticMutantOutcome> probeStudentTestAssertions(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> producedTemplateFiles,
             Map<String, String> producedSolutionFiles, @Nullable String testPlanJson, SeededStructuralTests seededStructuralTests, Runnable restoreCandidate) {
         List<SemanticMutant> probes = new ArrayList<>();
         producedSolutionFiles.forEach((path, source) -> {
             if (path.startsWith("src/") && path.endsWith(".java") && !source.equals(producedTemplateFiles.get(path))) {
                 JavaSourceInspector.emptyJUnitTestBodies(source).ifPresent(variant -> probes.add(SemanticMutant.emptyStudentTests(path, source, variant)));
+                JavaSourceInspector.nonFailingJUnitTestBodies(source).ifPresent(variant -> probes.add(SemanticMutant.nonFailingStudentTests(path, source, variant)));
             }
         });
         return SemanticMutantExecution.recheck(producedSolutionFiles, probes, OutputOnlyMainProbe.gradedTest(testPlanJson),

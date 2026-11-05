@@ -8,7 +8,6 @@ import java.util.Set;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
-import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 
 /** Executes assessment counterexamples at the artifact boundary, before the contract reaches statement authoring. */
@@ -25,16 +24,18 @@ final class StageAssessmentCheck {
         try {
             outcomes.addAll(verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, snapshot.testsFiles(), snapshot.templateFiles(), snapshot.solutionFiles(), plan, seeded,
                     Set.of(), () -> snapshot.restore(sandbox, sessionId)));
-            outcomes.addAll(verifier.probeEmptyStudentTests(sandbox, sessionId, exercise, snapshot.templateFiles(), snapshot.solutionFiles(), plan, seeded,
+            outcomes.addAll(verifier.probeStudentTestAssertions(sandbox, sessionId, exercise, snapshot.templateFiles(), snapshot.solutionFiles(), plan, seeded,
                     () -> snapshot.restore(sandbox, sessionId)));
         }
         finally {
             snapshot.restore(sandbox, sessionId);
         }
-        List<String> emptyTests = outcomes.stream().filter(outcome -> outcome.mutant().evidence() == SemanticMutant.Evidence.EMPTY_STUDENT_TESTS
-                && outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE).map(outcome -> outcome.mutant().solutionPath()).toList();
-        if (!emptyTests.isEmpty()) {
-            return Optional.of(StageCheckResult.redesignRequired("The graded suite accepts empty learner-written JUnit test bodies in " + emptyTests
+        List<String> ineffectiveTests = outcomes.stream()
+                .filter(outcome -> outcome.mutant().testsLearnerAssertions() && outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE)
+                .map(outcome -> outcome.mutant().solutionPath()).toList();
+        if (!ineffectiveTests.isEmpty()) {
+            return Optional.of(StageCheckResult.redesignRequired("The graded suite accepts empty learner-written JUnit test bodies or tests that suppress assertion failures in "
+                    + ineffectiveTests
                     + ". Running student tests only against the correct supplied implementation does not assess their assertions. Preserve the brief and grade whether learner tests reject faulty implementations, using supplied runtime support rather than inspecting their source.",
                     report));
         }

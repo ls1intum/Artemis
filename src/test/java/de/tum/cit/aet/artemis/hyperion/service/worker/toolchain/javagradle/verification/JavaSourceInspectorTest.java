@@ -33,6 +33,21 @@ class JavaSourceInspectorTest {
                 .doesNotContain("braces", "assertEquals", "assertTrue");
     }
 
+    @Test
+    void suppressingAssertionFailuresPreservesExecutedTestActionsAndHelpers() {
+        String source = """
+                class Learner {
+                    @org.junit.jupiter.api.Test void checks() {
+                        Support.observe();
+                        org.junit.jupiter.api.Assertions.assertEquals(2, Support.value());
+                    }
+                    int helper() { return 2; }
+                }
+                """;
+        assertThat(JavaSourceInspector.nonFailingJUnitTestBodies(source).orElseThrow()).contains("try {", "Support.observe();",
+                "org.junit.jupiter.api.Assertions.assertEquals(2, Support.value());", "catch (java.lang.AssertionError", "int helper() { return 2; }");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "class T { @org.junit.jupiter.api.BeforeEach void setup() { assertTrue(true); } @org.junit.jupiter.api.Test void t() {} }",
             "class T { static { assertTrue(true); } @org.junit.jupiter.api.Test void t() {} }", "class T { T() { assertTrue(true); } @org.junit.jupiter.api.Test void t() {} }",
@@ -40,6 +55,7 @@ class JavaSourceInspectorTest {
             "class T extends BaseTest { @org.junit.jupiter.api.Test void t() {} }", "class T { void helper() {} }" })
     void emptyJUnitProbeSkipsWorkOutsideTestBodiesOrSourcesWithoutTests(String source) {
         assertThat(JavaSourceInspector.emptyJUnitTestBodies(source)).isEmpty();
+        assertThat(JavaSourceInspector.nonFailingJUnitTestBodies(source)).isEmpty();
     }
 
     @Test

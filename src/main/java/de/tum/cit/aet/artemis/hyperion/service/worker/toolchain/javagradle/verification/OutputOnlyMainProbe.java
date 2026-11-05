@@ -120,7 +120,7 @@ final class OutputOnlyMainProbe {
             Set<String> excludedSolutionPaths, Function<Target, Optional<String>> captureTranscript, SemanticMutantExecution.ProbeRunner runner) {
         List<Target> sourceVisible = targets(testFiles, templateFiles, solutionFiles, gradedTestMethods(testPlanJson));
         List<Target> selected = new ArrayList<>(sourceVisible);
-        candidateTargets(templateFiles, solutionFiles).stream().filter(target -> !selected.contains(target)).limit(MAX_TARGETS - selected.size()).forEach(selected::add);
+        candidateTargets(templateFiles, solutionFiles).stream().filter(target -> !selected.contains(target)).limit((long) MAX_TARGETS - selected.size()).forEach(selected::add);
         List<SemanticMutant> variants = new ArrayList<>();
         List<SemanticMutantOutcome> outcomes = new ArrayList<>();
         for (Target target : selected) {

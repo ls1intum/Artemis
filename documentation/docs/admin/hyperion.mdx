@@ -322,14 +322,21 @@ learner calls to undeclared recorders or callbacks; a mechanically passing refer
 solution alone cannot establish that the student-facing task is sufficient.
 
 For exercises where students write JUnit tests, the assessment check also tries
-empty test bodies in simple student-owned test classes. The weighted grading tests
-must reject that variant. Running the learner's tests only against the correct
+two variants of simple student-owned test classes: empty test bodies, and the
+original bodies with assertion failures suppressed. The weighted grading tests
+must reject both variants. Keeping calls or recorded values while ignoring assertion
+failures does not establish that the learner has written effective tests. Running the learner's tests only against the correct
 supplied implementation does not establish whether their assertions detect faults.
 The specification must declare ordinary Java support that routes the learner's actual calls
 through correct and faulty behavior. Private JDK instrumentation is unavailable; a failed
 grader setup cannot count as a learner assertion detecting a fault.
 Lifecycle hooks, inheritance, constructors and initializers make this simple probe
-inapplicable; these cases still need quality review. An inconclusive execution cannot
+inapplicable; these cases still need quality review.
+The full-artifact quality review keeps the complete exercise source. Unchanged build-wrapper
+launchers are identified against their baseline instead of repeated in full. If a repair
+diff would exceed the review bound, the reviewer gets the complete current candidate and
+prior findings with an explicit notice that the duplicate diff was omitted. Required
+evidence that still exceeds the bound leaves the review unavailable. An inconclusive execution cannot
 authorize a contract change or establish that the assessment passed.
 
 When executed evidence causes redesign, the specification reviewer receives the

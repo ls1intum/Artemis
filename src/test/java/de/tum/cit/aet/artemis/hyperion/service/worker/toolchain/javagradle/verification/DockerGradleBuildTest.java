@@ -500,13 +500,15 @@ class DockerGradleBuildTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    void studentWrittenTestsMustRejectFaultyBehaviorRatherThanOnlyRunOnTheCorrectLibrary(boolean gradeFaults) throws IOException {
+    @ValueSource(ints = { 0, 1, 2 })
+    void studentWrittenTestsMustRejectFaultyBehaviorRatherThanOnlyRunOnTheCorrectLibrary(int assessment) throws IOException {
+        boolean gradeFaults = assessment == 1;
         String learner = """
                 package de.tum.cit.aet.reference;
                 public class LearnerCheck {
                     @org.junit.jupiter.api.Test
                     public void verifiesSum() {
+                        Toolbox.observations++;
                         org.junit.jupiter.api.Assertions.assertEquals(5, Toolbox.sum(2, 3));
                     }
                 }
@@ -515,6 +517,7 @@ class DockerGradleBuildTest {
                 package de.tum.cit.aet.reference;
                 public class Toolbox {
                     private static boolean faulty;
+                    public static int observations;
                     public static int sum(int a, int b) { return faulty ? 0 : a + b; }
                 }
                 """;
@@ -532,13 +535,14 @@ class DockerGradleBuildTest {
                         var faulty = Toolbox.class.getDeclaredField("faulty");
                         faulty.setAccessible(true);
                         faulty.setBoolean(null, false);
+                        Toolbox.observations = 0;
                         assertDoesNotThrow(() -> new LearnerCheck().verifiesSum());
                         %s
                     }
                 }
                 """.formatted(gradeFaults
                 ? "faulty.setBoolean(null, true); try { assertThrows(AssertionError.class, () -> new LearnerCheck().verifiesSum()); } finally { faulty.setBoolean(null, false); }"
-                : "");
+                : assessment == 2 ? "assertEquals(1, Toolbox.observations);" : "");
         List<WorkspaceFile> files = new ArrayList<>(
                 snapshot().files().stream().filter(file -> !file.path().equals("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java")).toList());
         files.add(new WorkspaceFile("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", instructor.getBytes(StandardCharsets.UTF_8), false));
@@ -575,6 +579,18 @@ class DockerGradleBuildTest {
         String plan = "{\"tests\":[{\"name\":\"testLearnerAssertions\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of("test-plan.json", plan), Map.of()));
 
+        if (assessment == 2) {
+            var sources = JavaSourceSnapshot.capture(sandbox, session);
+            var outcomes = new DifferentialVerifier(commands).probeStudentTestAssertions(sandbox, session, exercise, sources.templateFiles(), sources.solutionFiles(), plan,
+                    structural, () -> sources.restore(sandbox, session));
+            assertThat(outcomes).anySatisfy(outcome -> {
+                assertThat(outcome.mutant().evidence()).isEqualTo(SemanticMutant.Evidence.EMPTY_STUDENT_TESTS);
+                assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE);
+            }).anySatisfy(outcome -> {
+                assertThat(outcome.mutant().evidence()).isEqualTo(SemanticMutant.Evidence.NON_FAILING_STUDENT_TESTS);
+                assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+            });
+        }
         var failure = StageAssessmentCheck.failure(new DifferentialVerifier(commands), sandbox, session, exercise, structural, org.mockito.Mockito.mock(AgentVerifyReport.class));
 
         if (gradeFaults) {

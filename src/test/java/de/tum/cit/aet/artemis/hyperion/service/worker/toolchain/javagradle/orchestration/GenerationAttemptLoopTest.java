@@ -375,16 +375,19 @@ class GenerationAttemptLoopTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS" })
+    @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS", "NON_FAILING_STUDENT_TESTS" })
     void anAssessmentBypassAuthoredByAMechanicalRetryNeverBecomesACheckpoint(SemanticMutant.Evidence evidence) {
         stubSchedulerFixture();
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
                 any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("missing executable artifacts"), accepted());
-        var bypass = evidence == SemanticMutant.Evidence.EMPTY_STUDENT_TESTS ? SemanticMutant.emptyStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }")
-                : SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
-        if (evidence == SemanticMutant.Evidence.EMPTY_STUDENT_TESTS) {
-            when(verifier.probeEmptyStudentTests(any(), anyString(), any(), any(), any(), any(), any(), any()))
+        var bypass = switch (evidence) {
+            case EMPTY_STUDENT_TESTS -> SemanticMutant.emptyStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
+            case NON_FAILING_STUDENT_TESTS -> SemanticMutant.nonFailingStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
+            default -> SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
+        };
+        if (bypass.testsLearnerAssertions()) {
+            when(verifier.probeStudentTestAssertions(any(), anyString(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.SURVIVED_GRADED_SUITE)));
         }
         else {
@@ -401,16 +404,19 @@ class GenerationAttemptLoopTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS" })
+    @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS", "NON_FAILING_STUDENT_TESTS" })
     void anInconclusiveAssessmentNeitherCreatesACheckpointNorAuthorizesRedesign(SemanticMutant.Evidence evidence) {
         stubSchedulerFixture();
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
                 any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
-        var bypass = evidence == SemanticMutant.Evidence.EMPTY_STUDENT_TESTS ? SemanticMutant.emptyStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }")
-                : SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
-        if (evidence == SemanticMutant.Evidence.EMPTY_STUDENT_TESTS) {
-            when(verifier.probeEmptyStudentTests(any(), anyString(), any(), any(), any(), any(), any(), any()))
+        var bypass = switch (evidence) {
+            case EMPTY_STUDENT_TESTS -> SemanticMutant.emptyStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
+            case NON_FAILING_STUDENT_TESTS -> SemanticMutant.nonFailingStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
+            default -> SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
+        };
+        if (bypass.testsLearnerAssertions()) {
+            when(verifier.probeStudentTestAssertions(any(), anyString(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.INCONCLUSIVE)));
         }
         else {

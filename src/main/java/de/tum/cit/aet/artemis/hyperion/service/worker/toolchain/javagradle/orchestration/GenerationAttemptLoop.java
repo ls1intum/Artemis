@@ -896,11 +896,12 @@ class GenerationAttemptLoop {
             @Nullable SpecFidelityReport previousReport, @Nullable String specSnapshotForReview, @Nullable String testPlanSnapshot) {
         try {
             List<String> testNames = GenerationOrchestrator.extractTaskBoundTestNames(problemStatement);
+            Map<RepositoryRole, Map<String, String>> reviewArtifacts = GenerationReviewSupport.reviewArtifacts(producedFilesByType, baselineRepositoryFiles);
             SpecFidelityReport report = adaptationChanges == null
-                    ? specFidelityCritic.critique(reviewBrief, problemStatement, testNames, producedFilesByType, usageSink, cancelled, previousReport, specSnapshotForReview,
+                    ? specFidelityCritic.critique(reviewBrief, problemStatement, testNames, reviewArtifacts, usageSink, cancelled, previousReport, specSnapshotForReview,
                             repairDelta, testPlanSnapshot,
                             verification.templateFailureEvidence().stream().map(evidence -> new TestFailureEvidence(evidence.testName(), evidence.message())).toList())
-                    : specFidelityCritic.critiqueAdaptation(reviewBrief, problemStatement, testNames, adaptationChanges, producedFilesByType, usageSink, cancelled, previousReport);
+                    : specFidelityCritic.critiqueAdaptation(reviewBrief, problemStatement, testNames, adaptationChanges, reviewArtifacts, usageSink, cancelled, previousReport);
             report = GenerationReviewSupport.completeReview(report, adaptationChanges != null && adaptationChanges.contains(GenerationOrchestrator.CHANGE_SUMMARY_TRUNCATED),
                     specFidelityCritic.detectMessagelessAssertions(producedFilesByType.getOrDefault(RepositoryRole.TESTS, Map.of())),
                     specFidelityCritic.detectUnenforceableTechniqueRules(specSnapshotForReview), specSnapshotForReview);

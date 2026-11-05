@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -32,6 +35,24 @@ final class GenerationReviewSupport {
         combined = new ArrayList<>(classified.findings());
         combined.addAll(techniqueRules);
         return new SpecFidelityReport(combined);
+    }
+
+    /**
+     * Keeps every source and path while replacing unchanged build-wrapper launchers with an explicit baseline manifest.
+     * Changed or unrecognized files retain their complete contents. Mechanical verification still uses the original maps.
+     */
+    static Map<RepositoryRole, Map<String, String>> reviewArtifacts(Map<RepositoryRole, Map<String, String>> current, Map<RepositoryRole, Map<String, String>> baseline) {
+        Set<String> launchers = Set.of("gradlew", "gradlew.bat", "mvnw", "mvnw.cmd");
+        Map<RepositoryRole, Map<String, String>> projected = new EnumMap<>(RepositoryRole.class);
+        current.forEach((role, files) -> {
+            Map<String, String> rendered = new LinkedHashMap<>();
+            files.forEach((path, content) -> rendered.put(path,
+                    launchers.contains(path) && content != null && content.equals(baseline.getOrDefault(role, Map.of()).get(path))
+                            ? "[Unchanged build-wrapper launcher: exact content matches the verified baseline; " + content.length() + " characters.]"
+                            : content));
+            projected.put(role, rendered);
+        });
+        return projected;
     }
 
     static String reviewSummary(SpecFidelityReport report) {

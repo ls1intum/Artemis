@@ -222,6 +222,26 @@ class SpecFidelityCriticTest {
     }
 
     @Test
+    void duplicateRepairDiffCannotDisplaceTheCompleteCurrentCandidateFromReview() {
+        var scripted = criticScripted(jsonResponse("{}"), jsonResponse("{}"));
+        String specification = "## Rules\nKeep the contract intact.";
+        SpecFidelityReport prior = new SpecFidelityReport(
+                List.of(new SpecFidelityReport.Finding(Kind.TEMPLATE_QUALITY_GAP, "preserve this previous claim", "recheck its current evidence")));
+
+        SpecFidelityReport result = scripted.critic().critique("Implement the requested behavior.", "# Task", List.of(), COMPLETE_ARTIFACTS, null, () -> false, prior,
+                specification, "duplicate diff\n".repeat(12_000), null);
+
+        assertThat(result.findings()).isEmpty();
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        verify(scripted.model(), times(2)).call(prompts.capture());
+        assertThat(prompts.getAllValues()).allSatisfy(prompt -> {
+            String text = prompt.getInstructions().get(1).getText();
+            assertThat(text).contains("## Rules", "Keep the contract intact.", "preserve this previous claim", "recheck its current evidence").hasSizeLessThan(120_000);
+            COMPLETE_ARTIFACTS.values().forEach(files -> files.values().forEach(content -> assertThat(text).contains(content)));
+        });
+    }
+
+    @Test
     void primarySourceFitsWithoutDuplicatingItAndKeepsOracleCitationIds() {
         String brief = "Extend the supplied operation.\n\n" + "b".repeat(35_000);
         String specification = "## Rules\n\nPreserve the old guard.\n" + "s".repeat(40_000);

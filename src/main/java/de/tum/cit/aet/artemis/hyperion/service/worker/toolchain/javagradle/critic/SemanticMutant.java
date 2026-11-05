@@ -28,7 +28,9 @@ public record SemanticMutant(String ruleId, String solutionPath, String original
          */
         PRINTED_TRANSCRIPT,
         /** The server removed the bodies of simple learner-owned JUnit tests; a passing graded suite does not assess their assertions. */
-        EMPTY_STUDENT_TESTS
+        EMPTY_STUDENT_TESTS,
+        /** Learner test actions run, but their assertion failures cannot reach the grader. */
+        NON_FAILING_STUDENT_TESTS
     }
 
     /** Concise run-local history used only to keep later mutation samples novel; it carries no contract authority or executable-evidence claim. */
@@ -64,6 +66,18 @@ public record SemanticMutant(String ruleId, String solutionPath, String original
         String rule = "student-test-assertions";
         return new SemanticMutant(rule, path, source, variant, new ContractWitness(rule, "", "", "learner-owned JUnit test bodies contain no checks"), null,
                 Evidence.EMPTY_STUDENT_TESTS);
+    }
+
+    /** A learner test variant preserving actions while suppressing assertion failures. */
+    public static SemanticMutant nonFailingStudentTests(String path, String source, String variant) {
+        String rule = "student-test-assertion-failures";
+        return new SemanticMutant(rule, path, source, variant, new ContractWitness(rule, "", "", "learner test actions run but assertion failures are suppressed"), null,
+                Evidence.NON_FAILING_STUDENT_TESTS);
+    }
+
+    /** Whether this probe tests the effect of learner-owned test assertions. */
+    public boolean testsLearnerAssertions() {
+        return evidence == Evidence.EMPTY_STUDENT_TESTS || evidence == Evidence.NON_FAILING_STUDENT_TESTS;
     }
 
     /**

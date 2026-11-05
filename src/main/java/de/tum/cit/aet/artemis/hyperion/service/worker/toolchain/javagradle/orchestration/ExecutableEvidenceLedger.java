@@ -127,10 +127,10 @@ final class ExecutableEvidenceLedger {
         rememberTranscriptVerdicts(probed);
         outcomes.addAll(probed);
         outcomes.forEach(evidence::record);
-        // Empty-test probes are regenerated for each authoritative candidate, rather than entering the model-authored mutation lifecycle.
-        List<SemanticMutantOutcome> emptyTestOutcomes = verifier.probeEmptyStudentTests(sandbox, sessionId, exercise,
+        // Learner-test probes are regenerated for each authoritative candidate, rather than entering the model-authored mutation lifecycle.
+        List<SemanticMutantOutcome> studentTestOutcomes = verifier.probeStudentTestAssertions(sandbox, sessionId, exercise,
                 candidateFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()), plan, seeded, restoreCandidate);
-        outcomes.addAll(emptyTestOutcomes);
+        outcomes.addAll(studentTestOutcomes);
         List<SemanticMutant> counterexamples = outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).map(SemanticMutantOutcome::mutant)
                 .toList();
         if (counterexamples.isEmpty()) {
@@ -145,7 +145,7 @@ final class ExecutableEvidenceLedger {
         }
         List<String> reasons = new ArrayList<>(result.reasons());
         counterexamples.forEach(mutant -> reasons.add("The executed assessment accepts "
-                + (mutant.evidence() == SemanticMutant.Evidence.EMPTY_STUDENT_TESTS ? "empty learner-written JUnit test bodies" : "a print-only replacement") + " in "
+                + (mutant.testsLearnerAssertions() ? "learner-written JUnit tests without effective assertion failures" : "a print-only replacement") + " in "
                 + mutant.solutionPath() + ". The graded tests must distinguish the learner-owned operations before a candidate can become a checkpoint."));
         return new AssessmentVerdict(new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), reasons, result.templateFailureEvidence()),
                 counterexamples);

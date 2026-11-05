@@ -525,6 +525,12 @@ public class SpecFidelityCritic {
                 + planEvidence + "\n\n" + evidence.text();
         String repairableDownstreamSource = (problemStatement == null || problemStatement.isBlank() ? "" : problemStatement.strip() + "\n\n") + evidence.text() + planEvidence;
         Map<String, String> downstreamEvidenceByArtifact = downstreamEvidenceByArtifact(problemStatement, testPlanJson, artifacts);
+        if (userPrompt.length() > MAX_REVIEW_INPUT_CHARS && repairDelta != null && !repairDelta.isBlank()) {
+            // The full current candidate and prior findings carry the evidence; a duplicate diff is a navigation aid, not required authority.
+            userPrompt = renderUserPrompt(effectiveBrief, specificationContract, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport,
+                    "[Full repair diff omitted to fit the review bound. Complete current artifacts and previous findings remain below; omission does not mean unchanged or resolved.]",
+                    testPlanJson, templateFailureEvidence);
+        }
         if (userPrompt.length() > MAX_REVIEW_INPUT_CHARS) {
             return reviewUnavailable(adaptationChanges, "The complete review input exceeded its bounded size.");
         }

@@ -3,10 +3,12 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orch
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
@@ -14,6 +16,21 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome.Disposition;
 
 class GenerationReviewSupportTest {
+
+    @Test
+    void reviewProjectionRetainsAllExerciseCodeAndChangedLaunchersWithoutRepeatingBaselineLaunchers() {
+        String launcher = "shell launch support\n".repeat(2_000);
+        var baseline = Map.of(RepositoryRole.SOLUTION, Map.of("gradlew", launcher, "src/Given.java", "class Given {}"), RepositoryRole.TESTS, Map.of("gradlew", launcher));
+        var current = Map.of(RepositoryRole.SOLUTION, Map.of("gradlew", launcher, "src/Given.java", "class Given {}", "src/Student.java", "class Student {}"), RepositoryRole.TESTS,
+                Map.of("gradlew", launcher + "changed", "test/Check.java", "class Check {}"));
+
+        var result = GenerationReviewSupport.reviewArtifacts(current, baseline);
+
+        assertThat(result.get(RepositoryRole.SOLUTION)).containsEntry("src/Given.java", "class Given {}").containsEntry("src/Student.java", "class Student {}");
+        assertThat(result.get(RepositoryRole.SOLUTION).get("gradlew")).contains("matches the verified baseline").hasSizeLessThan(200);
+        assertThat(result.get(RepositoryRole.TESTS)).containsEntry("gradlew", launcher + "changed").containsEntry("test/Check.java", "class Check {}");
+        assertThat(current.get(RepositoryRole.SOLUTION).get("gradlew")).isEqualTo(launcher);
+    }
 
     @Test
     void anExecutedSurvivorIsBlockingOracleEvidenceThatAsksForADiscriminatingTest() {

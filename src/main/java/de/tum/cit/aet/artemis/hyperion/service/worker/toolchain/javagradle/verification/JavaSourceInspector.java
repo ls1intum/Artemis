@@ -76,6 +76,15 @@ final class JavaSourceInspector {
      * make this simple counterexample inapplicable: work outside a test body could legitimately carry its assertions, and unsupported syntax is never evidence of a bypass.
      */
     static Optional<String> emptyJUnitTestBodies(String source) {
+        return rewriteJUnitTestBodies(source, false);
+    }
+
+    /** Preserves test actions but prevents an assertion failure from reaching the instructor grader. */
+    static Optional<String> nonFailingJUnitTestBodies(String source) {
+        return rewriteJUnitTestBodies(source, true);
+    }
+
+    private static Optional<String> rewriteJUnitTestBodies(String source, boolean suppressAssertionFailures) {
         if (UNICODE_ESCAPE.matcher(source).find() || javaTestAnnotationSummary(source).unsupportedAnnotationSyntax()) {
             return Optional.empty();
         }
@@ -127,7 +136,11 @@ final class JavaSourceInspector {
                     if (bodyDepth != 0) {
                         return Optional.empty();
                     }
-                    variant.append(source, copiedThrough, offset + 1).append('}');
+                    variant.append(source, copiedThrough, offset + 1);
+                    if (suppressAssertionFailures) {
+                        variant.append("try {").append(source, offset + 1, close - 1).append("} catch (java.lang.AssertionError hyperionSuppressedAssertion) {}");
+                    }
+                    variant.append('}');
                     copiedThrough = close;
                     offset = close - 1;
                 }
