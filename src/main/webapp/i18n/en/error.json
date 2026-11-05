@@ -1,5 +1,7 @@
 {
     "error": {
+        "tumLiveUploadInProgress": "The pending upload is already being sent to TUM.Live. Discard it to start another one.",
+        "tumLiveNotConnected": "The course is not connected to TUM.Live.",
         "exerciseGenerationCancellationUnavailable": "The cancellation could not be confirmed. Check the current run status, then try again.",
         "title": "Error page!",
         "http": {

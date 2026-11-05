@@ -10,9 +10,11 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -238,4 +240,43 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                 AND l.isTutorialLecture = TRUE
             """)
     List<IngestionJobIdentityDTO> findTutorialLectureUnitIdentities(@Param("ids") Collection<Long> ids);
+
+    /**
+     * Sets the video URL of a unit that has none, as an edit saw it. A blank URL, which older saves stored for a removed link, counts as none.
+     *
+     * @param attachmentVideoUnitId the unit
+     * @param videoSource           the new URL
+     * @return 1 if it was written, 0 if the unit has a URL by now
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("UPDATE AttachmentVideoUnit unit SET unit.videoSource = :videoSource WHERE unit.id = :attachmentVideoUnitId AND (unit.videoSource IS NULL OR TRIM(unit.videoSource) = '')")
+    int updateVideoSourceIfNull(@Param("attachmentVideoUnitId") long attachmentVideoUnitId, @Param("videoSource") String videoSource);
+
+    /**
+     * Changes the video URL of a unit if it is still the one an edit saw.
+     *
+     * @param attachmentVideoUnitId the unit
+     * @param expectedVideoSource   the URL the edit loaded
+     * @param videoSource           the new URL
+     * @return 1 if it was written, 0 if the URL changed meanwhile
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("UPDATE AttachmentVideoUnit unit SET unit.videoSource = :videoSource WHERE unit.id = :attachmentVideoUnitId AND unit.videoSource = :expectedVideoSource")
+    int updateVideoSourceIfEquals(@Param("attachmentVideoUnitId") long attachmentVideoUnitId, @Param("expectedVideoSource") String expectedVideoSource,
+            @Param("videoSource") String videoSource);
+
+    /**
+     * Changes the video URL of a unit if it is still the one an edit loaded, so the edit does not overwrite a video a TUM.Live upload attached meanwhile.
+     *
+     * @param attachmentVideoUnitId the unit
+     * @param expectedVideoSource   the URL the edit loaded, or null
+     * @param videoSource           the new URL, or null
+     * @return whether it was written
+     */
+    default boolean updateVideoSourceIfUnchanged(long attachmentVideoUnitId, String expectedVideoSource, String videoSource) {
+        return (expectedVideoSource == null ? updateVideoSourceIfNull(attachmentVideoUnitId, videoSource)
+                : updateVideoSourceIfEquals(attachmentVideoUnitId, expectedVideoSource, videoSource)) == 1;
+    }
 }
