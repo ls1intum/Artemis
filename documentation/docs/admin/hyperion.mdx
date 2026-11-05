@@ -322,6 +322,9 @@ For exercises where students write JUnit tests, the assessment check also tries
 empty test bodies in simple student-owned test classes. The weighted grading tests
 must reject that variant. Running the learner's tests only against the correct
 supplied implementation does not establish whether their assertions detect faults.
+The specification must declare ordinary Java support that routes the learner's actual calls
+through correct and faulty behavior. Private JDK instrumentation is unavailable; a failed
+grader setup cannot count as a learner assertion detecting a fault.
 Lifecycle hooks, inheritance, constructors and initializers make this simple probe
 inapplicable; these cases still need quality review. An inconclusive execution cannot
 authorize a contract change or establish that the assessment passed.
