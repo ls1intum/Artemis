@@ -6,13 +6,12 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
@@ -100,8 +99,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let tutorParticipationService: TutorParticipationService;
 
     let accountService: AccountService;
-
-    let translateService: TranslateService;
 
     let submissionService: SubmissionService;
 
@@ -219,9 +216,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         ExerciseAssessmentDashboardComponent,
         FaIconComponent,
         MockComponent(TutorLeaderboardComponent),
-        MockComponent(TutorParticipationGraphComponent),
         MockComponent(HeaderExercisePageWithDetailsComponent),
-        MockComponent(SidePanelComponent),
         MockComponent(InfoPanelComponent),
         MockComponent(ModelingEditorComponent),
         MockComponent(SecondCorrectionEnableButtonComponent),
@@ -305,7 +300,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.submissionsWithComplaints.set([submissionWithComplaintDTO]);
         accountService = TestBed.inject(AccountService);
         vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(false);
-        translateService = TestBed.inject(TranslateService);
     });
 
     afterEach(() => {
@@ -326,6 +320,31 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         }
     });
 
+    it('should separate completed, locked and open assessment slots, including multiple correction rounds', () => {
+        comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 4, late: 1 }));
+        comp.totalNumberOfAssessments.set(2);
+        comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 1 }));
+        expect([comp.completedAssessments(), comp.inProgressAssessments(), comp.openAssessments()]).toEqual([2, 1, 2]);
+        expect(comp.assessedPercentage()).toBe(40);
+        expect(comp.inProgressPercentage()).toBe(20);
+
+        comp.isExamMode.set(true);
+        comp.numberOfAssessmentsOfCorrectionRounds.set([new DueDateStat(), new DueDateStat()]);
+        expect(comp.totalAssessmentSlots()).toBe(10);
+        expect(comp.openAssessments()).toBe(7);
+        expect(comp.assessedPercentage()).toBe(20);
+    });
+
+    it('should keep progress bounded for empty and fully locked exercises', () => {
+        expect(comp.assessedPercentage()).toBe(0);
+        expect(comp.inProgressPercentage()).toBe(0);
+        comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 2 }));
+        comp.statsForDashboard.set(Object.assign(new StatsForDashboard(), { totalNumberOfAssessmentLocks: 5 }));
+        expect(comp.inProgressAssessments()).toBe(2);
+        expect(comp.openAssessments()).toBe(0);
+        expect(comp.inProgressPercentage()).toBe(100);
+    });
+
     it('should initialize', () => {
         const user = { id: 10, login: 'tutor1' } as User;
         accountService.userIdentity.set(user);
@@ -336,11 +355,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.exerciseId()).toBe(modelingExercise.id);
 
         expect(comp.tutor()).toEqual(user);
-
-        const setupGraphSpy = vi.spyOn(comp, 'setupGraph');
-
-        translateService.use('en'); // Change language.
-        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should hide the complaints shortcut when the course has complaints disabled', () => {
@@ -393,11 +407,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.complaintsDashboardInfo().tutor).toBe(tutorLeaderBoardEntry.numberOfTutorComplaints);
         expect(comp.moreFeedbackRequestsDashboardInfo().tutor).toBe(tutorLeaderBoardEntry.numberOfTutorMoreFeedbackRequests);
         expect(comp.ratingsDashboardInfo().tutor).toBe(tutorLeaderBoardEntry.numberOfTutorRatings);
-
-        const setupGraphSpy = vi.spyOn(comp, 'setupGraph');
-
-        translateService.use('en'); // Change language.
-        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
@@ -593,16 +602,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: programmingExerciseWithAutomaticAssessment, headers: new HttpHeaders() })));
 
-            const translateServiceSpy = vi.spyOn(translateService, 'instant');
-
             comp.loadAll();
 
             expect(programmingSubmissionStubWithAssessment).toHaveBeenCalledTimes(2);
             expect(programmingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
-
-            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
         });
     });
 
