@@ -400,20 +400,29 @@ class GenerationAttemptLoopTest {
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
     }
 
-    @Test
-    void anInconclusiveEmptyTestProbeNeitherCreatesACheckpointNorAuthorizesRedesign() {
+    @ParameterizedTest
+    @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS" })
+    void anInconclusiveAssessmentNeitherCreatesACheckpointNorAuthorizesRedesign(SemanticMutant.Evidence evidence) {
         stubSchedulerFixture();
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
                 any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
-        var bypass = SemanticMutant.emptyStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
-        when(verifier.probeEmptyStudentTests(any(), anyString(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.INCONCLUSIVE)));
+        var bypass = evidence == SemanticMutant.Evidence.EMPTY_STUDENT_TESTS ? SemanticMutant.emptyStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }")
+                : SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
+        if (evidence == SemanticMutant.Evidence.EMPTY_STUDENT_TESTS) {
+            when(verifier.probeEmptyStudentTests(any(), anyString(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.INCONCLUSIVE)));
+        }
+        else {
+            when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.INCONCLUSIVE)));
+        }
 
         GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 1, 0, true);
         loop.run();
 
         assertThat(loop.lastMechanicallyVerifiedCandidate()).isNull();
+        verify(service, never()).preserveCandidate(any(), any(), anyString(), any());
         verify(stagedGenerationRunner, never()).requestAssessmentRedesign(any(), anyString(), any(), anyString(), any());
     }
 

@@ -134,10 +134,10 @@ final class ExecutableEvidenceLedger {
         List<SemanticMutant> counterexamples = outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).map(SemanticMutantOutcome::mutant)
                 .toList();
         if (counterexamples.isEmpty()) {
-            if (emptyTestOutcomes.stream().anyMatch(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)) {
+            if (outcomes.stream().anyMatch(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)) {
                 List<String> reasons = new ArrayList<>(result.reasons());
                 reasons.add(
-                        "The empty student-test assessment produced no conclusive build/test verdict. Keep the approved contract and repair the executable artifacts before checkpointing.");
+                        "The assessment counterexample produced no conclusive build/test verdict. Keep the approved contract and repair the executable artifacts before checkpointing.");
                 return new AssessmentVerdict(
                         new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), reasons, result.templateFailureEvidence()), List.of());
             }
