@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -7,6 +8,7 @@ import java.util.Set;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 
 /** Executes assessment counterexamples at the artifact boundary, before the contract reaches statement authoring. */
@@ -19,13 +21,22 @@ final class StageAssessmentCheck {
             AgentVerifyReport report) {
         JavaSourceSnapshot snapshot = JavaSourceSnapshot.capture(sandbox, sessionId);
         String plan = Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "test-plan.json"), "");
-        List<SemanticMutantOutcome> outcomes;
+        List<SemanticMutantOutcome> outcomes = new ArrayList<>();
         try {
-            outcomes = verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, snapshot.testsFiles(), snapshot.templateFiles(), snapshot.solutionFiles(), plan, seeded,
-                    Set.of(), () -> snapshot.restore(sandbox, sessionId));
+            outcomes.addAll(verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, snapshot.testsFiles(), snapshot.templateFiles(), snapshot.solutionFiles(), plan, seeded,
+                    Set.of(), () -> snapshot.restore(sandbox, sessionId)));
+            outcomes.addAll(verifier.probeEmptyStudentTests(sandbox, sessionId, exercise, snapshot.templateFiles(), snapshot.solutionFiles(), plan, seeded,
+                    () -> snapshot.restore(sandbox, sessionId)));
         }
         finally {
             snapshot.restore(sandbox, sessionId);
+        }
+        List<String> emptyTests = outcomes.stream().filter(outcome -> outcome.mutant().evidence() == SemanticMutant.Evidence.EMPTY_STUDENT_TESTS
+                && outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE).map(outcome -> outcome.mutant().solutionPath()).toList();
+        if (!emptyTests.isEmpty()) {
+            return Optional.of(StageCheckResult.redesignRequired("The graded suite accepts empty learner-written JUnit test bodies in " + emptyTests
+                    + ". Running student tests only against the correct supplied implementation does not assess their assertions. Preserve the brief and grade whether learner tests reject faulty implementations, using supplied runtime support rather than inspecting their source.",
+                    report));
         }
         List<String> surviving = outcomes.stream().filter(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE)
                 .map(outcome -> outcome.mutant().solutionPath()).toList();

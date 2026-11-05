@@ -220,3 +220,7 @@ not merely method bodies in a supplied hierarchy. The smallest student diff must
 competency; keep unrelated plumbing provided. Where the brief asks for breadth, choose complementary operations
 rather than near-identical repetitions. Do not infer teaching sequence from sheet numbers; use the brief's
 explicit prerequisites and learning objectives.
+
+When the learner writes tests, assess both sides: the learner tests pass on conforming behavior and fail on representative faulty behavior.
+Merely invoking them against the correct supplied implementation accepts empty test bodies. Put fault-variant selection and result interpretation in supplied instructor support;
+it must not become additional learner work. Grade the effect of the learner's assertions, not their source spelling or an incidental assertion-method count.

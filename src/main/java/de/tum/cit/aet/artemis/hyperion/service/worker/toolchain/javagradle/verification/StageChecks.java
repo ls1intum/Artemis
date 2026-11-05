@@ -926,8 +926,8 @@ public class StageChecks {
         }
         List<String> bareTasks = ProblemStatementBindingChecker.tasksWithoutInstruction(statement);
         if (!bareTasks.isEmpty()) {
-            return StageCheckResult.failed("These [task] bindings have no student-facing instruction before the next task or heading: " + bareTasks
-                    + ". Follow each task with concise imperative prose naming the types or members the student must implement; a checkbox alone is not an exercise instruction.");
+            return StageCheckResult.failed("These [task] bindings have no student-facing instruction following the binding or in its preceding numbered task block: " + bareTasks
+                    + ". Add concise imperative prose naming the types or members the student must implement after the binding or in its preceding numbered task block; a checkbox alone is not an exercise instruction.");
         }
         return StageCheckResult.passed("");
     }

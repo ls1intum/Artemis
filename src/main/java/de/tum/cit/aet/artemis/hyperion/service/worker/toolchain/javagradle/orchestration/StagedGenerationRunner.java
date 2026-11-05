@@ -336,7 +336,7 @@ public class StagedGenerationRunner {
         }
         transcriptWriter.writeAudit(exercise.id(), "assessment-redesign-authoritative", evidence);
         return new StagedAssessmentContinuation(startedAt, 0, expected, SpecificationReviewPrompts.assessmentRedesignPrompt(evidence), List.of(), conceptFindings,
-                GenerationStage.SPEC);
+                GenerationStage.SPEC, evidence);
     }
 
     private StagedRunOutcome runStages(GenerationInput exercise, SandboxAgentTools baseTools, SubmitVetoAware tools, String briefPrompt, String sourceBrief,
@@ -367,7 +367,9 @@ public class StagedGenerationRunner {
         int bestSpecFindingCount = Integer.MAX_VALUE;
         List<String> unresolvedSpecificationFindings = continuation == null ? List.of() : continuation.specificationFindings();
         String semanticSpecFeedback = null;
-        SpecFidelityCritic.SpecificationReview previousSpecificationReview = null;
+        String assessmentCounterexample = continuation == null ? null : continuation.assessmentCounterexample();
+        SpecFidelityCritic.SpecificationReview previousSpecificationReview = assessmentCounterexample == null ? null
+                : SpecificationReviewPrompts.executedAssessmentReview(assessmentCounterexample);
         String previousRejectedLearningFitDirection = null;
         boolean freshSemanticSpecAttempt = false;
         // Set once replacement concept discovery has come back empty. Reselection is not retried after that: the reviewer would ask for it again on the very next round, and each
@@ -585,7 +587,8 @@ public class StagedGenerationRunner {
                     bestSpecSnapshot = null;
                     bestSpecFindings = List.of();
                     bestSpecFindingCount = Integer.MAX_VALUE;
-                    previousSpecificationReview = null;
+                    assessmentCounterexample = gate.observation();
+                    previousSpecificationReview = SpecificationReviewPrompts.executedAssessmentReview(assessmentCounterexample);
                     previousRejectedLearningFitDirection = null;
                     unresolvedSpecificationFindings = List.of();
                     publishedSpec = null;
@@ -745,7 +748,8 @@ public class StagedGenerationRunner {
                                         bestSpecSnapshot = null;
                                         bestSpecFindingCount = Integer.MAX_VALUE;
                                         bestSpecFindings = List.of();
-                                        previousSpecificationReview = null;
+                                        previousSpecificationReview = assessmentCounterexample == null ? null
+                                                : SpecificationReviewPrompts.executedAssessmentReview(assessmentCounterexample);
                                         // Neither rejected candidate text nor quote-rich SPEC feedback enters the fresh discovery/SPEC contexts: the independent reviewer
                                         // assesses the replacement from scratch against the raw brief.
                                         gateFeedback = null;
@@ -853,7 +857,7 @@ public class StagedGenerationRunner {
                         unresolvedSpecificationFindings);
                 return new StagedRunOutcome(paused.result(), paused.conversation(), paused.unresolvedSpecificationFindings(), null, conceptFindings,
                         new StagedAssessmentContinuation(startedAt, reentriesRemaining, approvedSpecs.approved(sessionId).orElseThrow(), lastTestsFeedback,
-                                unresolvedSpecificationFindings, conceptFindings));
+                                unresolvedSpecificationFindings, conceptFindings, GenerationStage.TESTS, assessmentCounterexample));
             }
         }
         if (assessmentRedesignUsed && !assessmentVerified) {

@@ -3,9 +3,11 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.veri
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.JavaSourceText;
 
@@ -41,6 +43,13 @@ final class JavaSourceInspector {
 
     private static final Pattern SIMPLE_ANNOTATION_ARGUMENT = Pattern.compile("[0-9]+|\"(?:build|build/classes/java/test)\"");
 
+    private static final Pattern COMPLEX_LEARNER_TEST = Pattern.compile(
+            "@(?:[\\w.]+\\.)?(?:BeforeEach|BeforeAll|AfterEach|AfterAll|TestFactory|TestTemplate|ParameterizedTest|RepeatedTest)\\b|\\bstatic\\s*\\{|\\b(?:extends|implements)\\b");
+
+    private static final Pattern VOID_TEST_DECLARATION = Pattern.compile("\\bvoid\\s+\\w+\\s*\\(");
+
+    private static final Pattern CONSTRUCTOR_NAME = Pattern.compile("(?:^|\\s)(?:(?:public|protected|private)\\s+)?([A-Za-z_$][\\w$]*)\\s*\\(");
+
     private JavaSourceInspector() {
     }
 
@@ -59,6 +68,89 @@ final class JavaSourceInspector {
      * @param unsupportedAnnotationSyntax     whether malformed or composed annotations prevent safe identification of executable tests
      */
     record JavaTestAnnotationSummary(boolean hasTestMethods, boolean classWithMissingAresAnnotations, boolean testMethodWithoutStrictTimeout, boolean unsupportedAnnotationSyntax) {
+    }
+
+    /**
+     * Clears direct JUnit test bodies while preserving their signatures and annotations. Lifecycle hooks, inheritance, constructors, initializers, dynamic/parameterized tests and
+     * Unicode escapes
+     * make this simple counterexample inapplicable: work outside a test body could legitimately carry its assertions, and unsupported syntax is never evidence of a bypass.
+     */
+    static Optional<String> emptyJUnitTestBodies(String source) {
+        if (UNICODE_ESCAPE.matcher(source).find() || javaTestAnnotationSummary(source).unsupportedAnnotationSyntax()) {
+            return Optional.empty();
+        }
+        String structural = JavaSourceText.maskCommentsAndLiterals(source);
+        if (COMPLEX_LEARNER_TEST.matcher(structural).find()) {
+            return Optional.empty();
+        }
+        String withoutComments = stripJavaComments(source);
+        StringBuilder annotations = new StringBuilder();
+        StringBuilder declaration = new StringBuilder();
+        StringBuilder variant = new StringBuilder();
+        int copiedThrough = 0;
+        int depth = 0;
+        var classDepths = new ArrayDeque<Integer>();
+        Set<String> classNames = LOCAL_TYPE.matcher(structural).results().map(match -> match.group(1)).collect(Collectors.toSet());
+        for (int offset = 0; offset < structural.length(); offset++) {
+            char current = structural.charAt(offset);
+            if (current == '@') {
+                JavaAnnotation annotation = readAnnotation(withoutComments, structural, offset);
+                if (annotation == null) {
+                    return Optional.empty();
+                }
+                if (COMPLEX_LEARNER_TEST.matcher(annotation.text()).find()) {
+                    return Optional.empty();
+                }
+                annotations.append(annotation.text()).append('\n');
+                offset = annotation.end() - 1;
+            }
+            else if (current == '{' || current == ';' || current == '}') {
+                boolean classDeclaration = JAVA_CLASS_DECLARATION.matcher(declaration).find();
+                boolean classMember = !classDepths.isEmpty() && classDepths.peek() == depth;
+                if (classMember && !classDeclaration && current != '}' && (declaration.toString().contains("=") || (current == '{'
+                        && (declaration.toString().isBlank() || CONSTRUCTOR_NAME.matcher(declaration).results().anyMatch(match -> classNames.contains(match.group(1))))))) {
+                    // Initializers and constructors can legitimately perform assertions before any test method runs.
+                    return Optional.empty();
+                }
+                if (current == '{' && hasJUnitTestAnnotation(annotations.toString()) && VOID_TEST_DECLARATION.matcher(declaration).find()) {
+                    int bodyDepth = 1;
+                    int close = offset + 1;
+                    while (close < structural.length() && bodyDepth > 0) {
+                        char nested = structural.charAt(close++);
+                        if (nested == '{') {
+                            bodyDepth++;
+                        }
+                        else if (nested == '}') {
+                            bodyDepth--;
+                        }
+                    }
+                    if (bodyDepth != 0) {
+                        return Optional.empty();
+                    }
+                    variant.append(source, copiedThrough, offset + 1).append('}');
+                    copiedThrough = close;
+                    offset = close - 1;
+                }
+                else if (current == '{') {
+                    depth++;
+                    if (classDeclaration) {
+                        classDepths.push(depth);
+                    }
+                }
+                else if (current == '}') {
+                    if (!classDepths.isEmpty() && classDepths.peek() == depth) {
+                        classDepths.pop();
+                    }
+                    depth--;
+                }
+                annotations.setLength(0);
+                declaration.setLength(0);
+            }
+            else {
+                declaration.append(current);
+            }
+        }
+        return copiedThrough == 0 ? Optional.empty() : Optional.of(variant.append(source, copiedThrough, source.length()).toString());
     }
 
     /**

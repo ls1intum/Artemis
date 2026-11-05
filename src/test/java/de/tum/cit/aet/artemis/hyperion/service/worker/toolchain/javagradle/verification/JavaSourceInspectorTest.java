@@ -16,6 +16,33 @@ import org.junit.jupiter.params.provider.ValueSource;
 class JavaSourceInspectorTest {
 
     @Test
+    void emptyJUnitBodiesPreserveDeclarationsAndHelpersAndHandleNestedSyntax() {
+        String source = """
+                import org.junit.jupiter.api.Test;
+                class LearnerTest {
+                    @Test public void checksValues() throws Exception {
+                        String braces = "} { @Test";
+                        if (braces.length() > 0) { assertEquals(3, helper()); }
+                    }
+                    @org.junit.jupiter.api.Test void checksMore() { assertTrue(true); }
+                    int helper() { return 3; }
+                }
+                """;
+        String variant = JavaSourceInspector.emptyJUnitTestBodies(source).orElseThrow();
+        assertThat(variant).contains("@Test public void checksValues() throws Exception {}", "@org.junit.jupiter.api.Test void checksMore() {}", "int helper() { return 3; }")
+                .doesNotContain("braces", "assertEquals", "assertTrue");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "class T { @org.junit.jupiter.api.BeforeEach void setup() { assertTrue(true); } @org.junit.jupiter.api.Test void t() {} }",
+            "class T { static { assertTrue(true); } @org.junit.jupiter.api.Test void t() {} }", "class T { T() { assertTrue(true); } @org.junit.jupiter.api.Test void t() {} }",
+            "class T { { assertTrue(true); } @org.junit.jupiter.api.Test void t() {} }", "class T { int field = check(); @org.junit.jupiter.api.Test void t() {} }",
+            "class T extends BaseTest { @org.junit.jupiter.api.Test void t() {} }", "class T { void helper() {} }" })
+    void emptyJUnitProbeSkipsWorkOutsideTestBodiesOrSourcesWithoutTests(String source) {
+        assertThat(JavaSourceInspector.emptyJUnitTestBodies(source)).isEmpty();
+    }
+
+    @Test
     void declaresPackageMatchingPath_handlesLongQualifiedPackagesAndRejectsMalformedOnes() {
         String packageName = "segment.".repeat(10_000) + "last";
         String path = "src/" + packageName.replace('.', '/') + "/Example.java";

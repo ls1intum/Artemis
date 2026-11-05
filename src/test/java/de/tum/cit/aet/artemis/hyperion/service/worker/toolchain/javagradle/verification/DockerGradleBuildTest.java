@@ -500,6 +500,96 @@ class DockerGradleBuildTest {
     }
 
     @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void studentWrittenTestsMustRejectFaultyBehaviorRatherThanOnlyRunOnTheCorrectLibrary(boolean gradeFaults) throws IOException {
+        String learner = """
+                package de.tum.cit.aet.reference;
+                public class LearnerCheck {
+                    @org.junit.jupiter.api.Test
+                    public void verifiesSum() {
+                        org.junit.jupiter.api.Assertions.assertEquals(5, Toolbox.sum(2, 3));
+                    }
+                }
+                """;
+        String support = """
+                package de.tum.cit.aet.reference;
+                public class Toolbox {
+                    private static boolean faulty;
+                    public static int sum(int a, int b) { return faulty ? 0 : a + b; }
+                }
+                """;
+        String instructor = """
+                package de.tum.cit.aet.reference;
+                import static org.junit.jupiter.api.Assertions.*;
+                import org.junit.jupiter.api.Test;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+                @Public @Policy("SecurityPolicy.yaml")
+                @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)
+                class ScoreCalculatorTest {
+                    @Test @StrictTimeout(5) void testLearnerAssertions() throws Exception {
+                        var faulty = Toolbox.class.getDeclaredField("faulty");
+                        faulty.setAccessible(true);
+                        faulty.setBoolean(null, false);
+                        assertDoesNotThrow(() -> new LearnerCheck().verifiesSum());
+                        %s
+                    }
+                }
+                """.formatted(gradeFaults
+                ? "faulty.setBoolean(null, true); try { assertThrows(AssertionError.class, () -> new LearnerCheck().verifiesSum()); } finally { faulty.setBoolean(null, false); }"
+                : "");
+        List<WorkspaceFile> files = new ArrayList<>(
+                snapshot().files().stream().filter(file -> !file.path().equals("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java")).toList());
+        files.add(new WorkspaceFile("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", instructor.getBytes(StandardCharsets.UTF_8), false));
+        String path = "src/de/tum/cit/aet/reference/LearnerCheck.java";
+        files.add(new WorkspaceFile("solution/" + path, learner.getBytes(StandardCharsets.UTF_8), false));
+        files.add(new WorkspaceFile("template/" + path, learner
+                .replace("org.junit.jupiter.api.Assertions.assertEquals(5, Toolbox.sum(2, 3));", "throw new UnsupportedOperationException();").getBytes(StandardCharsets.UTF_8),
+                false));
+        for (String lane : List.of("template", "solution")) {
+            files.add(new WorkspaceFile(lane + "/src/de/tum/cit/aet/reference/Toolbox.java", support.getBytes(StandardCharsets.UTF_8), false));
+        }
+        String session = sandbox.createSession();
+        var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, new WorkspaceSnapshot(files), true);
+        var specifications = new ApprovedSpecRegistry();
+        specifications.approve(session, """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | LearnerCheck | Tests the learner writes | stubbed |
+                ## Public API
+                ```java
+                public class LearnerCheck {
+                    @org.junit.jupiter.api.Test public void verifiesSum();
+                }
+                ```
+                """);
+        var seeder = new StructuralOracleSeeder(workspace, specifications);
+        seeder.captureBaseline(session, seed.testsSeedSnapshot());
+        var structural = seeder.seedIfStructuralDiff(sandbox, session, exercise);
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+        assertThat(build(session, "solution").exitCode()).isZero();
+        assertThat(build(session, "template").testFailedNames()).contains("testLearnerAssertions");
+        String plan = "{\"tests\":[{\"name\":\"testLearnerAssertions\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of("test-plan.json", plan), Map.of()));
+
+        var failure = StageAssessmentCheck.failure(new DifferentialVerifier(commands), sandbox, session, exercise, structural, org.mockito.Mockito.mock(AgentVerifyReport.class));
+
+        if (gradeFaults) {
+            assertThat(failure).isEmpty();
+        }
+        else {
+            assertThat(failure).hasValueSatisfying(result -> {
+                assertThat(result.contractRedesignRequired()).isTrue();
+                assertThat(result.observation()).contains("empty learner-written JUnit", "LearnerCheck.java");
+            });
+        }
+        assertThat(JavaSourceSnapshot.capture(sandbox, session).solutionFiles()).containsEntry(path, learner);
+    }
+
+    @ParameterizedTest
     @ValueSource(ints = { 0, 1, 2 })
     void assessmentGateDistinguishesTranscriptGradingFromSuppliedRuntimeObservation(int assessment) throws IOException {
         boolean observeInteraction = assessment == 1;

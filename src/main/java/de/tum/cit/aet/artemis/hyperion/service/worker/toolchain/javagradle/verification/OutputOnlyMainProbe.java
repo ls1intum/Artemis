@@ -260,7 +260,7 @@ final class OutputOnlyMainProbe {
     }
 
     /** Whether a failure of the executed test with this name costs credit: it is weighted above zero, or there is no usable plan and every test counts. */
-    private static Predicate<String> gradedTest(@Nullable String testPlanJson) {
+    static Predicate<String> gradedTest(@Nullable String testPlanJson) {
         Set<String> graded = gradedTestMethods(testPlanJson);
         return graded == null ? testName -> true : testName -> graded.contains(methodName(testName));
     }

@@ -776,6 +776,32 @@ public class DifferentialVerifier {
     }
 
     /**
+     * Executes an empty-body counterexample for simple learner-owned JUnit classes after a passing reference build. Unchanged supplied classes and complex test lifecycles are
+     * excluded. A compilation failure is inconclusive; only the executed weighted grading tests decide whether the empty test bodies are accepted.
+     *
+     * @param sandbox               isolated workspace
+     * @param sessionId             active sandbox session
+     * @param exercise              exercise whose build recipe is used
+     * @param producedTemplateFiles starter sources used to exclude unchanged supplied classes
+     * @param producedSolutionFiles reference sources that passed verification
+     * @param testPlanJson          grading plan identifying tests that carry credit
+     * @param seededStructuralTests trusted server-owned structural bundle
+     * @param restoreCandidate      restores the pristine candidate around every probe
+     * @return executed survivor, kill, or inconclusive outcomes for the applicable learner test classes
+     */
+    public List<SemanticMutantOutcome> probeEmptyStudentTests(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> producedTemplateFiles,
+            Map<String, String> producedSolutionFiles, @Nullable String testPlanJson, SeededStructuralTests seededStructuralTests, Runnable restoreCandidate) {
+        List<SemanticMutant> probes = new ArrayList<>();
+        producedSolutionFiles.forEach((path, source) -> {
+            if (path.startsWith("src/") && path.endsWith(".java") && !source.equals(producedTemplateFiles.get(path))) {
+                JavaSourceInspector.emptyJUnitTestBodies(source).ifPresent(variant -> probes.add(SemanticMutant.emptyStudentTests(path, source, variant)));
+            }
+        });
+        return SemanticMutantExecution.recheck(producedSolutionFiles, probes, OutputOnlyMainProbe.gradedTest(testPlanJson),
+                (mutant, overlay) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, overlay, restoreCandidate));
+    }
+
+    /**
      * Rechecks printed-transcript probes after a repair. Only a failing test that carries weight kills one; a probe whose transcript comparison the source no longer shows is
      * resolved only once a {@code main} that prints nothing passes every weighted test. A failed probe preserves the prior evidence by propagating.
      *

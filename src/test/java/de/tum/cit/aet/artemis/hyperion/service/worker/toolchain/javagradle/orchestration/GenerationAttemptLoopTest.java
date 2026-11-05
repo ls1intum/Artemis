@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -364,7 +365,8 @@ class GenerationAttemptLoopTest {
     }
 
     private StagedAssessmentContinuation stubExecutableContinuation() {
-        var continuation = new StagedAssessmentContinuation(java.time.Instant.now(), 0, "approved SPEC", "complete current artifacts", List.of(), List.of());
+        var continuation = new StagedAssessmentContinuation(java.time.Instant.now(), 0, "approved SPEC", "complete current artifacts", List.of(), List.of(), GenerationStage.TESTS,
+                null);
         var paused = new StagedGenerationRunner.StagedRunOutcome(new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 60, "current workspace"), null, List.of(), null,
                 List.of(), continuation);
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
@@ -372,15 +374,23 @@ class GenerationAttemptLoopTest {
         return continuation;
     }
 
-    @Test
-    void aTranscriptBypassAuthoredByAMechanicalRetryNeverBecomesACheckpoint() {
+    @ParameterizedTest
+    @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS" })
+    void anAssessmentBypassAuthoredByAMechanicalRetryNeverBecomesACheckpoint(SemanticMutant.Evidence evidence) {
         stubSchedulerFixture();
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
                 any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("missing executable artifacts"), accepted());
-        var bypass = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.SURVIVED_GRADED_SUITE)));
+        var bypass = evidence == SemanticMutant.Evidence.EMPTY_STUDENT_TESTS ? SemanticMutant.emptyStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }")
+                : SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
+        if (evidence == SemanticMutant.Evidence.EMPTY_STUDENT_TESTS) {
+            when(verifier.probeEmptyStudentTests(any(), anyString(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.SURVIVED_GRADED_SUITE)));
+        }
+        else {
+            when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.SURVIVED_GRADED_SUITE)));
+        }
 
         GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 2, 0, true);
         loop.run();
@@ -388,6 +398,23 @@ class GenerationAttemptLoopTest {
         assertThat(loop.lastMechanicallyVerifiedCandidate()).isNull();
         verify(service, never()).preserveCandidate(any(), any(), anyString(), any());
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
+    }
+
+    @Test
+    void anInconclusiveEmptyTestProbeNeitherCreatesACheckpointNorAuthorizesRedesign() {
+        stubSchedulerFixture();
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        var bypass = SemanticMutant.emptyStudentTests("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }");
+        when(verifier.probeEmptyStudentTests(any(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.INCONCLUSIVE)));
+
+        GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 1, 0, true);
+        loop.run();
+
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNull();
+        verify(stagedGenerationRunner, never()).requestAssessmentRedesign(any(), anyString(), any(), anyString(), any());
     }
 
     @Test
@@ -417,7 +444,8 @@ class GenerationAttemptLoopTest {
             executions.incrementAndGet();
             return List.of(new SemanticMutantOutcome(bypass, attempts.get() == 2 ? Disposition.SURVIVED_GRADED_SUITE : Disposition.KILLED_BY_GRADED_SUITE));
         });
-        var continuation = new StagedAssessmentContinuation(java.time.Instant.now(), 0, "approved", "executed bypass", List.of(), List.of(), GenerationStage.SPEC);
+        var continuation = new StagedAssessmentContinuation(java.time.Instant.now(), 0, "approved", "executed bypass", List.of(), List.of(), GenerationStage.SPEC,
+                "executed bypass");
         when(stagedGenerationRunner.requestAssessmentRedesign(any(), anyString(), any(), anyString(), any())).thenReturn(continuation);
         when(stagedGenerationRunner.resume(Mockito.eq(continuation), any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(),
                 anyBoolean(), anyBoolean(), any(), any())).thenAnswer(invocation -> {

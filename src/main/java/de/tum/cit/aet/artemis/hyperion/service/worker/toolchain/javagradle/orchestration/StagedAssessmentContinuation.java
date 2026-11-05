@@ -3,11 +3,13 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orch
 import java.time.Instant;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 
 /** Server-owned assessment re-entry at SPEC or TESTS, within the existing authoring-attempt and job limits. */
 record StagedAssessmentContinuation(Instant startedAt, int reentriesRemaining, String approvedSpecification, String feedback, List<String> specificationFindings,
-        List<String> conceptFindings, GenerationStage stage) {
+        List<String> conceptFindings, GenerationStage stage, @Nullable String assessmentCounterexample) {
 
     StagedAssessmentContinuation {
         if (stage == GenerationStage.STATEMENT) {
@@ -17,8 +19,4 @@ record StagedAssessmentContinuation(Instant startedAt, int reentriesRemaining, S
         conceptFindings = List.copyOf(conceptFindings);
     }
 
-    StagedAssessmentContinuation(Instant startedAt, int reentriesRemaining, String approvedSpecification, String feedback, List<String> specificationFindings,
-            List<String> conceptFindings) {
-        this(startedAt, reentriesRemaining, approvedSpecification, feedback, specificationFindings, conceptFindings, GenerationStage.TESTS);
-    }
 }

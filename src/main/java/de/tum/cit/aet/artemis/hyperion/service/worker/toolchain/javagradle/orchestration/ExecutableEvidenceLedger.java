@@ -127,14 +127,26 @@ final class ExecutableEvidenceLedger {
         rememberTranscriptVerdicts(probed);
         outcomes.addAll(probed);
         outcomes.forEach(evidence::record);
+        // Empty-test probes are regenerated for each authoritative candidate, rather than entering the model-authored mutation lifecycle.
+        List<SemanticMutantOutcome> emptyTestOutcomes = verifier.probeEmptyStudentTests(sandbox, sessionId, exercise,
+                candidateFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()), plan, seeded, restoreCandidate);
+        outcomes.addAll(emptyTestOutcomes);
         List<SemanticMutant> counterexamples = outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).map(SemanticMutantOutcome::mutant)
                 .toList();
         if (counterexamples.isEmpty()) {
+            if (emptyTestOutcomes.stream().anyMatch(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)) {
+                List<String> reasons = new ArrayList<>(result.reasons());
+                reasons.add(
+                        "The empty student-test assessment produced no conclusive build/test verdict. Keep the approved contract and repair the executable artifacts before checkpointing.");
+                return new AssessmentVerdict(
+                        new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), reasons, result.templateFailureEvidence()), List.of());
+            }
             return new AssessmentVerdict(result, List.of());
         }
         List<String> reasons = new ArrayList<>(result.reasons());
-        counterexamples.forEach(mutant -> reasons.add("The executed assessment accepts a print-only replacement in " + mutant.solutionPath()
-                + ". The graded tests must distinguish the learner-owned operations before a candidate can become a checkpoint."));
+        counterexamples.forEach(mutant -> reasons.add("The executed assessment accepts "
+                + (mutant.evidence() == SemanticMutant.Evidence.EMPTY_STUDENT_TESTS ? "empty learner-written JUnit test bodies" : "a print-only replacement") + " in "
+                + mutant.solutionPath() + ". The graded tests must distinguish the learner-owned operations before a candidate can become a checkpoint."));
         return new AssessmentVerdict(new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), reasons, result.templateFailureEvidence()),
                 counterexamples);
     }

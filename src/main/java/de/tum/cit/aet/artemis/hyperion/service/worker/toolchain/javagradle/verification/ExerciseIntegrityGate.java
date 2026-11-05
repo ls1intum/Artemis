@@ -375,15 +375,15 @@ public final class ExerciseIntegrityGate {
         }
     }
 
-    /** Every Artemis task needs an actual instruction before the next task or section; a checkbox-only statement is not usable teaching material. */
+    /** Every Artemis task needs an adjacent instruction block; a checkbox-only statement is not usable teaching material. */
     static List<String> statementTaskInstructionReasons(String problemStatement) {
         if (problemStatement == null || problemStatement.isBlank()) {
             return List.of();
         }
         List<String> bareTasks = ProblemStatementBindingChecker.tasksWithoutInstruction(problemStatement);
         return bareTasks.isEmpty() ? List.of()
-                : List.of("the final statement has task binding(s) with no student-facing instruction before the next task or heading: " + bareTasks
-                        + ". Follow each task with concise prose naming the work to perform; the binding alone is grading metadata, not an exercise instruction.");
+                : List.of("the final statement has task binding(s) with no student-facing instruction following the binding or in its preceding numbered task block: " + bareTasks
+                        + ". Add concise prose naming the work to perform after the binding or in its preceding numbered task block; the binding alone is grading metadata, not an exercise instruction.");
     }
 
     /** Sorted and capped, so a large offending set never floods the rejection text and the message stays deterministic. */

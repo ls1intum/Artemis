@@ -141,3 +141,7 @@ exact names `verify` reports, copied verbatim.
 
 Test count follows the design's partitions, not a quota. Non-Java languages keep the same rules with their
 own framework's idiom. Shared fixtures/helpers are fine when they keep each test's focus readable.
+
+When the learner writes tests, assess both sides: the learner tests pass on conforming behavior and fail on representative faulty behavior.
+Merely invoking them against the correct supplied implementation accepts empty test bodies. Put fault-variant selection and result interpretation in supplied instructor support;
+it must not become additional learner work. Grade the effect of the learner's assertions, not their source spelling or an incidental assertion-method count.

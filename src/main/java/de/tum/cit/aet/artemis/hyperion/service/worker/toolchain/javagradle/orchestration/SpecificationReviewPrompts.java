@@ -52,6 +52,14 @@ final class SpecificationReviewPrompts {
         return review.riskHistory().stream().map(finding -> "Unresolved specification-review hypothesis from grounded evidence: " + finding).toList();
     }
 
+    static SpecFidelityCritic.SpecificationReview executedAssessmentReview(String evidence) {
+        String bounded = evidence.length() <= 6_000 ? evidence : evidence.substring(0, 6_000) + " [additional diagnostic text omitted]";
+        String finding = "Executed assessment counterexample against the preceding candidate: " + bounded;
+        // The critic's bounded F history requires adjudication against the replacement SPEC, not a claim that the old candidate was sound.
+        return new SpecFidelityCritic.SpecificationReview(false, false, true, List.of(finding), "Assessment redesign requires explicit counterexample adjudication.", null,
+                List.of(finding));
+    }
+
     static String assessmentRedesignPrompt(String executedEvidence) {
         return executedEvidence + """
 

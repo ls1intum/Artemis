@@ -110,7 +110,9 @@ final class ProblemStatementBindingChecker {
         return false;
     }
 
-    /** Task bindings followed only by another task, a heading, or the end of the statement, with no instruction in between. */
+    private static final Pattern NUMBERED_INSTRUCTION = Pattern.compile("^\\s*\\d+[.)]\\s+\\S.*");
+
+    /** Task bindings without following instructions or a preceding numbered instruction block belonging to that task. */
     static List<String> tasksWithoutInstruction(String problemStatement) {
         List<String> lines = problemStatement.lines().toList();
         List<String> bareTasks = new ArrayList<>();
@@ -130,11 +132,24 @@ final class ProblemStatementBindingChecker {
                     break;
                 }
             }
-            if (!hasInstruction) {
+            if (!hasInstruction && !hasPrecedingNumberedInstruction(lines, index)) {
                 bareTasks.add(task);
             }
         }
         return List.copyOf(bareTasks);
+    }
+
+    private static boolean hasPrecedingNumberedInstruction(List<String> lines, int taskIndex) {
+        for (int index = taskIndex - 1; index >= 0; index--) {
+            String line = lines.get(index).strip();
+            if (TASK_BINDING.matcher(line).find() || line.startsWith("#") || line.startsWith("```")) {
+                return false;
+            }
+            if (NUMBERED_INSTRUCTION.matcher(line).matches()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

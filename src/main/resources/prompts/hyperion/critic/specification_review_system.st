@@ -26,6 +26,10 @@ If an entry point delegates to a testable operation, declare that delegation and
 A print-only replacement of a graded entry point must lose its behavioral credit even if another helper still returns correct objects.
 For each intermediate action, name the runtime observation that would change if that action were omitted while the final state stayed the same.
 
+When the learner writes tests, assess both sides: the learner tests pass on conforming behavior and fail on representative faulty behavior.
+Merely invoking them against the correct supplied implementation accepts empty test bodies. Put fault-variant selection and result interpretation in supplied instructor support;
+it must not become additional learner work. Grade the effect of the learner's assertions, not their source spelling or an incidental assertion-method count.
+
 Reject incompatible postconditions and tests whose setup performs the learner-owned actions. Do not repair the proposal in your reasoning by inventing an observation hook.
 This is not a requirement to prove syntax through black-box tests. A requested technique can be ungraded pedagogy; objectiveObservable asks whether the learner's
 assigned work has meaningful observable consequences, not whether every behaviorally equivalent implementation can be rejected. Do not require source-pattern checks.

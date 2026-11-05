@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-05
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -223,16 +223,16 @@ Hyperion can pre-generate a pool of multiple-choice questions per course, compet
 
 ```yaml
 artemis:
-  hyperion:
-    quiz-pool:
-      generator-model: # model (Azure: deployment name) that generates pool questions; blank uses the default chat model
-      judge-model: # model (Azure: deployment name) that judges generated questions; blank uses the default chat model
-      question-types: single-choice,multiple-choice # cells of the pool per competency, lecture unit and difficulty
-      difficulties: easy,medium,hard
-      generation-batch-size: 8 # questions requested per generation call
-      stale-claim-minutes: 30 # a claim older than this counts as abandoned by a dead node and is released at the next build
-      max-material-characters: 60000 # characters of a lecture unit's text that a generation prompt receives at most
-      build-lease-minutes: 10 # a build that stops renewing its lease for this long counts as dead and frees the course for the next build; keep it longer than the longest model call
+    hyperion:
+        quiz-pool:
+            generator-model: # model (Azure: deployment name) that generates pool questions; blank uses the default chat model
+            judge-model: # model (Azure: deployment name) that judges generated questions; blank uses the default chat model
+            question-types: single-choice,multiple-choice # cells of the pool per competency, lecture unit and difficulty
+            difficulties: easy,medium,hard
+            generation-batch-size: 8 # questions requested per generation call
+            stale-claim-minutes: 30 # a claim older than this counts as abandoned by a dead node and is released at the next build
+            max-material-characters: 60000 # characters of a lecture unit's text that a generation prompt receives at most
+            build-lease-minutes: 10 # a build that stops renewing its lease for this long counts as dead and frees the course for the next build; keep it longer than the longest model call
 ```
 
 Both models must be reachable through the configured Spring AI endpoint. On Azure OpenAI / Microsoft Foundry a model name is the deployment name. Every generation and filter call is recorded in the LLM token usage tracking, so add the two models to `artemis.llm.model-costs` if you want their cost reported.
@@ -314,6 +314,20 @@ exact approval and original authoring deadline; it does not repeat concept or SP
 work, raise configured limits or allow another contract redesign. No statement is
 authored until that assessment passes. This check supplements
 the later quality review and does not establish overall teaching suitability.
+
+For exercises where students write JUnit tests, the assessment check also tries
+empty test bodies in simple student-owned test classes. The weighted grading tests
+must reject that variant. Running the learner's tests only against the correct
+supplied implementation does not establish whether their assertions detect faults.
+Lifecycle hooks, inheritance, constructors and initializers make this simple probe
+inapplicable; these cases still need quality review. An inconclusive execution cannot
+authorize a contract change or establish that the assessment passed.
+
+When executed evidence causes redesign, the specification reviewer receives the
+counterexample and must adjudicate it against the replacement contract. That evidence
+is kept across a paused continuation. If no verified replacement can be produced,
+unsaved artifacts remain read-only and inspectable. A proven assessment bypass cannot
+replace a previously verified checkpoint.
 
 Configure exactly one AI Worker identity for generation. Use the same distributed-data
 provider on generation-capable core nodes and that worker. Core reserves one job

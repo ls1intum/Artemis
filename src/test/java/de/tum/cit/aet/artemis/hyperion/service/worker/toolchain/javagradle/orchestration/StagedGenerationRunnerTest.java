@@ -242,6 +242,11 @@ class StagedGenerationRunnerTest {
     void executedAssessmentFailureReopensAndReapprovesTheContractBeforeStatementAuthoring() {
         var reviewer = mock(SpecFidelityCritic.class);
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(new SpecFidelityCritic.SpecificationReview(true, List.of()));
+        when(reviewer.reviewSpecification(anyString(), any(), anyString(), any(SpecFidelityCritic.SpecificationReview.class), any(), any())).thenAnswer(invocation -> {
+            SpecFidelityCritic.SpecificationReview prior = invocation.getArgument(3);
+            assertThat(prior.riskHistory()).singleElement().asString().contains("print", "src/Client.java");
+            return new SpecFidelityCritic.SpecificationReview(true, false, false, List.of(), "The revised API addresses the counterexample", null, prior.riskHistory());
+        });
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
         var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
         when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
@@ -262,7 +267,8 @@ class StagedGenerationRunnerTest {
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(calls).hasValue(5);
         assertThat(approvedSpecs.approved("s")).hasValue(sandbox.specMarkdown);
-        verify(reviewer, times(2)).reviewSpecification(anyString(), anyString(), any(), any());
+        verify(reviewer).reviewSpecification(anyString(), anyString(), any(), any());
+        verify(reviewer).reviewSpecification(anyString(), any(), anyString(), any(SpecFidelityCritic.SpecificationReview.class), any(), any());
         InOrder stages = inOrder(baseTools);
         stages.verify(baseTools).enterStage(GenerationStage.SPEC);
         stages.verify(baseTools).enterStage(GenerationStage.TESTS);
@@ -312,6 +318,7 @@ class StagedGenerationRunnerTest {
         var continuation = runner.requestAssessmentRedesign(exercise, "s", java.time.Instant.now(), "executed print-only bypass", List.of("concept objection"));
         assertThat(continuation).isNotNull();
         assertThat(continuation.stage()).isEqualTo(GenerationStage.SPEC);
+        assertThat(continuation.assessmentCounterexample()).isEqualTo("executed print-only bypass");
         assertThat(approvedSpecs.approved("s")).isEmpty();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
         when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
@@ -333,7 +340,7 @@ class StagedGenerationRunnerTest {
         StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
         assertThat(approvedSpecs.approved("s")).hasValue(continuation.approvedSpecification());
         continuation = new StagedAssessmentContinuation(continuation.startedAt(), continuation.reentriesRemaining(), continuation.approvedSpecification(), continuation.feedback(),
-                List.of("retained specification objection"), List.of("retained concept objection"));
+                List.of("retained specification objection"), List.of("retained concept objection"), continuation.stage(), continuation.assessmentCounterexample());
 
         var resumed = resume(continuation);
 

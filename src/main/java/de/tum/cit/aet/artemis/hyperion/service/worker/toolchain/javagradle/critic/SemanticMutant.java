@@ -26,7 +26,9 @@ public record SemanticMutant(String ruleId, String solutionPath, String original
          * The server replaced only the body of a student-owned {@code main} with statements printing the reference run's captured output. A suite that still passes observes
          * that {@code main} only through its printed transcript, so no counterexample is needed.
          */
-        PRINTED_TRANSCRIPT
+        PRINTED_TRANSCRIPT,
+        /** The server removed the bodies of simple learner-owned JUnit tests; a passing graded suite does not assess their assertions. */
+        EMPTY_STUDENT_TESTS
     }
 
     /** Concise run-local history used only to keep later mutation samples novel; it carries no contract authority or executable-evidence claim. */
@@ -55,6 +57,13 @@ public record SemanticMutant(String ruleId, String solutionPath, String original
         String probed = mainType + ".main";
         ContractWitness description = new ContractWitness(probed, "", "", "main prints the expected output without using the program's objects");
         return new SemanticMutant(probed, solutionPath, originalSolutionSource, variantSource, description, null, Evidence.PRINTED_TRANSCRIPT);
+    }
+
+    /** A server-authored variant with the learner's JUnit test bodies empty and all declarations unchanged. */
+    public static SemanticMutant emptyStudentTests(String path, String source, String variant) {
+        String rule = "student-test-assertions";
+        return new SemanticMutant(rule, path, source, variant, new ContractWitness(rule, "", "", "learner-owned JUnit test bodies contain no checks"), null,
+                Evidence.EMPTY_STUDENT_TESTS);
     }
 
     /**
