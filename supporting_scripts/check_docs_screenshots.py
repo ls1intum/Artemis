@@ -156,9 +156,11 @@ def validate(manifest: dict, repo_root: Path, docs_root: Path) -> list[str]:
             problems.append(f"{label}: `threshold` must be a share of the pixels between 0 and 1")
         if limit is not None and not str(entry.get("note", "")).strip():
             problems.append(f"{label}: a `threshold` of its own needs a `note` that says why the image varies")
-        for key in ("selector", "waitFor"):
+        for key in ("selector", "waitFor", "until"):
             if key in entry and not (isinstance(entry[key], str) and entry[key].strip()):
                 problems.append(f"{label}: `{key}` must be a CSS selector")
+        if "until" in entry and (not entry.get("selector") or entry.get("padding")):
+            problems.append(f"{label}: `until` needs a `selector` and is not combined with `padding`")
         padding = entry.get("padding")
         if padding is not None and (not isinstance(padding, int) or isinstance(padding, bool) or padding <= 0 or not entry.get("selector")):
             problems.append(f"{label}: `padding` needs a positive integer and a `selector`")
@@ -519,6 +521,9 @@ def self_test() -> None:
         assert broken(selector="main", padding=12) == []
         assert any("`padding`" in problem for problem in broken(padding=12)), "padding without a selector"
         assert any("`padding`" in problem for problem in broken(selector="main", padding=0))
+        assert broken(selector="h3", until="h4") == []
+        assert any("`until`" in problem for problem in broken(until="h4")), "until without a selector"
+        assert any("`until`" in problem for problem in broken(selector="h3", until="h4", padding=8))
         assert any("viewport" in problem for problem in broken(viewport={"width": 0, "height": 5}))
         assert any("kebab-case" in problem for problem in broken(id="Shot_1"))
         assert any("described twice" in problem or "duplicate id" in problem for problem in validate({"users": good["users"], "screenshots": [entry, entry]}, root, docs))

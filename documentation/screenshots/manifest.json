@@ -1406,6 +1406,228 @@
                 "height": 160
             },
             "source": ["src/main/webapp/app/exercise/participation", "src/main/webapp/i18n/en/exercise.json"]
+        },
+        {
+            "id": "text-form-content",
+            "image": "instructor/exercises/assets/text/create-form-content.png",
+            "pages": ["instructor/exercises/text-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/text-exercises/{exercise:Essay: Monolith or Microservices?}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 3200
+            },
+            "selector": "h3:text-is(\"Problem\")",
+            "until": "h3:text-is(\"Grading\")",
+            "source": ["src/main/webapp/app/text"]
+        },
+        {
+            "id": "text-form-grading",
+            "image": "instructor/exercises/assets/text/create-form-grading.png",
+            "pages": ["instructor/exercises/text-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/text-exercises/{exercise:Essay: Monolith or Microservices?}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 3200
+            },
+            "selector": "h3:text-is(\"Grading\")",
+            "until": "jhi-form-footer",
+            "source": ["src/main/webapp/app/text"],
+            "threshold": 0.03,
+            "note": "The dates of the demo course are relative to the day it was seeded."
+        },
+        {
+            "id": "file-upload-form-content",
+            "image": "instructor/exercises/assets/file-upload/create-form-content.png",
+            "pages": ["instructor/exercises/file-upload-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/file-upload-exercises/{exercise:Poster: Comparing Sorting Algorithms}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 3200
+            },
+            "selector": "h3:text-is(\"Problem\")",
+            "until": "h3:text-is(\"Grading\")",
+            "source": ["src/main/webapp/app/fileupload"]
+        },
+        {
+            "id": "file-upload-form-grading",
+            "image": "instructor/exercises/assets/file-upload/create-form-grading.png",
+            "pages": ["instructor/exercises/file-upload-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/file-upload-exercises/{exercise:Poster: Comparing Sorting Algorithms}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 3200
+            },
+            "selector": "h3:text-is(\"Grading\")",
+            "until": "jhi-form-footer",
+            "source": ["src/main/webapp/app/fileupload"],
+            "threshold": 0.03,
+            "note": "The dates of the demo course are relative to the day it was seeded."
+        },
+        {
+            "id": "modeling-form-content",
+            "image": "instructor/exercises/assets/modeling/create-form-content.png",
+            "pages": ["instructor/exercises/modeling-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/modeling-exercises/{exercise:Class Diagram: Library Management System}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 3200
+            },
+            "selector": "h3:text-is(\"Problem\")",
+            "until": "h3:text-is(\"Grading\")",
+            "source": ["src/main/webapp/app/modeling"]
+        },
+        {
+            "id": "modeling-form-grading",
+            "image": "instructor/exercises/assets/modeling/create-form-grading.png",
+            "pages": ["instructor/exercises/modeling-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/modeling-exercises/{exercise:Class Diagram: Library Management System}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 3200
+            },
+            "selector": "h3:text-is(\"Grading\")",
+            "until": "jhi-form-footer",
+            "source": ["src/main/webapp/app/modeling"],
+            "threshold": 0.03,
+            "note": "The dates of the demo course are relative to the day it was seeded."
+        },
+        {
+            "id": "programming-form-language",
+            "image": "instructor/exercises/assets/programming/create-form-language.png",
+            "pages": ["instructor/exercises/programming-exercise/create-an-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/programming-exercises/{exercise:Sorting Algorithms in Java}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 4000
+            },
+            "selector": "h3:text-is(\"Language\")",
+            "until": "h3:text-is(\"Problem\")",
+            "source": ["src/main/webapp/app/programming"]
+        },
+        {
+            "id": "programming-form-problem",
+            "image": "instructor/exercises/assets/programming/create-form-problem.png",
+            "pages": ["instructor/exercises/programming-exercise/create-an-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/programming-exercises/{exercise:Sorting Algorithms in Java}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 4000
+            },
+            "selector": "h3:text-is(\"Problem\")",
+            "until": "h3:text-is(\"Grading\")",
+            "source": ["src/main/webapp/app/programming"]
+        },
+        {
+            "id": "programming-form-grading",
+            "image": "instructor/exercises/assets/programming/create-form-grading.png",
+            "pages": ["instructor/exercises/programming-exercise/create-an-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/programming-exercises/{exercise:Sorting Algorithms in Java}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 4000
+            },
+            "selector": "h3:text-is(\"Grading\")",
+            "until": "jhi-form-footer",
+            "source": ["src/main/webapp/app/programming"],
+            "threshold": 0.03,
+            "note": "The dates of the demo course are relative to the day it was seeded."
+        },
+        {
+            "id": "quiz-form-multiple-choice",
+            "image": "instructor/exercises/assets/quiz/multiple-choice-question.png",
+            "pages": ["instructor/exercises/quiz-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/quiz-exercises/{exercise:Quiz: Java Collections and Complexity}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 4000
+            },
+            "steps": [
+                {
+                    "waitFor": "text=Add Multiple-Choice Question"
+                }
+            ],
+            "selector": "jhi-multiple-choice-question-edit",
+            "padding": 8,
+            "source": ["src/main/webapp/app/quiz/manage"]
+        },
+        {
+            "id": "quiz-form-short-answer",
+            "image": "instructor/exercises/assets/quiz/short-answer-question.png",
+            "pages": ["instructor/exercises/quiz-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/quiz-exercises/{exercise:Quiz: Java Collections and Complexity}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 4000
+            },
+            "steps": [
+                {
+                    "waitFor": "text=Add Short-Answer Question"
+                }
+            ],
+            "selector": "jhi-short-answer-question-edit",
+            "padding": 8,
+            "source": ["src/main/webapp/app/quiz/manage"]
+        },
+        {
+            "id": "quiz-form-drag-and-drop",
+            "image": "instructor/exercises/assets/quiz/drag-and-drop-question.png",
+            "pages": ["instructor/exercises/quiz-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/quiz-exercises/{exercise:Quiz: Java Collections and Complexity}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 4000
+            },
+            "steps": [
+                {
+                    "waitFor": "text=Add Drag-And-Drop Question"
+                }
+            ],
+            "selector": "jhi-drag-and-drop-question-edit",
+            "padding": 8,
+            "source": ["src/main/webapp/app/quiz/manage"]
+        },
+        {
+            "id": "quiz-existing-questions",
+            "image": "instructor/exercises/assets/quiz/existing-question.png",
+            "pages": ["instructor/exercises/quiz-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/quiz-exercises/{exercise:Quiz: Java Collections and Complexity}/edit",
+            "viewport": {
+                "width": 1440,
+                "height": 4000
+            },
+            "steps": [
+                {
+                    "click": "text=Add Existing Questions"
+                },
+                {
+                    "waitFor": "text=Select a Course"
+                },
+                {
+                    "select": {
+                        "selector": "jhi-quiz-question-list-edit-existing select",
+                        "label": "Introduction to Software Engineering"
+                    }
+                },
+                {
+                    "waitFor": "text=Add Selected Questions"
+                }
+            ],
+            "selector": "jhi-quiz-question-list-edit-existing",
+            "padding": 8,
+            "source": ["src/main/webapp/app/quiz/manage"]
         }
     ]
 }
