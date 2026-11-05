@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -617,6 +618,22 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         CourseAthenaConfigRepository mockConfigRepository = mock(CourseAthenaConfigRepository.class);
         when(mockConfigRepository.findConfigByCourseId(999L)).thenReturn(Optional.empty());
         ReflectionTestUtils.setField(athenaFeedbackSuggestionsService, "courseAthenaConfigRepository", mockConfigRepository);
+
+        LearnerProfileDTO result = invokeBuildLearnerProfileDTO(profile);
+
+        assertThat(result).isNotNull();
+        assertThat(result.feedbackDetail()).isEqualTo(LearnerProfile.DEFAULT_PROFILE_VALUE);
+        assertThat(result.feedbackFormality()).isEqualTo(LearnerProfile.DEFAULT_PROFILE_VALUE);
+    }
+
+    @Test
+    void testBuildLearnerProfileDTO_FallsBackToProfileDefaultForExamExerciseWithMaskedExam() throws Exception {
+        // an exercise group without its exam, as in a student-facing exam payload, has no course to read the defaults from
+        textExercise.setExerciseGroup(new ExerciseGroup());
+
+        LearnerProfile profile = new LearnerProfile();
+        profile.setId(42L);
+        profile.setHasSetupFeedbackPreferences(false);
 
         LearnerProfileDTO result = invokeBuildLearnerProfileDTO(profile);
 

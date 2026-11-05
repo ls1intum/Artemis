@@ -215,9 +215,10 @@ public class AthenaFeedbackSuggestionsService {
             return LearnerProfileDTO.of(learnerProfile);
         }
 
-        // The course id can be null for a transient exercise/course pair built in a test rather than persisted; that
-        // reads the same as a course with no Athena configuration, i.e. no course default.
-        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        // The course is null for an exam exercise whose exam is masked out, and its id for a transient exercise/course pair
+        // built in a test rather than persisted; both read the same as a course with no Athena configuration, i.e. no course default.
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Long courseId = course != null ? course.getId() : null;
         CourseAthenaConfigDTO courseConfig = courseId != null ? courseAthenaConfigRepository.findConfigByCourseId(courseId).orElse(null) : null;
         int defaultFeedbackDetail = courseConfig != null ? courseConfig.defaultFeedbackDetail() : 0;
         int defaultFeedbackFormality = courseConfig != null ? courseConfig.defaultFeedbackFormality() : 0;
