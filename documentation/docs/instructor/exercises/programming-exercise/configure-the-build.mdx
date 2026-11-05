@@ -205,7 +205,7 @@ The same pattern applies to any language: put the run command into `tasks.json`,
 
 If static code analysis was activated, the **Test** repository contains configuration files.
 
-For Java exercises, the *staticCodeAnalysisConfig* folder contains configuration files for each tool.
+For Java and Kotlin exercises, the *staticCodeAnalysisConfig* folder contains configuration files for each tool.
 Artemis generates default configurations with predefined rules. Instructors can freely customize these files.
 
 On exercise import, configurations are copied from the imported exercise.
@@ -282,6 +282,21 @@ On exercise import, configurations are copied from the imported exercise.
       <td>Dart</td>
       <td><a href="https://dart.dev/tools/analysis">dart analyze</a></td>
       <td>analysis_options.yaml</td>
+    </tr>
+    <tr>
+      <td>Kotlin</td>
+      <td><a href="https://detekt.dev/">detekt</a></td>
+      <td>detekt-student.yml</td>
+    </tr>
+    <tr>
+      <td>Go</td>
+      <td><a href="https://golangci-lint.run/">golangci-lint</a></td>
+      <td>.golangci.yml</td>
+    </tr>
+    <tr>
+      <td>C#</td>
+      <td><a href="https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/overview">.NET compiler analyzers (Roslyn)</a></td>
+      <td>(via the build phase)</td>
     </tr>
   </tbody>
 </table>
