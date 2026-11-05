@@ -101,7 +101,7 @@
                                 </a>
                             }
                             @if (exercise.isAtLeastInstructor) {
-                                <button type="button" tumAetUiMenuItem [disabled]="!exportsEnabled()" (triggered)="downloadExercise()">
+                                <button type="button" tumAetUiMenuItem [disabled]="!exportsEnabled()" (triggered)="downloadExercise()" data-testid="download-exercise">
                                     <fa-icon [icon]="faDownload" /><span jhiTranslate="artemisApp.programmingExercise.export.downloadExercise"></span>
                                 </button>
                                 @if (isExportToSharingEnabled()) {

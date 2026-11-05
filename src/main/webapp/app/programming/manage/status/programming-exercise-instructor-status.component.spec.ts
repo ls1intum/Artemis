@@ -174,7 +174,6 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
     it.each([
         [ProgrammingExerciseParticipationType.TEMPLATE, -1],
         [ProgrammingExerciseParticipationType.SOLUTION, 99],
-        [ProgrammingExerciseParticipationType.SOLUTION, 110],
     ])('warns for an unexpected %s score of %s even when the result is marked successful', (participationType, score) => {
         fixture.componentRef.setInput('participationType', participationType);
         fixture.componentRef.setInput('participation', { id: 1, submissions: [{ results: [{ id: 3, score, successful: true }] }] });

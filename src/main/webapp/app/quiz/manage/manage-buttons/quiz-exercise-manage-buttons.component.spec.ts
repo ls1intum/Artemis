@@ -355,6 +355,42 @@ describe('QuizExercise Management Buttons Component evaluate button', () => {
         expect(fixture.nativeElement.querySelector('jhi-create-variant-with-ai-button')).toBeNull();
     });
 
+    it.each([
+        { status: 404, error: { title: 'Quiz no longer exists' } },
+        { status: 500, error: {} },
+    ])('shows evaluation failures locally for status $status, including errors without a title', async ({ status, error }) => {
+        const failure = new HttpErrorResponse({ status, error });
+        vi.spyOn(TestBed.inject(QuizExerciseEvaluationApi), 'evaluateQuizExercise').mockReturnValue(throwError(() => failure));
+        const globalError = vi.spyOn(TestBed.inject(AlertService), 'error');
+        const button = render(true, true)!;
+
+        button.querySelector('button')!.click();
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain(failure.message);
+        expect(fixture.componentInstance.isEvaluatingQuizExercise()).toBe(false);
+        expect(globalError).not.toHaveBeenCalled();
+
+        vi.spyOn(TestBed.inject(QuizExerciseEvaluationApi), 'evaluateQuizExercise').mockReturnValue(of(undefined));
+        button.querySelector('button')!.click();
+        await fixture.whenStable();
+        expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+    });
+
+    it.each([
+        { status: 0, error: {} },
+        { status: 403, error: {} },
+        { status: 500, error: { title: 'Evaluation failed' } },
+        { status: 400, error: { fieldErrors: [{ field: 'quiz', message: 'invalid' }] } },
+    ])('leaves failures already handled globally to the global alert for status $status', async ({ status, error }) => {
+        vi.spyOn(TestBed.inject(QuizExerciseEvaluationApi), 'evaluateQuizExercise').mockReturnValue(throwError(() => new HttpErrorResponse({ status, error })));
+        const button = render(true, true)!;
+        button.querySelector('button')!.click();
+        await fixture.whenStable();
+        expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+        expect(fixture.componentInstance.isEvaluatingQuizExercise()).toBe(false);
+    });
+
     it('should offer the evaluate button on the detail page when the server accepts the evaluation', () => {
         expect(render(true, true)).not.toBeNull();
     });

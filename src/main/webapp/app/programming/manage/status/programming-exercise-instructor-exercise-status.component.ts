@@ -45,7 +45,13 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnD
             programmingExerciseResultWarning(this.latestSolutionResult(), ProgrammingExerciseParticipationType.SOLUTION) ? ProgrammingExerciseIssues.SOLUTION_FAILING : undefined,
         ].filter((issue): issue is ProgrammingExerciseIssues => issue !== undefined),
     );
-    protected readonly buildsSuccessful = computed(() => this.latestTemplateResult()?.score === 0 && this.latestSolutionResult()?.score === 100 && this.issues().length === 0);
+    protected readonly buildsSuccessful = computed(
+        () =>
+            this.latestTemplateResult()?.score === 0 &&
+            Number.isFinite(this.latestSolutionResult()?.score) &&
+            (this.latestSolutionResult()?.score ?? 0) >= 100 &&
+            this.issues().length === 0,
+    );
 
     private subscribedTemplateParticipationId?: number;
     private subscribedSolutionParticipationId?: number;

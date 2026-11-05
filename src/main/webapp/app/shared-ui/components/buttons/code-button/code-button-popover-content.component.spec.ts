@@ -11,7 +11,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
-import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { RepositoryAuthenticationMethod } from './code-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -130,6 +130,19 @@ describe('CodeButtonPopoverContentComponent', () => {
         const editor = fixture.nativeElement.querySelector('[data-testid="edit-repository-button"]') as HTMLAnchorElement | null;
         expect(editor?.getAttribute('href')).toBe('/course-management/3/programming-exercises/12/code-editor/template/1');
         expect(translatedElement('entity.action.editInEditor')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="open-repository-button"]')?.getAttribute('href')).toBe('/courses/1/exercises/2/repository');
+    });
+
+    it('disables browser editing when ProgrammingExercises is inactive while retaining read-only access', async () => {
+        TestBed.inject(FeatureToggleService).setFeatureToggleState(FeatureToggle.ProgrammingExercises, false).subscribe();
+        renderComponent([tokenAuthenticationMethodData]);
+        fixture.componentRef.setInput('repositoryEditorLink', ['/course-management/3/programming-exercises/12', 'code-editor', 'template', 1]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const editor = fixture.nativeElement.querySelector('[data-testid="edit-repository-button"]') as HTMLAnchorElement;
+        expect(editor).not.toBeNull();
+        expect(editor.classList.contains('disabled')).toBe(true);
         expect(fixture.nativeElement.querySelector('[data-testid="open-repository-button"]')?.getAttribute('href')).toBe('/courses/1/exercises/2/repository');
     });
 

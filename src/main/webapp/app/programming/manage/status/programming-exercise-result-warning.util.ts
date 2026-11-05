@@ -10,7 +10,10 @@ export function programmingExerciseResultWarning(result: Result | undefined, par
     if (participationType === ProgrammingExerciseParticipationType.TEMPLATE && hasScore && result.score !== 0) {
         return 'artemisApp.programmingExercise.status.templateFulfillsTest';
     }
-    if (participationType === ProgrammingExerciseParticipationType.SOLUTION && ((hasScore && result.score !== 100) || result.successful === false)) {
+    // Bonus points can lift a fully passing solution above 100%. The successful flag is
+    // score-derived, so use the test counts to catch failures hidden by bonus points.
+    const hasFailedTests = result.testCaseCount !== undefined && result.passedTestCaseCount !== undefined && result.passedTestCaseCount < result.testCaseCount;
+    if (participationType === ProgrammingExerciseParticipationType.SOLUTION && ((hasScore && result.score! < 100) || hasFailedTests)) {
         return 'artemisApp.programmingExercise.status.solutionFailsTest';
     }
     return undefined;

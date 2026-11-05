@@ -118,7 +118,7 @@ describe('ProgrammingRepositoryBuildOverviewComponent', () => {
 
     it('pairs each repository with its live familiar result and renders shared repositories and comparison once', async () => {
         await render();
-        const panels = fixture.debugElement.queryAll(By.css('[data-testid="build-panel"]'));
+        const panels = fixture.debugElement.queryAll(By.css('[data-testid="template-build-panel"], [data-testid="solution-build-panel"]'));
         expect(panels).toHaveLength(2);
         const codes = fixture.debugElement.queryAll(By.directive(CodeButtonComponent)).map((element) => element.componentInstance as CodeButtonComponent);
         expect(codes.map((code) => code.repositoryViewLink())).toEqual([
@@ -182,7 +182,7 @@ describe('ProgrammingRepositoryBuildOverviewComponent', () => {
             solutionCheckoutPath: 'reference',
         };
         await render();
-        const panels = fixture.debugElement.queryAll(By.css('[data-testid="build-panel"]'));
+        const panels = fixture.debugElement.queryAll(By.css('[data-testid="template-build-panel"], [data-testid="solution-build-panel"]'));
         expect(panels[0].nativeElement.textContent).toContain('/custom/source');
         expect(panels[0].nativeElement.textContent).toContain('/reference');
         expect(panels[1].nativeElement.textContent).toContain('/custom/source');

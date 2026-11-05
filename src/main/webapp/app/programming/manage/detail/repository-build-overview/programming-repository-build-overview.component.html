@@ -21,7 +21,10 @@
     <div class="grid min-w-0 grid-cols-1 gap-4! lg:grid-cols-2">
         @for (panel of panels(); track panel.repositoryType) {
             @let status = panel.status;
-            <tumaet-ui-card class="min-w-0 border border-(--tumaet-ui-border-color)" data-testid="build-panel">
+            <tumaet-ui-card
+                class="min-w-0 border border-(--tumaet-ui-border-color)"
+                [attr.data-testid]="panel.repositoryType === RepositoryType.TEMPLATE ? 'template-build-panel' : 'solution-build-panel'"
+            >
                 <h5>{{ panel.title | artemisTranslate }}</h5>
                 <p class="text-(--tumaet-ui-muted-color)">{{ panel.description | artemisTranslate }}</p>
                 @if (status.participation?.repositoryUri && exercise.id) {

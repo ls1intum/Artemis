@@ -8,6 +8,7 @@ import {
 } from '@tumaet/ui-angular';
 import { ExerciseDetailActionsComponent } from 'app/exercise/detail/exercise-detail-actions.component';
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -33,6 +34,7 @@ import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluat
     templateUrl: './quiz-exercise-manage-buttons.component.html',
     imports: [
         RouterLink,
+        NgTemplateOutlet,
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -77,6 +79,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
 
     readonly baseUrl = signal<string>(undefined!);
     readonly isEvaluatingQuizExercise = signal(false);
+    readonly evaluationError = signal<string | undefined>(undefined);
 
     isDetailPage = input(false);
     readonly detailPageSection = input<'actions' | 'administration'>('actions');
@@ -152,6 +155,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     }
 
     evaluateQuizExercise() {
+        this.evaluationError.set(undefined);
         this.isEvaluatingQuizExercise.set(true);
         this.quizExerciseEvaluationApi.evaluateQuizExercise(this.quizExercise().id!).subscribe({
             next: () => {
@@ -159,7 +163,13 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
                 this.isEvaluatingQuizExercise.set(false);
             },
             error: (error: HttpErrorResponse) => {
-                this.dialogErrorSource.next(error.message);
+                // The global alert handler ignores 404 responses and most errors without a problem title.
+                // Connection, permission and structured validation failures already receive a global alert.
+                const hasValidationAlert =
+                    error.status === 400 && (error.error?.fieldErrors?.length || error.headers.keys().some((key) => key.toLowerCase().endsWith('app-error')));
+                if (error.status === 404 || (error.status !== 0 && error.status !== 403 && !error.error?.title && !hasValidationAlert)) {
+                    this.evaluationError.set(error.message);
+                }
                 this.isEvaluatingQuizExercise.set(false);
             },
         });

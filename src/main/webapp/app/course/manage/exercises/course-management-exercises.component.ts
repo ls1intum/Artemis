@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, Subscription, catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { Observable, Subject, Subscription, catchError, forkJoin, map, of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
@@ -77,6 +77,9 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { findLatestResult } from 'app/foundation/util/utils';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 /** Local-storage key under which the last-selected view is remembered, so closing an exercise editor returns to it. */
 const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
@@ -130,6 +133,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly localStorageService = inject(LocalStorageService);
     private readonly profileService = inject(ProfileService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly participationWebsocketService = inject(ParticipationWebsocketService);
 
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
@@ -161,6 +165,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly cards = signal<CourseExerciseCard[]>([]);
     /** Whether the initial load has finished, so the empty state is not shown while the exercises are still coming. */
     readonly loaded = signal(false);
+    protected readonly loadingBuildResults = signal(false);
 
     readonly selectedIds = signal<Set<number>>(new Set());
     readonly addModalVisible = signal(false);
@@ -217,6 +222,9 @@ export class CourseManagementExercisesComponent implements OnInit {
     protected readonly localCIEnabled = signal(true);
 
     private courseExercisesSubscription?: Subscription;
+    private buildResultsSubscription?: Subscription;
+    private courseContextVersion = 0;
+    private readonly participationResultSubscriptions = new Map<number, { subscription: Subscription; exercise: Exercise }>();
 
     private readonly groupDeleteError = new Subject<string>();
     private readonly selectedDeleteError = new Subject<string>();
@@ -230,6 +238,7 @@ export class CourseManagementExercisesComponent implements OnInit {
             this.view.set(storedView);
         }
         this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
+        this.destroyRef.onDestroy(() => this.clearParticipationResultSubscriptions());
     }
 
     ngOnInit(): void {
@@ -238,7 +247,16 @@ export class CourseManagementExercisesComponent implements OnInit {
 
         this.route.parent!.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ course }) => {
             this.courseExercisesSubscription?.unsubscribe();
+            this.buildResultsSubscription?.unsubscribe();
+            this.clearParticipationResultSubscriptions();
+            this.courseContextVersion++;
+            this.clearSelection();
+            this.exercises.set([]);
+            this.groups.set([]);
+            this.loaded.set(false);
+            this.loadingBuildResults.set(false);
             this.course.set(course);
+            this.rebuildCards();
             if (course?.id) {
                 this.loadCourseExercises(course.id);
             } else {
@@ -251,35 +269,12 @@ export class CourseManagementExercisesComponent implements OnInit {
     /** Loads the course's exercises (with access rights, quiz state, groups and batches) and rebuilds the cards. */
     private loadCourseExercises(courseId: number): void {
         this.courseExercisesSubscription?.unsubscribe();
+        this.buildResultsSubscription?.unsubscribe();
+        this.clearParticipationResultSubscriptions();
+        this.loadingBuildResults.set(false);
         this.courseExercisesSubscription = this.courseManagementService
             .findWithExercises(courseId)
-            .pipe(
-                switchMap((response) => {
-                    const exercises = response.body?.exercises ?? [];
-                    if (!exercises.some((exercise) => exercise.type === ExerciseType.PROGRAMMING)) {
-                        return of(response);
-                    }
-                    // The generic course payload omits lazy build results. The programming list endpoint
-                    // supplies both latest results for the whole course, avoiding a request per exercise.
-                    return this.courseExerciseService.findAllProgrammingExercisesForCourse(courseId).pipe(
-                        map((programmingResponse) => {
-                            const byId = new Map((programmingResponse.body ?? []).map((exercise) => [exercise.id, exercise]));
-                            for (const exercise of exercises) {
-                                const programming = byId.get(exercise.id);
-                                if (exercise.type === ExerciseType.PROGRAMMING && programming) {
-                                    const target = exercise as ProgrammingExercise;
-                                    target.templateParticipation = programming.templateParticipation;
-                                    target.solutionParticipation = programming.solutionParticipation;
-                                }
-                            }
-                            return response;
-                        }),
-                        // A result lookup failure must not hide the exercise list or imply a successful build.
-                        catchError(() => of(response)),
-                    );
-                }),
-                takeUntilDestroyed(this.destroyRef),
-            )
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (response) => {
                     const loadedCourse = response.body;
@@ -303,8 +298,95 @@ export class CourseManagementExercisesComponent implements OnInit {
                     this.rebuildCards();
                     this.loaded.set(true);
                     this.loadQuizBatches(courseId);
+                    this.loadProgrammingBuildResults(courseId);
                 },
             });
+    }
+
+    /** The optional build lookup must not delay the exercise list, group controls or quiz actions. */
+    private loadProgrammingBuildResults(courseId: number): void {
+        if (!this.exercises().some((exercise) => exercise.type === ExerciseType.PROGRAMMING)) {
+            return;
+        }
+        this.loadingBuildResults.set(true);
+        this.buildResultsSubscription = this.courseExerciseService
+            .findAllProgrammingExercisesForCourse(courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response) => {
+                    const byId = new Map((response.body ?? []).map((exercise) => [exercise.id, exercise]));
+                    // Group and quiz requests may have refreshed the objects while build results were pending.
+                    for (const exercise of this.exercises()) {
+                        const programming = byId.get(exercise.id);
+                        if (exercise.type === ExerciseType.PROGRAMMING && programming) {
+                            const target = exercise as ProgrammingExercise;
+                            target.templateParticipation = programming.templateParticipation;
+                            target.solutionParticipation = programming.solutionParticipation;
+                        }
+                    }
+                    this.syncParticipationResultSubscriptions();
+                    this.rebuildCards();
+                    this.loadingBuildResults.set(false);
+                },
+                // Keep the list available without implying a successful build when results cannot be loaded.
+                error: () => this.loadingBuildResults.set(false),
+            });
+    }
+
+    /** Own one result observer per base participation, independent of the selected view or visible rows. */
+    private syncParticipationResultSubscriptions(): void {
+        const participations = new Map<number, { exercise: ProgrammingExercise; field: 'templateParticipation' | 'solutionParticipation' }>();
+        for (const exercise of this.exercises()) {
+            if (exercise.type !== ExerciseType.PROGRAMMING || exercise.id === undefined) {
+                continue;
+            }
+            const programming = exercise as ProgrammingExercise;
+            for (const field of ['templateParticipation', 'solutionParticipation'] as const) {
+                const id = programming[field]?.id;
+                if (id !== undefined) {
+                    participations.set(id, { exercise: programming, field });
+                }
+            }
+        }
+        for (const [id, tracked] of this.participationResultSubscriptions) {
+            if (!participations.has(id)) {
+                tracked.subscription.unsubscribe();
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(id, tracked.exercise);
+                this.participationResultSubscriptions.delete(id);
+            }
+        }
+        for (const [id, { exercise, field }] of participations) {
+            if (this.participationResultSubscriptions.has(id)) {
+                continue;
+            }
+            const subscription = new Subscription();
+            // Register before subscribing because the shared BehaviorSubject may replay a result immediately.
+            this.participationResultSubscriptions.set(id, { subscription, exercise });
+            subscription.add(
+                this.participationWebsocketService.subscribeForLatestResultOfParticipation(id, false, exercise.id).subscribe((result) => {
+                    const current = this.exercises().find<ProgrammingExercise>((candidate): candidate is ProgrammingExercise => candidate.id === exercise.id);
+                    const participation = current?.[field];
+                    if (result && current && participation?.id === id) {
+                        // The shared stream replays cached results, which can predate the fresh HTTP snapshot.
+                        // Keep same-ID updates: findLatestResult favors the later entry when IDs are equal.
+                        if (findLatestResult([...getAllResultsOfAllSubmissions(participation.submissions), result]) !== result) {
+                            return;
+                        }
+                        const updated = cloneWith(current, { [field]: cloneWith(participation, { submissions: [{ results: [result] }] }) });
+                        this.onExerciseUpdated(updated);
+                    }
+                }),
+            );
+        }
+    }
+
+    private clearParticipationResultSubscriptions(): void {
+        for (const [id, { subscription, exercise }] of this.participationResultSubscriptions) {
+            subscription.unsubscribe();
+            // The shared service deliberately retains active-exercise topics for other consumers.
+            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(id, exercise);
+        }
+        this.participationResultSubscriptions.clear();
     }
 
     onViewChange(view: ExerciseManagementView): void {
@@ -325,6 +407,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         exercise.isAtLeastEditor = course?.isAtLeastEditor;
         exercise.isAtLeastInstructor = course?.isAtLeastInstructor;
         this.exercises.update((exercises) => [...exercises.filter((current) => current.id !== exercise.id), exercise]);
+        this.syncParticipationResultSubscriptions();
         this.rebuildCards();
     }
 
@@ -387,15 +470,21 @@ export class CourseManagementExercisesComponent implements OnInit {
                 catchError((error: HttpErrorResponse) => of(error)),
             ),
         );
-        forkJoin(deletionObservables).subscribe({
-            next: (results) => {
-                const firstError = results.find((result): result is HttpErrorResponse => result !== undefined);
-                this.selectedDeleteError.next(firstError?.message ?? '');
-                // Some exercises may already be gone; reload so the view matches the server (even on a partial failure).
-                this.clearSelection();
-                this.loadCourseExercises(courseId);
-            },
-        });
+        const contextVersion = this.courseContextVersion;
+        forkJoin(deletionObservables)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (results) => {
+                    if (this.courseContextVersion !== contextVersion) {
+                        return;
+                    }
+                    const firstError = results.find((result): result is HttpErrorResponse => result !== undefined);
+                    this.selectedDeleteError.next(firstError?.message ?? '');
+                    // Some exercises may already be gone; reload so the view matches the server (even on a partial failure).
+                    this.clearSelection();
+                    this.loadCourseExercises(courseId);
+                },
+            });
     }
 
     /** Resolves the type-specific deletion request for a single exercise, forwarding the delete dialog's cleanup checks. */
@@ -491,6 +580,7 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     onExerciseUpdated(updated: Exercise): void {
         this.exercises.set(this.exercises().map((e) => (e.id === updated.id ? updated : e)));
+        this.syncParticipationResultSubscriptions();
         this.groups.set(this.groups().map((g) => cloneWith(g, { exercises: (g.exercises ?? []).map((e) => (e.id === updated.id ? updated : e)) })));
         this.rebuildCards();
     }
@@ -505,6 +595,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     onExerciseDeleted(deleted: Exercise): void {
         // Prune the exercise locally (flat list + its group) so it disappears without a reload.
         this.exercises.set(this.exercises().filter((e) => e.id !== deleted.id));
+        this.syncParticipationResultSubscriptions();
         this.groups.set(this.groups().map((g) => cloneWith(g, { exercises: (g.exercises ?? []).filter((e) => e.id !== deleted.id) })));
         if (deleted.id !== undefined && this.selectedIds().has(deleted.id)) {
             const remaining = new Set(this.selectedIds());

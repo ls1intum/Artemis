@@ -53,6 +53,17 @@ describe('ProgrammingExerciseInstructorExerciseStatusComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="programming-build-success"]')).not.toBeNull();
     });
 
+    it('shows success for passing bonus solutions and warns for failed tests at 100%', () => {
+        fixture.componentRef.setInput('templateParticipation', { id: 1, submissions: [{ results: [{ id: 1, score: 0 }] }] });
+        fixture.componentRef.setInput('solutionParticipation', { id: 2, submissions: [{ results: [{ id: 2, score: 110, testCaseCount: 3, passedTestCaseCount: 3 }] }] });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="programming-build-success"]')).not.toBeNull();
+        solutionResults.next({ id: 3, score: 100, successful: true, testCaseCount: 3, passedTestCaseCount: 2 });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="programming-build-warning"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="programming-build-success"]')).toBeNull();
+    });
+
     it('clears warnings and unsubscribes when a participation is removed', () => {
         fixture.componentRef.setInput('solutionParticipation', { id: 2, submissions: [{ results: [{ id: 3, score: 80 }] }] });
         fixture.detectChanges();

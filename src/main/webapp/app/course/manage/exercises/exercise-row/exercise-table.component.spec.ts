@@ -385,16 +385,17 @@ describe('ExerciseTableComponent', () => {
         }
 
         it.each([
-            [20, 100, 'templateFulfillsTest'],
-            [0, 99, 'solutionFailsTest'],
-            [0, 110, 'solutionFailsTest'],
-        ])('shows an unexpected-build warning beside the exercise title for scores %s/%s', (templateScore, solutionScore, reason) => {
+            [20, 100, 'templateFulfillsTest', undefined, undefined],
+            [0, 99, 'solutionFailsTest', undefined, undefined],
+            [0, 100, 'solutionFailsTest', 9, 10],
+            [0, 110, 'solutionFailsTest', 9, 10],
+        ])('shows an unexpected-build warning beside the exercise title for scores %s/%s', (templateScore, solutionScore, reason, passedTestCaseCount, testCaseCount) => {
             const programming = Object.assign(new ProgrammingExercise(undefined, undefined), {
                 id: 8,
                 type: ExerciseType.PROGRAMMING,
                 title: 'Programming exercise',
                 templateParticipation: { id: 10, submissions: [{ results: [{ id: 20, score: templateScore, successful: true }] }] },
-                solutionParticipation: { id: 11, submissions: [{ results: [{ id: 21, score: solutionScore, successful: true }] }] },
+                solutionParticipation: { id: 11, submissions: [{ results: [{ id: 21, score: solutionScore, successful: true, passedTestCaseCount, testCaseCount }] }] },
             });
             const element = renderRows([programming]);
             const warning = element.querySelector('[data-testid="programming-build-warning"]');
@@ -404,12 +405,12 @@ describe('ExerciseTableComponent', () => {
             expect(warning?.getAttribute('aria-label')).toContain(reason);
         });
 
-        it('does not warn for expected build scores or unavailable results', () => {
+        it.each([100, 110])('does not warn for passing solution score %s or unavailable results', (score) => {
             const expected = Object.assign(new ProgrammingExercise(undefined, undefined), {
                 id: 8,
                 type: ExerciseType.PROGRAMMING,
                 templateParticipation: { id: 10, submissions: [{ results: [{ id: 20, score: 0, successful: false }] }] },
-                solutionParticipation: { id: 11, submissions: [{ results: [{ id: 21, score: 100, successful: true }] }] },
+                solutionParticipation: { id: 11, submissions: [{ results: [{ id: 21, score, successful: true, passedTestCaseCount: 10, testCaseCount: 10 }] }] },
             });
             const unavailable = Object.assign(new ProgrammingExercise(undefined, undefined), { id: 9 });
 
