@@ -52,7 +52,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
-import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, isCreditsOutOfBounds } from 'app/assessment/shared/util/feedback-credits-bounds.util';
+import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, alertUpdateAfterComplaintFailure, isCreditsOutOfBounds } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -598,15 +598,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             },
             error: (httpErrorResponse: HttpErrorResponse) => {
                 assessmentAfterComplaint.onError();
-                this.alertService.closeAll();
-                const error = httpErrorResponse.error;
-                if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                    this.alertService.error(error.message, error.params);
-                } else if (isCreditsOutOfBounds(httpErrorResponse)) {
-                    this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
-                } else {
-                    this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
-                }
+                alertUpdateAfterComplaintFailure(this.alertService, httpErrorResponse, 'artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
             },
         });
     }

@@ -10,7 +10,7 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, isCreditsOutOfBounds } from 'app/assessment/shared/util/feedback-credits-bounds.util';
+import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, alertUpdateAfterComplaintFailure } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 import { notUndefined } from 'app/foundation/util/string-pure.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -515,15 +515,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 },
                 error: (httpErrorResponse: HttpErrorResponse) => {
                     assessmentAfterComplaint.onError();
-                    this.alertService.closeAll();
-                    const error = httpErrorResponse.error;
-                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                        this.alertService.error(error.message, error.params);
-                    } else if (isCreditsOutOfBounds(httpErrorResponse)) {
-                        this.alertService.error(FEEDBACK_CREDITS_OUT_OF_BOUNDS);
-                    } else {
-                        this.alertService.error('artemisApp.textAssessment.updateAfterComplaintFailed');
-                    }
+                    alertUpdateAfterComplaintFailure(this.alertService, httpErrorResponse, 'artemisApp.textAssessment.updateAfterComplaintFailed');
                 },
             });
     }
