@@ -1,17 +1,9 @@
-@let result = latestResult();
-@if (participationType() === ProgrammingExerciseParticipationType.TEMPLATE && result && result.score! > 0) {
-    <fa-icon
-        id="instructor-status-template"
-        [icon]="faExclamationTriangle"
-        class="text-warning"
-        [ngbTooltip]="'artemisApp.programmingExercise.status.templateFulfillsTest' | artemisTranslate"
-    />
-}
-@if (participationType() === ProgrammingExerciseParticipationType.SOLUTION && result && !result.successful) {
-    <fa-icon
-        id="instructor-status-solution"
-        [icon]="faExclamationTriangle"
-        class="text-warning"
-        [ngbTooltip]="'artemisApp.programmingExercise.status.solutionFailsTest' | artemisTranslate"
-    />
+@if (warning(); as warning) {
+    <span [tumAetUiTooltip]="warning | artemisTranslate" [attr.aria-label]="warning | artemisTranslate" role="img" tabindex="0">
+        <fa-icon
+            [attr.id]="participationType() === ProgrammingExerciseParticipationType.TEMPLATE ? 'instructor-status-template' : 'instructor-status-solution'"
+            [icon]="faExclamationTriangle"
+            class="text-state-warning"
+        />
+    </span>
 }

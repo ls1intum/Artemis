@@ -14,8 +14,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercis
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { ExerciseDetailHeaderComponent } from 'app/exercise/detail/exercise-detail-header.component';
 import { QuizExerciseManageButtonsComponent } from '../manage-buttons/quiz-exercise-manage-buttons.component';
 import { QuizExerciseLifecycleButtonsComponent } from '../lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
@@ -26,8 +25,7 @@ import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestrati
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-detail.component.html',
     imports: [
-        TranslateDirective,
-        DocumentationButtonComponent,
+        ExerciseDetailHeaderComponent,
         QuizExerciseManageButtonsComponent,
         QuizExerciseLifecycleButtonsComponent,
         ExerciseDetailStatisticsComponent,
