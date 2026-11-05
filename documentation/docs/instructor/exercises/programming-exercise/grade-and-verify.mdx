@@ -2,7 +2,7 @@
 id: grade-and-verify
 title: Configure Grading and Verify the Exercise
 sidebar_label: Configure Grading and Verify the Exercise
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-06
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -80,7 +80,7 @@ to the overall score and allows configuration of code quality issue penalties.
 
 Adapt test case contribution to the overall score or set grading based on tasks.
 
-<Image src={configureGradingTestCases} alt="Configure Grading Test Cases" size={ImageSize.large} caption="Test Case Grading Configuration" />
+<Image src={configureGradingTestCases} alt="Configure Grading page on the Test Cases tab, with the task table and the charts" size={ImageSize.large} caption="Test Case Grading Configuration" />
 
 <Callout variant={CalloutVariant.info}>
 
@@ -229,13 +229,13 @@ Choosing the right policy depends on the exercise and teaching style. Lock repos
 
 No submission policy. Participants can submit as often as they want until the due date.
 
-<Image src={submissionPolicyNoneForm} alt="Submission Policy None" size={ImageSize.medium} caption="No Submission Policy" />
+<Image src={submissionPolicyNoneForm} alt="Submission policy field set to None" size={ImageSize.medium} caption="No Submission Policy" />
 
 #### Lock Repository
 
 Participants can submit a fixed number of times. After reaching the limit, the repository is locked and further submissions are prevented.
 
-<Image src={submissionPolicyLockRepositoryForm} alt="Submission Policy Lock Repository" size={ImageSize.large} caption="Lock Repository Policy Configuration" />
+<Image src={submissionPolicyLockRepositoryForm} alt="Submission policy set to Lock Repository, with the field for the submission limit" size={ImageSize.large} caption="Lock Repository Policy Configuration" />
 
 With the example configuration shown above, participants can submit 5 times. After the 5th submission, Artemis locks the repository, preventing further pushes.
 
@@ -275,7 +275,7 @@ Students receive feedback explaining the deduction:
 
 After generating an exercise, submission policies can be updated on the grading page.
 
-<Image src={submissionPolicyGradingPage} alt="Submission Policy Grading Page" size={ImageSize.large} caption="Submission Policy Management on Grading Page" />
+<Image src={submissionPolicyGradingPage} alt="Configure Grading page on the Submission Policy tab" size={ImageSize.large} caption="Submission Policy Management on Grading Page" />
 
 #### (De)activating Submission Policies
 
