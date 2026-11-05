@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -26,12 +27,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.openai.errors.OpenAIServiceException;
 
 import tools.jackson.databind.DeserializationFeature;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.CoercionAction;
+import tools.jackson.databind.cfg.CoercionInputShape;
 import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.type.LogicalType;
 
 import de.tum.cit.aet.artemis.deimos.config.DeimosEnabled;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureType;
@@ -61,8 +65,6 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
 
     private static final String MALICIOUS_FIELD = "malicious";
 
-    private static final String RATIONALE_FIELD = "rationale";
-
     /**
      * A classification stated anywhere in the response, also where no object can be recovered: prose with an unmatched
      * brace or quote derails the balanced-object scan, and must not hide a later contradicting verdict. Each character of
@@ -81,7 +83,15 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
 
     // Trailing tokens are rejected so a response containing an early guess followed by a corrected verdict is not
     // silently resolved to the first object; such a response falls through to the fenced and balanced candidates.
-    private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).build();
+    // Nothing is coerced: "true", 1 or an empty string in place of the classification, or a number or boolean in place
+    // of the rationale, is not a verdict the model actually gave.
+    private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+            .withCoercionConfig(LogicalType.Boolean,
+                    config -> config.setCoercion(CoercionInputShape.String, CoercionAction.Fail).setCoercion(CoercionInputShape.EmptyString, CoercionAction.Fail)
+                            .setCoercion(CoercionInputShape.Integer, CoercionAction.Fail).setCoercion(CoercionInputShape.Float, CoercionAction.Fail))
+            .withCoercionConfig(LogicalType.Textual, config -> config.setCoercion(CoercionInputShape.Integer, CoercionAction.Fail)
+                    .setCoercion(CoercionInputShape.Float, CoercionAction.Fail).setCoercion(CoercionInputShape.Boolean, CoercionAction.Fail))
+            .build();
 
     private final ChatClient chatClient;
 
@@ -224,10 +234,12 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
     /**
      * Parses one candidate, requiring both fields to be present and correctly typed.
      * <p>
-     * Deliberately does not bind straight onto the {@code boolean} record component: a response missing
-     * {@code malicious} would silently deserialise to {@code false}, i.e. a security tool would report "benign" for an
-     * answer it never actually understood. A missing or blank {@code rationale} is rejected for the same reason: the
-     * rationale is the only thing an instructor can review, and a verdict without one is not usable evidence.
+     * Deliberately does not bind straight onto the {@code boolean} component of {@link DeimosLlmResponse}: a response
+     * missing {@code malicious} would silently deserialise to {@code false}, i.e. a security tool would report "benign"
+     * for an answer it never actually understood. {@link VerdictCandidate} keeps a missing field recognisable. A missing
+     * or blank {@code rationale} is rejected for the same reason: the rationale is the only thing an instructor can
+     * review, and a verdict without one is not usable evidence. Every occurrence of a repeated field has to be correctly
+     * typed, not only the last one: an object that states a field twice in different shapes is not an unambiguous answer.
      *
      * @param candidate the candidate text
      * @return the verdict, or empty if the candidate is not a valid verdict object
@@ -237,24 +249,27 @@ public class DefaultDeimosLlmClient implements DeimosLlmClient {
             return Optional.empty();
         }
         try {
-            JsonNode root = OBJECT_MAPPER.readTree(candidate);
-            if (root == null || !root.isObject()) {
+            VerdictCandidate verdict = OBJECT_MAPPER.readValue(candidate, VerdictCandidate.class);
+            if (verdict == null || verdict.malicious() == null || verdict.rationale() == null || verdict.rationale().isBlank()) {
                 return Optional.empty();
             }
-            JsonNode maliciousNode = root.get(MALICIOUS_FIELD);
-            if (maliciousNode == null || !maliciousNode.isBoolean()) {
-                return Optional.empty();
-            }
-            JsonNode rationaleNode = root.get(RATIONALE_FIELD);
-            if (rationaleNode == null || !rationaleNode.isString() || rationaleNode.asString().isBlank()) {
-                return Optional.empty();
-            }
-            return Optional.of(new DeimosLlmResponse(maliciousNode.asBoolean(), rationaleNode.asString()));
+            return Optional.of(new DeimosLlmResponse(verdict.malicious(), verdict.rationale()));
         }
         catch (Exception ex) {
             log.debug("Deimos verdict candidate could not be parsed as JSON", ex);
             return Optional.empty();
         }
+    }
+
+    /**
+     * The two fields of a verdict as the model wrote them, boxed so that a missing field stays {@code null} instead of
+     * turning into {@code false}. Any other field is ignored.
+     *
+     * @param malicious the classification, or {@code null} if absent
+     * @param rationale the rationale, or {@code null} if absent
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record VerdictCandidate(@Nullable Boolean malicious, @Nullable String rationale) {
     }
 
     /**

@@ -108,6 +108,14 @@ class DefaultDeimosLlmClientTest {
         assertThat(DefaultDeimosLlmClient.parseVerdict("{\"malicious\": 1, \"rationale\": \"x\"}")).isEmpty();
     }
 
+    @Test
+    void shouldRejectAFieldThatIsRepeatedInADifferentShape() {
+        // Only the last occurrence would count if the object were read as a whole, yet a field stated once as a number and
+        // once as text is no unambiguous answer.
+        assertThat(DefaultDeimosLlmClient.parseVerdict("{\"malicious\": false, \"rationale\": 42, \"rationale\": \"ordinary solution\"}")).isEmpty();
+        assertThat(DefaultDeimosLlmClient.parseVerdict("{\"malicious\": \"no\", \"malicious\": false, \"rationale\": \"ordinary solution\"}")).isEmpty();
+    }
+
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = { "   ", "I cannot answer that.", "[]", "{\"unrelated\": true}", "{ broken json" })
