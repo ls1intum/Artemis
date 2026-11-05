@@ -44,6 +44,25 @@
                                                 <span>{{ presentationAssessment.exerciseTitle }}</span>
                                             </a>
                                         }
+                                        @if (isAtLeastEditor() && presentationAssessment.gradingMethod === PresentationGradingMethod.RUBRIC) {
+                                            <tumaet-ui-button
+                                                size="small"
+                                                severity="secondary"
+                                                variant="outlined"
+                                                [icon]="faTableCellsLarge"
+                                                (clicked)="startEditRubric(presentationAssessment)"
+                                                data-testid="edit-rubric-button"
+                                            >
+                                                <span jhiTranslate="artemisApp.presentationAssessment.rubric.title"></span>
+                                            </tumaet-ui-button>
+                                        } @else if (presentationAssessment.gradingMethod; as gradingMethod) {
+                                            <tumaet-ui-tag size="sm" data-testid="presentation-grading-method-tag">
+                                                <span class="inline-flex items-center gap-1">
+                                                    <fa-icon [icon]="gradingMethodIcons[gradingMethod]" />
+                                                    <span [jhiTranslate]="'artemisApp.presentationAssessment.gradingMethod.' + gradingMethod"></span>
+                                                </span>
+                                            </tumaet-ui-tag>
+                                        }
                                         @if (isAtLeastEditor()) {
                                             <tumaet-ui-button
                                                 size="small"
@@ -217,7 +236,7 @@
 
     <tumaet-ui-dialog
         [(visible)]="presentationDialogVisible"
-        size="medium"
+        [size]="presentationDialogWide() ? 'large' : 'medium'"
         [closable]="!isSaving()"
         [closeOnEscape]="!isSaving()"
         [dismissableMask]="false"
@@ -232,6 +251,7 @@
                 [isSaving]="isSaving()"
                 [canDelete]="isAtLeastInstructor()"
                 [dialogError]="dialogError$"
+                (wideChanged)="presentationDialogWide.set($event)"
                 (saved)="handlePresentationDialogSave($event)"
                 (deleteRequested)="handlePresentationDialogDelete($event)"
                 (cancelled)="handlePresentationDialogCancel()"
@@ -251,12 +271,33 @@
         @if (instanceDialogVisible() && dialogInstancePresentationAssessment(); as presentationAssessment) {
             <jhi-presentation-assessment-instance-form-dialog
                 [courseId]="courseId()"
+                [course]="course()"
                 [presentationAssessment]="presentationAssessment"
                 [instance]="dialogInstance()"
                 [initialAssignedStudents]="dialogAssignedStudents()"
                 [isSaving]="isSaving()"
                 (saved)="handleInstanceDialogSave($event)"
                 (cancelled)="handleInstanceDialogCancel()"
+            />
+        }
+    </tumaet-ui-dialog>
+
+    <tumaet-ui-dialog
+        [(visible)]="rubricDialogVisible"
+        size="large"
+        [closable]="!isSaving()"
+        [closeOnEscape]="!isSaving()"
+        [dismissableMask]="false"
+        [header]="'artemisApp.presentationAssessment.rubric.title' | artemisTranslate"
+        [closeButtonAriaLabel]="'entity.action.close' | artemisTranslate"
+    >
+        @if (rubricDialogVisible() && dialogRubricPresentationAssessment()?.id; as presentationAssessmentId) {
+            <jhi-presentation-rubric-dialog
+                [courseId]="courseId()"
+                [presentationAssessmentId]="presentationAssessmentId"
+                [isSaving]="isSaving()"
+                (saved)="handleRubricDialogSave($event)"
+                (cancelled)="handleRubricDialogCancel()"
             />
         }
     </tumaet-ui-dialog>

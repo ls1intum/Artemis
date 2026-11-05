@@ -14,18 +14,55 @@
             "maxPoints": "Max. Punkte",
             "resultPoints": "Punkte",
             "resultPointsExceedMaxPoints": "Punkte dürfen die maximalen Punkte nicht überschreiten.",
+            "presentationDetails": "Präsentationsdetails",
+            "pointsOf": "von",
+            "generalRemark": "Allgemeine Anmerkung",
             "placeholder": {
-                "title": "Titel",
+                "title": "z. B. Review der Systemarchitektur",
                 "maxPoints": "0",
                 "resultPoints": "0.0",
-                "description": "Beschreibung eingeben"
+                "description": "Füge Kontext oder Hinweise für Studierende hinzu.",
+                "remark": "Füge eine Anmerkung hinzu",
+                "generalRemark": "Füge eine Rückmeldung zur gesamten Präsentation hinzu."
+            },
+            "optional": "Optional",
+            "pointsUnit": "Punkte",
+            "result": {
+                "label": "Ergebnis",
+                "passed": "Bestanden",
+                "failed": "Nicht bestanden"
             },
             "validation": {
                 "maxPointsMin": "Bitte gib einen Wert größer als 0 ein.",
                 "resultPointsMin": "Punkte müssen mindestens 0 betragen.",
                 "pointsMax": "Punkte dürfen {{ max }} nicht überschreiten.",
                 "exerciseNotSelected": "Wähle eine Aufgabe aus der Liste aus oder leere das Feld.",
-                "meetingLinkInvalid": "Bitte gib einen Link ein, der mit http:// oder https:// beginnt."
+                "meetingLinkInvalid": "Bitte gib einen Link ein, der mit http:// oder https:// beginnt.",
+                "gradingMethodRequired": "Bitte wähle eine Bewertungsmethode.",
+                "resultRequired": "Ein gespeichertes Ergebnis kann geändert, aber nicht entfernt werden."
+            },
+            "gradingMethod": {
+                "label": "Bewertungsmethode",
+                "question": "Wie soll diese Präsentation bewertet werden?",
+                "hint": "Wähle eine Methode. Punkte und Rubrik legst du im nächsten Schritt fest.",
+                "PASS_FAIL": "Bestanden / Nicht bestanden",
+                "SCORE": "Punkte",
+                "RUBRIC": "Rubrik",
+                "description": {
+                    "PASS_FAIL": "Markiere die Präsentation als bestanden oder nicht bestanden.",
+                    "SCORE": "Vergib Punkte bis zu einem festgelegten Maximum.",
+                    "RUBRIC": "Bewerte mehrere gewichtete Kriterien mit jeweils eigener Bewertungsskala."
+                }
+            },
+            "scoreConfiguration": {
+                "title": "Punktebewertung konfigurieren",
+                "hint": "Lege fest, wie viele Punkte für diese Präsentation höchstens vergeben werden."
+            },
+            "step": {
+                "number": "Schritt {{ number }}",
+                "details": "Präsentationsdetails",
+                "method": "Bewertungsmethode",
+                "configuration": "Bewertung konfigurieren"
             },
             "presentationDate": "Präsentationstermin",
             "presentationTime": "Uhrzeit",
@@ -42,6 +79,7 @@
             "assessment": "Bewertung",
             "remark": "Anmerkung",
             "remarkTooLong": "Die Anmerkung darf höchstens {{ max }} Zeichen enthalten.",
+            "descriptionTooLong": "Die Beschreibung darf höchstens {{ max }} Zeichen enthalten.",
             "assessed": "Bewertet",
             "pending": "Ausstehend",
             "searchStudent": "Studierende Person suchen",
@@ -94,6 +132,68 @@
             },
             "students": {
                 "removeQuestion": "Soll der Benutzer mit Login <strong>{{ title }}</strong> wirklich aus dieser Präsentationsinstanz entfernt werden?"
+            },
+            "rubric": {
+                "title": "Rubrik",
+                "heading": "Rubrik-Kriterien",
+                "hint": "Lege gewichtete Kriterien fest und wähle für jedes eine eigene Bewertungsskala.",
+                "loading": "Rubrik wird geladen",
+                "saved": "Die Rubrik wurde erfolgreich aktualisiert",
+                "weightChange": {
+                    "header": "Ergebnisse neu berechnen",
+                    "message": "Durch die geänderten Gewichte werden die Ergebnisse von {{ count }} bewerteten Präsentationen neu berechnet.",
+                    "confirm": "Speichern und neu berechnen"
+                },
+                "criterion": "Kriterium {{ number }}",
+                "name": "Name",
+                "description": "Beschreibung",
+                "weight": "Gewicht",
+                "scaleLabel": "Skala",
+                "scale": {
+                    "THREE_POINT": "3-stufige Bewertungsskala",
+                    "FIVE_POINT": "5-stufige Bewertungsskala"
+                },
+                "scaleHint": "1 ({{ lowest }}) bis {{ count }} ({{ highest }})",
+                "configureScale": "Skala konfigurieren",
+                "hideScale": "Skala ausblenden",
+                "value": "Wert",
+                "key": "Stufe",
+                "levelDescription": "Beschreibung",
+                "levelsHeading": "Bewertungsskala für Kriterium {{ number }}",
+                "levelKey": {
+                    "poor": "Mangelhaft",
+                    "needsImprovement": "Verbesserungswürdig",
+                    "satisfactory": "Befriedigend",
+                    "good": "Gut",
+                    "excellent": "Ausgezeichnet"
+                },
+                "feedbackFor": "Feedback zu {{ name }} (optional)",
+                "feedbackPlaceholder": "Begründe, warum du diese Stufe gewählt hast.",
+                "notRated": "Noch nicht bewertet. Wähle eine Stufe.",
+                "overallResult": "Gesamtergebnis",
+                "calculatedAutomatically": "Wird automatisch berechnet",
+                "remaining": "Noch nicht bewertet: {{ count }}. Bewerte alle Kriterien oder keines, um zu speichern.",
+                "emptyTitle": "Beginne mit deiner Rubrik",
+                "empty": "Füge Kriterien hinzu, gewichte sie und wähle für jedes eine Bewertungsskala.",
+                "addFirstCriterion": "Erstes Kriterium hinzufügen",
+                "addCriterion": "Kriterium hinzufügen",
+                "removeCriterion": "Kriterium entfernen",
+                "maxCriteriaReached": "Eine Rubrik kann höchstens {{ max }} Kriterien haben.",
+                "totalWeight": "Gesamtgewicht",
+                "lockedHint": "Diese Präsentation hat bereits Instanzen. Kriterien können nicht mehr hinzugefügt oder entfernt werden, und ihre Skala ist festgelegt.",
+                "scaleChange": {
+                    "header": "Skala ändern",
+                    "message": "Beim Ändern der Skala werden die Beschreibungen der Stufen dieses Kriteriums verworfen.",
+                    "confirm": "Skala ändern"
+                },
+                "validation": {
+                    "empty": "Füge mindestens ein Kriterium hinzu",
+                    "weightSum": "Das Gesamtgewicht muss genau 100 % betragen",
+                    "weightSumDetail": "Aktuell sind es {{ total }} %. Passe die Gewichte vor dem Speichern an.",
+                    "nameRequired": "Bitte gib einen Namen ein.",
+                    "weightRange": "Bitte gib eine ganze Zahl von 1 bis 100 ein.",
+                    "levelDescriptionTooLong": "Eine Stufenbeschreibung ist länger als {{ max }} Zeichen. Öffne die Skala, um sie zu kürzen."
+                }
             }
         }
     }

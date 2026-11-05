@@ -1,13 +1,17 @@
-<form [formGroup]="editForm" (ngSubmit)="save()" novalidate class="presentation-assessment-dialog-form">
-    <div class="presentation-assessment-form-grid">
-        <div class="presentation-assessment-field presentation-assessment-title-field">
-            <label for="presentation-assessment-title" jhiTranslate="artemisApp.presentationAssessment.title"></label>
+<form [formGroup]="editForm" (ngSubmit)="isEdit() || isLastStep() ? save() : continue()" novalidate class="flex flex-col gap-6">
+    <ng-template #detailFields>
+        <div class="flex min-w-0 flex-col gap-2">
+            <label for="presentation-assessment-title">
+                <span jhiTranslate="artemisApp.presentationAssessment.title"></span>
+                <span class="text-state-danger" aria-hidden="true"> *</span>
+            </label>
             <input
                 id="presentation-assessment-title"
                 tumAetUiInput
                 class="w-full"
                 type="text"
                 formControlName="title"
+                required
                 [placeholder]="'artemisApp.presentationAssessment.placeholder.title' | artemisTranslate"
             />
             @if (editForm.controls.title.invalid && editForm.controls.title.touched) {
@@ -17,33 +21,11 @@
             }
         </div>
 
-        <div class="presentation-assessment-field">
-            <label for="presentation-assessment-max-points" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></label>
-            <jhi-points-input
-                inputId="presentation-assessment-max-points"
-                fluid
-                [min]="minPoints"
-                [max]="maxPointsUpperBound"
-                [step]="0.001"
-                formControlName="maxPoints"
-                [placeholder]="'artemisApp.presentationAssessment.placeholder.maxPoints' | artemisTranslate"
-            />
-            @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
-                <tumaet-ui-message severity="error" data-testid="presentation-max-points-error">
-                    <span
-                        [jhiTranslate]="
-                            editForm.controls.maxPoints.hasError('max')
-                                ? 'artemisApp.presentationAssessment.validation.pointsMax'
-                                : 'artemisApp.presentationAssessment.validation.maxPointsMin'
-                        "
-                        [translateValues]="{ max: maxPointsUpperBound }"
-                    ></span>
-                </tumaet-ui-message>
-            }
-        </div>
-
-        <div class="presentation-assessment-field presentation-assessment-exercise-field">
-            <label for="presentation-assessment-exercise" jhiTranslate="artemisApp.presentationAssessment.exercise"></label>
+        <div class="flex min-w-0 flex-col gap-2">
+            <label for="presentation-assessment-exercise">
+                {{ 'artemisApp.presentationAssessment.exercise' | artemisTranslate }}
+                <span class="ms-1 text-sm text-(--text-body-secondary)">{{ 'artemisApp.presentationAssessment.optional' | artemisTranslate }}</span>
+            </label>
             <tumaet-ui-autocomplete
                 inputId="presentation-assessment-exercise"
                 class="w-full"
@@ -62,21 +44,173 @@
             }
         </div>
 
-        <div class="presentation-assessment-field presentation-assessment-description-field">
+        <div class="col-span-full flex min-w-0 flex-col gap-2">
             <label for="presentation-assessment-description" jhiTranslate="artemisApp.presentationAssessment.description"></label>
             <textarea
                 id="presentation-assessment-description"
                 tumAetUiTextarea
-                class="w-full"
+                class="min-h-28 w-full resize-y"
                 rows="4"
                 formControlName="description"
                 [placeholder]="'artemisApp.presentationAssessment.placeholder.description' | artemisTranslate"
+                [attr.aria-invalid]="editForm.controls.description.hasError('maxlength')"
+                [attr.aria-describedby]="editForm.controls.description.hasError('maxlength') ? 'presentation-assessment-description-error' : undefined"
             ></textarea>
+            @if (editForm.controls.description.hasError('maxlength')) {
+                <tumaet-ui-message severity="error" id="presentation-assessment-description-error" role="alert" data-testid="presentation-description-error">
+                    <span jhiTranslate="artemisApp.presentationAssessment.descriptionTooLong" [translateValues]="{ max: 1000 }"></span>
+                </tumaet-ui-message>
+            }
         </div>
-    </div>
+    </ng-template>
 
-    <div class="presentation-assessment-actions">
-        @if (presentationAssessment()?.id && canDelete()) {
+    <ng-template #maxPointsField>
+        <div class="flex min-w-0 flex-col gap-2">
+            <label for="presentation-assessment-max-points">
+                <span jhiTranslate="artemisApp.presentationAssessment.maxPoints"></span>
+                <span class="text-state-danger" aria-hidden="true"> *</span>
+            </label>
+            <div class="flex items-center gap-2">
+                <jhi-points-input
+                    class="w-32"
+                    inputId="presentation-assessment-max-points"
+                    fluid
+                    [min]="minPoints"
+                    [max]="maxPointsUpperBound"
+                    [step]="0.001"
+                    formControlName="maxPoints"
+                    [placeholder]="'artemisApp.presentationAssessment.placeholder.maxPoints' | artemisTranslate"
+                />
+                <span class="text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.pointsUnit"></span>
+            </div>
+            @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
+                <tumaet-ui-message severity="error" data-testid="presentation-max-points-error">
+                    <span
+                        [jhiTranslate]="
+                            editForm.controls.maxPoints.hasError('max')
+                                ? 'artemisApp.presentationAssessment.validation.pointsMax'
+                                : 'artemisApp.presentationAssessment.validation.maxPointsMin'
+                        "
+                        [translateValues]="{ max: maxPointsUpperBound }"
+                    ></span>
+                </tumaet-ui-message>
+            }
+        </div>
+    </ng-template>
+
+    @if (isEdit()) {
+        <div class="grid grid-cols-1 items-start gap-4 sm:grid-cols-[minmax(14rem,1.4fr)_minmax(12rem,1fr)]">
+            <ng-container [ngTemplateOutlet]="detailFields" />
+            <div class="flex min-w-0 flex-col gap-2" data-testid="presentation-grading-method">
+                <span jhiTranslate="artemisApp.presentationAssessment.gradingMethod.label"></span>
+                <strong [jhiTranslate]="'artemisApp.presentationAssessment.gradingMethod.' + presentationAssessment()?.gradingMethod"></strong>
+            </div>
+            @if (presentationAssessment()?.gradingMethod === PresentationGradingMethod.SCORE) {
+                <ng-container [ngTemplateOutlet]="maxPointsField" />
+            }
+        </div>
+    } @else {
+        <ol
+            class="presentation-assessment-steps m-0! flex list-none gap-4 rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-5! py-4 text-(--text-body-secondary)"
+            data-testid="presentation-steps"
+        >
+            @for (candidate of steps(); track candidate; let index = $index) {
+                <li
+                    class="presentation-assessment-steps__step flex min-w-0 flex-1 items-center gap-3"
+                    [class.presentation-assessment-steps__step--current]="candidate === step()"
+                    [attr.aria-current]="candidate === step() ? 'step' : null"
+                >
+                    <span
+                        class="inline-flex size-7 shrink-0 items-center justify-center rounded-full border text-sm font-semibold"
+                        [class]="
+                            candidate === step()
+                                ? 'border-(--primary) bg-(--primary) text-(--module-bg)'
+                                : isStepComplete(candidate)
+                                  ? 'border-transparent bg-(--accent-surface-bg) text-(--primary)'
+                                  : 'border-(--border-color) bg-(--module-bg)'
+                        "
+                        aria-hidden="true"
+                    >
+                        @if (isStepComplete(candidate)) {
+                            <fa-icon [icon]="faCheck" />
+                        } @else {
+                            {{ index + 1 }}
+                        }
+                    </span>
+                    <span class="presentation-assessment-steps__text flex min-w-0 flex-col">
+                        <span
+                            class="text-[0.6875rem] tracking-[0.04em] uppercase"
+                            jhiTranslate="artemisApp.presentationAssessment.step.number"
+                            [translateValues]="{ number: index + 1 }"
+                        ></span>
+                        <strong class="sm:whitespace-nowrap" [jhiTranslate]="'artemisApp.presentationAssessment.step.' + candidate"></strong>
+                    </span>
+                </li>
+            }
+        </ol>
+
+        @switch (step()) {
+            @case ('details') {
+                <div class="grid grid-cols-1 items-start gap-4 sm:grid-cols-[minmax(14rem,1.4fr)_minmax(12rem,1fr)]">
+                    <ng-container [ngTemplateOutlet]="detailFields" />
+                </div>
+            }
+            @case ('method') {
+                <fieldset class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <legend class="presentation-assessment-methods__legend col-span-full flex flex-col gap-1">
+                        <h3 class="m-0! text-lg! font-semibold!">{{ 'artemisApp.presentationAssessment.gradingMethod.question' | artemisTranslate }}</h3>
+                        <p class="m-0! text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.gradingMethod.hint"></p>
+                    </legend>
+                    @for (method of gradingMethods; track method) {
+                        @let selected = selectedGradingMethod() === method;
+                        <label
+                            class="relative flex! cursor-pointer flex-col gap-2 rounded-lg border px-3.5 py-3.5 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-(--primary)"
+                            [class]="selected ? 'border-(--primary) bg-(--selected-option-bg) shadow-[inset_0_0_0_1px_var(--primary)]' : 'border-(--border-color) bg-(--module-bg)'"
+                            [attr.data-testid]="'grading-method-' + method"
+                        >
+                            <input class="sr-only" type="radio" formControlName="gradingMethod" [value]="method" />
+                            <span
+                                class="absolute top-3.5 right-3.5 size-4.5 rounded-full"
+                                [class]="selected ? 'border-[5px] border-(--primary)' : 'border border-(--border-color)'"
+                                aria-hidden="true"
+                            ></span>
+                            <span class="mb-2 inline-flex size-10.5 items-center justify-center rounded-lg bg-(--accent-surface-bg) text-(--primary)" aria-hidden="true">
+                                <fa-icon [icon]="gradingMethodIcons[method]" />
+                            </span>
+                            <strong>{{ 'artemisApp.presentationAssessment.gradingMethod.' + method | artemisTranslate }}</strong>
+                            <span class="text-sm text-(--text-body-secondary)">{{
+                                'artemisApp.presentationAssessment.gradingMethod.description.' + method | artemisTranslate
+                            }}</span>
+                        </label>
+                    }
+                </fieldset>
+                @if (editForm.controls.gradingMethod.invalid && editForm.controls.gradingMethod.touched) {
+                    <tumaet-ui-message severity="error" data-testid="presentation-grading-method-error">
+                        <span jhiTranslate="artemisApp.presentationAssessment.validation.gradingMethodRequired"></span>
+                    </tumaet-ui-message>
+                }
+            }
+            @case ('configuration') {
+                @if (selectedGradingMethod() === PresentationGradingMethod.RUBRIC) {
+                    <jhi-presentation-rubric-editor [form]="rubricForm" [showErrors]="showRubricErrors()" />
+                } @else {
+                    <section class="mx-auto flex w-full max-w-140 flex-col gap-4 text-center">
+                        <div class="flex flex-col gap-1">
+                            <h3 class="m-0! text-lg! font-semibold!">{{ 'artemisApp.presentationAssessment.scoreConfiguration.title' | artemisTranslate }}</h3>
+                            <p class="m-0! text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.scoreConfiguration.hint"></p>
+                        </div>
+                        <div class="flex justify-center text-start">
+                            <ng-container [ngTemplateOutlet]="maxPointsField" />
+                        </div>
+                    </section>
+                }
+            }
+            @default {}
+        }
+    }
+
+    <div class="flex flex-col-reverse gap-2 border-t border-(--border-color) pt-4 sm:flex-row">
+        @if (isEdit() && canDelete()) {
             <button
                 tumAetUiButton
                 data-testid="delete-presentation-button"
@@ -96,15 +230,36 @@
                 <span jhiTranslate="entity.action.delete"></span>
             </button>
         }
-        <div class="presentation-assessment-actions-main flex gap-2">
+        @if (!isEdit() && step() !== 'details') {
+            <tumaet-ui-button severity="secondary" variant="text" type="button" data-testid="back-presentation-button" [disabled]="isSaving()" (clicked)="back()">
+                <fa-icon [icon]="faArrowLeft" />
+                <span jhiTranslate="entity.action.back"></span>
+            </tumaet-ui-button>
+        }
+        <div class="flex gap-2 sm:ms-auto">
             <tumaet-ui-button severity="secondary" type="button" (clicked)="cancel()">
                 <fa-icon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>
             </tumaet-ui-button>
-            <tumaet-ui-button type="submit" data-testid="save-presentation-button" [disabled]="isSaving() || editForm.invalid">
-                <fa-icon [icon]="faSave" />
-                <span jhiTranslate="entity.action.save"></span>
-            </tumaet-ui-button>
+            @if (isEdit() || isLastStep()) {
+                <tumaet-ui-button type="submit" data-testid="save-presentation-button" [disabled]="isSaving() || editForm.invalid">
+                    <fa-icon [icon]="faSave" />
+                    <span jhiTranslate="entity.action.save"></span>
+                </tumaet-ui-button>
+            } @else {
+                <tumaet-ui-button
+                    type="submit"
+                    data-testid="continue-presentation-button"
+                    [disabled]="
+                        step() === 'details'
+                            ? editForm.controls.title.invalid || editForm.controls.exercise.invalid || editForm.controls.description.invalid
+                            : editForm.controls.gradingMethod.invalid
+                    "
+                >
+                    <span jhiTranslate="entity.action.continue"></span>
+                    <fa-icon [icon]="faArrowRight" />
+                </tumaet-ui-button>
+            }
         </div>
     </div>
 </form>

@@ -10,6 +10,7 @@ import {
     PresentationAssessmentInstanceRequest,
     PresentationAssessmentInstancesCreate,
     PresentationAssessmentMode,
+    PresentationRubricScale,
 } from 'app/presentation/shared/entities/presentation-assessment.model';
 
 describe('PresentationAssessmentService', () => {
@@ -241,5 +242,25 @@ describe('PresentationAssessmentService', () => {
 
         const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/42/instances/11` });
         req.flush(null);
+    });
+
+    it('should fetch the rubric of a presentation', () => {
+        const rubric = {
+            criteria: [{ id: 3, name: 'Content', weight: 100, scale: PresentationRubricScale.THREE_POINT, levels: [{ id: 31 }, { id: 32 }, { id: 33 }] }],
+            instanceCount: 2,
+            assessedInstanceCount: 1,
+        };
+
+        service.getRubric(courseId, 42).subscribe((response) => expect(response.body).toEqual(rubric));
+
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/42/rubric` }).flush(rubric);
+    });
+
+    it('should fetch the ratings of an instance', () => {
+        const ratings = [{ criterionId: 3, levelId: 32, comment: 'Clear' }];
+
+        service.getRatings(courseId, 42, 11).subscribe((response) => expect(response.body).toEqual(ratings));
+
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/42/instances/11/ratings` }).flush(ratings);
     });
 });

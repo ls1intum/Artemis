@@ -33,8 +33,11 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstanceReque
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentInstancesBatchCreateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
+import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricDTO;
+import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricRatingDTO;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.assessment.service.PresentationAssessmentService;
+import de.tum.cit.aet.artemis.assessment.service.PresentationRubricService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
@@ -60,10 +63,14 @@ public class PresentationAssessmentResource {
 
     private final PresentationAssessmentService presentationAssessmentService;
 
+    private final PresentationRubricService presentationRubricService;
+
     private final PresentationAssessmentRepository presentationAssessmentRepository;
 
-    public PresentationAssessmentResource(PresentationAssessmentService presentationAssessmentService, PresentationAssessmentRepository presentationAssessmentRepository) {
+    public PresentationAssessmentResource(PresentationAssessmentService presentationAssessmentService, PresentationRubricService presentationRubricService,
+            PresentationAssessmentRepository presentationAssessmentRepository) {
         this.presentationAssessmentService = presentationAssessmentService;
+        this.presentationRubricService = presentationRubricService;
         this.presentationAssessmentRepository = presentationAssessmentRepository;
     }
 
@@ -121,6 +128,21 @@ public class PresentationAssessmentResource {
     }
 
     /**
+     * GET /api/assessment/courses/{courseId}/presentation-assessments/{assessmentId}/rubric : get the rubric of a presentation graded by rubric.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @return the ResponseEntity with status 200 (OK) and the rubric with its instance counts
+     */
+    @GetMapping("courses/{courseId}/presentation-assessments/{assessmentId}/rubric")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<PresentationRubricDTO> getPresentationRubric(@PathVariable long courseId, @PathVariable long assessmentId) {
+        log.debug("REST request to get the rubric of presentation assessment {} for course {}", assessmentId, courseId);
+        presentationAssessmentService.checkPresentationAssessmentsEnabled(courseId);
+        return ResponseEntity.ok(presentationRubricService.getRubric(courseId, assessmentId));
+    }
+
+    /**
      * POST /api/assessment/courses/{courseId}/presentation-assessments : create a presentation assessment.
      *
      * @param courseId the course id
@@ -171,6 +193,23 @@ public class PresentationAssessmentResource {
         presentationAssessmentService.checkPresentationAssessmentsEnabled(courseId);
         presentationAssessmentService.delete(courseId, assessmentId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET /api/assessment/courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}/ratings : get the rubric ratings of an instance.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @param instanceId   the instance id
+     * @return the ResponseEntity with status 200 (OK) and the ratings in the order of the rubric
+     */
+    @GetMapping("courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}/ratings")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<List<PresentationRubricRatingDTO>> getPresentationRubricRatings(@PathVariable long courseId, @PathVariable long assessmentId,
+            @PathVariable long instanceId) {
+        log.debug("REST request to get the rubric ratings of presentation instance {} of assessment {} for course {}", instanceId, assessmentId, courseId);
+        presentationAssessmentService.checkPresentationAssessmentsEnabled(courseId);
+        return ResponseEntity.ok(presentationAssessmentService.getRatings(courseId, assessmentId, instanceId));
     }
 
     /**

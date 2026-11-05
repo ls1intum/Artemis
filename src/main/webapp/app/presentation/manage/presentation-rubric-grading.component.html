@@ -1,0 +1,112 @@
+<div class="flex flex-col gap-4">
+    @let incomplete = form().hasError('ratingsIncomplete');
+    @for (criterion of criteria(); track criterion.id; let index = $index) {
+        @let rating = form().at(index);
+        <article
+            class="flex flex-col gap-4 overflow-hidden rounded-lg border bg-(--module-bg) pb-4"
+            [class]="incomplete && rating.controls.levelId.value === undefined ? 'border-state-warning' : 'border-(--border-color)'"
+            [formGroup]="rating"
+            [attr.data-testid]="'rubric-grading-criterion-' + index"
+        >
+            <!-- The head of a criterion is a band across the card, which separates it from the levels -->
+            <header class="flex items-start gap-3 border-b border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-4 py-3">
+                <span
+                    class="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-(--accent-surface-bg) text-sm font-semibold text-(--primary)"
+                    aria-hidden="true"
+                    >{{ index + 1 }}</span
+                >
+                <div class="min-w-0 flex-1">
+                    <h3 class="m-0! text-[0.9375rem]! font-semibold!" [id]="'rubric-grading-name-' + index">{{ criterion.name }}</h3>
+                    @if (criterion.description) {
+                        <p class="mt-0.5! mb-0! text-[0.8125rem] text-(--text-body-secondary)">{{ criterion.description }}</p>
+                    }
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-[0.6875rem] tracking-[0.04em] text-(--text-body-secondary) uppercase" jhiTranslate="artemisApp.presentationAssessment.rubric.weight"></span>
+                    <strong class="text-[0.9375rem]">{{ criterion.weight }} %</strong>
+                </div>
+            </header>
+
+            <!-- All levels of a criterion side by side as long as they fit -->
+            <div class="grid grid-cols-1 gap-2 px-4 sm:grid-cols-[repeat(auto-fit,minmax(8rem,1fr))]" role="radiogroup" [attr.aria-labelledby]="'rubric-grading-name-' + index">
+                @for (position of positionsHighestFirst(criterion); track position) {
+                    @let level = criterion.levels[position];
+                    @let selected = rating.controls.levelId.value === level.id;
+                    <!-- The radio sits in the corner, so the key keeps the full width of the card -->
+                    <label
+                        class="relative flex! cursor-pointer rounded-lg border py-2.5 ps-3 pe-8 text-[0.8125rem] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-(--primary)"
+                        [class]="
+                            selected
+                                ? 'border-(--primary) bg-(--selected-option-bg) shadow-[inset_0_0_0_1px_var(--primary)]'
+                                : 'border-(--border-color) hover:bg-(--selected-option-bg)'
+                        "
+                        [attr.data-testid]="'rubric-grading-level-' + index + '-' + position"
+                    >
+                        <input
+                            class="sr-only"
+                            type="radio"
+                            [name]="'rubric-grading-level-' + index"
+                            [checked]="selected"
+                            [disabled]="rating.disabled"
+                            (change)="selectLevel(rating, level.id)"
+                        />
+                        <span class="flex min-w-0 flex-col gap-1">
+                            <strong class="font-semibold! whitespace-nowrap">{{ position + 1 }} – <span [jhiTranslate]="rubricLevelKey(criterion.scale, position)"></span></strong>
+                            @if (level.description) {
+                                <span class="text-xs text-(--text-body-secondary)">{{ level.description }}</span>
+                            }
+                        </span>
+                        <span
+                            class="absolute top-2.5 right-2.5 size-4 rounded-full"
+                            [class]="selected ? 'border-[5px] border-(--primary)' : 'border border-(--border-color)'"
+                            aria-hidden="true"
+                        ></span>
+                    </label>
+                }
+            </div>
+
+            @if (rating.controls.levelId.value !== undefined) {
+                <div class="flex flex-col gap-2 px-4">
+                    <label [for]="'rubric-grading-comment-' + index">{{
+                        'artemisApp.presentationAssessment.rubric.feedbackFor' | artemisTranslate: { name: criterion.name }
+                    }}</label>
+                    <textarea
+                        [id]="'rubric-grading-comment-' + index"
+                        [tumAetUiInputId]="'rubric-grading-comment-' + index"
+                        tumAetUiTextarea
+                        class="w-full"
+                        rows="3"
+                        formControlName="comment"
+                        [placeholder]="'artemisApp.presentationAssessment.rubric.feedbackPlaceholder' | artemisTranslate"
+                        [attr.data-testid]="'rubric-grading-comment-' + index"
+                    ></textarea>
+                    @if (rating.controls.comment.hasError('maxlength')) {
+                        <tumaet-ui-message severity="error">
+                            <span jhiTranslate="artemisApp.presentationAssessment.remarkTooLong" [translateValues]="{ max: 1000 }"></span>
+                        </tumaet-ui-message>
+                    }
+                </div>
+            } @else {
+                <p
+                    class="m-0! flex items-center gap-2 px-4 text-[0.8125rem]"
+                    [class]="incomplete ? 'text-state-warning' : 'text-(--text-body-secondary)'"
+                    [attr.data-testid]="'rubric-grading-unrated-' + index"
+                >
+                    <fa-icon [icon]="faCircleInfo" />
+                    <span jhiTranslate="artemisApp.presentationAssessment.rubric.notRated"></span>
+                </p>
+            }
+        </article>
+    }
+
+    <div class="rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) p-4">
+        <ng-content />
+    </div>
+
+    @let overall = overallResult();
+    <div class="flex flex-col items-end gap-0.5 rounded-lg border border-(--border-color) bg-(--hover-slightly-darker-body-bg) p-4" data-testid="rubric-grading-overall">
+        <span jhiTranslate="artemisApp.presentationAssessment.rubric.overallResult"></span>
+        <strong class="text-2xl text-(--primary)">{{ overall === undefined ? '–' : overall + ' %' }}</strong>
+        <span class="text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.presentationAssessment.rubric.calculatedAutomatically"></span>
+    </div>
+</div>

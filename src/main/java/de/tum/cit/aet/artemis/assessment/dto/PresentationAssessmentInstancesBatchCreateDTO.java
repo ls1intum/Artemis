@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
@@ -11,6 +12,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -21,11 +24,12 @@ import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PresentationAssessmentInstancesBatchCreateDTO(@NotNull ZonedDateTime presentationDate,
-        @PositiveOrZero @DecimalMax("10000") @Digits(integer = 5, fraction = 3) Double resultPoints, @NotEmpty @Size(max = 500) List<@NotBlank String> studentLogins,
-        @NotBlank @Size(max = 10) String language, @NotNull PresentationAssessmentMode mode, @Size(max = 255) String location,
-        @Size(max = 1000) @Pattern(regexp = "^https?://\\S+$", flags = Pattern.Flag.CASE_INSENSITIVE) String meetingLink, @Size(max = 1000) String remark) {
+        @PositiveOrZero @DecimalMax("10000") @Digits(integer = 5, fraction = 3) Double resultPoints, Boolean passed,
+        @NotEmpty @Size(max = 500) List<@NotBlank String> studentLogins, @NotBlank @Size(max = 10) String language, @NotNull PresentationAssessmentMode mode,
+        @Size(max = 255) String location, @Size(max = 1000) @Pattern(regexp = "^https?://\\S+$", flags = Pattern.Flag.CASE_INSENSITIVE) String meetingLink,
+        @Size(max = 1000) String remark, @Nullable @Size(min = 1, max = 20) List<@NotNull @Valid PresentationRubricRatingDTO> ratings) {
 
     public PresentationAssessmentInstanceRequestDTO forStudent(String studentLogin) {
-        return new PresentationAssessmentInstanceRequestDTO(null, presentationDate, resultPoints, studentLogin, language, mode, location, meetingLink, remark);
+        return new PresentationAssessmentInstanceRequestDTO(null, presentationDate, resultPoints, passed, studentLogin, language, mode, location, meetingLink, remark, ratings);
     }
 }

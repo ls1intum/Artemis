@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentMode;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationGradingMethod;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -243,6 +244,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         PresentationAssessment presentationAssessment = new PresentationAssessment();
         presentationAssessment.setCourse(course);
         presentationAssessment.setTitle(title);
+        presentationAssessment.setGradingMethod(PresentationGradingMethod.SCORE);
         presentationAssessment.setMaxPoints(20.0);
         presentationAssessment = presentationAssessmentRepository.save(presentationAssessment);
 

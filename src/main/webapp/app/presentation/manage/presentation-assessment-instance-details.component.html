@@ -8,6 +8,10 @@
             <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.exercise"></span>:
             {{ presentationAssessment.exerciseTitle || '-' }}
         </div>
+        <div>
+            <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.gradingMethod.label"></span>:
+            {{ presentationAssessment.gradingMethod ? ('artemisApp.presentationAssessment.gradingMethod.' + presentationAssessment.gradingMethod | artemisTranslate) : '-' }}
+        </div>
     }
     <div>
         <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.language"></span>:

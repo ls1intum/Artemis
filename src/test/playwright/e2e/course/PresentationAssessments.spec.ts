@@ -4,6 +4,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
 import { generateUUID } from '../../support/utils';
+import { PresentationGradingMethod } from '../../support/constants';
 
 test.describe('Presentation assessments', { tag: '@fast' }, () => {
     let course: Course;
@@ -25,14 +26,14 @@ test.describe('Presentation assessments', { tag: '@fast' }, () => {
         await login(instructor);
         await presentationAssessmentManagement.goto(course.id!);
 
-        await presentationAssessmentManagement.createPresentation(title, 20);
+        await presentationAssessmentManagement.createPresentation(title, PresentationGradingMethod.SCORE, { maxPoints: 20 });
         await presentationAssessmentManagement.openPresentation(title);
 
         await presentationAssessmentManagement.assignAndGrade(studentOne.username, dayjs(), 15);
-        await expect(presentationAssessmentManagement.instanceRow(studentOne.username).getByTestId('instance-result-points')).toHaveText('15 / 20');
+        await expect(presentationAssessmentManagement.instanceRow(studentOne.username).getByTestId('instance-result')).toHaveText('15 / 20');
 
         await presentationAssessmentManagement.changeGrade(studentOne.username, 18);
-        await expect(presentationAssessmentManagement.instanceRow(studentOne.username).getByTestId('instance-result-points')).toHaveText('18 / 20');
+        await expect(presentationAssessmentManagement.instanceRow(studentOne.username).getByTestId('instance-result')).toHaveText('18 / 20');
 
         await presentationAssessmentManagement.deleteInstance(studentOne.username);
         await expect(presentationAssessmentManagement.instanceRow(studentOne.username)).toHaveCount(0);
@@ -48,7 +49,9 @@ test.describe('Presentation assessments', { tag: '@fast' }, () => {
     test('Tutor grades a student but cannot manage presentations', async ({ page, login, presentationAssessmentManagement }) => {
         const title = `Tutor presentation ${generateUUID()}`;
         // Still logged in as the admin from beforeEach.
-        const created = await page.request.post(`api/assessment/courses/${course.id}/presentation-assessments`, { data: { title, maxPoints: 20, courseId: course.id } });
+        const created = await page.request.post(`api/assessment/courses/${course.id}/presentation-assessments`, {
+            data: { title, gradingMethod: PresentationGradingMethod.SCORE, maxPoints: 20, courseId: course.id },
+        });
         expect(created.status()).toBe(201);
 
         await login(tutor, `/course-management/${course.id}`);
@@ -61,8 +64,46 @@ test.describe('Presentation assessments', { tag: '@fast' }, () => {
 
         await presentationAssessmentManagement.assignAndGrade(studentOne.username, dayjs(), 12);
         const row = presentationAssessmentManagement.instanceRow(studentOne.username);
-        await expect(row.getByTestId('instance-result-points')).toHaveText('12 / 20');
+        await expect(row.getByTestId('instance-result')).toHaveText('12 / 20');
         await expect(row.getByTestId('edit-instance-button')).toBeVisible();
         await expect(row.getByTestId('delete-instance-button')).toHaveCount(0);
+    });
+
+    test('Instructor creates a presentation graded by rubric and grades a student with it', async ({ page, login, presentationAssessmentManagement }) => {
+        const title = `Rubric presentation ${generateUUID()}`;
+        await login(instructor);
+        await presentationAssessmentManagement.goto(course.id!);
+
+        await presentationAssessmentManagement.createPresentation(title, PresentationGradingMethod.RUBRIC, {
+            criteria: [
+                { name: 'Content', weight: 60 },
+                { name: 'Delivery', weight: 40 },
+            ],
+        });
+        await presentationAssessmentManagement.openPresentation(title);
+        await expect(page.getByTestId('edit-rubric-button')).toBeVisible();
+
+        // Both criteria have five levels: 60 % · 3/4 for "Good" and 40 % · 4/4 for "Excellent"
+        await presentationAssessmentManagement.assignAndGradeByRubric(studentOne.username, dayjs(), [3, 4]);
+
+        await expect(presentationAssessmentManagement.instanceRow(studentOne.username).getByTestId('instance-result')).toHaveText('85 %');
+    });
+
+    test('Tutor grades a presentation by pass/fail', async ({ page, login, presentationAssessmentManagement }) => {
+        const title = `Pass/fail presentation ${generateUUID()}`;
+        // Still logged in as the admin from beforeEach.
+        const created = await page.request.post(`api/assessment/courses/${course.id}/presentation-assessments`, {
+            data: { title, gradingMethod: PresentationGradingMethod.PASS_FAIL, courseId: course.id },
+        });
+        expect(created.status()).toBe(201);
+
+        await login(tutor, `/course-management/${course.id}`);
+        await page.locator('#presentations').click();
+        await presentationAssessmentManagement.openPresentation(title);
+        await expect(page.getByTestId('presentation-grading-method-tag')).toBeVisible();
+
+        await presentationAssessmentManagement.assignAndGradeByPassFail(studentOne.username, dayjs(), false);
+
+        await expect(presentationAssessmentManagement.instanceRow(studentOne.username).getByTestId('instance-result')).toHaveText('Failed');
     });
 });

@@ -5,7 +5,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, merge } from 'rxjs';
 import { debounceTime, finalize, map, tap } from 'rxjs/operators';
 
-import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTableCellsLarge, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import {
@@ -19,6 +19,7 @@ import {
     TumAetUiPaginatorComponent,
     TumAetUiSelectComponent,
     TumAetUiTableSortEvent,
+    TumAetUiTagComponent,
 } from '@tumaet/ui-angular';
 
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -31,6 +32,8 @@ import {
     PresentationAssessmentStatistics,
     PresentationAssessmentStudentRow,
     PresentationAssessmentStudentRowsRequest,
+    PresentationGradingMethod,
+    PresentationRubricCriterion,
 } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -44,11 +47,13 @@ import {
 } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
 import { PresentationAssessmentInstancesTableComponent } from 'app/presentation/manage/presentation-assessment-instances-table.component';
 import { PresentationAssessmentOverviewTableComponent } from 'app/presentation/manage/presentation-assessment-overview-table.component';
+import { PresentationRubricDialogComponent } from 'app/presentation/manage/presentation-rubric-dialog.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CollapseState, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateService } from '@ngx-translate/core';
-import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';
+import { GRADING_METHOD_ICONS } from 'app/presentation/shared/presentation-grading-method-icons';
 import {
     AssessmentStatusFilter,
     FilterOption,
@@ -57,7 +62,7 @@ import {
     PresentationTypeFilter,
     PresentationViewMode,
     createPresentationSidebarData,
-    hasResultPoints,
+    hasResult,
 } from 'app/presentation/manage/presentation-assessment-management.helper';
 
 const presentationSidebarCollapseStateRecord: Record<string, boolean> = { standalone: false, linkedToExercise: false };
@@ -84,7 +89,7 @@ function decorateStudentRow(row: PresentationStudentRow): PresentationStudentTab
         instance: row.instance,
         rowKey: studentRowKey(row),
         displayName: studentDisplayName(row),
-        assessed: hasResultPoints(row.instance.resultPoints),
+        assessed: hasResult(row.instance),
     };
 }
 
@@ -108,6 +113,7 @@ function positiveRouteId(value: string | null): number | undefined {
         PresentationAssessmentInstanceFormDialogComponent,
         PresentationAssessmentInstancesTableComponent,
         PresentationAssessmentOverviewTableComponent,
+        PresentationRubricDialogComponent,
         TumAetUiButtonComponent,
         TumAetUiButtonDirective,
         TumAetUiButtonGroupComponent,
@@ -117,6 +123,7 @@ function positiveRouteId(value: string | null): number | undefined {
         TumAetUiMessageComponent,
         TumAetUiPaginatorComponent,
         TumAetUiSelectComponent,
+        TumAetUiTagComponent,
         SidebarComponent,
     ],
 })
@@ -141,6 +148,8 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     );
 
     protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faTableCellsLarge = faTableCellsLarge;
+    protected readonly gradingMethodIcons = GRADING_METHOD_ICONS;
     protected readonly faPlus = faPlus;
     protected readonly faLink = faLink;
     protected readonly faUsers = faUsers;
@@ -179,11 +188,16 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     readonly overviewPage = signal(0);
     readonly overviewPageSize = signal(25);
     readonly presentationDialogVisible = signal(false);
+    /** Whether the presentation dialog shows the rubric editor, which needs the wide dialog. */
+    readonly presentationDialogWide = signal(false);
     readonly dialogPresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
     readonly instanceDialogVisible = signal(false);
     readonly dialogInstancePresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
     readonly dialogInstance = signal<PresentationAssessmentInstance | undefined>(undefined);
     readonly dialogAssignedStudents = signal<User[]>([]);
+    readonly rubricDialogVisible = signal(false);
+    readonly dialogRubricPresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
+    protected readonly PresentationGradingMethod = PresentationGradingMethod;
     readonly studentSortField = signal<PresentationAssessmentStudentRowsRequest['sortField']>('studentLogin');
     readonly studentSortOrder = signal(1);
     readonly studentRowsRequest = computed<PresentationAssessmentStudentRowsRequest>(() => {
@@ -372,7 +386,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     onStudentSort(event: TumAetUiTableSortEvent): void {
         const field = event.field;
-        if (field !== 'studentLogin' && field !== 'presentationTitle' && field !== 'presentationDate' && field !== 'resultPoints') {
+        if (field !== 'studentLogin' && field !== 'presentationTitle' && field !== 'presentationDate') {
             return;
         }
         this.studentSortField.set(field);
@@ -402,6 +416,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
 
     startEdit(presentationAssessment: PresentationAssessment): void {
         this.openPresentationDialog(presentationAssessment);
+    }
+
+    startEditRubric(presentationAssessment: PresentationAssessment): void {
+        this.dialogRubricPresentationAssessment.set(presentationAssessment);
+        this.rubricDialogVisible.set(true);
     }
 
     startCreateInstance(presentationAssessment: PresentationAssessment): void {
@@ -517,8 +536,10 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.presentationLoadFailed.set(false);
         this.presentationDialogVisible.set(false);
         this.instanceDialogVisible.set(false);
+        this.rubricDialogVisible.set(false);
         this.dialogPresentationAssessment.set(undefined);
         this.dialogInstancePresentationAssessment.set(undefined);
+        this.dialogRubricPresentationAssessment.set(undefined);
         this.dialogInstance.set(undefined);
         this.dialogAssignedStudents.set([]);
         this.dialogErrorSource.next('');
@@ -656,6 +677,47 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             return;
         }
         this.deletePresentationAssessment(presentationAssessment);
+    }
+
+    handleRubricDialogSave(rubricCriteria: PresentationRubricCriterion[]): void {
+        const presentationAssessment = this.dialogRubricPresentationAssessment();
+        if (!presentationAssessment || this.isSaving()) {
+            return;
+        }
+        const courseId = this.courseId();
+        const generation = this.courseContextGeneration;
+        this.isSaving.set(true);
+        this.presentationAssessmentService
+            .update(courseId, cloneWith(presentationAssessment, { rubricCriteria }))
+            .pipe(
+                finalize(() => {
+                    if (generation === this.courseContextGeneration) {
+                        this.isSaving.set(false);
+                    }
+                }),
+            )
+            .subscribe({
+                next: () => {
+                    if (generation !== this.courseContextGeneration) {
+                        return;
+                    }
+                    this.rubricDialogVisible.set(false);
+                    // Changed weights recalculate the results of assessed presentations.
+                    this.studentRowsResource.reload();
+                    this.alertService.success('artemisApp.presentationAssessment.rubric.saved');
+                },
+                error: (res: HttpErrorResponse) => {
+                    if (generation === this.courseContextGeneration) {
+                        this.onWriteError(res);
+                    }
+                },
+            });
+    }
+
+    handleRubricDialogCancel(): void {
+        if (!this.isSaving()) {
+            this.rubricDialogVisible.set(false);
+        }
     }
 
     private openInstanceDialog(presentationAssessment: PresentationAssessment, instance?: PresentationAssessmentInstance): void {

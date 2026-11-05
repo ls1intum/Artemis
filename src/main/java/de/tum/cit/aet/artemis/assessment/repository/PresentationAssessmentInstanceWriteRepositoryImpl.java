@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.assessment.repository;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.ObjectProvider;
 
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessment;
 import de.tum.cit.aet.artemis.assessment.domain.PresentationAssessmentInstance;
+import de.tum.cit.aet.artemis.assessment.domain.PresentationRubricRating;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 
 /**
@@ -20,23 +22,34 @@ public class PresentationAssessmentInstanceWriteRepositoryImpl implements Presen
 
     private final ObjectProvider<PresentationAssessmentInstanceRepository> instanceRepository;
 
+    private final PresentationRubricRatingRepository ratingRepository;
+
     public PresentationAssessmentInstanceWriteRepositoryImpl(PresentationAssessmentRepository assessmentRepository,
-            ObjectProvider<PresentationAssessmentInstanceRepository> instanceRepository) {
+            ObjectProvider<PresentationAssessmentInstanceRepository> instanceRepository, PresentationRubricRatingRepository ratingRepository) {
         this.assessmentRepository = assessmentRepository;
         this.instanceRepository = instanceRepository;
+        this.ratingRepository = ratingRepository;
     }
 
     @Override
-    public PresentationAssessmentInstance updateInstanceIfVersionMatches(long courseId, long assessmentId, long expectedVersion, PresentationAssessmentInstance instance) {
+    public PresentationAssessmentInstance updateInstanceIfVersionMatches(long courseId, long assessmentId, long expectedVersion, PresentationAssessmentInstance instance,
+            @Nullable List<PresentationRubricRating> ratings) {
         incrementVersionOrThrow(courseId, assessmentId, expectedVersion);
-        return instanceRepository.getObject().save(instance);
+        PresentationAssessmentInstance savedInstance = instanceRepository.getObject().save(instance);
+        if (ratings != null) {
+            ratingRepository.deleteAllByInstanceId(savedInstance.getId());
+            ratingRepository.saveAll(ratings);
+        }
+        return savedInstance;
     }
 
     @Override
     public List<PresentationAssessmentInstance> createInstancesIfVersionMatches(long courseId, long assessmentId, long expectedVersion,
-            List<PresentationAssessmentInstance> instances) {
+            List<PresentationAssessmentInstance> instances, List<PresentationRubricRating> ratings) {
         incrementVersionOrThrow(courseId, assessmentId, expectedVersion);
-        return instanceRepository.getObject().saveAll(instances);
+        List<PresentationAssessmentInstance> savedInstances = instanceRepository.getObject().saveAll(instances);
+        ratingRepository.saveAll(ratings);
+        return savedInstances;
     }
 
     @Override

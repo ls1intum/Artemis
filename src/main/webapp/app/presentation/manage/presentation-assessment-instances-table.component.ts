@@ -8,6 +8,7 @@ import { PresentationAssessment } from 'app/presentation/shared/entities/present
 import { PresentationAssessmentInstanceDetailsComponent } from 'app/presentation/manage/presentation-assessment-instance-details.component';
 import { PresentationInstanceActionsComponent } from 'app/presentation/manage/presentation-instance-actions.component';
 import { PresentationStudentToggleComponent } from 'app/presentation/manage/presentation-student-toggle.component';
+import { PresentationResultTagComponent } from 'app/presentation/manage/presentation-result-tag.component';
 import { PresentationStudentTableRow } from 'app/presentation/manage/presentation-assessment-management.helper';
 
 /** Lists the students assigned to one presentation with their grade, date and remark. */
@@ -25,6 +26,7 @@ import { PresentationStudentTableRow } from 'app/presentation/manage/presentatio
         PresentationAssessmentInstanceDetailsComponent,
         PresentationInstanceActionsComponent,
         PresentationStudentToggleComponent,
+        PresentationResultTagComponent,
     ],
 })
 export class PresentationAssessmentInstancesTableComponent {

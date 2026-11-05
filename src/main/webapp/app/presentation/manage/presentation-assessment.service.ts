@@ -12,6 +12,8 @@ import {
     PresentationAssessmentStatistics,
     PresentationAssessmentStudentRow,
     PresentationAssessmentStudentRowsRequest,
+    PresentationRubric,
+    PresentationRubricRating,
 } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
 type EntityResponseType = HttpResponse<PresentationAssessment>;
@@ -48,6 +50,12 @@ export class PresentationAssessmentService {
         return this.http.get<PresentationAssessmentStatistics>(`api/assessment/courses/${courseId}/presentation-assessments/statistics`, { observe: 'response' });
     }
 
+    getRubric(courseId: number, presentationAssessmentId: number): Observable<HttpResponse<PresentationRubric>> {
+        return this.http.get<PresentationRubric>(`api/assessment/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/rubric`, {
+            observe: 'response',
+        });
+    }
+
     create(courseId: number, presentationAssessment: PresentationAssessment): Observable<EntityResponseType> {
         return this.http.post<PresentationAssessment>(`api/assessment/courses/${courseId}/presentation-assessments`, presentationAssessment, { observe: 'response' });
     }
@@ -80,6 +88,13 @@ export class PresentationAssessmentService {
                 { observe: 'response' },
             )
             .pipe(map((res) => this.convertInstanceArrayResponseFromServer(res)));
+    }
+
+    getRatings(courseId: number, presentationAssessmentId: number, instanceId: number): Observable<HttpResponse<PresentationRubricRating[]>> {
+        return this.http.get<PresentationRubricRating[]>(
+            `api/assessment/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/instances/${instanceId}/ratings`,
+            { observe: 'response' },
+        );
     }
 
     deleteInstance(courseId: number, presentationAssessmentId: number, instanceId: number): Observable<HttpResponse<void>> {
