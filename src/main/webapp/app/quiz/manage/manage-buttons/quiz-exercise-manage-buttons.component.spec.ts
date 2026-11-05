@@ -15,7 +15,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
@@ -171,11 +172,6 @@ describe('QuizExercise Management Buttons Component', () => {
         expect(comp.faClipboardCheck).toBeDefined();
     });
 
-    it('should have button types defined', () => {
-        expect(comp.ButtonType).toBeDefined();
-        expect(comp.ButtonSize).toBeDefined();
-    });
-
     it('should initialize course base URL', () => {
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
@@ -298,8 +294,65 @@ describe('QuizExercise Management Buttons Component evaluate button', () => {
                 provideHttpClient(),
                 MockProvider(DialogService),
             ],
+        }).overrideComponent(QuizExerciseManageButtonsComponent, {
+            remove: { imports: [CreateVariantWithAiButtonComponent] },
+            add: { imports: [MockComponent(CreateVariantWithAiButtonComponent)] },
         });
         fixture = TestBed.createComponent(QuizExerciseManageButtonsComponent);
+    });
+
+    it('groups the variant with editing and keeps export in a one-entry menu', async () => {
+        const quiz = Object.assign(new QuizExercise({ id: 123 }, undefined), {
+            id: 456,
+            isAtLeastTutor: true,
+            isAtLeastEditor: true,
+            isEditable: true,
+        });
+        fixture.componentRef.setInput('quizExercise', quiz);
+        fixture.componentRef.setInput('isDetailPage', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-editing-actions"] jhi-create-variant-with-ai-button')).not.toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('jhi-create-variant-with-ai-button')).toHaveLength(1);
+        fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]').click();
+        await fixture.whenStable();
+        expect(document.querySelectorAll('tumaet-ui-menu [tumAetUiMenuItem]')).toHaveLength(1);
+        expect(document.querySelector('tumaet-ui-menu')?.textContent).toContain('entity.action.export');
+    });
+
+    it('shows reset and delete only in the instructor administration section', () => {
+        render(true, true);
+        fixture.componentRef.setInput('detailPageSection', 'administration');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('section [id="delete-quiz-456"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('section [jhiDeleteButton]')).toHaveLength(2);
+        expect(fixture.nativeElement.querySelector('jhi-exercise-detail-actions')).toBeNull();
+        fixture.componentRef.setInput('quizExercise', Object.assign(new QuizExercise({ id: 123 }, undefined), { id: 456, isAtLeastTutor: true }));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('section')).toBeNull();
+    });
+
+    it('preserves the edit lock while a quiz is running', () => {
+        const quiz = Object.assign(new QuizExercise({ id: 123 }, undefined), { id: 456, isAtLeastEditor: true, isEditable: false });
+        fixture.componentRef.setInput('quizExercise', quiz);
+        fixture.componentRef.setInput('isDetailPage', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-editing-actions"] a').getAttribute('aria-disabled')).toBe('true');
+        expect(fixture.nativeElement.querySelector('a[href$="/edit"]')).toBeNull();
+        fixture.componentRef.setInput('quizExercise', Object.assign(new QuizExercise({ id: 123 }, undefined), { id: 456, isAtLeastEditor: true, isEditable: true }));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('a[href$="/quiz-exercises/456/edit"]')).not.toBeNull();
+    });
+
+    it('keeps destructive actions out of the detail toolbar', () => {
+        render(true, true);
+        expect(fixture.nativeElement.querySelector('[id="delete-quiz-456"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-exercise-detail-actions')).not.toBeNull();
+    });
+
+    it('keeps row deletion available without adding a duplicate variant action', () => {
+        render(false, true);
+        expect(fixture.nativeElement.querySelector('[id="delete-quiz-456"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-create-variant-with-ai-button')).toBeNull();
     });
 
     it('should offer the evaluate button on the detail page when the server accepts the evaluation', () => {

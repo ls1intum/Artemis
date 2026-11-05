@@ -1,12 +1,13 @@
 import { AfterViewInit, Component, input } from '@angular/core';
 import { updateHeaderHeight } from 'app/foundation/util/navbar.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-detail-overview-navigation-bar',
     templateUrl: './detail-overview-navigation-bar.component.html',
     styleUrls: ['./detail-overview-navigation-bar.scss'],
-    imports: [ArtemisTranslatePipe],
+    imports: [ArtemisTranslatePipe, RouterLink],
     host: {
         '(window:resize)': 'onResizeAddDistanceFromStatusBarToNavbar()',
     },

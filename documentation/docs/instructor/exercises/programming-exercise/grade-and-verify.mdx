@@ -2,7 +2,7 @@
 id: grade-and-verify
 title: Configure Grading and Verify the Exercise
 sidebar_label: Configure Grading and Verify the Exercise
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -33,6 +33,22 @@ import submissionPolicyGradingPage from '../assets/programming/submission-policy
 Grading decides how test results become points: which tests count, how much, and when students get to see them. Once that is set, verifying the exercise means checking that the template scores zero, the solution scores full marks, and every task is bound to a test that actually exists.
 
 This page also covers what you do once students are working: reviewing common mistakes with feedback analysis, and assessing submissions by hand where the exercise calls for it.
+
+## Check the Template and Solution Builds
+
+The exercise details page combines repository access and build results in two
+panels: **Template** for the student's starting point and **Solution** for the
+reference implementation. Each panel groups **Code**, repository download, the
+latest result, the rebuild control and its submission-history link. Labeled
+checkout paths show which repositories each build uses. The shared test repository
+and any auxiliary repositories appear below the panels, followed by the
+**Template/Solution Comparison**.
+
+The expected baseline is **0%** for the template and **100%** for the solution.
+A yellow warning triangle appears beside an unexpected result and beside the
+exercise's title in the course exercise list. Hover or focus the warning to read
+its explanation. Solution builds that fail tests also show the warning. Results
+that have not been loaded are not treated as successful builds.
 
 ## Configure Grading
 

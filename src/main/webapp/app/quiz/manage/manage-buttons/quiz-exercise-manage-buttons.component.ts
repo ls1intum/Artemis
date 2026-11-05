@@ -1,3 +1,12 @@
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
+import { ExerciseDetailActionsComponent } from 'app/exercise/detail/exercise-detail-actions.component';
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -7,15 +16,12 @@ import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-di
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { faClipboardCheck, faEye, faFileExport, faListAlt, faSignal, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faClipboardCheck, faEllipsis, faEye, faFileExport, faListAlt, faSignal, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Observable, Subject } from 'rxjs';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
@@ -25,7 +31,21 @@ import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluat
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
     templateUrl: './quiz-exercise-manage-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, ButtonComponent, DeleteButtonDirective, NgbTooltip, CreateVariantWithAiButtonComponent],
+    imports: [
+        RouterLink,
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        DeleteButtonDirective,
+        CreateVariantWithAiButtonComponent,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        ExerciseDetailActionsComponent,
+    ],
 })
 export class QuizExerciseManageButtonsComponent implements OnInit {
     private quizExerciseService = inject(QuizExerciseService);
@@ -38,6 +58,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     private router = inject(Router);
 
     protected readonly ActionType = ActionType;
+    readonly faEllipsis = faEllipsis;
     readonly faEye = faEye;
     readonly faSignal = faSignal;
     readonly faFileExport = faFileExport;
@@ -46,9 +67,6 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     readonly faListAlt = faListAlt;
     readonly faUndo = faUndo;
     readonly faClipboardCheck = faClipboardCheck;
-
-    readonly ButtonType = ButtonType;
-    readonly ButtonSize = ButtonSize;
 
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -61,6 +79,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     readonly isEvaluatingQuizExercise = signal(false);
 
     isDetailPage = input(false);
+    readonly detailPageSection = input<'actions' | 'administration'>('actions');
 
     quizExercise = input.required<QuizExercise>();
     course = computed(() => getCourseFromExercise(this.quizExercise()));

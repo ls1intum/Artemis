@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DetailOverviewNavigationBarComponent } from 'app/shared-ui/detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { provideRouter } from '@angular/router';
 
 const sectionHeadlines = [
     { id: 'general', translationKey: 'some.translation.key' },
@@ -19,7 +20,7 @@ describe('DetailOverviewNavigationBar', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(DetailOverviewNavigationBarComponent);
@@ -46,5 +47,17 @@ describe('DetailOverviewNavigationBar', () => {
 
         expect(getElementByIdSpy).toHaveBeenCalledWith('general');
         expect(scrollIntroViewSpy).toHaveBeenCalledOnce();
+    });
+
+    it('handles section links inside Angular instead of navigating to the base URL', () => {
+        fixture.componentRef.setInput('sectionHeadlines', sectionHeadlines);
+        fixture.detectChanges();
+        const scroll = vi.spyOn(component, 'scrollToView');
+        const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+
+        fixture.nativeElement.querySelector('a').dispatchEvent(click);
+
+        expect(click.defaultPrevented).toBe(true);
+        expect(scroll).toHaveBeenCalledWith('general');
     });
 });

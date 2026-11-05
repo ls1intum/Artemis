@@ -12,11 +12,11 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -77,6 +77,15 @@ describe('Exercise detail common actions Component', () => {
         fixture.componentRef.setInput('exercise', modelingExercise);
         comp.ngOnInit();
         expect(comp.baseResource()).toBe('/course-management/123/modeling-exercises/123/');
+    });
+
+    it('updates destinations when the routed exercise changes without recreating the toolbar', () => {
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', Object.assign(new TextExercise(course, undefined), { id: 1 }));
+        comp.ngOnInit();
+        fixture.componentRef.setInput('exercise', Object.assign(new TextExercise(course, undefined), { id: 2 }));
+        expect(comp.baseResource()).toBe('/course-management/123/text-exercises/2/');
+        expect(comp.teamBaseResource()).toBe('/course-management/123/exercises/2/');
     });
 
     it('should get the correct edit routes for exam exercise', () => {
@@ -186,5 +195,82 @@ describe('Exercise detail common actions Component', () => {
         fixture.componentRef.setInput('exercise', new ModelingExercise(UMLDiagramType.ClassDiagram, { id: 123 }, undefined));
         comp.deleteExercise();
         expect(deleteModelingExerciseService).toHaveBeenCalledOnce();
+    });
+});
+
+describe('Exercise detail common action rendering', () => {
+    let fixture: ComponentFixture<NonProgrammingExerciseDetailCommonActionsComponent>;
+    const course: Course = { id: 123 };
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideRouter([]),
+                MockProvider(TextExerciseService),
+                MockProvider(FileUploadExerciseService),
+                MockProvider(ModelingExerciseService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(ProfileService, { isModuleFeatureActive: () => true }),
+            ],
+        });
+        fixture = TestBed.createComponent(NonProgrammingExerciseDetailCommonActionsComponent);
+        fixture.componentRef.setInput('course', course);
+    });
+    const exercise = (editor = true, instructor = true): TextExercise =>
+        Object.assign(new TextExercise(course, undefined), {
+            id: 456,
+            title: 'Saved title',
+            isAtLeastTutor: true,
+            isAtLeastEditor: editor,
+            isAtLeastInstructor: instructor,
+        });
+
+    it('keeps editing separate from navigation and deletion outside the toolbar', () => {
+        fixture.componentRef.setInput('exercise', exercise());
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-editing-actions"] a').getAttribute('href')).toContain('/text-exercises/456/edit');
+        expect(fixture.nativeElement.querySelector('[jhiDeleteButton]')).toBeNull();
+    });
+
+    it('offers exactly plagiarism and tutor effort in the secondary text menu', async () => {
+        fixture.componentRef.setInput('exercise', exercise());
+        fixture.detectChanges();
+        fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]').click();
+        await fixture.whenStable();
+        const items = document.querySelectorAll('tumaet-ui-menu [tumAetUiMenuItem]');
+        expect(items).toHaveLength(2);
+        expect(items[0].getAttribute('href')).toContain('plagiarism');
+        expect(items[1].getAttribute('href')).toContain('/text-exercises/456/tutor-effort-statistics');
+    });
+
+    it('removes the plagiarism destination when its module is disabled', async () => {
+        fixture.componentRef.setInput('exercise', exercise());
+        fixture.detectChanges();
+        fixture.componentInstance.plagiarismEnabled.set(false);
+        fixture.detectChanges();
+        fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]').click();
+        await fixture.whenStable();
+        const plagiarism = document.querySelector('#check-plagiarism-download');
+        expect(plagiarism?.getAttribute('aria-disabled')).toBe('true');
+        expect(plagiarism?.hasAttribute('href')).toBe(false);
+    });
+
+    it('does not show editor or secondary actions to tutors', () => {
+        fixture.componentRef.setInput('exercise', exercise(false, false));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-editing-actions"] a')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('a[href$="participations"]')).not.toBeNull();
+    });
+
+    it('restricts administration to instructors and renders it separately', () => {
+        fixture.componentRef.setInput('exercise', exercise(false, false));
+        fixture.componentRef.setInput('section', 'administration');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('section')).toBeNull();
+        fixture.componentRef.setInput('exercise', exercise());
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('section [jhiDeleteButton]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-exercise-detail-actions')).toBeNull();
     });
 });

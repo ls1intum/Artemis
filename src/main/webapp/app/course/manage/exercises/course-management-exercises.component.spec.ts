@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { CourseManagementExercisesComponent } from 'app/course/manage/exercises/course-management-exercises.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -29,6 +29,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -64,6 +67,9 @@ describe('Course Management Exercises Component', () => {
                 MockProvider(DeleteDialogService),
                 MockProvider(CourseManagementService, {
                     findWithExercises: () => of(new HttpResponse({ body: course })),
+                }),
+                MockProvider(CourseExerciseService, {
+                    findAllProgrammingExercisesForCourse: () => of(new HttpResponse({ body: [] })),
                 }),
                 MockProvider(ExerciseVariantGroupService, {
                     getGroupsForCourse: () => of([]),
@@ -110,6 +116,92 @@ describe('Course Management Exercises Component', () => {
     it('should propagate course permissions onto the loaded exercises', () => {
         comp.ngOnInit();
         expect(comp.exercises().every((e) => e.isAtLeastEditor === true && e.isAtLeastInstructor === true)).toBe(true);
+    });
+
+    it('loads the latest template and solution results in one course request for list warnings', () => {
+        const templateParticipation = { id: 10, submissions: [{ results: [{ id: 20, score: 20 }] }] };
+        const solutionParticipation = { id: 11, submissions: [{ results: [{ id: 21, score: 80 }] }] };
+        const load = vi
+            .spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse')
+            .mockReturnValue(of(new HttpResponse({ body: [{ id: 1, type: ExerciseType.PROGRAMMING, templateParticipation, solutionParticipation }] as ProgrammingExercise[] })));
+
+        comp.ngOnInit();
+
+        expect(load).toHaveBeenCalledExactlyOnceWith(1);
+        const programming = comp.exercises().find((exercise) => exercise.id === 1) as ProgrammingExercise;
+        expect(programming.templateParticipation).toBe(templateParticipation);
+        expect(programming.solutionParticipation).toBe(solutionParticipation);
+        expect(programming.title).toBe('Intro Programming');
+        expect(programming.isAtLeastEditor).toBe(true);
+    });
+
+    it('keeps the exercise list available if loading build results fails', () => {
+        vi.spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse').mockReturnValue(throwError(() => new Error('Build results unavailable')));
+
+        comp.ngOnInit();
+
+        expect(comp.loaded()).toBe(true);
+        expect(comp.exercises()).toHaveLength(2);
+    });
+
+    it('does not request programming results when the course has no programming exercises', () => {
+        course.exercises = [Object.assign(new TextExercise(undefined, undefined), { id: 2 })];
+        const load = vi.spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse');
+        comp.ngOnInit();
+        expect(load).not.toHaveBeenCalled();
+    });
+
+    it('ignores build results from a previous course after navigation', () => {
+        const routeData = new Subject<{ course: Course }>();
+        (parentRoute as any).data = routeData;
+        const oldResults = new Subject<HttpResponse<ProgrammingExercise[]>>();
+        vi.spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse').mockReturnValue(oldResults);
+        comp.ngOnInit();
+        routeData.next({ course });
+        const nextCourse: Course = { id: 2, exercises: [Object.assign(new TextExercise(undefined, undefined), { id: 7 })], isAtLeastEditor: true };
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: nextCourse })));
+        routeData.next({ course: nextCourse });
+        oldResults.next(new HttpResponse({ body: [] }));
+
+        expect(comp.course()?.id).toBe(2);
+        expect(comp.exercises().map((exercise) => exercise.id)).toEqual([7]);
+    });
+
+    it('preserves loaded build results in the group view', () => {
+        vi.spyOn(TestBed.inject(CourseExerciseService), 'findAllProgrammingExercisesForCourse').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [
+                        Object.assign(new ProgrammingExercise(undefined, undefined), {
+                            id: 1,
+                            templateParticipation: { id: 10, submissions: [{ results: [{ id: 20, score: 20 }] }] },
+                        }),
+                    ],
+                }),
+            ),
+        );
+        vi.spyOn(variantGroupService, 'getGroupsForCourse').mockReturnValue(of([{ id: 9, title: 'Variants', exerciseIds: [1] }]));
+        comp.ngOnInit();
+        comp.onViewChange('group');
+
+        const member = comp.cards().find((card) => card.group?.id === 9)?.exercises[0] as ProgrammingExercise;
+        expect(member?.templateParticipation?.submissions?.[0].results?.[0].score).toBe(20);
+    });
+
+    it('ignores previous-course group responses after navigation', () => {
+        const routeData = new Subject<{ course: Course }>();
+        (parentRoute as any).data = routeData;
+        const oldGroups = new Subject<ExerciseVariantGroupDTO[]>();
+        vi.spyOn(variantGroupService, 'getGroupsForCourse').mockReturnValue(oldGroups);
+        comp.ngOnInit();
+        routeData.next({ course });
+        const nextCourse: Course = { id: 2, exercises: [Object.assign(new TextExercise(undefined, undefined), { id: 7 })], isAtLeastEditor: false };
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: nextCourse })));
+        routeData.next({ course: nextCourse });
+        oldGroups.next([{ id: 9, title: 'Old group', exerciseIds: [1] }]);
+
+        expect(comp.groups()).toEqual([]);
+        expect(comp.exercises().map((exercise) => exercise.id)).toEqual([7]);
     });
 
     it('should not load groups for tutors (non-editors)', () => {

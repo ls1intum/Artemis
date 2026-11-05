@@ -170,4 +170,40 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
         expect(internals(comp).latestResult()).toEqual(newResult);
     });
+
+    it.each([
+        [ProgrammingExerciseParticipationType.TEMPLATE, -1],
+        [ProgrammingExerciseParticipationType.SOLUTION, 99],
+        [ProgrammingExerciseParticipationType.SOLUTION, 110],
+    ])('warns for an unexpected %s score of %s even when the result is marked successful', (participationType, score) => {
+        fixture.componentRef.setInput('participationType', participationType);
+        fixture.componentRef.setInput('participation', { id: 1, submissions: [{ results: [{ id: 3, score, successful: true }] }] });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('fa-icon')).not.toBeNull();
+    });
+    it('refreshes a result snapshot for the same participation without reconnecting', () => {
+        fixture.componentRef.setInput('participationType', ProgrammingExerciseParticipationType.SOLUTION);
+        fixture.componentRef.setInput('participation', { id: 1, submissions: [{ results: [{ id: 3, score: 80 }] }] });
+        fixture.detectChanges();
+        fixture.componentRef.setInput('participation', { id: 1, submissions: [{ results: [{ id: 4, score: 100, successful: true }] }] });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('fa-icon')).toBeNull();
+        expect(subscribeForLatestResultStub).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears a removed participation and stops accepting its live results', () => {
+        fixture.componentRef.setInput('participationType', ProgrammingExerciseParticipationType.SOLUTION);
+        fixture.componentRef.setInput('participation', { id: 1, submissions: [{ results: [{ id: 3, score: 80 }] }] });
+        fixture.detectChanges();
+        fixture.componentRef.setInput('participation', undefined);
+        fixture.detectChanges();
+        latestResultSubject.next({ id: 4, score: 50 });
+        fixture.detectChanges();
+
+        expect(internals(comp).latestResult()).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('fa-icon')).toBeNull();
+        expect(comp.resultSubscription?.closed).toBe(true);
+    });
 });

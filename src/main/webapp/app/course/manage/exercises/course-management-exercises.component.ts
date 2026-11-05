@@ -1,11 +1,12 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, catchError, forkJoin, map, of } from 'rxjs';
+import { Observable, Subject, Subscription, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { FormsModule } from '@angular/forms';
 import {
     TumAetUiButtonComponent,
@@ -114,6 +115,7 @@ const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
 export class CourseManagementExercisesComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly courseManagementService = inject(CourseManagementService);
+    private readonly courseExerciseService = inject(CourseExerciseService);
     private readonly quizExerciseService = inject(QuizExerciseService);
     private readonly quizExerciseDeletionApi = inject(QuizExerciseDeletionApi);
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
@@ -214,6 +216,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     /** Under LocalCI repositories and build plans live inside Artemis, so the delete dialog offers no external cleanup checks. */
     protected readonly localCIEnabled = signal(true);
 
+    private courseExercisesSubscription?: Subscription;
+
     private readonly groupDeleteError = new Subject<string>();
     private readonly selectedDeleteError = new Subject<string>();
     /** Exposed to the bulk-delete button (jhiDeleteButton) so the shared delete dialog can surface deletion errors. */
@@ -232,10 +236,9 @@ export class CourseManagementExercisesComponent implements OnInit {
         // Card titles are resolved eagerly via TranslateService.instant, so rebuild them on a language switch.
         this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.rebuildCards());
 
-        this.route.parent!.data.subscribe(({ course }) => {
-            if (course) {
-                this.course.set(course);
-            }
+        this.route.parent!.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ course }) => {
+            this.courseExercisesSubscription?.unsubscribe();
+            this.course.set(course);
             if (course?.id) {
                 this.loadCourseExercises(course.id);
             } else {
@@ -247,31 +250,61 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     /** Loads the course's exercises (with access rights, quiz state, groups and batches) and rebuilds the cards. */
     private loadCourseExercises(courseId: number): void {
-        this.courseManagementService.findWithExercises(courseId).subscribe({
-            next: (response) => {
-                const loadedCourse = response.body;
-                const exercises = loadedCourse?.exercises ?? [];
-                exercises.forEach((exercise) => {
-                    exercise.isAtLeastTutor = loadedCourse?.isAtLeastTutor;
-                    exercise.isAtLeastEditor = loadedCourse?.isAtLeastEditor;
-                    exercise.isAtLeastInstructor = loadedCourse?.isAtLeastInstructor;
-                    if (exercise.type === ExerciseType.QUIZ) {
-                        this.groupSync.applyQuizClientState(exercise);
+        this.courseExercisesSubscription?.unsubscribe();
+        this.courseExercisesSubscription = this.courseManagementService
+            .findWithExercises(courseId)
+            .pipe(
+                switchMap((response) => {
+                    const exercises = response.body?.exercises ?? [];
+                    if (!exercises.some((exercise) => exercise.type === ExerciseType.PROGRAMMING)) {
+                        return of(response);
                     }
-                });
-                this.exercises.set(exercises);
-                // The variant-group endpoints are editor-only, and this page is also reachable by tutors.
-                if (loadedCourse?.isAtLeastEditor) {
-                    this.loadGroupsFromServer(courseId);
-                } else {
-                    // Clear groups left over from a previously shown course, since the instance is reused.
-                    this.groups.set([]);
-                }
-                this.rebuildCards();
-                this.loaded.set(true);
-                this.loadQuizBatches(courseId);
-            },
-        });
+                    // The generic course payload omits lazy build results. The programming list endpoint
+                    // supplies both latest results for the whole course, avoiding a request per exercise.
+                    return this.courseExerciseService.findAllProgrammingExercisesForCourse(courseId).pipe(
+                        map((programmingResponse) => {
+                            const byId = new Map((programmingResponse.body ?? []).map((exercise) => [exercise.id, exercise]));
+                            for (const exercise of exercises) {
+                                const programming = byId.get(exercise.id);
+                                if (exercise.type === ExerciseType.PROGRAMMING && programming) {
+                                    const target = exercise as ProgrammingExercise;
+                                    target.templateParticipation = programming.templateParticipation;
+                                    target.solutionParticipation = programming.solutionParticipation;
+                                }
+                            }
+                            return response;
+                        }),
+                        // A result lookup failure must not hide the exercise list or imply a successful build.
+                        catchError(() => of(response)),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe({
+                next: (response) => {
+                    const loadedCourse = response.body;
+                    const exercises = loadedCourse?.exercises ?? [];
+                    exercises.forEach((exercise) => {
+                        exercise.isAtLeastTutor = loadedCourse?.isAtLeastTutor;
+                        exercise.isAtLeastEditor = loadedCourse?.isAtLeastEditor;
+                        exercise.isAtLeastInstructor = loadedCourse?.isAtLeastInstructor;
+                        if (exercise.type === ExerciseType.QUIZ) {
+                            this.groupSync.applyQuizClientState(exercise);
+                        }
+                    });
+                    this.exercises.set(exercises);
+                    // The variant-group endpoints are editor-only, and this page is also reachable by tutors.
+                    if (loadedCourse?.isAtLeastEditor) {
+                        this.loadGroupsFromServer(courseId);
+                    } else {
+                        // Clear groups left over from a previously shown course, since the instance is reused.
+                        this.groups.set([]);
+                    }
+                    this.rebuildCards();
+                    this.loaded.set(true);
+                    this.loadQuizBatches(courseId);
+                },
+            });
     }
 
     onViewChange(view: ExerciseManagementView): void {
@@ -584,6 +617,9 @@ export class CourseManagementExercisesComponent implements OnInit {
     /** The /with-exercises response omits the quizBatches association, so fetch it from the quiz endpoint and merge. */
     private loadQuizBatches(courseId: number): void {
         this.quizExerciseService.findForCourse(courseId).subscribe((quizExercises) => {
+            if (this.course()?.id !== courseId) {
+                return;
+            }
             const merged = this.groupSync.mergeQuizInfo(this.exercises(), this.groups(), quizExercises);
             if (!merged) {
                 return;
@@ -598,12 +634,18 @@ export class CourseManagementExercisesComponent implements OnInit {
     private loadGroupsFromServer(courseId: number): void {
         this.exerciseVariantGroupService.getGroupsForCourse(courseId).subscribe({
             next: (dtos) => {
+                if (this.course()?.id !== courseId) {
+                    return;
+                }
                 const merged = this.groupSync.mergeGroupsIntoExercises(this.exercises(), dtos);
                 this.exercises.set(merged.exercises);
                 this.groups.set(merged.groups);
                 this.rebuildCards();
             },
             error: (errorRes: HttpErrorResponse) => {
+                if (this.course()?.id !== courseId) {
+                    return;
+                }
                 // Drop the previous course's groups, or they would be rendered against the new exercise list.
                 this.groups.set([]);
                 this.rebuildCards();
