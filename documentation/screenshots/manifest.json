@@ -1628,6 +1628,261 @@
             "selector": "jhi-quiz-question-list-edit-existing",
             "padding": 8,
             "source": ["src/main/webapp/app/quiz/manage"]
+        },
+        {
+            "id": "manage-exercises-dialog",
+            "image": "instructor/exercises/assets/general/manage-exercises-dialog.png",
+            "pages": [
+                "instructor/exercises/file-upload-exercise.mdx",
+                "instructor/exercises/modeling-exercise.mdx",
+                "instructor/exercises/programming-exercise/create-an-exercise.mdx",
+                "instructor/exercises/quiz-exercise.mdx",
+                "instructor/exercises/text-exercise.mdx"
+            ],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/exercises",
+            "steps": [
+                {
+                    "click": "button:has-text(\"Create\")"
+                },
+                {
+                    "waitFor": "text=Select an exercise type"
+                }
+            ],
+            "selector": "cdk-dialog-container",
+            "source": ["src/main/webapp/app/exercise"]
+        },
+        {
+            "id": "import-programming-exercise-dialog",
+            "image": "instructor/exercises/assets/programming/import-programming-exercise-modal.png",
+            "pages": ["instructor/exercises/programming-exercise/create-an-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/exercises",
+            "steps": [
+                {
+                    "click": "button:has-text(\"Import\")"
+                },
+                {
+                    "waitFor": "text=Select what you want to import"
+                },
+                {
+                    "click": "cdk-dialog-container :text-is(\"Select\") >> nth=0"
+                },
+                {
+                    "waitFor": "text=Search for exercise"
+                }
+            ],
+            "selector": "cdk-dialog-container",
+            "source": ["src/main/webapp/app/exercise"]
+        },
+        {
+            "id": "import-text-exercise-dialog",
+            "image": "instructor/exercises/assets/text/import-text-exercise-modal.png",
+            "pages": ["instructor/exercises/text-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/exercises",
+            "steps": [
+                {
+                    "click": "button:has-text(\"Import\")"
+                },
+                {
+                    "waitFor": "text=Select what you want to import"
+                },
+                {
+                    "click": "cdk-dialog-container :text-is(\"Select\") >> nth=3"
+                },
+                {
+                    "waitFor": "text=Search for exercise"
+                }
+            ],
+            "selector": "cdk-dialog-container",
+            "source": ["src/main/webapp/app/exercise"]
+        },
+        {
+            "id": "import-modeling-exercise-dialog",
+            "image": "instructor/exercises/assets/modeling/import-modeling-exercise-modal.png",
+            "pages": ["instructor/exercises/modeling-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/exercises",
+            "steps": [
+                {
+                    "click": "button:has-text(\"Import\")"
+                },
+                {
+                    "waitFor": "text=Select what you want to import"
+                },
+                {
+                    "click": "cdk-dialog-container :text-is(\"Select\") >> nth=2"
+                },
+                {
+                    "waitFor": "text=Search for exercise"
+                }
+            ],
+            "selector": "cdk-dialog-container",
+            "source": ["src/main/webapp/app/exercise"]
+        },
+        {
+            "id": "import-quiz-list-dialog",
+            "image": "instructor/exercises/assets/quiz/import-list-quizzes.png",
+            "pages": ["instructor/exercises/quiz-exercise.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/exercises",
+            "steps": [
+                {
+                    "click": "button:has-text(\"Import\")"
+                },
+                {
+                    "waitFor": "text=Select what you want to import"
+                },
+                {
+                    "click": "cdk-dialog-container :text-is(\"Select\") >> nth=1"
+                },
+                {
+                    "waitFor": "text=Search for"
+                }
+            ],
+            "selector": "cdk-dialog-container",
+            "source": ["src/main/webapp/app/exercise"]
+        },
+        {
+            "id": "programming-grading-test-cases",
+            "image": "instructor/exercises/assets/programming/configure-grading-test-cases.png",
+            "pages": ["instructor/exercises/programming-exercise/grade-and-verify.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/programming-exercises/{exercise:Sorting Algorithms in Java}/grading/test-cases",
+            "viewport": {
+                "width": 1440,
+                "height": 1000
+            },
+            "steps": [
+                {
+                    "waitFor": "text=Charts"
+                }
+            ],
+            "source": ["src/main/webapp/app/programming/manage"]
+        },
+        {
+            "id": "programming-grading-submission-policy",
+            "image": "instructor/exercises/assets/programming/submission-policy-grading-page.png",
+            "pages": ["instructor/exercises/programming-exercise/grade-and-verify.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/programming-exercises/{exercise:Sorting Algorithms in Java}/grading/submission-policy",
+            "viewport": {
+                "width": 1440,
+                "height": 1000
+            },
+            "steps": [
+                {
+                    "waitFor": "text=Submission Policy"
+                }
+            ],
+            "selector": "jhi-programming-exercise-configure-grading",
+            "source": ["src/main/webapp/app/programming/manage"]
+        },
+        {
+            "id": "submission-policy-none",
+            "image": "instructor/exercises/assets/programming/submission-policy-none-form.png",
+            "pages": ["instructor/exercises/programming-exercise/grade-and-verify.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/programming-exercises/{exercise:Sorting Algorithms in Java}/grading/submission-policy",
+            "steps": [
+                {
+                    "waitFor": "text=Submission Policy"
+                }
+            ],
+            "selector": "jhi-submission-policy-update",
+            "source": ["src/main/webapp/app/programming/manage"]
+        },
+        {
+            "id": "submission-policy-lock-repository",
+            "image": "instructor/exercises/assets/programming/submission-policy-lock-repository-form.png",
+            "pages": ["instructor/exercises/programming-exercise/grade-and-verify.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/programming-exercises/{exercise:Sorting Algorithms in Java}/grading/submission-policy",
+            "steps": [
+                {
+                    "waitFor": "text=Submission Policy"
+                },
+                {
+                    "click": "jhi-submission-policy-update button[role=combobox]"
+                },
+                {
+                    "click": "[role=option]:has-text(\"Lock Repository\")"
+                },
+                {
+                    "waitFor": "text=Submission Limit"
+                }
+            ],
+            "selector": "jhi-submission-policy-update",
+            "source": ["src/main/webapp/app/programming/manage"]
+        },
+        {
+            "id": "exam-grade-key-editor",
+            "image": "instructor/exams/assets/grade_key_editor.png",
+            "pages": ["instructor/exams/grade-and-publish.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/exams/{exam:Practice Exam: Software Engineering Fundamentals}/grading",
+            "viewport": {
+                "width": 1440,
+                "height": 1000
+            },
+            "steps": [
+                {
+                    "waitFor": "text=Grade Type"
+                }
+            ],
+            "source": ["src/main/webapp/app/exam/manage"]
+        },
+        {
+            "id": "exam-assessment-dashboard",
+            "image": "instructor/exams/assets/assessment_dashboard.png",
+            "pages": ["instructor/exams/assess-an-exam.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/exams/{exam:Practice Exam: Software Engineering Fundamentals}/assessment-dashboard",
+            "viewport": {
+                "width": 1440,
+                "height": 1000
+            },
+            "steps": [
+                {
+                    "waitFor": "text=Exercise Table"
+                }
+            ],
+            "source": ["src/main/webapp/app/exam/manage"]
+        },
+        {
+            "id": "exam-add-exercise-dialog",
+            "image": "instructor/exams/assets/add_exercises.png",
+            "pages": ["instructor/exams/add-exercises.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/exams/{exam:Practice Exam: Software Engineering Fundamentals}/exercise-groups",
+            "steps": [
+                {
+                    "click": "button:has-text(\"Add Exercise\") >> nth=0"
+                },
+                {
+                    "waitFor": "text=Select an exercise type"
+                }
+            ],
+            "selector": "cdk-dialog-container",
+            "source": ["src/main/webapp/app/exam/manage"]
+        },
+        {
+            "id": "exam-import-exercise-group-dialog",
+            "image": "instructor/exams/assets/exercise_group_import_exam.png",
+            "pages": ["instructor/exams/add-exercises.mdx"],
+            "user": "instructor",
+            "route": "/course-management/{courseId}/exams/{exam:Practice Exam: Software Engineering Fundamentals}/exercise-groups",
+            "steps": [
+                {
+                    "click": "button:has-text(\"Import Exercise Group\")"
+                },
+                {
+                    "waitFor": "text=Import an exam"
+                }
+            ],
+            "selector": "cdk-dialog-container",
+            "source": ["src/main/webapp/app/exam/manage"]
         }
     ]
 }
