@@ -50,7 +50,7 @@ that appear in the code, the user interface, and the documentation, so that one 
 | Exercise | A task of a course that students solve and that Artemis can grade. There are five types: programming, quiz, modeling, text, and file upload. | |
 | Programming exercise | An exercise that students solve by pushing code to a git repository. Artemis builds and tests the code and creates a result. | `coding exercise` |
 | Quiz exercise | An exercise made of multiple choice, short answer, or drag and drop questions. Artemis assesses it automatically. | |
-| Modeling exercise | An exercise in which students draw a UML diagram in the Apollon editor. It is assessed manually. | |
+| Modeling exercise | An exercise in which students draw a diagram in the Apollon editor, for example a UML class diagram, an activity diagram or a BPMN process. It is assessed manually or with automatic feedback. | |
 | Text exercise | An exercise that students answer in free text. It is assessed manually or with suggestions from Athena. | |
 | File upload exercise | An exercise that students answer by uploading a file. It is assessed manually. | |
 | Participation | The connection between a student (or a team) and one exercise. It is created when the student starts the exercise and holds the submissions and results of that student. For a programming exercise it also points to the student's repository. | |
@@ -60,7 +60,7 @@ that appear in the code, the user interface, and the documentation, so that one 
 | Score | The percentage of the points of an exercise that a result earned. | |
 | Assessment | The act of grading a submission. It is **automatic** (tests, quizzes) or **manual** (a Teaching Assistant, optionally supported by Athena). | |
 | Grading instruction | A reusable comment with a fixed number of points that an assessor applies while assessing manually. Grading instructions are grouped in grading criteria. | |
-| Complaint | A student's objection to a manually assessed result. Another assessor reviews it and answers with a complaint response. | |
+| Complaint | A student's objection to an assessed result, either a manual one or an automatic one of a programming exercise when the instructor enables complaints on automatic assessment. Another assessor reviews it and answers with a complaint response. | |
 | Grading scale | The mapping from the overall score of a course or exam to a grade. | |
 | Plagiarism check | The comparison of the submissions of an exercise with each other (JPlag for programming exercises). A match that an instructor investigates becomes a **plagiarism case**. | |
 
@@ -116,7 +116,7 @@ that appear in the code, the user interface, and the documentation, so that one 
 | Module | A package of the server below `de.tum.cit.aet.artemis`, such as `exercise`, `exam`, or `localci`, with its own API for the other modules. | |
 | Distributed data provider | The abstraction `DistributedDataProvider` that holds the state that nodes share (caches, queues, locks, maps). Hazelcast, Redis, and a local implementation are its **providers**. See [Distributed Data](guidelines/distributed-data.mdx). | `distributed cache provider` |
 | Provider | A swappable implementation of the distributed data provider. Its glue code is an **adapter**. | |
-| Websocket topic | A declared destination that the server sends messages to and that the client subscribes to. Every topic is a constant with an access rule. See [Websocket](guidelines/websocket.mdx). | `web socket` |
+| Websocket topic | A declared destination that the server sends messages to and that the client subscribes to. Every topic is a constant: a broadcast topic has an access rule for its subscribers, a per-user topic reaches only the user that the server addresses. See [Websocket](guidelines/websocket.mdx). | `web socket` |
 | Spring profile | A switch that enables parts of the server, such as `core`, `buildagent`, `localvc`, `localci`, `scheduling`, or `dev`. | |
 | Feature toggle | A switch that an administrator turns on or off at run time to enable a feature without a deployment. | |
 | Liquibase changeset | One step of the database migration. A changed schema always needs a new changeset. | |
