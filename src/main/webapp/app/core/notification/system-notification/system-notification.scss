@@ -28,32 +28,48 @@
 
     .notification-text {
         flex: 1;
+        min-width: 0;
         display: flex;
         justify-content: center;
         align-items: center;
-        flex-wrap: wrap;
+        gap: 10px;
+    }
 
-        .notification-title {
-            font-weight: bold;
-            white-space: nowrap;
-            margin: 0 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
+    .notification-icon {
+        flex-shrink: 0;
+        font-size: 20px;
+        animation-delay: 0.2s;
+    }
 
-            .ng-fa-icon {
-                font-size: 20px;
-                animation-delay: 0.2s;
-            }
+    .notification-message {
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-align: start;
+        cursor: pointer;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        animation-delay: 0.28s;
+    }
 
-            > span {
-                animation-delay: 0.28s;
-            }
+    .notification-title {
+        font-weight: bold;
+    }
+
+    @media (max-width: 767.98px) {
+        padding-inline: 10px;
+        font-size: 0.875rem;
+
+        .notification-text {
+            gap: 6px;
         }
 
-        .notification-content {
-            animation-delay: 0.36s;
+        .notification-icon {
+            font-size: 1rem;
         }
     }
 
@@ -63,6 +79,15 @@
     }
 
     .notification-close {
+        flex-shrink: 0;
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
         cursor: pointer;
     }
 }
@@ -89,4 +114,19 @@
         opacity: 1;
         transform: scaleY(1);
     }
+}
+
+.notification-preview {
+    width: min(22rem, calc(100vw - 3rem));
+    max-height: min(24rem, 60dvh);
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+.notification-details {
+    width: min(32rem, calc(100vw - 3rem));
+    max-height: min(36rem, calc(100dvh - 6rem));
+    overflow: auto;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
 }

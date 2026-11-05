@@ -1,3 +1,38 @@
+.courses-title {
+    font-size: clamp(1.125rem, 2.5vw, 1.75rem);
+}
+
+.courses-actions {
+    flex-basis: 8rem;
+}
+
+.course-sort,
+.course-secondary-action {
+    flex-shrink: 0;
+}
+
+.course-search {
+    flex: 1;
+    max-width: 20rem;
+}
+
+@media (max-width: 767.98px) {
+    .courses-title,
+    .course-secondary-action,
+    .course-sort {
+        display: none;
+    }
+
+    .course-search {
+        max-width: none;
+    }
+
+    .course-section-title {
+        font-size: clamp(1rem, 4vw, 1.25rem);
+        white-space: nowrap;
+    }
+}
+
 .exam-container {
     cursor: pointer;
     transition: box-shadow 0.1s linear;
@@ -19,23 +54,22 @@
     display: grid;
 
     // cards can shrink to 350px
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(350px, 100%), 1fr));
     gap: 1rem;
     justify-items: center;
 
     // for 4 or less cards, we let each card shrink to 325px to display more cards in smaller screens, 1751px is the breakpoint for 4 cards
 
     @media screen and (max-width: 1751px) {
-        grid-template-columns: repeat(auto-fill, minmax(325px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(min(325px, 100%), 1fr));
     }
 }
 
 .course-card-wrapper {
     width: 100%;
     max-width: 400px;
-}
 
-.container-fluid {
-    // ensure that horizontal spacing in container is consistent
-    --bs-gutter-x: 2rem;
+    @media (max-width: 767.98px) {
+        max-width: none;
+    }
 }
