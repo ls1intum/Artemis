@@ -439,6 +439,7 @@ def make_png(width: int, height: int, pixel, color: int = 2, method: int = 0) ->
 
 
 def self_test() -> None:
+    """Exercise manifest validation, PNG decoding and screenshot comparison with self-contained fixtures."""
     def gradient(x, y):
         return (x * 20 % 256, y * 30 % 256, (x + y) * 10 % 256)
 

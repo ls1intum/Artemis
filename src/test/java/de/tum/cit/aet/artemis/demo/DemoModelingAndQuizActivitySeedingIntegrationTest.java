@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 
 import tools.jackson.databind.JsonNode;
 
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.api.CourseApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -190,7 +192,7 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
     }
 
     @Test
-    void seedsDragAndDropQuestionWithPictureIntoOngoingQuiz() {
+    void seedsDragAndDropQuestionWithPictureIntoOngoingQuiz() throws Exception {
         seed();
 
         QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsElseThrow(demoExercise(ONGOING_QUIZ_TITLE).getId());
@@ -201,6 +203,8 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
         assertThat(question.getDragItems()).as("an item for each cost").hasSize(3);
         assertThat(question.getCorrectMappings()).as("every item belongs to one box").hasSize(3);
         assertThat(question.getBackgroundFilePath()).as("the picture of the question was stored").isNotBlank().endsWith(".png");
+        assertThat(FilePathConverter.getDragAndDropBackgroundFilePath().resolve(question.getBackgroundFilePath())).as("quiz creation preserves the packaged background image bytes")
+                .hasBinaryContent(new ClassPathResource("demo/quiz/collection-lookup-costs.png").getContentAsByteArray());
     }
 
     @Test

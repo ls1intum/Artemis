@@ -2,10 +2,7 @@ package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -16,7 +13,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +27,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.util.CommonsMultipartFile;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
@@ -98,7 +97,7 @@ public class QuizDemoService {
      * The picture of the drag and drop question of the ongoing quiz: three operations on the left, and an empty box beside each of them. It is stored with the demo resources
      * instead of being drawn here, because drawing text needs the fonts of the machine that runs the server. The boxes of {@link #lookupCostQuestion()} lie on its empty boxes.
      */
-    private static final Path DND_BACKGROUND_RESOURCE = Path.of("demo", "quiz", "collection-lookup-costs.png");
+    private static final Path DND_BACKGROUND_RESOURCE = Path.of("demo", "quiz", DND_BACKGROUND_FILE_NAME);
 
     private static final String EXAM_QUIZ_TITLE = "Quiz: Algorithms and Complexity";
 
@@ -209,12 +208,22 @@ public class QuizDemoService {
 
         quizExercise.addQuestion(lookupCostQuestion());
 
-        return create(quizExercise, List.of(new DemoImageFile(DND_BACKGROUND_FILE_NAME, readBackground())));
+        return create(quizExercise, List.of(readBackground()));
     }
 
-    private byte[] readBackground() {
+    /**
+     * Reads the packaged question background into the same multipart wrapper used for uploaded files, keeping this small image in memory.
+     *
+     * @return the image file passed to quiz creation
+     */
+    private MultipartFile readBackground() {
         try {
-            return resourceLoaderService.getResource(DND_BACKGROUND_RESOURCE).getContentAsByteArray();
+            byte[] content = resourceLoaderService.getResource(DND_BACKGROUND_RESOURCE).getContentAsByteArray();
+            FileItem item = new DiskFileItem(DND_BACKGROUND_FILE_NAME, "image/png", false, DND_BACKGROUND_FILE_NAME, content.length, null);
+            try (var output = item.getOutputStream()) {
+                output.write(content);
+            }
+            return new CommonsMultipartFile(item);
         }
         catch (IOException exception) {
             throw new UncheckedIOException("Could not read the picture of the demo drag and drop question " + DND_BACKGROUND_RESOURCE, exception);
@@ -453,55 +462,6 @@ public class QuizDemoService {
             question.addCorrectMapping(new ShortAnswerMapping().spot(spot).solution(solution));
         }
         return question;
-    }
-
-    /**
-     * A picture that the quiz creation stores like the one that an instructor uploads.
-     *
-     * @param name    the file name that the drag and drop question refers to.
-     * @param content the bytes of the picture.
-     */
-    private record DemoImageFile(String name, byte[] content) implements MultipartFile {
-
-        @Override
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public String getOriginalFilename() {
-            return name;
-        }
-
-        @Override
-        public String getContentType() {
-            return "image/png";
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return content.length == 0;
-        }
-
-        @Override
-        public long getSize() {
-            return content.length;
-        }
-
-        @Override
-        public byte[] getBytes() {
-            return content.clone();
-        }
-
-        @Override
-        public InputStream getInputStream() {
-            return new ByteArrayInputStream(content);
-        }
-
-        @Override
-        public void transferTo(File destination) throws IOException {
-            FileUtils.writeByteArrayToFile(destination, content);
-        }
     }
 
     /**
