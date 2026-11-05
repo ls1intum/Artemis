@@ -29,7 +29,13 @@
             <span th:text="#{email.deimos.analysisComplete.analyzed}">Analyzed participations</span>: <span th:text="${analysis.analyzed}">0</span>
         </li>
         <li>
+            <span th:text="#{email.deimos.analysisComplete.manipulationAttemptCount}">Manipulation attempts</span>: <span th:text="${analysis.manipulationAttemptCount}">0</span>
+        </li>
+        <li>
             <span th:text="#{email.deimos.analysisComplete.maliciousCount}">Malicious</span>: <span th:text="${analysis.maliciousCount}">0</span>
+        </li>
+        <li>
+            <span th:text="#{email.deimos.analysisComplete.incompletelyCheckedCount}">Incompletely checked</span>: <span th:text="${analysis.incompletelyCheckedCount}">0</span>
         </li>
         <li>
             <span th:text="#{email.deimos.analysisComplete.benignCount}">Benign</span>: <span th:text="${analysis.benignCount}">0</span>
@@ -39,16 +45,54 @@
         </li>
     </ul>
 
+    <th:block th:if="${analysis.failureBreakdown != null and !analysis.failureBreakdown.isEmpty()}">
+        <p class="bold-text" th:text="#{email.deimos.analysisComplete.failureBreakdownHeading}">Failures by category</p>
+        <ul>
+            <li th:each="entry : ${analysis.failureBreakdown}">
+                <span th:text="#{${entry.translationKey}}">Category</span>: <span th:text="${entry.count}">0</span>
+            </li>
+        </ul>
+        <p th:text="#{email.deimos.analysisComplete.failureHint}">Categories other than "Nothing to analyze" mean these participations were not examined.</p>
+    </th:block>
+
     <th:block th:if="${analysis.failedAnalysisDetails != null and !analysis.failedAnalysisDetails.isEmpty()}">
         <p class="bold-text" th:text="#{email.deimos.analysisComplete.failedDetailsHeading}">Failure details</p>
         <ul>
             <li th:each="detail : ${analysis.failedAnalysisDetails}">
-                <span th:if="${detail.participationId > 0}"
-                      th:text="#{email.deimos.analysisComplete.failedParticipationLabel(${detail.participationId})}">Participation</span>
-                <span th:if="${detail.participationId <= 0}"
-                      th:text="#{email.deimos.analysisComplete.failedBatchLabel}">Batch-level failure</span>
+                <!--/* One line with literal spaces: some mail clients drop a line break between inline elements instead of showing it as a space. */-->
+                <span th:if="${detail.participationId > 0}" th:text="#{email.deimos.analysisComplete.failedParticipationLabel(${detail.participationId})}">Participation</span><span th:if="${detail.participationId <= 0}" th:text="#{email.deimos.analysisComplete.failedBatchLabel}">Batch-level failure</span>: <span th:text="#{${detail.translationKey}}">Category</span>
                 <p style="white-space: pre-wrap; margin: 0.35em 0 0.75em 0; font-family: monospace; font-size: 0.85em; color: #666;"
                    th:text="${detail.reason}">Reason</p>
+            </li>
+        </ul>
+    </th:block>
+
+    <th:block th:if="${analysis.manipulationAttemptLinks != null and !analysis.manipulationAttemptLinks.isEmpty()}">
+        <p class="bold-text" th:text="#{email.deimos.analysisComplete.manipulationAttemptsHeading}">Manipulation attempts</p>
+        <p th:text="#{email.deimos.analysisComplete.manipulationAttemptsHint}">These participations contain text that imitates the Deimos markers.</p>
+        <ul>
+            <li th:each="link : ${analysis.manipulationAttemptLinks}">
+                <div>
+                    <a th:href="${link.url}" th:text="#{email.deimos.analysisComplete.maliciousParticipationLinkLabel(${link.participationId})}">Participation</a>
+                </div>
+                <ul>
+                    <li th:each="finding : ${link.findings}">
+                        <span th:if="${finding.lineNumber != null}"
+                              th:text="#{email.deimos.analysisComplete.findingInLine(${finding.filePath}, ${finding.lineNumber}, ${finding.snapshot})}">File, line, snapshot</span>
+                        <span th:if="${finding.lineNumber == null}"
+                              th:text="#{email.deimos.analysisComplete.findingInPath(${finding.filePath}, ${finding.snapshot})}">File path, snapshot</span>
+                    </li>
+                    <li th:if="${link.findingCount > link.findings.size()}"
+                        th:text="#{email.deimos.analysisComplete.moreFindings(${link.findingCount - link.findings.size()})}">... and more</li>
+                </ul>
+                <p th:if="${link.llmMalicious != null and link.llmMalicious}" th:text="#{email.deimos.analysisComplete.llmAssessmentMalicious}">The model also classified it as malicious:</p>
+                <p th:if="${link.llmMalicious != null and !link.llmMalicious}" th:text="#{email.deimos.analysisComplete.llmAssessmentBenign}">The model classified it as benign:</p>
+                <p class="rationale-block" th:if="${link.rationale != null and !link.rationale.isEmpty()}"
+                   style="white-space: pre-wrap; margin: 0.35em 0 0.75em 0;"
+                   th:text="${link.rationale}">Rationale</p>
+                <p th:if="${link.failureTranslationKey != null}">
+                    <span th:text="#{email.deimos.analysisComplete.llmUnavailable}">No assessment by the model</span>: <span th:text="#{${link.failureTranslationKey}}">Category</span>
+                </p>
             </li>
         </ul>
     </th:block>
@@ -60,6 +104,29 @@
                 <div>
                     <a th:href="${link.url}" th:text="#{email.deimos.analysisComplete.maliciousParticipationLinkLabel(${link.participationId})}">Participation</a>
                 </div>
+                <p class="rationale-block" th:if="${link.rationale != null and !link.rationale.isEmpty()}"
+                   style="white-space: pre-wrap; margin: 0.35em 0 0.75em 0;"
+                   th:text="${link.rationale}">Rationale</p>
+            </li>
+        </ul>
+    </th:block>
+
+    <th:block th:if="${analysis.incompletelyCheckedLinks != null and !analysis.incompletelyCheckedLinks.isEmpty()}">
+        <p class="bold-text" th:text="#{email.deimos.analysisComplete.incompletelyCheckedHeading}">Incompletely checked participations</p>
+        <p th:text="#{email.deimos.analysisComplete.incompletelyCheckedHint}">Part of the evidence of these participations was left out.</p>
+        <ul>
+            <li th:each="link : ${analysis.incompletelyCheckedLinks}">
+                <div>
+                    <a th:href="${link.url}" th:text="#{email.deimos.analysisComplete.maliciousParticipationLinkLabel(${link.participationId})}">Participation</a>
+                </div>
+                <ul>
+                    <li th:each="omission : ${link.omissions}">
+                        <!--/* One line with literal spaces: some mail clients drop a line break between inline elements instead of showing it as a space. */-->
+                        <span th:text="#{${'email.deimos.analysisComplete.omissionReason.' + omission.reason.name()}}">Reason</span><th:block th:if="${omission.filePath != null}">: <span th:text="${omission.filePath}">File</span></th:block> (<span th:if="${omission.snapshot != null}" th:text="#{email.deimos.analysisComplete.omissionSnapshot(${omission.snapshot})}">snapshot</span><span th:if="${omission.snapshot == null}" th:text="#{email.deimos.analysisComplete.finalState}">final state</span>)
+                    </li>
+                    <li th:if="${link.omissionCount > link.omissions.size()}"
+                        th:text="#{email.deimos.analysisComplete.moreOmissions(${link.omissionCount - link.omissions.size()})}">... and more</li>
+                </ul>
                 <p class="rationale-block" th:if="${link.rationale != null and !link.rationale.isEmpty()}"
                    style="white-space: pre-wrap; margin: 0.35em 0 0.75em 0;"
                    th:text="${link.rationale}">Rationale</p>

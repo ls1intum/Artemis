@@ -8,7 +8,7 @@
             "modal": {
                 "title": {
                     "course": "Malicious Participation Analysis für diesen Kurs starten",
-                    "exercise": "Malicious Participation Analysis für diese Programmieraufgabe Starten"
+                    "exercise": "Malicious Participation Analysis für diese Programmieraufgabe starten"
                 },
                 "from": "Von",
                 "to": "Bis",
@@ -16,7 +16,7 @@
                 "validation": {
                     "required": "Bitte wähle Start- und Enddatum aus.",
                     "order": "Das Startdatum muss vor oder gleich dem Enddatum liegen.",
-                    "window": "Der ausgewählte Zeitraum überschreitet das erlaubte Fenster von 31 Tagen."
+                    "window": "Der ausgewählte Zeitraum überschreitet das erlaubte Fenster von {{ maxWindowDays }} Tagen."
                 }
             },
             "trigger": {

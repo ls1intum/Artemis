@@ -1,6 +1,7 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
 import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -9,15 +10,25 @@ export interface DeimosDateRangeSelection {
     to: Dayjs;
 }
 
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
 @Component({
     selector: 'jhi-deimos-date-range-modal',
     templateUrl: './deimos-date-range-modal.component.html',
     imports: [TumAetUiDialogComponent, TumAetUiDatePickerComponent, TumAetUiButtonDirective, TumAetUiMessageComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class DeimosDateRangeModalComponent {
+    private readonly profileService = inject(ProfileService);
+
     titleTranslationKey = input.required<string>();
-    maxWindowDays = input<number | undefined>(undefined);
     isSubmitting = input(false);
+
+    /**
+     * The longest window the server accepts, published by the server so the two cannot diverge. It is only absent when
+     * the Deimos module is disabled, in which case no trigger opens this dialog; the dialog then skips its own check
+     * and the server stays authoritative.
+     */
+    protected readonly maxWindowDays = this.profileService.getProfileInfo()?.deimosMaxWindowDays;
 
     confirmSelection = output<DeimosDateRangeSelection>();
 
@@ -37,13 +48,17 @@ export class DeimosDateRangeModalComponent {
     });
 
     readonly isWindowTooLarge = computed(() => {
-        const maxDays = this.maxWindowDays();
+        const maxDays = this.maxWindowDays;
         const from = this.fromDate();
         const to = this.toDate();
         if (!maxDays || !from || !to || this.isOrderInvalid()) {
             return false;
         }
-        return to.diff(from, 'day', true) > maxDays;
+        // Compared in elapsed milliseconds to match the server, which uses Duration.between(from, to) on instants.
+        // dayjs' .diff(..., 'day', true) compensates for UTC-offset changes, so across a DST transition it reports one
+        // hour less than the server measures. That let the client enable Submit for a window the server then rejected.
+        const rangeInMilliseconds = to.valueOf() - from.valueOf();
+        return rangeInMilliseconds > maxDays * MILLISECONDS_PER_DAY;
     });
 
     /** Ids of the messages that explain a rejected range, for the pickers to point at. */
