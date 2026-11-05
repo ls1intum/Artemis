@@ -636,7 +636,7 @@ public class StageChecks {
         }
         List<String> ids = new ArrayList<>();
         for (String partition : row.admittedPartitions().split(";")) {
-            java.util.regex.Matcher matcher = RISK_PARTITION.matcher(partition.strip());
+            java.util.regex.Matcher matcher = RISK_PARTITION.matcher(normalizeTestingCell(partition.replace("`", "")));
             if (!matcher.matches() || !matcher.group(1).startsWith(row.seamId() + ".")) {
                 return List.of();
             }

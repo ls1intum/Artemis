@@ -1344,6 +1344,28 @@ class StageChecksTest {
         }
 
         @Test
+        void acceptsInlineCodeFormattingAroundStableRiskPartitions() {
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
+            for (String partitions : List.of("S1.P1: typical; S1.P2: extrema", "`S1.P1: typical`; `S1.P2: extrema`", "`S1.P1`: typical; `S1.P2`: extrema",
+                    "`S1.P1: typical; S1.P2: extrema`")) {
+                sandbox.spec = VALID_SPEC.replace("S1.P1: typical, zero, negative, and int extrema", partitions);
+                assertThat(check(GenerationStage.SPEC).passed()).as(partitions).isTrue();
+                assertThat(StageChecks.riskPartitionIds(sandbox.spec)).containsExactly("S1.P1", "S1.P2");
+            }
+        }
+
+        @Test
+        void formattedRiskPartitionsStillRequireDescriptionsCorrectOwnershipAndUniqueIds() {
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
+            for (String partitions : List.of("`S1.P1:`", "`S2.P1: typical`", "`S1.P0: typical`", "`S1.P1: typical`; `S1.P1: duplicate`")) {
+                sandbox.spec = VALID_SPEC.replace("S1.P1: typical, zero, negative, and int extrema", partitions);
+                assertThat(check(GenerationStage.SPEC).passed()).as(partitions).isFalse();
+            }
+        }
+
+        @Test
         void rejectsAnIncompleteOrUnauthorizedContractRiskInventory() {
             exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
                     GenerationBuildTool.GRADLE);
