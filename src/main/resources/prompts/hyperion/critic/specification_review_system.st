@@ -25,6 +25,10 @@ Observe the same learner execution that the task grades. A second independently 
 If an entry point delegates to a testable operation, declare that delegation and observe the operation reached through that entry point; do not duplicate the scenario.
 A print-only replacement of a graded entry point must lose its behavioral credit even if another helper still returns correct objects.
 For each intermediate action, name the runtime observation that would change if that action were omitted while the final state stayed the same.
+Keep observation instrumentation inside supplied API constructors and methods, so the ordinary calls assigned by the brief are recorded automatically.
+Unless instrumentation is an explicit learning objective, learner code must not call recorders, registries, grading callbacks or reset functions to earn credit.
+A conforming learner implementation that follows the statement without those extra calls must pass. Hidden tests cannot make an undeclared recording call mandatory.
+The supplied observer records what the learner actually did; it must neither perform those actions nor trust a learner's claim that an unobserved action happened.
 
 When the learner writes tests, assess both sides: the learner tests pass on conforming behavior and fail on representative faulty behavior.
 Merely invoking them against the correct supplied implementation accepts empty test bodies. Put fault-variant selection and result interpretation in supplied instructor support;

@@ -162,6 +162,10 @@ its Public API, before the specification freezes. Vary inputs when behavior depe
 observation may expose operations on objects a beginner creates locally without making them write new abstractions. Tests of the supplied API alone do not grade the student's
 integration. For an operation sequence, state when each observation is taken. A final snapshot cannot establish an earlier state erased by a later operation; use supplied intermediate observations where needed. Observation support must record student actions, not perform them. Keep the student's prerequisites and responsibilities intact. Do not invent normative call counts, allocation counts or syntax restrictions merely to help a test.
 Source and bytecode inspection are not supported grading mechanisms.
+Keep observation instrumentation inside supplied API constructors and methods, so the ordinary calls assigned by the brief are recorded automatically.
+Unless instrumentation is an explicit learning objective, learner code must not call recorders, registries, grading callbacks or reset functions to earn credit.
+A conforming learner implementation that follows the statement without those extra calls must pass. Hidden tests cannot make an undeclared recording call mandatory.
+The supplied observer records what the learner actually did; it must neither perform those actions nor trust a learner's claim that an unobserved action happened.
 
 Observe the same learner execution that the task grades. A second independently implemented entry point cannot provide evidence for the first.
 If an entry point delegates to a testable operation, declare that delegation and observe the operation reached through that entry point; do not duplicate the scenario.
