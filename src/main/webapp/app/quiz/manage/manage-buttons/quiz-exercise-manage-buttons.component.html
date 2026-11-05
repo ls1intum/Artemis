@@ -14,12 +14,14 @@
                         size="small"
                         [icon]="faClipboardCheck"
                         [loading]="isEvaluatingQuizExercise()"
+                        [ariaLabel]="'artemisApp.quizExercise.evaluateQuizExercise' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.quizExercise.evaluateQuizExercise' | artemisTranslate"
                         (clicked)="evaluateQuizExercise()"
-                        ><span jhiTranslate="artemisApp.quizExercise.evaluateQuizExercise"></span
+                        ><span class="hidden @sm:inline" jhiTranslate="artemisApp.quizExercise.evaluateQuizExercise"></span
                     ></tumaet-ui-button>
                 }
                 @if (quizExercise().isAtLeastEditor) {
-                    <jhi-create-variant-with-ai-button [exercise]="quizExercise()" />
+                    <jhi-create-variant-with-ai-button [exercise]="quizExercise()" styleClass="min-w-0 flex-1 @7xl:flex-none [&>tumaet-ui-button]:w-full" />
                 }
             </ng-container>
             <ng-container detailMoreActions>
@@ -173,6 +175,8 @@
                 size="small"
                 severity="warn"
                 [routerLink]="quizExercise().isEditable ? [baseUrl(), 'quiz-exercises', quizExercise().id, 'edit'] : undefined"
+                [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                [tumAetUiTooltip]="'entity.action.edit' | artemisTranslate"
                 [class.opacity-60]="!quizExercise().isEditable"
                 [class.pointer-events-none]="!quizExercise().isEditable"
                 [attr.aria-disabled]="!quizExercise().isEditable"
@@ -182,7 +186,13 @@
         </span>
     }
     @if (quizExercise().isAtLeastInstructor && quizExercise().quizEnded) {
-        <a tumAetUiButton size="small" severity="warn" [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 're-evaluate']"
+        <a
+            tumAetUiButton
+            size="small"
+            severity="warn"
+            [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 're-evaluate']"
+            [attr.aria-label]="'entity.action.re-evaluate' | artemisTranslate"
+            [tumAetUiTooltip]="'entity.action.re-evaluate' | artemisTranslate"
             ><fa-icon [icon]="faWrench" /><span jhiTranslate="entity.action.re-evaluate"></span
         ></a>
     }

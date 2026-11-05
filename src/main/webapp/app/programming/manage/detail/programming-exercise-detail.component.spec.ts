@@ -263,6 +263,16 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="edit-in-editor-action"]')).toBeNull();
     });
 
+    it('names the compact editing links when their visible labels are hidden', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.isAtLeastEditor = true;
+        comp.programmingExercise.set(exercise);
+        fixture.detectChanges();
+        const links = fixture.nativeElement.querySelectorAll('[data-testid="exercise-editing-actions"] a') as NodeListOf<HTMLAnchorElement>;
+        expect(Array.from(links, (link) => link.getAttribute('aria-label'))).toEqual(['entity.action.edit', 'artemisApp.programmingExercise.configureGrading.shortTitle']);
+    });
+
     it('omits More actions when the editor has no available secondary commands', () => {
         const exercise = new ProgrammingExercise(new Course(), undefined);
         exercise.id = 21715;

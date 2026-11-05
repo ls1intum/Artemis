@@ -6,6 +6,8 @@ import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { promises as fs } from 'fs';
 import { SEED_COURSES } from '../../../support/seedData';
+import dayjs from 'dayjs';
+import { expectInside, expectNoOverlap, forEachViewport, measure } from '../../../support/layout';
 
 const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
@@ -150,6 +152,58 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             await quizExerciseOverview.exportQuizExercise();
             await expect(downloadPromise).resolves.toBeUndefined();
         });
+    });
+
+    test('Keeps German evaluation and variant actions readable on narrow screens', async ({ login, page, exerciseAPIRequests }) => {
+        await page.route('**/management/info', async (route) => {
+            const response = await route.fetch();
+            const info = await response.json();
+            info.activeModuleFeatures = [...new Set([...(info.activeModuleFeatures ?? []), 'hyperion'])];
+            await route.fulfill({ response, json: info });
+        });
+        // Localize this browser without changing the seeded administrator's preference for other workers.
+        await page.route('**/api/core/public/account', async (route) => {
+            const response = await route.fetch();
+            const account = await response.json();
+            account.langKey = 'de';
+            await route.fulfill({ response, json: account });
+        });
+        await login(admin);
+        const quiz = await exerciseAPIRequests.createQuizExercise({
+            body: { course },
+            quizQuestions: [multipleChoiceTemplate],
+            releaseDate: dayjs().subtract(3, 'hour'),
+            startOfWorkingTime: dayjs().subtract(2, 'hour'),
+            dueDate: dayjs().subtract(1, 'hour'),
+        });
+        try {
+            await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}`);
+            await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+            const editing = page.getByTestId('exercise-editing-actions');
+            const toolbar = editing.locator('..');
+            const controls = [
+                editing.getByRole('link', { name: 'Überarbeiten', exact: true }),
+                editing.getByTestId('quiz-evaluate-button').getByRole('button'),
+                editing.getByTestId('create-variant-ai-button').getByRole('button'),
+            ];
+            await expect(controls[1]).toHaveAccessibleName('Quiz auswerten');
+            const checkActions = async () => {
+                for (const [index, control] of controls.entries()) {
+                    const name = ['Re-evaluate', 'Evaluate quiz', 'Create Variant'][index];
+                    await expectInside(control, toolbar, ['top', 'right', 'bottom', 'left'], { name: `${name} stays inside the quiz toolbar` });
+                    await expect.poll(async () => (await measure(control, { name })).width, { message: `${name} retains a usable width` }).toBeGreaterThanOrEqual(32);
+                    await expect.poll(async () => (await measure(control, { name })).height, { message: `${name} uses at most two text lines` }).toBeLessThanOrEqual(64);
+                }
+                await expectNoOverlap(controls, { name: 'Re-evaluate, Evaluate quiz and Create Variant' });
+            };
+            await forEachViewport(page, checkActions);
+            await test.step('390px phone with the management sidebar', async () => {
+                await page.setViewportSize({ width: 390, height: 844 });
+                await checkActions();
+            });
+        } finally {
+            await exerciseAPIRequests.deleteQuizExercise(quiz.id!);
+        }
     });
 
     // Seed courses are persistent — no cleanup needed

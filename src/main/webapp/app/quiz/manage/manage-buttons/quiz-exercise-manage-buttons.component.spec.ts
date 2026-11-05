@@ -343,6 +343,21 @@ describe('QuizExercise Management Buttons Component evaluate button', () => {
         expect(fixture.nativeElement.querySelector('a[href$="/quiz-exercises/456/edit"]')).not.toBeNull();
     });
 
+    it.each([false, true])('names compact edit and reevaluation links when the quiz has ended: %s', (quizEnded) => {
+        const quiz = Object.assign(new QuizExercise({ id: 123 }, undefined), { id: 456, isAtLeastEditor: true, isAtLeastInstructor: true, isEditable: true, quizEnded });
+        fixture.componentRef.setInput('quizExercise', quiz);
+        fixture.componentRef.setInput('isDetailPage', true);
+        fixture.detectChanges();
+        const link = fixture.nativeElement.querySelector('[data-testid="exercise-editing-actions"] a') as HTMLAnchorElement;
+        expect(link.getAttribute('aria-label')).toBe(quizEnded ? 'entity.action.re-evaluate' : 'entity.action.edit');
+    });
+
+    it('names the compact evaluation button independently of its visible label', () => {
+        const button = render(true, true)!.querySelector('button')!;
+        expect(button.getAttribute('aria-label')).toBe('artemisApp.quizExercise.evaluateQuizExercise');
+        expect(button.disabled).toBe(false);
+    });
+
     it('keeps destructive actions out of the detail toolbar', () => {
         render(true, true);
         expect(fixture.nativeElement.querySelector('[id="delete-quiz-456"]')).toBeNull();

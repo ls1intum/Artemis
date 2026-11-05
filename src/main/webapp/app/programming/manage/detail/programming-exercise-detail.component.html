@@ -66,13 +66,27 @@
             </ng-container>
             <ng-container detailEditingActions>
                 @if (exercise.isAtLeastEditor) {
-                    <a tumAetUiButton severity="warn" size="small" [routerLink]="[baseResource(), 'edit']">
+                    <a
+                        tumAetUiButton
+                        severity="warn"
+                        size="small"
+                        [routerLink]="[baseResource(), 'edit']"
+                        [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                        [tumAetUiTooltip]="'entity.action.edit' | artemisTranslate"
+                    >
                         <fa-icon [icon]="faWrench" /><span jhiTranslate="entity.action.edit"></span>
                     </a>
-                    <a tumAetUiButton severity="warn" size="small" [routerLink]="[baseResource(), 'grading', 'test-cases']">
+                    <a
+                        tumAetUiButton
+                        severity="warn"
+                        size="small"
+                        [routerLink]="[baseResource(), 'grading', 'test-cases']"
+                        [attr.aria-label]="'artemisApp.programmingExercise.configureGrading.shortTitle' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.programmingExercise.configureGrading.shortTitle' | artemisTranslate"
+                    >
                         <fa-icon [icon]="faFileSignature" /><span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle"></span>
                     </a>
-                    <jhi-create-variant-with-ai-button [exercise]="exercise" />
+                    <jhi-create-variant-with-ai-button [exercise]="exercise" styleClass="min-w-0 flex-1 @7xl:flex-none [&>tumaet-ui-button]:w-full" />
                 }
             </ng-container>
             <ng-container detailMoreActions>

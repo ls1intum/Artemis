@@ -232,6 +232,12 @@ describe('Exercise detail common action rendering', () => {
         expect(fixture.nativeElement.querySelector('[jhiDeleteButton]')).toBeNull();
     });
 
+    it('names the compact edit link when its visible label is hidden', () => {
+        fixture.componentRef.setInput('exercise', exercise());
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-editing-actions"] a').getAttribute('aria-label')).toBe('entity.action.edit');
+    });
+
     it('offers exactly plagiarism and tutor effort in the secondary text menu', async () => {
         fixture.componentRef.setInput('exercise', exercise());
         fixture.detectChanges();

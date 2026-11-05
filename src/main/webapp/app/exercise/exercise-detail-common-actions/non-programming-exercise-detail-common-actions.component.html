@@ -65,7 +65,13 @@
             </ng-container>
             <ng-container detailEditingActions>
                 @if (exercise.isAtLeastEditor) {
-                    <a tumAetUiButton size="small" severity="warn" [routerLink]="baseResource() + 'edit'"
+                    <a
+                        tumAetUiButton
+                        size="small"
+                        severity="warn"
+                        [routerLink]="baseResource() + 'edit'"
+                        [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                        [tumAetUiTooltip]="'entity.action.edit' | artemisTranslate"
                         ><fa-icon [icon]="faWrench" /><span jhiTranslate="entity.action.edit"></span
                     ></a>
                 }
