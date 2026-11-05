@@ -44,6 +44,10 @@ checkout paths show which repositories each build uses. The shared test reposito
 and any auxiliary repositories appear below the panels, followed by the
 **Template/Solution Comparison**.
 
+Select the exercise title on the course's exercise list and scroll to **Repositories and builds** to find these
+panels. **Code** opens the repository actions; editors can choose **Edit in editor** there. **Download Repository**
+downloads that panel's repository, while **More actions → Download Exercise** downloads the complete exercise.
+
 The expected baseline is **0%** for the template and **100%** for the solution.
 A yellow warning triangle appears beside an unexpected result and beside the
 exercise's title in the course exercise list. Hover or focus the warning to read
@@ -54,7 +58,8 @@ that have not been loaded are not treated as successful builds.
 
 ## Configure Grading
 
-The grading configuration determines how test cases contribute to the overall score and allows configuration of code quality issue penalties.
+Open **Grading** in the exercise detail action bar. The grading configuration determines how test cases contribute
+to the overall score and allows configuration of code quality issue penalties.
 
 ### General Actions
 
@@ -289,13 +294,14 @@ Select **None** as policy type and press **Update**. Locked repositories are unl
 
 ## Verify Exercise Configuration
 
-Open the **View** page of the programming exercise.
+Select the programming exercise's title in course management and scroll to **Repositories and builds**.
 
-<Image src={solutionTemplateResult} alt="Solution Template Result" size={ImageSize.large} caption="Template and Solution Results" />
+<Image src={solutionTemplateResult} alt="Template and Solution repository panels with their build results and checkout directories" size={ImageSize.large} caption="Template and Solution builds beside their repository controls" />
 
 Verify:
-- **Template result**: Score 0% with "0 of X passed" (or "0 of X passed, 0 issues" with SCA)
-- **Solution result**: Score 100% with "X of X passed" (or "X of X passed, 0 issues" with SCA)
+- **Template**: Score 0% with "0 of X passed" (or "0 of X passed, 0 issues" with SCA).
+- **Solution**: Score at least 100% with all tests passed. A fully passing solution may exceed 100% when bonus
+  points are configured; failed tests still produce a warning even if bonus points raise the score to 100% or more.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -305,7 +311,9 @@ Verify:
 
 ### Review Template/Solution Differences
 
-Review differences between **template** and **solution** repositories to verify expected student changes.
+Below the build panels, **Tests** and any auxiliary repositories appear once with their own repository controls.
+The **Template/Solution Comparison** follows them. Review the differences between the template and solution
+repositories to verify the changes expected from students.
 
 <Image src={courseManagementTemplateSolutionDiff} alt="Template Solution Diff" size={ImageSize.large} caption="Template/Solution Comparison in Exercise Management" />
 
