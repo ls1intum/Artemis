@@ -262,8 +262,12 @@ ext["testcontainers-redis-module.version"] = testcontainers_redis_version
 // com.fasterxml.jackson.core:jackson-annotations (that artifact never moved to the tools.jackson group) at a
 // version trailing the Jackson 2 line, and io.spring.dependency-management lets a later import override an
 // earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
+// OpenTelemetry is pinned the same way: the Spring Boot BOM manages opentelemetry-api at an older line (1.62.0),
+// which the GitHub dependency graph reports (GHSA-ccrj-gw8r-854m, fixed in 1.67.0) although the resolutionStrategy
+// force above already puts every runtime configuration on ${opentelemetry_version}.
 dependencyManagement {
     imports {
+        mavenBom "io.opentelemetry:opentelemetry-bom:${opentelemetry_version}"
         mavenBom "tools.jackson:jackson-bom:3.2.4"
         mavenBom "com.fasterxml.jackson:jackson-bom:2.22.4"
     }

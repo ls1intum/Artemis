@@ -1,0 +1,17 @@
+import { Component, inject } from '@angular/core';
+import { AccountInformationComponent } from 'app/account/user/settings/profile/account-information/account-information.component';
+import { GlobalNotificationsSettingsComponent } from 'app/account/user/settings/profile/global-notifications-settings/global-notifications-settings.component';
+import { isAtlasModuleActive } from 'app/account/user/settings/learning/learner-profile-availability';
+import { ScienceSettingsComponent } from 'app/account/user/settings/profile/science-settings/science-settings.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+
+@Component({
+    selector: 'jhi-profile-settings',
+    templateUrl: './profile-settings.component.html',
+    imports: [AccountInformationComponent, GlobalNotificationsSettingsComponent, ScienceSettingsComponent],
+})
+export class ProfileSettingsComponent {
+    private readonly profileService = inject(ProfileService);
+
+    readonly isDataSharingAvailable = isAtlasModuleActive(this.profileService);
+}
