@@ -180,6 +180,26 @@ describe('NavbarComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('keeps course enrollment reachable through mobile account navigation', () => {
+        vi.spyOn(TestBed.inject(AccountService), 'isAuthenticated').mockReturnValue(true);
+        fixture.detectChanges();
+        component.currAccount.set({ login: 'student' } as User);
+        component.iconsMovedToMenu.set(true);
+        component.isNavbarCollapsed.set(false);
+        fixture.detectChanges();
+
+        const enrollmentLink: HTMLAnchorElement = fixture.nativeElement.querySelector('[data-testid="mobile-course-enrollment"]');
+        expect(enrollmentLink).toBeTruthy();
+        enrollmentLink.click();
+        expect(router.createUrlTree).toHaveBeenCalledWith(['/courses/enroll'], expect.any(Object));
+        expect(router.navigateByUrl).toHaveBeenCalled();
+        expect(component.isNavbarCollapsed()).toBe(true);
+
+        component.isExamActive.set(true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="mobile-course-enrollment"]')).toBeNull();
+    });
+
     it('should initialize component', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
