@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -43,7 +44,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
 import de.tum.cit.aet.artemis.programming.exception.GitException;
+import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -124,6 +127,22 @@ public class ProgrammingExerciseRepositoryService {
      */
     void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig, final User exerciseCreator,
             boolean emptyRepositories) throws GitAPIException {
+        setupExerciseTemplate(programmingExercise, buildConfig, exerciseCreator, emptyRepositories, null);
+    }
+
+    /**
+     * Set up the exercise template like {@link #setupExerciseTemplate(ProgrammingExercise, ProgrammingExerciseBuildConfig, User, boolean)} and apply a
+     * Security Framework choice to the tests repository before its first commit, so the initial builds run once with the chosen setting.
+     *
+     * @param programmingExercise     the programming exercise that should be set up
+     * @param buildConfig             its build configuration, which is stored separately and read by the caller
+     * @param exerciseCreator         the User that performed the action (used as Git commit author)
+     * @param emptyRepositories       if true, clear sources in template, solution, and test repositories after setup
+     * @param securityFrameworkChoice the validated Security Framework setting; null to keep the template's
+     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
+     */
+    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig, final User exerciseCreator,
+            boolean emptyRepositories, @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice) throws GitAPIException {
         if (programmingExercise == null) {
             throw new IllegalArgumentException("ProgrammingExercise must not be null");
         }
@@ -134,7 +153,7 @@ public class ProgrammingExerciseRepositoryService {
         final RepositoryResources solutionResources = getRepositoryResources(programmingExercise, RepositoryType.SOLUTION);
         final RepositoryResources testResources = getRepositoryResources(programmingExercise, RepositoryType.TESTS);
 
-        setupRepositories(programmingExercise, buildConfig, exerciseCreator, exerciseResources, solutionResources, testResources);
+        setupRepositories(programmingExercise, buildConfig, exerciseCreator, exerciseResources, solutionResources, testResources, securityFrameworkChoice);
 
         if (emptyRepositories) {
             clearRepositoriesForAiGeneration(exerciseResources.repository, solutionResources.repository, testResources.repository, exerciseCreator);
@@ -336,20 +355,22 @@ public class ProgrammingExerciseRepositoryService {
     /**
      * Sets up the three initial repositories for a new exercise.
      *
-     * @param programmingExercise The exercise that should be set up.
-     * @param buildConfig         Its build configuration, which is stored separately and read by the caller.
-     * @param exerciseCreator     The user that wants to create the exercise
-     * @param exerciseResources   The resources for the template repository.
-     * @param solutionResources   The resources for the solution repository.
-     * @param testResources       The resources for the repository containing the tests.
+     * @param programmingExercise     The exercise that should be set up.
+     * @param buildConfig             Its build configuration, which is stored separately and read by the caller.
+     * @param exerciseCreator         The user that wants to create the exercise
+     * @param exerciseResources       The resources for the template repository.
+     * @param solutionResources       The resources for the solution repository.
+     * @param testResources           The resources for the repository containing the tests.
+     * @param securityFrameworkChoice the validated Security Framework setting for the tests repository; null to keep the template's
      * @throws GitAPIException Thrown in case pushing a repository fails.
      */
     private void setupRepositories(final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig, final User exerciseCreator,
-            final RepositoryResources exerciseResources, final RepositoryResources solutionResources, final RepositoryResources testResources) throws GitAPIException {
+            final RepositoryResources exerciseResources, final RepositoryResources solutionResources, final RepositoryResources testResources,
+            @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice) throws GitAPIException {
         try {
             setupTemplateAndPush(exerciseResources, "Exercise", programmingExercise, buildConfig, exerciseCreator);
             setupTemplateAndPush(solutionResources, "Solution", programmingExercise, buildConfig, exerciseCreator);
-            setupTestTemplateAndPush(testResources, programmingExercise, buildConfig, exerciseCreator);
+            setupTestTemplateAndPush(testResources, programmingExercise, buildConfig, exerciseCreator, securityFrameworkChoice);
         }
         catch (Exception ex) {
             // if any exception occurs, try to at least push an empty commit, so that the
@@ -499,11 +520,11 @@ public class ProgrammingExerciseRepositoryService {
      * @throws GitAPIException Thrown in case pushing the updates to the version control system fails.
      */
     private void setupTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig,
-            final User user) throws IOException, GitAPIException {
+            final User user, @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice) throws IOException, GitAPIException {
         // Only copy template if repo is empty
         if (gitService.getFiles(resources.repository).isEmpty()
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
-            setupJVMTestTemplateAndPush(resources, programmingExercise, buildConfig, user);
+            setupJVMTestTemplateAndPush(resources, programmingExercise, buildConfig, user, securityFrameworkChoice);
         }
         else {
             // If there is no special test structure for a programming language, just copy all the test files.
@@ -522,7 +543,7 @@ public class ProgrammingExerciseRepositoryService {
      * @throws GitAPIException Thrown in case pushing the updates to the version control system fails.
      */
     private void setupJVMTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final ProgrammingExerciseBuildConfig buildConfig,
-            final User user) throws IOException, GitAPIException {
+            final User user, @Nullable SecurityFrameworkChoiceDTO securityFrameworkChoice) throws IOException, GitAPIException {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
@@ -559,7 +580,24 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         replacePlaceholders(programmingExercise, buildConfig, resources.repository);
+        if (securityFrameworkChoice != null && programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            applySecurityFrameworkChoice(repoLocalPath, securityFrameworkChoice);
+        }
         commitAndPushRepository(resources.repository, "Test-Template pushed by Artemis", true, user);
+    }
+
+    /**
+     * Applies the Security Framework choice to the test template before its first commit. If the template is one the Security Framework cannot manage, e.g.
+     * because an instance overrides it, the template is kept as it is: an exception here would make {@link #setupRepositories} replace all repositories with
+     * empty commits. The client compares the resulting state with the choice and warns the instructor.
+     */
+    private void applySecurityFrameworkChoice(Path repoLocalPath, SecurityFrameworkChoiceDTO securityFrameworkChoice) {
+        try {
+            SecurityFrameworkService.applyChoiceToNewTestRepository(repoLocalPath, securityFrameworkChoice);
+        }
+        catch (BadRequestAlertException e) {
+            log.warn("The Security Framework choice was not applied to the test template: {}", e.getMessage());
+        }
     }
 
     private static Path getJavaProjectTemplatePath(final Path templatePath, final ProjectType projectType) {

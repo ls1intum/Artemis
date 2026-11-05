@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -25,6 +24,7 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.LargeObjectException;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -77,10 +77,13 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationCommitHashDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
+import de.tum.cit.aet.artemis.programming.dto.SecurityFrameworkChoiceDTO;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -95,6 +98,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationS
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
+import de.tum.cit.aet.artemis.programming.service.security.SecurityFrameworkService;
 
 /**
  * REST controller for managing ProgrammingExercise.
@@ -155,6 +159,8 @@ public class ProgrammingExerciseExportImportResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final SecurityFrameworkService securityFrameworkService;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
@@ -163,7 +169,9 @@ public class ProgrammingExerciseExportImportResource {
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService,
             Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
+            SecurityFrameworkService securityFrameworkService) {
+        this.securityFrameworkService = securityFrameworkService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
@@ -283,10 +291,12 @@ public class ProgrammingExerciseExportImportResource {
         // Check if the user has the rights to access the original programming exercise
         Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, originalCourse, user);
+        SecurityFrameworkChoiceDTO securityFrameworkChoice = validateSecurityFrameworkChoice(newExerciseRequest.securityFramework(),
+                originalProgrammingExercise.getProgrammingLanguage(), originalProgrammingExercise.getProjectType(), course, user);
 
         try {
             ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, sourceBuildConfig,
-                    newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate);
+                    newExercise, newBuildConfig, recreateBuildPlans, setTestCaseVisibilityToAfterDueDate, securityFrameworkChoice, user);
 
             // The response record carries neither test cases nor static code analysis categories nor tasks, so the
             // response stays small without nulling those slots on the managed entity.
@@ -356,18 +366,37 @@ public class ProgrammingExerciseExportImportResource {
         // service resolves. The import runs through the creation pipeline, which reads the links off the exercise,
         // exactly as the entity request part used to leave them there.
         competencyExerciseLinkService.updateCompetencyLinks(programmingExerciseRequest, programmingExercise, hyperionCompetencyIds == null ? Set.of() : hyperionCompetencyIds);
+        // The exercise group of an exam exercise was shown to belong to this course above, so the instructor role is checked here for both.
+        SecurityFrameworkChoiceDTO securityFrameworkChoice = validateSecurityFrameworkChoice(programmingExerciseRequest.securityFramework(),
+                programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), course, user);
         try {
             ProgrammingExercise importedExercise = programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, buildConfig, zipFile, course,
-                    user);
+                    user, false, securityFrameworkChoice);
             exerciseVersionService.createExerciseVersion(importedExercise, user);
             return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(importedExercise,
                     programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(importedExercise.getId())));
         }
-        catch (IOException | URISyntaxException | GitAPIException e) {
+        catch (IOException | GitAPIException e) {
             log.error(e.getMessage(), e);
             throw new InternalServerErrorException("Error while importing programming exercise from file: " + e.getMessage());
         }
 
+    }
+
+    /**
+     * Validates the Security Framework choice of an import before anything is persisted. Any choice changes the imported tests repository, so it needs the
+     * instructor role in the target course, like the endpoints that change the sandbox later.
+     *
+     * @return the validated choice; null if there is none
+     */
+    private @Nullable SecurityFrameworkChoiceDTO validateSecurityFrameworkChoice(@Nullable SecurityFrameworkChoiceDTO choice, ProgrammingLanguage programmingLanguage,
+            @Nullable ProjectType projectType, Course course, User user) {
+        if (choice == null) {
+            return null;
+        }
+        securityFrameworkService.validateChoice(programmingLanguage, projectType, choice);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        return choice;
     }
 
     /**
