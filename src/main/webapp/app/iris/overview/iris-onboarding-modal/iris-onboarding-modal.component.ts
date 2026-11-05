@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { IrisOnboardingRef } from './iris-onboarding-ref';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -68,14 +68,12 @@ type TooltipConfig = {
     templateUrl: './iris-onboarding-modal.component.html',
     styleUrls: ['./iris-onboarding-modal.component.scss'],
     imports: [TranslateDirective, ArtemisTranslatePipe, IrisLogoComponent, ButtonComponent, StepperComponent, CdkTrapFocus],
-    // Escape is handled here rather than relying on DialogService's built-in keyboard
-    // handling because the dialog is opened with closable: false (to prevent accidental
-    // dismissal) — this gives us explicit control over the Escape key behaviour.
+    // The tour is mounted without a dialog shell (see IrisOnboardingTourHost), so it handles Escape itself.
     host: { '(document:keydown.escape)': 'onEscapeKey()' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisOnboardingModalComponent {
-    private dialogRef = inject(DynamicDialogRef);
+    private dialogRef = inject(IrisOnboardingRef);
     private destroyRef = inject(DestroyRef);
     private onboardingService = inject(IrisOnboardingService);
 

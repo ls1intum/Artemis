@@ -1,4 +1,5 @@
-<p-confirmdialog />
+<tumaet-ui-confirm-dialog />
+<jhi-about-iris-modal [(visible)]="aboutIrisModalVisible" />
 <!-- main chat section -->
 <div class="chat-layout">
     @if (isChatHistoryAvailable()) {
@@ -163,19 +164,35 @@
                     <button
                         type="button"
                         class="session-title-trigger"
-                        (click)="toggleSessionMenu($event)"
-                        [attr.aria-expanded]="sessionMenuOpen()"
-                        aria-haspopup="menu"
+                        [tumAetUiMenuTrigger]="sessionMenu"
+                        (menuOpened)="sessionMenuOpen.set(true)"
+                        (menuClosed)="sessionMenuOpen.set(false)"
                         [attr.aria-label]="'artemisApp.iris.chatHistory.switchSession' | artemisTranslate"
                     >
                         <span class="session-title-text">{{ currentSessionTitle() }}</span>
                         <fa-icon [icon]="faChevronDown" class="session-title-chevron" [class.rotated]="sessionMenuOpen()" />
                     </button>
-                    @if (sessionMenuOpen()) {
-                        <div class="session-switcher-inline-menu">
-                            <p-menu [model]="sessionMenuItems()" styleClass="session-switcher-menu" (click)="$event.stopPropagation()" />
-                        </div>
-                    }
+                    <ng-template #sessionMenu>
+                        <tumaet-ui-menu class="session-switcher-menu">
+                            @for (group of sessionMenuGroups(); track group.labelKey) {
+                                <div role="group" [attr.aria-label]="group.labelKey | artemisTranslate">
+                                    <div class="session-menu-group-label" aria-hidden="true">{{ group.labelKey | artemisTranslate }}</div>
+                                    @for (item of group.items; track item.session.id) {
+                                        <button
+                                            type="button"
+                                            tumAetUiMenuItem
+                                            class="session-menu-item"
+                                            [class.session-menu-item-active]="item.isActive"
+                                            [attr.aria-current]="item.isActive ? 'true' : null"
+                                            (triggered)="onSessionClick(item.session)"
+                                        >
+                                            {{ item.label }}
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </tumaet-ui-menu>
+                    </ng-template>
                 }
                 <div class="flex gap-2">
                     @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
@@ -193,8 +210,8 @@
                             <div class="toolbox">
                                 <span
                                     class="rate-limit"
-                                    [pTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
-                                    tooltipPosition="bottom"
+                                    [tumAetUiTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
+                                    tumAetUiTooltipPlacement="bottom"
                                 >
                                     {{ rateLimitInfo()?.currentMessageCount }} / {{ rateLimit }}
                                 </span>

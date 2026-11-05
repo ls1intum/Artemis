@@ -45,8 +45,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { ConfirmationService } from 'primeng/api';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
@@ -123,7 +123,6 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: LLMSelectionModalService, useValue: mockLLMModalService },
                 { provide: IrisOnboardingService, useValue: mockOnboardingService },
                 MockProvider(AlertService),
-                MockProvider(DialogService),
                 MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
@@ -1886,23 +1885,18 @@ describe('IrisBaseChatbotComponent', () => {
             expect(trigger).toBeNull();
         });
 
-        it('should build menu items with group labels and all sessions on toggle', () => {
-            const mockEvent = new MouseEvent('click');
-            component.toggleSessionMenu(mockEvent);
+        it('should group the sessions of the menu like the chat history', () => {
+            const groups = component.sessionMenuGroups();
 
-            // "Today" group label + 3 today sessions + "Older" group label + 1 older session
-            expect(component.sessionMenuItems()).toHaveLength(6);
-            expect(component.sessionMenuItems()[0].disabled).toBe(true); // "Today" group label
-            expect(component.sessionMenuItems()[1].label).toBe('Help with recursion'); // most recent today
-            expect(component.sessionMenuItems()[1].data?.isActive).toBe(true); // Current session
-            expect(component.sessionMenuItems()[2].label).toBe('Other exercise chat');
-            expect(component.sessionMenuItems()[3].label).toBe('Lecture question');
-            expect(component.sessionMenuItems()[4].disabled).toBe(true); // "Older" group label
-            expect(component.sessionMenuItems()[5].label).toBe('Array sorting question');
-            expect(component.sessionMenuItems()[5].data?.isActive).toBe(false);
+            // "Today" with 3 sessions and "Yesterday" with 1; the empty groups are left out
+            expect(groups.map((group) => group.labelKey)).toEqual(['artemisApp.iris.chatHistory.today', 'artemisApp.iris.chatHistory.yesterday']);
+            expect(groups[0].items.map((item) => item.label)).toEqual(['Help with recursion', 'Other exercise chat', 'Lecture question']);
+            expect(groups[0].items[0].isActive).toBe(true); // Current session
+            expect(groups[1].items.map((item) => item.label)).toEqual(['Array sorting question']);
+            expect(groups[1].items[0].isActive).toBe(false);
         });
 
-        it('should still build grouped menu when current session id is undefined', () => {
+        it('should still group the menu when current session id is undefined', () => {
             vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(undefined));
 
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
@@ -1912,35 +1906,44 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
             fixture.detectChanges();
 
-            const mockEvent = new MouseEvent('click');
-            component.toggleSessionMenu(mockEvent);
-
             // No session is active, but sessions are still grouped
-            expect(component.sessionMenuItems()[1].data?.isActive).toBe(false);
-            expect(component.sessionMenuItems()[3].data?.isActive).toBe(false);
+            const items = component.sessionMenuGroups().flatMap((group) => group.items);
+            expect(items).toHaveLength(4);
+            expect(items.some((item) => item.isActive)).toBe(false);
         });
 
-        it('should call onSessionClick when a today session menu item is clicked', () => {
-            vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
-            const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
-            const mockEvent = new MouseEvent('click');
-            component.toggleSessionMenu(mockEvent);
+        // These tests run on fake timers, so change detection is driven directly instead of awaiting stability.
+        const openSessionMenu = async () => {
+            fixture.nativeElement.querySelector('.session-title-trigger').click();
+            fixture.detectChanges();
+            return [...document.querySelectorAll<HTMLButtonElement>('.session-menu-item')];
+        };
 
-            component.sessionMenuItems()[1].command!({} as any);
+        it('should render the grouped sessions as menu entries and mark the current one', async () => {
+            const entries = await openSessionMenu();
 
-            expect(onSessionClickSpy).toHaveBeenCalledWith(exerciseSession1);
+            expect(entries.map((entry) => entry.textContent?.trim())).toEqual(['Help with recursion', 'Other exercise chat', 'Lecture question', 'Array sorting question']);
+            expect(entries.every((entry) => entry.getAttribute('role') === 'menuitem')).toBe(true);
+            expect(entries[0].getAttribute('aria-current')).toBe('true');
+            expect(entries[3].getAttribute('aria-current')).toBeNull();
+            expect(document.querySelectorAll('.session-switcher-menu [role="group"]')).toHaveLength(2);
+            expect(component.sessionMenuOpen()).toBe(true);
         });
 
-        it('should call onSessionClick when an older session menu item is clicked', () => {
+        it.each([
+            [0, 'today', () => exerciseSession1],
+            [3, 'yesterday', () => exerciseSession2],
+        ])('should switch to the chosen %s session and close the menu', async (index, _group, expectedSession) => {
             vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
             const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
-            const mockEvent = new MouseEvent('click');
-            component.toggleSessionMenu(mockEvent);
 
-            // index 5: "Older" label is at [4], exerciseSession2 (the only older session) is at [5]
-            component.sessionMenuItems()[5].command!({} as any);
+            const entries = await openSessionMenu();
+            entries[index].click();
+            fixture.detectChanges();
 
-            expect(onSessionClickSpy).toHaveBeenCalledWith(exerciseSession2);
+            expect(onSessionClickSpy).toHaveBeenCalledWith(expectedSession());
+            expect(component.sessionMenuOpen()).toBe(false);
+            expect(document.querySelector('.session-switcher-menu')).toBeNull();
         });
 
         it('should have hasHeaderContent true for widget layout', () => {
@@ -2121,7 +2124,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('onDeleteSession', () => {
-        let confirmationService: ConfirmationService;
+        let confirmationService: TumAetUiConfirmationService;
         let alertService: AlertService;
         const mockSession: IrisSessionDTO = {
             id: 42,
@@ -2133,7 +2136,7 @@ describe('IrisBaseChatbotComponent', () => {
         };
 
         beforeEach(() => {
-            confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+            confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
             alertService = TestBed.inject(AlertService);
         });
 
@@ -2148,12 +2151,12 @@ describe('IrisBaseChatbotComponent', () => {
             expect(callArgs.message).toContain('artemisApp.iris.chatHistory.deleteSessionQuestion');
             expect(callArgs.acceptLabel).toBe('entity.action.delete');
             expect(callArgs.rejectLabel).toBe('entity.action.cancel');
+            expect(callArgs.acceptSeverity).toBe('danger');
         });
 
         it('should call chatService.deleteSession on accept', () => {
             vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
-                confirmation.accept!();
-                return confirmationService;
+                confirmation.accept();
             });
             const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
 
@@ -2164,8 +2167,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should show success alert after successful deletion', () => {
             vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
-                confirmation.accept!();
-                return confirmationService;
+                confirmation.accept();
             });
             vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
             const successSpy = vi.spyOn(alertService, 'success');
@@ -2177,10 +2179,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should not call deleteSession on rejection', () => {
             vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
-                if (confirmation.reject) {
-                    confirmation.reject();
-                }
-                return confirmationService;
+                confirmation.reject?.();
             });
             const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession');
 
@@ -2478,20 +2477,17 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('openAboutIrisModal', () => {
-        it.each(['client', 'widget', 'embedded'] as const)('should always open via PrimeNG DialogService (layout: %s)', (layout) => {
-            const dialogService = TestBed.inject(DialogService);
-            const dialogServiceOpenSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ close: vi.fn() } as any);
-
+        it.each(['client', 'widget', 'embedded'] as const)('should show the About Iris dialog (layout: %s)', (layout) => {
             fixture.componentRef.setInput('layout', layout);
             fixture.detectChanges();
+            const aboutIrisModal = fixture.debugElement.query(By.directive(AboutIrisModalComponent)).componentInstance as AboutIrisModalComponent;
+            expect(aboutIrisModal.visible()).toBe(false);
 
             component.openAboutIrisModal();
+            fixture.detectChanges();
 
-            expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
-            expect(dialogServiceOpenSpy).toHaveBeenCalledWith(
-                expect.anything(),
-                expect.objectContaining({ modal: true, closable: false, showHeader: false, styleClass: 'about-iris-dialog' }),
-            );
+            expect(aboutIrisModal.visible()).toBe(true);
+            expect(aboutIrisModal.hideTryButton()).toBe(false);
         });
     });
 

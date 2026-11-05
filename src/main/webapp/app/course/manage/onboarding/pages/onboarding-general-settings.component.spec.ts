@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -21,7 +21,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, of, throwError } from 'rxjs';
-import { DialogService } from 'primeng/dynamicdialog';
+import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { AthenaCourseConfigDTO, AthenaCourseConfigService } from 'app/course/manage/services/athena-course-config.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 
@@ -71,17 +71,22 @@ describe('OnboardingGeneralSettingsComponent', () => {
                         updateCourseSettings: () => of({ body: { settings: { enabled: false } } }),
                     },
                 },
-                MockProvider(DialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         })
             .overrideComponent(OnboardingGeneralSettingsComponent, {
                 remove: {
-                    imports: [TranslateDirective, ArtemisTranslatePipe, ColorSelectorComponent, TumAetUiDatePickerComponent],
+                    imports: [TranslateDirective, ArtemisTranslatePipe, ColorSelectorComponent, TumAetUiDatePickerComponent, AboutIrisModalComponent],
                 },
                 add: {
-                    imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(ColorSelectorComponent), MockComponent(TumAetUiDatePickerComponent)],
+                    imports: [
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe),
+                        MockComponent(ColorSelectorComponent),
+                        MockComponent(TumAetUiDatePickerComponent),
+                        MockComponent(AboutIrisModalComponent),
+                    ],
                 },
             })
             .compileComponents();
@@ -96,6 +101,12 @@ describe('OnboardingGeneralSettingsComponent', () => {
     it('should initialize with the provided course', () => {
         expect(comp).toBeTruthy();
         expect(comp.course()).toEqual(course);
+    });
+
+    it('should open the about Iris modal', () => {
+        expect(comp['aboutIrisModalVisible']()).toBe(false);
+        comp.openAboutIrisModal();
+        expect(comp['aboutIrisModalVisible']()).toBe(true);
     });
 
     it('should have language options for English and German', () => {

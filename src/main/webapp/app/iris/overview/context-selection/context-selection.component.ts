@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { faChalkboardUser, faComments, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faComments, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -14,8 +14,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseTitle } from 'app/exercise/shared/entities/exercise/exercise-title.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { SelectModule } from 'primeng/select';
-import { ChipModule } from 'primeng/chip';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumAetUiChipComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { forkJoin } from 'rxjs';
@@ -50,7 +49,7 @@ function iconForMode(mode: ChatServiceMode): IconDefinition {
     selector: 'jhi-context-selection',
     templateUrl: './context-selection.component.html',
     styleUrls: ['./context-selection.component.scss'],
-    imports: [SelectModule, ChipModule, TooltipModule, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
+    imports: [SelectModule, TumAetUiChipComponent, TumAetUiTooltipDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
 })
@@ -63,7 +62,6 @@ export class ContextSelectionComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly faPlus = faPlus;
-    protected readonly faXmark = faXmark;
 
     readonly disabled = input<boolean>(false);
     readonly contextChanged = output<void>();

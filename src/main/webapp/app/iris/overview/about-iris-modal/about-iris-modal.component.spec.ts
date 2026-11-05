@@ -1,9 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { signal } from '@angular/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { AboutIrisModalComponent } from './about-iris-modal.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -18,21 +16,17 @@ import type { User } from 'app/account/user/user.model';
 describe('AboutIrisModalComponent', () => {
     let component: AboutIrisModalComponent;
     let fixture: ComponentFixture<AboutIrisModalComponent>;
-    let dialogRef: { close: ReturnType<typeof vi.fn> };
     let chatService: { startFreshChat: ReturnType<typeof vi.fn> };
     const userIdentitySignal = signal<User | undefined>(undefined);
 
     beforeEach(async () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-        dialogRef = { close: vi.fn() };
         chatService = { startFreshChat: vi.fn() };
 
         TestBed.configureTestingModule({
             imports: [AboutIrisModalComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
-                { provide: DynamicDialogRef, useValue: dialogRef },
-                { provide: DynamicDialogConfig, useValue: { data: {} } },
                 { provide: IrisChatService, useValue: chatService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useValue: { userIdentity: userIdentitySignal } },
@@ -46,6 +40,7 @@ describe('AboutIrisModalComponent', () => {
     });
 
     afterEach(() => {
+        fixture.destroy();
         vi.restoreAllMocks();
     });
 
@@ -75,26 +70,46 @@ describe('AboutIrisModalComponent', () => {
         expectValidCards(cards);
     });
 
-    it('close() should call dialogRef.close() without starting a fresh chat', () => {
+    const open = async () => {
+        component.visible.set(true);
+        await fixture.whenStable();
+    };
+
+    it('should default to hidden and render nothing', () => {
+        expect(component.visible()).toBe(false);
+        expect(document.querySelector('.about-iris-panel')).toBeNull();
+    });
+
+    it('close() should hide the dialog without starting a fresh chat', async () => {
+        await open();
         component.close();
-        expect(dialogRef.close).toHaveBeenCalledOnce();
+        expect(component.visible()).toBe(false);
         expect(chatService.startFreshChat).not.toHaveBeenCalled();
     });
 
-    it('tryIris() should start a fresh chat and close dialog', () => {
+    it('tryIris() should start a fresh chat and hide the dialog', async () => {
+        await open();
         component.tryIris();
         expect(chatService.startFreshChat).toHaveBeenCalledOnce();
-        expect(dialogRef.close).toHaveBeenCalledOnce();
+        expect(component.visible()).toBe(false);
     });
 
     it.each([
         ['.close-btn', 'close'],
-        ['.try-iris-btn', 'tryIris'],
+        ['[data-testid="try-iris-button"]', 'tryIris'],
     ] as const)('%s click should call %s()', async (selector, method) => {
+        await open();
         vi.spyOn(component, method);
-        fixture.debugElement.query(By.css(selector)).nativeElement.click();
+        document.querySelector<HTMLElement>(selector)!.click();
         await fixture.whenStable();
         expect(component[method]).toHaveBeenCalled();
+    });
+
+    it('should not offer the try button when hideTryButton is set', async () => {
+        fixture.componentRef.setInput('hideTryButton', true);
+        await open();
+        expect(document.querySelector('.about-iris-panel')).not.toBeNull();
+        expect(document.querySelector('[data-testid="try-iris-button"]')).toBeNull();
     });
 
     describe('privacyDescKey', () => {

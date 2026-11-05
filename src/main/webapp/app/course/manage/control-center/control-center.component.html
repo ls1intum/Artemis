@@ -12,6 +12,7 @@
                 <jhi-iris-enabled [course]="course()" />
             </div>
         </div>
+        <jhi-about-iris-modal [(visible)]="aboutIrisModalVisible" [hideTryButton]="true" />
     }
     @if (athenaEnabled()) {
         <div class="ai-panel" data-testid="athena-panel">

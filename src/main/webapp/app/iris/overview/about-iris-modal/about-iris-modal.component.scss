@@ -1,6 +1,10 @@
-:host {
-    display: block;
+// The dialog panel caps the width at 90dvw and the height at 90dvh including its 1px border.
+.about-iris-panel {
     position: relative;
+    width: 40rem;
+    max-width: 90dvw;
+    margin: 0 -1rem -1rem;
+    background-color: var(--iris-secondary-background);
 }
 
 .close-btn-container {
@@ -29,7 +33,9 @@
 
 .about-iris-content {
     padding: 2.5rem;
-    max-height: 40rem; /* 640px */
+
+    // Only this box scrolls, so the close button stays in the corner.
+    max-height: min(40rem, calc(90dvh - 2px));
     overflow-y: auto;
     scrollbar-gutter: stable;
 }
@@ -167,9 +173,6 @@
     margin-top: 1.5rem;
 }
 
-.try-iris-btn {
-    font-size: 0.875rem;
+.try-iris-btn-wrapper > button {
     min-width: 160px;
-    border-radius: 0.5rem;
-    padding: 0.5rem 0;
 }

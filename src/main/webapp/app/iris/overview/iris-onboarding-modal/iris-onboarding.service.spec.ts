@@ -1,14 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { IrisOnboardingRef } from './iris-onboarding-ref';
+import { IrisOnboardingTourHost } from './iris-onboarding-tour-host.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisOnboardingService, OnboardingResult } from './iris-onboarding.service';
 
 describe('IrisOnboardingService', () => {
     let service: IrisOnboardingService;
-    let dialogService: DialogService;
+    let dialogService: IrisOnboardingTourHost;
     let chatHttpService: IrisChatHttpService;
     let matchMediaMock: ReturnType<typeof vi.spyOn>;
 
@@ -31,8 +32,8 @@ describe('IrisOnboardingService', () => {
         });
     };
 
-    function createMockDialogRef(closeSubject: Subject<OnboardingResult | undefined>): DynamicDialogRef {
-        return { onClose: closeSubject.asObservable() } as unknown as DynamicDialogRef;
+    function createMockTourRef(closeSubject: Subject<OnboardingResult | undefined>): IrisOnboardingRef {
+        return { onClose: closeSubject.asObservable() } as unknown as IrisOnboardingRef;
     }
 
     beforeEach(() => {
@@ -42,7 +43,7 @@ describe('IrisOnboardingService', () => {
         TestBed.configureTestingModule({
             providers: [
                 IrisOnboardingService,
-                { provide: DialogService, useValue: { open: vi.fn() } },
+                { provide: IrisOnboardingTourHost, useValue: { open: vi.fn() } },
                 { provide: AccountService, useValue: { userIdentity: () => ({ id: MOCK_USER_ID }) } },
                 {
                     provide: IrisChatHttpService,
@@ -54,7 +55,7 @@ describe('IrisOnboardingService', () => {
         });
 
         service = TestBed.inject(IrisOnboardingService);
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(IrisOnboardingTourHost);
         chatHttpService = TestBed.inject(IrisChatHttpService);
         localStorage.removeItem(STORAGE_KEY);
     });
@@ -99,9 +100,9 @@ describe('IrisOnboardingService', () => {
             expect(result).toBeUndefined();
         });
 
-        it('should open the modal with correct options', async () => {
+        it('should open the tour and resolve with its result', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
 
             const resultPromise = service.openOnboardingModal();
             closeSubject.next({ action: 'finish' });
@@ -109,15 +110,6 @@ describe('IrisOnboardingService', () => {
             const result = await resultPromise;
 
             expect(dialogService.open).toHaveBeenCalledOnce();
-            const openCall = vi.mocked(dialogService.open).mock.calls[0];
-            expect(openCall[1]).toEqual(
-                expect.objectContaining({
-                    modal: false,
-                    closable: false,
-                    showHeader: false,
-                    styleClass: 'iris-onboarding-dialog',
-                }),
-            );
             expect(result).toEqual({ action: 'finish' });
         });
 
@@ -126,7 +118,7 @@ describe('IrisOnboardingService', () => {
             // navigating away mid-tour: PrimeNG's onClose only fires when .close() is invoked
             // explicitly, not when the host component is torn down.
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
 
             const resultPromise = service.openOnboardingModal();
 
@@ -137,19 +129,19 @@ describe('IrisOnboardingService', () => {
             await resultPromise;
         });
 
-        it('should keep onboarding marked completed even if onClose never fires (host destroyed)', async () => {
+        it('should keep onboarding marked completed even if onClose never fires', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
 
             void service.openOnboardingModal();
-            // Simulate the host component being destroyed without ever calling .close():
+            // Simulate a tour that never reports a result (the page reloads mid-tour):
             // the close subject simply never emits. The completion flag must already be set.
             expect(service.hasCompletedOnboarding()).toBeTruthy();
         });
 
         it('should return undefined when modal is dismissed', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
 
             const resultPromise = service.openOnboardingModal();
             closeSubject.next(undefined);
@@ -162,7 +154,7 @@ describe('IrisOnboardingService', () => {
 
         it('should not open a second modal if one is already open', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+            vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
 
             const firstCall = service.openOnboardingModal();
             const secondCall = service.openOnboardingModal();
@@ -181,7 +173,7 @@ describe('IrisOnboardingService', () => {
         it('should clear dialogRef after modal closes', async () => {
             const closeSubject1 = new Subject<OnboardingResult | undefined>();
             const closeSubject2 = new Subject<OnboardingResult | undefined>();
-            vi.spyOn(dialogService, 'open').mockReturnValueOnce(createMockDialogRef(closeSubject1)).mockReturnValueOnce(createMockDialogRef(closeSubject2));
+            vi.spyOn(dialogService, 'open').mockReturnValueOnce(createMockTourRef(closeSubject1)).mockReturnValueOnce(createMockTourRef(closeSubject2));
 
             const firstPromise = service.openOnboardingModal();
             closeSubject1.next({ action: 'finish' });
@@ -208,7 +200,7 @@ describe('IrisOnboardingService', () => {
 
         it('should delegate to openOnboardingModal', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+            const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
 
             const resultPromise = service.showOnboardingIfNeeded(() => true);
             // Wait until the async session-count gate resolves and the dialog is opened.
@@ -248,7 +240,7 @@ describe('IrisOnboardingService', () => {
 
         it('should open the modal when the user has zero Iris messages', async () => {
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+            const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
             vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 0, messages: 0 }));
 
             const resultPromise = service.showOnboardingIfNeeded(() => true);
@@ -266,7 +258,7 @@ describe('IrisOnboardingService', () => {
             // Regression guard: opening the chat auto-creates an empty session server-side,
             // so new users land here with sessions=1, messages=0. The tour must still open.
             const closeSubject = new Subject<OnboardingResult | undefined>();
-            const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockDialogRef(closeSubject));
+            const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(createMockTourRef(closeSubject));
             vi.mocked(chatHttpService.getSessionAndMessageCount).mockReturnValueOnce(of({ sessions: 1, messages: 0 }));
 
             const resultPromise = service.showOnboardingIfNeeded(() => true);

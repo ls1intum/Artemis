@@ -1,9 +1,9 @@
 import { Service, inject, signal } from '@angular/core';
 import { Subject, firstValueFrom } from 'rxjs';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
-import { IrisOnboardingModalComponent } from './iris-onboarding-modal.component';
+import { IrisOnboardingRef } from './iris-onboarding-ref';
+import { IrisOnboardingTourHost } from './iris-onboarding-tour-host.service';
 
 export type OnboardingResult = { action: 'finish' };
 
@@ -13,10 +13,10 @@ const IRIS_ONBOARDING_KEY_PREFIX = 'iris-onboarding-completed';
 
 @Service()
 export class IrisOnboardingService {
-    private dialogService = inject(DialogService);
+    private tourHost = inject(IrisOnboardingTourHost);
     private accountService = inject(AccountService);
     private chatHttpService = inject(IrisChatHttpService);
-    private dialogRef: DynamicDialogRef | undefined;
+    private dialogRef: IrisOnboardingRef | undefined;
     private pendingResult: Promise<OnboardingResult | undefined> | undefined;
 
     readonly onboardingEvent$ = new Subject<OnboardingEvent>();
@@ -140,27 +140,15 @@ export class IrisOnboardingService {
 
         this.currentStep.set(0);
 
-        this.dialogRef =
-            this.dialogService.open(IrisOnboardingModalComponent, {
-                modal: false,
-                closable: false,
-                showHeader: false,
-                styleClass: 'iris-onboarding-dialog',
-                maskStyleClass: 'iris-onboarding-mask',
-            }) ?? undefined;
+        this.dialogRef = this.tourHost.open();
 
-        if (!this.dialogRef) {
-            return undefined;
-        }
-
-        // Mark on open, not on close: PrimeNG's onClose only fires when .close() is invoked
-        // explicitly. If the host component is torn down (e.g. user navigates between courses
-        // mid-tour) the dialog is destroyed without onClose emitting, the flag never gets
-        // written, and the next mount re-triggers the tour.
+        // Mark on open, not on close: a tour that never reports a result (the page reloads, or the
+        // browser closes mid-tour) would otherwise never write the flag, and the next mount would
+        // show the tour again.
         this.markOnboardingCompleted();
 
         this.pendingResult = new Promise<OnboardingResult | undefined>((resolve) => {
-            this.dialogRef!.onClose.subscribe((result: OnboardingResult | undefined) => {
+            this.dialogRef!.onClose.subscribe((result) => {
                 this.currentStep.set(0);
                 resolve(result ? { action: 'finish' } : undefined);
             });
