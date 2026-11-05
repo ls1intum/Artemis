@@ -172,7 +172,7 @@
                 "notRated": "Not rated yet. Select one level.",
                 "overallResult": "Overall result",
                 "calculatedAutomatically": "Calculated automatically",
-                "remaining": "Criteria remaining: {{ count }}",
+                "remaining": "Not rated yet: {{ count }}. Rate every criterion, or none, to save.",
                 "emptyTitle": "Start building your rubric",
                 "empty": "Add criteria, give each a weight and choose its rating scale.",
                 "addFirstCriterion": "Add first criterion",

@@ -529,6 +529,7 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
 
             expect(query('[data-testid="rubric-remaining"]')).not.toBeNull();
             expect(saveButton().disabled).toBe(true);
+            expect(saveButton().getAttribute('aria-describedby')).toBe('rubric-remaining');
             submit();
             expect(saved).not.toHaveBeenCalled();
         });

@@ -1,8 +1,10 @@
 <div class="flex flex-col gap-4">
+    @let incomplete = form().hasError('ratingsIncomplete');
     @for (criterion of criteria(); track criterion.id; let index = $index) {
         @let rating = form().at(index);
         <article
-            class="flex flex-col gap-4 overflow-hidden rounded-lg border border-(--border-color) bg-(--module-bg) pb-4"
+            class="flex flex-col gap-4 overflow-hidden rounded-lg border bg-(--module-bg) pb-4"
+            [class]="incomplete && rating.controls.levelId.value === undefined ? 'border-state-warning' : 'border-(--border-color)'"
             [formGroup]="rating"
             [attr.data-testid]="'rubric-grading-criterion-' + index"
         >
@@ -85,7 +87,11 @@
                     }
                 </div>
             } @else {
-                <p class="m-0! flex items-center gap-2 px-4 text-[0.8125rem] text-(--text-body-secondary)" [attr.data-testid]="'rubric-grading-unrated-' + index">
+                <p
+                    class="m-0! flex items-center gap-2 px-4 text-[0.8125rem]"
+                    [class]="incomplete ? 'text-state-warning' : 'text-(--text-body-secondary)'"
+                    [attr.data-testid]="'rubric-grading-unrated-' + index"
+                >
                     <fa-icon [icon]="faCircleInfo" />
                     <span jhiTranslate="artemisApp.presentationAssessment.rubric.notRated"></span>
                 </p>

@@ -172,7 +172,7 @@
                 "notRated": "Noch nicht bewertet. Wähle eine Stufe.",
                 "overallResult": "Gesamtergebnis",
                 "calculatedAutomatically": "Wird automatisch berechnet",
-                "remaining": "Offene Kriterien: {{ count }}",
+                "remaining": "Noch nicht bewertet: {{ count }}. Bewerte alle Kriterien oder keines, um zu speichern.",
                 "emptyTitle": "Beginne mit deiner Rubrik",
                 "empty": "Füge Kriterien hinzu, gewichte sie und wähle für jedes eine Bewertungsskala.",
                 "addFirstCriterion": "Erstes Kriterium hinzufügen",

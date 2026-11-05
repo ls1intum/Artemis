@@ -245,7 +245,8 @@
     <div class="flex items-center gap-2 border-t border-(--border-color) pt-4">
         @if (remainingCriteria() > 0) {
             <span
-                class="text-sm text-(--text-body-secondary)"
+                id="rubric-remaining"
+                class="text-sm text-state-warning"
                 data-testid="rubric-remaining"
                 jhiTranslate="artemisApp.presentationAssessment.rubric.remaining"
                 [translateValues]="{ count: remainingCriteria() }"
@@ -256,6 +257,7 @@
             <tumaet-ui-button
                 type="submit"
                 data-testid="save-instance-button"
+                [ariaDescribedBy]="remainingCriteria() > 0 ? 'rubric-remaining' : undefined"
                 [disabled]="
                     isSaving() || rubricUnavailable() || editForm.invalid || !!ratingsForm()?.invalid || !dateTextValid() || !timeTextValid() || assignedStudents().length === 0
                 "
