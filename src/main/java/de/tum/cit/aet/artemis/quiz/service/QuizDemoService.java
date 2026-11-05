@@ -2,8 +2,13 @@ package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -18,10 +23,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.factories.ExerciseDates;
@@ -29,6 +36,10 @@ import de.tum.cit.aet.artemis.exercise.factories.ExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.DragItem;
+import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -66,6 +77,8 @@ public class QuizDemoService {
 
     private static final String ONGOING_QUIZ_SHORT_NAME = "demoquiz";
 
+    private static final String DND_BACKGROUND_FILE_NAME = "collection-lookup-costs.png";
+
     private static final String ONGOING_PROBLEM_STATEMENT = """
             A short self check on the collections you use every day. You have ten minutes once you start, and you can start whenever you like before the due date.
             """;
@@ -80,6 +93,12 @@ public class QuizDemoService {
     private static final String ENDED_PROBLEM_STATEMENT = """
             A short self check on the sorting and searching algorithms of the lecture. The quiz has ended: look at your result, and practice it as often as you like.
             """;
+
+    /**
+     * The picture of the drag and drop question of the ongoing quiz: three operations on the left, and an empty box beside each of them. It is stored with the demo resources
+     * instead of being drawn here, because drawing text needs the fonts of the machine that runs the server. The boxes of {@link #lookupCostQuestion()} lie on its empty boxes.
+     */
+    private static final Path DND_BACKGROUND_RESOURCE = Path.of("demo", "quiz", "collection-lookup-costs.png");
 
     private static final String EXAM_QUIZ_TITLE = "Quiz: Algorithms and Complexity";
 
@@ -120,9 +139,11 @@ public class QuizDemoService {
 
     private final QuizBatchRepository quizBatchRepository;
 
+    private final ResourceLoaderService resourceLoaderService;
+
     public QuizDemoService(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, ExerciseVersionService exerciseVersionService,
             ParticipationService participationService, QuizBatchService quizBatchService, QuizSubmissionService quizSubmissionService, QuizResultService quizResultService,
-            QuizBatchRepository quizBatchRepository) {
+            QuizBatchRepository quizBatchRepository, ResourceLoaderService resourceLoaderService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.exerciseVersionService = exerciseVersionService;
@@ -131,6 +152,7 @@ public class QuizDemoService {
         this.quizSubmissionService = quizSubmissionService;
         this.quizResultService = quizResultService;
         this.quizBatchRepository = quizBatchRepository;
+        this.resourceLoaderService = resourceLoaderService;
     }
 
     /**
@@ -185,7 +207,44 @@ public class QuizDemoService {
                 "Looking up a key in a `HashMap` costs [-spot 1] on average, while looking up a key in a `TreeMap` costs [-spot 2].",
                 "A hash map reaches its bucket directly, a tree map descends a balanced search tree.", 2.0, List.of("O(1)", "O(log n)")));
 
-        return create(quizExercise);
+        quizExercise.addQuestion(lookupCostQuestion());
+
+        return create(quizExercise, List.of(new DemoImageFile(DND_BACKGROUND_FILE_NAME, readBackground())));
+    }
+
+    private byte[] readBackground() {
+        try {
+            return resourceLoaderService.getResource(DND_BACKGROUND_RESOURCE).getContentAsByteArray();
+        }
+        catch (IOException exception) {
+            throw new UncheckedIOException("Could not read the picture of the demo drag and drop question " + DND_BACKGROUND_RESOURCE, exception);
+        }
+    }
+
+    /**
+     * Builds the drag and drop question of the ongoing quiz. The position and size of a drop location are given in the 200 by 200 units of the picture, whatever its size in pixels
+     * is: the picture is 400 by 240 pixels, so a unit is two pixels wide and 1.2 pixels high.
+     */
+    private static DragAndDropQuestion lookupCostQuestion() {
+        DragAndDropQuestion question = (DragAndDropQuestion) new DragAndDropQuestion().title("Lookup costs").text("Drag the average cost of each operation into the box beside it.")
+                .score(2.0);
+        question.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
+        question.setExplanation("A hash map computes the bucket of a key, a tree map descends a balanced tree, and a linked list has to walk from its head to the index.");
+        question.setRandomizeOrder(true);
+        question.setBackgroundFilePath(DND_BACKGROUND_FILE_NAME);
+
+        DropLocation hashMapBox = new DropLocation().posX(115d).posY(25d).width(70d).height(41.7d);
+        DropLocation treeMapBox = new DropLocation().posX(115d).posY(75d).width(70d).height(41.7d);
+        DropLocation linkedListBox = new DropLocation().posX(115d).posY(125d).width(70d).height(41.7d);
+        DragItem constant = new DragItem().text("O(1)");
+        DragItem logarithmic = new DragItem().text("O(log n)");
+        DragItem linear = new DragItem().text("O(n)");
+        List.of(hashMapBox, treeMapBox, linkedListBox).forEach(question::addDropLocation);
+        List.of(constant, logarithmic, linear).forEach(question::addDragItem);
+        question.addCorrectMapping(new DragAndDropMapping().dragItem(constant).dropLocation(hashMapBox));
+        question.addCorrectMapping(new DragAndDropMapping().dragItem(logarithmic).dropLocation(treeMapBox));
+        question.addCorrectMapping(new DragAndDropMapping().dragItem(linear).dropLocation(linkedListBox));
+        return question;
     }
 
     /**
@@ -306,16 +365,23 @@ public class QuizDemoService {
      * not need. A quiz in an exam is created like {@code QuizExerciseCreationUpdateResource#createExamQuizExercise}, which gives it no channel of its own.
      */
     private QuizExercise create(QuizExercise quizExercise) {
+        return create(quizExercise, List.of());
+    }
+
+    /**
+     * Creates the quiz with the files that its drag and drop questions refer to.
+     */
+    private QuizExercise create(QuizExercise quizExercise, List<MultipartFile> files) {
         // The achievable points of a quiz are the sum of its question points, so they can only be set once all questions have been added.
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         try {
-            QuizExercise createdQuiz = quizExerciseService.createQuizExercise(quizExercise, List.of(), quizExercise.isExamExercise(), null);
+            QuizExercise createdQuiz = quizExerciseService.createQuizExercise(quizExercise, files, quizExercise.isExamExercise(), null);
             exerciseVersionService.createExerciseVersion(createdQuiz);
             log.info("Created demo quiz exercise '{}' with id {}", createdQuiz.getTitle(), createdQuiz.getId());
             return createdQuiz;
         }
         catch (IOException exception) {
-            // Only thrown while storing the images of drag and drop questions, which the demo quizzes deliberately do not use.
+            // Only thrown while storing the images of drag and drop questions.
             throw new UncheckedIOException("Could not create the demo quiz exercise " + quizExercise.getTitle(), exception);
         }
     }
@@ -387,6 +453,55 @@ public class QuizDemoService {
             question.addCorrectMapping(new ShortAnswerMapping().spot(spot).solution(solution));
         }
         return question;
+    }
+
+    /**
+     * A picture that the quiz creation stores like the one that an instructor uploads.
+     *
+     * @param name    the file name that the drag and drop question refers to.
+     * @param content the bytes of the picture.
+     */
+    private record DemoImageFile(String name, byte[] content) implements MultipartFile {
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public String getOriginalFilename() {
+            return name;
+        }
+
+        @Override
+        public String getContentType() {
+            return "image/png";
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return content.length == 0;
+        }
+
+        @Override
+        public long getSize() {
+            return content.length;
+        }
+
+        @Override
+        public byte[] getBytes() {
+            return content.clone();
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            return new ByteArrayInputStream(content);
+        }
+
+        @Override
+        public void transferTo(File destination) throws IOException {
+            Files.write(destination.toPath(), content);
+        }
     }
 
     /**

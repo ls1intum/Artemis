@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.programming.api.ProgrammingDemoApi;
 import de.tum.cit.aet.artemis.quiz.api.QuizDemoApi;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
@@ -186,6 +187,20 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
         assertThat(Stream.of(ONGOING_MODELING_TITLE, IN_ASSESSMENT_MODELING_TITLE, ONGOING_QUIZ_TITLE, ENDED_QUIZ_TITLE).map(this::demoExercise))
                 .as("every exercise has the version that creating it in the exercise editor records")
                 .allSatisfy(exercise -> assertThat(exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId())).isPresent());
+    }
+
+    @Test
+    void seedsDragAndDropQuestionWithPictureIntoOngoingQuiz() {
+        seed();
+
+        QuizExercise quiz = quizExerciseRepository.findByIdWithQuestionsElseThrow(demoExercise(ONGOING_QUIZ_TITLE).getId());
+        assertThat(quiz.isValid()).as("the quiz with the drag and drop question is valid").isTrue();
+        DragAndDropQuestion question = quiz.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast).findFirst()
+                .orElseThrow();
+        assertThat(question.getDropLocations()).as("a box for each operation").hasSize(3);
+        assertThat(question.getDragItems()).as("an item for each cost").hasSize(3);
+        assertThat(question.getCorrectMappings()).as("every item belongs to one box").hasSize(3);
+        assertThat(question.getBackgroundFilePath()).as("the picture of the question was stored").isNotBlank().endsWith(".png");
     }
 
     @Test
