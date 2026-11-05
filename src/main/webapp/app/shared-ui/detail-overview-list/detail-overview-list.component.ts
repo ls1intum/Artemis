@@ -1,5 +1,5 @@
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
-import { Component, ViewEncapsulation, computed, inject, input } from '@angular/core';
+import { Component, TemplateRef, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
@@ -15,7 +15,6 @@ import { NgOptimizedImage, NgTemplateOutlet } from '@angular/common';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phases-editor.component';
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
@@ -38,13 +37,10 @@ export enum DetailType {
     Markdown = 'detail-markdown',
     GradingCriteria = 'detail-grading-criteria',
     ModelingEditor = 'detail-modeling-editor',
-    ProgrammingRepositoryButtons = 'detail-repository-buttons',
-    ProgrammingAuxiliaryRepositoryButtons = 'detail-auxiliary-repository-buttons',
-    ProgrammingTestStatus = 'detail-test-status',
+    ProgrammingRepositoryBuildOverview = 'detail-repository-build-overview',
     ProgrammingDiffReport = 'detail-diff-report',
     ProgrammingProblemStatement = 'detail-problem-statement',
     ProgrammingTimeline = 'detail-timeline',
-    ProgrammingCheckoutDirectories = 'detail-checkout-directories',
     ProgrammingBuildPhases = 'detail-build-phases',
     ExerciseCategories = 'detail-exercise-categories',
 }
@@ -64,7 +60,6 @@ export enum DetailType {
         StructuredGradingInstructionsAssessmentLayoutComponent,
         TranslateDirective,
         ModelingEditorComponent,
-        ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
         BuildPhasesEditorComponent,
         ExerciseDetailDirective,
         NoDataComponent,
@@ -82,6 +77,8 @@ export class DetailOverviewListComponent {
     protected readonly ButtonSize = ButtonSize;
 
     sections = input.required<DetailOverviewSection[]>();
+    /** Optional contextual tools rendered alongside a visible section heading. */
+    readonly sectionActions = input<Readonly<Record<string, TemplateRef<unknown>>>>({});
 
     // headline list for navigation bar
     readonly headlines = computed<{ id: string; translationKey: string }[]>(() =>
