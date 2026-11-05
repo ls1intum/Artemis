@@ -89,6 +89,16 @@ class BuildPhasesTemplateServiceDefaultTemplatesTest {
     }
 
     @Test
+    void shouldRunOnlyTheTestFileOfTheStageForRubySequentialTestRuns() throws Exception {
+        var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.RUBY, Optional.empty(), false, true);
+
+        assertThat(names(phases)).containsExactly("install_dependencies", "syntax_check", "structural_tests", "behavior_tests");
+        // the rake task ignores TEST and would run every test file in both stages, which reports each test twice as a duplicate
+        assertThat(phases.get(2).script()).contains("ruby -Itest test/test_structural.rb").doesNotContain("rake ci:test").doesNotContain("test_behavior");
+        assertThat(phases.get(3).script()).contains("ruby -Itest test/test_behavior.rb").doesNotContain("rake ci:test").doesNotContain("test_structural");
+    }
+
+    @Test
     void shouldSelectTheStaticCodeAnalysisTemplateForSwift() throws Exception {
         var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.SWIFT, Optional.of(ProjectType.PLAIN), true, false);
 
