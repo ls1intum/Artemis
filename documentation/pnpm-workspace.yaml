@@ -65,6 +65,10 @@ overrides:
   shell-quote: '1.12.0'
   # Kept on the 3.x line (docs' SVG toolchain requires ^3).
   svgo: '3.3.5'
+  # @docusaurus/core runs its static site generation in a tinypool thread pool and asks for ^1.1.1.
+  # Must stay >= 2.1.2, which fixed GHSA-85c8-ppgw-ccpr and GHSA-5gmw-xhrv-c9v3 (prototype pollution
+  # in worker options). Build-time only, never served.
+  tinypool: '2.1.2'
   undici: '7.30.1'
   uuid: '14.0.3'
   webpack: '5.112.2'
