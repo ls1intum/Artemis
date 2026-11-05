@@ -50,9 +50,12 @@ function sortByTime(entries: BuildLogEntry[]): BuildLogEntry[] {
  * Wrapper class for build log output.
  */
 export class BuildLogEntryArray extends Array<BuildLogEntry> {
-    private mavenErrorLogRegex = /\[?(ERROR)?\]?.*\/?(src\/.+):\[(\d+),(\d+)\]\s(.*$)/;
-    private gradleErrorLogRegex = /(src\/.+):(\d+)():\s(error:)\s(.*$)/;
-    private swiftErrorLogRegex = /.*\/?(Sources\/.+):(\d+):(\d+):\s(error:)(.*$)/;
+    private mavenErrorLogRegex = /^\[?(ERROR)?\]?.*(src\/(?:(?!src\/)[^:])+):\[(\d+),(\d+)\]\s(.*)$/;
+    private gradleErrorLogRegex = /^(?:(?!src\/).)*(src\/[^:]+):(\d+)():\s(error:)\s(.*)$/;
+    private swiftErrorLogRegex = /^.*(Sources\/(?:(?!Sources\/)[^:])+):(\d+):(\d+):\s(error:)(.*)$/;
+
+    /** Lines longer than this are not parsed for errors. */
+    private static readonly MAX_PARSED_LINE_LENGTH = 1024;
 
     /**
      * Factory method for creating an instance of the class. Prefer this method over the default constructor.
@@ -96,7 +99,10 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
         return Array.from(
             this
                 // Parse build logs
-                .map(({ log, time }) => ({ log: log.split('\n', 1)[0].trim().match(errorLogRegex), time }))
+                .map(({ log, time }): { log: RegExpMatchArray | null; time: string } => {
+                    const line = log.split('\n', 1)[0].trim();
+                    return { log: line.length <= BuildLogEntryArray.MAX_PARSED_LINE_LENGTH ? errorLogRegex.exec(line) : null, time };
+                })
                 // Remove entries that could not be parsed, are too short or not errors
                 .filter((entry: { log: RegExpMatchArray | null; time: string }): entry is { log: ParsedLogEntry; time: string } => {
                     const { log } = entry;
