@@ -290,6 +290,15 @@ jobs:
           name: Server Coverage Execution Data (${{ matrix.shard.name }})
           path: build/jacoco/test.exec
           if-no-files-found: ignore
+      - name: Upload Missing Foreign Key Indexes
+        # Informational findings of MissingForeignKeyIndexTest, written only by the shard that runs it
+        # (on Postgres), so every other shard uploads nothing.
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Missing Foreign Key Indexes (${{ matrix.shard.name }})
+          path: build/reports/static-analysis/missing-fk-indexes.json
+          if-no-files-found: ignore
       - name: Upload Selected Server Coverage for Sonar
         # The selected plan has exactly one shard. Reuse its actual execution data; Sonar builds
         # a lightweight XML report after compiling the same revision on its public runner.
