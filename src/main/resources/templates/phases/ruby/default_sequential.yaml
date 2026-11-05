@@ -9,7 +9,8 @@
   script: |-
     cd "${testWorkingDirectory}"
     status=0
-    TEST=test/test_structural.rb bundler exec rake ci:test || status=$?
+    # The rake task ignores TEST and always runs every test file, so the file is run directly with the options of the ci:test task
+    bundler exec ruby -Itest test/test_structural.rb --verbose --junit --junit-jenkins --junit-filename=report.xml || status=$?
     mv report.xml structural-report.xml
     exit $status
   resultPaths:
@@ -18,7 +19,7 @@
   script: |-
     cd "${testWorkingDirectory}"
     status=0
-    TEST=test/test_behavior.rb bundler exec rake ci:test || status=$?
+    bundler exec ruby -Itest test/test_behavior.rb --verbose --junit --junit-jenkins --junit-filename=report.xml || status=$?
     mv report.xml behavior-report.xml
     exit $status
   resultPaths:

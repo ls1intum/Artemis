@@ -195,7 +195,7 @@
             "courses": "Courses",
             "student": "Student",
             "course": "Management",
-            "courseRequests": "Request a new Course",
+            "courseRequests": "Request new course",
             "entities": {
                 "main": "Entities",
                 "course": "Course",
