@@ -1,26 +1,27 @@
 import { HyperionRunLinkComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-link.component';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
-    faBook,
     faChartBar,
-    faCheckDouble,
-    faExclamationTriangle,
-    faEye,
+    faDownload,
+    faEllipsisVertical,
+    faFileExport,
     faFileSignature,
+    faFlask,
     faHistory,
     faListAlt,
-    faPencilAlt,
+    faMagnifyingGlass,
     faTrash,
     faUndo,
     faUserCheck,
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -34,7 +35,6 @@ import { ConsistencyCheckService } from 'app/programming/manage/consistency-chec
 import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/reset/button/programming-exercise-reset-button.directive';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
-import { ProgrammingExerciseInstructorExerciseDownloadComponent } from 'app/programming/shared/actions/instructor-exercise-download/programming-exercise-instructor-exercise-download.component';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -42,16 +42,14 @@ import { ProgrammingLanguageFeatureService } from 'app/programming/shared/servic
 import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
-import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -64,27 +62,30 @@ import { DeimosService } from 'app/programming/shared/services/deimos.service';
 import { DeimosDateRangeModalComponent, DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
 import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../shared/actions/programming-exercise-instructor-exercise-sharing.component';
-import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { ExerciseDetailHeaderComponent } from 'app/exercise/detail/exercise-detail-header.component';
+import { ExerciseDetailActionsComponent } from 'app/exercise/detail/exercise-detail-actions.component';
+import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
     styleUrls: ['./programming-exercise-detail.component.scss'],
-    encapsulation: ViewEncapsulation.None,
     imports: [
         HyperionRunLinkComponent,
         TranslateDirective,
-        DocumentationButtonComponent,
+        ExerciseDetailHeaderComponent,
+        ExerciseDetailActionsComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiTooltipDirective,
         RouterLink,
         FaIconComponent,
-        FeatureToggleLinkDirective,
-        NgbTooltip,
-        ProgrammingExerciseInstructorExerciseDownloadComponent,
         FeatureToggleDirective,
         FeatureToggleHideDirective,
         ProgrammingExerciseResetButtonDirective,
@@ -92,8 +93,6 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         ExerciseDetailStatisticsComponent,
         DetailOverviewListComponent,
         ArtemisTranslatePipe,
-        FeatureOverlayComponent,
-        ProgrammingExerciseInstructorExerciseSharingComponent,
         ButtonComponent,
         DeimosDateRangeModalComponent,
         AtlasOrchestrationTriggerComponent,
@@ -119,6 +118,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private consistencyCheckService = inject(ConsistencyCheckService);
     private sharingService = inject(ProgrammingExerciseSharingService);
+    private featureToggleService = inject(FeatureToggleService);
 
     protected readonly deimosModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_DEIMOS);
 
@@ -126,30 +126,32 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected deimosSubmitting = signal(false);
 
     protected readonly dayjs = dayjs;
-    protected readonly ActionType = ActionType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
     protected readonly AssessmentType = AssessmentType;
-    protected readonly RepositoryType = RepositoryType;
     protected readonly documentationType: DocumentationType = 'Programming';
 
     protected readonly faUndo = faUndo;
     protected readonly faTrash = faTrash;
-    protected readonly faBook = faBook;
     protected readonly faWrench = faWrench;
-    protected readonly faCheckDouble = faCheckDouble;
-    protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faFileSignature = faFileSignature;
     protected readonly faListAlt = faListAlt;
     protected readonly faChartBar = faChartBar;
-    protected readonly faPencilAlt = faPencilAlt;
     protected readonly faUsers = faUsers;
-    protected readonly faEye = faEye;
     protected readonly faHistory = faHistory;
     protected readonly faUserCheck = faUserCheck;
+    protected readonly faDownload = faDownload;
+    protected readonly faEllipsisVertical = faEllipsisVertical;
+    protected readonly faFileExport = faFileExport;
+    protected readonly faFlask = faFlask;
+    protected readonly faMagnifyingGlass = faMagnifyingGlass;
+    protected readonly programmingFeatureEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: false });
+    protected readonly exportsEnabled = toSignal(this.featureToggleService.getFeatureTogglesActive([FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]), {
+        initialValue: false,
+    });
 
     readonly programmingExercise = signal<ProgrammingExercise>(undefined!);
     programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
@@ -161,7 +163,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly baseResource = signal<string>(undefined!);
     readonly shortBaseResource = signal<string>(undefined!);
     readonly teamBaseResource = signal<string>(undefined!);
-    // Signal-backed so the child ProgrammingTestStatusDetailComponent re-renders when the participation
+    // Signal-backed so the repository/build overview re-renders when the participation
     // results finish loading; a plain field mutated in the async pipe would not schedule change detection.
     readonly loadingTemplateParticipationResults = signal(true);
     readonly loadingSolutionParticipationResults = signal(true);
@@ -220,6 +222,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private readonly UPDATE_DEBOUNCE_MS = 1000;
 
     ngOnInit() {
+        // REMOVE_IN_ARTEMIS_11 (Jenkins): drop the PROFILE_JENKINS operand below
         this.isBuildPlanEditable.set(this.profileService.isProfileActive(PROFILE_JENKINS) || this.profileService.isProfileActive(PROFILE_LOCALCI));
         this.isExportToSharingEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING));
         // Get route data directly from snapshot - no subscription needed
@@ -451,6 +454,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
             details: [
+                exercise.id !== undefined && { type: DetailType.Text, title: 'artemisApp.exerciseDetail.id', data: { text: String(exercise.id) } },
                 exercise.course && {
                     type: DetailType.Link,
                     title: 'artemisApp.exercise.course',
@@ -535,92 +539,33 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     data: { boolean: exercise.buildConfig?.sequentialTestRuns },
                 },
                 {
-                    type: DetailType.ProgrammingRepositoryButtons,
-                    title: 'artemisApp.programmingExercise.templateRepositoryUri',
-                    data: {
-                        participation: exercise.templateParticipation,
-                        exerciseId: exercise.id,
-                        type: RepositoryType.TEMPLATE,
-                    },
-                },
-                {
-                    type: DetailType.ProgrammingRepositoryButtons,
-                    title: 'artemisApp.programmingExercise.solutionRepositoryUri',
-                    data: {
-                        participation: exercise.solutionParticipation,
-                        exerciseId: exercise.id,
-                        type: RepositoryType.SOLUTION,
-                    },
-                },
-                {
-                    type: DetailType.ProgrammingRepositoryButtons,
-                    title: 'artemisApp.programmingExercise.testRepositoryUri',
-                    data: {
-                        participation: { repositoryUri: exercise.testRepositoryUri },
-                        exerciseId: exercise.id,
-                        type: RepositoryType.TESTS,
-                    },
-                },
-                this.supportsAuxiliaryRepositories &&
-                    !!exercise.auxiliaryRepositories?.length && {
-                        type: DetailType.ProgrammingAuxiliaryRepositoryButtons,
-                        title: 'artemisApp.programmingExercise.auxiliaryRepositories',
-                        data: {
-                            auxiliaryRepositories: exercise.auxiliaryRepositories,
-                            exerciseId: exercise.id,
-                        },
-                    },
-                exercise.isAtLeastEditor &&
-                    this.localCIEnabled() && {
-                        type: DetailType.ProgrammingCheckoutDirectories,
-                        title: 'artemisApp.programmingExercise.checkoutDirectories',
-                        data: {
-                            exercise: exercise,
-                            programmingLanguage: exercise.programmingLanguage,
-                            isLocal: true,
-                        },
-                    },
-                !this.localCIEnabled() && {
-                    type: DetailType.Link,
-                    title: 'artemisApp.programmingExercise.templateBuildPlanId',
-                    data: {
-                        href: exercise.templateParticipation?.buildPlanUrl,
-                        text: exercise.templateParticipation?.buildPlanId,
-                    },
-                },
-                !this.localCIEnabled() && {
-                    type: DetailType.Link,
-                    title: 'artemisApp.programmingExercise.solutionBuildPlanId',
-                    data: {
-                        href: exercise.solutionParticipation?.buildPlanUrl,
-                        text: exercise.solutionParticipation?.buildPlanId,
-                    },
-                },
-                {
-                    type: DetailType.ProgrammingTestStatus,
-                    title: 'artemisApp.programmingExercise.templateResult',
+                    type: DetailType.ProgrammingRepositoryBuildOverview,
                     data: {
                         exercise,
-                        participation: exercise.templateParticipation,
-                        loading: this.loadingTemplateParticipationResults,
-                        submissionRouterLink: exercise.templateParticipation && this.getParticipationSubmissionLink(exercise.templateParticipation.id!),
-                        onParticipationChange: () => this.onParticipationChange(),
-                        type: ProgrammingExerciseParticipationType.TEMPLATE,
+                        localCIEnabled: this.localCIEnabled(),
+                        supportsAuxiliaryRepositories: this.supportsAuxiliaryRepositories,
+                        editorBaseResource: exercise.isAtLeastEditor ? this.baseResource() : undefined,
+                        editBuildPlanLink: exercise.isAtLeastEditor && this.isBuildPlanEditable() ? [this.baseResource(), 'edit-build-plan'] : undefined,
+                        checkConsistency: exercise.isAtLeastEditor ? () => this.checkConsistencies(exercise) : undefined,
+                        templateStatus: {
+                            exercise,
+                            participation: exercise.templateParticipation,
+                            loading: this.loadingTemplateParticipationResults,
+                            submissionRouterLink: exercise.templateParticipation && this.getParticipationSubmissionLink(exercise.templateParticipation.id!),
+                            onParticipationChange: () => this.onParticipationChange(),
+                            type: ProgrammingExerciseParticipationType.TEMPLATE,
+                        },
+                        solutionStatus: {
+                            exercise,
+                            participation: exercise.solutionParticipation,
+                            loading: this.loadingSolutionParticipationResults,
+                            submissionRouterLink: exercise.solutionParticipation && this.getParticipationSubmissionLink(exercise.solutionParticipation.id!),
+                            onParticipationChange: () => this.onParticipationChange(),
+                            type: ProgrammingExerciseParticipationType.SOLUTION,
+                        },
+                        comparison: diffReportDetail,
                     },
                 },
-                {
-                    type: DetailType.ProgrammingTestStatus,
-                    title: 'artemisApp.programmingExercise.solutionResult',
-                    data: {
-                        exercise,
-                        participation: exercise.solutionParticipation,
-                        loading: this.loadingSolutionParticipationResults,
-                        submissionRouterLink: exercise.solutionParticipation && this.getParticipationSubmissionLink(exercise.solutionParticipation.id!),
-                        onParticipationChange: () => this.onParticipationChange(),
-                        type: ProgrammingExerciseParticipationType.SOLUTION,
-                    },
-                },
-                diffReportDetail,
                 !!buildPlanPhases?.dockerImage && {
                     type: DetailType.Text,
                     title: 'artemisApp.programmingExercise.dockerImage',
@@ -757,6 +702,43 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.solutionFileContentByPath,
             'artemisApp.programmingExercise.participationChangeError',
         );
+    }
+
+    /** Downloads the complete exercise from the secondary actions menu. */
+    downloadExercise(): void {
+        const exerciseId = this.programmingExercise().id;
+        if (exerciseId === undefined) {
+            return;
+        }
+        this.programmingExerciseService.exportInstructorExercise(exerciseId).subscribe({
+            next: (response) => {
+                downloadZipFileFromResponse(response);
+                this.alertService.success('artemisApp.programmingExercise.export.successMessageExercise');
+            },
+            error: () => this.alertService.error('error.exportFailed'),
+        });
+    }
+
+    /** Preserves the sharing redirect workflow while presenting it as a menu command. */
+    exportExerciseToSharing(): void {
+        const exerciseId = this.programmingExercise().id;
+        if (exerciseId === undefined) {
+            return;
+        }
+        this.sharingService.exportProgrammingExerciseToSharing(exerciseId, window.location.href).subscribe({
+            next: (response) => {
+                if (response.body) {
+                    window.location.href = response.body;
+                } else {
+                    this.alertService.error('artemisApp.programmingExercise.sharing.error.noRedirect');
+                }
+            },
+            error: (errorResponse) => {
+                this.alertService.error('artemisApp.programmingExercise.sharing.error.export', {
+                    message: errorResponse?.error?.message || errorResponse?.error || 'Unknown error',
+                });
+            },
+        });
     }
 
     generateStructureOracle() {

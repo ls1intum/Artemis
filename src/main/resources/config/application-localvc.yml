@@ -24,6 +24,7 @@ artemis:
         #      job and is accepted only for that job's own assignment, test, solution and auxiliary repositories, and
         #      only while the job runs. Use this where ssh is not practical, e.g. port 7921 is not reachable by agents.
         #
+        # REMOVE_IN_ARTEMIS_11 (Jenkins): option 3 and the two properties below go away with Jenkins support
         #   3. A SHARED USERNAME AND PASSWORD - Jenkins only, and refused everywhere else.
         #      build-agent-git-username / build-agent-git-password below are accepted ONLY on a localvc node that does
         #      NOT run local CI, which in practice means Jenkins with LocalVC: Jenkins is not an Artemis build agent, so

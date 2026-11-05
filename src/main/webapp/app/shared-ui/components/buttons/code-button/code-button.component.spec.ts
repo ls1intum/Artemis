@@ -11,9 +11,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
-import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
-import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
+import { Ide } from 'app/account/user/settings/exercises/ide-preferences/ide.model';
+import { IdeSettingsService } from 'app/account/user/settings/exercises/ide-preferences/ide-settings.service';
+import { SshUserSettingsService } from 'app/account/user/settings/credentials/ssh-settings/ssh-user-settings.service';
 import { User } from 'app/account/user/user.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeButtonComponent, RepositoryAuthenticationMethod, type VcsAccessTokenSourceInfo } from './code-button.component';
@@ -137,6 +137,23 @@ describe('CodeButtonComponent', () => {
             fixture.detectChanges();
         }
     }
+
+    it('forwards browser editing through Code even when the online IDE is disallowed', async () => {
+        createComponent(false);
+        fixture.componentRef.setInput('repositoryEditorLink', ['/course-management/3/programming-exercises/12', 'code-editor', 'solution', 2]);
+        await fixture.whenStable();
+        expect(document.querySelector('[data-testid="edit-repository-button"]')?.getAttribute('href')).toBe('/course-management/3/programming-exercises/12/code-editor/solution/2');
+        expect(document.querySelector('[data-testid="open-repository-button"]')?.getAttribute('href')).toBe('/courses/1/exercises/42/repository');
+    });
+
+    it('retains browser editing when clone authentication cannot be loaded', async () => {
+        profileInfo.repositoryAuthenticationMechanisms = [];
+        createComponent(false);
+        fixture.componentRef.setInput('repositoryEditorLink', ['/course-management/3/programming-exercises/12', 'code-editor', 'template', 1]);
+        await fixture.whenStable();
+        expect(component['loadingState']().status).toBe('error');
+        expect(document.querySelector('[data-testid="edit-repository-button"]')?.getAttribute('href')).toBe('/course-management/3/programming-exercises/12/code-editor/template/1');
+    });
 
     it('should defer resource loading until the popover trigger is clicked', async () => {
         createComponent(false, ProgrammingLanguage.JAVA, repositoryUri, { returnedTokenType: 'participation-token', participationId: 7 }, false);

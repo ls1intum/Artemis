@@ -347,7 +347,7 @@ public class ProgrammingExerciseRepositoryService {
     private boolean hasSeparateStaticCodeAnalysisTemplateFiles(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
             // Languages that have a separate staticCodeAnalysis directory with template files
-            case PYTHON, TYPESCRIPT, JAVASCRIPT, C_PLUS_PLUS, DART, R, RUBY -> true;
+            case PYTHON, TYPESCRIPT, JAVASCRIPT, C_PLUS_PLUS, DART, R, RUBY, GO -> true;
             default -> false;
         };
     }

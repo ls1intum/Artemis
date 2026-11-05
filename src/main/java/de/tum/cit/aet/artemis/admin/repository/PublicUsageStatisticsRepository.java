@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.admin.dto.BuildUsageDTO;
 import de.tum.cit.aet.artemis.admin.dto.StudentSubmissionCountDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -65,6 +66,22 @@ public interface PublicUsageStatisticsRepository extends ArtemisJpaRepository<Co
     Set<Long> findStudentIds(@Param("courseIds") Set<Long> courseIds);
 
     /**
+     * Counts every enrolment, so a student of several courses is counted once per course.
+     *
+     * @param courseIds the real courses
+     * @return the number of student enrolments in the courses, without deleted users and test users
+     */
+    @Query("""
+            SELECT COUNT(ucr.id)
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
+                AND ucr.user.deleted = FALSE
+                AND ucr.user.isTestUser = FALSE
+            """)
+    long countStudentEnrollments(@Param("courseIds") Set<Long> courseIds);
+
+    /**
      * @param courseIds the real courses
      * @return the ids of all exercises of the courses, including the exercises of their exams
      */
@@ -107,6 +124,51 @@ public interface PublicUsageStatisticsRepository extends ArtemisJpaRepository<Co
     long countLectures(@Param("courseIds") Set<Long> courseIds);
 
     /**
+     * Counts the units of the lectures that {@link #countLectures} counts, of every unit type (text, video, attachment, online and exercise units).
+     *
+     * @param courseIds the courses
+     * @return the number of lecture units in these courses, without the units of tutorial lectures
+     */
+    @Query("""
+            SELECT COUNT(lu.id)
+            FROM LectureUnit lu
+            WHERE lu.lecture.course.id IN :courseIds
+                AND lu.lecture.isTutorialLecture = FALSE
+            """)
+    long countLectureUnits(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * @param courseIds the courses
+     * @return the number of unique people with the instructor role in at least one of the courses, without deleted users and test users
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT ucr.user.id)
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+                AND ucr.user.deleted = FALSE
+                AND ucr.user.isTestUser = FALSE
+            """)
+    long countInstructors(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * Editors are counted as tutors, they are tutors who can also edit the content of a course. Someone who is a tutor in one course and an instructor
+     * in another is counted in both numbers.
+     *
+     * @param courseIds the courses
+     * @return the number of unique people with the tutor or editor role in at least one of the courses, without deleted users and test users
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT ucr.user.id)
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR)
+                AND ucr.user.deleted = FALSE
+                AND ucr.user.isTestUser = FALSE
+            """)
+    long countTutors(@Param("courseIds") Set<Long> courseIds);
+
+    /**
      * @param courseIds the real courses
      * @return the number of exercises per type including exam exercises, types without exercises are missing
      */
@@ -120,4 +182,93 @@ public interface PublicUsageStatisticsRepository extends ArtemisJpaRepository<Co
             GROUP BY TYPE(e)
             """)
     Set<ExerciseTypeMetricsEntry> countExercisesByType(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * Summarizes the finished build jobs of the courses in one pass over the build jobs. Jobs that are still queued or building, were cancelled or are
+     * recorded as missing are not builds that ran. A missing job that is retried is recorded as a new job, so counting it as well would count the build twice.
+     * The average duration only uses the successful jobs.
+     *
+     * @param courseIds the real courses
+     * @return the number of finished build jobs and the average duration in seconds of the successful ones, which is null without such jobs
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.admin.dto.BuildUsageDTO(
+                COUNT(b.id),
+                AVG(CASE WHEN b.buildStatus = de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL
+                        AND b.buildStartDate IS NOT NULL
+                        AND b.buildCompletionDate IS NOT NULL
+                    THEN (b.buildCompletionDate - b.buildStartDate) BY SECOND
+                    END)
+            )
+            FROM BuildJob b
+            WHERE b.courseId IN :courseIds
+                AND b.buildStatus IN (
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.FAILED,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.ERROR,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.TIMEOUT)
+            """)
+    BuildUsageDTO summarizeFinishedBuildJobs(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * Counts the posts in channels, group chats and direct messages of the courses. Posts that belong to a plagiarism case instead of a conversation are not counted.
+     *
+     * @param courseIds the real courses
+     * @return the number of posts
+     */
+    @Query("""
+            SELECT COUNT(p.id)
+            FROM Post p
+            WHERE p.conversation.course.id IN :courseIds
+            """)
+    long countPosts(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * Replies that Iris drafted and no tutor has verified yet are not visible to students and therefore not counted.
+     *
+     * @param courseIds the real courses
+     * @return the number of visible replies to the posts that {@link #countPosts} counts
+     */
+    @Query("""
+            SELECT COUNT(a.id)
+            FROM AnswerPost a
+            WHERE a.post.conversation.course.id IN :courseIds
+                AND a.verified = TRUE
+            """)
+    long countAnswerPosts(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * @param courseIds the real courses
+     * @return the number of reactions to the posts that {@link #countPosts} counts
+     */
+    @Query("""
+            SELECT COUNT(r.id)
+            FROM Reaction r
+            WHERE r.post.conversation.course.id IN :courseIds
+            """)
+    long countReactionsOnPosts(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * @param courseIds the real courses
+     * @return the number of reactions to the replies that {@link #countAnswerPosts} counts
+     */
+    @Query("""
+            SELECT COUNT(r.id)
+            FROM Reaction r
+            WHERE r.answerPost.post.conversation.course.id IN :courseIds
+                AND r.answerPost.verified = TRUE
+            """)
+    long countReactionsOnAnswerPosts(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * @param courseIds the real courses
+     * @return the number of accepted, i.e. published, FAQs of these courses
+     */
+    @Query("""
+            SELECT COUNT(f.id)
+            FROM Faq f
+            WHERE f.course.id IN :courseIds
+                AND f.faqState = de.tum.cit.aet.artemis.communication.domain.FaqState.ACCEPTED
+            """)
+    long countAcceptedFaqs(@Param("courseIds") Set<Long> courseIds);
 }

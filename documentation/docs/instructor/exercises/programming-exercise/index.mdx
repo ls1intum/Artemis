@@ -2,6 +2,7 @@
 id: index
 title: Programming Exercise
 sidebar_label: Programming Exercise
+last_reviewed: 2026-11-03
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -12,7 +13,7 @@ import exerciseWorkflow from '../assets/programming/ExerciseWorkflow.png';
 
 In a programming exercise, students write code in a Git repository of their own and Artemis grades it automatically by running your test cases against every push. You provide three repositories — a template students start from, a solution, and the tests — and Artemis takes care of handing out repositories, running builds, and turning test results into scores and feedback.
 
-Artemis supports a wide range of programming languages and is independent of any particular version control or continuous integration system, so you have a lot of freedom in how you set up the test environment.
+Artemis supports a wide range of programming languages. It hosts the repositories and, with Local CI, runs the builds itself ([Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle), Local Version Control and Local CI). Instances that have not migrated yet still run the builds in Jenkins. Jenkins is deprecated and Artemis 11 (planned for March 2027) removes it, so the **Jenkins** columns below only matter for instances that have not yet [migrated to Local CI](/admin/jenkins-to-localci-migration).
 
 For supported unreleased Java exercises built with Gradle or Maven, [AI-assisted authoring with Hyperion](/instructor/exercises/hyperion-generation)
 can create the statement, template, solution, and tests together from a brief.
@@ -67,7 +68,7 @@ Artemis ships a template for each supported language, so a new exercise starts f
 | 2   | Python               | ✅        | ✅       | pip                    | [artemis-python-docker](https://github.com/ls1intum/artemis-python-docker)                   |
 | 3   | C                    | ✅        | ✅       | Makefile, FACT, GCC    | [artemis-c-docker](https://github.com/ls1intum/artemis-c-docker)                             |
 | 4   | Haskell              | ✅        | ✅       | Stack                  | [artemis-haskell](https://github.com/uni-passau-artemis/artemis-haskell)                     |
-| 5   | Kotlin               | ✅        | ✅       | Maven                  | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker)                     |
+| 5   | Kotlin               | ✅        | ✅       | Maven                  | [artemis-kotlin-docker](https://github.com/ls1intum/artemis-kotlin-docker)                   |
 | 6   | VHDL                 | ✅        | ❌       | Makefile               | [artemis-vhdl-docker](https://github.com/ls1intum/artemis-vhdl-docker)                       |
 | 7   | Assembler            | ✅        | ❌       | Makefile               | [artemis-assembler-docker](https://github.com/ls1intum/artemis-assembler-docker)             |
 | 8   | Swift                | ✅        | ✅       | SwiftPM                | [artemis-swift-swiftlint-docker](https://github.com/ls1intum/artemis-swift-swiftlint-docker) |
@@ -108,25 +109,25 @@ Not all templates support the same feature set. **L** = Local CI, **J** = Jenkin
 | No. | Language   | [Sequential Test Runs](#sequential-test-runs) | [Static Code Analysis](/instructor/exercises/programming-exercise/configure-the-build#configure-static-code-analysis) | [Plagiarism Check](/instructor/assessment-grading/plagiarism-check) | [Package Name](#package-name) | Project Type           | [Solution Repository Checkout](#solution-repository-checkout) | [Auxiliary Repositories](#auxiliary-repositories) |
 |:---:|:-----------|:---------------------------------------------:|:-------------------------------------------------------:|:---------------------------------------:|:-----------------------------:|:-----------------------|:-------------------------------------------------------------:|:-------------------------------------------------:|
 |  1  | Java       |                       ✅                       |                            ✅                            |                    ✅                    |               ✅               | Gradle, Maven, DejaGnu |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  2  | Python     |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  2  | Python     |                 L: ✅<br />J: ❌                |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  3  | C          |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | FACT, GCC              |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  4  | Haskell    |                L: ✅<br />J: ❌                 |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ✅                               |                  L: ✅<br />J: ❌                   |
-|  5  | Kotlin     |                L: ❌<br />J: ✅                 |                            ❌                            |                    ✅                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  5  | Kotlin     |                       ✅                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  6  | VHDL       |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  7  | Assembler  |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-|  8  | Swift      |                       ❌                       |                     L: ❌<br />J: ✅                      |                    ✅                    |               ✅               | Plain                  |                               ❌                               |                  L: ✅<br />J: ❌                   |
+|  8  | Swift      |                 L: ✅<br />J: ❌                |                            ✅                            |                    ✅                    |               ✅               | Plain                  |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  9  | OCaml      |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ✅                               |                  L: ✅<br />J: ❌                   |
-| 10  | Rust       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 11  | JavaScript |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 10  | Rust       |                 L: ✅<br />J: ❌                |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 11  | JavaScript |                 L: ✅<br />J: ❌                |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 | 12  | R          |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 | 13  | C++        |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 14  | TypeScript |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 15  | C#         |                       ❌                       |                            ❌                            |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 16  | Go         |                       ❌                       |                            ❌                            |                    ✅                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 14  | TypeScript |                 L: ✅<br />J: ❌                |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 15  | C#         |                 L: ✅<br />J: ❌                |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 16  | Go         |                 L: ✅<br />J: ❌                |                     L: ✅<br />J: ❌                      |                    ✅                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 | 17  | Bash       |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 | 18  | MATLAB     |                       ❌                       |                            ❌                            |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 19  | Ruby       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
-| 20  | Dart       |                       ❌                       |                     L: ✅<br />J: ❌                      |                    ❌                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 19  | Ruby       |                 L: ✅<br />J: ❌                |                     L: ✅<br />J: ❌                      |                    ❌                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
+| 20  | Dart       |                 L: ✅<br />J: ❌                |                     L: ✅<br />J: ❌                      |                    ❌                    |               ✅               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
 
 <Callout variant={CalloutVariant.info}>
 
@@ -140,7 +141,7 @@ Not all templates support the same feature set. **L** = Local CI, **J** = Jenkin
 
 Artemis can generate a build plan which first executes structural and then behavioral tests. Structural tests check that the expected classes and method signatures exist; behavioral tests check that they do the right thing. Only if the structural tests pass do the behavioral ones run, so students are not buried under failures caused by something they have not written yet.
 
-Cannot be combined with static code analysis, and cannot be changed after the exercise is created.
+Cannot be combined with static code analysis, and cannot be changed after the exercise is created. Java exercises with the Maven black-box project type do not support sequential test runs, because their DejaGnu tests are a single suite. For Swift, a project type has to be selected.
 
 #### Package Name
 
@@ -150,7 +151,7 @@ For some languages — Java, Kotlin, Swift, Go and Dart — you can specify the 
 
 Checks out the solution repository alongside the student's submission during the build, so tests can compare the two directly.
 
-Currently supported for OCaml and Haskell only, with both continuous integration systems.
+Currently supported for OCaml and Haskell only.
 
 #### Auxiliary Repositories
 

@@ -27,6 +27,11 @@ public enum StaticCodeAnalysisTool {
     SPOTBUGS("spotbugsXml.xml"),
     SWIFTLINT("swiftlint-result.xml"),
     OTHER(null),
+    // The constants below are appended after OTHER on purpose: enums are encoded by their position in the distributed data
+    // (Redis/Valkey keep queued build results across a release), so inserting a constant before OTHER would shift its ordinal.
+    DETEKT("detekt.sarif"),
+    GOLANGCI_LINT("golangci-lint.sarif"),
+    ROSLYN("roslyn.sarif"),
     ;
     // @formatter:on
 
@@ -38,9 +43,12 @@ public enum StaticCodeAnalysisTool {
 
         map.put(ProgrammingLanguage.C, List.of(GCC));
         map.put(ProgrammingLanguage.C_PLUS_PLUS, List.of(CLANG_TIDY));
+        map.put(ProgrammingLanguage.C_SHARP, List.of(ROSLYN));
         map.put(ProgrammingLanguage.DART, List.of(DART_ANALYZE));
+        map.put(ProgrammingLanguage.GO, List.of(GOLANGCI_LINT));
         map.put(ProgrammingLanguage.JAVA, List.of(SPOTBUGS, CHECKSTYLE, PMD, PMD_CPD));
         map.put(ProgrammingLanguage.JAVASCRIPT, List.of(ESLINT));
+        map.put(ProgrammingLanguage.KOTLIN, List.of(DETEKT));
         map.put(ProgrammingLanguage.PYTHON, List.of(RUFF));
         map.put(ProgrammingLanguage.R, List.of(LINTR));
         map.put(ProgrammingLanguage.RUBY, List.of(RUBOCOP));

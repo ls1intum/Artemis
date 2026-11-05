@@ -74,7 +74,17 @@
 @source './app/exercise/import';
 @source './app/exercise/review';
 @source './app/programming/manage/code-editor/instructor-and-editor-container';
+@source './app/programming/manage/detail';
+@source './app/programming/manage/status';
+@source './app/quiz/manage/detail';
+@source './app/quiz/manage/manage-buttons';
+@source './app/quiz/manage/lifecyle-buttons';
+@source './app/text/manage/detail';
+@source './app/modeling/manage/detail';
+@source './app/fileupload/manage/exercise-details';
 @source './app/iris/manage/settings';
+@source './app/course/manage/athena-settings-update';
+@source './app/course/manage/control-center/about-athena-modal';
 @source './app/hyperion';
 @source './app/editor/markdown-editor';
 @source './app/communication/message-editor';
@@ -112,6 +122,7 @@
 @source './app/core/layouts/footer';
 @source './app/core/navbar/global-search/components/modal/global-search-modal.component.html';
 @source './app/course/overview/setup-passkey-modal';
+@source './app/course/overview/courses';
 @source './app/course/sidebar';
 @source './app/notification';
 @source './app/communication/faq';

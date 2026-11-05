@@ -1,0 +1,275 @@
+{
+  "$schema": "http://json.schemastore.org/sarif-2.1.0",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "results": [
+        {
+          "ruleId": "CS8600",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "Converting null literal or possible null value to non-nullable type."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///var/tmp/testing-dir/assignment/Flawed.cs"
+                },
+                "region": {
+                  "startLine": 8,
+                  "startColumn": 23,
+                  "endLine": 8,
+                  "endColumn": 28
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS8602",
+          "ruleIndex": 3,
+          "level": "warning",
+          "message": {
+            "text": "Dereference of a possibly null reference."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///var/tmp/testing-dir/assignment/Flawed.cs"
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 16,
+                  "endLine": 9,
+                  "endColumn": 20
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CS0219",
+          "ruleIndex": 4,
+          "level": "warning",
+          "message": {
+            "text": "The variable 'unused' is assigned but its value is never used"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///var/tmp/testing-dir/assignment/Flawed.cs"
+                },
+                "region": {
+                  "startLine": 7,
+                  "startColumn": 13,
+                  "endLine": 7,
+                  "endColumn": 19
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 3
+          }
+        },
+        {
+          "ruleId": "CA1708",
+          "ruleIndex": 0,
+          "level": "warning",
+          "message": {
+            "text": "Names of 'Namespaces' and 'Assignment, assignment' should differ by more than case"
+          },
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA1822",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Member 'Count' does not access instance data and can be marked as static"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///var/tmp/testing-dir/assignment/Flawed.cs"
+                },
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 16,
+                  "endLine": 12,
+                  "endColumn": 21
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA1822",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Member 'PerformSort' does not access instance data and can be marked as static"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///var/tmp/testing-dir/assignment/BubbleSort.cs"
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 17,
+                  "endLine": 9,
+                  "endColumn": 28
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        },
+        {
+          "ruleId": "CA1822",
+          "ruleIndex": 1,
+          "level": "warning",
+          "message": {
+            "text": "Member 'PerformSort' does not access instance data and can be marked as static"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///var/tmp/testing-dir/assignment/MergeSort.cs"
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 17,
+                  "endLine": 9,
+                  "endColumn": 28
+                }
+              }
+            }
+          ],
+          "properties": {
+            "warningLevel": 1
+          }
+        }
+      ],
+      "properties": {
+        "analyzerExecutionTime": "0.720"
+      },
+      "tool": {
+        "driver": {
+          "name": "Microsoft (R) Visual C# Compiler",
+          "version": "4.11.0-3.25569.22 (3fb752d4)",
+          "dottedQuadFileVersion": "4.11.0.0",
+          "semanticVersion": "4.11.0",
+          "rules": [
+            {
+              "id": "CA1708",
+              "shortDescription": {
+                "text": "Identifiers should differ by more than case"
+              },
+              "fullDescription": {
+                "text": "Identifiers for namespaces, types, members, and parameters cannot differ only by case because languages that target the common language runtime are not required to be case-sensitive."
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1708",
+              "properties": {
+                "category": "Naming",
+                "tags": [
+                  "PortedFromFxCop",
+                  "Telemetry",
+                  "EnabledRuleInAggressiveMode"
+                ]
+              }
+            },
+            {
+              "id": "CA1822",
+              "shortDescription": {
+                "text": "Mark members as static"
+              },
+              "fullDescription": {
+                "text": "Members that do not access instance data or call instance methods can be marked as static. After you mark the methods as static, the compiler will emit nonvirtual call sites to these members. This can give you a measurable performance gain for performance-sensitive code."
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "helpUri": "https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1822",
+              "properties": {
+                "category": "Performance",
+                "tags": [
+                  "PortedFromFxCop",
+                  "Telemetry",
+                  "EnabledRuleInAggressiveMode"
+                ]
+              }
+            },
+            {
+              "id": "CS8600",
+              "shortDescription": {
+                "text": "Converting null literal or possible null value to non-nullable type."
+              },
+              "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS8600)",
+              "properties": {
+                "category": "Compiler",
+                "tags": [
+                  "Compiler",
+                  "Telemetry"
+                ]
+              }
+            },
+            {
+              "id": "CS8602",
+              "shortDescription": {
+                "text": "Dereference of a possibly null reference."
+              },
+              "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS8602)",
+              "properties": {
+                "category": "Compiler",
+                "tags": [
+                  "Compiler",
+                  "Telemetry"
+                ]
+              }
+            },
+            {
+              "id": "CS0219",
+              "shortDescription": {
+                "text": "Variable is assigned but its value is never used"
+              },
+              "helpUri": "https://msdn.microsoft.com/query/roslyn.query?appId=roslyn&k=k(CS0219)",
+              "properties": {
+                "category": "Compiler",
+                "tags": [
+                  "Compiler",
+                  "Telemetry"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "columnKind": "utf16CodeUnits"
+    }
+  ]
+}
