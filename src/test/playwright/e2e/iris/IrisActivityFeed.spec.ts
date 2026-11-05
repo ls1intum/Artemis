@@ -131,9 +131,11 @@ test.describe('Iris activity visibility (real Pyris)', { tag: '@slow' }, () => {
         const secondPreamble = llmMessages.filter({ hasText: 'Let me look once more — mock-second-preamble' }).first();
         await expect(secondPreamble).toBeVisible({ timeout: 60_000 });
 
-        // Step 1 moved onto the second preamble, so the live group holds only step 2.
+        // Step 1 moved onto the second preamble, so the live group holds only step 2. Both steps run the
+        // same tool, so the step id tells them apart.
         const liveFeed = page.locator('.iris-activity-group.mode-live');
-        await expect(liveFeed.locator('.iris-activity-row')).toHaveCount(1, { timeout: 60_000 });
+        await expect(liveFeed.locator('.iris-activity-row[data-activity-id="act-2"]')).toHaveCount(1, { timeout: 60_000 });
+        await expect(liveFeed.locator('.iris-activity-row')).toHaveCount(1);
 
         await expect(llmMessages.last()).toContainText('mock-llm', { timeout: 60_000 });
         await expect(llmMessages).toHaveCount(3);

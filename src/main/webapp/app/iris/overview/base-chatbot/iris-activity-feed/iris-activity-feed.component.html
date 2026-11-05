@@ -11,7 +11,7 @@
         </summary>
         <ul class="iris-activity-list">
             @for (activity of viewItems(); track activity.id) {
-                <li class="iris-activity-row" [class]="activity.stateClass" [attr.aria-label]="activity.tooltip">
+                <li class="iris-activity-row" [class]="activity.stateClass" [attr.aria-label]="activity.tooltip" [attr.data-activity-id]="activity.id">
                     <fa-icon class="iris-activity-icon" [icon]="activity.icon" [animation]="activity.spin ? 'spin' : undefined" aria-hidden="true" />
                     <span class="iris-activity-name">{{ activity.label }}</span>
                     @if (activity.detail) {

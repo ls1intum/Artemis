@@ -8,6 +8,9 @@
 .iris-activity-group {
     color: var(--iris-label-color);
     font-size: 0.875rem;
+
+    // A long tool name or detail must wrap instead of widening the message.
+    overflow-wrap: anywhere;
 }
 
 .iris-activity-summary {

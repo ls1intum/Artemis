@@ -72,6 +72,8 @@ describe('IrisActivityFeedComponent', () => {
         expect(fixture.debugElement.query(By.css('.iris-activity-row.running .iris-activity-icon'))).toBeTruthy();
         expect(fixture.debugElement.query(By.css('.iris-activity-row.finished .iris-activity-icon'))).toBeTruthy();
         expect(fixture.debugElement.query(By.css('.iris-activity-row.failed .iris-activity-icon'))).toBeTruthy();
+        // Each row names its step, so tests can tell two runs of the same tool apart.
+        expect(fixture.debugElement.query(By.css('.iris-activity-row[data-activity-id="act-failed"]'))).toBeTruthy();
         expect(fixture.nativeElement.textContent).toContain('Lecture search');
         expect(fixture.nativeElement.textContent).toContain('3.1s');
     });

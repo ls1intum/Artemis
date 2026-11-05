@@ -290,6 +290,38 @@ class IrisChatSessionServiceStatusUpdateTest {
     }
 
     @Test
+    void finalResultWithAnEmptyStepListStoresNoSteps() {
+        var session = new IrisChatSession();
+        session.setId(2L);
+        session.setUserId(5L);
+        session.setCourseId(1L);
+        when(irisSessionRepository.findByIdWithMessagesAndContents(2L)).thenReturn(session);
+
+        var job = new ChatJob("run-1", 1L, 2L, 3L, null, null, null);
+        when(pyrisJobService.getJob("run-1")).thenReturn(job);
+        when(pyrisJobService.runWithJobLock(eq("run-1"), any())).thenAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            Supplier<?> supplier = invocation.getArgument(1, Supplier.class);
+            return supplier.get();
+        });
+        when(irisMessageService.saveMessage(any(IrisMessage.class), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(invocation -> {
+            var message = invocation.getArgument(0, IrisMessage.class);
+            message.setId(104L);
+            return message;
+        });
+
+        // Every step already shows on an interim message: an empty list is not "missing", so the whole run must not be stored again.
+        var step = new PyrisActivityDTO("act-1", PyrisActivityKind.TOOL, "list_exercises", PyrisActivityState.FINISHED, null, null, 80L);
+        var statusUpdate = new PyrisChatStatusUpdateDTO("answer", PyrisRunState.RUNNING, null, null, null, null, null, null, List.of(step), 2, true, null, null, List.of());
+
+        irisChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        var messageCaptor = ArgumentCaptor.forClass(IrisMessage.class);
+        verify(irisMessageService).saveMessage(messageCaptor.capture(), eq(session), eq(IrisMessageSender.LLM));
+        assertThat(messageCaptor.getValue().getToolActivity()).isNull();
+    }
+
+    @Test
     void finalResultStoresOnlyTheStepsNoInterimMessageShows() {
         var session = new IrisChatSession();
         session.setId(2L);
