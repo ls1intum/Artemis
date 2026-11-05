@@ -205,19 +205,17 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     return;
                 }
                 const changedParticipation = updatedParticipation as StudentParticipation;
-                let resultIdToReload: number | undefined;
-                for (const athenaResult of this.athenaResultNotificationTracker.resultsToNotify(changedParticipation.submissions)) {
+                const athenaResults = this.athenaResultNotificationTracker.resultsToNotify(changedParticipation.submissions);
+                for (const athenaResult of athenaResults) {
                     if (athenaResult.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise()?.title ?? '' });
                         this.hasAthenaResultForLatestSubmission = true;
-                        if (this.isExamSummary() && this.participation()?.id !== undefined) {
-                            resultIdToReload = athenaResult.id;
-                        }
                     }
                 }
-                if (resultIdToReload !== undefined) {
+                const resultIdToReload = getNewestResult(athenaResults.filter((result) => result.successful !== false))?.id;
+                if (resultIdToReload !== undefined && this.isExamSummary() && this.participation()?.id !== undefined) {
                     this.reloadForExamSummary(resultIdToReload);
                     return;
                 }

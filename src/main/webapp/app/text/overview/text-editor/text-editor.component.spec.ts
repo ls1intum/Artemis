@@ -1062,6 +1062,17 @@ describe('TextEditorComponent', () => {
             expect(comp.participation()).toBe(reloaded);
         });
 
+        it('should reload the exam summary with the newest Athena result when the submissions hold them in reverse order', () => {
+            const participationSubject = openWithParticipation(withResults([]), true);
+            getTextForParticipationStub.mockReturnValue(of(withResults([athenaResult(true)])));
+            const update = withResults([{ ...athenaResult(true), id: 6 }]);
+            update.submissions!.push({ id: 8, text: 'answer', results: [athenaResult(true)] } as TextSubmission);
+
+            participationSubject.next(update);
+
+            expect(getTextForParticipationStub).toHaveBeenCalledExactlyOnceWith(42, 6, 'owner');
+        });
+
         it('should drop the answer of an exam summary reload that a newer one replaced', () => {
             const participationSubject = openWithParticipation(withResults([]), true);
             const firstReload = new Subject<StudentParticipation>();
