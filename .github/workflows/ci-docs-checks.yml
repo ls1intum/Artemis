@@ -1,0 +1,90 @@
+name: Documentation Checks
+
+# Cheap, dependency-free checks that keep the documentation true. They run apart from ci-docs.yml, which builds the
+# site, because they depend on the code the documentation describes: a pull request that renames a class or a
+# property must fail here even though it does not touch a page.
+#
+# What each script proves, and why the pages that it lists are only advice, is documented in the script itself and
+# in "Keeping the documentation up to date" of documentation/docs/developer/guidelines/documentation.mdx.
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'SHA to check. PR runs use the PR head SHA (matching ci-build.yml).'
+        required: true
+        type: string
+      pull_request_number:
+        description: 'Number of the pull request, for the advice about the pages that the change may have made wrong. Empty outside a pull request.'
+        required: false
+        default: ''
+        type: string
+      base_sha:
+        description: 'Base commit of the pull request, to compare review dates with.'
+        required: false
+        default: ''
+        type: string
+
+permissions: {}
+
+jobs:
+  documentation-checks:
+    name: Documentation References, Freshness and Diagrams
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read # lists the files of the pull request
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+
+      # The matchers decide what the checks see, so a regression there would pass silently.
+      - name: Checker self-tests
+        run: |
+          python supporting_scripts/check_docs_references.py --self-test
+          python supporting_scripts/check_docs_freshness.py --self-test
+
+      - name: Sidebars, paths, class names, configuration and labels
+        if: ${{ !cancelled() }}
+        run: python supporting_scripts/check_docs_references.py
+
+      - name: Review dates
+        if: ${{ !cancelled() }}
+        run: python supporting_scripts/check_docs_freshness.py --validate
+
+      - name: Architecture diagrams are generated from their source
+        if: ${{ !cancelled() }}
+        run: python supporting_scripts/generate_architecture_diagrams.py --check
+
+      # Advice, never a failure: which pages mention what this pull request changes, and which edited pages kept an
+      # old review date. The author is the one who can compare the page with the code.
+      - name: Pages that the change may have made wrong
+        if: ${{ !cancelled() && inputs.pull_request_number != '' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PULL_REQUEST: ${{ inputs.pull_request_number }}
+          BASE_SHA: ${{ inputs.base_sha }}
+        run: |
+          set -Eeuo pipefail
+          gh api "repos/${REPOSITORY}/pulls/${PULL_REQUEST}/files" --paginate --jq '.[].filename' > "${RUNNER_TEMP}/changed-files.txt"
+          # The base commit is enough to read the old review dates; no history is needed.
+          fetch_result=0
+          git fetch --no-tags --depth=1 origin "${BASE_SHA}" || fetch_result=$?
+          {
+            echo "### Documentation that this change may have made wrong"
+            echo
+            python supporting_scripts/check_docs_freshness.py --impact --files-from "${RUNNER_TEMP}/changed-files.txt"
+            echo
+            if [ "$fetch_result" -eq 0 ]; then
+              python supporting_scripts/check_docs_freshness.py --unreviewed --base "${BASE_SHA}" --files-from "${RUNNER_TEMP}/changed-files.txt"
+            fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"

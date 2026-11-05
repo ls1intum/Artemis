@@ -262,8 +262,12 @@ ext["testcontainers-redis-module.version"] = testcontainers_redis_version
 // com.fasterxml.jackson.core:jackson-annotations (that artifact never moved to the tools.jackson group) at a
 // version trailing the Jackson 2 line, and io.spring.dependency-management lets a later import override an
 // earlier one. Keeping the Jackson 2 BOM last is what stops it from dragging jackson-annotations backwards.
+// OpenTelemetry is pinned the same way: the Spring Boot BOM manages opentelemetry-api at an older line (1.62.0),
+// which the GitHub dependency graph reports (GHSA-ccrj-gw8r-854m, fixed in 1.67.0) although the resolutionStrategy
+// force above already puts every runtime configuration on ${opentelemetry_version}.
 dependencyManagement {
     imports {
+        mavenBom "io.opentelemetry:opentelemetry-bom:${opentelemetry_version}"
         mavenBom "tools.jackson:jackson-bom:3.2.4"
         mavenBom "com.fasterxml.jackson:jackson-bom:2.22.4"
     }
@@ -697,6 +701,7 @@ dependencies {
     implementation "org.bouncycastle:bcpg-jdk18on:1.86"
 
     // required for database connections
+    // REMOVE_IN_ARTEMIS_11 (MySQL): remove the driver once MySQL support is removed
     implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
     implementation "org.postgresql:postgresql:42.7.14"
 
@@ -861,6 +866,7 @@ configurations.matching { it.name in ["compileClasspath", "runtimeClasspath", "t
 configurations.matching { it.name != 'mockitoAgent' }.configureEach {
     resolutionStrategy {
         dependencySubstitution {
+            // REMOVE_IN_ARTEMIS_11 (MySQL): remove the testcontainers mysql substitution
             substitute module("org.testcontainers:mysql") using module("org.testcontainers:testcontainers-mysql:${testcontainers_version}")
             substitute module("org.testcontainers:postgresql") using module("org.testcontainers:testcontainers-postgresql:${testcontainers_version}")
             substitute module("org.testcontainers:jdbc") using module("org.testcontainers:testcontainers-jdbc:${testcontainers_version}")
@@ -932,6 +938,7 @@ tasks.named("dependencyUpdates").configure {
 // 2) Execute tests (PostgreSQL, Docker required):  ./gradlew test -x webapp
 // 2a) Execute tests with coverage report:          ./gradlew test jacocoTestReport -x webapp
 // 2b) Execute tests with H2 (no Docker needed):    ./gradlew test -x webapp -Dzonky.test.database.type=H2
+// REMOVE_IN_ARTEMIS_11 (MySQL): remove the testMysql task and this line
 // 2c) Execute tests with MySQL test container:     ./gradlew testMysql -x webapp  (requires Docker)
 // 2d) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
 // 2e) Run tests for modules:                       ./gradlew test -DincludeModules=athena,atlas -x webapp (executes all tests in directories ./src/main/test/.../athena and ./src/main/test/.../atlas) + ArchitectureTests

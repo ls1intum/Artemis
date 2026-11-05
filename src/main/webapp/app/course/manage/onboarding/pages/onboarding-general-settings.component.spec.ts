@@ -292,6 +292,32 @@ describe('OnboardingGeneralSettingsComponent', () => {
             expect(comp.isAthenaFormativeEnabled()).toBe(false);
         });
 
+        it('should show an error instead of the athena toggles after a failed load', () => {
+            activeModuleFeatures = [MODULE_FEATURE_ATHENA];
+            fixture = TestBed.createComponent(OnboardingGeneralSettingsComponent);
+            fixture.componentRef.setInput('course', course);
+            comp = fixture.componentInstance;
+            vi.spyOn(TestBed.inject(AthenaCourseConfigService), 'getCourseConfig').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            fixture.detectChanges();
+
+            const element: HTMLElement = fixture.nativeElement;
+            expect(comp.isAthenaLoadFailed()).toBe(true);
+            expect(element.querySelector('[data-testid="onboarding-athena-load-failed"] [jhiTranslate]')?.getAttribute('jhiTranslate')).toBe(
+                'artemisApp.course.athenaConfig.loadFailed',
+            );
+            expect(element.querySelector('[data-testid^="onboarding-athena-formative-feedback"]')).toBeNull();
+            expect(element.querySelector('[data-testid^="onboarding-athena-grading-feedback"]')).toBeNull();
+        });
+
+        it('should show the athena toggles once the configuration has loaded', () => {
+            createWithAthenaActive();
+
+            const element: HTMLElement = fixture.nativeElement;
+            expect(element.querySelector('[data-testid="onboarding-athena-load-failed"]')).toBeNull();
+            expect(element.querySelector('[data-testid^="onboarding-athena-formative-feedback"]')).toBeTruthy();
+            expect(element.querySelector('[data-testid^="onboarding-athena-grading-feedback"]')).toBeTruthy();
+        });
+
         it('should save a switched feature right away without touching the other one', () => {
             createWithAthenaActive();
             const expected = { gradingFeedbackEnabled: false, formativeFeedbackEnabled: true };
