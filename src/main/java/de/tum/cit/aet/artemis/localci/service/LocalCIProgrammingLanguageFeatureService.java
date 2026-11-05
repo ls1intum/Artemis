@@ -65,14 +65,14 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(BASH, new ProgrammingLanguageFeature(BASH, false, false, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, true, true, false, false, List.of(FACT, GCC), true));
         programmingLanguageFeatures.put(C_PLUS_PLUS, new ProgrammingLanguageFeature(C_PLUS_PLUS, false, true, true, false, false, List.of(), true));
-        programmingLanguageFeatures.put(C_SHARP, new ProgrammingLanguageFeature(C_SHARP, true, false, true, false, false, List.of(), true));
+        programmingLanguageFeatures.put(C_SHARP, new ProgrammingLanguageFeature(C_SHARP, true, true, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(DART, new ProgrammingLanguageFeature(DART, true, true, false, true, false, List.of(), true));
-        programmingLanguageFeatures.put(GO, new ProgrammingLanguageFeature(GO, true, false, true, true, false, List.of(), true));
+        programmingLanguageFeatures.put(GO, new ProgrammingLanguageFeature(GO, true, true, true, true, false, List.of(), true));
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, true, false, false, false, true, List.of(), true));
         programmingLanguageFeatures.put(JAVA,
                 new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN, MAVEN_BLACKBOX), true));
         programmingLanguageFeatures.put(JAVASCRIPT, new ProgrammingLanguageFeature(JAVASCRIPT, true, true, true, false, false, List.of(), true));
-        programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, true, false, true, true, false, List.of(), true));
+        programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, true, true, true, true, false, List.of(), true));
         programmingLanguageFeatures.put(MATLAB, new ProgrammingLanguageFeature(MATLAB, false, false, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(OCAML, new ProgrammingLanguageFeature(OCAML, false, false, false, false, true, List.of(), true));
         programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, true, true, true, false, false, List.of(), true));
