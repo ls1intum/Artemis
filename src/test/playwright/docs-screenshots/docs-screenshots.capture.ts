@@ -194,7 +194,12 @@ for (const entry of manifest.screenshots.filter((candidate) => only.length === 0
             } else if (step.clickIfPresent) {
                 // For an action that only exists the first time, such as the start of an exercise that a participation of an earlier run has started already.
                 const target = page.locator(step.clickIfPresent).first();
-                if (await target.isVisible({ timeout: 3_000 }).catch(() => false)) {
+                // `isVisible` does not wait, so wait up to the intended 3 seconds for the control to appear.
+                const appeared = await target
+                    .waitFor({ state: 'visible', timeout: 3_000 })
+                    .then(() => true)
+                    .catch(() => false);
+                if (appeared) {
                     await target.click();
                 }
             } else if (step.upload) {

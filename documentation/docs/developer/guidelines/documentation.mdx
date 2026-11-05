@@ -219,15 +219,15 @@ that you keep. The script needs Docker, JDK 25 and Node and takes about eight mi
 `docs-maintenance.yml` needs no stack and lists the images whose `source` files changed after the image (`--stale`) in an issue of its own, which tells you
 which images to look at first.
 
-The manifest covers 39 images of the student and instructor guides. They show the one demo course, "Introduction to Software Engineering", so
+The manifest covers 78 images of the student and instructor guides. They show the one demo course, "Introduction to Software Engineering", so
 the same users, exercises, lectures and exam run through the whole documentation. **An image has to show what the text around it says.** A screenshot
 does not have to reproduce the older hand-made image pixel by pixel, but it has to show the same screen and the controls that the text names. When the
-demo course cannot show them (an iPad app, the exercise list during an exam, a started exercise, the test cases of a programming exercise), the image
+demo course cannot show them (an iPad app, the exercise list during an exam, the test cases of a programming exercise), the image
 stays manual and gets no entry, and when only the description is wrong, such as the type of a grading key or the number of questions in a list, the
 description is corrected in the same change. A page that the demo course cannot fill yet may get a small extension of the demo seeding instead.
 The script keeps the repositories of the demo programming exercise below `build/docs-screenshots-stack`, so a repository of an earlier run cannot
 keep the exercise from being seeded.
-Interactions such as an open dialog, and screens that need data the demo course does not have (a programming exercise with builds, a started exam),
+Screens that need data the demo course does not have (a programming exercise with builds, a started exam)
 are not part of the manifest; such screenshots stay manual and keep the rules above.
 
 ## Screencasts

@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -17,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -500,7 +500,7 @@ public class QuizDemoService {
 
         @Override
         public void transferTo(File destination) throws IOException {
-            Files.write(destination.toPath(), content);
+            FileUtils.writeByteArrayToFile(destination, content);
         }
     }
 

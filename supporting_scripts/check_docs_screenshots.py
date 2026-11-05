@@ -169,8 +169,12 @@ def validate(manifest: dict, repo_root: Path, docs_root: Path) -> list[str]:
         for number, step in enumerate(steps, 1):
             problems.extend(f"{label}: step {number} {problem}" for problem in step_problems(step))
             upload = step.get("upload") if isinstance(step, dict) else None
-            if isinstance(upload, dict) and isinstance(upload.get("file"), str) and not (repo_root / upload["file"]).is_file():
-                problems.append(f"{label}: step {number} uploads `{upload['file']}`, which does not exist")
+            if isinstance(upload, dict) and isinstance(upload.get("file"), str):
+                upload_path = Path(upload["file"])
+                if upload_path.is_absolute() or ".." in upload_path.parts:
+                    problems.append(f"{label}: step {number} uploads `{upload['file']}`, which must be a path below the repository root, without `..`")
+                elif not (repo_root / upload_path).is_file():
+                    problems.append(f"{label}: step {number} uploads `{upload['file']}`, which does not exist")
         for key in ("source", "mask", "maskSelector", "hide"):
             values = entry.get(key, [])
             if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
@@ -510,6 +514,7 @@ def self_test() -> None:
         assert any("`steps` must be a list" in problem for problem in broken(steps="click"))
         assert any("uploads `gone.png`" in problem for problem in broken(steps=[{"upload": {"selector": "input", "file": "gone.png"}}]))
         assert any("uploads `src`" in problem for problem in broken(steps=[{"upload": {"selector": "input", "file": "src"}}])), "a directory is not a file"
+        assert any("without `..`" in problem for problem in broken(steps=[{"upload": {"selector": "input", "file": "../gone.png"}}])), "an upload stays below the repository"
         assert broken(selector="main", padding=12) == []
         assert any("`padding`" in problem for problem in broken(padding=12)), "padding without a selector"
         assert any("`padding`" in problem for problem in broken(selector="main", padding=0))

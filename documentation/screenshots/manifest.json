@@ -12,7 +12,8 @@
         "student": "demo_student",
         "tutor": "demo_tutor",
         "instructor": "demo_instructor",
-        "participant": "demo_student_4"
+        "participant": "demo_student_4",
+        "uploader": "demo_student_5"
     },
     "screenshots": [
         {
@@ -1022,7 +1023,7 @@
             "id": "student-file-upload-before",
             "image": "student/exercises/assets/file-upload/before-submitting.png",
             "pages": ["student/exercises/file-upload-exercise.mdx"],
-            "user": "participant",
+            "user": "uploader",
             "route": "/courses/{courseId}/exercises/{exercise:Poster: Comparing Sorting Algorithms}",
             "steps": [
                 {
@@ -1310,7 +1311,7 @@
             "route": "/courses/{courseId}/exercises/{exercise:Quiz: Java Collections and Complexity}",
             "viewport": {
                 "width": 1440,
-                "height": 1100
+                "height": 1800
             },
             "steps": [
                 {
@@ -1320,6 +1321,7 @@
                     "waitFor": "text=Lookup costs"
                 }
             ],
+            "hide": [".sticky-bottom"],
             "selector": "div:has(> h4:has-text(\"Lookup costs\"))",
             "padding": 8,
             "threshold": 0.1,
@@ -1352,12 +1354,12 @@
                     "waitFor": "text=sorting-poster"
                 }
             ],
-            "hide": ["p-toast"],
+            "hide": ["jhi-alert-overlay"],
             "clip": {
                 "x": 411,
                 "y": 44,
                 "width": 1023,
-                "height": 180
+                "height": 260
             },
             "source": ["src/main/webapp/app/fileupload/overview", "src/main/webapp/i18n/en/fileUploadExercise.json"]
         },
