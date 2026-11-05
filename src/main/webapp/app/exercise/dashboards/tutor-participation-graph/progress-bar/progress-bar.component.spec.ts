@@ -33,7 +33,9 @@ describe('ProgressBarComponent', () => {
         fixture.detectChanges();
         const bar = fixture.debugElement.query(By.directive(TumAetUiProgressBarComponent)).componentInstance as TumAetUiProgressBarComponent;
         expect(bar.severity()).toBe(severity);
-        expect(fixture.nativeElement.textContent).toContain(`${percentage} / 100 (${percentage}%)`);
+        const baseLabel = fixture.nativeElement.querySelector('[data-testid="tutor-progress-label"]') as HTMLElement;
+        expect(baseLabel?.textContent).toContain(`${percentage} / 100 (${percentage}%)`);
+        expect(baseLabel.getAttribute('aria-hidden')).not.toBe('true');
         const filledLabel = fixture.nativeElement.querySelector('[data-testid="tutor-progress-filled-label"]') as HTMLElement;
         expect(filledLabel?.style.color).toBe(`var(--tumaet-ui-state-${contrast}-contrast)`);
         expect(filledLabel.style.clipPath).toBe(clipPath);

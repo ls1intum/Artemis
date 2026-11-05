@@ -54,16 +54,16 @@ jhi-tutor-participation-graph {
         display: none;
 
         &.active + li + li::before {
-            background: var(--tumaet-ui-state-danger) !important;
+            background: var(--tumaet-ui-state-danger);
         }
     }
 
     .not_participated + li::before {
-        display: none !important;
+        display: none;
     }
 
-    .opaque {
-        background: var(--tumaet-ui-state-danger) !important;
+    li.opaque {
+        background: var(--tumaet-ui-state-danger);
         color: var(--tumaet-ui-state-danger-contrast);
     }
 
@@ -71,21 +71,21 @@ jhi-tutor-participation-graph {
         background: var(--tumaet-ui-state-danger);
     }
 
-    .orange {
-        background: var(--tumaet-ui-state-warning) !important;
+    li.orange {
+        background: var(--tumaet-ui-state-warning);
         color: var(--tumaet-ui-state-warning-contrast);
     }
 
     .orange ~ li::before,
     .orange ~ li::after {
-        background: var(--tumaet-ui-state-warning) !important;
+        background: var(--tumaet-ui-state-warning);
     }
 
-    .progress-bar-li {
+    li.progress-bar-li {
         display: block;
         width: 8rem;
         height: 1rem;
-        background: transparent !important;
+        background: transparent;
         margin-top: 0.5rem;
     }
 
@@ -93,7 +93,7 @@ jhi-tutor-participation-graph {
         top: calc(0.5rem - 1px);
     }
 
-    .stacked-li {
+    li.stacked-li {
         display: inline-flex;
         flex-flow: column nowrap;
         align-items: stretch;
@@ -155,16 +155,16 @@ jhi-tutor-participation-graph {
         z-index: -1;
     }
 
-    .opaque::after,
-    .opaque .stacked-item::before,
-    .opaque .stacked-item::after {
+    li.opaque::after,
+    li.opaque .stacked-item::before,
+    li.opaque .stacked-item::after {
         background: var(--tumaet-ui-state-danger);
     }
 
     .orange ~ li .stacked-item::before,
     .orange ~ li .stacked-item::after,
-    .orange::after,
-    .orange .stacked-item::after {
-        background: var(--tumaet-ui-state-warning) !important;
+    li.orange::after,
+    li.orange .stacked-item::after {
+        background: var(--tumaet-ui-state-warning);
     }
 }

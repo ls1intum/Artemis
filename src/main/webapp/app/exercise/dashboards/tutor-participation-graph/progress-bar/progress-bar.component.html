@@ -11,7 +11,7 @@
         {{ numerator() }} / {{ denominator() }} ({{ normalizedPercentage() + '%' }})
     </span>
     <span
-        class="absolute inset-0 flex items-center justify-center text-xs leading-4 font-medium"
+        class="absolute inset-0 flex items-center justify-center text-xs leading-4 font-medium filled-label"
         [style.clip-path]="'inset(0 ' + (100 - normalizedPercentage()) + '% 0 0)'"
         [style.color]="
             normalizedPercentage() < 50
