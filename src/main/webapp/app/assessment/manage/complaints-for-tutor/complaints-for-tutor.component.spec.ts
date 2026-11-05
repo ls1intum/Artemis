@@ -62,7 +62,6 @@ describe('ComplaintsForTutorComponent', () => {
 
                 exercise = { id: 11, isAtLeastInstructor: true, course: course } as Exercise;
                 fixture.componentRef.setInput('exercise', exercise);
-                fixture.componentRef.setInput('submission', undefined);
                 fixture.componentRef.setInput('complaint', undefined);
             });
     });

@@ -222,7 +222,7 @@ async function navigateToExerciseAssessment(page: import('@playwright/test').Pag
     const participateButton = page.locator('[data-testid="participate-in-assessment"]');
     await expect(participateButton).toBeVisible({ timeout: EXAM_DASHBOARD_TIMEOUT });
     await participateButton.click();
-    const startButton = page.locator('[data-testid="start-new-assessment"]').first();
+    const startButton = page.locator('[data-testid="manage-assessment-link"][data-assessment-action="assess"]').first();
     await expect(startButton).toBeVisible({ timeout: EXAM_DASHBOARD_TIMEOUT });
     await startButton.click();
 }

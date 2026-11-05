@@ -26,6 +26,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -46,11 +47,14 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
@@ -60,6 +64,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingManualResultRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunDTO;
 import de.tum.cit.aet.artemis.programming.dto.SelectedBuildRunStatusDTO;
@@ -72,6 +77,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @Autowired
     private ResultTestRepository resultRepository;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
 
     private ProgrammingExercise exercise;
 
@@ -838,6 +846,42 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         });
     }
 
+    @ParameterizedTest
+    @CsvSource({ "instructor1,false,true,SEMI_AUTOMATIC,OK", "instructor1,true,true,SEMI_AUTOMATIC,OK", "tutor1,false,true,SEMI_AUTOMATIC,FORBIDDEN",
+            "tutor1,true,true,SEMI_AUTOMATIC,FORBIDDEN", "instructor1,false,false,SEMI_AUTOMATIC,FORBIDDEN", "instructor1,true,false,SEMI_AUTOMATIC,FORBIDDEN",
+            "instructor1,false,true,AUTOMATIC,FORBIDDEN", "instructor1,true,true,AUTOMATIC,FORBIDDEN" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLockAndGetProgrammingSubmissionEarlyAssessment(String assessor, boolean futureFinalTests, boolean submitted, AssessmentType assessmentType, HttpStatus status)
+            throws Exception {
+        exercise.setAssessmentType(assessmentType);
+        exercise.setAllowComplaintsForAutomaticAssessments(false);
+        exercise.setDueDate(ZonedDateTime.now().plusDays(futureFinalTests ? -1 : 1));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(futureFinalTests ? ZonedDateTime.now().plusDays(2) : null);
+        programmingExerciseRepository.saveAndFlush(exercise);
+        var commitHash = participationCommitHashes.get(programmingExerciseStudentParticipation.getParticipantIdentifier());
+        var submission = ParticipationFactory.generateProgrammingSubmission(submitted, commitHash, SubmissionType.MANUAL);
+        submission.setParticipation(programmingExerciseStudentParticipation);
+        submission = submissionRepository.save(submission);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
+        userUtilService.changeUser(TEST_PREFIX + assessor);
+
+        var locked = request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", status, ProgrammingSubmission.class);
+
+        if (status == HttpStatus.OK) {
+            var draft = locked.getLatestResult();
+            assertThat(draft.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + assessor);
+            assertThat(draft.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+            var body = new ProgrammingManualResultRequestDTO(draft.getId(), 0.0, false, true, List.of(), null);
+            var url = "/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results";
+            request.put(url, body, HttpStatus.OK);
+            request.put(url + "?submit=true", body, HttpStatus.OK);
+            assertThat(resultRepository.findById(draft.getId()).orElseThrow().getCompletionDate()).isNotNull();
+        }
+        else {
+            assertThat(resultRepository.countBySubmissionId(submission.getId())).isOne();
+        }
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithoutAutomaticResult() throws Exception {
@@ -1111,6 +1155,41 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         request.get(url, HttpStatus.FORBIDDEN, String.class);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorsCanAssessNextSubmissionBeforeDeadline(boolean teamMode) throws Exception {
+        for (var submissionId : submissionRepository.findLatestSubmissionIdsByExerciseId(exercise.getId())) {
+            var existing = submissionRepository.findByIdElseThrow(submissionId);
+            existing.setSubmitted(false);
+            submissionRepository.saveAndFlush(existing);
+        }
+        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(2));
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise.setMode(teamMode ? ExerciseMode.TEAM : ExerciseMode.INDIVIDUAL);
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
+        ProgrammingSubmission submission;
+        if (teamMode) {
+            Team team = teamUtilService.createTeam(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student3")), userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"),
+                    exercise, "earlyteam");
+            submission = addSubmissionForTeam(team);
+        }
+        else {
+            submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true), TEST_PREFIX + "student3");
+        }
+        var participation = (ProgrammingExerciseStudentParticipation) submission.getParticipation();
+        participation.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
+        participationRepository.saveAndFlush(participation);
+        seedRepositoryForParticipation(participation, "EarlyAssessment.java");
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=true";
+
+        var response = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
+        assertThat(response.getParticipation().getId()).isEqualTo(participation.getId());
+        assertThat(response.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "instructor1");
+        assertThat(request.get(url, HttpStatus.OK, ProgrammingSubmission.class)).isNull();
+    }
+
     /**
      * Checks that submissions for a participation with an individual due date are not shown to tutors before this due date has passed.
      *
@@ -1166,6 +1245,51 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(storedSubmission).isNull();
         // The dashboard reads "no submission left to assess" from a genuinely empty 200 body, not from an empty object.
         assertThat(request.get(url, HttpStatus.OK, String.class)).isNullOrEmpty();
+    }
+
+    /**
+     * Only the team tutor may assess a team submission, so the next submission handed out in a team exercise must
+     * come from one of the teams the requesting tutor owns.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetProgrammingSubmissionWithoutAssessmentInTeamModeOnlyReturnsOwnTeams() throws Exception {
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise.setDueDate(ZonedDateTime.now().minusDays(2));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
+        Team otherTeam = teamUtilService.createTeam(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student3")), userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"),
+                exercise, "otherteam");
+        addSubmissionForTeam(otherTeam);
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
+
+        assertThat(request.get(url, HttpStatus.OK, ProgrammingSubmission.class)).as("the team of another tutor is not handed out").isNull();
+
+        Team ownTeam = teamUtilService.createTeam(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student4")), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
+                exercise, "ownteam");
+        var ownSubmission = addSubmissionForTeam(ownTeam);
+
+        assertThat(request.get(url, HttpStatus.OK, ProgrammingSubmission.class).getId()).as("the own team is handed out").isEqualTo(ownSubmission.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void instructorsCanSelectSubmissionsFromOtherTutorsTeams() throws Exception {
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise.setDueDate(ZonedDateTime.now().minusDays(2));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
+        Team team = teamUtilService.createTeam(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student3")), userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"), exercise,
+                "othertutor");
+        addSubmissionForTeam(team);
+        var response = request.get("/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK, ProgrammingSubmission.class);
+        assertThat(response).as("instructors may select teams they do not own").isNotNull();
+    }
+
+    private ProgrammingSubmission addSubmissionForTeam(Team team) {
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team));
+        return submissionRepository.saveAndFlush(submission);
     }
 
     private void createTenLockedSubmissionsForExercise(String assessor) {

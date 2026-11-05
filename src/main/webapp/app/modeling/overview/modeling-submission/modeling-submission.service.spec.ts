@@ -73,29 +73,6 @@ describe('ModelingSubmission Service', () => {
         req.flush(returnedFromService);
     });
 
-    it('should get submissions without correction round', () => {
-        const { exerciseId, returnedFromService, requestOption } = getDefaultValues();
-        service
-            .getSubmissions(exerciseId, requestOption as { submittedOnly?: boolean; assessedByMe?: boolean })
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: [] }));
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/exercises/${exerciseId}/modeling-submissions?test=Test` });
-        expect(req.request.params.get('test')).toBe('Test');
-        req.flush(returnedFromService);
-    });
-
-    it('should get submissions with correction round', () => {
-        const { exerciseId, returnedFromService, requestOption, correctionRound } = getDefaultValues();
-        service
-            .getSubmissions(5, requestOption as { submittedOnly?: boolean; assessedByMe?: boolean }, correctionRound)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: [] }));
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/exercises/${exerciseId}/modeling-submissions?test=Test&correction-round=${correctionRound}` });
-        expect(req.request.params.get('test')).toBe('Test');
-        expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
-        req.flush(returnedFromService);
-    });
-
     it('should getSubmissionWithoutAssessment', () => {
         const { exerciseId, returnedFromService, correctionRound } = getDefaultValues();
         service
@@ -159,23 +136,6 @@ describe('ModelingSubmission Service', () => {
         expect(results.find((result) => result.id === 24)?.feedbacks?.[0]?.text).toBe('older');
     });
 
-    it.each([0, 2])('loads my assessed submissions through the tutor route for round %s', (correctionRound) => {
-        service.getMyAssessedSubmissions(123, correctionRound).subscribe((response) => expect(response.body).toEqual([]));
-        const req = httpMock.expectOne((request) => request.url === 'api/modeling/exercises/123/modeling-submissions/assessed-by-me');
-        expect(req.request.method).toBe('GET');
-        expect(req.request.params.get('correction-round')).toBe(correctionRound === 0 ? null : '2');
-        expect(req.request.params.has('assessedByTutor')).toBe(false);
-        req.flush([]);
-    });
-
-    it('keeps the instructor self filter on the instructor route', () => {
-        service.getSubmissions(123, { submittedOnly: true, assessedByMe: true }, 2).subscribe();
-        const req = httpMock.expectOne((request) => request.url === 'api/modeling/exercises/123/modeling-submissions');
-        expect(req.request.params.get('submittedOnly')).toBe('true');
-        expect(req.request.params.get('assessedByMe')).toBe('true');
-        expect(req.request.params.get('correction-round')).toBe('2');
-        req.flush([]);
-    });
     it.each(['owner', 'staff-preview'] as const)('selects modeling editor URLs from explicit %s purpose', (purpose) => {
         const suffix = purpose === 'staff-preview' ? '/for-staff' : '';
         service.getLatestSubmissionForModelingEditor(123, purpose).subscribe((data) => expect(data.id).toBe(123));

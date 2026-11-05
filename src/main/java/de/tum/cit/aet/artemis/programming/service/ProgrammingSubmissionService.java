@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionAssessmentEligibilityService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
@@ -99,9 +100,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ComplaintRepository complaintRepository, ParticipationAuthorizationCheckService participationAuthCheckService, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository) {
+            ScaFeedbackRepository scaFeedbackRepository, SubmissionAssessmentEligibilityService assessmentEligibilityService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository,
+                assessmentEligibilityService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.asyncBuildTriggerService = asyncBuildTriggerService;
@@ -493,6 +495,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
     public Result lockSubmission(Submission submission, int correctionRound) {
         SubmissionService.checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
+        assessmentEligibilityService.checkCanStartAssessmentElseThrow(submission, correctionRound);
+        checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
         Optional<Result> optionalExistingResult;
         if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
             optionalExistingResult = Optional.of(submission.getLatestResult());
@@ -509,8 +513,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         // Create a new manual result and try to reuse the existing submission with the latest commit hash
-        ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
-                SubmissionType.MANUAL);
+        var participation = (ProgrammingExerciseStudentParticipation) submission.getParticipation();
+        String lastCommitHash = getLastCommitHashForParticipation(participation);
+        ProgrammingSubmission existingSubmission = programmingSubmissionRepository
+                .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), lastCommitHash);
+        if (existingSubmission == null) {
+            existingSubmission = ProgrammingSubmission.createFallbackSubmission(participation, ZonedDateTime.now(), lastCommitHash);
+        }
+        assessmentEligibilityService.checkCanStartAssessmentElseThrow(existingSubmission, correctionRound);
+        if (existingSubmission.getId() == null) {
+            existingSubmission = programmingSubmissionRepository.saveAndFlush(existingSubmission);
+        }
         Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);

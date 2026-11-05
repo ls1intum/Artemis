@@ -3,7 +3,6 @@
         class="modeling-assessment-page__layout"
         [isLoading]="isLoading()"
         [nextSubmissionBusy]="nextSubmissionBusy()"
-        [isTeamMode]="!!modelingExercise()?.teamMode"
         [isAssessor]="isAssessor()"
         [isTestRun]="isTestRun()"
         [exerciseDashboardLink]="exerciseDashboardLink()"
@@ -62,7 +61,6 @@
                                 [zeroIndent]="false"
                                 [exercise]="modelingExercise()"
                                 [isAssessor]="isAssessor()"
-                                [submission]="submission()"
                                 [isTestRun]="isTestRun()"
                                 (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
                             />

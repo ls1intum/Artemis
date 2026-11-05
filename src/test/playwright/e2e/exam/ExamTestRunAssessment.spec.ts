@@ -59,7 +59,10 @@ test.describe('Exam test run assessment', { tag: '@slow' }, () => {
         await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
         // The dashboard of a test run lists its submissions; the one of the instructor is opened for the assessment.
         await expect(page.getByRole('heading', { name: 'Test Run submissions' })).toBeVisible();
-        await page.locator('#continue-assessment, [data-testid="open-assessment"]').first().click();
+        await page
+            .locator('[data-testid="manage-assessment-link"][data-assessment-action="continue"], [data-testid="manage-assessment-link"][data-assessment-action="open"]')
+            .first()
+            .click();
         await examAssessment.addNewFeedback(6, 'Fine for a test run');
         expect((await examAssessment.submitTextAssessment()).status()).toBe(200);
 

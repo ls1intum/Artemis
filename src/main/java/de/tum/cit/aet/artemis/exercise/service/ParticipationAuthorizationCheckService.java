@@ -85,13 +85,15 @@ public class ParticipationAuthorizationCheckService {
     }
 
     /**
-     * Keeps an owner's direct access to their own data during anonymous assessment.
+     * Keeps an owner's and an assigned team tutor's access during anonymous assessment.
      *
      * @param participation the participation being accessed
      * @return whether the current user may see its identifying data
      */
     public boolean canSeeParticipantInformation(StudentParticipation participation) {
-        return authCheckService.isOwnerOfParticipation(participation) || canSeeParticipantInformation(participation.getExercise());
+        return authCheckService.isOwnerOfParticipation(participation) || canSeeParticipantInformation(participation.getExercise())
+                || (participation.getExercise().isTeamMode() && authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())
+                        && participation.getTeam().filter(team -> team.isOwner(userRepository.getUser())).isPresent());
     }
 
     /**

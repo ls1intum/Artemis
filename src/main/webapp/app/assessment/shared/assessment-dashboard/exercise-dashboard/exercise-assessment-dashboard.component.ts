@@ -16,7 +16,6 @@ import { User } from 'app/account/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -24,23 +23,13 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import {
-    Submission,
-    SubmissionExerciseType,
-    getLatestSubmissionResult,
-    getSubmissionResultByCorrectionRound,
-    setLatestSubmissionResult,
-} from 'app/exercise/shared/entities/submission/submission.model';
-import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { Observable, of } from 'rxjs';
-import { filter, finalize, map } from 'rxjs/operators';
+import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { finalize } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
-import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TutorParticipation, TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
@@ -59,9 +48,8 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { isManualResult } from 'app/exercise/result/result.utils';
 import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
 import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
@@ -71,8 +59,7 @@ import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-butto
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
-import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
+import { AssessmentQueueComponent } from './assessment-queue/assessment-queue.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { TutorLeaderboardComponent } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -83,7 +70,7 @@ import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
-import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
+import { getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
 
 /** Largest delay `setTimeout` accepts before its signed 32-bit delay overflows and the timer fires immediately. */
 const MAX_TIMEOUT_DELAY = 2_147_483_647;
@@ -117,9 +104,8 @@ export interface ExampleSubmissionQueryParams {
         TumAetUiMessageComponent,
         SortDirective,
         SortByDirective,
-        LanguageTableCellComponent,
+        AssessmentQueueComponent,
         ResultComponent,
-        AssessmentWarningComponent,
         CollapsableAssessmentInstructionsComponent,
         TutorLeaderboardComponent,
         ArtemisDatePipe,
@@ -137,12 +123,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private tutorParticipationService = inject(TutorParticipationService);
     private submissionService = inject(SubmissionService);
-    private textSubmissionService = inject(TextSubmissionService);
-    private modelingSubmissionService = inject(ModelingSubmissionService);
-    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private router = inject(Router);
-    private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private sortService = inject(SortService);
     private datePipe = inject(ArtemisDatePipe);
     private destroyRef = inject(DestroyRef);
@@ -170,19 +152,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly totalNumberOfAssessments = signal(0);
     readonly numberOfAutomaticAssistedAssessments = signal(new DueDateStat());
     readonly numberOfAssessmentsOfCorrectionRounds = signal<DueDateStat[]>([new DueDateStat()]);
-    readonly correctionRoundIndices = computed(() => {
-        const numberOfConfiguredRounds = this.isTestRun() ? 0 : (this.exam()?.numberOfCorrectionRoundsInExam ?? 0);
-        const numberOfRounds = Math.max(this.numberOfAssessmentsOfCorrectionRounds().length, numberOfConfiguredRounds);
-        return Array.from({ length: numberOfRounds }, (_, index) => index);
-    });
-    readonly numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = signal<DueDateStat[]>([new DueDateStat()]);
     readonly complaintsEnabled = signal(false);
     readonly feedbackRequestEnabled = signal(false);
     readonly tutorAssessmentPercentage = signal(0);
     readonly tutorParticipationStatus = signal<TutorParticipationStatus>(undefined!);
-    // Indexed by correction round (0, 1) — readonly so any in-place mutation is a compile error and updates go through .update() with a new array.
-    readonly assessedSubmissionsByRound = signal<readonly (readonly Submission[])[]>([]);
-    readonly unassessedSubmissionByRound = signal<readonly (Submission | undefined)[]>([]);
     readonly exampleSubmissionsToReview = signal<ExampleSubmission[]>([]);
     readonly exampleSubmissionsToAssess = signal<ExampleSubmission[]>([]);
     readonly exampleSubmissionsCompletedByTutor = signal<ExampleSubmission[]>([]);
@@ -192,21 +165,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly complaints = signal<Complaint[]>([]);
     readonly submissionsWithMoreFeedbackRequests = signal<SubmissionWithComplaintDTO[]>([]);
     readonly submissionsWithComplaints = signal<SubmissionWithComplaintDTO[]>([]);
-    readonly submissionLockLimitReached = signal(false);
-    readonly openingAssessmentEditorForNewSubmission = signal(false);
     readonly secondCorrectionEnabled = signal(false);
+    readonly queueRounds = computed(() =>
+        this.isExamMode() && !this.isTestRun() ? Array.from({ length: this.exam()?.numberOfCorrectionRoundsInExam ?? 0 }, (_, round) => round) : undefined,
+    );
     readonly numberOfCorrectionRoundsEnabled = computed(() => (this.secondCorrectionEnabled() ? 2 : 1));
 
     readonly formattedGradingInstructions = signal<SafeHtml | undefined>(undefined);
     readonly formattedProblemStatement = signal<SafeHtml | undefined>(undefined);
     readonly formattedSampleSolution = signal<SafeHtml | undefined>(undefined);
-    getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
-
-    // helper variables to display information message about why no new assessments are possible anymore.
-    // Computed synchronously in calculateAssessmentProgressInformation alongside statsForDashboard.set(), so they render on that signal's CD tick.
-    lockedSubmissionsByOtherTutor: number[] = [];
-    notYetAssessed: number[] = [];
-    readonly firstRoundAssessments = signal<number>(undefined!);
 
     // attributes for sorting the tables
     sortPredicates = ['submissionDate', 'complaint.accepted', 'complaint.accepted'];
@@ -293,7 +260,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly moreFeedbackRequestsLink = signal<(string | number)[]>(undefined!);
 
     // Icons
-    faSpinner = faSpinner;
     faQuestionCircle = faQuestionCircle;
     faCheckCircle = faCheckCircle;
     faFolderOpen = faFolderOpen;
@@ -310,7 +276,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.exerciseId.set(Number(this.route.snapshot.paramMap.get('exerciseId')));
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.isTestRun.set(this.router.url.indexOf('test-assessment-dashboard') >= 0);
-        this.unassessedSubmissionByRound.set([]);
 
         if (this.route.snapshot.paramMap.has('examId')) {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
@@ -442,21 +407,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                     this.exerciseGroupId = exercise.exerciseGroup.id!;
                     this.secondCorrectionEnabled.set(exercise.secondCorrectionEnabled);
                 }
-                this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
-                // The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
-                const isAfterDueDate = !exercise.dueDate || exercise.dueDate.isBefore(dayjs());
-                // Athena feedback requests, and thus the pre-due-date exception, are only supported for these exercise types
-                const supportsAthenaFeedbackRequests = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING].includes(exercise.type!);
-                // While the exam is still running the server rejects this, and the banner already explains why
-                if (
-                    ((supportsAthenaFeedbackRequests && (exercise.course?.athenaFormativeFeedbackEnabled ?? false)) || isAfterDueDate) &&
-                    !exercise.teamMode &&
-                    !this.isTestRun() &&
-                    !this.assessmentNotPossibleYetReason()
-                ) {
-                    this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
-                }
                 this.scheduleAssessmentAvailabilityUpdate();
 
                 if (!this.isTestRun()) {
@@ -492,7 +443,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                     this.totalNumberOfAssessments.set(this.statsForDashboard().totalNumberOfAssessments);
                     this.numberOfAssessmentsOfCorrectionRounds.set(this.statsForDashboard().numberOfAssessmentsOfCorrectionRounds);
                     this.numberOfAutomaticAssistedAssessments.set(this.statsForDashboard().numberOfAutomaticAssistedAssessments);
-                    this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set(this.statsForDashboard().numberOfLockedAssessmentByOtherTutorsOfCorrectionRound);
 
                     const tutorLeaderboardEntry = this.statsForDashboard().tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor()!.id);
                     this.sortService.sortByProperty(this.statsForDashboard().tutorLeaderboardEntries, 'points', false);
@@ -543,7 +493,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                     }
                     this.complaintsEnabled.set(this.statsForDashboard().complaintsEnabled);
                     this.feedbackRequestEnabled.set(this.statsForDashboard().feedbackRequestEnabled);
-                    this.calculateAssessmentProgressInformation();
 
                     this.setupGraph();
                 },
@@ -581,11 +530,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.scheduleAssessmentAvailabilityUpdate();
                 return;
             }
-            // the submissions could not be fetched while assessment was blocked, so fetch them now
-            const exercise = this.exercise();
-            if (exercise && !exercise.teamMode && !this.isTestRun()) {
-                this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
-            }
         }, millisecondsUntilNextChange);
     }
 
@@ -610,180 +554,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             return (submission as TextSubmission).language || 'UNKNOWN';
         }
         return 'UNKNOWN';
-    }
-
-    /**
-     * get all submissions for all correction rounds which the tutor has assessed.
-     * If not in examMode, correction rounds defaults to 0, as more than 1 is currently not supported.
-     */
-    private getAllTutorAssessedSubmissionsForAllCorrectionRounds(): void {
-        if (this.isExamMode()) {
-            for (let i = 0; i < this.exam()!.numberOfCorrectionRoundsInExam!; i++) {
-                this.getAllTutorAssessedSubmissionsForCorrectionRound(i);
-            }
-        } else {
-            this.getAllTutorAssessedSubmissionsForCorrectionRound(0);
-        }
-    }
-
-    /**
-     * Get all the submissions from the server for which the current user is the assessor for the specified correction round,
-     * which is the case for started or completed assessments. All these submissions get listed
-     * in the exercise dashboard.
-     */
-    private getAllTutorAssessedSubmissionsForCorrectionRound(correctionRound: number): void {
-        let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
-        if (this.isTestRun()) {
-            submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId());
-        } else {
-            // TODO: This could be one generic endpoint.
-            switch (this.exercise().type) {
-                case ExerciseType.TEXT:
-                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
-                        ? this.textSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
-                        : this.textSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
-                    break;
-                case ExerciseType.MODELING:
-                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
-                        ? this.modelingSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
-                        : this.modelingSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
-                    break;
-                case ExerciseType.FILE_UPLOAD:
-                    submissionsObservable = this.accountService.isAtLeastInstructorForExercise(this.exercise())
-                        ? this.fileUploadSubmissionService.getSubmissions(this.exerciseId(), { assessedByMe: true }, correctionRound)
-                        : this.fileUploadSubmissionService.getMyAssessedSubmissions(this.exerciseId(), correctionRound);
-                    break;
-                case ExerciseType.PROGRAMMING:
-                    submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
-                    break;
-            }
-        }
-
-        submissionsObservable
-            .pipe(
-                map((res) => res.body),
-                filter((body): body is Submission[] => body != undefined),
-                map(this.reconnectEntities),
-            )
-            .subscribe((submissions: Submission[]) => {
-                // Set the received submissions. As the result component depends on the submission we nest it into the participation.
-                const sub = submissions
-                    .filter((submission) => {
-                        return !!getSubmissionResultByCorrectionRound(submission, correctionRound);
-                    })
-                    .map((submission) => {
-                        submission.participation!.submissions = [submission];
-                        setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                        return submission;
-                    });
-
-                this.assessedSubmissionsByRound.update((rounds) => {
-                    const next = [...rounds];
-                    next[correctionRound] = sub;
-                    return next;
-                });
-                this.sortSubmissionRows(correctionRound);
-            });
-    }
-
-    /**
-     * Reconnect submission, result and participation for all submissions in the given array.
-     */
-    private reconnectEntities = (submissions: Submission[]) => {
-        return submissions.map((submission: Submission) => {
-            const latestResult = getLatestSubmissionResult(submission);
-            if (latestResult) {
-                // reconnect some associations
-                latestResult.submission = submission;
-                setLatestSubmissionResult(submission, latestResult);
-            }
-            return submission;
-        });
-    };
-
-    /**
-     * Get all submissions that don't have an assessment for all correction rounds
-     * If not in examMode correction rounds defaults to 0.
-     */
-    private getSubmissionWithoutAssessmentForAllCorrectionRounds(): void {
-        if (this.isExamMode()) {
-            for (let i = 0; i < this.exam()!.numberOfCorrectionRoundsInExam!; i++) {
-                if (i <= this.numberOfCorrectionRoundsEnabled()) {
-                    this.getSubmissionWithoutAssessmentForCorrectionRound(i);
-                }
-            }
-        } else {
-            this.getSubmissionWithoutAssessmentForCorrectionRound(0);
-        }
-    }
-
-    /**
-     * Get a submission from the server that does not have an assessment for the given correction round yet (if there is one).
-     * The submission gets added to the end of the list of submissions in the exercise
-     * dashboard and the user can start the assessment. Note, that the number of started but unfinished assessments is limited per user and course.
-     * If the user reached this limit,
-     * the server will respond with a BAD REQUEST response here.
-     */
-    private getSubmissionWithoutAssessmentForCorrectionRound(correctionRound: number): void {
-        let submissionObservable: Observable<Submission | undefined> = of();
-        switch (this.exercise().type) {
-            case ExerciseType.TEXT:
-                submissionObservable = this.textSubmissionService.getSubmissionWithoutAssessment(this.exerciseId(), 'head', correctionRound);
-                break;
-            case ExerciseType.MODELING:
-                submissionObservable = this.modelingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId(), undefined, correctionRound);
-                break;
-            case ExerciseType.FILE_UPLOAD:
-                submissionObservable = this.fileUploadSubmissionService.getSubmissionWithoutAssessment(this.exerciseId(), undefined, correctionRound);
-                break;
-            case ExerciseType.PROGRAMMING:
-                submissionObservable = this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId(), undefined, correctionRound);
-                break;
-        }
-
-        submissionObservable.subscribe({
-            next: (submission?: Submission) => {
-                if (!submission) {
-                    // there are no unassessed submissions
-                    // Delete this correction round, as we are done with all
-                    this.unassessedSubmissionByRound.update((rounds) => {
-                        const next = [...rounds];
-                        next[correctionRound] = undefined;
-                        return next;
-                    });
-                    return;
-                }
-
-                setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                this.unassessedSubmissionByRound.update((rounds) => {
-                    const next = [...rounds];
-                    next[correctionRound] = submission;
-                    return next;
-                });
-
-                this.submissionLockLimitReached.set(false);
-            },
-            error: (error: HttpErrorResponse) => {
-                if (error.error?.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.submissionLockLimitReached.set(true);
-                } else if (this.assessmentNotPossibleYetReason()) {
-                    // the banner already explains this, so it needs no additional toast
-                } else if (!alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe)) {
-                    this.onError(error.error?.detail || error.message);
-                }
-            },
-        });
-    }
-
-    /**
-     * Whether to show graded submissions and actions regarding them
-     * @param correctionRound Round to check for unassessed submissions
-     */
-    showSubmissionsForRound(correctionRound: number): boolean {
-        const unassessedSubmissionExist = !!this.unassessedSubmissionByRound()[correctionRound]?.id;
-        const assessedSubmissionsExist = !!this.assessedSubmissionsByRound()[correctionRound]?.length;
-
-        return (unassessedSubmissionExist || assessedSubmissionsExist) && !this.exercise().allowComplaintsForAutomaticAssessments;
     }
 
     /**
@@ -815,18 +585,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     private onError(error: string) {
         this.alertService.error(error);
-    }
-
-    /**
-     * Calculates the status of a submission by inspecting the result. Returns true if the submission is a draft, or false if it is done
-     * @param submission which to check
-     * @param correctionRound for which to get status
-     */
-    calculateSubmissionStatusIsDraft(submission: Submission, correctionRound = 0): boolean {
-        // Looked up by the round the result belongs to. Indexing by the round only worked while the server sent the
-        // results as a list padded with nulls for the rounds nobody had assessed yet.
-        const resultForRound = getSubmissionResultByCorrectionRound(submission, correctionRound);
-        return !(resultForRound?.completionDate && isManualResult(resultForRound));
     }
 
     /**
@@ -927,40 +685,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.togglingSecondCorrectionButton.set(true);
         this.exerciseService.toggleSecondCorrection(this.exerciseId()).subscribe((res: boolean) => {
             this.secondCorrectionEnabled.set(res);
-            if (!this.assessmentNotPossibleYetReason()) {
-                this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
-            }
             this.togglingSecondCorrectionButton.set(false);
-        });
-    }
-
-    /**
-     * To correctly display why a tutor cannot assess any further submissions we need to calculate those values.
-     */
-    calculateAssessmentProgressInformation() {
-        const exam = this.exam();
-        if (exam) {
-            for (let i = 0; i < (exam.numberOfCorrectionRoundsInExam ?? 0); i++) {
-                this.lockedSubmissionsByOtherTutor[i] = this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound()[i]?.inTime;
-
-                // number of submissions in the particular round that still need assessment and are not locked
-                this.notYetAssessed[i] = this.numberOfSubmissions().inTime - this.numberOfAssessmentsOfCorrectionRounds()[i].inTime - this.lockedSubmissionsByOtherTutor[i];
-
-                // The number of assessments which are still open but cannot be assessed as they were already assessed in the first round.
-                // Since if this will be displayed the number of assessments the tutor can create is 0 we can simply get this number by subtracting the
-                // lock-count from the remaining unassessed submissions of the current correction round.
-                this.firstRoundAssessments.set(this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i]);
-            }
-        }
-    }
-
-    sortSubmissionRows(correctionRound: number) {
-        this.assessedSubmissionsByRound.update((rounds) => {
-            const next = [...rounds];
-            const sorted = [...(next[correctionRound] ?? [])];
-            this.sortService.sortByProperty(sorted, this.sortPredicates[0].replace('correctionRound', correctionRound + ''), this.reverseOrders[0]);
-            next[correctionRound] = sorted;
-            return next;
         });
     }
 

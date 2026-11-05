@@ -1118,22 +1118,6 @@ describe('ProgrammingSubmissionService', () => {
         submissionService.unsubscribeAllWebsocketTopics(exercise);
     });
 
-    it('loads assessed submissions with round filters and detaches returned records', () => {
-        const payload = [{ id: 9, participation: { id: 8, initializationDate: '2026-01-01T10:00:00Z' }, results: [{ id: 10, score: 80 }] }];
-        submissionService.getSubmissions(7, { submittedOnly: true, assessedByTutor: true }, 1).subscribe((response) => {
-            expect(response.body).toEqual(payload);
-            expect(response.body).not.toBe(payload);
-            expect(response.body?.[0]).not.toBe(payload[0]);
-            expect(response.body?.[0].results?.[0].score).toBe(80);
-        });
-        const request = httpMock.expectOne((r) => r.url === 'api/programming/exercises/7/programming-submissions');
-        expect(request.request.params.get('submittedOnly')).toBe('true');
-        expect(request.request.params.get('assessedByTutor')).toBe('true');
-        expect(request.request.params.get('correction-round')).toBe('1');
-        request.flush(payload);
-        httpMock.verify();
-    });
-
     it('releases websocket listeners and cached exercise state when the page is destroyed', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.id = exerciseId;

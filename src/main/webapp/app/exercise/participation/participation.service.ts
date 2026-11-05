@@ -1,3 +1,4 @@
+import { AssessmentQueueRowDTO, AssessmentQueueSearch } from './assessment-queue-dto.model';
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -88,6 +89,39 @@ export class ParticipationService {
     }
 
     searchParticipations(exerciseId: number, search: ParticipationSearch, kind: 'course' | 'exam' = 'course'): Observable<PageableResult<ParticipationManagementDTO>> {
+        return this.searchParticipationResults(exerciseId, search, kind === 'exam' ? 'participations/page/for-exam' : 'participations/page');
+    }
+
+    searchAssessmentQueue(exerciseId: number, search: AssessmentQueueSearch): Observable<PageableResult<AssessmentQueueRowDTO>> {
+        return this.http
+            .get<AssessmentQueueRowDTO[]>(`api/exercise/exercises/${exerciseId}/assessment-queue`, {
+                params: { page: search.page, pageSize: search.pageSize, sortingOrder: search.sortingOrder, sortedColumn: search.sortedColumn, searchTerm: search.searchTerm },
+                observe: 'response',
+            })
+            .pipe(
+                map((response) => {
+                    const content = response.body ?? [];
+                    content.forEach((row) => {
+                        row.correctionRoundResults ??= [];
+                        row.assessableCorrectionRounds ??= [];
+                        row.olderAssessmentDrafts ??= [];
+                        row.submissionDate = convertDateFromServer(row.submissionDate);
+                        row.individualDueDate = convertDateFromServer(row.individualDueDate);
+                        row.completionDate = convertDateFromServer(row.completionDate);
+                        row.correctionRoundResults.forEach((result) => {
+                            result.completionDate = convertDateFromServer(result.completionDate);
+                        });
+                    });
+                    return { content, totalElements: Number(response.headers.get('X-Total-Count') ?? 0) };
+                }),
+            );
+    }
+
+    private searchParticipationResults(
+        exerciseId: number,
+        search: ParticipationSearch,
+        resource: 'participations/page' | 'participations/page/for-exam',
+    ): Observable<PageableResult<ParticipationManagementDTO>> {
         const params: Record<string, string | number> = {
             page: search.page,
             pageSize: search.pageSize,
@@ -105,7 +139,7 @@ export class ParticipationService {
             params['scoreRangeUpper'] = search.scoreRangeUpper;
         }
         return this.http
-            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/participations/page${kind === 'exam' ? '/for-exam' : ''}`, {
+            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/${resource}`, {
                 params,
                 observe: 'response',
             })
@@ -116,6 +150,7 @@ export class ParticipationService {
                         dto.initializationDate = convertDateFromServer(dto.initializationDate);
                         dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
                         dto.completionDate = convertDateFromServer(dto.completionDate);
+                        dto.submissionDate = convertDateFromServer(dto.submissionDate);
                         dto.correctionRoundResults?.forEach((result) => {
                             result.completionDate = convertDateFromServer(result.completionDate);
                         });

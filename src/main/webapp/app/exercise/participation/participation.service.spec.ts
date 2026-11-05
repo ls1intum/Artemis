@@ -227,6 +227,33 @@ describe('Participation Service', () => {
         expect(resultGetBuildJobId).toEqual(expected);
     });
 
+    it('loads the assessment queue independently from the existing scores and management endpoints', () => {
+        const date = '2026-10-15T10:00:00Z';
+        let roundCompletionDate: dayjs.Dayjs | undefined;
+        service
+            .searchAssessmentQueue(42, { page: 0, pageSize: 20, sortingOrder: SortingOrder.ASCENDING, sortedColumn: 'participantName', searchTerm: 'alpha' })
+            .subscribe((page) => {
+                roundCompletionDate = page.content[0].correctionRoundResults?.[0].completionDate;
+                expect(page.content[0].assessableCorrectionRounds).toEqual([]);
+                expect(page.content[0].olderAssessmentDrafts).toEqual([]);
+            });
+        const req = httpMock.expectOne((request) => request.url === 'api/exercise/exercises/42/assessment-queue');
+        expect(req.request.params.keys().sort()).toEqual(['page', 'pageSize', 'searchTerm', 'sortedColumn', 'sortingOrder']);
+        req.flush(
+            [
+                {
+                    participationId: 1,
+                    submissionId: 2,
+                    correctionRoundResults: [{ resultId: 3, correctionRound: 0, completionDate: date }],
+                },
+            ],
+            {
+                headers: { 'X-Total-Count': '1' },
+            },
+        );
+        expect(dayjs.isDayjs(roundCompletionDate)).toBe(true);
+    });
+
     describe('searchParticipations', () => {
         const baseSearch = {
             page: 0,
