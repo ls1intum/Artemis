@@ -590,7 +590,7 @@ public final class ExerciseIntegrityGate {
                     || !FILE_READ.matcher(JavaSourceInspector.maskCommentsAndLiterals(file.getValue())).find()) {
                 continue;
             }
-            List<SourceRange> pathRanges = pathExpressionRanges(JavaSourceInspector.maskCommentsAndLiterals(file.getValue()));
+            List<PathExpression> pathRanges = pathExpressionRanges(JavaSourceInspector.maskCommentsAndLiterals(file.getValue()));
             List<String> sourcePaths = STRING_LITERAL.matcher(JavaSourceInspector.stripJavaComments(file.getValue())).results()
                     .filter(literal -> pathRanges.stream().anyMatch(range -> range.start() <= literal.start() && literal.end() <= range.end())).map(literal -> literal.group(1))
                     .map(String::strip).filter(literal -> !INNER_WHITESPACE.matcher(literal).find() && SOURCE_PATH_LITERAL.matcher(literal).find()).distinct().toList();
@@ -607,36 +607,51 @@ public final class ExerciseIntegrityGate {
 
     /**
      * The source ranges that can contribute to a path a test reads: the arguments of actual file/resource reads, and the value of every variable or field named in such a range
-     * and in scope there, followed until no further variable is named.
+     * and in scope there, followed until no further variable is named. Local values follow the latest preceding assignment in the closest enclosing scope; assignments
+     * after the read and overwritten values cannot supply its path. Fields remain conservative because declaration order does not determine their value at a method call.
      *
      * @param masked comment- and literal-masked source, so parentheses inside literals are not counted
      * @return the ranges, each from its start to its exclusive end
      */
-    private static List<SourceRange> pathExpressionRanges(String masked) {
-        List<SourceRange> ranges = new ArrayList<>();
+    private static List<PathExpression> pathExpressionRanges(String masked) {
+        List<PathExpression> ranges = new ArrayList<>();
         Matcher call = FILE_READ.matcher(masked);
         while (call.find()) {
             int open = masked.indexOf('(', call.start());
-            ranges.add(new SourceRange(open, closingParenthesis(masked, open)));
+            ranges.add(new PathExpression(open, closingParenthesis(masked, open), call.start()));
         }
         List<SourceRange> blocks = braceBlocks(masked);
         Set<Integer> followedAssignments = new HashSet<>();
         for (int index = 0; index < ranges.size(); index++) {
-            SourceRange range = ranges.get(index);
+            PathExpression range = ranges.get(index);
             Set<String> named = IDENTIFIER.matcher(masked.substring(range.start(), range.end())).results().map(MatchResult::group).collect(Collectors.toSet());
             if (named.isEmpty()) {
                 continue;
             }
-            Matcher assignment = ASSIGNMENT.matcher(masked);
-            while (assignment.find()) {
-                // Only an assignment whose blocks all enclose the use is in scope there: a field, or a local of the same method; a same-named local elsewhere is not.
-                if (named.contains(assignment.group(1)) && visibleAt(blocks, assignment.start(), range.start()) && followedAssignments.add(assignment.start())) {
+            for (String name : named) {
+                List<MatchResult> assignments = ASSIGNMENT.matcher(masked).results()
+                        .filter(assignment -> name.equals(assignment.group(1)) && visibleAt(blocks, assignment.start(), range.valueAt()))
+                        .filter(assignment -> blockDepth(blocks, assignment.start()) < 2 || assignment.start() < range.valueAt()).toList();
+                int closestScope = assignments.stream().mapToInt(assignment -> blockDepth(blocks, assignment.start())).max().orElse(-1);
+                int latest = assignments.stream().filter(assignment -> blockDepth(blocks, assignment.start()) == closestScope).mapToInt(MatchResult::start).max().orElse(-1);
+                for (MatchResult assignment : assignments) {
+                    if (blockDepth(blocks, assignment.start()) != closestScope || closestScope >= 2 && assignment.start() != latest
+                            || !followedAssignments.add(assignment.start())) {
+                        continue;
+                    }
                     int end = masked.indexOf(';', assignment.end());
-                    ranges.add(new SourceRange(assignment.end(), end < 0 ? masked.length() : end));
+                    ranges.add(new PathExpression(assignment.end(), end < 0 ? masked.length() : end, assignment.start()));
                 }
             }
         }
         return ranges;
+    }
+
+    private record PathExpression(int start, int end, int valueAt) {
+    }
+
+    private static int blockDepth(List<SourceRange> blocks, int position) {
+        return (int) blocks.stream().filter(block -> block.start() < position && position < block.end()).count();
     }
 
     /** Every brace-delimited block of the masked source, from its opening to its closing brace. */

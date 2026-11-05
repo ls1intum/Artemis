@@ -913,6 +913,27 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void sourceReadingTests_traceLocalValuesAtTheReadRatherThanLaterOrOverwrittenAssignments() {
+        String test = """
+                class ParserTest {
+                    @Test void parsesPaths() throws Exception {
+                        String fileName = "Parser.java";
+                        fileName = "cases.csv";
+                        String data = java.nio.file.Files.readString(java.nio.file.Path.of(fileName));
+                        fileName = "Expected.java";
+                        assertEquals(fileName, new Parser().parse(data).getFirst().fileName());
+                    }
+                }
+                """;
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", test))).isEmpty();
+        String sourceRead = test.replace("fileName = \"cases.csv\";", "fileName = \"Actual.java\";");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", sourceRead))).singleElement().asString().contains("Actual.java")
+                .doesNotContain("Expected.java", "Parser.java");
+        String aliasRead = test.replace("String data =", "String input = fileName; fileName = \"Unused.java\"; String data =").replace("Path.of(fileName)", "Path.of(input)");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", aliasRead))).isEmpty();
+    }
+
+    @Test
     void statementTasks_requireInstructionTextBeforeTheNextTask() {
         assertThat(ExerciseIntegrityGate.statementTaskInstructionReasons("[task][First](one)\n[task][Second](two)\n")).singleElement().asString().contains("First", "Second",
                 "no student-facing instruction");

@@ -118,16 +118,33 @@ final class OutputOnlyMainProbe {
      */
     static List<SemanticMutantOutcome> evaluate(Map<String, String> testFiles, Map<String, String> templateFiles, Map<String, String> solutionFiles, @Nullable String testPlanJson,
             Set<String> excludedSolutionPaths, Function<Target, Optional<String>> captureTranscript, SemanticMutantExecution.ProbeRunner runner) {
+        List<Target> sourceVisible = targets(testFiles, templateFiles, solutionFiles, gradedTestMethods(testPlanJson));
+        List<Target> selected = new ArrayList<>(sourceVisible);
+        candidateTargets(templateFiles, solutionFiles).stream().filter(target -> !selected.contains(target)).limit(MAX_TARGETS - selected.size()).forEach(selected::add);
         List<SemanticMutant> variants = new ArrayList<>();
-        for (Target target : targets(testFiles, templateFiles, solutionFiles, gradedTestMethods(testPlanJson))) {
+        List<SemanticMutantOutcome> outcomes = new ArrayList<>();
+        for (Target target : selected) {
             if (excludedSolutionPaths.contains(target.solutionPath())) {
                 continue;
             }
             String source = solutionFiles.get(target.solutionPath());
-            captureTranscript.apply(target).flatMap(transcript -> transcriptOnlyVariant(source, transcript))
-                    .ifPresent(variant -> variants.add(SemanticMutant.printedTranscript(target.solutionPath(), source, variant, target.simpleName())));
+            Optional<String> variant = captureTranscript.apply(target).flatMap(transcript -> transcriptOnlyVariant(source, transcript));
+            if (variant.isEmpty()) {
+                continue;
+            }
+            SemanticMutant probe = SemanticMutant.printedTranscript(target.solutionPath(), source, variant.get(), target.simpleName());
+            // A source call is only a hint: reflection can hide a graded call, and unreachable code can resemble one. Execution establishes grading scope.
+            Disposition scope = silentMainOutcome(target.solutionPath(), source, probe, solutionFiles, gradedTest(testPlanJson), runner);
+            if (scope != Disposition.KILLED_BY_GRADED_SUITE) {
+                if (scope == Disposition.INCONCLUSIVE) {
+                    outcomes.add(new SemanticMutantOutcome(probe, scope));
+                }
+                continue;
+            }
+            variants.add(probe);
         }
-        return variants.isEmpty() ? List.of() : SemanticMutantExecution.recheck(solutionFiles, variants, gradedTest(testPlanJson), runner);
+        outcomes.addAll(SemanticMutantExecution.recheck(solutionFiles, variants, gradedTest(testPlanJson), runner));
+        return List.copyOf(outcomes);
     }
 
     /**
@@ -202,6 +219,11 @@ final class OutputOnlyMainProbe {
      * @param gradedTestMethods method names of the tests that carry weight, or {@code null} to treat every test as graded
      */
     static List<Target> targets(Map<String, String> testFiles, Map<String, String> templateFiles, Map<String, String> solutionFiles, @Nullable Set<String> gradedTestMethods) {
+        return candidateTargets(templateFiles, solutionFiles).stream().filter(target -> gradesPrintedOutput(testFiles, target.simpleName(), gradedTestMethods)).limit(MAX_TARGETS)
+                .toList();
+    }
+
+    private static List<Target> candidateTargets(Map<String, String> templateFiles, Map<String, String> solutionFiles) {
         if (solutionFiles.values().stream().anyMatch(source -> source != null && READS_STANDARD_INPUT.matcher(JavaSourceText.maskCommentsAndLiterals(source)).find())) {
             return List.of();
         }
@@ -217,15 +239,9 @@ final class OutputOnlyMainProbe {
             if (!IDENTIFIER.matcher(simpleName).matches() || mainDeclarations(masked).size() != 1) {
                 continue;
             }
-            if (!gradesPrintedOutput(testFiles, simpleName, gradedTestMethods)) {
-                continue;
-            }
             Matcher packageMatcher = PACKAGE.matcher(masked);
             String binaryName = packageMatcher.find() ? WHITESPACE.matcher(packageMatcher.group(1)).replaceAll("") + "." + simpleName : simpleName;
             targets.add(new Target(path, simpleName, binaryName));
-            if (targets.size() == MAX_TARGETS) {
-                break;
-            }
         }
         return List.copyOf(targets);
     }

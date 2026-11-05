@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
@@ -179,7 +180,7 @@ class OutputOnlyMainProbeTest {
 
     @Test
     void aProbeNoLongerAppliesOnceNoGradedTestComparesTheTranscript() {
-        SemanticMutant probe = SemanticMutant.printedTranscript(PATH, SOLUTION, SOLUTION, "Library");
+        SemanticMutant probe = SemanticMutant.printedTranscript(PATH, SOLUTION, OutputOnlyMainProbe.transcriptOnlyVariant(SOLUTION, "Books: 1\n").orElseThrow(), "Library");
         String ungradedPlan = """
                 {"tests":[{"name":"printsTheSize","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"},
                  {"name":"countsAddedBooks","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"}]}
@@ -216,12 +217,15 @@ class OutputOnlyMainProbeTest {
                  {"name":"keepsTheSuppliedSetup","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}]}
                 """;
         // Replacing all of main also drops supplied setup, which only the zero-weight check observes; the weighted transcript test still passes.
-        SemanticMutantExecution.ProbeRunner preservationFails = (mutant, probe) -> new BuildSummary(2, 1, 1, false,
-                List.of("LibraryTest.printsTheSize()", "LibraryTest.keepsTheSuppliedSetup()"), List.of("LibraryTest.keepsTheSuppliedSetup()"), List.of(), "");
+        SemanticMutantExecution.ProbeRunner preservationFails = (mutant, probe) -> {
+            boolean prints = mutant.mutantSource().contains("Books: 1");
+            return new BuildSummary(2, prints ? 1 : 2, prints ? 1 : 2, false, List.of("LibraryTest.printsTheSize()", "LibraryTest.keepsTheSuppliedSetup()"),
+                    prints ? List.of("LibraryTest.keepsTheSuppliedSetup()") : List.of("LibraryTest.printsTheSize()", "LibraryTest.keepsTheSuppliedSetup()"), List.of(), "");
+        };
 
         assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), planWithPreservation, Set.of(), target -> Optional.of("Books: 1\n"),
                 preservationFails)).extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.SURVIVED_GRADED_SUITE);
-        SemanticMutant probe = SemanticMutant.printedTranscript(PATH, SOLUTION, SOLUTION, "Library");
+        SemanticMutant probe = SemanticMutant.printedTranscript(PATH, SOLUTION, OutputOnlyMainProbe.transcriptOnlyVariant(SOLUTION, "Books: 1\n").orElseThrow(), "Library");
         assertThat(OutputOnlyMainProbe.recheck(TESTS, Map.of(PATH, SOLUTION), planWithPreservation, List.of(probe), preservationFails))
                 .extracting(SemanticMutantOutcome::disposition).as("a later recheck is judged the same way").containsExactly(Disposition.SURVIVED_GRADED_SUITE);
     }
@@ -400,11 +404,36 @@ class OutputOnlyMainProbeTest {
     }
 
     @Test
+    void reflectiveMainDispatchUsesExecutedGradingScopeRatherThanTheSourceCallShape() {
+        Map<String, String> reflective = Map.of("test/LibraryTest.java",
+                "class LibraryTest { @Test void printsTheSize() throws Exception { Class.forName(\"example.Library\").getMethod(\"main\", String[].class).invoke(null, (Object)new String[0]); } }");
+        List<SemanticMutant> executed = new ArrayList<>();
+        var outcomes = OutputOnlyMainProbe.evaluate(reflective, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.of("Books: 1\n"),
+                (mutant, overlay) -> {
+                    executed.add(mutant);
+                    boolean silent = !mutant.mutantSource().contains("Books: 1");
+                    return new BuildSummary(1, silent ? 1 : 0, silent ? 1 : 0, false, List.of("printsTheSize"), silent ? List.of("printsTheSize") : List.of(), List.of(), "");
+                });
+        assertThat(executed).hasSize(2);
+        assertThat(outcomes).singleElement().satisfies(outcome -> assertThat(outcome.disposition()).isEqualTo(Disposition.SURVIVED_GRADED_SUITE));
+    }
+
+    @Test
+    void anUnobservedDemoMainIsNotFlaggedWhenItsEmptyBodyPassesWeightedGrading() {
+        Map<String, String> tests = Map.of("test/LibraryTest.java",
+                TESTS.values().iterator().next().replace("Library.main(new String[0]);", "if (false) Library.main(new String[0]);"));
+        var outcomes = OutputOnlyMainProbe.evaluate(tests, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.of("Books: 1\n"),
+                (mutant, overlay) -> new BuildSummary(1, 0, 0, false, List.of("printsTheSize"), List.of(), List.of(), ""));
+        assertThat(outcomes).isEmpty();
+    }
+
+    @Test
     void aPassingSuiteLetsThePrintOnlyVariantSurviveAndAFailingTestKillsIt() {
         List<SemanticMutant> built = new ArrayList<>();
         SemanticMutantExecution.ProbeRunner passing = (mutant, probe) -> {
             built.add(mutant);
-            return new BuildSummary(1, 0, 0, false, List.of("printsTheSize"), List.of(), List.of(), "");
+            boolean silent = !mutant.mutantSource().contains("Books: 1");
+            return new BuildSummary(1, silent ? 1 : 0, silent ? 1 : 0, false, List.of("printsTheSize"), silent ? List.of("printsTheSize") : List.of(), List.of(), "");
         };
 
         List<SemanticMutantOutcome> survived = OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(),
@@ -416,7 +445,7 @@ class OutputOnlyMainProbeTest {
             assertThat(outcome.mutant().ruleId()).isEqualTo("Library.main");
             assertThat(outcome.mutant().originalSolutionSource()).isEqualTo(SOLUTION);
         });
-        assertThat(built).singleElement().satisfies(mutant -> assertThat(mutant.mutantSource()).contains("System.out.print(\"Books: 1\\n\");"));
+        assertThat(built).hasSize(2).last().satisfies(mutant -> assertThat(mutant.mutantSource()).contains("System.out.print(\"Books: 1\\n\");"));
 
         SemanticMutantExecution.ProbeRunner failing = (mutant, probe) -> new BuildSummary(1, 1, 1, false, List.of("printsTheSize"), List.of("printsTheSize"), List.of(), "");
         assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.of("Books: 1\n"), failing))
@@ -435,11 +464,17 @@ class OutputOnlyMainProbeTest {
             boolean capture = Arrays.stream(invocation.getArguments()).anyMatch(argument -> String.valueOf(argument).contains("hyperion-main"));
             return new SandboxExecResultDTO(0, capture ? encoded : "", "", false);
         });
-        when(sandbox.copyOut(anyString(), anyString())).thenAnswer(invocation -> ReportTarFixtures.junitAndScaReports("solution", List.of("printsTheSize"), List.of(), Map.of()));
+        AtomicReference<String> activeSource = new AtomicReference<>(SOLUTION);
+        when(sandbox.copyOut(anyString(), anyString())).thenAnswer(invocation -> ReportTarFixtures.junitAndScaReports("solution", List.of("printsTheSize"),
+                activeSource.get().contains("Books: 1") ? List.of() : List.of("printsTheSize"), Map.of()));
         List<Map<String, String>> installed = new ArrayList<>();
         doAnswer(invocation -> {
             try (var archive = new TarArchiveInputStream(invocation.getArgument(2, InputStream.class))) {
-                installed.add(WorkspaceArchive.readTar(archive, ""));
+                Map<String, String> files = WorkspaceArchive.readTar(archive, "");
+                installed.add(files);
+                if (files.containsKey("solution/" + PATH)) {
+                    activeSource.set(files.get("solution/" + PATH));
+                }
             }
             return null;
         }).when(sandbox).copyIn(anyString(), anyString(), any());

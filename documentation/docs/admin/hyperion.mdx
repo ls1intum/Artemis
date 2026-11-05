@@ -294,8 +294,11 @@ against that snapshot before persisting them, and checks repository heads and
 exercise metadata again before writing.
 
 Before statement authoring, whole-exercise generation runs an executable assessment
-check on eligible student-owned `main` methods. It replaces the method body with
-statements printing the reference transcript and runs the weighted tests. If those
+check on eligible student-owned `main` methods. Source calls prioritize candidates;
+reflection does not exclude them. The check first empties the body to establish
+whether weighted tests observe it. An ungraded demonstration is not a defect.
+It then replaces the body with statements printing the reference transcript and
+runs the weighted tests. If those
 tests still pass, or every non-preservation student-work test passes on the
 unchanged template, the staged controller can reopen the exact specification once,
 review a coherent redesign, and rebuild the artifacts under the existing shared
