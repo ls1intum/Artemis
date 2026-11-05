@@ -99,7 +99,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
         return Array.from(
             this
                 // Parse build logs
-                .map(({ log, time }) => {
+                .map(({ log, time }): { log: RegExpMatchArray | null; time: string } => {
                     const line = log.split('\n', 1)[0].trim();
                     return { log: line.length <= BuildLogEntryArray.MAX_PARSED_LINE_LENGTH ? errorLogRegex.exec(line) : null, time };
                 })
