@@ -135,7 +135,8 @@
             "source": [
                 "src/main/webapp/app/communication/course-conversations",
                 "src/main/webapp/i18n/en/conversation.json"
-            ]
+            ],
+            "waitFor": "text=All Messages"
         },
         {
             "id": "assessment-dashboard",
