@@ -73,6 +73,11 @@ EMBED_DIM = max(0, int(os.environ.get("MOCK_LLM_EMBED_DIM", "1536")))
 TOOL_MARKER = os.environ.get("MOCK_LLM_TOOL_MARKER", "[e2e-tool]")
 TOOL_FOLLOWUP_DELAY_S = float(os.environ.get("MOCK_LLM_TOOL_FOLLOWUP_DELAY_S", "4.0"))
 TOOL_PREAMBLE = "Let me check the course details first — mock-preamble"
+# With this marker instead, the mock answers TWO tool-call rounds, each with its own
+# preamble, so a test can check that each step shows between the message before it
+# and the message after it.
+TWO_ROUND_TOOL_MARKER = os.environ.get("MOCK_LLM_TWO_ROUND_TOOL_MARKER", "[e2e-two-tool-rounds]")
+SECOND_TOOL_PREAMBLE = "Let me look once more — mock-second-preamble"
 
 
 def log(message: str) -> None:
@@ -89,7 +94,7 @@ def message_text(message: dict) -> str:
     return ""
 
 
-def tool_call_body(model: str, tool_name: str) -> dict:
+def tool_call_body(model: str, tool_name: str, round_index: int = 0) -> dict:
     """Build a response that asks the agent to run one tool with empty arguments."""
     now = int(time.time())
     return {
@@ -102,11 +107,11 @@ def tool_call_body(model: str, tool_name: str) -> dict:
                 "index": 0,
                 "message": {
                     "role": "assistant",
-                    "content": TOOL_PREAMBLE,
+                    "content": TOOL_PREAMBLE if round_index == 0 else SECOND_TOOL_PREAMBLE,
                     "refusal": None,
                     "tool_calls": [
                         {
-                            "id": "call_mock_1",
+                            "id": f"call_mock_{round_index + 1}",
                             "type": "function",
                             "function": {"name": tool_name, "arguments": "{}"},
                         }
@@ -325,15 +330,21 @@ class MockLLMHandler(BaseHTTPRequestHandler):
                 if isinstance(message, dict) and message.get("role") == "user":
                     last_user_text = message_text(message)
                     break
-            wants_tool_round = bool(tools) and TOOL_MARKER in last_user_text
-            has_tool_result = any(isinstance(m, dict) and m.get("role") == "tool" for m in messages)
+            tool_rounds = 0
+            if tools and TWO_ROUND_TOOL_MARKER in last_user_text:
+                tool_rounds = 2
+            elif tools and TOOL_MARKER in last_user_text:
+                tool_rounds = 1
+            wants_tool_round = tool_rounds > 0
+            tool_results = sum(1 for m in messages if isinstance(m, dict) and m.get("role") == "tool")
+            has_tool_result = tool_results > 0
             wants_stream = bool(body.get("stream"))
             log(
                 f"chat.completions model={model!r} json={wants_json} tools={len(tools)} "
-                f"tool_round={wants_tool_round} tool_result={has_tool_result} stream={wants_stream}"
+                f"tool_rounds={tool_rounds} tool_results={tool_results} stream={wants_stream}"
             )
-            if wants_tool_round and not has_tool_result:
-                response = tool_call_body(model, pick_tool_name(tools))
+            if tool_results < tool_rounds:
+                response = tool_call_body(model, pick_tool_name(tools), round_index=tool_results)
             else:
                 if wants_tool_round and has_tool_result and TOOL_FOLLOWUP_DELAY_S > 0:
                     # Keep the finished tool chip visible for the UI assertion window.

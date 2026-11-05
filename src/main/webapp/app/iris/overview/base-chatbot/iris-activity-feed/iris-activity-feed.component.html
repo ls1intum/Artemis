@@ -1,25 +1,27 @@
 @if (viewItems().length) {
-    <div class="iris-activity-stepper mode-{{ mode() }}" aria-live="polite" [attr.aria-label]="feedAriaLabel()">
-        @for (activity of viewItems(); track activity.id; let last = $last) {
-            <div class="stepper-step" [class]="activity.stateClass">
-                <div class="stepper-rail">
-                    <div class="stepper-node" role="img" [attr.aria-label]="activity.tooltip">
-                        <fa-icon class="stepper-icon" [icon]="activity.icon" [animation]="activity.spin ? 'spin' : undefined" />
-                    </div>
-                    @if (!last) {
-                        <span class="stepper-connector" aria-hidden="true"></span>
-                    }
-                </div>
-                <span class="stepper-label">
-                    <span class="stepper-label-name">{{ activity.label }}</span>
+    <details class="iris-activity-group activity-trail mode-{{ mode() }}" [attr.aria-live]="mode() === 'live' ? 'polite' : null" [attr.aria-label]="feedAriaLabel()">
+        <summary class="iris-activity-summary">
+            @if (runningItem(); as running) {
+                <fa-icon class="iris-activity-summary-spinner" [icon]="faCircleNotch" animation="spin" />
+                <span class="iris-activity-summary-text">{{ running.label }}</span>
+            } @else {
+                <span class="iris-activity-summary-text">{{ summary() }}</span>
+            }
+            <fa-icon class="iris-activity-summary-caret" [icon]="faCaretRight" aria-hidden="true" />
+        </summary>
+        <ul class="iris-activity-list">
+            @for (activity of viewItems(); track activity.id) {
+                <li class="iris-activity-row" [class]="activity.stateClass" [attr.aria-label]="activity.tooltip">
+                    <fa-icon class="iris-activity-icon" [icon]="activity.icon" [animation]="activity.spin ? 'spin' : undefined" aria-hidden="true" />
+                    <span class="iris-activity-name">{{ activity.label }}</span>
                     @if (activity.detail) {
-                        <span class="stepper-label-detail">{{ activity.detail }}</span>
+                        <span class="iris-activity-detail">{{ activity.detail }}</span>
                     }
                     @if (activity.durationLabel) {
-                        <span class="stepper-label-duration">{{ activity.durationLabel }}</span>
+                        <span class="iris-activity-duration">{{ activity.durationLabel }}</span>
                     }
-                </span>
-            </div>
-        }
-    </div>
+                </li>
+            }
+        </ul>
+    </details>
 }

@@ -270,10 +270,7 @@
                                 @if (message.sender === IrisSender.LLM) {
                                     <div class="llm-message-wrapper">
                                         @if (getActivities(message).length) {
-                                            <details class="activity-trail">
-                                                <summary>{{ activityTrailSummary(getActivities(message)) }}</summary>
-                                                <jhi-iris-activity-feed [activities]="getActivities(message)" mode="trail" />
-                                            </details>
+                                            <jhi-iris-activity-feed [activities]="getActivities(message)" mode="trail" />
                                         }
                                         @for (content of message.content; track content.id ?? $index) {
                                             @if (isMcqSetContent(content)) {
