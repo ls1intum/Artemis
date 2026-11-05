@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * The payload of the new mention notification.
@@ -20,7 +24,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param replyIsBot           whether the reply came from a bot
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NewMentionPayloadDTO(String postMarkdownContent, String postCreationDate, String postAuthorName, Long postId, String replyMarkdownContent, String replyCreationDate,
-        String replyAuthorName, Long replyAuthorId, String replyImageUrl, Long replyId, String channelName, Long channelId, boolean replyIsBot)
+public record NewMentionPayloadDTO(@Nullable String postMarkdownContent, @Nullable String postCreationDate, @Nullable String postAuthorName, @Nullable Long postId,
+        @Nullable String replyMarkdownContent, @Nullable String replyCreationDate, @Nullable String replyAuthorName, @Nullable Long replyAuthorId, @Nullable String replyImageUrl,
+        @Nullable Long replyId, @Nullable String channelName, @Nullable Long channelId, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean replyIsBot)
         implements CourseNotificationPayloadDTO {
 }

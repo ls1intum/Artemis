@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.GlobalNotificationSettingDTO;
 import de.tum.cit.aet.artemis.notification.dto.UpdateGlobalNotificationSettingDTO;
 import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
+import io.swagger.v3.oas.annotations.Operation;
 
 @Profile(PROFILE_CORE)
 @FeatureUsage(UserFeature.NOTIFICATION_SETTINGS)
@@ -53,10 +54,12 @@ public class GlobalNotificationSettingResource {
      * @param notificationType the name of the {@link GlobalNotificationType};
      * @param request          the JSON request body, e.g. {@code {"enabled":true}}
      * @return {@link ResponseEntity} containing the persisted setting DTO and HTTP 200 on success;
-     *         HTTP 400 if the body is missing the {@code enabled} property or if {@code notificationType} is unknown
+     *         HTTP 400 if the body is missing or if {@code notificationType} is unknown. An omitted or null {@code enabled}
+     *         property defaults to false.
      */
     @PutMapping("global-notification-settings/{notificationType}")
     @EnforceAtLeastStudent
+    @Operation(operationId = "updateGlobalNotificationSetting", summary = "Update a global notification setting for the current user")
     public ResponseEntity<GlobalNotificationSettingDTO> updateSetting(@PathVariable GlobalNotificationType notificationType,
             @RequestBody UpdateGlobalNotificationSettingDTO request) {
         User user = userRepository.getUserWithAuthorities();
@@ -73,6 +76,7 @@ public class GlobalNotificationSettingResource {
      */
     @GetMapping("global-notification-settings")
     @EnforceAtLeastStudent
+    @Operation(operationId = "getGlobalNotificationSettings", summary = "Get the current user's global notification settings")
     public ResponseEntity<Map<String, Boolean>> getAllSettings() {
         // Not getUserWithAuthorities: it additionally joins the authorities collection, and only the id and the login are used.
         Map<String, Boolean> result = globalNotificationSettingService.getAllSettingsAsMap(userRepository.getUser());

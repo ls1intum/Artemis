@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -11,5 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param exerciseGroupId the exam exercise group, when the exercise belongs to an exam
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ProgrammingTestCasesChangedPayloadDTO(Long exerciseId, String exerciseTitle, Long examId, Long exerciseGroupId) implements CourseNotificationPayloadDTO {
+public record ProgrammingTestCasesChangedPayloadDTO(@Nullable Long exerciseId, @Nullable String exerciseTitle, @Nullable Long examId, @Nullable Long exerciseGroupId)
+        implements CourseNotificationPayloadDTO {
 }

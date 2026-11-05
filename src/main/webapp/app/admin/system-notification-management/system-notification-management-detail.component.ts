@@ -32,8 +32,7 @@ export class SystemNotificationManagementDetailComponent implements OnInit {
      */
     ngOnInit(): void {
         this.route.data.subscribe(({ notification }) => {
-            const resolvedNotification = notification?.body ?? notification;
-            this.notification.set(resolvedNotification);
+            this.notification.set(notification);
         });
     }
 }

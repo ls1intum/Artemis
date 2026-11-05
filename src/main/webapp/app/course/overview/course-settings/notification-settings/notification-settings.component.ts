@@ -3,14 +3,13 @@ import { CourseSettingCategoryDirective } from 'app/course/overview/course-setti
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBell, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
+import { UserCourseNotificationSettingPreset as CourseNotificationSettingPreset } from 'app/openapi/model/user-course-notification-setting-preset';
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CourseNotificationSettingSpecification } from 'app/notification/shared/entities/course-notification/course-notification-setting-specification';
 import { CourseNotificationSettingSpecificationCardComponent } from 'app/notification/course-notification/course-notification-setting-specification-card/course-notification-setting-specification-card.component';
-import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
+import { CourseNotificationSettingInfo, CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
-import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationInfo } from 'app/openapi/model/course-notification-info';
 import { CourseNotificationSettingsMap } from 'app/notification/shared/entities/course-notification/course-notification-settings-map';
 import { AccountService } from 'app/core/auth/account.service';
 
@@ -49,7 +48,7 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
      * Sets up selectable presets, current preset, and notification specifications.
      */
     initializeValues() {
-        this.selectableSettingPresets.set(this.info!.presets);
+        this.selectableSettingPresets.set(this.info!.presets ?? []);
 
         this.selectedSettingPreset.set(
             this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets().find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!,
@@ -58,7 +57,7 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         if (this.settingInfo!.selectedPreset === 0) {
             this.updateSpecificationArrayByNotificationMap(this.settingInfo!.notificationTypeChannels, this.settingInfo!.notificationTypeChannels[1] === undefined);
         } else if (this.settingInfo!.selectedPreset !== 0) {
-            this.updateSpecificationArrayByNotificationMap(this.selectedSettingPreset()!.presetMap, true);
+            this.updateSpecificationArrayByNotificationMap(this.selectedSettingPreset()?.presetMap ?? {}, true);
         }
 
         this.isLoading.set(false);
@@ -112,8 +111,8 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         });
 
         this.courseNotificationService.getInfo().subscribe((info) => {
-            if (info.body) {
-                this.info = info.body;
+            if (info) {
+                this.info = info;
 
                 if (this.settingInfo) {
                     this.initializeValues();
@@ -137,7 +136,7 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
     private updateSpecificationArrayByNotificationMap(notificationMap: CourseNotificationSettingsMap, useValue: boolean) {
         const notificationSpecifications: CourseNotificationSettingSpecification[] = [];
         const isInstructor = this.accountService.isAtLeastInstructorInCourseWithId(this.courseId);
-        Object.entries(this.info!.notificationTypes).forEach(([key, value]) => {
+        Object.entries(this.info!.notificationTypes ?? {}).forEach(([key, value]) => {
             if (!isInstructor && CourseNotificationService.INSTRUCTOR_ONLY_NOTIFICATION_TYPES.includes(value)) {
                 return;
             }

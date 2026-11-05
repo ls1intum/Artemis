@@ -1,67 +1,55 @@
-/**
- * Vitest tests for SystemNotificationManagementResolve service.
- * Tests the route resolver that fetches system notification data based on ID parameter.
- */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { isObservable, of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot } from '@angular/router';
-
 import { SystemNotificationManagementResolve } from 'app/admin/system-notification-management/system-notification-management-resolve.service';
 import { SystemNotification } from 'app/admin/system-notification-management/system-notification.model';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 
 describe('SystemNotificationManagementResolve', () => {
-    let systemNotificationService: SystemNotificationService;
     let resolver: SystemNotificationManagementResolve;
+    const find = vi.fn();
 
-    /** Mock service with spy method */
-    const mockSystemNotificationService = {
-        find: vi.fn(),
-    };
-
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            providers: [SystemNotificationManagementResolve, { provide: SystemNotificationService, useValue: mockSystemNotificationService }],
-        }).compileComponents();
-
-        systemNotificationService = TestBed.inject(SystemNotificationService);
+    beforeEach(() => {
+        find.mockReset();
+        TestBed.configureTestingModule({ providers: [{ provide: SystemNotificationService, useValue: { find } }] });
         resolver = TestBed.inject(SystemNotificationManagementResolve);
     });
 
-    beforeEach(() => {
-        vi.clearAllMocks();
+    it('resolves the Dayjs model directly for the detail and editor routes', () => {
+        const notification = new SystemNotification();
+        notification.id = 1;
+        find.mockReturnValue(of(notification));
+        const route = new ActivatedRouteSnapshot();
+        route.params = { id: '1' };
+        const result = resolver.resolve(route);
+        if (!isObservable(result)) {
+            throw new Error('Existing notifications must resolve asynchronously');
+        }
+        let resolved: SystemNotification | undefined;
+        result.subscribe((value) => (resolved = value));
+        expect(resolved).toBe(notification);
+        expect(find).toHaveBeenCalledExactlyOnceWith(1);
     });
 
-    it('should fetch notification by id when id parameter is provided', () => {
-        const expectedNotification = new SystemNotification();
-        const httpResponse = new HttpResponse<SystemNotification>({ body: expectedNotification });
-        const routeSnapshot = { params: { id: '1' } } as unknown as ActivatedRouteSnapshot;
-
-        vi.spyOn(systemNotificationService, 'find').mockReturnValue(of(httpResponse));
-
-        let result: SystemNotification | undefined;
-        // @ts-ignore - resolve may return Observable or direct value
-        resolver.resolve(routeSnapshot).subscribe((notification: SystemNotification) => (result = notification));
-
-        expect(result).toBe(expectedNotification);
-        expect(systemNotificationService.find).toHaveBeenCalledOnce();
-        expect(systemNotificationService.find).toHaveBeenCalledWith(1);
+    it('propagates a missing notification instead of resolving an empty editor model', () => {
+        const error = new HttpErrorResponse({ status: 404 });
+        find.mockReturnValue(throwError(() => error));
+        const route = new ActivatedRouteSnapshot();
+        route.params = { id: '99' };
+        const result = resolver.resolve(route);
+        if (!isObservable(result)) {
+            throw new Error('Existing notifications must resolve asynchronously');
+        }
+        let failure: HttpErrorResponse | undefined;
+        result.subscribe({ error: (value: HttpErrorResponse) => (failure = value) });
+        expect(failure).toBe(error);
     });
 
-    it('should return new notification when id parameter is not provided', () => {
-        const existingNotification = new SystemNotification();
-        const httpResponse = new HttpResponse<SystemNotification>({ body: existingNotification });
-        const routeSnapshot = { params: { id: undefined } } as unknown as ActivatedRouteSnapshot;
-
-        vi.spyOn(systemNotificationService, 'find').mockReturnValue(of(httpResponse));
-
-        const result = resolver.resolve(routeSnapshot);
-
-        // Should return a new SystemNotification instance, not the mocked one
-        expect(result).not.toBe(existingNotification);
+    it('constructs a new UI notification when no id is provided', () => {
+        const result = resolver.resolve(new ActivatedRouteSnapshot());
         expect(result).toBeInstanceOf(SystemNotification);
-        expect(systemNotificationService.find).not.toHaveBeenCalled();
+        expect(find).not.toHaveBeenCalled();
     });
 });

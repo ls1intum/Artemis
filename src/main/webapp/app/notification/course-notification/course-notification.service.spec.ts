@@ -2,17 +2,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
-import { HttpResponse } from '@angular/common/http';
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
-import { CourseNotificationPage } from 'app/notification/shared/entities/course-notification/course-notification-page';
+import { CourseNotificationPage } from 'app/openapi/model/course-notification-page';
+import { NewPostCourseNotification } from 'app/openapi/model/new-post-course-notification';
+import { CourseNotificationInfo } from 'app/openapi/model/course-notification-info';
+import { UserCourseNotificationStatusUpdateRequest } from 'app/openapi/model/user-course-notification-status-update-request';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
 import dayjs from 'dayjs/esm';
 import { faComments, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 import { User } from 'app/account/user/user.model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -20,6 +22,26 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 describe('CourseNotificationService', () => {
     let service: CourseNotificationService;
     let httpMock: HttpTestingController;
+
+    const wireNotification = (notificationId: number, courseId = 123): NewPostCourseNotification => ({
+        notificationType: 'newPostNotification',
+        notificationId,
+        courseId,
+        category: 'COMMUNICATION',
+        status: 'UNSEEN',
+        creationDate: '2026-10-25T02:30:00+02:00',
+        courseTitle: 'Java Programming',
+        courseIconUrl: 'icon.svg',
+        payload: { postId: 99, channelId: 20, authorIsBot: false },
+        relativeWebAppUrl: '/courses/123/communication',
+    });
+    const wirePage = (content: CourseNotificationPage['content'], totalPages = 1): CourseNotificationPage => ({
+        content,
+        pageNumber: 0,
+        pageSize: 10,
+        totalElements: content?.length ?? 0,
+        totalPages,
+    });
 
     beforeEach(() => {
         vi.useFakeTimers();
@@ -41,103 +63,125 @@ describe('CourseNotificationService', () => {
         expect(service).toBeTruthy();
     });
 
-    describe('getNextNotificationPage', () => {
-        it('should return false if final page was already reached', () => {
-            const courseId = 123;
-            service['courseNotificationPageMap'][courseId] = true;
-            const notifyNotificationSubscribersSpy = vi.spyOn(service as any, 'notifyNotificationSubscribers');
+    describe('getInfo generated body and cache', () => {
+        const info: CourseNotificationInfo = { notificationTypes: { '1': 'newPostNotification' }, channels: ['WEBAPP', 'PUSH', 'EMAIL'], presets: [] };
 
-            const result = service.getNextNotificationPage(courseId);
-
-            expect(result).toBe(false);
-            expect(notifyNotificationSubscribersSpy).toHaveBeenCalledOnce();
+        it('returns the body directly and reuses only its successful cached value', () => {
+            let first: CourseNotificationInfo | undefined;
+            let cached: CourseNotificationInfo | undefined;
+            service.getInfo().subscribe((body) => (first = body));
+            const request = httpMock.expectOne('/api/notification/courses/info');
+            expect(request.request.method).toBe('GET');
+            request.flush(info);
+            service.getInfo().subscribe((body) => (cached = body));
+            httpMock.expectNone('/api/notification/courses/info');
+            expect(first).toEqual(info);
+            expect(cached).toBe(first);
         });
 
-        it('should initialize the notifications array if it does not exist', () => {
-            const courseId = 123;
-            expect(service['courseNotificationMap'][courseId]).toBeUndefined();
-
-            service.getNextNotificationPage(courseId);
-
-            expect(service['courseNotificationMap'][courseId]).toEqual([]);
-
-            const req = httpMock.expectOne(`/api/notification/courses/${courseId}?page=0&size=10`);
-            req.flush({ content: [], totalPages: 0 });
-            vi.advanceTimersByTime(0);
+        it('does not poison the cache on an error and retries the generated request', () => {
+            let error: HttpErrorResponse | undefined;
+            service.getInfo().subscribe({ error: (value: HttpErrorResponse) => (error = value) });
+            httpMock.expectOne('/api/notification/courses/info').flush({}, { status: 503, statusText: 'Unavailable' });
+            expect(error?.status).toBe(503);
+            expect(service['cachedNotificationInfo']).toBeNull();
+            let result: CourseNotificationInfo | undefined;
+            service.getInfo().subscribe((body) => (result = body));
+            httpMock.expectOne('/api/notification/courses/info').flush(info);
+            expect(result).toEqual(info);
         });
 
-        it('should fetch notification page and handle response with content', () => {
-            const courseId = 123;
-
-            const mockNotifications: CourseNotification[] = [
-                {
-                    notificationId: 1,
-                    type: 'newPostNotification',
-                    status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
-                    // @ts-ignore
-                    creationDate: new Date('2024-01-01'),
-                    category: 'GENERAL' as unknown as CourseNotificationCategory,
-                },
-                {
-                    notificationId: 2,
-                    type: 'newPostNotification',
-                    status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
-                    // @ts-ignore
-                    creationDate: new Date('2024-01-02'),
-                    category: 'GENERAL' as unknown as CourseNotificationCategory,
-                },
-            ];
-            const mockResponse: { content: CourseNotification[]; totalPages: number } = {
-                content: mockNotifications,
-                totalPages: 1,
-            };
-            const notifyNotificationSubscribersSpy = vi.spyOn(service as any, 'notifyNotificationSubscribers');
-
-            const result = service.getNextNotificationPage(courseId);
-
-            const req = httpMock.expectOne(`/api/notification/courses/${courseId}?page=0&size=10`);
-            expect(req.request.method).toBe('GET');
-            req.flush(mockResponse);
-            vi.advanceTimersByTime(0);
-
-            expect(result).toBe(true);
-            expect(service['courseNotificationMap'][courseId]).toHaveLength(2);
-            expect(service['courseNotificationPageMap'][courseId]).toBe(true);
-            expect(notifyNotificationSubscribersSpy).toHaveBeenCalledOnce();
+        it('keeps the existing independent in-flight request behavior', () => {
+            service.getInfo().subscribe();
+            service.getInfo().subscribe();
+            const requests = httpMock.match('/api/notification/courses/info');
+            expect(requests).toHaveLength(2);
+            requests.forEach((request) => request.flush(info));
         });
 
-        it('should handle empty response', () => {
-            const courseId = 123;
-            const notifyNotificationSubscribersSpy = vi.spyOn(service as any, 'notifyNotificationSubscribers');
-
-            service.getNextNotificationPage(courseId);
-
-            const req = httpMock.expectOne(`/api/notification/courses/${courseId}?page=0&size=10`);
-            req.flush(null);
-            vi.advanceTimersByTime(0);
-
-            expect(service['courseNotificationPageMap'][courseId]).toBe(true);
-            expect(notifyNotificationSubscribersSpy).toHaveBeenCalledOnce();
+        it('does not cache a null successful body', () => {
+            service.getInfo().subscribe();
+            httpMock.expectOne('/api/notification/courses/info').flush(null);
+            expect(service['cachedNotificationInfo']).toBeNull();
+            service.getInfo().subscribe();
+            httpMock.expectOne('/api/notification/courses/info').flush(info);
         });
     });
 
-    describe('setNotificationStatus', () => {
-        it('should make PUT request to set notification status', () => {
-            // Arrange
-            const courseId = 123;
-            const notificationIds = [1, 2, 3];
-            const statusType = CourseNotificationViewingStatus.SEEN;
+    describe('getNextNotificationPage generated boundary', () => {
+        it('keeps the completed-page guard and emits existing state without another request', () => {
+            service['courseNotificationPageMap'][123] = true;
+            let emissions = 0;
+            service.notifications$.subscribe(() => emissions++);
+            expect(service.getNextNotificationPage(123)).toBe(false);
+            httpMock.expectNone('/api/notification/courses/123?page=0&size=10');
+            expect(emissions).toBe(2);
+        });
 
-            service.setNotificationStatus(courseId, notificationIds, statusType);
+        it('requests page zero and size ten, converts instants/enums and leaves wire objects untouched', () => {
+            const wire = wireNotification(1);
+            expect(service.getNextNotificationPage(123)).toBe(true);
+            expect(service['courseNotificationMap'][123]).toEqual([]);
+            const request = httpMock.expectOne('/api/notification/courses/123?page=0&size=10');
+            expect(request.request.method).toBe('GET');
+            request.flush(wirePage([wire]));
+            const notification = service['courseNotificationMap'][123][0];
+            expect(notification).toBeInstanceOf(CourseNotification);
+            expect(notification.creationDate?.toISOString()).toBe('2026-10-25T00:30:00.000Z');
+            expect(notification.category).toBe(CourseNotificationCategory.COMMUNICATION);
+            expect(notification.status).toBe(CourseNotificationViewingStatus.UNSEEN);
+            expect(notification.courseTitle).toBe('Java Programming');
+            expect(notification.courseIconUrl).toBe('icon.svg');
+            expect(notification.payload).toEqual(wire.payload);
+            expect(wire.creationDate).toBe('2026-10-25T02:30:00+02:00');
+            expect(wire.category).toBe('COMMUNICATION');
+            expect(service['courseNotificationPageMap'][123]).toBe(true);
+        });
 
-            const req = httpMock.expectOne(`/api/notification/courses/${courseId}/status`);
-            expect(req.request.method).toBe('PUT');
-            expect(req.request.body).toEqual({
-                notificationIds,
-                statusType,
-            });
-            req.flush({});
-            vi.advanceTimersByTime(0);
+        it('appends later pages in order, deduplicates IDs and retains existing notification identity/count seeding', () => {
+            const existing = Array.from({ length: 10 }, (_, index) => CourseNotification.fromServer(wireNotification(index + 1)));
+            service['courseNotificationMap'][123] = existing;
+            service.updateNotificationCountMap(123, 17);
+            const first = existing[0];
+            service.getNextNotificationPage(123);
+            httpMock.expectOne('/api/notification/courses/123?page=1&size=10').flush(wirePage([wireNotification(1), wireNotification(11)], 3));
+            expect(service['courseNotificationMap'][123].map((notification) => notification.notificationId)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+            expect(service['courseNotificationMap'][123][0]).toBe(first);
+            expect(service['courseNotificationPageMap'][123]).toBe(false);
+            expect(service['courseNotificationCountMap'][123]).toBe(17);
+        });
+
+        it.each(['empty', 'omitted', 'null'])('keeps the %s page completion behavior', (kind) => {
+            service.getNextNotificationPage(123);
+            const body = kind === 'null' ? null : wirePage(kind === 'empty' ? [] : undefined, 0);
+            httpMock.expectOne('/api/notification/courses/123?page=0&size=10').flush(body);
+            expect(service['courseNotificationMap'][123]).toEqual([]);
+            expect(service['courseNotificationPageMap'][123]).toBe(true);
+        });
+
+        it('rejects a null item before committing any converted notification or altering count state', () => {
+            const page = wirePage([wireNotification(1), null, wireNotification(2)]);
+            expect(() => service['convertPageFromServer'](page)).toThrow('null entry');
+            expect(service['courseNotificationMap']).toEqual({});
+            expect(service['courseNotificationCountMap']).toEqual({});
+            expect(service['courseNotificationPageMap']).toEqual({});
+            expect(page.totalElements).toBe(3);
+            expect(page.content?.[1]).toBeNull();
+        });
+    });
+
+    describe('setNotificationStatus generated boundary', () => {
+        const statuses: { ui: CourseNotificationViewingStatus; wire: UserCourseNotificationStatusUpdateRequest['statusType'] }[] = [
+            { ui: CourseNotificationViewingStatus.UNSEEN, wire: 'UNSEEN' },
+            { ui: CourseNotificationViewingStatus.SEEN, wire: 'SEEN' },
+            { ui: CourseNotificationViewingStatus.ARCHIVED, wire: 'ARCHIVED' },
+        ];
+        it.each(statuses)('sends $wire instead of the numeric UI value', ({ ui, wire }) => {
+            service.setNotificationStatus(123, [0, 1, 2], ui);
+            const request = httpMock.expectOne('/api/notification/courses/123/status');
+            expect(request.request.method).toBe('PUT');
+            expect(request.request.body).toEqual({ notificationIds: [0, 1, 2], statusType: wire });
+            request.flush(null);
         });
     });
 
@@ -151,7 +195,7 @@ describe('CourseNotificationService', () => {
             const req = httpMock.expectOne(`/api/notification/courses/${courseId}/seen`);
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toEqual({ notificationIds });
-            req.flush({});
+            req.flush(null);
             vi.advanceTimersByTime(0);
             httpMock.expectNone(`/api/notification/courses/${courseId}/status`);
         });
@@ -165,8 +209,8 @@ describe('CourseNotificationService', () => {
 
             const req = httpMock.expectOne(`/api/notification/courses/${courseId}/archive-all`);
             expect(req.request.method).toBe('PUT');
-            expect(req.request.body).toEqual({});
-            req.flush({});
+            expect(req.request.body).toBeNull();
+            req.flush(null);
             vi.advanceTimersByTime(0);
         });
     });
@@ -551,32 +595,6 @@ describe('CourseNotificationService', () => {
         });
     });
 
-    describe('convertResponseFromServer', () => {
-        it('should convert dates and enums in response', () => {
-            const mockResponse = {
-                body: {
-                    content: [
-                        {
-                            notificationId: 1,
-                            creationDate: '2024-01-01T10:30:00Z',
-                            category: 'DISCUSSION',
-                            status: 'UNSEEN',
-                            courseTitle: 'Java Programming',
-                            courseIconUrl: 'http://example.com/icon.png',
-                            payload: {},
-                        },
-                    ],
-                    totalPages: 1,
-                },
-            } as unknown as HttpResponse<CourseNotificationPage>;
-
-            const result = service['convertResponseFromServer'](mockResponse);
-
-            expect(result.body!.content![0].courseTitle).toBe('Java Programming');
-            expect(result.body!.content![0].courseIconUrl).toBe('http://example.com/icon.png');
-        });
-    });
-
     describe('authentication state changes', () => {
         let authState: BehaviorSubject<User | undefined>;
         let scoped: CourseNotificationService;
@@ -627,6 +645,20 @@ describe('CourseNotificationService', () => {
             authState.next({ id: 99 } as User);
 
             expect(scoped['courseNotificationMap'][7]).toHaveLength(1);
+        });
+
+        it('prevents an older getInfo response from caching over a new account response', () => {
+            scoped.getInfo().subscribe();
+            const oldRequest = scopedHttpMock.expectOne('/api/notification/courses/info');
+            authState.next(new User(100));
+            let current: CourseNotificationInfo | undefined;
+            scoped.getInfo().subscribe((info) => (current = info));
+            const fresh: CourseNotificationInfo = { channels: ['WEBAPP'], notificationTypes: { '2': 'newAnswerNotification' } };
+            scopedHttpMock.expectOne('/api/notification/courses/info').flush(fresh);
+            oldRequest.flush({ channels: ['EMAIL'], notificationTypes: { '1': 'newPostNotification' } });
+            scoped.getInfo().subscribe((info) => (current = info));
+            scopedHttpMock.expectNone('/api/notification/courses/info');
+            expect(current).toEqual(fresh);
         });
 
         it('should ignore in-flight pagination responses after logout', () => {
