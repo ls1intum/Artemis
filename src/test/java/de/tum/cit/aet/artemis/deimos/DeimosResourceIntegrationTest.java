@@ -87,14 +87,14 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerCourseBatch_instructor_returnsAccepted() throws Exception {
         request.performMvcRequest(post(COURSE_ENDPOINT, course.getId()).contentType(MediaType.APPLICATION_JSON).content(emptyWindowBody())).andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.runId").isNotEmpty()).andExpect(jsonPath("$.status").value("ACCEPTED"));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerExerciseBatch_instructor_returnsAccepted() throws Exception {
         request.performMvcRequest(post(EXERCISE_ENDPOINT, programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON).content(emptyWindowBody()))
                 .andExpect(status().isAccepted()).andExpect(jsonPath("$.runId").isNotEmpty());
@@ -107,19 +107,19 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void triggerCourseBatch_tutor_returnsForbidden() throws Exception {
         request.performMvcRequest(post(COURSE_ENDPOINT, course.getId()).contentType(MediaType.APPLICATION_JSON).content(emptyWindowBody())).andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
     void triggerCourseBatch_editor_returnsForbidden() throws Exception {
         request.performMvcRequest(post(COURSE_ENDPOINT, course.getId()).contentType(MediaType.APPLICATION_JSON).content(emptyWindowBody())).andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void triggerCourseBatch_wrongCourseInstructor_returnsForbidden() throws Exception {
         request.performMvcRequest(post(COURSE_ENDPOINT, course.getId()).contentType(MediaType.APPLICATION_JSON).content(emptyWindowBody())).andExpect(status().isForbidden());
     }
@@ -138,14 +138,14 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void triggerExerciseBatch_tutor_returnsForbidden() throws Exception {
         request.performMvcRequest(post(EXERCISE_ENDPOINT, programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON).content(emptyWindowBody()))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "USER")
     void triggerExerciseBatch_wrongCourseInstructor_returnsForbidden() throws Exception {
         request.performMvcRequest(post(EXERCISE_ENDPOINT, programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON).content(emptyWindowBody()))
                 .andExpect(status().isForbidden());
@@ -159,7 +159,7 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerCourseBatch_featureToggleDisabled_returnsForbidden() throws Exception {
         featureToggleService.disableFeature(Feature.Deimos);
 
@@ -167,7 +167,7 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerExerciseBatch_featureToggleDisabled_returnsForbidden() throws Exception {
         featureToggleService.disableFeature(Feature.Deimos);
 
@@ -176,7 +176,7 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerCourseBatch_fromAfterTo_returnsBadRequest() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();
 
@@ -185,7 +185,7 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerCourseBatch_windowTooLarge_returnsBadRequest() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();
 
@@ -194,7 +194,7 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerExerciseBatch_windowTooLarge_returnsBadRequest() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();
 
@@ -203,7 +203,7 @@ class DeimosResourceIntegrationTest extends AbstractProgrammingIntegrationIndepe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void triggerCourseBatch_exactlyMaximumWindow_returnsAccepted() throws Exception {
         // The server permits exactly 31 days; this pins the boundary the client validation has to match. Built from a fixed
         // duration in UTC: 31 calendar days in a zone with daylight saving time can be an hour longer or shorter.
