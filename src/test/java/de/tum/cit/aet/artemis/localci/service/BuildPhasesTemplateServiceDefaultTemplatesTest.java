@@ -67,6 +67,38 @@ class BuildPhasesTemplateServiceDefaultTemplatesTest {
     }
 
     @Test
+    void shouldFallBackToPlainMavenForJavaSequentialTestRunsWithoutProjectType() throws Exception {
+        var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.JAVA, Optional.empty(), false, true);
+
+        assertThat(names(phases)).containsExactly("compile_structural", "compile_behavior", "structural", "behavior");
+        assertThat(phases).isEqualTo(service.getBuildPlanPhasesFor(ProgrammingLanguage.JAVA, Optional.of(ProjectType.PLAIN_MAVEN), false, true));
+    }
+
+    @Test
+    void shouldRunStructuralBeforeBehaviorTestsForGo() throws Exception {
+        var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.GO, Optional.empty(), false, true);
+
+        assertThat(names(phases)).containsExactly("build", "structural_tests", "behavior_tests");
+    }
+
+    @Test
+    void shouldRunStructuralBeforeBehaviorTestsForCSharp() throws Exception {
+        var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.C_SHARP, Optional.empty(), false, true);
+
+        assertThat(names(phases)).containsExactly("build", "structural_tests", "behavior_tests");
+    }
+
+    @Test
+    void shouldRunOnlyTheTestFileOfTheStageForRubySequentialTestRuns() throws Exception {
+        var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.RUBY, Optional.empty(), false, true);
+
+        assertThat(names(phases)).containsExactly("install_dependencies", "syntax_check", "structural_tests", "behavior_tests");
+        // the rake task ignores TEST and would run every test file in both stages, which reports each test twice as a duplicate
+        assertThat(phases.get(2).script()).contains("ruby -Itest test/test_structural.rb").doesNotContain("rake ci:test").doesNotContain("test_behavior");
+        assertThat(phases.get(3).script()).contains("ruby -Itest test/test_behavior.rb").doesNotContain("rake ci:test").doesNotContain("test_structural");
+    }
+
+    @Test
     void shouldSelectTheStaticCodeAnalysisTemplateForSwift() throws Exception {
         var phases = service.getBuildPlanPhasesFor(ProgrammingLanguage.SWIFT, Optional.of(ProjectType.PLAIN), true, false);
 
