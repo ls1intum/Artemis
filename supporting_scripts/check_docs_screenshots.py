@@ -498,6 +498,15 @@ def self_test() -> None:
             assert "git log failed" in str(failure)
         finally:
             globals()["REPO_ROOT"] = original_root
+    ids = {"screenshots": [{"id": "one"}, {"id": "two"}]}
+    assert select_ids(ids, "one") == {"one"} and select_ids(ids, " one, two ") == {"one", "two"}
+    for bad_selection in ("one,tow", "tow", "", " , "):
+        try:
+            select_ids(ids, bad_selection)
+        except SystemExit as failure:
+            assert "--only" in str(failure), bad_selection
+            continue
+        raise AssertionError(f"--only {bad_selection!r} must be rejected")
     for bad in ("nan","inf", "-0.1", "1.5", "x"):
         try:
             share(bad)
@@ -509,6 +518,18 @@ def self_test() -> None:
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+
+
+def select_ids(manifest: dict, text: str) -> set[str]:
+    """The manifest ids that `--only` asks for. A misspelled id and an empty selection stop the run, because the run would otherwise render or compare less than was asked."""
+    requested = [identifier.strip() for identifier in text.split(",") if identifier.strip()]
+    if not requested:
+        raise SystemExit("--only needs at least one manifest id")
+    known = {entry["id"] for entry in manifest["screenshots"]}
+    unknown = [identifier for identifier in requested if identifier not in known]
+    if unknown:
+        raise SystemExit(f"--only names ids that the manifest does not have: {', '.join(unknown)}")
+    return set(requested)
 
 
 def share(text: str) -> float:
@@ -526,7 +547,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--compare", metavar="DIR", help="compare the images rendered into DIR with the checked-in ones")
     parser.add_argument("--threshold", type=share, default=DEFAULT_THRESHOLD, help="share of changed pixels that counts as a difference (default 0.01)")
-    parser.add_argument("--only", metavar="IDS", help="with --compare: compare only these manifest ids, comma separated, as the renderer rendered only them")
+    parser.add_argument("--only", metavar="IDS", help="with --compare: compare only these manifest ids, comma separated, as the renderer rendered only them. A misspelled id is an error.")
     parser.add_argument("--all", action="store_true", help="with --compare: also list the images that are within the threshold, with their similarity")
     parser.add_argument("--stale", action="store_true", help="list images whose source files changed after the image")
     parser.add_argument("--self-test", action="store_true", help="run the built-in tests")
@@ -535,8 +556,8 @@ def main() -> int:
         self_test()
         return 0
     manifest = load_manifest(MANIFEST)
+    only = select_ids(manifest, args.only) if args.only is not None else None
     if args.compare:
-        only = {identifier.strip() for identifier in args.only.split(",") if identifier.strip()} if args.only else None
         lines, compared = compare(manifest, Path(args.compare), DOCS_ROOT, args.threshold, args.all, only)
         differing = [line for line in lines if "within the threshold" not in line]
         print(f"{len(differing)} of {compared} compared screenshot(s) differ (threshold {args.threshold:.1%} of the pixels)")

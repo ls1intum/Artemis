@@ -34,6 +34,7 @@ set -Eeuo pipefail
 UPDATE=false
 RENDER_ONLY=false
 ONLY=""
+ONLY_GIVEN=false
 BROWSER="container"
 THRESHOLD="0.01"
 SKIP_INSTALL=false
@@ -44,7 +45,7 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         --update) UPDATE=true; shift ;;
         --render-only) RENDER_ONLY=true; shift ;;
-        --only) ONLY="${2:?--only needs a comma separated list of ids}"; shift 2 ;;
+        --only) ONLY="${2?--only needs a comma separated list of ids}"; ONLY_GIVEN=true; shift 2 ;;
         --browser) BROWSER="${2:?--browser needs container or host}"; shift 2 ;;
         --threshold) THRESHOLD="${2:?--threshold needs a number}"; shift 2 ;;
         --skip-install) SKIP_INSTALL=true; shift ;;
@@ -54,6 +55,10 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
+if [ "$ONLY_GIVEN" = true ]; then
+    # Before anything is started: a misspelled or an empty id stops here, so that the run does not render less than was asked.
+    python3 "$(dirname "$0")/../check_docs_screenshots.py" --only "$ONLY" >/dev/null
+fi
 if [ "$UPDATE" = true ] && [ "$RENDER_ONLY" = true ]; then
     echo "--update replaces the checked-in images and --render-only leaves them alone: use one of them." >&2
     exit 1
