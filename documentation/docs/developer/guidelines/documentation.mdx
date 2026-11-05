@@ -377,11 +377,12 @@ Checks keep these habits honest. They only report what they can prove, so they d
 | Check | What it proves | Where it runs |
 | --- | --- | --- |
 | `python3 supporting_scripts/check_docs_references.py` | Every page is in its sidebar. Inline code names an existing repository path, an existing class and, for `Class.method()`, an existing method. Properties (`artemis.*`), environment variables (`ARTEMIS_*`) and the keys of a YAML example are defined in the configuration or the source. A bold label after a verb such as "Click" is a text of the English translation files. | Every pull request (`docs-checks`) |
+| `python3 supporting_scripts/check_docs_consistency.py` | The numbers, commands and examples next to the names are true. **Versions** (Java, Node, Angular, Spring Boot, PostgreSQL, Gradle) match the build files. **Defaults** of `artemis.*` properties match the YAML. **Commands** (`pnpm run`, `./gradlew`, Spring profiles, paths in shell examples) exist. **Routes** of the client pages and `/api/` paths consist of segments that the route definitions and mappings contain. **Images** are referenced, have alt text and stay within the size budget. **Examples** in JSON parse, shell passes `bash -n`, YAML has no tabs. **Removal markers** (`REMOVE_IN_ARTEMIS_<n>`) are gone once that version is reached. **Glossary**: no page uses a word of the Avoid column of the [glossary](/developer/glossary). | Every pull request (`docs-checks`) |
 | `python3 supporting_scripts/check_docs_freshness.py --validate` | Every page has a valid `last_reviewed` date in its front matter. | Every pull request (`docs-checks`) |
 | `python3 supporting_scripts/generate_architecture_diagrams.py --check` | The UML diagrams of the [system design](/developer/system-design) are what their generator draws. | Every pull request (`docs-checks`) |
 | `python3 supporting_scripts/check_docs_freshness.py --impact` | Lists the pages that mention a file or a class that the pull request changes, and the edited pages that kept an old review date. It is advice and never fails. | The summary of the `docs-checks` job |
 | `python3 supporting_scripts/check_docs_screenshots.py` | Every entry of the screenshot manifest names an existing image that its pages show, a known user, a route with a known placeholder, and existing source paths. | Every pull request (`docs-checks`) |
-| `docs-maintenance.yml` | Opens an issue for every page that was not reviewed for a year, one for external links that no longer work, and one for screenshots whose component or translations changed after the image. | Weekly |
+| `docs-maintenance.yml` | Opens an issue for every page that was not reviewed for a year, with the owner from `.github/CODEOWNERS` of each page, one for external links that no longer work, and one for screenshots whose component or translations changed after the image. | Weekly |
 
 Paths that are expected to be missing in a checkout, such as build output or a file the reader creates, are exempt through git ignore rules.
 Every other exception is an entry of an allowlist at the top of the script, and needs a reason.
@@ -390,6 +391,14 @@ The check reads the whole tree, so a pull request that renames a class or a prop
 **Review dates.** `last_reviewed: YYYY-MM-DD` in the front matter of a page is the day on which someone compared the page with the code and found it correct.
 Whoever changes a page and checks it updates the date, and a new page starts with the date of its creation.
 Do not update the date for a change that did not involve that comparison, because the weekly list of stale pages relies on it.
+
+**Glossary.** The [glossary](/developer/glossary) defines the terms of Artemis. Use its term, and when a word is a common
+wrong name for a term, add it to the **Avoid** column of that term: the consistency check then fails on every page that uses it.
+The column is the one place where the preferred vocabulary is decided.
+
+**Image format.** Screenshots stay PNG, and the check enforces a size budget instead of a format. Lossy WebP blurs the small
+text of a screenshot, and lossless WebP saves only a moderate share of the size. Converting would also rewrite every
+reference and keep both formats in the history of the repository. Crop a screenshot to the area that matters, and the file stays small.
 
 **Diagrams.** Edit `supporting_scripts/generate_architecture_diagrams.py`, run it, and commit the generated SVG files together with the change.
 A diagram that was edited by hand fails the check.
@@ -400,6 +409,7 @@ and look at the screenshots of the screens that changed. The list of stale pages
 
 ## Related
 
+* [Glossary](/developer/glossary): the terms of Artemis and the words to avoid for them.
 * [Terminology](/developer/guidelines/terminology) — naming components instead of layers, and the check that
   enforces it.
 * [Language](/developer/guidelines/language) — inclusive, diversity-sensitive and appreciative language.

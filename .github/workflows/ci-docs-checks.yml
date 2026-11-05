@@ -50,10 +50,15 @@ jobs:
         run: |
           python supporting_scripts/check_docs_references.py --self-test
           python supporting_scripts/check_docs_freshness.py --self-test
+          python supporting_scripts/check_docs_consistency.py --self-test
 
       - name: Sidebars, paths, class names, configuration and labels
         if: ${{ !cancelled() }}
         run: python supporting_scripts/check_docs_references.py
+
+      - name: Versions, defaults, commands, routes, images, examples, removal markers and glossary
+        if: ${{ !cancelled() }}
+        run: python supporting_scripts/check_docs_consistency.py
 
       - name: Review dates
         if: ${{ !cancelled() }}
