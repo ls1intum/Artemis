@@ -280,7 +280,7 @@ def check_default(page: Path, number: int, key: str, claimed: str, values: dict[
 SHELL_LANGUAGES = {"sh", "bash", "shell", "zsh", "console", "shell-session"}
 # `pnpm --dir documentation run build`: options, some with a value, may precede the command. A word after an option is read as the value only
 # when the rest still names a command, because the expression backtracks.
-PNPM = re.compile(r"\bpnpm(?:\s+-[\w-]+(?:=\S+|\s+(?!run\b)[^-\s#]\S*)?)*\s+(?:run\s+)?([a-z][\w:.-]*)")
+PNPM = re.compile(r"\bpnpm(?:\s+-[\w-]+(?:=\S+|\s+(?!run\b)[^-\s#]\S*)?)*\s+(run\s+)?([a-z][\w:.-]*)")
 GRADLEW = re.compile(r"\./gradlew((?:\s+[^\s`|&;]+)+)")
 
 
@@ -353,10 +353,11 @@ def command_problems(page: Path, text: str) -> list[str]:
     scripts, gradle = package_scripts(), gradle_text()
     for number, segment, fenced in code_segments(text):
         for m in PNPM.finditer(segment):
-            name = m.group(1)
-            if name in scripts or name in PNPM_BUILTIN_COMMANDS or f"{rel(page)}: pnpm {name}" in COMMAND_ALLOWLIST:
+            explicit_run, name = m.group(1), m.group(2)
+            # `pnpm run <name>` runs a script, so a built-in command of that name does not make it valid, while `pnpm <name>` may be the built-in
+            if name in scripts or (name in PNPM_BUILTIN_COMMANDS and not explicit_run) or f"{rel(page)}: pnpm {name}" in COMMAND_ALLOWLIST:
                 continue
-            problems.append(f"{rel(page)}:{number}: `pnpm {name}` is neither a script of a package.json nor a pnpm command")
+            problems.append(f"{rel(page)}:{number}: `pnpm {'run ' if explicit_run else ''}{name}` is {'not a script of a package.json' if explicit_run else 'neither a script of a package.json nor a pnpm command'}")
         for m in GRADLEW.finditer(segment):
             skip = False
             for word in m.group(1).split():
@@ -716,6 +717,8 @@ def self_test() -> None:
     assert len(command_problems(page, "```bash\n# pnpm is needed\npnpm run no-such-script-xyz  # still reported\n```\n")) == 1
     assert strip_shell_comment('MESSAGE="Fix #123" pnpm run x  # note') == 'MESSAGE="Fix #123" pnpm run x  ' and strip_shell_comment("echo a#b 'x #y'") == "echo a#b 'x #y'"
     assert len(command_problems(page, '```bash\nMESSAGE="Fix #123" pnpm run no-such-script-xyz\n```\n')) == 1, "a quoted # is not a comment"
+    assert len(command_problems(page, "`pnpm run licenses`\n")) == 1, "a built-in command is not a script when `run` is explicit"
+    assert not command_problems(page, "`pnpm licenses list` `pnpm run build`\n"), "the built-in form and a real script are valid"
     assert len(command_problems(page, "`./gradlew clean noSuchTaskXyz`\n")) == 1, "every task is checked, not only the first"
     assert not command_problems(page, "`./gradlew build --console plain -x test`\n"), "an option value is not a task"
 
