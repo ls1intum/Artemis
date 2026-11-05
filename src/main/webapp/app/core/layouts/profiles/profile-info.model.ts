@@ -132,6 +132,7 @@ export class ProfileInfo {
     public allowedEmailPatternReadable?: string;
     public allowedLdapUsernamePattern?: string;
     public build!: Build;
+    // REMOVE_IN_ARTEMIS_11 (Jenkins): only set on Jenkins instances, remove with Jenkins support
     public buildPlanURLTemplate?: string; // only available on Artemis instances with Jenkins
     public buildTimeoutDefault!: number;
     public buildTimeoutMax!: number;

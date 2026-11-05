@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { ScienceEventDTO, ScienceEventType } from 'app/foundation/science/science.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { ScienceSettingsService } from 'app/account/user/settings/profile/science-settings/science-settings.service';
 import { User } from 'app/account/user/user.model';
 
 @Service()

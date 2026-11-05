@@ -5,7 +5,6 @@ import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
@@ -16,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -64,14 +64,10 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
         boolean rememberMe = false;
         String redirectTarget = null;
         String codeChallenge = null;
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            Boolean storedRememberMe = (Boolean) session.getAttribute(OIDCConstants.OIDC_REMEMBER_ME_SESSION_KEY);
-            if (storedRememberMe != null) {
-                rememberMe = storedRememberMe;
-            }
-            redirectTarget = (String) session.getAttribute(OIDCConstants.OIDC_REDIRECT_TARGET_SESSION_KEY);
-            codeChallenge = (String) session.getAttribute(OIDCConstants.OIDC_CODE_CHALLENGE_SESSION_KEY);
+        if (request.getAttribute(OIDCConstants.OIDC_AUTHORIZATION_REQUEST_ATTRIBUTE) instanceof OAuth2AuthorizationRequest authorizationRequest) {
+            rememberMe = Boolean.TRUE.equals(authorizationRequest.getAttribute(OIDCConstants.OIDC_REMEMBER_ME_ATTRIBUTE));
+            redirectTarget = authorizationRequest.getAttribute(OIDCConstants.OIDC_REDIRECT_TARGET_ATTRIBUTE);
+            codeChallenge = authorizationRequest.getAttribute(OIDCConstants.OIDC_CODE_CHALLENGE_ATTRIBUTE);
         }
 
         OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
@@ -94,10 +90,6 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
         ResponseCookie jwtCookie = jwtCookieService.buildLoginCookie(rememberMe);
         response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
         artemisSuccessfulLoginService.sendLoginEmail(user.getLogin(), AuthenticationMethod.OIDC, HttpRequestUtils.getClientEnvironment(request));
-
-        if (session != null) {
-            session.invalidate();
-        }
 
         // Handle redirect based on parameter: generate code strictly for recognized VS Code client
         if (OIDCConstants.VS_CODE_REDIRECT_TARGET.equals(redirectTarget)) {

@@ -69,6 +69,7 @@ tasks.withType(Test).configureEach {
         systemProperty 'zonky.test.database.type', dbType
         // Override Hibernate dialect to match the selected test database.
         switch (dbType.toUpperCase()) {
+            // REMOVE_IN_ARTEMIS_11 (MySQL): remove the MYSQL database type
             case 'MYSQL':
                 systemProperty 'spring.jpa.database-platform', 'org.hibernate.dialect.MySQLDialect'
                 systemProperty 'spring.jpa.database', 'MYSQL'
@@ -233,6 +234,7 @@ test {
 // Note: The default 'test' task already uses PostgreSQL (configured in application.yml).
 // These convenience tasks are equivalent but explicit. To use H2 instead:
 //   ./gradlew test -x webapp -Dzonky.test.database.type=H2
+// REMOVE_IN_ARTEMIS_11 (MySQL): remove the testMysql task
 ['Mysql': ['MYSQL', 'org.hibernate.dialect.MySQLDialect', 'MYSQL'],
  'Postgres': ['POSTGRES', 'org.hibernate.dialect.PostgreSQLDialect', 'POSTGRESQL']].each { name, config ->
     tasks.register("test${name}", Test) {
