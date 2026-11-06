@@ -419,7 +419,7 @@ class GenerationAttemptLoopTest {
         assertThat(loop.lastMechanicallyVerifiedCandidate().verification().mechanicallyVerified()).isTrue();
         assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().hasBlockingFindings()).isTrue();
         assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
-        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.ATTEMPT_CAP_REACHED);
     }
 
     @ParameterizedTest

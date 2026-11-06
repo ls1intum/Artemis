@@ -318,6 +318,10 @@ redesign returns the earlier draft. It does not turn that draft into a qualified
 The configured `artemis.hyperion.agent.max-turns` is a **job-wide authoring limit**,
 shared by concept selection, stages, continuations and repair attempts. There is no
 hidden 83-turn staged cap and a retry does not receive a new full allocation.
+The single contract-redesign allowance is separate from scoped repair: after it is
+spent, the verified draft receives its full quality review and may use remaining
+repair rounds within the frozen contract. An exhausted redesign allowance alone
+does not mean that no test repair is possible.
 Verification and review still use the job's token and wall-clock guards. Every twenty
 authoring turns, the agent receives a work checkpoint. A current passing tool check
 returns control to the authoritative gate; two blocks without a verified reduction

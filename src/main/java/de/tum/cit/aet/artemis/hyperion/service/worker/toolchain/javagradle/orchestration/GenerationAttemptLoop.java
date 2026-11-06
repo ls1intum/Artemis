@@ -383,19 +383,18 @@ class GenerationAttemptLoop {
                         ? stagedGenerationRunner.requestAssessmentRedesign(exercise, sessionId, stagedAuthoringStartedAt,
                                 specFidelityCritic.renderForRetryPrompt(executableEvidence.preserveAssessmentFindings(SpecFidelityReport.empty())), unresolvedConceptFindings)
                         : null;
-                if (stagedContinuation == null) {
-                    terminationReason = TerminationReason.NO_SCHEDULABLE_SURFACE;
-                    break;
+                if (stagedContinuation != null) {
+                    if (!canContinueAssessment(attempt)) {
+                        return outcomeIfAgentStopped();
+                    }
+                    continue;
                 }
-                if (!canContinueAssessment(attempt)) {
-                    return outcomeIfAgentStopped();
-                }
-                continue;
+                emit("Contract redesign is unavailable; reviewing the verified draft for scoped repair within the remaining shared budget.");
             }
             if (!verification.mechanicallyVerified() && artifacts.extractionFailed().isEmpty()) {
                 lastRejectedVerificationRequest = artifacts.verificationRequest();
             }
-            if (verification.mechanicallyVerified()) {
+            if (verification.mechanicallyVerified() && assessed.counterexamples().isEmpty()) {
                 checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot);
             }
             if (verification.serverDefect()) {

@@ -362,6 +362,7 @@ class GenerationOrchestratorTest {
                     .thenReturn(new StagedGenerationRunner.StagedRunOutcome(new AgentLoopResult(AgentLoopResult.Status.ERROR, 1, "No replacement concept"), null, List.of(),
                             TerminationReason.NO_ADMISSIBLE_CONCEPT));
         }
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         List<GenerationOutcome> checkpoints = new ArrayList<>();
 
         var outcome = stagedService.generate(exercise, SEED, "Build a bubble sort exercise.", JOB_ID, Mode.GENERATE, () -> false, null, null, null, null, null, _ -> {
@@ -372,7 +373,44 @@ class GenerationOrchestratorTest {
         assertThat(outcome.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
         assertThat(outcome.specFidelityReport()).isEqualTo(checkpoints.getLast().specFidelityReport());
         assertThat(outcome.capturedProducedFiles()).isEqualTo(checkpoints.getLast().capturedProducedFiles());
-        assertThat(outcome.terminationReason()).isEqualTo(redesignFails ? TerminationReason.NO_ADMISSIBLE_CONCEPT : TerminationReason.NO_SCHEDULABLE_SURFACE);
+        assertThat(outcome.terminationReason()).isEqualTo(redesignFails ? TerminationReason.NO_ADMISSIBLE_CONCEPT : TerminationReason.REPAIR_DID_NOT_IMPROVE);
+    }
+
+    @Test
+    void exhaustedAssessmentRedesignStillAllowsAnOracleRepairWithinTheFrozenContract() {
+        var repaired = new AtomicBoolean();
+        var stagedService = newService(true);
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            repaired.set(true);
+            return loopSession(completed());
+        });
+        when(workspace.extractRepository(any(), anyString(), any(), any())).thenAnswer(invocation -> switch ((RepositoryRole) invocation.getArgument(2)) {
+            case SOLUTION -> new GenerationWorkspace.RepositoryExtraction(Map.of("src/Attempt.java", "attempt 1"), false);
+            case TESTS -> new GenerationWorkspace.RepositoryExtraction(Map.of("test/Checks.java", repaired.get() ? "strong grader" : "weak grader"), false);
+            default -> new GenerationWorkspace.RepositoryExtraction(Map.of(), false);
+        });
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        var survivor = SemanticMutant.printedTranscript("src/Attempt.java", "attempt 1", "print only", "Attempt");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> repaired.get() ? List.of() : List.of(new SemanticMutantOutcome(survivor, SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE)));
+        when(verifier.recheckOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> List.of(new SemanticMutantOutcome(survivor,
+                        repaired.get() ? SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE : SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE)));
+
+        var outcome = stagedService.generate(exercise, SEED, "Build a bubble sort exercise.", JOB_ID, Mode.GENERATE, () -> false, null, null, null, null, null, _ -> {
+        }, _ -> {
+        });
+
+        assertThat(outcome.isMechanicallyVerified()).isTrue();
+        assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.CONVERGED);
+        assertThat(outcome.capturedProducedFiles().get(RepositoryRole.TESTS)).containsEntry("test/Checks.java", "strong grader");
+        assertThat(outcome.specFidelityReport().hasBlockingFindings()).isFalse();
+        assertThat(outcome.capturedProducedFiles().get(RepositoryRole.SOLUTION)).containsEntry("src/Attempt.java", "attempt 1");
+        ArgumentCaptor<Integer> remainingTurns = ArgumentCaptor.forClass(Integer.class);
+        verify(agentLoopRunner).runSession(anyString(), any(), anyString(), any(), remainingTurns.capture(), any(), any(), any());
+        assertThat(remainingTurns.getValue()).isBetween(1, 99);
     }
 
     @Test
