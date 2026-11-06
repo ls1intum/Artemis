@@ -66,7 +66,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-// TODO: this class has too many dependencies to other services. We should reduce this
 public class SubmissionService {
 
     private static final Logger log = LoggerFactory.getLogger(SubmissionService.class);
@@ -204,19 +203,22 @@ public class SubmissionService {
         return submissions;
     }
 
+    /**
+     * Returns eligible assessment candidates, restricting team exercises to the current tutor's teams unless they are an instructor.
+     *
+     * @param exercise        the exercise to assess
+     * @param examMode        whether to use exam candidate selection
+     * @param correctionRound the requested correction round
+     * @return eligible submissions excluding test runs
+     */
     public List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
         final Long teamOwnerId = exercise.isTeamMode() && !authCheckService.isAtLeastInstructorForExercise(exercise, null) ? userRepository.getUser().getId() : null;
         final List<StudentParticipation> participations;
         if (examMode) {
-            // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
-            // No manual result means that no tutor has started an assessment for the corresponding submission yet.
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(), correctionRound,
                     teamOwnerId);
         }
         else {
-            // Get all participations of submissions that are submitted and do not already have a manual result.
-            // No manual result means that no user has started an assessment for the corresponding submission yet.
-            // Does not fetch participations for which the due date has not yet passed.
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(exercise.getId(),
                     ZonedDateTime.now(), teamOwnerId);
         }
@@ -224,8 +226,6 @@ public class SubmissionService {
         var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
 
         if (correctionRound > 0) {
-            // remove submission if user already assessed first correction round
-            // if disabled, please switch tutorAssessUnique within the tests
             // TODO: we could move this check into the database call of the if clause above (examMode == true) to avoid fetching all results and assessors
             final var user = userRepository.getUser();
             submissionsWithoutResult = submissionsWithoutResult.stream().filter(submission -> {
