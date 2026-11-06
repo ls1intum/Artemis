@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ProgrammingBuildNotificationsComponent } from 'app/programming/overview/build-notifications/programming-build-notifications.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -100,8 +101,14 @@ describe('ExerciseHeaderComponent', () => {
         // than rendered because the real ones reach all the way down to the result history's PrimeNG dialog service;
         // what the header owns is the decision to show them, which the mock still reports.
         TestBed.overrideComponent(ExerciseHeaderComponent, {
-            remove: { imports: [ParticipationModeToggleComponent, ExerciseHeadersInformationComponent] },
-            add: { imports: [MockComponent(ParticipationModeToggleComponent), MockComponent(ExerciseHeadersInformationComponent)] },
+            remove: { imports: [ParticipationModeToggleComponent, ExerciseHeadersInformationComponent, ProgrammingBuildNotificationsComponent] },
+            add: {
+                imports: [
+                    MockComponent(ParticipationModeToggleComponent),
+                    MockComponent(ExerciseHeadersInformationComponent),
+                    MockComponent(ProgrammingBuildNotificationsComponent),
+                ],
+            },
         });
 
         // Mock complex child imports of ExerciseHeaderActionsComponent to avoid deep dependency chains
