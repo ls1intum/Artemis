@@ -31,7 +31,9 @@
                 "authMechanism": "Access Type",
                 "commitHash": "Commit Hash",
                 "timeStamp": "Timestamp",
-                "error": "VCS Access log could not be retrieved"
+                "error": "VCS Access log could not be retrieved",
+                "searchPlaceholder": "Search by user, author, action, access type, commit or date",
+                "empty": "No access log entries match your search or filters."
             },
             "userRepository": {
                 "title": "Assignment-Repository"

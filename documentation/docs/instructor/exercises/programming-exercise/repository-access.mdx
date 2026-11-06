@@ -2,7 +2,7 @@
 id: repository-access
 title: Repository Access Configuration
 sidebar_label: Repository Access Configuration
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-06
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -131,6 +131,12 @@ Open the repository from **Course Management** and click **Open Access Log**. Ea
 | Access Type | How the user authenticated, for example over HTTPS with a token, or over SSH with a key |
 | Commit Hash | The commit involved, for write accesses |
 | Timestamp | When the access happened |
+
+The log shows the newest accesses first. Click a column heading to sort by user, author, action, access type, or timestamp. Use the search field to find entries by user, author, action, access type, commit hash, or date, and combine it with the column filters to narrow the results. The date filter uses your local calendar date.
+
+Use the pagination controls below the table to change pages or the number of entries per page. The column headings and pagination remain visible while the entries scroll. On narrow screens, scroll the table horizontally to reach the remaining columns.
+
+![VCS access log with sortable columns, filters, and pagination, using illustrative entries](../assets/programming/vcs-access-log-desktop-light.webp)
 
 <Callout variant={CalloutVariant.info}>
 
