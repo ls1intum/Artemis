@@ -1,7 +1,7 @@
 import { FormsModule } from '@angular/forms';
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
-import { expect, fireEvent, fn, screen, waitForElementToBeRemoved, within } from 'storybook/test';
+import { expect, fireEvent, fn, screen, waitFor, waitForElementToBeRemoved, within } from 'storybook/test';
 import { formStoryDecorator } from '../../../.storybook/story-decorators';
 import { TumAetUiSelectComponent } from './tumaet-ui-select.component';
 
@@ -99,7 +99,9 @@ export const Empty: Story = {
     tags: ['!autodocs'],
     play: async ({ canvas, userEvent }) => {
         await userEvent.click(canvas.getByRole('combobox', { name: 'Course language' }));
-        await expect(await screen.findByText('No languages available')).toBeVisible();
+        await waitFor(async () => {
+            await expect(await screen.findByText('No languages available')).toBeVisible();
+        });
     },
 };
 
@@ -143,7 +145,9 @@ export const FilterWithoutMatches: Story = {
         await userEvent.click(canvas.getByRole('combobox', { name: 'Course language' }));
         await userEvent.type(await screen.findByRole('textbox', { name: 'Filter options' }), 'zzz');
 
-        await expect(await screen.findByText('No matching options')).toBeVisible();
+        await waitFor(async () => {
+            await expect(await screen.findByText('No matching options')).toBeVisible();
+        });
     },
 };
 
