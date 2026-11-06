@@ -61,7 +61,7 @@ class ExerciseWithSubmissionsExportServiceTest {
             "    ![example](/api/core/files/markdown/example.png)", "`/api/core/files/markdown/example.png`", "`` ![example](/api/core/files/markdown/example.png) `nested` ``",
             "<!-- <img src=/api/core/files/markdown/example.png> -->", "<pre><img src=/api/core/files/markdown/example.png></pre>",
             "<code><a href=/api/core/files/markdown/example.png>example</a></code>", "A literal path: /api/core/files/markdown/example.png",
-            "!\\[example](/api/core/files/markdown/example.png)" })
+            "!\\[example](/api/core/files/markdown/example.png)", "<a href=\"https://example.org/?redirect=/api/core/files/markdown/example.png\">external</a>" })
     void exportsLiteralPathsUnchangedWithoutCopyingFiles(String statement) throws Exception {
         exercise.setProblemStatement(statement);
 

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PRE
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -187,7 +188,19 @@ public abstract class ExerciseWithSubmissionsExportService {
             if (element.closest("pre, code") != null) {
                 continue;
             }
-            Matcher matcher = EMBEDDED_FILE.matcher(element.attr(element.normalName().equals("img") ? "src" : "href"));
+            String url = element.attr(element.normalName().equals("img") ? "src" : "href");
+            String path;
+            try {
+                path = URI.create(url).getPath();
+            }
+            catch (IllegalArgumentException e) {
+                // Malformed URLs cannot refer to a local embedded file.
+                continue;
+            }
+            if (path == null) {
+                continue;
+            }
+            Matcher matcher = EMBEDDED_FILE.matcher(path);
             if (matcher.find()) {
                 String fileName = matcher.group(1);
                 // Uploaded markdown files lie directly in the markdown directory. A link with a path names none of them, and an editor must not
