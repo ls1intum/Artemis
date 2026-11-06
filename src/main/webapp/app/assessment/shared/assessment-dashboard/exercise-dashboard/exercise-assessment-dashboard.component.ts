@@ -1,8 +1,8 @@
 import {
+    TumAetUiButtonDirective,
     TumAetUiMenuComponent,
     TumAetUiMenuItemDirective,
     TumAetUiMenuTriggerDirective,
-    TumAetUiButtonDirective,
     TumAetUiMessageComponent,
     TumAetUiPanelComponent,
     TumAetUiTableDirective,
@@ -60,10 +60,10 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
 import {
-    faEllipsisVertical,
-    faCodeCommit,
     faCheckCircle,
     faCircleInfo,
+    faCodeCommit,
+    faEllipsisVertical,
     faExclamationTriangle,
     faFlag,
     faFolderOpen,
