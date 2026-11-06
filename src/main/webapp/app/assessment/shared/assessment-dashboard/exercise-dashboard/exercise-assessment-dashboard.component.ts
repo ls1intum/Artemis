@@ -266,18 +266,22 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.numberOfSubmissions().total > 0 ? Math.floor((100 * this.numberOfTutorAssessedSubmissions()) / this.numberOfSubmissions().total) : 100,
     );
     readonly showsComplaintProgress = computed(() => this.exercise()?.type === ExerciseType.PROGRAMMING && !!this.exercise().allowComplaintsForAutomaticAssessments);
-    readonly totalAssessmentSlots = computed(() =>
-        this.showsComplaintProgress()
-            ? this.statsForDashboard().numberOfComplaints
-            : this.numberOfSubmissions().total * (this.isExamMode() ? this.correctionRoundIndices().length : 1),
-    );
-    readonly completedAssessments = computed(() =>
-        this.showsComplaintProgress()
-            ? this.statsForDashboard().numberOfComplaints - this.statsForDashboard().numberOfOpenComplaints
-            : this.isExamMode()
-              ? this.numberOfAssessmentsOfCorrectionRounds().reduce((total, round) => total + round.inTime, 0)
-              : this.totalNumberOfAssessments(),
-    );
+    readonly totalAssessmentSlots = computed(() => {
+        if (this.showsComplaintProgress()) {
+            return this.statsForDashboard().numberOfComplaints;
+        }
+        const correctionRounds = this.isExamMode() ? this.correctionRoundIndices().length : 1;
+        return this.numberOfSubmissions().total * correctionRounds;
+    });
+    readonly completedAssessments = computed(() => {
+        if (this.showsComplaintProgress()) {
+            return this.statsForDashboard().numberOfComplaints - this.statsForDashboard().numberOfOpenComplaints;
+        }
+        if (this.isExamMode()) {
+            return this.numberOfAssessmentsOfCorrectionRounds().reduce((total, round) => total + round.inTime, 0);
+        }
+        return this.totalNumberOfAssessments();
+    });
     readonly inProgressAssessments = computed(() =>
         this.showsComplaintProgress() ? 0 : Math.min(Math.max(0, this.totalAssessmentSlots() - this.completedAssessments()), this.statsForDashboard().totalNumberOfAssessmentLocks),
     );

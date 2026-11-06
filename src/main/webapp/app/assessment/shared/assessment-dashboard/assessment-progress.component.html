@@ -5,12 +5,10 @@
         ({{ assessedPercentage() }}%)
     </span>
 </div>
-<div
-    class="relative my-1 h-[calc(var(--tumaet-ui-spacing)*5)] overflow-hidden rounded-md bg-(--artemis-control-disabled-background)"
-    role="progressbar"
-    aria-valuemin="0"
-    aria-valuemax="100"
-    [attr.aria-valuenow]="assessedPercentage()"
+<progress
+    class="sr-only"
+    max="100"
+    [value]="assessedPercentage()"
     [attr.aria-label]="
         'artemisApp.assessmentDashboard.progressDescription'
             | artemisTranslate
@@ -21,6 +19,9 @@
                   }
     "
 >
+    {{ assessedPercentage() }}%
+</progress>
+<div class="relative my-1 h-[calc(var(--tumaet-ui-spacing)*5)] overflow-hidden rounded-md bg-(--artemis-control-disabled-background)" aria-hidden="true">
     <span class="absolute inset-y-0 left-0 bg-state-success text-(--tumaet-ui-state-success-contrast)" [style.width.%]="assessedPercentage()" aria-hidden="true"></span>
     <span class="pointer-events-none absolute inset-y-0 bg-state-warning" [style.left.%]="assessedPercentage()" [style.width.%]="inProgressPercentage()" aria-hidden="true"></span>
 </div>
