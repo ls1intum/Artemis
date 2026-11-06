@@ -16,6 +16,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { OnlineCourse } from '../model/online-course';
+import { Lti13AuthenticationResponse } from '../model/lti13authentication-response';
 import { DeepLinkingTarget } from '../model/deep-linking-target';
 import { OnlineCourseConfiguration } from '../model/online-course-configuration';
 import { appendQueryParam } from './query-params';
@@ -36,6 +37,20 @@ export class LtiApi {
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/lti/courses/for-lti-dashboard${queryString ? `?${queryString}` : ''}`;
         return this.http.get<Array<OnlineCourse>>(url);
+    }
+
+    /**
+     * Completes an LTI 1.3 launch with the state and id token that the platform sent
+     *
+     * @param state
+     * @param idToken
+     */
+    lti13AuthLogin(state: string, idToken: string): Observable<Lti13AuthenticationResponse> {
+        const url = `${this.basePath}/api/lti/public/lti13/auth-login`;
+        const formBody = new URLSearchParams();
+        appendQueryParam(formBody, 'state', state);
+        appendQueryParam(formBody, 'id_token', idToken);
+        return this.http.post<Lti13AuthenticationResponse>(url, formBody.toString(), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
     }
 
     /**
