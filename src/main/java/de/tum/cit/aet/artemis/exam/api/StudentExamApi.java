@@ -83,28 +83,28 @@ public class StudentExamApi extends AbstractExamApi {
     }
 
     /**
-     * Checks whether a working period can be determined for the student in the exam. That is the case when the student has a student exam
-     * of their own (the newest one for test exams), instructor test runs are ignored.
+     * Finds which of the given users have a working period in the exam. That is the case when the user has a student exam of their own (the newest one for test exams);
+     * instructor test runs are ignored.
      *
-     * @param examId the id of the exam
-     * @param userId the id of the student
-     * @return true if the student has a student exam to read the working period from
+     * @param examId  the id of the exam
+     * @param userIds the ids of the users to check
+     * @return the ids of the given users that have a student exam to read the working period from
      */
-    public boolean hasWorkingPeriod(long examId, long userId) {
-        return studentExamRepository.findNewestWorkingPeriodByExamIdAndUserId(examId, userId).isPresent();
+    public Set<Long> findUserIdsWithWorkingPeriod(long examId, Collection<Long> userIds) {
+        return studentExamRepository.findUserIdsWithStudentExamByExamIdAndUserIdIn(examId, userIds);
     }
 
     /**
-     * Checks whether an exercise is part of the newest student exam of the student in the exam, instructor test runs are ignored. A result for an exercise that the student
-     * exam does not contain would not be found by the exam result calculation.
+     * Finds which of the given users have the exercise in their newest student exam of the exam; instructor test runs are ignored. A result for an exercise that the
+     * student exam does not contain would not be found by the exam result calculation.
      *
      * @param examId     the id of the exam
-     * @param userId     the id of the student
      * @param exerciseId the id of the exercise
-     * @return true if the newest student exam of the student contains the exercise
+     * @param userIds    the ids of the users to check
+     * @return the ids of the given users whose newest student exam contains the exercise
      */
-    public boolean isExerciseOfNewestStudentExam(long examId, long userId, long exerciseId) {
-        return studentExamRepository.isExerciseOfNewestStudentExam(examId, userId, exerciseId);
+    public Set<Long> findUserIdsWithExerciseInNewestStudentExam(long examId, long exerciseId, Collection<Long> userIds) {
+        return studentExamRepository.findUserIdsWithExerciseInNewestStudentExam(examId, exerciseId, userIds);
     }
 
     public Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(long userId, Collection<Long> courseIds) {
