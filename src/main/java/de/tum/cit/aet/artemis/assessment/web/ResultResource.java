@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,11 +11,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,10 +31,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.ExternalSubmissionExerciseRejection;
+import de.tum.cit.aet.artemis.assessment.domain.ExternalSubmissionIneligibility;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.ExternalSubmissionCandidateDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ExternalSubmissionResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
@@ -39,6 +47,7 @@ import de.tum.cit.aet.artemis.assessment.dto.FeedbackPageableDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.service.ExternalSubmissionEligibilityService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -55,11 +64,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
-import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
-import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -74,7 +80,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
-import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 /**
  * REST controller for managing Result.
@@ -101,9 +106,7 @@ public class ResultResource {
 
     private final ResultService resultService;
 
-    private final Optional<ExamDateApi> examDateApi;
-
-    private final Optional<StudentExamApi> studentExamApi;
+    private final ExternalSubmissionEligibilityService externalSubmissionEligibilityService;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -119,16 +122,15 @@ public class ResultResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, Optional<ExamDateApi> examDateApi,
-            Optional<StudentExamApi> studentExamApi, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
+    public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService,
+            ExternalSubmissionEligibilityService externalSubmissionEligibilityService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
-        this.examDateApi = examDateApi;
-        this.studentExamApi = studentExamApi;
+        this.externalSubmissionEligibilityService = externalSubmissionEligibilityService;
         this.exerciseRepository = exerciseRepository;
         this.authCheckService = authCheckService;
         this.participationAuthCheckService = participationAuthCheckService;
@@ -267,54 +269,20 @@ public class ResultResource {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        if (!exercise.isExamExercise()) {
-            if (exercise.getDueDate() == null || ZonedDateTime.now().isBefore(exercise.getDueDate())) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
-                        "External submissions are not supported before the exercise due date.")).build();
-            }
-        }
-        else {
-            Exam exam = exercise.getExerciseGroup().getExam();
-            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
-            ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(exam);
-            if (latestIndividualExamEndDate == null || ZonedDateTime.now().isBefore(latestIndividualExamEndDate)) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
-                        "External submissions are not supported before the end of the exam.")).build();
-            }
-        }
-
-        if (exercise instanceof QuizExercise) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionForQuizExercise",
-                    "External submissions are not supported for Quiz exercises.")).build();
-        }
-
-        Optional<User> student = userRepository.findOneWithAuthoritiesByLogin(studentLogin);
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
-        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(course, student.get())) {
+        Optional<ExternalSubmissionExerciseRejection> exerciseRejection = externalSubmissionEligibilityService.checkExerciseAcceptsExternalSubmissions(exercise);
+        if (exerciseRejection.isPresent()) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "studentNotFound", "The student could not be found in this course.")).build();
-        }
-
-        // Without a student exam the student has no working period, which the participation and the result of an exam exercise depend on
-        if (exercise.isExamExercise()) {
-            StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
-            if (!api.hasWorkingPeriod(exercise.getExerciseGroup().getExam().getId(), student.get().getId())) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "noWorkingPeriod",
-                        "This student has no working period in this exam, because no student exam exists for them. Generate the student exams first.")).build();
-            }
-            // A result for an exercise that the student exam does not contain would be left out of the exam result
-            if (!api.isExerciseOfNewestStudentExam(exercise.getExerciseGroup().getExam().getId(), student.get().getId(), exercise.getId())) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "exerciseNotInStudentExam",
-                        "The student exam of this student does not contain this exercise.")).build();
-            }
-        }
-
-        // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentAnyStateWithEagerResults(exercise, student.get());
-        if (optionalParticipation.isPresent() && optionalParticipation.get().getSubmissions().stream().anyMatch(submission -> !submission.getResults().isEmpty())) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "resultAlreadyExists", "A result already exists for this student in this exercise."))
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, exerciseRejection.get().getErrorKey(), exerciseRejection.get().getDefaultMessage()))
                     .build();
+        }
+
+        // The same rules decide which students the dialog suggests, see searchExternalSubmissionCandidates
+        Optional<User> student = userRepository.findOneWithAuthoritiesByLogin(studentLogin);
+        Optional<ExternalSubmissionIneligibility> ineligibility = student.isEmpty() ? Optional.of(ExternalSubmissionIneligibility.NOT_IN_COURSE)
+                : externalSubmissionEligibilityService.checkEligibility(exercise, student.get());
+        if (ineligibility.isPresent()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, ineligibility.get().getErrorKey(), ineligibility.get().getDefaultMessage())).build();
         }
 
         Result result = resultDTO.toEntity();
@@ -334,6 +302,41 @@ public class ResultResource {
 
         return ResponseEntity.created(new URI("/api/results/" + savedResult.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedResult.getId().toString())).body(ResultDTO.of(savedResult));
+    }
+
+    /**
+     * GET exercises/:exerciseId/external-submission-candidates : Searches the students of the exercise's course for the external submission dialog and reports for each
+     * whether they can receive an external submission result. The checks run in a fixed order: the role check of the annotation, then whether the exercise takes
+     * external submissions at all, then the length of the search term.
+     *
+     * @param exerciseId the id of the exercise
+     * @param searchTerm part of the login, name, email or registration number, at least {@link ExternalSubmissionEligibilityService#MIN_SEARCH_TERM_LENGTH} characters
+     * @param page       zero-based page index
+     * @param pageSize   number of students per page
+     * @return the matching students sorted by name, with pagination headers
+     */
+    @FeatureUsage(UserFeature.EXERCISE_SCORES)
+    @GetMapping("exercises/{exerciseId}/external-submission-candidates")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<List<ExternalSubmissionCandidateDTO>> searchExternalSubmissionCandidates(@PathVariable long exerciseId, @RequestParam String searchTerm,
+            @RequestParam(defaultValue = "0") @Min(0) @Max(100_000) int page, @RequestParam(defaultValue = "10") @Min(1) @Max(50) int pageSize) {
+        log.debug("REST request to search external submission candidates for exercise {}", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        Optional<ExternalSubmissionExerciseRejection> exerciseRejection = externalSubmissionEligibilityService.checkExerciseAcceptsExternalSubmissions(exercise);
+        if (exerciseRejection.isPresent()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, exerciseRejection.get().getErrorKey(), exerciseRejection.get().getDefaultMessage()))
+                    .build();
+        }
+        if (searchTerm.strip().length() < ExternalSubmissionEligibilityService.MIN_SEARCH_TERM_LENGTH) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "searchTermTooShort",
+                    "The search term must have at least " + ExternalSubmissionEligibilityService.MIN_SEARCH_TERM_LENGTH + " characters.")).build();
+        }
+
+        Page<ExternalSubmissionCandidateDTO> candidates = externalSubmissionEligibilityService.searchCandidates(exercise, searchTerm.strip(), page, pageSize);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), candidates);
+        return new ResponseEntity<>(candidates.getContent(), headers, HttpStatus.OK);
     }
 
     /**

@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -11,7 +11,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Router, RouterLink } from '@angular/router';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { faBook, faChartBar, faListAlt, faRobot, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faChartBar, faEllipsis, faListAlt, faRobot, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_IRIS, MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,7 +19,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { ExerciseDetailActionsComponent } from 'app/exercise/detail/exercise-detail-actions.component';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 
@@ -34,7 +34,10 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
         TranslateDirective,
         DeleteButtonDirective,
         ArtemisTranslatePipe,
-        FeatureOverlayComponent,
+        ExerciseDetailActionsComponent,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
     ],
 })
 export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit {
@@ -46,6 +49,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     private eventManager = inject(EventManager);
     private router = inject(Router);
 
+    readonly section = input<'actions' | 'configuration' | 'administration'>('actions');
     exercise = input.required<Exercise>();
     course = input.required<Course>();
     isExamExercise = input<boolean>(false);
@@ -66,9 +70,15 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    readonly teamBaseResource = signal<string>(undefined!);
-    readonly baseResource = signal<string>(undefined!);
-    readonly shortBaseResource = signal<string>(undefined!);
+    readonly shortBaseResource = computed(() => {
+        const coursePath = `/course-management/${this.course().id!}/`;
+        return this.isExamExercise() ? `${coursePath}exams/${this.exercise().exerciseGroup?.exam?.id}/` : coursePath;
+    });
+    private readonly exerciseBaseResource = computed(() =>
+        this.isExamExercise() ? `${this.shortBaseResource()}exercise-groups/${this.exercise().exerciseGroup?.id}/` : this.shortBaseResource(),
+    );
+    readonly teamBaseResource = computed(() => `${this.exerciseBaseResource()}exercises/${this.exercise().id}/`);
+    readonly baseResource = computed(() => `${this.exerciseBaseResource()}${this.exercise().type}-exercises/${this.exercise().id}/`);
     readonly irisEnabled = signal(false);
     readonly plagiarismEnabled = signal(false);
     readonly ExerciseType = ExerciseType;
@@ -76,6 +86,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     readonly AssessmentType = AssessmentType;
 
     // Icons
+    faEllipsis = faEllipsis;
     faTrash = faTrash;
     faBook = faBook;
     faWrench = faWrench;
@@ -86,22 +97,6 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     faRobot = faRobot;
 
     ngOnInit(): void {
-        const exercise = this.exercise();
-        const course = this.course();
-        if (!this.isExamExercise()) {
-            this.baseResource.set(`/course-management/${course.id!}/${exercise.type}-exercises/${exercise.id}/`);
-            this.teamBaseResource.set(`/course-management/${course.id!}/exercises/${exercise.id}/`);
-            this.shortBaseResource.set(`/course-management/${course.id!}/`);
-        } else {
-            this.baseResource.set(
-                `/course-management/${course.id!}/exams/${exercise.exerciseGroup?.exam?.id}` +
-                    `/exercise-groups/${exercise.exerciseGroup?.id}/${exercise.type}-exercises/${exercise.id}/`,
-            );
-            this.teamBaseResource.set(
-                `/course-management/${course.id!}/exams/${exercise.exerciseGroup?.exam?.id}` + `/exercise-groups/${exercise.exerciseGroup?.id}/exercises/${exercise.id}/`,
-            );
-            this.shortBaseResource.set(`/course-management/${course.id!}/exams/${exercise.exerciseGroup?.exam?.id}/`);
-        }
         this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
     }

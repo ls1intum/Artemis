@@ -14,6 +14,19 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Component } from '@angular/core';
+
+@Component({
+    imports: [DetailOverviewListComponent],
+    template: `
+        <ng-template #tools><button type="button" (click)="actions = actions + 1">Suggest competencies</button></ng-template>
+        <jhi-detail-overview-list [sections]="sections" [sectionActions]="{ 'headline.1': tools }" />
+    `,
+})
+class SectionActionsHostComponent {
+    readonly sections = sections;
+    actions = 0;
+}
 
 const sections: DetailOverviewSection[] = [
     {
@@ -61,6 +74,19 @@ describe('DetailOverviewList', () => {
         expect(component.headlines()).toStrictEqual([{ id: 'headline-1', translationKey: 'headline.1' }]);
         expect(component.headlinesRecord()).toStrictEqual({ 'headline.1': 'headline-1' });
         expect(DetailOverviewListComponent).not.toBeNull();
+    });
+
+    it('places working contextual actions next to their section without hiding its details', () => {
+        fixture.componentRef.setInput('sections', sections);
+        const host = TestBed.createComponent(SectionActionsHostComponent);
+        host.detectChanges();
+        const element = host.nativeElement as HTMLElement;
+        const button = element.querySelector('.detail-section-heading button') as HTMLButtonElement;
+
+        expect(button).not.toBeNull();
+        expect(element.querySelector('dl')?.textContent).toContain('text');
+        button.click();
+        expect(host.componentInstance.actions).toBe(1);
     });
 
     it('should escape all falsy values', () => {
