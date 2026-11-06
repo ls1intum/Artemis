@@ -222,8 +222,6 @@ public class ExamRegistrationService {
         examRepository.save(exam);
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
-        generateAndPrepareMissingExams(exam);
-
         try {
             User currentUser = userRepository.getUserWithAuthorities();
             Map<String, Object> userData = new HashMap<>();
@@ -239,6 +237,9 @@ public class ExamRegistrationService {
         catch (Exception ex) {
             log.warn("Could not add audit event to audit log", ex);
         }
+
+        // The registrations are saved and audited above, so a busy preparation lock (409) cannot leave them unrecorded.
+        generateAndPrepareMissingExams(exam);
 
         return new ExamRegistrationResultDTO(notFoundStudentsDTOs, rejectedStaffDTOs);
     }
@@ -406,9 +407,9 @@ public class ExamRegistrationService {
 
         examRepository.save(exam);
         studentExamService.invalidateExerciseStartStatus(exam.getId());
-        generateAndPrepareMissingExams(exam);
         AuditEvent auditEvent = new AuditEvent(userRepository.getUser().getLogin(), Constants.ADD_USER_TO_EXAM, userData);
         auditEventRepository.add(auditEvent);
+        generateAndPrepareMissingExams(exam);
     }
 
     private void checkRegistrationOpen(Exam exam) {

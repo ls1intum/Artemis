@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
 import java.nio.file.Path;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -34,9 +35,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
+import de.tum.cit.aet.artemis.admin.repository.ApplicationAuditEventRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -91,6 +94,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ExamPreparationLockService examPreparationLockService;
+
+    @Autowired
+    private ApplicationAuditEventRepository applicationAuditEventRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
@@ -482,6 +488,9 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 request.postWithoutLocation(url, List.of(student), HttpStatus.CONFLICT, null);
                 assertThat(examUserRepository.findUserIdsByExamId(examId)).contains(newStudent.getId());
                 assertThat(studentExamRepository.findWithExercisesByUserIdAndExamId(newStudent.getId(), examId, false)).isEmpty();
+                // The registration is audited even though the preparation lock rejected the follow-up generation.
+                await().untilAsserted(() -> assertThat(applicationAuditEventRepository.findByPrincipalAndAuditEventDateAfterAndAuditEventType(TEST_PREFIX + "instructor1",
+                        Instant.now().minusSeconds(120), Constants.ADD_USER_TO_EXAM)).isNotEmpty());
             }
             finally {
                 releasePreparation.countDown();
