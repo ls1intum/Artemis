@@ -694,7 +694,7 @@
                 "registrationSavedPreparationPending": "Die Anmeldung wurde gespeichert. Die Vorbereitung steht noch aus. Versuche die Vorbereitung erneut, damit neu angemeldete Studierende die Prüfung starten können.",
                 "generationSavedPreparationPending": "Die neuen individuellen Prüfungen wurden generiert und gespeichert. Die Bereinigung steht noch aus. Versuche die Vorbereitung erneut, um die Bereinigung abzuschließen und diese Prüfungen vorzubereiten.",
                 "retryPreparation": "Vorbereitung erneut versuchen",
-                "preparationRetryFailed": "Die Vorbereitung steht noch aus. Bitte versuche es erneut. {{message}}",
+                "preparationRetryFailed": "Die Vorbereitung steht noch aus. Bitte versuche es erneut.",
                 "registrationClosed": "Die Anmeldung ist geschlossen, da die Prüfung beendet ist.",
                 "registrationAfterGeneration": "Die individuellen Prüfungen wurden bereits generiert. Neu angemeldete Studierende erhalten automatisch eine eigene Prüfung. Falls die Vorbereitung bereits gestartet wurde, werden auch ihre Aufgaben vorbereitet. Fortfahren?",
                 "manualAttendance": {

@@ -104,6 +104,12 @@ reports progress while it runs.
 The **Individual exams status** indicator on the same page tells you where you stand: whether every registered
 student has an individual exam, and whether every exercise in those exams has been prepared.
 
+If a warning says registration or individual exam generation was saved but preparation is pending, the registrations
+and generated individual exams are already saved, even if preparation temporarily failed. Choose **Retry preparation**
+to finish preparing those exams while preserving their IDs. Generating individual exams again would replace them.
+For a registration warning, the retry repeats the original registration action, so you do not need to enter the
+students again. Registration still closes immediately at the exam's end date.
+
 Programming exercises need one more check before the exam: that the tests are set to run only after it, and that the
 solution build passes them. See [Run the Tests After the Exam](/instructor/exams/add-exercises#run-the-tests-after-the-exam).
 

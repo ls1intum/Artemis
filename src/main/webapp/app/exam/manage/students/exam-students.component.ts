@@ -717,7 +717,7 @@ export class ExamStudentsComponent implements OnDestroy {
                     this.capturePreparationStatus(res, pending.examId, pending.kind, pending.retry);
                     this.reloadStudentsView();
                 },
-                error: (error: HttpErrorResponse) => this.handleError('artemisApp.examManagement.examStudents.preparationRetryFailed', error),
+                error: () => this.alertService.error('artemisApp.examManagement.examStudents.preparationRetryFailed'),
             });
     }
 

@@ -563,7 +563,7 @@ describe('ExamStudentsComponent', () => {
             const retry = new Subject<HttpResponse<void>>();
             const start = vi
                 .spyOn(examManagementService, 'startExercises')
-                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503 })))
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409, error: { message: 'error.concurrencyFailure' } })))
                 .mockReturnValue(retry);
             vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
             component.handleGenerateStudentExams();
@@ -571,6 +571,7 @@ describe('ExamStudentsComponent', () => {
             component.retryPendingPreparation();
             expect(component.preparationPending()?.kind).toBe('generation');
             expect(component.preparationRetrying()).toBe(false);
+            expect(alertService.error).toHaveBeenCalledExactlyOnceWith('artemisApp.examManagement.examStudents.preparationRetryFailed');
             component.retryPendingPreparation();
             component.retryPendingPreparation();
             expect(start).toHaveBeenCalledTimes(2);
