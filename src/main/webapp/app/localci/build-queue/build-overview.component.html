@@ -25,7 +25,13 @@
                     <tumaet-ui-tag severity="info" [value]="runningBuildJobs().length.toString()" />
                 </h5>
                 @if (runningBuildJobs()?.length) {
-                    <tumaet-ui-button severity="danger" size="small" (clicked)="cancelAllRunningBuildJobs()">
+                    <tumaet-ui-button
+                        data-button-intent="destructive"
+                        data-button-intent-reason="Cancels queued or running build execution"
+                        severity="danger"
+                        size="small"
+                        (clicked)="cancelAllRunningBuildJobs()"
+                    >
                         <fa-icon [icon]="faTimes" />
                         <span jhiTranslate="artemisApp.buildQueue.cancelAll"></span>
                     </tumaet-ui-button>
@@ -47,7 +53,13 @@
                     <tumaet-ui-tag severity="secondary" [value]="queuedBuildJobs().length.toString()" />
                 </h5>
                 @if (queuedBuildJobs()?.length) {
-                    <tumaet-ui-button severity="danger" size="small" (clicked)="cancelAllQueuedBuildJobs()">
+                    <tumaet-ui-button
+                        data-button-intent="destructive"
+                        data-button-intent-reason="Cancels queued or running build execution"
+                        severity="danger"
+                        size="small"
+                        (clicked)="cancelAllQueuedBuildJobs()"
+                    >
                         <fa-icon [icon]="faTimes" />
                         <span jhiTranslate="artemisApp.buildQueue.cancelAll"></span>
                     </tumaet-ui-button>

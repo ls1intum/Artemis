@@ -259,6 +259,42 @@ Run `pnpm --dir packages/tum-aet-ui run storybook:build` followed by
 after editing the palette. Check the real affected pages, including hover/focus, disabled/loading,
 colored selected rows, and narrow layouts, before merging.
 
+### Automated button checks
+
+`localRules/enforce-button-intent` runs in the existing client ESLint CI check for external and inline
+application templates. It recognizes common action labels, resolving translation keys through the
+English catalog, and checks their severity across TUM AET UI, application adapters and transitional
+buttons. It also rejects local color classes/styles on native TUM buttons; use the component's
+severity, variant and size instead. Visible labels take precedence over tooltip text.
+For `<tumaet-ui-button>`, pass `ariaLabel` to name its native button; `aria-label` on the wrapper
+does not reach that button. The check rejects this mistake. Native `<button tumAetUiButton>` and
+`<a tumAetUiButton>` continue to use their normal `aria-label` attribute.
+
+For an opaque label, declare `data-button-intent` as `workflow`, `authoring`, `transfer`, `utility`,
+`analytics`, `positive` or `destructive`. The rule checks the corresponding severity. When context
+changes the usual meaning of a recognized label, add a static explanation:
+
+```html
+<button tumAetUiButton severity="danger" data-button-intent="destructive" data-button-intent-reason="Cancels the persisted assessment">Cancel assessment</button>
+```
+
+Do not recolor such an action merely to satisfy its label, or suppress the rule for a whole file.
+Selection is separate: semantic tabs/radio/switch controls are not action-family buttons; a custom
+mode chooser can declare `data-button-intent="selection"` with an explanation. A conditional green
+completion indicator is allowed when the same condition demonstrably disables the control; its
+enabled action still follows its family.
+
+When one control changes intent with its label, bind `attr.data-button-intent` using the same
+condition as its severity and explain the difference. For example, the quiz editor declares
+`pendingChangesCache() ? 'destructive' : 'utility'` alongside `pendingChangesCache() ? 'danger' :
+'secondary'`: Cancel discards edits, while Back only navigates. The rule checks corresponding
+branches rather than accepting an unordered set of colors; reversed or unrelated mappings fail.
+
+The rule does not infer arbitrary handler behavior, resolve computed component properties, or prove
+the meaning of every dynamic label. Keep focused behavioral tests and review for those cases. It
+complements the rendered light/dark palette/contrast tests rather than replacing browser testing.
+Run `pnpm run lint` and `pnpm run test:rules`; failures identify the button and required severity.
+
 ## Adding or changing a theme role
 
 Before adding a property, search the existing semantic roles and the

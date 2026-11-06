@@ -1,7 +1,14 @@
 <div>
     <h5 *adminTitleBarTitle id="admin-data-exports-page-heading" class="mb-0" jhiTranslate="artemisApp.dataExport.admin.title"></h5>
     <div *adminTitleBarActions>
-        <tumaet-ui-button size="small" severity="secondary" (clicked)="openCreateModal()" data-testid="create-export-btn">
+        <tumaet-ui-button
+            data-button-intent="transfer"
+            data-button-intent-reason="Opens the data export request workflow"
+            size="small"
+            severity="secondary"
+            (clicked)="openCreateModal()"
+            data-testid="create-export-btn"
+        >
             <fa-icon [icon]="faPlus" class="me-1" />
             <span jhiTranslate="artemisApp.dataExport.admin.createExport"></span>
         </tumaet-ui-button>

@@ -286,6 +286,8 @@
             }
             @if (importStrategy() === ImportStrategy.PURGE_EXISTING) {
                 <button
+                    data-button-intent="destructive"
+                    data-button-intent-reason="Deletes the existing teams before importing replacements"
                     tumAetUiButton
                     type="button"
                     severity="danger"

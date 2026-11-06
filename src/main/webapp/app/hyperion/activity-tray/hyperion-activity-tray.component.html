@@ -144,6 +144,8 @@
                         }
                         @if (row.canCancel) {
                             <button
+                                data-button-intent="destructive"
+                                data-button-intent-reason="Stops the running generation job"
                                 type="button"
                                 tumAetUiButton
                                 variant="outlined"

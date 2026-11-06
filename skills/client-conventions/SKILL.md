@@ -247,6 +247,18 @@ colored selected row when text/outlined contrast would be insufficient. Remove l
 hover/foreground overrides when migrating. Check the Button Palette Storybook browser tests after
 changing shared tokens and retain permission/feature/disabled/loading/submit behavior.
 
+The client lint gate enforces `localRules/enforce-button-intent` in external and inline application
+templates. Common labels (resolved through the English catalog) must match their action family;
+native TUM buttons cannot override their palette with local color classes/styles. Use the component's
+`ariaLabel` input when an icon-only `<tumaet-ui-button>` needs a name;
+an `aria-label` on its wrapper does not name the native button. For an opaque action
+label, declare `data-button-intent`; for a contextual exception, also declare a static
+`data-button-intent-reason` describing the behavior. Preserve destructive cancellation/editing and
+documented variant-authoring exceptions rather than recoloring them from their labels. Semantic
+selection controls and a provably disabled green completion state remain distinct from actions.
+Do not use a generic lint suppression. Unknown dynamic labels/severities still need behavioral
+tests and review. Run `pnpm run test:rules` and `pnpm run lint` after changing this policy.
+
 Colours use semantic tokens. Use TUM AET UI component variants, or `text-state-danger`,
 `text-state-success`, `text-state-warning`, `text-state-info` for plain markup. Never `--p-<color>-N`
 primitives, never `text-red-500`, never `text-danger`, never the superseded arbitrary

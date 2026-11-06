@@ -65,6 +65,8 @@
                     }
                     @case (SubmissionButtonStates.EDIT) {
                         <jhi-confirm-button
+                            data-button-intent="destructive"
+                            data-button-intent-reason="Deletes the saved example assessment before enabling editing"
                             class="col-auto"
                             [icon]="faEdit"
                             id="editSampleSolution"

@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiButtonDirective, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -11,7 +11,6 @@ import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/cha
 import { normalizedStackedBarChart, stackedBarChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export type TestCaseColors = {

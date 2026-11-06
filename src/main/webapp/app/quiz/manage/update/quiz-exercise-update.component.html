@@ -401,6 +401,8 @@
                             }
                             @if (quizExercise().course || quizExercise().exerciseGroup) {
                                 <button
+                                    [attr.data-button-intent]="pendingChangesCache() ? 'destructive' : 'utility'"
+                                    data-button-intent-reason="Cancel discards pending quiz edits; Back only navigates"
                                     type="button"
                                     id="quiz-cancel-back-button"
                                     tumAetUiButton
