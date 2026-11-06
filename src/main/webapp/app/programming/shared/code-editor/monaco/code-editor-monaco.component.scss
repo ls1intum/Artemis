@@ -35,6 +35,11 @@
     background-color: var(--monaco-editor-diff-line-highlight);
 }
 
+/* The lines an inline feedback refers to, below its widget. Kept to the margin so it combines with the diff highlight. */
+.monaco-feedback-range-margin {
+    box-shadow: inset 3px 0 0 var(--info);
+}
+
 .image-file-preview {
     // Block layout (instead of flex) keeps the container's width pinned to the parent so
     // an oversized SVG cannot stretch its own ancestor by sitting on it as a flex item.

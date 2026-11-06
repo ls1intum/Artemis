@@ -1,65 +1,65 @@
-<div
-    id="cardInstructions"
-    data-testid="cardInstructions"
-    class="instructions-wrapper card collapsable-card"
-    [style.height]="collapsed() ? (isAssessmentMode() ? '200px' : '250px') : '100%'"
->
-    <div
-        class="card-header code-editor-panel-header d-flex justify-content-left"
-        (click)="!disableCollapse() && toggleEditorCollapse($event)"
-        [attr.aria-expanded]="!collapsed()"
-        #keyboardAction2
-        role="button"
-        [attr.aria-disabled]="disableCollapse()"
-        [attr.tabindex]="disableCollapse() ? -1 : 0"
-        (keydown.enter)="!disableCollapse() && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
-        (keydown.space)="!disableCollapse() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-        (keyup.space)="!disableCollapse() && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
-    >
-        <h3 class="card-title">
-            @if (!collapsed()) {
-                <span>
-                    <fa-icon [icon]="farListAlt" />
-                    @if (!isAssessmentMode()) {
-                        @if (!isEditor()) {
-                            <span class="header" jhiTranslate="artemisApp.exercise.problemStatement"></span>
+<div id="cardInstructions" data-testid="cardInstructions" class="instructions-wrapper card collapsable-card" style="height: 100%">
+    @if (collapsed()) {
+        <jhi-collapsed-panel-rail
+            [icon]="farListAlt"
+            [labelKey]="
+                isAssessmentMode() ? 'artemisApp.exercise.instructions' : isEditor() ? 'artemisApp.exercise.problemStatementEditor' : 'artemisApp.exercise.problemStatement'
+            "
+            testId="collapsed-instructions"
+            (expand)="toggleEditorCollapse($event)"
+        />
+    } @else {
+        <div
+            class="card-header code-editor-panel-header d-flex justify-content-left"
+            [class.code-editor-panel-header--custom]="customHeader()"
+            (click)="headerToggles() && toggleEditorCollapse($event)"
+            [attr.aria-expanded]="!collapsed()"
+            #keyboardAction2
+            role="button"
+            [attr.aria-disabled]="!headerToggles()"
+            [attr.tabindex]="headerToggles() ? 0 : -1"
+            (keydown.enter)="headerToggles() && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+            (keydown.space)="headerToggles() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+            (keyup.space)="headerToggles() && $event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        >
+            @if (customHeader()) {
+                <ng-content select="[instructionsHeader]" />
+            } @else {
+                <h3 class="card-title">
+                    <span>
+                        <fa-icon [icon]="farListAlt" />
+                        @if (!isAssessmentMode()) {
+                            @if (!isEditor()) {
+                                <span class="header" jhiTranslate="artemisApp.exercise.problemStatement"></span>
+                            }
+                            @if (isEditor()) {
+                                <span class="header" jhiTranslate="artemisApp.exercise.problemStatementEditor"></span>
+                            }
                         }
-                        @if (isEditor()) {
-                            <span class="header" jhiTranslate="artemisApp.exercise.problemStatementEditor"></span>
+                        @if (isAssessmentMode()) {
+                            <span class="ms-2" jhiTranslate="artemisApp.exercise.instructions"></span>
                         }
-                    }
-                    @if (isAssessmentMode()) {
-                        <span class="ms-2" jhiTranslate="artemisApp.exercise.instructions"></span>
-                    }
-                </span>
+                    </span>
+                </h3>
             }
-            @if (collapsed()) {
-                <span class="collapsed-instructions-card">
-                    @if (!disableCollapse()) {
-                        <fa-icon class="top-icon" [icon]="faChevronLeft" />
-                    }
-                    <fa-icon [icon]="farListAlt" class="fa-rotate-90" id="panel-symbol" />
-                    @if (!isAssessmentMode()) {
-                        @if (!isEditor()) {
-                            <span class="header" jhiTranslate="artemisApp.exercise.problemStatement"></span>
-                        }
-                        @if (isEditor()) {
-                            <span class="header" jhiTranslate="artemisApp.exercise.problemStatementEditor"></span>
-                        }
-                    }
-                    @if (isAssessmentMode()) {
-                        <span class="header" jhiTranslate="artemisApp.exercise.instructions"></span>
-                    }
-                    @if (!disableCollapse()) {
-                        <fa-icon class="bottom-icon" [icon]="faChevronLeft" />
-                    }
-                </span>
+            @if (!disableCollapse()) {
+                @if (customHeader()) {
+                    <!-- The header holds the page's tabs, so a click on it is not a click to collapse; the button is -->
+                    <button
+                        type="button"
+                        class="code-editor-panel-header__collapse"
+                        data-testid="code-editor-collapse-instructions"
+                        (click)="toggleEditorCollapse($event)"
+                        [attr.aria-label]="'artemisApp.courseOverview.exerciseDetails.collapsePanel' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faChevronRight" />
+                    </button>
+                } @else {
+                    <fa-icon class="ms-auto clickable" [icon]="faChevronRight" />
+                }
             }
-        </h3>
-        @if (!collapsed() && !disableCollapse()) {
-            <fa-icon class="ms-auto clickable" [icon]="faChevronRight" />
-        }
-    </div>
+        </div>
+    }
     <div class="instructions-wrapper__content" [hidden]="collapsed()">
         <ng-content />
     </div>
