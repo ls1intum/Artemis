@@ -1,21 +1,22 @@
 import { Component, type ResourceParamsContext, type ResourceSnapshot, computed, inject, input, resource, resourceFromSnapshots, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleExclamation, faCircleNotch, faCode } from '@fortawesome/free-solid-svg-icons';
+import { faCircleExclamation, faCircleNotch, faCode, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AuthenticationMethodData, CodeButtonPopoverContentComponent, NonEmptyArray, SshKeyState, TheiaLinkData } from './code-button-popover-content.component';
-import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
+import { SshUserSettingsService } from 'app/account/user/settings/credentials/ssh-settings/ssh-user-settings.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { Observable, firstValueFrom } from 'rxjs';
-import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
-import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
+import { IdeSettingsService } from 'app/account/user/settings/exercises/ide-preferences/ide-settings.service';
+import { Ide } from 'app/account/user/settings/exercises/ide-preferences/ide.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { User } from 'app/account/user/user.model';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
@@ -23,6 +24,7 @@ import { map } from 'rxjs/operators';
 import { notUndefined } from 'app/foundation/util/string-pure.utils';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -52,12 +54,14 @@ type CodeButtonLoadingState =
     templateUrl: './code-button.component.html',
     imports: [
         TumAetUiButtonDirective,
+        RouterLink,
         TumAetUiPopoverComponent,
         TumAetUiPopoverTriggerDirective,
         FaIconComponent,
         ArtemisTranslatePipe,
         CodeButtonPopoverContentComponent,
         FeatureToggleDirective,
+        FeatureToggleLinkDirective,
     ],
 })
 export class CodeButtonComponent {
@@ -71,6 +75,7 @@ export class CodeButtonComponent {
     protected readonly faCircleExclamation = faCircleExclamation;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCode = faCode;
+    protected readonly faPencilAlt = faPencilAlt;
     protected readonly FeatureToggle = FeatureToggle;
 
     private readonly resourceLoadingTriggered = signal(false);
@@ -80,6 +85,8 @@ export class CodeButtonComponent {
     readonly repositoryUri = input.required<string>();
     readonly vcsAccessTokenSourceInfo = input.required<VcsAccessTokenSourceInfo>();
     readonly repositoryViewLink = input.required<(string | number)[]>();
+    /** Optional browser editor; independent of clone authentication and external online IDE support. */
+    readonly repositoryEditorLink = input<(string | number)[]>();
     readonly allowOnlineIde = input.required<boolean>();
     readonly programmingLanguage = input<ProgrammingLanguage>();
     readonly disabled = input(false);

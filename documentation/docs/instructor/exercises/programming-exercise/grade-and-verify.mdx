@@ -2,7 +2,7 @@
 id: grade-and-verify
 title: Configure Grading and Verify the Exercise
 sidebar_label: Configure Grading and Verify the Exercise
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -34,9 +34,32 @@ Grading decides how test results become points: which tests count, how much, and
 
 This page also covers what you do once students are working: reviewing common mistakes with feedback analysis, and assessing submissions by hand where the exercise calls for it.
 
+## Check the Template and Solution Builds
+
+The exercise details page combines repository access and build results in two
+panels: **Template** for the student's starting point and **Solution** for the
+reference implementation. Each panel groups **Code**, repository download, the
+latest result, the rebuild control and its submission-history link. Labeled
+checkout paths show which repositories each build uses. The shared test repository
+and any auxiliary repositories appear below the panels, followed by the
+**Template/Solution Comparison**.
+
+Select the exercise title on the course's exercise list and scroll to **Repositories and builds** to find these
+panels. **Code** opens the repository actions; editors can choose **Edit in editor** there. **Download Repository**
+downloads that panel's repository, while **More actions → Download Exercise** downloads the complete exercise.
+
+The expected baseline is **0%** for the template and **100%** for the solution.
+A yellow warning triangle appears beside an unexpected result and beside the
+exercise's title in the course exercise list. Hover or focus the warning to read
+its explanation. Solution builds that fail tests also show the warning, even when bonus points
+bring the score to 100% or more. Fully passing solutions may exceed 100% when
+bonus points are configured and do not show a warning. Results
+that have not been loaded are not treated as successful builds.
+
 ## Configure Grading
 
-The grading configuration determines how test cases contribute to the overall score and allows configuration of code quality issue penalties.
+Open **Grading** in the exercise detail action bar. The grading configuration determines how test cases contribute
+to the overall score and allows configuration of code quality issue penalties.
 
 ### General Actions
 
@@ -162,7 +185,7 @@ Issues are grouped into categories. The following table shows the category mappi
 
 Other languages use categories defined by their static code analysis tool:
 
-- **JavaScript, TypeScript, C++, R**: Only use the `Lint` category
+- **JavaScript, TypeScript, C++, R, Go**: Only use the `Lint` category
 - **Dart**: Dart's analyzer can generate these categories:
   - `TODO`
   - `HINT`
@@ -174,6 +197,8 @@ Other languages use categories defined by their static code analysis tool:
 - **Python**: Uses [Ruff's tool names](https://docs.astral.sh/ruff/rules/)
 - **Ruby**: Uses [Rubocop's Department names](https://docs.rubocop.org/rubocop/cops.html)
 - **Rust**: Uses [Clippy's lint groups](https://rust-lang.github.io/rust-clippy/stable/index.html)
+- **Kotlin**: Uses the [rule sets of detekt](https://detekt.dev/docs/rules/complexity): `complexity`, `coroutines`, `empty-blocks`, `exceptions`, `naming`, `performance`, `potential-bugs` and `style`. Rules of other rule sets are reported as `other`
+- **C#**: Uses the [categories of the .NET analyzers](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/categories), e.g. `Design`, `Naming`, `Performance` and `Usage`. Compiler warnings are reported as `Compiler`. Diagnostics that do not point to a source location, such as some project-level analyzer rules, are not reported
 
 On the left side of the page, instructors can configure the static code analysis categories:
 
@@ -269,13 +294,14 @@ Select **None** as policy type and press **Update**. Locked repositories are unl
 
 ## Verify Exercise Configuration
 
-Open the **View** page of the programming exercise.
+Select the programming exercise's title in course management and scroll to **Repositories and builds**.
 
-<Image src={solutionTemplateResult} alt="Solution Template Result" size={ImageSize.large} caption="Template and Solution Results" />
+<Image src={solutionTemplateResult} alt="Template and Solution repository panels with their build results and checkout directories" size={ImageSize.large} caption="Template and Solution builds beside their repository controls" />
 
 Verify:
-- **Template result**: Score 0% with "0 of X passed" (or "0 of X passed, 0 issues" with SCA)
-- **Solution result**: Score 100% with "X of X passed" (or "X of X passed, 0 issues" with SCA)
+- **Template**: Score 0% with "0 of X passed" (or "0 of X passed, 0 issues" with SCA).
+- **Solution**: Score at least 100% with all tests passed. A fully passing solution may exceed 100% when bonus
+  points are configured; failed tests still produce a warning even if bonus points raise the score to 100% or more.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -285,7 +311,9 @@ Verify:
 
 ### Review Template/Solution Differences
 
-Review differences between **template** and **solution** repositories to verify expected student changes.
+Below the build panels, **Tests** and any auxiliary repositories appear once with their own repository controls.
+The **Template/Solution Comparison** follows them. Review the differences between the template and solution
+repositories to verify the changes expected from students.
 
 <Image src={courseManagementTemplateSolutionDiff} alt="Template Solution Diff" size={ImageSize.large} caption="Template/Solution Comparison in Exercise Management" />
 

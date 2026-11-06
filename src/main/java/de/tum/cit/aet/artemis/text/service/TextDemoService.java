@@ -310,7 +310,7 @@ public class TextDemoService {
     public List<TextExercise> createDemo(Course course, List<User> students, User tutor) {
         List<TextExercise> existingExercises = textExerciseRepository.findByCourseIdWithCategories(course.getId());
         TextExercise ongoingEssay = findExisting(existingExercises, ONGOING_ESSAY_TITLE).orElseGet(() -> createEssay(course, ONGOING_ESSAY_TITLE, ONGOING_ESSAY_SHORT_NAME,
-                ONGOING_ESSAY_PROBLEM_STATEMENT, ONGOING_ESSAY_EXAMPLE_SOLUTION, ExerciseDates.ongoing(), ExerciseFactory.exerciseCategory("Architecture", "#691b0b")));
+                ONGOING_ESSAY_PROBLEM_STATEMENT, ONGOING_ESSAY_EXAMPLE_SOLUTION, ExerciseDates.ongoing(), ExerciseFactory.exerciseCategory("Architecture", "#ffd166")));
         TextExercise gradedEssay = findExisting(existingExercises, GRADED_ESSAY_TITLE).orElseGet(() -> createGradedEssay(course, students, tutor));
         return List.of(ongoingEssay, gradedEssay);
     }
@@ -391,7 +391,7 @@ public class TextDemoService {
         ZonedDateTime now = ZonedDateTime.now();
         // Released two weeks before seeding, the due date and the assessment due date only keep the essay open until the activity below has happened.
         TextExercise essay = createEssay(course, GRADED_ESSAY_TITLE, GRADED_ESSAY_SHORT_NAME, GRADED_ESSAY_PROBLEM_STATEMENT, GRADED_ESSAY_EXAMPLE_SOLUTION,
-                new ExerciseDates(now.minusWeeks(2), null, now.plusDays(1), now.plusDays(2)), ExerciseFactory.exerciseCategory("Collaboration", "#0d3cc2"));
+                new ExerciseDates(now.minusWeeks(2), null, now.plusDays(1), now.plusDays(2)), ExerciseFactory.exerciseCategory("Collaboration", "#9dd9f3"));
 
         List<TextSubmission> submissions = new ArrayList<>();
         for (int index = 0; index < students.size(); index++) {
