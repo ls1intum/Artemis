@@ -34,7 +34,7 @@ public class ExamPreparationLockService {
 
     private final ParticipationCleanupService participationCleanupService;
 
-    public ExamPreparationLockService(DistributedDataProvider distributedDataProvider, ParticipationCleanupService participationCleanupService) {
+    public ExamPreparationLockService(DistributedDataProvider distributedDataProvider, @Lazy ParticipationCleanupService participationCleanupService) {
         this.distributedDataProvider = distributedDataProvider;
         this.participationCleanupService = participationCleanupService;
     }
