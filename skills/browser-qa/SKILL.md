@@ -114,7 +114,7 @@ Use chrome-devtools MCP as the primary browser. Pick the recording method once, 
 
 After each driver returns:
 
-1. Post-process the batch video and look at its contact sheet (`skills/browser-qa/reference/recording.md`). A blank or frozen clip sends the batch back.
+1. Trim the batch video and read its contact sheet (`skills/browser-qa/reference/recording.md`). A blank or frozen clip sends the batch back. The report and any upload use `<batch>.trimmed.mp4`.
 2. Open its `<run>/results/*.json` and at least the final screenshot of each failing and each passing write case. A pass with a screenshot that does not show the `expect.ui` state is a fail. For download cases, inspect the file and assertions per `skills/browser-qa/reference/downloads.md`; a screenshot or HTTP response alone is not download proof. For `api` cases, read the saved `api/*.txt` files, not the driver's summary.
 3. When server logs are available, inspect relevant 4xx and 5xx responses and attach any matching server trace to the result. Otherwise record the missing evidence.
 4. If the target or a required precondition is unavailable, mark affected cases blocked and name the missing evidence in the report.
@@ -139,7 +139,7 @@ Write `<run>/report.md`:
 - the validation matrix, including untested features, roles and excused changes; the E2E selector result or why it was unavailable, and any tests actually run;
 - regressions first, each with the case, the steps, the expected and observed result, the video file and timestamp (or the `api/*.txt` file), the screenshots and the causing `file:line`; then pre-existing failures and flakes;
 - every endpoint the change touched, with the api cases run against it and their statuses;
-- every video with a one-line caption of the cases it shows;
+- every trimmed video (`<batch>.trimmed.mp4`) with a one-line caption of the cases it shows;
 - for a PR: each Step for Testing with `yes`, `no` or `not tested`, and the rewrite a reviewer needs for any step that could not run as written;
 - blocked cases and every path no case reached, named.
 
