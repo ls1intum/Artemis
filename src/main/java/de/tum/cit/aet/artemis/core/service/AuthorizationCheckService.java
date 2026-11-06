@@ -961,6 +961,9 @@ public class AuthorizationCheckService {
         if (!exercise.isTeamMode()) {
             return;
         }
+        if (submission.getParticipation() instanceof StudentParticipation practice && practice.isTestRun() && practice.getTeam().isEmpty()) {
+            return;
+        }
         var user = userRepository.getUserWithAuthorities();
         if (isAtLeastInstructorForExercise(exercise, user)) {
             return;

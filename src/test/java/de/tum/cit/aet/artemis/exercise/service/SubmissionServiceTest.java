@@ -405,6 +405,27 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         request.put(url, null, HttpStatus.OK);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamExercisePracticeDraftCanBeReopenedOnlyByItsAssessor() throws Exception {
+        var exercise = teamExercise(ExerciseType.TEXT);
+        var participation = participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        var submission = participationUtilService.addSubmission(participation, new TextSubmission().text("Practice answer"));
+        var draft = new Result();
+        draft.setSubmission(submission);
+        draft.setExerciseId(exercise.getId());
+        draft.setAssessmentType(AssessmentType.MANUAL);
+        draft.setAssessor(tutor1);
+        draft.setCorrectionRound(0);
+        draft = resultRepository.save(draft);
+        var url = assessmentStartUrl(ExerciseType.TEXT, submission.getId());
+        request.get(url, HttpStatus.OK, String.class);
+        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(draft.getId()).orElseThrow().getAssessor()).isEqualTo(tutor1);
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        request.get(url, HttpStatus.LOCKED, String.class);
+        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(draft.getId()).orElseThrow().getAssessor()).isEqualTo(tutor1);
+    }
+
     private String assessmentProposalUrl(ExerciseType type, Long exerciseId) {
         var path = switch (type) {
             case TEXT -> "text/text";
