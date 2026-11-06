@@ -179,6 +179,19 @@ describe('ProgrammingBuildNotificationsComponent', () => {
         expect(icons[1].getAttribute('sizes')).toBe('32x32');
     });
 
+    it('keeps the progress icon when the user returns while the build is still running', () => {
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        hidden = false;
+        focused = true;
+        document.dispatchEvent(new Event('visibilitychange'));
+        expect(icons[0].href).toContain('favicon-building');
+        hidden = true;
+        focused = false;
+        document.dispatchEvent(new Event('visibilitychange'));
+        complete();
+        expect(icons[0].href).toContain('favicon-result');
+    });
+
     it('restores the normal icon when the browser window regains focus', () => {
         hidden = false;
         state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);

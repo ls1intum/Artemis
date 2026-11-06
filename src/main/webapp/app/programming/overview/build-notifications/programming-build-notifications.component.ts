@@ -312,13 +312,19 @@ export class ProgrammingBuildNotificationsComponent {
         }
     };
 
-    /** Acknowledges feedback only when the exercise tab is visible and focused. */
+    /** Acknowledges a result only when the exercise tab is visible and focused; a running build keeps its clock. */
     private readonly onReturn = () => {
         if (this.supported) {
             this.permission.set(Notification.permission);
         }
-        if (!this.isAway()) {
+        if (this.isAway()) {
+            return;
+        }
+        if (this.pendingSubmissionId === undefined) {
             this.clearFeedback();
+        } else {
+            // The build is still running: keep the clock so it shows again when the user leaves.
+            this.clearNotifications();
         }
     };
 
