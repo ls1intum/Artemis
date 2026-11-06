@@ -224,7 +224,8 @@ class OutputOnlyMainProbeTest {
         };
 
         assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), planWithPreservation, Set.of(), target -> Optional.of("Books: 1\n"),
-                preservationFails)).extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.SURVIVED_GRADED_SUITE);
+                preservationFails, _ -> {
+                })).extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.SURVIVED_GRADED_SUITE);
         SemanticMutant probe = SemanticMutant.printedTranscript(PATH, SOLUTION, OutputOnlyMainProbe.transcriptOnlyVariant(SOLUTION, "Books: 1\n").orElseThrow(), "Library");
         assertThat(OutputOnlyMainProbe.recheck(TESTS, Map.of(PATH, SOLUTION), planWithPreservation, List.of(probe), preservationFails))
                 .extracting(SemanticMutantOutcome::disposition).as("a later recheck is judged the same way").containsExactly(Disposition.SURVIVED_GRADED_SUITE);
@@ -413,6 +414,7 @@ class OutputOnlyMainProbeTest {
                     executed.add(mutant);
                     boolean silent = !mutant.mutantSource().contains("Books: 1");
                     return new BuildSummary(1, silent ? 1 : 0, silent ? 1 : 0, false, List.of("printsTheSize"), silent ? List.of("printsTheSize") : List.of(), List.of(), "");
+                }, _ -> {
                 });
         assertThat(executed).hasSize(2);
         assertThat(outcomes).singleElement().satisfies(outcome -> assertThat(outcome.disposition()).isEqualTo(Disposition.SURVIVED_GRADED_SUITE));
@@ -423,7 +425,8 @@ class OutputOnlyMainProbeTest {
         Map<String, String> tests = Map.of("test/LibraryTest.java",
                 TESTS.values().iterator().next().replace("Library.main(new String[0]);", "if (false) Library.main(new String[0]);"));
         var outcomes = OutputOnlyMainProbe.evaluate(tests, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.of("Books: 1\n"),
-                (mutant, overlay) -> new BuildSummary(1, 0, 0, false, List.of("printsTheSize"), List.of(), List.of(), ""));
+                (mutant, overlay) -> new BuildSummary(1, 0, 0, false, List.of("printsTheSize"), List.of(), List.of(), ""), _ -> {
+                });
         assertThat(outcomes).isEmpty();
     }
 
@@ -437,7 +440,8 @@ class OutputOnlyMainProbeTest {
         };
 
         List<SemanticMutantOutcome> survived = OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(),
-                target -> Optional.of("Books: 1\n"), passing);
+                target -> Optional.of("Books: 1\n"), passing, _ -> {
+                });
 
         assertThat(survived).singleElement().satisfies(outcome -> {
             assertThat(outcome.disposition()).isEqualTo(Disposition.SURVIVED_GRADED_SUITE);
@@ -448,12 +452,12 @@ class OutputOnlyMainProbeTest {
         assertThat(built).hasSize(2).last().satisfies(mutant -> assertThat(mutant.mutantSource()).contains("System.out.print(\"Books: 1\\n\");"));
 
         SemanticMutantExecution.ProbeRunner failing = (mutant, probe) -> new BuildSummary(1, 1, 1, false, List.of("printsTheSize"), List.of("printsTheSize"), List.of(), "");
-        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.of("Books: 1\n"), failing))
-                .extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.KILLED_BY_GRADED_SUITE);
-        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(PATH), target -> Optional.of("Books: 1\n"), failing))
-                .as("a pending probe is rechecked elsewhere").isEmpty();
-        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.empty(), failing))
-                .as("a reference run that is not deterministic and bounded proves nothing").isEmpty();
+        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.of("Books: 1\n"), failing, _ -> {
+        })).extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.KILLED_BY_GRADED_SUITE);
+        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(PATH), target -> Optional.of("Books: 1\n"), failing, _ -> {
+        })).as("a pending probe is rechecked elsewhere").isEmpty();
+        assertThat(OutputOnlyMainProbe.evaluate(TESTS, Map.of(PATH, TEMPLATE), Map.of(PATH, SOLUTION), PLAN, Set.of(), target -> Optional.empty(), failing, _ -> {
+        })).as("a reference run that is not deterministic and bounded proves nothing").isEmpty();
     }
 
     @Test
@@ -485,6 +489,7 @@ class OutputOnlyMainProbeTest {
 
         List<SemanticMutantOutcome> outcomes = new DifferentialVerifier(commands).probeOutputOnlyMains(sandbox, "session", exercise, TESTS, Map.of(PATH, TEMPLATE),
                 Map.of(PATH, SOLUTION), PLAN, SeededStructuralTests.EMPTY, Set.of(), () -> {
+                }, _ -> {
                 });
 
         assertThat(outcomes).singleElement().satisfies(outcome -> {

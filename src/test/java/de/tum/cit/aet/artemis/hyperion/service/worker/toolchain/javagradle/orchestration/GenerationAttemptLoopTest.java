@@ -404,11 +404,11 @@ class GenerationAttemptLoopTest {
             default -> SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
         };
         if (bypass.testsLearnerAssertions()) {
-            when(verifier.probeStudentTestAssertions(any(), anyString(), any(), any(), any(), any(), any(), any()))
+            when(verifier.probeStudentTestAssertions(any(), anyString(), any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.SURVIVED_GRADED_SUITE)));
         }
         else {
-            when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+            when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.SURVIVED_GRADED_SUITE)));
         }
 
@@ -435,11 +435,11 @@ class GenerationAttemptLoopTest {
             default -> SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
         };
         if (bypass.testsLearnerAssertions()) {
-            when(verifier.probeStudentTestAssertions(any(), anyString(), any(), any(), any(), any(), any(), any()))
+            when(verifier.probeStudentTestAssertions(any(), anyString(), any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.INCONCLUSIVE)));
         }
         else {
-            when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+            when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(List.of(new SemanticMutantOutcome(bypass, Disposition.INCONCLUSIVE)));
         }
 
@@ -471,7 +471,7 @@ class GenerationAttemptLoopTest {
                 accepted());
         var bypass = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
         AtomicInteger executions = new AtomicInteger();
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
             Set<String> skipped = invocation.getArgument(8);
             if (skipped.contains(bypass.solutionPath())) {
                 return List.of();
@@ -507,7 +507,7 @@ class GenerationAttemptLoopTest {
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
                 any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         var bypass = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
             cancelled.set(true);
             return List.of(new SemanticMutantOutcome(bypass, Disposition.SURVIVED_GRADED_SUITE));
         });
@@ -1140,11 +1140,12 @@ class GenerationAttemptLoopTest {
         SemanticMutant printOnly = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
         SemanticMutant reDerived = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler { /* reworded */ }", "class Scheduler { }", "Scheduler");
         AtomicInteger probes = new AtomicInteger();
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> switch (probes.incrementAndGet()) {
-            case 1 -> List.of(new SemanticMutantOutcome(printOnly, Disposition.SURVIVED_GRADED_SUITE));
-            case 3 -> List.of(new SemanticMutantOutcome(reDerived, currentProbe));
-            default -> List.of();
-        });
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenAnswer(invocation -> switch (probes.incrementAndGet()) {
+                    case 1 -> List.of(new SemanticMutantOutcome(printOnly, Disposition.SURVIVED_GRADED_SUITE));
+                    case 3 -> List.of(new SemanticMutantOutcome(reDerived, currentProbe));
+                    default -> List.of();
+                });
         stubPrintOnlyRecheck(Disposition.KILLED_BY_GRADED_SUITE);
         when(verifier.resolveStaleOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
             List<SemanticMutant> stale = invocation.getArgument(6);
@@ -1249,7 +1250,7 @@ class GenerationAttemptLoopTest {
             return checked.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.KILLED_BY_GRADED_SUITE)).toList();
         });
         java.util.concurrent.atomic.AtomicBoolean deferredProbeRan = new java.util.concurrent.atomic.AtomicBoolean();
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
             if (attempts.get() == 1) {
                 return historical.stream().map(mutant -> new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)).toList();
             }
@@ -1563,7 +1564,7 @@ class GenerationAttemptLoopTest {
         GenerationAttemptLoop loop = newGenerateLoop(2, 1);
         loop.run();
 
-        verify(verifier, times(1)).probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(verifier, times(1)).probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(verifier, never()).recheckOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any());
         assertThat(loop.verification().reasons()).anyMatch(reason -> reason.contains("Scheduler.main that only prints the expected output"));
     }
@@ -1590,7 +1591,7 @@ class GenerationAttemptLoopTest {
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any()))
                 .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
         SemanticMutant printOnly = SemanticMutant.printedTranscript("src/Scheduler.java", "class Scheduler {}", "class Scheduler { }", "Scheduler");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(printOnly, Disposition.SURVIVED_GRADED_SUITE)), List.of());
         return printOnly;
     }

@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.MatchResult;
@@ -114,10 +115,12 @@ final class OutputOnlyMainProbe {
      * @param excludedSolutionPaths classes whose probe is already tracked as a pending mutant and is rechecked there
      * @param captureTranscript     runs the reference {@code main} of a target and returns its exact output, or empty when that run is not deterministic and bounded
      * @param runner                executes the graded suite against one variant
+     * @param completed             receives each completed outcome before the next build
      * @return one executed outcome per synthesized variant
      */
     static List<SemanticMutantOutcome> evaluate(Map<String, String> testFiles, Map<String, String> templateFiles, Map<String, String> solutionFiles, @Nullable String testPlanJson,
-            Set<String> excludedSolutionPaths, Function<Target, Optional<String>> captureTranscript, SemanticMutantExecution.ProbeRunner runner) {
+            Set<String> excludedSolutionPaths, Function<Target, Optional<String>> captureTranscript, SemanticMutantExecution.ProbeRunner runner,
+            Consumer<SemanticMutantOutcome> completed) {
         List<Target> sourceVisible = targets(testFiles, templateFiles, solutionFiles, gradedTestMethods(testPlanJson));
         List<Target> selected = new ArrayList<>(sourceVisible);
         candidateTargets(templateFiles, solutionFiles).stream().filter(target -> !selected.contains(target)).limit((long) MAX_TARGETS - selected.size()).forEach(selected::add);
@@ -137,13 +140,15 @@ final class OutputOnlyMainProbe {
             Disposition scope = silentMainOutcome(target.solutionPath(), source, probe, solutionFiles, gradedTest(testPlanJson), runner);
             if (scope != Disposition.KILLED_BY_GRADED_SUITE) {
                 if (scope == Disposition.INCONCLUSIVE) {
-                    outcomes.add(new SemanticMutantOutcome(probe, scope));
+                    var outcome = new SemanticMutantOutcome(probe, scope);
+                    outcomes.add(outcome);
+                    completed.accept(outcome);
                 }
                 continue;
             }
             variants.add(probe);
         }
-        outcomes.addAll(SemanticMutantExecution.recheck(solutionFiles, variants, gradedTest(testPlanJson), runner));
+        outcomes.addAll(SemanticMutantExecution.recheck(solutionFiles, variants, gradedTest(testPlanJson), runner, completed));
         return List.copyOf(outcomes);
     }
 

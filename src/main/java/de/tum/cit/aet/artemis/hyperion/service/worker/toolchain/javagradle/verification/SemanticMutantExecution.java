@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -12,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome.Disposition;
 
-/** Pure decision logic around sandbox mutant builds; {@link DifferentialVerifier} remains the sole owner of executing and restoring the workspace. */
+/** Classifies sandbox mutant builds; {@link DifferentialVerifier} remains the sole owner of executing and restoring the workspace. */
 final class SemanticMutantExecution {
 
     private static final int MAX_MUTANTS = 4;
@@ -91,18 +92,28 @@ final class SemanticMutantExecution {
      *                         behavior, earns a student nothing and neither kills the mutant nor makes the build inconclusive
      */
     static List<SemanticMutantOutcome> recheck(Map<String, String> solutionFiles, List<SemanticMutant> mutants, Predicate<String> countedTests, ProbeRunner runner) {
+        return recheck(solutionFiles, mutants, countedTests, runner, _ -> {
+        });
+    }
+
+    static List<SemanticMutantOutcome> recheck(Map<String, String> solutionFiles, List<SemanticMutant> mutants, Predicate<String> countedTests, ProbeRunner runner,
+            Consumer<SemanticMutantOutcome> completed) {
         List<SemanticMutantOutcome> outcomes = new ArrayList<>();
         for (SemanticMutant mutant : mutants) {
             if (!mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath()))) {
                 // This exact replacement was proven only against another reference revision. It is neither a survivor nor a kill against the current candidate; the orchestration
                 // review authors a fresh mutant against the new source instead of making an unexecuted stale probe block acceptance.
-                outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
+                var outcome = new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE);
+                outcomes.add(outcome);
+                completed.accept(outcome);
                 continue;
             }
             BuildSummary result = runner.run(mutant, null);
             // The repair may rename, strengthen, or replace the suggested counterexample. Because the candidate already passed mechanical verification immediately before this
             // probe, any test that executes and fails only after installing the mutant is outcome-level evidence that the suite now kills it. Compile failures execute no tests.
-            outcomes.add(new SemanticMutantOutcome(mutant, disposition(result, countedTests)));
+            var outcome = new SemanticMutantOutcome(mutant, disposition(result, countedTests));
+            outcomes.add(outcome);
+            completed.accept(outcome);
         }
         return List.copyOf(outcomes);
     }

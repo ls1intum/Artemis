@@ -375,7 +375,7 @@ class GenerationAttemptLoop {
             }
             emit(verification.report());
             if (!assessed.counterexamples().isEmpty()) {
-                checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot);
+                checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot, verification);
                 if (cancelled.getAsBoolean()) {
                     return cancelledOutcome(cancelledResult(loopResult));
                 }
@@ -395,7 +395,7 @@ class GenerationAttemptLoop {
                 lastRejectedVerificationRequest = artifacts.verificationRequest();
             }
             if (verification.mechanicallyVerified() && assessed.counterexamples().isEmpty()) {
-                checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot);
+                checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot, verification);
             }
             if (verification.serverDefect()) {
                 // The diagnostic tells the agent to change nothing, so another attempt could only contradict it or repeat the same verdict.
@@ -645,15 +645,15 @@ class GenerationAttemptLoop {
         };
         VerificationResult result = verifyWithInfrastructureRetry(artifacts.verificationRequest(), restoreCandidate);
         if (result.mechanicallyVerified() && lastMechanicallyVerifiedCandidate == null) {
-            verification = result;
-            checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot);
+            checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot, result);
         }
         if (result.mechanicallyVerified()) {
             result = executableEvidence.recheckAfterVerification(result, candidateFiles, testPlanSnapshot, candidateBeforeCurrentRepair != null, seededStructuralTests,
                     restoreCandidate);
         }
         return useStagedGeneration && result.mechanicallyVerified()
-                ? executableEvidence.assessBeforeCheckpoint(result, candidateFiles, testPlanSnapshot, seededStructuralTests, restoreCandidate)
+                ? executableEvidence.assessBeforeCheckpoint(result, candidateFiles, testPlanSnapshot, seededStructuralTests, restoreCandidate,
+                        verified -> checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot, verified))
                 : new ExecutableEvidenceLedger.AssessmentVerdict(result, List.of());
     }
 
@@ -673,8 +673,8 @@ class GenerationAttemptLoop {
     }
 
     /** Checkpoints the first verified candidate; a later semantic repair is promoted only once its review has run, see {@link #promoteReviewedCandidate}. */
-    private void checkpointMechanicallyVerifiedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
-        CandidateSnapshot mechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
+    private void checkpointMechanicallyVerifiedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot, VerificationResult verified) {
+        CandidateSnapshot mechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verified, copyProducedFiles(producedFilesByType), producedProblemStatement,
                 executableEvidence.preserveExecutableEvidenceState(
                         SpecFidelityReport.qualityReviewUnavailable("This mechanically verified draft still requires full quality review before study qualification.")),
                 specDocumentSnapshot, artifacts.testPlanJson());

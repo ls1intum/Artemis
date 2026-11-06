@@ -40,7 +40,7 @@ class StageGateEvaluatorTest {
         var mechanicallyPassed = new StageCheckResult(true, "mechanical checks passed", report);
         doReturn(Optional.empty()).when(checks).correctGivenOwnership(sandbox, "s");
         doReturn(mechanicallyPassed).when(checks).check(GenerationStage.TESTS, sandbox, "s", exercise, Map.of(), null, SeededStructuralTests.EMPTY);
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenThrow(new AssertionError("Optional assessment started before the complete draft could be checkpointed"));
 
         var result = StageGateEvaluator.evaluate(checks, GenerationStage.TESTS, tools, sandbox, "s", exercise, Map.of(), null);

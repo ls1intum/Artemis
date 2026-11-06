@@ -617,7 +617,8 @@ class DockerGradleBuildTest {
         if (assessment == 2 || assessment == 3) {
             var sources = JavaSourceSnapshot.capture(sandbox, session);
             var outcomes = verifier.probeStudentTestAssertions(sandbox, session, exercise, sources.templateFiles(), sources.solutionFiles(), plan, structural,
-                    () -> sources.restore(sandbox, session));
+                    () -> sources.restore(sandbox, session), _ -> {
+                    });
             assertThat(outcomes).anySatisfy(outcome -> {
                 assertThat(outcome.mutant().evidence()).isEqualTo(SemanticMutant.Evidence.EMPTY_STUDENT_TESTS);
                 assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE);
@@ -782,9 +783,11 @@ class DockerGradleBuildTest {
         List<SemanticMutantOutcome> outcomes = new ArrayList<>();
         try {
             outcomes.addAll(verifier.probeOutputOnlyMains(sandbox, session, exercise, sources.testsFiles(), sources.templateFiles(), sources.solutionFiles(), plan, structural,
-                    Set.of(), () -> sources.restore(sandbox, session)));
+                    Set.of(), () -> sources.restore(sandbox, session), _ -> {
+                    }));
             outcomes.addAll(verifier.probeStudentTestAssertions(sandbox, session, exercise, sources.templateFiles(), sources.solutionFiles(), plan, structural,
-                    () -> sources.restore(sandbox, session)));
+                    () -> sources.restore(sandbox, session), _ -> {
+                    }));
         }
         finally {
             sources.restore(sandbox, session);

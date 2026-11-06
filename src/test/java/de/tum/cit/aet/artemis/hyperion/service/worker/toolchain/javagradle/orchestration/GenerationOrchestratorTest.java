@@ -351,7 +351,7 @@ class GenerationOrchestratorTest {
                 any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         var survivor = SemanticMutant.printedTranscript("src/Attempt.java", "attempt 1", "print only", "Attempt");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(survivor, SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE)));
         if (redesignFails) {
             var continuation = new StagedAssessmentContinuation(java.time.Instant.now(), 0, "approved SPEC", "executed bypass", List.of(), List.of(), GenerationStage.SPEC,
@@ -376,6 +376,41 @@ class GenerationOrchestratorTest {
         assertThat(outcome.terminationReason()).isEqualTo(redesignFails ? TerminationReason.NO_ADMISSIBLE_CONCEPT : TerminationReason.REPAIR_DID_NOT_IMPROVE);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void anInterruptedAssessmentKeepsCompletedEvidenceInTheMatchingCheckpoint(boolean withinLearnerTestBatch) {
+        var stagedService = newService(true);
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        var survivor = withinLearnerTestBatch ? SemanticMutant.emptyStudentTests("src/Attempt.java", "attempt 1", "empty test")
+                : SemanticMutant.printedTranscript("src/Attempt.java", "attempt 1", "print only", "Attempt");
+        var completed = new SemanticMutantOutcome(survivor, SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(withinLearnerTestBatch ? List.of() : List.of(completed));
+        when(verifier.probeStudentTestAssertions(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            if (withinLearnerTestBatch) {
+                Consumer<SemanticMutantOutcome> observer = invocation.getArgument(8);
+                observer.accept(new SemanticMutantOutcome(survivor, SemanticMutantOutcome.Disposition.INCONCLUSIVE, "Earlier obligation awaits its current probe"));
+                observer.accept(completed);
+            }
+            throw new DifferentialVerifier.VerificationInfrastructureException("Later assessment build lost its session", null);
+        });
+        List<GenerationOutcome> checkpoints = new ArrayList<>();
+
+        var outcome = stagedService.generate(exercise, SEED, "Build a bubble sort exercise.", JOB_ID, Mode.GENERATE, () -> false, null, null, null, null, null, _ -> {
+        }, checkpoints::add);
+
+        assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.RUN_FAILED);
+        assertThat(outcome.isMechanicallyVerified()).isTrue();
+        assertThat(outcome.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        if (withinLearnerTestBatch) {
+            assertThat(outcome.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE);
+        }
+        assertThat(outcome.specFidelityReport()).isEqualTo(checkpoints.getLast().specFidelityReport());
+        assertThat(outcome.capturedProducedFiles()).isEqualTo(checkpoints.getLast().capturedProducedFiles());
+    }
+
     @Test
     void exhaustedAssessmentRedesignStillAllowsAnOracleRepairWithinTheFrozenContract() {
         var repaired = new AtomicBoolean();
@@ -393,7 +428,7 @@ class GenerationOrchestratorTest {
         });
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         var survivor = SemanticMutant.printedTranscript("src/Attempt.java", "attempt 1", "print only", "Attempt");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenAnswer(invocation -> repaired.get() ? List.of() : List.of(new SemanticMutantOutcome(survivor, SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE)));
         when(verifier.recheckOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any()))
                 .thenAnswer(invocation -> List.of(new SemanticMutantOutcome(survivor,

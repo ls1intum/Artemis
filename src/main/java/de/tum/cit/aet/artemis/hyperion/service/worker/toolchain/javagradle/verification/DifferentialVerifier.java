@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -757,11 +758,12 @@ public class DifferentialVerifier {
      * @param seededStructuralTests the exact server-owned structural authority
      * @param pendingSolutionPaths  classes whose probe is already pending and is rechecked by {@link #checkSemanticMutants}
      * @param restoreCandidate      restores the verified candidate between probes
+     * @param completed             receives each completed outcome before the next probe starts
      * @return one executed outcome per probed class
      */
     public List<SemanticMutantOutcome> probeOutputOnlyMains(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> producedTestsFiles,
             Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, @Nullable String testPlanJson, SeededStructuralTests seededStructuralTests,
-            Set<String> pendingSolutionPaths, Runnable restoreCandidate) {
+            Set<String> pendingSolutionPaths, Runnable restoreCandidate, Consumer<SemanticMutantOutcome> completed) {
         List<SemanticMutantOutcome> outcomes = OutputOnlyMainProbe.evaluate(producedTestsFiles, producedTemplateFiles, producedSolutionFiles, testPlanJson, pendingSolutionPaths,
                 target -> {
                     if (stopVerification.getAsBoolean()) {
@@ -783,7 +785,7 @@ public class DifferentialVerifier {
                         log.warn("Output-only probe for exercise {} skipped {}: {}", exercise.id(), target.simpleName(), OutputOnlyMainProbe.skipReason(capture));
                     }
                     return transcript;
-                }, (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate));
+                }, (mutant, probe) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, probe, restoreCandidate), completed);
         if (!outcomes.isEmpty() && log.isInfoEnabled()) {
             log.info("Output-only probe for exercise {}: {}", exercise.id(),
                     outcomes.stream().map(outcome -> outcome.mutant().ruleId() + "=" + outcome.disposition()).collect(Collectors.joining(", ")));
@@ -805,10 +807,13 @@ public class DifferentialVerifier {
      * @param testPlanJson          grading plan identifying tests that carry credit
      * @param seededStructuralTests trusted server-owned structural bundle
      * @param restoreCandidate      restores the pristine candidate around every probe
+     * @param completed             receives each completed outcome before the next probe starts
      * @return executed survivor, kill, or inconclusive outcomes for the applicable learner test classes
      */
     public List<SemanticMutantOutcome> probeStudentTestAssertions(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> producedTemplateFiles,
-            Map<String, String> producedSolutionFiles, @Nullable String testPlanJson, SeededStructuralTests seededStructuralTests, Runnable restoreCandidate) {
+            Map<String, String> producedSolutionFiles, @Nullable String testPlanJson, SeededStructuralTests seededStructuralTests, Runnable restoreCandidate,
+            Consumer<SemanticMutantOutcome> completed) {
+        studentTestAssessmentHistory.complete(sessionId, List.of()).forEach(completed);
         List<SemanticMutant> probes = new ArrayList<>();
         producedSolutionFiles.forEach((path, source) -> {
             if (path.startsWith("src/") && path.endsWith(".java") && !source.equals(producedTemplateFiles.get(path))) {
@@ -819,7 +824,10 @@ public class DifferentialVerifier {
             }
         });
         List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.recheck(producedSolutionFiles, probes, OutputOnlyMainProbe.gradedTest(testPlanJson),
-                (mutant, overlay) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, overlay, restoreCandidate));
+                (mutant, overlay) -> runSemanticMutantProbe(sandbox, sessionId, exercise, seededStructuralTests, mutant, overlay, restoreCandidate), outcome -> {
+                    studentTestAssessmentHistory.record(sessionId, outcome);
+                    completed.accept(outcome);
+                });
         return studentTestAssessmentHistory.complete(sessionId, outcomes);
     }
 

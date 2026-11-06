@@ -343,7 +343,8 @@ class DifferentialVerifierTest {
         var restores = new AtomicInteger();
         var verifier = new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), () -> true);
         var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
-        var outcomes = verifier.probeStudentTestAssertions(sandbox, "s", input(), Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, restores::incrementAndGet);
+        var outcomes = verifier.probeStudentTestAssertions(sandbox, "s", input(), Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, restores::incrementAndGet, _ -> {
+        });
 
         assertThat(restores).hasValue(0);
         assertThat(outcomes).hasSize(4).allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE));
@@ -359,6 +360,7 @@ class DifferentialVerifierTest {
             if (restores.incrementAndGet() == 2) {
                 stopped.set(true);
             }
+        }, _ -> {
         });
 
         assertThat(restores).hasValue(2);
@@ -368,13 +370,53 @@ class DifferentialVerifierTest {
     }
 
     @Test
+    void completedLearnerTestEvidenceReachesTheObserverBeforeALaterBuildThrows() {
+        var completed = new ArrayList<SemanticMutantOutcome>();
+        var restores = new AtomicInteger();
+        var failure = new DifferentialVerifier.VerificationInfrastructureException("Later build lost its session", null);
+        var verifier = newVerifier();
+        var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
+
+        assertThatThrownBy(() -> verifier.probeStudentTestAssertions(sandbox, "s", input(), Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, () -> {
+            if (restores.incrementAndGet() == 3) {
+                assertThat(completed).hasSize(1);
+                throw failure;
+            }
+        }, completed::add)).isSameAs(failure);
+
+        assertThat(completed).singleElement().satisfies(outcome -> {
+            assertThat(outcome.mutant().testsLearnerAssertions()).isTrue();
+            assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+        });
+        var retry = new ArrayList<SemanticMutantOutcome>();
+        var retryRestores = new AtomicInteger();
+        assertThatThrownBy(() -> verifier.probeStudentTestAssertions(sandbox, "s", input(), Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, () -> {
+            if (retryRestores.incrementAndGet() == 1) {
+                assertThat(retry).singleElement().satisfies(outcome -> {
+                    assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE);
+                    assertThat(outcome.diagnostic()).contains("previously confirmed");
+                });
+                throw failure;
+            }
+        }, retry::add)).isSameAs(failure);
+        var retained = verifier.probeStudentTestAssertions(sandbox, "s", input(), learnerTests(), learnerTests(), null, SeededStructuralTests.EMPTY, NO_RESTORE, _ -> {
+        });
+        assertThat(retained).singleElement().satisfies(outcome -> {
+            assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE);
+            assertThat(outcome.diagnostic()).contains("previously confirmed");
+        });
+    }
+
+    @Test
     void stoppedOutputAssessmentDoesNotStartAnotherTranscriptCapture() {
         var restores = new AtomicInteger();
         var verifier = new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), () -> true);
         var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
         var sources = Map.of("src/de/test/Main.java", "package de.test; public class Main { public static void main(String[] args) { System.out.println(1); } }");
 
-        var outcomes = verifier.probeOutputOnlyMains(sandbox, "s", input(), Map.of(), Map.of(), sources, null, SeededStructuralTests.EMPTY, Set.of(), restores::incrementAndGet);
+        var outcomes = verifier.probeOutputOnlyMains(sandbox, "s", input(), Map.of(), Map.of(), sources, null, SeededStructuralTests.EMPTY, Set.of(), restores::incrementAndGet,
+                _ -> {
+                });
 
         assertThat(outcomes).isEmpty();
         assertThat(restores).hasValue(0);

@@ -326,6 +326,9 @@ Optional assessment probes run on the complete candidate after statement authori
 where their evidence is bound to the verified draft. The TESTS-stage gate still
 checks compilation, reference/starter grading and the grading plan; it does not
 repeat the optional probes before a complete draft can be checkpointed.
+Each completed assessment result is added to the matching immutable checkpoint
+before the next probe starts. A later build or sandbox failure keeps the completed
+findings; unfinished checks remain unverified.
 Verification and review still use the job's token and wall-clock guards. Every twenty
 authoring turns, the agent receives a work checkpoint. A current passing tool check
 returns control to the authoritative gate; two blocks without a verified reduction

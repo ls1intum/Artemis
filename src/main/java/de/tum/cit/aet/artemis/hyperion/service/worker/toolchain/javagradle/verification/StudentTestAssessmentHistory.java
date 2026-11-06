@@ -22,9 +22,14 @@ final class StudentTestAssessmentHistory {
 
     private final Map<Probe, SemanticMutant> required = new LinkedHashMap<>();
 
+    void record(String sessionId, SemanticMutantOutcome outcome) {
+        if (outcome.mutant().testsLearnerAssertions() && outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE) {
+            required.putIfAbsent(Probe.of(sessionId, outcome.mutant()), outcome.mutant());
+        }
+    }
+
     List<SemanticMutantOutcome> complete(String sessionId, List<SemanticMutantOutcome> current) {
-        current.stream().filter(outcome -> outcome.mutant().testsLearnerAssertions() && outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE)
-                .forEach(outcome -> required.putIfAbsent(Probe.of(sessionId, outcome.mutant()), outcome.mutant()));
+        current.forEach(outcome -> record(sessionId, outcome));
         Set<Probe> observed = current.stream().map(outcome -> Probe.of(sessionId, outcome.mutant())).collect(Collectors.toSet());
         List<SemanticMutantOutcome> results = new ArrayList<>(current);
         required.forEach((probe, mutant) -> {

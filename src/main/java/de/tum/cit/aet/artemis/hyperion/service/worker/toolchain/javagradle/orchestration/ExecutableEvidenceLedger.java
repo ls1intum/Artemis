@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,9 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
  * candidate and keeps it from vanishing as progress when a repair changes its reference source.
  */
 final class ExecutableEvidenceLedger {
+
+    private record AssessmentProbe(String path, SemanticMutant.Evidence kind, String rule) {
+    }
 
     private static final int MAX_TRACKED_SEMANTIC_MUTANTS = 6;
 
@@ -120,22 +124,36 @@ final class ExecutableEvidenceLedger {
 
     /** The authoritative checkpoint boundary also checks candidates authored by ordinary mechanical retries, before any verified snapshot can be published. */
     AssessmentVerdict assessBeforeCheckpoint(VerificationResult result, Map<RepositoryRole, Map<String, String>> candidateFiles, @Nullable String plan,
-            SeededStructuralTests seeded, Runnable restoreCandidate) {
+            SeededStructuralTests seeded, Runnable restoreCandidate, Consumer<VerificationResult> evidenceUpdated) {
         Map<String, SemanticMutantOutcome> known = transcriptVerdicts(candidateFiles, plan);
-        List<SemanticMutantOutcome> outcomes = new ArrayList<>(known.values());
-        List<SemanticMutantOutcome> probed = verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryRole.TESTS, Map.of()),
+        Map<AssessmentProbe, SemanticMutantOutcome> outcomes = new LinkedHashMap<>();
+        Consumer<SemanticMutantOutcome> completed = outcome -> {
+            var probe = new AssessmentProbe(outcome.mutant().solutionPath(), outcome.mutant().evidence(), outcome.mutant().ruleId());
+            if (outcome.equals(outcomes.put(probe, outcome))) {
+                return;
+            }
+            if (!outcome.mutant().testsLearnerAssertions()) {
+                evidence.record(outcome);
+                rememberTranscriptVerdicts(List.of(outcome));
+            }
+            updateAssessmentFindings(outcomes.values());
+            evidenceUpdated.accept(result);
+        };
+        known.values().forEach(completed);
+        verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryRole.TESTS, Map.of()),
                 candidateFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()), plan, seeded, known.keySet(),
-                restoreCandidate);
-        rememberTranscriptVerdicts(probed);
-        outcomes.addAll(probed);
-        outcomes.forEach(evidence::record);
+                restoreCandidate, completed).forEach(completed);
         // Learner-test probes are regenerated for each authoritative candidate, rather than entering the model-authored mutation lifecycle.
-        List<SemanticMutantOutcome> studentTestOutcomes = verifier.probeStudentTestAssertions(sandbox, sessionId, exercise,
-                candidateFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()), plan, seeded, restoreCandidate);
-        outcomes.addAll(studentTestOutcomes);
-        List<SemanticMutant> counterexamples = outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).map(SemanticMutantOutcome::mutant)
-                .toList();
-        assessmentFindings = new SpecFidelityReport(counterexamples.stream().map(GenerationReviewSupport::semanticMutantFinding).toList());
+        verifier.probeStudentTestAssertions(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()),
+                candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of()), plan, seeded, restoreCandidate, completed).forEach(completed);
+        updateAssessmentFindings(outcomes.values());
+        return new AssessmentVerdict(result,
+                outcomes.values().stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).map(SemanticMutantOutcome::mutant).toList());
+    }
+
+    private void updateAssessmentFindings(Collection<SemanticMutantOutcome> outcomes) {
+        assessmentFindings = new SpecFidelityReport(outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE)
+                .map(SemanticMutantOutcome::mutant).map(GenerationReviewSupport::semanticMutantFinding).toList());
         if (outcomes.stream().anyMatch(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)) {
             List<SpecFidelityReport.Finding> findings = new ArrayList<>(assessmentFindings.findings());
             String detail = "The draft passed mechanical verification, but assessment evidence is incomplete. "
@@ -144,7 +162,6 @@ final class ExecutableEvidenceLedger {
             findings.addAll(SpecFidelityReport.executableEvidenceUnavailable(detail).findings());
             assessmentFindings = new SpecFidelityReport(findings);
         }
-        return new AssessmentVerdict(result, counterexamples);
     }
 
     /**
@@ -237,7 +254,7 @@ final class ExecutableEvidenceLedger {
             Set<String> probedPaths = changedTranscriptProbes.stream().map(SemanticMutant::solutionPath).collect(Collectors.toUnmodifiableSet());
             List<SemanticMutantOutcome> currentProbes = verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, candidateFiles.getOrDefault(RepositoryRole.TESTS, Map.of()),
                     candidateFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), solutionFiles, testPlanJson, seededStructuralTests,
-                    solutionFiles.keySet().stream().filter(path -> !probedPaths.contains(path)).collect(Collectors.toUnmodifiableSet()), restoreCandidate);
+                    solutionFiles.keySet().stream().filter(path -> !probedPaths.contains(path)).collect(Collectors.toUnmodifiableSet()), restoreCandidate, evidence::record);
             outcomes.addAll(changedTranscriptOutcomes(changedTranscriptProbes, currentProbes, candidateFiles, testPlanJson, seededStructuralTests, restoreCandidate));
         }
         return outcomes;
@@ -288,7 +305,8 @@ final class ExecutableEvidenceLedger {
         Set<String> skippedTranscriptProbes = java.util.stream.Stream.concat(pendingTranscriptProbes.stream(), transcriptVerdicts(candidateFiles, testPlanJson).keySet().stream())
                 .collect(Collectors.toUnmodifiableSet());
         List<SemanticMutantOutcome> probedTranscriptOutcomes = verifier.probeOutputOnlyMains(sandbox, sessionId, exercise, testsFiles,
-                producedFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), solutionFiles, testPlanJson, seededStructuralTests, skippedTranscriptProbes, restoreCandidate);
+                producedFiles.getOrDefault(RepositoryRole.TEMPLATE, Map.of()), solutionFiles, testPlanJson, seededStructuralTests, skippedTranscriptProbes, restoreCandidate,
+                evidence::record);
         rememberTranscriptVerdicts(probedTranscriptOutcomes);
         List<SemanticMutantOutcome> transcriptOutcomes = java.util.stream.Stream.concat(reusedTranscriptOutcomes.stream(), probedTranscriptOutcomes.stream()).toList();
         List<SemanticMutantOutcome> staleTranscriptOutcomes = changedTranscriptOutcomes(staleTranscriptProbes, transcriptOutcomes, candidateFiles, testPlanJson,
