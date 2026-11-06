@@ -134,7 +134,7 @@ describe('ParticipationComponent', () => {
     it('should choose the exam page from the loaded exercise kind before requesting participations', () => {
         component.exercise.set({ ...exercise, course: undefined, exerciseGroup: { id: 8, exam: { id: 9, course } } });
         const search = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-        component.onDataRequest({ pageIndex: 0, pageSize: 50, sort: { field: 'id', direction: 'asc' } });
+        component.onLazyLoad({ first: 0, rows: 50, sortField: 'id', sortOrder: 1 });
         expect(search).toHaveBeenCalledWith(1, expect.anything(), 'exam');
     });
 
@@ -166,7 +166,7 @@ describe('ParticipationComponent', () => {
             componentFixture.detectChanges();
             await componentFixture.whenStable();
             componentFixture.detectChanges();
-            return componentFixture.nativeElement.querySelector('tumaet-ui-table tbody tr') as HTMLElement;
+            return componentFixture.nativeElement.querySelector('jhi-table-view tbody tr') as HTMLElement;
         };
 
         it('should show the state and the result of a participation side by side', () => {
@@ -317,7 +317,7 @@ describe('ParticipationComponent', () => {
             vi.spyOn(exerciseService, 'findForStaff').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
             const search = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
             componentFixture.detectChanges();
-            component.onDataRequest({ pageIndex: 0, pageSize: 50, searchTerm: 'alice', sort: { field: 'participantName', direction: 'asc' } });
+            component.onLazyLoad({ first: 0, rows: 50, globalFilter: 'alice', sortField: 'participantName', sortOrder: 1 });
             componentFixture.detectChanges();
             expect(component.hideParticipantInformation()).toBe(false);
             search.mockReturnValue(of({ content: [{ participationId: 3, submissionCount: 1, testRun: false }], totalElements: 1 }));
@@ -358,11 +358,11 @@ describe('ParticipationComponent', () => {
             expect(
                 component.columns().some((column) => column.headerKey === 'artemisApp.participation.students' || column.headerKey === 'artemisApp.participation.repository'),
             ).toBe(false);
-            const table: HTMLElement = componentFixture.nativeElement.querySelector('tumaet-ui-table');
+            const table: HTMLElement = componentFixture.nativeElement.querySelector('jhi-table-view');
             expect(table.querySelector('tbody td')?.textContent?.trim()).toBe(String(sampleDto.participationId));
             expect(table.textContent).not.toContain(sampleDto.participantName);
             expect(table.querySelector('a[href*="/teams/"]')).toBeNull();
-            expect(table.querySelector('input[type=search]')).toBeNull();
+            expect(table.querySelector('jhi-search-filter')).toBeNull();
         });
 
         it.each([false, true])('should retain identity columns and search for instructors (team mode: %s)', (teamMode) => {
@@ -383,7 +383,7 @@ describe('ParticipationComponent', () => {
                 component.activeFilters.set([FilterProp.NO_SUBMISSIONS]);
                 const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
 
-                component.onDataRequest({ pageIndex: 2, pageSize: 25, searchTerm: 'alice', sort: { field: sortField, direction: 'asc' } });
+                component.onLazyLoad({ first: 50, rows: 25, globalFilter: 'alice', sortField: sortField, sortOrder: 1 });
 
                 expect(searchSpy).toHaveBeenCalledWith(
                     exercise.id,
@@ -397,7 +397,7 @@ describe('ParticipationComponent', () => {
             component.exercise.set({ ...exercise, isAtLeastInstructor: true });
             const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
 
-            component.onDataRequest({ pageIndex: 0, pageSize: 50, searchTerm: 'alice', sort: { field: 'participantName', direction: 'asc' } });
+            component.onLazyLoad({ first: 0, rows: 50, globalFilter: 'alice', sortField: 'participantName', sortOrder: 1 });
 
             expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'alice', sortedColumn: 'participantName' }), 'course');
         });
@@ -447,7 +447,7 @@ describe('ParticipationComponent', () => {
             await componentFixture.whenStable();
             componentFixture.detectChanges();
 
-            return componentFixture.nativeElement.querySelector('tumaet-ui-table');
+            return componentFixture.nativeElement.querySelector('jhi-table-view');
         }
 
         function bodyRows(table: HTMLElement): HTMLTableRowElement[] {
@@ -536,7 +536,7 @@ describe('ParticipationComponent', () => {
                 .spyOn(participationService, 'searchParticipations')
                 .mockReturnValue(of({ content: [sampleDto], totalElements: 1 } as PageableResult<ParticipationManagementDTO>));
 
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
 
             expect(searchStub).toHaveBeenCalledOnce();
             expect(component.participations()).toEqual([sampleDto]);
@@ -547,7 +547,7 @@ describe('ParticipationComponent', () => {
         it('should update active filter and reload on filter change', () => {
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
 
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
             searchStub.mockClear();
 
             component.updateParticipationFilter([FilterProp.FAILED, FilterProp.MANUAL]);
@@ -557,11 +557,11 @@ describe('ParticipationComponent', () => {
         });
     });
 
-    it('preserves server paging, descending sorting, search and combined filters from the TUM table', () => {
+    it('preserves server paging, descending sorting, search and combined filters from the participation table', () => {
         component.exercise.set({ ...exercise, isAtLeastInstructor: true });
         component.activeFilters.set([FilterProp.SUCCESSFUL, FilterProp.MANUAL]);
         const search = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-        component.onDataRequest({ pageIndex: 2, pageSize: 25, searchTerm: 'alice', sort: { field: 'score', direction: 'desc' } });
+        component.onLazyLoad({ first: 50, rows: 25, globalFilter: 'alice', sortField: 'score', sortOrder: -1 });
         expect(search).toHaveBeenCalledExactlyOnceWith(
             exercise.id,
             expect.objectContaining({
@@ -644,7 +644,7 @@ describe('ParticipationComponent', () => {
         it.each([ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('sends the graded filter to the server (%s)', (type) => {
             component.exercise.set({ ...exercise, type });
             const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
             searchSpy.mockClear();
             component.updateParticipationFilter([FilterProp.GRADED]);
             expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ filterProp: 'Graded' }), 'course');
@@ -653,7 +653,7 @@ describe('ParticipationComponent', () => {
         it('keeps manual and locked filters when enabling graded programming participations', () => {
             component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
             const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
             component.updateParticipationFilter([FilterProp.MANUAL, FilterProp.LOCKED]);
             component.updateParticipationFilter([FilterProp.MANUAL, FilterProp.LOCKED, FilterProp.GRADED]);
             expect(searchSpy).toHaveBeenLastCalledWith(exercise.id, expect.objectContaining({ filterProp: 'Manual,Locked,Graded' }), 'course');
@@ -663,14 +663,14 @@ describe('ParticipationComponent', () => {
             const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
             component.rangeFilter.set(new Range(60, 70));
 
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
 
             expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ scoreRangeLower: 60, scoreRangeUpper: 70 }), 'course');
         });
 
         it('should reset filter options, drop the range from the URL and reload', () => {
             const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
             component.rangeFilter.set(new Range(0, 10));
             component.activeFilters.set([FilterProp.SUCCESSFUL]);
             searchSpy.mockClear();
@@ -685,7 +685,7 @@ describe('ParticipationComponent', () => {
 
         it('should refresh the current page', () => {
             const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
             searchSpy.mockClear();
 
             component.refresh();
@@ -878,7 +878,7 @@ describe('ParticipationComponent', () => {
 
             const updateStub = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
             searchStub.mockClear();
 
             component.saveIndividualDueDate(sampleDto);
@@ -906,7 +906,7 @@ describe('ParticipationComponent', () => {
         it('should delete participation and reload', () => {
             vi.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
             searchStub.mockClear();
 
             component.deleteParticipation(sampleDto.participationId);
@@ -917,7 +917,7 @@ describe('ParticipationComponent', () => {
         it('should clean up pending due date and presentation map on delete', () => {
             vi.spyOn(participationService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
 
             component.startEditDueDate(sampleDto);
             component.changeGradedPresentation(sampleDto);
@@ -936,7 +936,7 @@ describe('ParticipationComponent', () => {
         it('should call cleanupBuildPlan and reload on success', () => {
             const cleanupStub = vi.spyOn(participationService, 'cleanupBuildPlan').mockReturnValue(of(new HttpResponse({ body: {} as any })));
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
             searchStub.mockClear();
 
             component.cleanupProgrammingExerciseParticipation(sampleDto);
@@ -968,7 +968,7 @@ describe('ParticipationComponent', () => {
             component.exercise.set(basicExercise);
             const updateStub = vi.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: {} as any })));
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
             searchStub.mockClear();
 
             component.addBasicPresentation(sampleDto);
@@ -1016,7 +1016,7 @@ describe('ParticipationComponent', () => {
             const dto = { ...sampleDto, presentationScore: 75 };
             const updateStub = vi.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: {} as any })));
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
             component.changeGradedPresentation(dto);
             searchStub.mockClear();
 
@@ -1092,7 +1092,7 @@ describe('ParticipationComponent', () => {
             });
             const updateStub = vi.spyOn(participationService, 'update').mockReturnValue(of(new HttpResponse({ body: {} as any })));
             const searchStub = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
-            component.onDataRequest({ pageIndex: 0, pageSize: 50 });
+            component.onLazyLoad({ first: 0, rows: 50 });
             searchStub.mockClear();
 
             component.removePresentation(sampleDto);
@@ -1251,8 +1251,8 @@ describe('ParticipationComponent', () => {
         const current = new Subject<PageableResult<ParticipationManagementDTO>>();
         vi.spyOn(participationService, 'searchParticipations').mockReturnValueOnce(first).mockReturnValueOnce(current);
         const alert = vi.spyOn(alertService, 'error');
-        component.onDataRequest({ pageIndex: 0, pageSize: 50, sort: { field: 'id', direction: 'asc' } });
-        component.onDataRequest({ pageIndex: 1, pageSize: 50, sort: { field: 'id', direction: 'asc' } });
+        component.onLazyLoad({ first: 0, rows: 50, sortField: 'id', sortOrder: 1 });
+        component.onLazyLoad({ first: 50, rows: 50, sortField: 'id', sortOrder: 1 });
         current.next({ content: [sampleDto], totalElements: 51 });
         first.error(new HttpErrorResponse({ status: 403 }));
         expect(component.participations()).toEqual([sampleDto]);

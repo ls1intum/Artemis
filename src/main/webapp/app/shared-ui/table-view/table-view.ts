@@ -106,6 +106,7 @@ export interface TableConfig {
     showSearch: boolean;
     /** Translation key for the search input placeholder. Default: 'artemisApp.course.exercise.search.searchPlaceholder' */
     searchPlaceholder: string;
+    searchSize?: 'small' | 'large';
     /** Translation key for the message shown when the table has no rows. Default: 'artemisApp.dataTable.search.noResults' */
     emptyMessageTranslation: string;
     /** Enable scrollable mode with fixed headers. Default: false */
@@ -314,6 +315,7 @@ export class TableViewComponent<T> {
             pageSizeOptions: opts.hidePageSizeOptions ? undefined : (opts.pageSizeOptions ?? DEFAULT_TABLE_CONFIG.pageSizeOptions),
             showSearch: opts.showSearch ?? DEFAULT_TABLE_CONFIG.showSearch,
             searchPlaceholder: opts.searchPlaceholder ?? DEFAULT_TABLE_CONFIG.searchPlaceholder,
+            searchSize: opts.searchSize,
             emptyMessageTranslation: opts.emptyMessageTranslation ?? DEFAULT_TABLE_CONFIG.emptyMessageTranslation,
             scrollable: opts.scrollable ?? DEFAULT_TABLE_CONFIG.scrollable,
             scrollHeight: opts.scrollHeight ?? DEFAULT_TABLE_CONFIG.scrollHeight,

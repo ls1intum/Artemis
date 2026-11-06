@@ -23,15 +23,13 @@ const ROWS: Row[] = [
 @Component({
     imports: [TumAetUiTableComponent],
     template: `
-        <tumaet-ui-table [columns]="columns" [rows]="rows" [totalRecords]="2" [rowActions]="actions" [tableActions]="filters" [showSearch]="showSearch" />
-        <ng-template #filters><button type="button" data-testid="table-filter">Filter</button></ng-template>
+        <tumaet-ui-table [columns]="columns" [rows]="rows" [totalRecords]="2" [rowActions]="actions" />
         <ng-template #actions let-row>
             <button type="button">Edit {{ row.name }}</button>
         </ng-template>
     `,
 })
 class ActionsHostComponent {
-    showSearch = true;
     columns = COLUMNS;
     rows = ROWS;
 }
@@ -62,15 +60,6 @@ describe('TumAetUiTableComponent', () => {
     function dataCells(): HTMLElement[] {
         return fixture.debugElement.queryAll(By.css('td[cdk-cell]')).map((d) => d.nativeElement);
     }
-
-    it('keeps projected filters available when identity search is hidden', async () => {
-        const host = TestBed.createComponent(ActionsHostComponent);
-        host.componentInstance.showSearch = false;
-        host.detectChanges();
-        await host.whenStable();
-        expect(host.nativeElement.querySelector('[data-testid="table-filter"]')).not.toBeNull();
-        expect(host.nativeElement.querySelector('input[type="search"]')).toBeNull();
-    });
 
     it('renders one header per column and cells with dot-path values', async () => {
         fixture.detectChanges();

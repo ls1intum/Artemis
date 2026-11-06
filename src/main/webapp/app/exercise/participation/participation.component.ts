@@ -1,3 +1,5 @@
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewLazyLoadEvent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Subject, Subscription } from 'rxjs';
@@ -44,15 +46,11 @@ import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/progr
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import {
-    CellTemplateRef,
-    ColumnDef,
     TumAetUiButtonDirective,
     TumAetUiDatePickerComponent,
     TumAetUiInputDirective,
     TumAetUiPopoverComponent,
     TumAetUiPopoverTriggerDirective,
-    TumAetUiTableComponent,
-    TumAetUiTableQueryEvent,
     TumAetUiTagComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
@@ -64,7 +62,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ParticipationManagementDTO } from './participation-management-dto.model';
-import { ParticipationSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { ParticipationSearch } from 'app/foundation/pagination/pageable-table';
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
@@ -116,12 +114,12 @@ export enum FilterProp {
         ProgrammingExerciseInstructorSubmissionStateComponent,
         RouterLink,
         FaIconComponent,
-        TumAetUiTableComponent,
         TumAetUiButtonDirective,
         TumAetUiInputDirective,
         TumAetUiPopoverComponent,
         TumAetUiPopoverTriggerDirective,
         TumAetUiTooltipDirective,
+        TableViewComponent,
         CodeButtonComponent,
         TumAetUiDatePickerComponent,
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
@@ -254,7 +252,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     readonly isExamExercise = computed(() => !!this.exercise()?.exerciseGroup);
 
-    private lastQuery: TumAetUiTableQueryEvent | undefined;
+    private lastLazyEvent: TableViewLazyLoadEvent | undefined;
     private currentLoadRequestId = 0;
     // private exerciseSubmissionState: ExerciseSubmissionState = {};
     private paramSub?: Subscription;
@@ -272,7 +270,12 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     /** Rows whose due date text is not a date: the picker keeps its last valid date then, so it cannot be told from the pending date. */
     private readonly invalidDueDateTextIds = signal<ReadonlySet<number>>(new Set());
 
-    readonly tableOptions = computed(() => ({
+    readonly tableOptions = computed<TableViewOptions>(() => ({
+        dataKey: 'participationId',
+        searchSize: 'small',
+        striped: true,
+        scrollable: true,
+        scrollHeight: 'flex',
         showSearch: !this.hideParticipantInformation(),
         searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.participation.searchTeams' : 'artemisApp.participation.searchStudents',
     }));
@@ -486,24 +489,18 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.websocketSubscriptions.push(submissionSub, resultSub);
     }
 
-    onDataRequest(event: TumAetUiTableQueryEvent) {
-        this.lastQuery = event;
+    onLazyLoad(event: TableViewLazyLoadEvent) {
+        this.lastLazyEvent = event;
         this.loadPage();
     }
 
     private loadPage() {
         const ex = this.exercise();
-        if (!ex?.id || !this.lastQuery) return;
+        if (!ex?.id || !this.lastLazyEvent) return;
 
         this.isLoading.set(true);
         const requestId = ++this.currentLoadRequestId;
-        const base = {
-            page: this.lastQuery.pageIndex,
-            pageSize: this.lastQuery.pageSize,
-            searchTerm: this.lastQuery.searchTerm ?? '',
-            sortedColumn: this.lastQuery.sort?.field ?? 'id',
-            sortingOrder: this.lastQuery.sort?.direction === 'desc' ? SortingOrder.DESCENDING : SortingOrder.ASCENDING,
-        };
+        const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
         const search: ParticipationSearch = cloneWith(base, {
             searchTerm: this.hideParticipantInformation() ? '' : base.searchTerm,
             sortedColumn: this.hideParticipantInformation() && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,

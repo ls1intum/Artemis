@@ -2,7 +2,12 @@
     @if (showCaption()) {
         <div class="flex shrink-0 flex-wrap items-center gap-2">
             @if (resolvedOptions().showSearch) {
-                <jhi-search-filter class="min-w-48 grow" [placeholderKey]="resolvedOptions().searchPlaceholder" (newSearchEvent)="onGlobalSearch($event)" />
+                <jhi-search-filter
+                    class="min-w-48 grow"
+                    [size]="resolvedOptions().searchSize"
+                    [placeholderKey]="resolvedOptions().searchPlaceholder"
+                    (newSearchEvent)="onGlobalSearch($event)"
+                />
             }
             @if (tableActions()) {
                 <ng-container [ngTemplateOutlet]="tableActions()!" />

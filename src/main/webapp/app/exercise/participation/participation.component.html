@@ -78,20 +78,15 @@
         }
         <jhi-participation-access-notice [exercise]="exercise()!" />
         <div style="flex: 1; min-height: 0">
-            <tumaet-ui-table
-                [columns]="columns()"
-                [rows]="participations()"
-                [totalRecords]="totalRows()"
+            <jhi-table-view
+                [cols]="columns()"
+                [vals]="participations()"
+                [totalRows]="totalRows()"
                 [loading]="isLoading()"
-                [tableActions]="filterActionsTemplate"
-                [style.--tumaet-ui-table-search-max-width]="'16rem'"
+                [tableActions]="filterActionsTemplate ?? null"
                 [rowActions]="actionsTemplate"
-                [striped]="true"
-                [scrollable]="true"
-                scrollHeight="flex"
-                [showSearch]="tableOptions().showSearch"
-                [searchPlaceholder]="tableOptions().searchPlaceholder"
-                (dataRequest)="onDataRequest($event)"
+                [options]="tableOptions()"
+                (onLazyLoad)="onLazyLoad($event)"
             />
         </div>
     </div>
