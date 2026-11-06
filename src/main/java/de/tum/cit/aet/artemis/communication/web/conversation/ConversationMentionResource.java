@@ -27,11 +27,14 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
+@FeatureUsage(UserFeature.MESSAGING)
 @RequestMapping("api/communication/courses/")
 public class ConversationMentionResource extends ConversationManagementResource {
 
@@ -77,8 +80,8 @@ public class ConversationMentionResource extends ConversationManagementResource 
         if (!courseWide && !conversationService.isMember(conversationId, user.getId()) && !authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("Only conversation members or instructors may search mention recipients.");
         }
-        var users = participantRepository.findMentionCandidates(conversationId, courseId, courseWide, loginOrName.toLowerCase(Locale.ROOT).trim(),
-                Instant.EPOCH.atZone(ZoneOffset.UTC), Pageable.ofSize(10));
+        var searchTerm = loginOrName.toLowerCase(Locale.ROOT).trim().replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        var users = participantRepository.findMentionCandidates(conversationId, courseId, courseWide, searchTerm, Instant.EPOCH.atZone(ZoneOffset.UTC), Pageable.ofSize(10));
         return ResponseEntity.ok(users.stream()
                 .map(candidate -> new UserNameAndLoginDTO(User.displayName(candidate.firstName(), candidate.lastName(), candidate.login()), candidate.login())).toList());
     }

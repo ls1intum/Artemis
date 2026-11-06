@@ -7,13 +7,25 @@ This template uses [FACT](https://fact.readthedocs.io/en/latest/), a Python fram
 - `exercise.yml` declares the translation unit, test names, dependencies, and structural requirements. The initial tests are `Compile`, `CodeStructure`, and `InputOutput`.
 - `exercise_io.txt` contains the input/output cases. The supplied example also substitutes values of `x` and `y` in the student's source before checking its output.
 
-The build container supplies Python and FACT. From the test directory in that environment, run:
+The default FACT build image, `ls1tum/artemis-fact-minimal-docker:1.1.0`, supplies Python, FACT, and its compiler dependencies. Custom build images must supply these dependencies too.
+
+For a local run, arrange the solution or student checkout beside this test repository:
+
+```text
+exercise/
+  assignment/       # solution or student sources
+  tests/            # this repository
+  test-reports/
+```
+
+FACT expects the assignment at `../assignment` relative to the test directory. From the test directory in an environment with the dependencies above, copy the test-controlled Makefile into the assignment as the build does, then run the tests:
 
 ```sh
+cp Makefile ../assignment/Makefile
 python3 Tests.py
 ```
 
-Keep the assignment checkout in the location expected by the build plan. Copying only this test directory to a machine with Python is insufficient: FACT, its compiler dependencies, and the assignment checkout must also be available.
+Copying only this test directory to a machine with Python is insufficient: FACT, its compiler dependencies, and the assignment checkout must also be available.
 
 Adapt the Makefile and translation unit when renaming or adding C source files. Define new tests in `exercise.yml`, add their data or Python implementations as required by the test type, and update test dependencies. Test names must match those referenced in the exercise problem statement and grading configuration.
 

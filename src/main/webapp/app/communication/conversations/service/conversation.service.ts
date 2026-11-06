@@ -75,6 +75,7 @@ export class ConversationService {
         }
     }
 
+    /** Loads up to ten eligible mention recipients from this conversation, ordered by their latest message or reply. */
     searchMembersForUserMentions(courseId: number, conversationId: number, loginOrName: string): Observable<HttpResponse<UserNameAndLoginDTO[]>> {
         const params = new HttpParams().set('loginOrName', loginOrName);
         return this.http.get<UserNameAndLoginDTO[]>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/members/mentions`, { observe: 'response', params });

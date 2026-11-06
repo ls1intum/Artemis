@@ -292,7 +292,14 @@ The test repository separates the runner from the test definitions:
 - `exercise_io.txt` supplies the input/output cases. The example also replaces variable initializations in the source to test several values.
 - `Tests.py` is the entry point. Add or adapt tests in the definition files rather than adding each test to the runner.
 
-To run the tests locally, use an environment containing FACT and its compiler dependencies, keep the assignment checkout in the location expected by the build configuration, and run `python3 Tests.py` from the test directory. Python alone is insufficient. The Artemis build image already supplies the framework.
+The default FACT build image, `ls1tum/artemis-fact-minimal-docker:1.1.0`, supplies FACT and its compiler dependencies. If you configure a custom image, verify that it supplies these dependencies too; the standard C GCC image is intended for the separate GCC template.
+
+For a local run, put the solution or student checkout in `assignment/` beside the test checkout, so it is available at `../assignment` from the test directory. In an environment with FACT and its compiler dependencies, run these commands from the test directory to reproduce the build's Makefile preparation and test execution:
+
+```sh
+cp Makefile ../assignment/Makefile
+python3 Tests.py
+```
 
 When changing the exercise, update the translation unit and Makefile together, keep the test names aligned with the problem statement and grading configuration, and verify both the solution and template builds. The separate C **GCC** template uses its own test setup; these instructions apply to FACT.
 

@@ -132,6 +132,17 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('makes each scrolling table keyboard-focusable with a localized accessible name', () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Tabelle in der Aufgabenstellung');
+        const rendered = comp.addStylesForTables('<table><tr><td>Wide content</td></tr></table>');
+        const table = new DOMParser().parseFromString(rendered!, 'text/html').querySelector('table')!;
+
+        expect(table.style.overflowX).toBe('scroll');
+        expect(table.tabIndex).toBe(0);
+        expect(table.getAttribute('aria-label')).toBe('Tabelle in der Aufgabenstellung');
+        expect(table.querySelector('td')?.textContent).toBe('Wide content');
+    });
+
     it('should on participation change clear old subscription for participation results set up new one', async () => {
         // Enable fake timers BEFORE the debounced action is scheduled so we can advance the
         // 150 ms problemStatementUpdateSubject debounce (instruction component) deterministically.
