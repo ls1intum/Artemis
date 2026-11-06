@@ -11,7 +11,7 @@
                 <jhi-programming-exercise-instructor-submission-state [exercise]="exercise()!" [shouldToggle]="true" [toggleBreakpoint]="'md'" />
             }
             @if (exercise()!.isAtLeastInstructor && !exercise()!.teamMode) {
-                <jhi-external-submission class="inline-block" [exercise]="exercise()!" [outlined]="true" />
+                <jhi-external-submission class="inline-block" [exercise]="exercise()!" [outlined]="true" (resultCreated)="refresh()" />
             }
             @if (exercise()!.isAtLeastInstructor) {
                 <button
