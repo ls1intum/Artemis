@@ -1,4 +1,5 @@
-import { EMPTY, catchError, expand, map, of, retry, switchMap, timer } from 'rxjs';
+import { EMPTY, Subscription, catchError, defer, expand, map, of, retry, switchMap, throwError, timer } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
@@ -108,6 +109,8 @@ export class ExamResultSummaryComponent implements OnInit {
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private alertService = inject(AlertService);
 
+    private gradeRequest?: { studentExamId: number; subscription: Subscription };
+
     // make constants available to html for comparison
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -137,6 +140,9 @@ export class ExamResultSummaryComponent implements OnInit {
         effect(() => {
             const se = this.studentExam();
             const gradeInfo = this.studentExamGradeInfoDTO();
+            if (this.gradeRequest && this.gradeRequest.studentExamId !== se.id) {
+                this.gradeRequest.subscription.unsubscribe();
+            }
             if (gradeInfo) {
                 if (gradeInfo.studentExam?.id !== undefined && gradeInfo.studentExam.id !== se.id) {
                     this.studentExamGradeInfoDTO.set(undefined);
@@ -221,16 +227,26 @@ export class ExamResultSummaryComponent implements OnInit {
                 ? suppliedGrades
                     ? of(suppliedGrades)
                     : this.studentExamService.find(this.courseId(), studentExam.exam.id, studentExam.id).pipe(map((response) => response.body!))
-                : this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam.id, studentExam.id);
+                : defer(() =>
+                      this.studentExam().id === studentExam.id
+                          ? this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam!.id!, studentExam.id!)
+                          : EMPTY,
+                  ).pipe(
+                      retry({
+                          delay: (error: unknown, retryCount) => {
+                              if (!(error instanceof HttpErrorResponse) || (error.status !== 0 && (error.status < 500 || error.status >= 600))) {
+                                  return throwError(() => error);
+                              }
+                              return timer(Math.min(2000 * 2 ** Math.max(0, retryCount - 3), 30000));
+                          },
+                      }),
+                      // The HTTP interceptor reports permanent failures; they must not become an endless retry loop.
+                      catchError(() => EMPTY),
+                  );
             // Poll quickly at first, then back off while results stay pending or refreshes keep failing.
             let pollCount = 0;
-            grades
+            const subscription = grades
                 .pipe(
-                    // A transient failure of the first request must not end the flow before polling can start. Test exams retry it with backoff.
-                    retry({
-                        count: this.isTestExam ? 5 : 0,
-                        delay: (_error, retryCount) => timer(Math.min(2000 * 2 ** (retryCount - 1), 30000)),
-                    }),
                     expand((gradeInfo) => {
                         const pendingAutomaticResults = this.isTestExam && !!gradeInfo.pendingExerciseIds?.length;
                         if (this.studentExam().id !== studentExam.id || (!pendingAutomaticResults && !gradeInfo.studentResult?.gradeWithBonus?.pending)) {
@@ -260,6 +276,7 @@ export class ExamResultSummaryComponent implements OnInit {
                     this.studentExamGradeInfoDTO.set(studentExamWithGrade);
                     this.exerciseInfos.set(this.getExerciseInfos(studentExamWithGrade));
                 });
+            this.gradeRequest = { studentExamId: studentExam.id, subscription };
         }
 
         this.exampleSolutionPublished.set(!!studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(studentExam.exam.exampleSolutionPublicationDate));

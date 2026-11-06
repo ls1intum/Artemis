@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
 import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
@@ -255,12 +257,95 @@ class ExamPracticeGradeTest {
     @Test
     void completedProgrammingResultContributesToTheGrade() {
         var programming = programmingParticipation();
+        var submission = new ProgrammingSubmission();
+        submission.setId(1L);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        programming.addSubmission(submission);
+        var completedResult = new Result();
+        completedResult.setId(1L);
+        completedResult.setCompletionDate(ZonedDateTime.now());
+        completedResult.setRated(true);
+        completedResult.setScore(80.0);
+        submission.addResult(completedResult);
         when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(attempt, false)).thenReturn(List.of(programming));
         var grade = new ExamGradeScoreDTO(programming.getId(), 1L, 2L, 80.0, 20.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
         var result = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of(grade));
         assertThat(result.pendingExerciseIds()).isEmpty();
         assertThat(result.studentResult().overallPointsAchieved()).isEqualTo(16.0);
         assertThat(result.studentResult().overallScoreAchieved()).isEqualTo(80.0);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false,false", "false,true", "true,false", "true,true" })
+    void programmingCompletionBetweenScoreAndParticipationReadsUsesTheCompletedSnapshot(boolean instructorView, boolean earlierProgrammingScore) {
+        var programming = programmingParticipation();
+        attempt.setExercises(List.of(quiz, programming.getExercise()));
+        var quizParticipation = new StudentParticipation();
+        quizParticipation.setId(1L);
+        quizParticipation.setExercise(quiz);
+        var submission = new ProgrammingSubmission();
+        submission.setId(10L);
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        programming.addSubmission(submission);
+        var completedResult = new Result();
+        completedResult.setId(10L);
+        completedResult.setRated(true);
+        completedResult.setScore(80.0);
+        completedResult.setCompletionDate(ZonedDateTime.now());
+        var earlierGrades = new HashSet<>(Set.of(grade(1L, 50.0)));
+        if (earlierProgrammingScore) {
+            earlierGrades.add(new ExamGradeScoreDTO(programming.getId(), 1L, 2L, 20.0, 20.0, IncludedInOverallScore.INCLUDED_COMPLETELY));
+        }
+        // The result finishes after the grade projection, but before the exact-attempt participation reload.
+        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(attempt, false)).thenAnswer(invocation -> {
+            submission.addResult(completedResult);
+            return List.of(quizParticipation, programming);
+        });
+
+        if (instructorView) {
+            exam.setExerciseGroups(List.of(quiz.getExerciseGroup()));
+            exam.setNumberOfCorrectionRoundsInExam(1);
+            when(examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(1L)).thenReturn(exam);
+            when(studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(1L)).thenReturn(Set.of(attempt));
+            when(studentParticipationRepository.findGradesByExamId(1L)).thenReturn(earlierGrades);
+            var result = examService.calculateExamScores(1L).studentResults().getFirst();
+            assertThat(result.overallPointsAchieved()).isEqualTo(21.0);
+            assertThat(result.overallScoreAchieved()).isEqualTo(70.0);
+            assertThat(result.maxPoints()).isEqualTo(30.0);
+        }
+        else {
+            var result = examService.calculateStudentResultWithGradeAndPoints(attempt, earlierGrades);
+            assertThat(result.pendingExerciseIds()).isEmpty();
+            assertThat(result.studentResult().overallPointsAchieved()).isEqualTo(21.0);
+            assertThat(result.studentResult().overallScoreAchieved()).isEqualTo(70.0);
+            assertThat(result.achievedPointsPerExercise()).containsEntry(quiz.getId(), 5.0).containsEntry(2L, 16.0);
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = { "true,0", "false,80", "true,NULL" }, nullValues = "NULL")
+    void completedProgrammingSnapshotRetainsZeroAndDoesNotAwaitIneligibleScores(boolean rated, Double score) {
+        var programming = programmingParticipation();
+        var submission = new ProgrammingSubmission();
+        submission.setId(1L);
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        programming.addSubmission(submission);
+        var completedResult = new Result();
+        completedResult.setId(1L);
+        completedResult.setCompletionDate(ZonedDateTime.now());
+        completedResult.setRated(rated);
+        completedResult.setScore(score);
+        submission.addResult(completedResult);
+        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(attempt, false)).thenReturn(List.of(programming));
+        var olderGrade = new ExamGradeScoreDTO(programming.getId(), 1L, 2L, 80.0, 20.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
+
+        var result = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of(olderGrade));
+
+        assertThat(result.pendingExerciseIds()).isEmpty();
+        assertThat(result.studentResult().overallPointsAchieved()).isZero();
+        assertThat(result.studentResult().overallScoreAchieved()).isZero();
     }
 
     @Test
@@ -360,12 +445,18 @@ class ExamPracticeGradeTest {
         var sourceParticipation = new StudentParticipation();
         sourceParticipation.setId(11L);
         sourceParticipation.setExercise(sourceExercise);
-        if (pending) {
-            var submission = new ProgrammingSubmission();
-            submission.setId(11L);
-            submission.setSubmitted(true);
-            submission.setSubmissionDate(ZonedDateTime.now());
-            sourceParticipation.addSubmission(submission);
+        var submission = new ProgrammingSubmission();
+        submission.setId(11L);
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        sourceParticipation.addSubmission(submission);
+        if (!pending) {
+            var completedResult = new Result();
+            completedResult.setId(11L);
+            completedResult.setCompletionDate(ZonedDateTime.now());
+            completedResult.setRated(true);
+            completedResult.setScore(80.0);
+            submission.addResult(completedResult);
         }
         when(examRepository.findByIdElseThrow(2L)).thenReturn(sourceExam);
         when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(latest, false)).thenReturn(List.of(sourceParticipation));

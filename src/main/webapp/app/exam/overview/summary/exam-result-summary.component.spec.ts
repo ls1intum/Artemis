@@ -47,14 +47,14 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent
 import { RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { Subject, defer, of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import * as ExamUtils from 'app/exam/overview/exam.utils';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -307,6 +307,128 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.studentExamGradeInfoDTO()).toBeDefined();
     });
 
+    it.each([0, 500, 503])('recovers an initial owner grade request with status %s into pending polling', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+            const completed = { ...gradeInfo, pendingExerciseIds: [], studentResult: { ...gradeInfo.studentResult, overallPointsAchieved: 16 } };
+            const load = vi
+                .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status })))
+                .mockReturnValueOnce(of(pending))
+                .mockReturnValue(of(completed));
+            fixture.detectChanges();
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+            await vi.advanceTimersByTimeAsync(2000);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="exam-summary-result-overview"]')).not.toBeNull();
+            expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(1);
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(component.studentExamGradeInfoDTO()?.studentResult.overallPointsAchieved).toBe(16);
+            await vi.advanceTimersByTimeAsync(60000);
+            expect(load).toHaveBeenCalledTimes(3);
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it('backs off initial transient failures and recovers a published real-exam summary', async () => {
+        vi.useFakeTimers();
+        try {
+            const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(6000);
+            expect(load).toHaveBeenCalledTimes(4);
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(load).toHaveBeenCalledTimes(4);
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(load).toHaveBeenCalledTimes(5);
+            await vi.advanceTimersByTimeAsync(24000);
+            expect(load).toHaveBeenCalledTimes(7);
+            await vi.advanceTimersByTimeAsync(30000);
+            expect(load).toHaveBeenCalledTimes(8);
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+            load.mockReturnValue(of({ ...gradeInfo }));
+            await vi.advanceTimersByTimeAsync(29999);
+            expect(load).toHaveBeenCalledTimes(8);
+            await vi.advanceTimersByTimeAsync(1);
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[data-testid="exam-summary-result-overview"]')).not.toBeNull();
+            await vi.advanceTimersByTimeAsync(90000);
+            expect(load).toHaveBeenCalledTimes(9);
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([401, 403])('does not retry an initial owner request with permanent status %s', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(60000);
+            expect(load).toHaveBeenCalledOnce();
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each(['attempt change', 'destroy'])('cancels an initial owner retry timer on %s', async (cancellation) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+            fixture.detectChanges();
+            if (cancellation === 'destroy') {
+                fixture.destroy();
+            } else {
+                fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, id: 999, submitted: true });
+                fixture.detectChanges();
+            }
+            await vi.advanceTimersByTimeAsync(60000);
+            expect(load).toHaveBeenCalledOnce();
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each(['attempt change', 'destroy'])('unsubscribes an in-flight initial owner retry on %s', async (cancellation) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const retryRequest = new Subject<StudentExamWithGradeDTO>();
+            const load = vi
+                .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+                .mockReturnValue(retryRequest);
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(retryRequest.observed).toBe(true);
+            if (cancellation === 'destroy') {
+                fixture.destroy();
+            } else {
+                fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, id: 999, submitted: true });
+                fixture.detectChanges();
+            }
+            expect(retryRequest.observed).toBe(false);
+            retryRequest.next({ ...gradeInfo });
+            await vi.advanceTimersByTimeAsync(60000);
+            expect(load).toHaveBeenCalledTimes(2);
+            expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
     it('refreshes pending automatic results and stops after completion', async () => {
         vi.useFakeTimers();
         fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
@@ -384,26 +506,6 @@ describe('ExamResultSummaryComponent', () => {
         await vi.advanceTimersByTimeAsync(2000);
         expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(0);
         expect(load).toHaveBeenCalledTimes(3);
-        vi.useRealTimers();
-    });
-
-    it('retries a failed initial grade request for a test exam', async () => {
-        vi.useFakeTimers();
-        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
-        let subscriptions = 0;
-        // A retry resubscribes to the same observable, as it does for a cold HTTP request.
-        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(
-            defer(() => {
-                subscriptions++;
-                return subscriptions === 1 ? throwError(() => new Error('offline')) : of({ ...gradeInfo, pendingExerciseIds: [] });
-            }),
-        );
-        fixture.detectChanges();
-        expect(component.studentExamGradeInfoDTO()).toBeUndefined();
-        await vi.advanceTimersByTimeAsync(2000);
-        expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(0);
-        expect(subscriptions).toBe(2);
-        expect(load).toHaveBeenCalledTimes(1);
         vi.useRealTimers();
     });
 

@@ -622,14 +622,29 @@ public class ExamService {
                 .toList();
         var participationIds = participations.stream().map(StudentParticipation::getId).collect(Collectors.toSet());
         var exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
-        var attemptGrades = grades.stream().filter(grade -> participationIds.contains(grade.participationId()) && exerciseIds.contains(grade.exerciseId()))
+        var programmingExercises = exercises.stream().filter(ProgrammingExercise.class::isInstance).toList();
+        var programmingExerciseIds = programmingExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
+        var attemptGrades = grades.stream().filter(
+                grade -> participationIds.contains(grade.participationId()) && exerciseIds.contains(grade.exerciseId()) && !programmingExerciseIds.contains(grade.exerciseId()))
                 .collect(Collectors.toSet());
-        var pendingExerciseIds = exercises.stream().filter(ProgrammingExercise.class::isInstance).filter(exercise -> {
+        var pendingExerciseIds = new ArrayList<Long>();
+        for (var exercise : programmingExercises) {
             var participation = exercise.findParticipation(participations);
             var latest = participation != null ? participation.findLatestSubmission().orElse(null) : null;
-            return latest instanceof ProgrammingSubmission submission && Boolean.TRUE.equals(submission.isSubmitted()) && submission.getSubmissionDate() != null
-                    && !submission.isBuildFailed() && submission.getLatestCompletedResult() == null;
-        }).map(Exercise::getId).toList();
+            if (!(latest instanceof ProgrammingSubmission submission)) {
+                continue;
+            }
+            // The grade projection can precede build completion. Use one loaded result snapshot for both the score
+            // and readiness, rather than clearing pending with a newer result while retaining the older projection.
+            var completedResult = submission.getLatestCompletedResult();
+            if (submission.getSubmissionDate() != null && completedResult != null && Boolean.TRUE.equals(completedResult.isRated()) && completedResult.getScore() != null) {
+                attemptGrades.add(new ExamGradeScoreDTO(participation.getId(), studentExam.getUser().getId(), exercise.getId(), completedResult.getScore(), exercise.getMaxPoints(),
+                        exercise.getIncludedInOverallScore()));
+            }
+            if (Boolean.TRUE.equals(submission.isSubmitted()) && submission.getSubmissionDate() != null && !submission.isBuildFailed() && completedResult == null) {
+                pendingExerciseIds.add(exercise.getId());
+            }
+        }
         return new ExamResultInputs(exercises, attemptGrades, pendingExerciseIds);
     }
 

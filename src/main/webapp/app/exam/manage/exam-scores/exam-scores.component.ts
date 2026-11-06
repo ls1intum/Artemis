@@ -847,7 +847,7 @@ export class ExamScoresComponent implements OnInit {
         }
         rowData.set(EXAM_SUBMITTED, studentResult.submitted ? 'yes' : 'no');
         if (this.gradingScaleExists() && !this.isBonus()) {
-            rowData.set(EXAM_PASSED, studentResult.hasPassed ? 'yes' : 'no');
+            rowData.set(EXAM_PASSED, this.isUnscoredTestAttempt(studentResult) ? '' : studentResult.hasPassed ? 'yes' : 'no');
         }
 
         if (this.hasPlagiarismVerdicts()) {

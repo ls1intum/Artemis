@@ -1,3 +1,4 @@
+import * as XLSX from '@e965/xlsx';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -28,6 +29,7 @@ import {
     EXAM_ASSIGNED_EXERCISE,
     EXAM_OVERALL_POINTS_KEY,
     EXAM_OVERALL_SCORE_KEY,
+    EXAM_PASSED,
     EXAM_SUBMITTED,
     FINAL_GRADE_KEY,
     NAME_KEY,
@@ -48,6 +50,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@e965/xlsx', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@e965/xlsx')>();
+    return { ...actual, writeFile: vi.fn() };
+});
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ExamScoresComponent', () => {
@@ -638,6 +645,45 @@ describe('ExamScoresComponent', () => {
         expect(exported.mock.calls[0][1][1]['Maximum Exam Points']).toBe('20');
         expect(exported.mock.calls[0][1][0]['Overall Exam Points']).toBe('8.4');
         expect(exported.mock.calls[0][1][0]['Overall Exam Score']).toBe('80%');
+    });
+
+    it.each([true, false])('exports unscored pass values separately from a genuine zero (test exam: %s)', async (testExam) => {
+        const dto = deepClone(examScoreDTO);
+        dto.studentResults.forEach((result, index) => {
+            result.maxPoints = testExam ? (index === 0 ? 0 : 10) : undefined;
+            result.overallPointsAchieved = index === 1 ? undefined : 0;
+            result.overallScoreAchieved = index === 1 ? undefined : 0;
+            result.hasPassed = false;
+            result.submitted = true;
+            result.overallGrade = index === 2 ? '5' : undefined;
+        });
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        fixture.detectChanges();
+        comp.gradingScaleExists.set(true);
+        comp.isBonus.set(false);
+        const options = {
+            fieldSeparator: CsvFieldSeparator.SEMICOLON,
+            quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteStrings: true,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
+        };
+
+        comp.exportExamResults(options);
+
+        const blob = vi.mocked(URL.createObjectURL).mock.calls.at(-1)![0] as Blob;
+        const workbook = XLSX.read(await blob.text(), { type: 'string', FS: ';' });
+        const csvRows = XLSX.utils.sheet_to_json<string[]>(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: '' });
+        const passColumn = csvRows[0].indexOf(EXAM_PASSED);
+        expect(passColumn).toBeGreaterThanOrEqual(0);
+        const expected = testExam ? ['', '', 'no'] : ['no', 'no', 'no'];
+        expect(csvRows.slice(1).map((row) => row[passColumn])).toEqual(expected);
+
+        const writeFile = vi.mocked(XLSX.writeFile);
+        writeFile.mockClear();
+        comp.exportExamResults();
+        const excelWorkbook = writeFile.mock.calls[0][0];
+        const excelRows = XLSX.utils.sheet_to_json<string[]>(excelWorkbook.Sheets[excelWorkbook.SheetNames[0]], { header: 1, defval: '' });
+        expect(excelRows.slice(1).map((row) => row[excelRows[0].indexOf(EXAM_PASSED)])).toEqual(expected);
     });
 
     it('counts pending and manual-only attempts independently of scored statistics in every submission filter', () => {
