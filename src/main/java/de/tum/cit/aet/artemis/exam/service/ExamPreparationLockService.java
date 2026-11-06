@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.function.Supplier;
 
 import org.springframework.context.annotation.Conditional;
@@ -42,6 +43,33 @@ public class ExamPreparationLockService {
         }
         finally {
             lock.unlock();
+        }
+    }
+
+    /**
+     * Runs every cleanup task, even if an earlier one fails, so that one failing external resource does not leave the
+     * resources of the remaining participations orphaned. The first failure is rethrown afterwards with the others attached
+     * as suppressed exceptions.
+     *
+     * @param cleanups the cleanup tasks collected during regeneration
+     */
+    public void runAllCleanups(List<Runnable> cleanups) {
+        RuntimeException failure = null;
+        for (Runnable cleanup : cleanups) {
+            try {
+                cleanup.run();
+            }
+            catch (RuntimeException ex) {
+                if (failure == null) {
+                    failure = ex;
+                }
+                else {
+                    failure.addSuppressed(ex);
+                }
+            }
+        }
+        if (failure != null) {
+            throw failure;
         }
     }
 }

@@ -182,18 +182,23 @@ public class ParticipationDeletionService {
             String projectKey = buildPlanId == null ? null : programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
             boolean hasRepository = programmingExerciseParticipation.getRepositoryUri() != null;
             externalCleanup.accept(() -> {
-                if (buildPlanId != null) {
-                    continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
-                }
-                if (hasRepository) {
-                    try {
-                        versionControlService.orElseThrow().deleteRepository(repositoryUri);
-                    }
-                    catch (Exception ex) {
-                        log.error("Could not delete repository {} of participation {}", repositoryUri, participationId, ex);
+                try {
+                    if (buildPlanId != null) {
+                        continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
                     }
                 }
-                gitService.deleteLocalRepository(repositoryUri);
+                finally {
+                    // A failing build plan deletion must not leave the repositories behind; the failure still propagates.
+                    if (hasRepository) {
+                        try {
+                            versionControlService.orElseThrow().deleteRepository(repositoryUri);
+                        }
+                        catch (Exception ex) {
+                            log.error("Could not delete repository {} of participation {}", repositoryUri, participationId, ex);
+                        }
+                    }
+                    gitService.deleteLocalRepository(repositoryUri);
+                }
             });
 
             participationVcsAccessTokenService.deleteByParticipationId(participationId);

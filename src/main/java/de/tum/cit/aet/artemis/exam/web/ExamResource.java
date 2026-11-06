@@ -1174,7 +1174,7 @@ public class ExamResource {
                 return studentExamService.generateStudentExams(exam);
             });
             // Preparation cannot recreate repositories or build plans until the old resources have been removed.
-            externalCleanup.forEach(Runnable::run);
+            examPreparationLockService.runAllCleanups(externalCleanup);
             return generated;
         });
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
