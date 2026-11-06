@@ -22,7 +22,7 @@ import {
     visibleTitleRow,
 } from '../../support/examLayoutAssertions';
 import { test } from '../../support/fixtures';
-import { expectAligned, expectHeight, expectInset, expectSameValue, forEachViewport, measure } from '../../support/layout';
+import { expectAligned, expectGap, expectHeight, expectInset, expectSameValue, forEachViewport, measure } from '../../support/layout';
 import { SEED_COURSES } from '../../support/seedData';
 import { admin, studentTwo } from '../../support/users';
 
@@ -118,6 +118,15 @@ test.describe('Exam layout contract', { tag: '@slow' }, () => {
         ];
 
         const sidebar = page.getByTestId('exam-sidebar');
+        const expectStackedProblemStatement = async () => {
+            const solution = page.getByTestId('resizeable-container-left').filter({ visible: true });
+            const instructions = page.getByTestId('resizeable-container-right').filter({ visible: true });
+            const content = page.getByTestId('exam-content-column');
+            // Comparing against the exam content catches two equally squeezed panels as well as an overflowing one.
+            await expectAligned([solution, instructions, content], 'width', { name: 'the stacked solution and instructions fill the exam content' });
+            await expectAligned([solution, instructions, content], 'left', { name: 'the stacked panels start at the content edge' });
+            await expectGap(instructions, solution, 'vertical', 6, { name: 'the stacked instructions keep the divider space above the solution' });
+        };
         const openExamPage = async (index: number) => {
             const examPage = pages[index];
             await sidebar.getByTestId('sidebar-card-title').nth(index).click();
@@ -163,7 +172,11 @@ test.describe('Exam layout contract', { tag: '@slow' }, () => {
                             await expectProgrammingPanelDividers(page);
                         }
                         if (PAGES_WITH_PROBLEM_STATEMENT.includes(examPage.name as ExerciseType)) {
-                            await expectProblemStatementDivider(page, `the ${examPage.name} page`);
+                            if (viewport.width <= 992) {
+                                await expectStackedProblemStatement();
+                            } else {
+                                await expectProblemStatementDivider(page, `the ${examPage.name} page`);
+                            }
                         }
                         if (examPage.name === ExerciseType.FILE_UPLOAD) {
                             const uploadArea = page.getByTestId('file-upload-field').filter({ visible: true });
@@ -180,6 +193,25 @@ test.describe('Exam layout contract', { tag: '@slow' }, () => {
                 expectSameValue(page, 'top of the title row on the pages of the exam', tops);
                 expectSameValue(page, 'left edge of the title on the pages of the exam', lefts);
             }));
+
+        await test.step('The file upload and instructions remain reachable on a phone', async () => {
+            const originalViewport = page.viewportSize()!;
+            try {
+                await page.setViewportSize({ width: 390, height: 844 });
+                await openExamPage(pages.findIndex(({ name }) => name === ExerciseType.FILE_UPLOAD));
+                await expectStackedProblemStatement();
+                const instructions = page.getByTestId('resizeable-container-right').filter({ visible: true });
+                const uploadArea = page.getByTestId('file-upload-field').filter({ visible: true });
+                await instructions.getByRole('button').first().scrollIntoViewIfNeeded();
+                await expect(instructions.getByRole('button').first()).toBeInViewport({ ratio: 1 });
+                await uploadArea.scrollIntoViewIfNeeded();
+                await expect(uploadArea, 'the full upload control can be reached without clipping').toBeInViewport({ ratio: 1 });
+                await expectPageNotToScrollSideways(page, uploadArea);
+                await page.getByTestId('exam-content-scroller').evaluate((element) => (element.scrollTop = 0));
+            } finally {
+                await page.setViewportSize(originalViewport);
+            }
+        });
 
         // The dividers keep working as handles, and the collapsed problem statement keeps its distance. A divider that was dragged leaves the width
         // it was given in px, which a smaller window does not undo, so this is left to the end of the pages, at the size of the window the test started with.
