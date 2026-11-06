@@ -368,7 +368,7 @@ public class ProgrammingSubmissionResource {
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
             User user = userRepository.getUserWithAuthorities();
-            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode,
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exercise, user, examMode,
                     correctionRound);
         }
         else {
@@ -425,6 +425,8 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
 
+        authCheckService.checkTeamAssessmentAccessElseThrow(programmingSubmission);
+
         long numberOfManualResults = programmingSubmission.getResults().stream().filter(Result::isManual).count();
 
         // this makes sure that new results are only created if it is really necessary.
@@ -441,6 +443,10 @@ public class ProgrammingSubmissionResource {
                 // If there isn't a submission either, we should not create any result.
                 programmingSubmission = programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false).orElseThrow();
             }
+            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
+        }
+        else if (programmingExercise.isTeamMode() && programmingSubmission.getResultForCorrectionRound(correctionRound) != null
+                && programmingSubmission.getResultForCorrectionRound(correctionRound).getCompletionDate() == null) {
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
 

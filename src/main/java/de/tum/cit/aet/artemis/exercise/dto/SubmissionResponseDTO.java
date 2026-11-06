@@ -70,6 +70,18 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
     }
 
     /**
+     * Maps queue metadata without transferring every team's answer or model to the dashboard.
+     *
+     * @param submission the listed submission
+     * @return the submission metadata and assessment status
+     */
+    public static SubmissionResponseDTO forAssessmentQueue(Submission submission) {
+        var response = of(submission);
+        return new SubmissionResponseDTO(response.id(), response.submitted(), response.type(), response.exampleSubmission(), response.submissionDate(),
+                response.submissionExerciseType(), response.participation(), response.results(), response.buildFailed(), response.commitHash(), null, response.language(), null);
+    }
+
+    /**
      * Maps a submission together with the sibling submissions of its participation.
      * <p>
      * The example-submission import table resolves the result it shows over all submissions of the participation, not

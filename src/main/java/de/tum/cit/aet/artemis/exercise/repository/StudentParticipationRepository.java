@@ -1026,16 +1026,19 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      *
      * @param correctionRound the correction round the fetched results should belong to
      * @param exerciseId      the exercise id the participations should belong to
+     * @param teamOwnerId     restrict candidates to this team tutor, or null for unrestricted assessment
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     // NOTE: we should not fetch too elements here so we leave out feedback and test cases, otherwise the query will be very slow
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN p.team team
                 LEFT JOIN FETCH p.submissions submission
                 LEFT JOIN FETCH submission.results result
                 LEFT JOIN FETCH result.assessor
             WHERE p.exercise.id = :exerciseId
+                AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
                 AND p.testRun = FALSE
                 AND 0L = (
                     SELECT COUNT(r2)
@@ -1070,7 +1073,21 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND submission.id = (SELECT MAX(s3.id) FROM p.submissions s3)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") long exerciseId,
-            @Param("correctionRound") long correctionRound);
+            @Param("correctionRound") long correctionRound, @Param("teamOwnerId") Long teamOwnerId);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                JOIN FETCH p.team team
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.assessor
+            WHERE p.exercise.id = :exerciseId
+                AND p.testRun = FALSE
+                AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
+            ORDER BY p.id
+            """)
+    List<StudentParticipation> findTeamAssessmentQueueParticipations(@Param("exerciseId") long exerciseId, @Param("teamOwnerId") Long teamOwnerId);
 
     Set<StudentParticipation> findDistinctAllByExerciseIdInAndStudentId(Set<Long> exerciseIds, Long studentId);
 
@@ -1078,9 +1095,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN p.team team
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
             WHERE p.exercise.id = :exerciseId
+                AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
                 AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
                 AND p.testRun = FALSE
                 AND NOT EXISTS (
@@ -1096,7 +1115,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND s.id = (SELECT MAX(s3.id) FROM p.submissions s3)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId,
-            @Param("now") ZonedDateTime now);
+            @Param("now") ZonedDateTime now, @Param("teamOwnerId") Long teamOwnerId);
 
     @Query("""
             SELECT p

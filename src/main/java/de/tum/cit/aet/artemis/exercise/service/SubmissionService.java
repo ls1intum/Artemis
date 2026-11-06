@@ -180,46 +180,45 @@ public class SubmissionService {
     /**
      * Given an exercise id and a tutor id, it returns all the submissions where the tutor has a result associated.
      *
-     * @param exerciseId      - the id of the exercise we are looking for
+     * @param exercise        - the exercise we are looking for
      * @param correctionRound - the correction round we want our submission to have results for
      * @param tutor           - the tutor we are interested in
      * @param examMode        - flag should be set to ignore the test run submissions
      * @param <T>             the submission type
      * @return list of submissions
      */
-    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(Long exerciseId, User tutor, boolean examMode,
+    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(Exercise exercise, User tutor, boolean examMode,
             int correctionRound) {
         List<T> submissions;
         if (examMode) {
-            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
+            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exercise.getId(), tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
                     .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(Collectors.toCollection(ArrayList::new));
         }
         else {
-            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndAssessorOrCurrentTeamOwnerIgnoreTestRuns(exercise.getId(), tutor,
+                    exercise.isTeamMode() && authCheckService.isAtLeastInstructorForExercise(exercise, tutor));
         }
 
         submissions.forEach(submission -> submission.getLatestResult().setSubmission(null));
         return submissions;
     }
 
-    protected List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
-        // TODO: it really does not make sense to fetch these submissions with all related data from the database just to select one submission afterwards
-        // it would be better to fetch them with minimal related data (so we can select one) and then afterwards fetch the selected one with all related data
-
+    public List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
+        final Long teamOwnerId = exercise.isTeamMode() && !authCheckService.isAtLeastInstructorForExercise(exercise, null) ? userRepository.getUser().getId() : null;
         final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
             // No manual result means that no tutor has started an assessment for the corresponding submission yet.
-            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(),
-                    correctionRound);
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(), correctionRound,
+                    teamOwnerId);
         }
         else {
             // Get all participations of submissions that are submitted and do not already have a manual result.
             // No manual result means that no user has started an assessment for the corresponding submission yet.
             // Does not fetch participations for which the due date has not yet passed.
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(exercise.getId(),
-                    ZonedDateTime.now());
+                    ZonedDateTime.now(), teamOwnerId);
         }
 
         var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
@@ -677,6 +676,7 @@ public class SubmissionService {
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
+        authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         Result result = submission.getResultForCorrectionRound(correctionRound);
         if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round
@@ -686,7 +686,7 @@ public class SubmissionService {
             result = saveNewEmptyResult(submission);
         }
 
-        if (result.getAssessor() == null) {
+        if (result.getAssessor() == null || submission.getParticipation().getExercise().isTeamMode() && result.getCompletionDate() == null) {
             result.setAssessor(userRepository.getUser());
         }
 
