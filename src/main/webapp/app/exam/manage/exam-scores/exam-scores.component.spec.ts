@@ -887,6 +887,65 @@ describe('ExamScoresComponent', () => {
         expect(fixture.nativeElement.querySelectorAll('jhi-exam-scores-average-scores-graph rect[role="button"]')).toHaveLength(0);
     });
 
+    it.each([
+        { points: 20, score: 100 },
+        { points: 0, score: 0 },
+    ])('uses assigned attempts for participation percentages while averaging scored points ($points)', ({ points, score }) => {
+        const dto = deepClone(examScoreDTO);
+        dto.hasSecondCorrectionAndStarted = false;
+        // Actual server contract: the server's existing participation counts describe the scored cohort.
+        dto.exerciseGroups = [
+            {
+                id: 24,
+                title: 'Automatic programming only',
+                maxPoints: 20,
+                numberOfParticipants: 1,
+                containedExercises: [{ exerciseId: 31, title: 'Program', maxPoints: 20, numberOfParticipants: 1, exerciseType: 'ProgrammingExercise' }],
+            },
+        ];
+        dto.studentResults = dto.studentResults.slice(0, 2);
+        dto.studentResults.forEach((result, index) => {
+            result.submitted = true;
+            result.maxPoints = 20;
+            result.overallPointsAchieved = index === 0 ? points : undefined;
+            result.overallScoreAchieved = index === 0 ? score : undefined;
+            result.exerciseGroupIdToExerciseResult = {
+                24:
+                    index === 0
+                        ? {
+                              exerciseId: 31,
+                              title: 'Program',
+                              maxScore: 20,
+                              achievedPoints: points,
+                              achievedScore: score,
+                              hasNonEmptySubmission: true,
+                          }
+                        : { exerciseId: 31, title: 'Program', maxScore: 20, hasNonEmptySubmission: true },
+            };
+        });
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        fixture.detectChanges();
+        comp.toggleFilterForNonEmptySubmission();
+        fixture.detectChanges();
+
+        const group = comp.aggregatedExerciseGroupResults()[0];
+        expect(group.totalParticipants).toBe(2);
+        expect(group.noOfParticipantsWithFilter).toBe(2);
+        expect(group.noOfScoredParticipantsWithFilter).toBe(1);
+        expect(group.averagePoints).toBe(points);
+        expect(group.averagePercentage).toBe(score);
+        expect(group.exerciseResults[0].totalParticipants).toBe(2);
+        expect(group.exerciseResults[0].averagePoints).toBe(points);
+        expect(comp.aggregatedExamResults().meanPointsTotal).toBe(points);
+        expect(comp.aggregatedExamResults().noOfExamsNonEmpty).toBe(2);
+        const statisticsRow = Array.from(fixture.nativeElement.querySelectorAll('tr') as NodeListOf<HTMLTableRowElement>).find(
+            (row) => row.cells[1]?.textContent?.trim() === 'Automatic programming only',
+        )!;
+        expect(statisticsRow.cells[2].textContent?.replace(/\s+/g, ' ').trim()).toBe('2 / 2 (100 %)');
+        expect(statisticsRow.cells[6].textContent?.replace(/\s+/g, ' ').trim()).toBe('2 / 2 (100 %)');
+        expect(fixture.nativeElement.textContent).not.toContain('200 %');
+    });
+
     it('retains registration and submission counts when no test attempt has a completed automatic score', () => {
         const dto = deepClone(examScoreDTO);
         for (const result of dto.studentResults) {

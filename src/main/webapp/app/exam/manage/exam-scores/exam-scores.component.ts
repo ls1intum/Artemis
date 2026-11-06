@@ -335,11 +335,24 @@ export class ExamScoresComponent implements OnInit {
         // Create data structures holding the statistics for all exercise groups and exercises
         const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
         for (const exerciseGroup of this.exerciseGroups()) {
-            const groupResult = new AggregatedExerciseGroupResult(exerciseGroup.id, exerciseGroup.title, exerciseGroup.maxPoints, exerciseGroup.numberOfParticipants);
+            // Practice metadata includes pending/manual assignments; the server's legacy counts only include scored entries.
+            const assignments = this.hasPerAttemptMaxima()
+                ? this.studentResults().flatMap((result) => {
+                      const assignment = result.exerciseGroupIdToExerciseResult?.[exerciseGroup.id];
+                      return assignment ? [assignment] : [];
+                  })
+                : undefined;
+            const groupResult = new AggregatedExerciseGroupResult(
+                exerciseGroup.id,
+                exerciseGroup.title,
+                exerciseGroup.maxPoints,
+                assignments?.length ?? exerciseGroup.numberOfParticipants,
+            );
             // We initialize the data structure for exercises here as it can happen that no student was assigned to an exercise
             exerciseGroup.containedExercises.forEach((exerciseInfo) => {
                 const type = declareExerciseType(exerciseInfo);
-                const exerciseResult = new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title, exerciseInfo.maxPoints, exerciseInfo.numberOfParticipants, type!);
+                const participants = assignments?.filter((assignment) => assignment.exerciseId === exerciseInfo.exerciseId).length ?? exerciseInfo.numberOfParticipants;
+                const exerciseResult = new AggregatedExerciseResult(exerciseInfo.exerciseId, exerciseInfo.title, exerciseInfo.maxPoints, participants, type!);
                 groupResult.exerciseResults.push(exerciseResult);
             });
             groupIdToGroupResults.set(exerciseGroup.id, groupResult);
