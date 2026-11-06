@@ -1,4 +1,4 @@
-<div class="flex flex-wrap items-center gap-2" role="group" [attr.aria-label]="'artemisApp.exercise.filter' | artemisTranslate">
+<fieldset class="m-0 flex min-w-0 flex-wrap items-center gap-2 border-0 p-0" [attr.aria-label]="'artemisApp.exercise.filter' | artemisTranslate">
     @for (group of groups(); track group.labelKey) {
         @if (group.items.length === 1) {
             <div class="inline-flex shrink-0 items-center gap-2 text-sm text-(--tumaet-ui-text-color)">
@@ -61,4 +61,4 @@
             {{ 'artemisApp.assessment.dashboard.resetFilter' | artemisTranslate }}
         </button>
     }
-</div>
+</fieldset>

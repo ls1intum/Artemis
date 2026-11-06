@@ -53,6 +53,7 @@ import {
     TumAetUiPopoverTriggerDirective,
     TumAetUiTableComponent,
     TumAetUiTableQueryEvent,
+    TumAetUiTagComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
@@ -63,8 +64,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ParticipationManagementDTO } from './participation-management-dto.model';
-import { SortingOrder } from 'app/foundation/pagination/pageable-table';
-import { ParticipationSearch } from 'app/foundation/pagination/pageable-table';
+import { ParticipationSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
@@ -81,7 +81,6 @@ import { Range } from 'app/foundation/util/utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';

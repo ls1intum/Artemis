@@ -50,10 +50,10 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
     imports: [TumAetUiButtonDirective, TumAetUiTooltipDirective, FaIconComponent, ArtemisTranslatePipe, FeatureToggleDirective, TranslateDirective],
 })
 export class ProgrammingExerciseTriggerAllButtonComponent {
-    private submissionService = inject(ProgrammingSubmissionService);
-    private programmingBuildRunService = inject(ProgrammingBuildRunService);
-    private dialogService = inject(DialogService);
-    private translateService = inject(TranslateService);
+    private readonly submissionService = inject(ProgrammingSubmissionService);
+    private readonly programmingBuildRunService = inject(ProgrammingBuildRunService);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
 
     FeatureToggle = FeatureToggle;
     ButtonSize = ButtonSize;

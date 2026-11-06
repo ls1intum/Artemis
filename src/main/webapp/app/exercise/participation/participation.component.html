@@ -100,13 +100,14 @@
 <!-- Filter dropdown in the table caption bar -->
 
 <ng-template #filterActionsTemplate>
-    <span
-        tabindex="0"
-        role="img"
+    <button
+        type="button"
+        class="inline-flex items-center border-0 bg-transparent p-0 text-inherit"
         [attr.aria-label]="'artemisApp.participation.searchHint' | artemisTranslate"
         [tumAetUiTooltip]="'artemisApp.participation.searchHint' | artemisTranslate"
-        ><fa-icon [icon]="faCircleInfo"
-    /></span>
+    >
+        <fa-icon [icon]="faCircleInfo" />
+    </button>
     <jhi-filter-dropdown [groupedFilters]="filterGroups()" [activeFilters]="activeFilters()" (filterChange)="updateParticipationFilter($event)" />
 </ng-template>
 
