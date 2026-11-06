@@ -241,9 +241,9 @@
 
 /* Keep navbar trigger colors local; portalled content retains the body theme. */
 .jh-navbar jhi-hyperion-activity-tray > button {
-    --tumaet-ui-contrast-background: var(--navbar-light-active-color);
+    --tumaet-ui-button-contrast-foreground: var(--navbar-light-active-color);
     --tumaet-ui-text-color: var(--navbar-light-color);
-    --tumaet-ui-focus-color: var(--navbar-light-active-color);
+    --tumaet-ui-button-focus-color: var(--navbar-light-active-color);
 }
 
 /* Preflight is disabled, so provide its semantic default for bare Tailwind border utilities. */
