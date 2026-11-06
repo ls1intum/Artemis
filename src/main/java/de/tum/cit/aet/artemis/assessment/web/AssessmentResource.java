@@ -277,9 +277,10 @@ public abstract class AssessmentResource {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
+        authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         boolean isAssessorOfResult = resultForAuthorization.getAssessor() != null && user.getId().equals(resultForAuthorization.getAssessor().getId());
-        if (!(isAtLeastInstructor || isAssessorOfResult)) {
+        if (!(isAtLeastInstructor || exercise.isTeamMode() || isAssessorOfResult)) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
             throw new AccessForbiddenException();
         }

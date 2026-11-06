@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TeamAssessmentQueueEntryDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 
 /**
@@ -1075,19 +1076,24 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") long exerciseId,
             @Param("correctionRound") long correctionRound, @Param("teamOwnerId") Long teamOwnerId);
 
+    /**
+     * Selects team labels and the latest assessed submission for one correction round without loading histories.
+     *
+     * @param exerciseId      the exercise id
+     * @param teamOwnerId     the team owner, or null for all teams
+     * @param correctionRound the displayed correction round
+     * @return one metadata row per participation
+     */
     @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                JOIN FETCH p.team team
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.assessor
-            WHERE p.exercise.id = :exerciseId
-                AND p.testRun = FALSE
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.TeamAssessmentQueueEntryDTO(p.id, team.id, team.shortName,
+                (SELECT MAX(s.id) FROM Submission s JOIN s.results r WHERE s.participation.id = p.id AND r.correctionRound = :correctionRound))
+            FROM StudentParticipation p JOIN p.team team
+            WHERE p.exercise.id = :exerciseId AND p.testRun = FALSE
                 AND (:teamOwnerId IS NULL OR team.owner.id = :teamOwnerId)
             ORDER BY p.id
             """)
-    List<StudentParticipation> findTeamAssessmentQueueParticipations(@Param("exerciseId") long exerciseId, @Param("teamOwnerId") Long teamOwnerId);
+    List<TeamAssessmentQueueEntryDTO> findTeamAssessmentQueueParticipations(@Param("exerciseId") long exerciseId, @Param("teamOwnerId") Long teamOwnerId,
+            @Param("correctionRound") int correctionRound);
 
     Set<StudentParticipation> findDistinctAllByExerciseIdInAndStudentId(Set<Long> exerciseIds, Long studentId);
 

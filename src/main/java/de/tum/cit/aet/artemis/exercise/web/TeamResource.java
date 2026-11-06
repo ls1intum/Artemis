@@ -6,7 +6,6 @@ import static de.tum.cit.aet.artemis.core.util.StringUtil.stripIllegalCharacters
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -72,10 +71,12 @@ import de.tum.cit.aet.artemis.exercise.dto.TeamResponseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * REST controller for managing Teams.
@@ -121,10 +122,13 @@ public class TeamResource {
 
     private final TeamScoreRepository teamScoreRepository;
 
+    private final SubmissionRepository submissionRepository;
+
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseRepository courseRepository,
             ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationDeletionService participationDeletionService, SubmissionService submissionService, AuditEventRepository auditEventRepository,
-            StudentParticipationRepository studentParticipationRepository, TeamScoreRepository teamScoreRepository) {
+            StudentParticipationRepository studentParticipationRepository, TeamScoreRepository teamScoreRepository, SubmissionRepository submissionRepository) {
+        this.submissionRepository = submissionRepository;
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
@@ -345,7 +349,7 @@ public class TeamResource {
         submissionService.checkThatAssessmentIsPossibleElseThrow(exercise, null);
         var user = userRepository.getUserWithAuthorities();
         Long teamOwnerId = authCheckService.isAtLeastInstructorForExercise(exercise, user) ? null : user.getId();
-        var participations = studentParticipationRepository.findTeamAssessmentQueueParticipations(exerciseId, teamOwnerId);
+        var participations = studentParticipationRepository.findTeamAssessmentQueueParticipations(exerciseId, teamOwnerId, correctionRound);
         Map<Long, Submission> submissions = new HashMap<>();
         boolean canStartAssessment = true;
         try {
@@ -355,19 +359,17 @@ public class TeamResource {
             // Existing assessments remain visible while new assessments are blocked by their due date.
             canStartAssessment = false;
         }
-        if (canStartAssessment) {
+        if (canStartAssessment && (!(exercise instanceof ProgrammingExercise programmingExercise) || programmingExercise.areManualResultsAllowed())) {
             submissionService.getAssessableSubmissions(exercise, exercise.isExamExercise(), correctionRound)
                     .forEach(submission -> submissions.put(submission.getParticipation().getId(), submission));
         }
-        for (var participation : participations) {
-            participation.getSubmissions().stream().filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).max(Comparator.comparing(Submission::getId))
-                    .ifPresent(submission -> submissions.putIfAbsent(participation.getId(), submission));
+        var existingIds = participations.stream().map(entry -> entry.submissionId()).filter(Objects::nonNull).toList();
+        if (!existingIds.isEmpty()) {
+            submissionRepository.findBySubmissionIdsWithEagerResults(existingIds).forEach(submission -> submissions.putIfAbsent(submission.getParticipation().getId(), submission));
         }
-        return ResponseEntity.ok(participations.stream().filter(participation -> submissions.containsKey(participation.getId())).map(participation -> {
-            var team = participation.getTeam().orElseThrow();
-            var submission = submissions.get(participation.getId());
-            submission.setParticipation(participation);
-            return new AssessmentQueueTeamDTO(participation.getId(), team.getId(), team.getShortName(), SubmissionResponseDTO.forAssessmentQueue(submission));
+        return ResponseEntity.ok(participations.stream().filter(entry -> submissions.containsKey(entry.participationId())).map(entry -> {
+            var submission = submissions.get(entry.participationId());
+            return new AssessmentQueueTeamDTO(entry.participationId(), entry.teamId(), entry.shortName(), SubmissionResponseDTO.forAssessmentQueue(submission));
         }).toList());
     }
 

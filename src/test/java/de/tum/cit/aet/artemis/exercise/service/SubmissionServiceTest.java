@@ -259,6 +259,12 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         var team = teamRepository.findWithStudentsByIdElseThrow(teamId);
         team.setOwner(tutor2);
         teamRepository.save(exercise, team);
+        assertThat(submissionService.getLockedSubmissions(exercise.getCourseViaExerciseGroupOrCourseMember().getId())).isEmpty();
+        if (type == ExerciseType.PROGRAMMING) {
+            request.put("/api/programming/programming-submissions/" + draft.getId() + "/cancel-assessment?resultId=" + resultId, null, HttpStatus.FORBIDDEN);
+            assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(resultId).orElseThrow().getFeedbacks()).extracting(Feedback::getText)
+                    .contains("Saved draft feedback");
+        }
         assertThat(request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams", HttpStatus.OK, AssessmentQueueTeamDTO.class)).isEmpty();
 
         assertThat(submissionService.<Submission>getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(exercise, tutor1, false, 0)).isEmpty();
@@ -361,6 +367,16 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         finally {
             athenaRequestMockProvider.reset();
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void automaticProgrammingTeamQueueHasNoNewCandidates() throws Exception {
+        var exercise = (ProgrammingExercise) teamExercise(ExerciseType.PROGRAMMING);
+        teamSubmission(exercise, tutor1, "own");
+        exercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        exerciseRepository.save(exercise);
+        assertThat(request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams", HttpStatus.OK, AssessmentQueueTeamDTO.class)).isEmpty();
     }
 
     private String assessmentProposalUrl(ExerciseType type, Long exerciseId) {

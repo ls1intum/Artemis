@@ -130,8 +130,7 @@ public class SubmissionService {
      * @param currentUser the current user with groups and authorities
      */
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
-        // The exercise was loaded from the database by the caller, so its course is a persisted entity and not something
-        // the client could have tampered with. Re-reading it by id would only repeat a row we are already holding.
+        // The caller loaded this exercise from the database; its persisted course does not need reloading.
         final var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             throw new AccessForbiddenException();
@@ -155,13 +154,13 @@ public class SubmissionService {
     }
 
     /**
-     * Check if the limit of simultaneously locked submissions (i.e. unfinished assessments) has been reached for the current user in the given course. Throws a
-     * BadRequestAlertException if the limit has been reached.
+     * Reject a new assessment when the current user has reached the course lock limit.
      *
      * @param courseId the id of the course
      */
     public void checkSubmissionLockLimit(long courseId) {
-        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId);
+        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId,
+                authCheckService.isAtLeastInstructorInCourse(courseId));
         if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
             throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
         }
@@ -174,11 +173,12 @@ public class SubmissionService {
      * @return the locked submissions for the current user in the given course
      */
     public List<Submission> getLockedSubmissions(long courseId) {
-        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId);
+        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId,
+                authCheckService.isAtLeastInstructorInCourse(courseId));
     }
 
     /**
-     * Given an exercise id and a tutor id, it returns all the submissions where the tutor has a result associated.
+     * Returns existing assessments visible to the tutor for the exercise.
      *
      * @param exercise        - the exercise we are looking for
      * @param correctionRound - the correction round we want our submission to have results for

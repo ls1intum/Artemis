@@ -158,8 +158,9 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the
      * assessment.
      *
-     * @param userId   the id of the user
-     * @param courseId the id of the course
+     * @param userId     the id of the user
+     * @param courseId   the id of the course
+     * @param instructor whether the caller may retain assessments for teams owned by other tutors
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
@@ -169,8 +170,10 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE r.assessor.id = :userId
                 AND r.completionDate IS NULL
                 AND s.participation.exercise.course.id = :courseId
+                AND (:instructor = TRUE OR s.participation.exercise.mode <> de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM
+                    OR EXISTS (SELECT p.id FROM StudentParticipation p WHERE p.id = s.participation.id AND p.team.owner.id = :userId))
             """)
-    long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("instructor") boolean instructor);
 
     /**
      * Get the number of currently locked submissions for a specific user in the given exam. These are all submissions for which the user started, but has not yet finished the
@@ -231,8 +234,9 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * Get currently locked submissions for a specific user in the given course.
      * These are all submissions for which the user started, but has not yet finished the assessment.
      *
-     * @param userId   the id of the user
-     * @param courseId the id of the course
+     * @param userId     the id of the user
+     * @param courseId   the id of the course
+     * @param instructor whether the caller may retain assessments for teams owned by other tutors
      * @return currently locked submissions for a specific user in the given course
      */
     @Query("""
@@ -242,8 +246,10 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE r.assessor.id = :userId
                 AND r.completionDate IS NULL
                 AND submission.participation.exercise.course.id = :courseId
+                AND (:instructor = TRUE OR submission.participation.exercise.mode <> de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM
+                    OR EXISTS (SELECT p.id FROM StudentParticipation p WHERE p.id = submission.participation.id AND p.team.owner.id = :userId))
             """)
-    List<Submission> getLockedSubmissionsAndResultsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    List<Submission> getLockedSubmissionsAndResultsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("instructor") boolean instructor);
 
     /**
      * Get all currently locked submissions across the given exercises (used for an exam).

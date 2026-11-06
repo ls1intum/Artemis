@@ -447,6 +447,10 @@ public class ProgrammingSubmissionResource {
         }
         else if (programmingExercise.isTeamMode() && programmingSubmission.getResultForCorrectionRound(correctionRound) != null
                 && programmingSubmission.getResultForCorrectionRound(correctionRound).getCompletionDate() == null) {
+            var draft = programmingSubmission.getResultForCorrectionRound(correctionRound);
+            if (draft.getAssessor() == null || !draft.getAssessor().getId().equals(user.getId())) {
+                programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            }
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
 
