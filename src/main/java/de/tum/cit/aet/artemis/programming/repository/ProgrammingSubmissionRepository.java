@@ -41,6 +41,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             FROM ProgrammingSubmission s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH r.assessmentNote
                 LEFT JOIN FETCH s.participation p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students

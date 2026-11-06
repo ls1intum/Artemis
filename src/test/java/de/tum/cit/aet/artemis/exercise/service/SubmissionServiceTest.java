@@ -471,9 +471,9 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @org.junit.jupiter.params.provider.CsvSource({ "false,false", "false,true", "true,false", "true,true" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void programmingTeamDraftNoteSurvivesReopenAndSave(boolean transfer) throws Exception {
+    void programmingTeamDraftNoteSurvivesReopenAndSave(boolean transfer, boolean originalUrl) throws Exception {
         var exercise = teamExercise(ExerciseType.PROGRAMMING);
         var submission = teamSubmission(exercise, tutor1, "own");
         var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId()), HttpStatus.OK,
@@ -491,7 +491,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
             teamRepository.save(exercise, team);
             userUtilService.changeUser(TEST_PREFIX + "tutor2");
         }
-        var reopened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, opened.id()), HttpStatus.OK,
+        assertThat(opened.id()).isNotEqualTo(submission.getId());
+        var reopened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, originalUrl ? submission.getId() : opened.id()), HttpStatus.OK,
                 de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
         var result = reopened.results().getFirst();
         assertThat(result.assessmentNote()).isNotNull();

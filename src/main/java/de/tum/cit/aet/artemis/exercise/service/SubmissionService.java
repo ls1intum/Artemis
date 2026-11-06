@@ -691,15 +691,10 @@ public class SubmissionService {
             result.setAssessor(userRepository.getUser());
         }
 
-        // The round this result belongs to is stored on the result itself. This is the one place where a manual result
-        // for a correction round is created or claimed, and the round the tutor asked for takes precedence over the one
-        // Submission.addResult would derive.
+        // The requested correction round takes precedence over the one Submission.addResult would derive.
         result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
-        // Deliberately keep (and return) the object the submission's result set already holds instead of the
-        // merge result: the set ignores re-adding an equal copy, so a caller that adds the returned result back
-        // would keep the stale instance. Returning the original also avoids the assessor (and every other
-        // association) turning into an uninitialized proxy, which the merge result does.
+        // Return the original: the result set ignores equal merge copies, whose associations may also become lazy proxies.
         resultRepository.save(result);
         return result;
     }
