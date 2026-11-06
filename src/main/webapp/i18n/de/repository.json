@@ -33,7 +33,7 @@
                 "timeStamp": "Zeitstempel",
                 "error": "VCS-Zugriffsprotokoll konnte nicht abgerufen werden",
                 "searchPlaceholder": "Nach Benutzer, Autor, Aktion, Zugriffsart, Commit oder Datum suchen",
-                "empty": "Keine Zugriffsprotokolleinträge entsprechen der Suche oder den Filtern."
+                "empty": "Keine Zugriffsprotokolleinträge entsprechen der Suche."
             },
             "userRepository": {
                 "title": "Assignment-Repository"

@@ -80,7 +80,7 @@ export class VcsRepositoryAccessLogViewComponent {
             repositoryActionType: entry.repositoryActionType,
             authenticationMechanism: entry.authenticationMechanism,
             commitHash: entry.commitHash,
-            // The shared date filter reads the leading calendar date. Use the viewer's timezone, matching the displayed date.
+            // Search dates in the viewer's timezone, matching the displayed timestamp.
             timestamp: dayjs(entry.timestamp).local().format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
         })),
     );
@@ -96,17 +96,16 @@ export class VcsRepositoryAccessLogViewComponent {
     };
 
     protected readonly columns = computed<ColumnDef<VcsAccessLogRow>[]>(() => [
-        { field: 'userId', headerKey: 'artemisApp.repository.vcsAccessLog.userId', sort: true, filterType: 'numeric', width: '7rem' },
-        { field: 'author', headerKey: 'artemisApp.repository.vcsAccessLog.author', sort: true, filterType: 'text' },
-        { field: 'repositoryActionType', headerKey: 'artemisApp.repository.vcsAccessLog.actionType', sort: true, filterType: 'text', width: '9rem' },
-        { field: 'authenticationMechanism', headerKey: 'artemisApp.repository.vcsAccessLog.authMechanism', sort: true, filterType: 'text', width: '12rem' },
+        { field: 'userId', headerKey: 'artemisApp.repository.vcsAccessLog.userId', sort: true, width: '7rem' },
+        { field: 'author', headerKey: 'artemisApp.repository.vcsAccessLog.author', sort: true },
+        { field: 'repositoryActionType', headerKey: 'artemisApp.repository.vcsAccessLog.actionType', sort: true, width: '9rem' },
+        { field: 'authenticationMechanism', headerKey: 'artemisApp.repository.vcsAccessLog.authMechanism', sort: true, width: '12rem' },
         { field: 'commitHash', headerKey: 'artemisApp.repository.vcsAccessLog.commitHash', templateRef: this.commitHashTemplate() },
         {
             field: 'timestamp',
             headerKey: 'artemisApp.repository.vcsAccessLog.timeStamp',
             sort: true,
             sortComparator: (first, second) => dayjs(first.timestamp).valueOf() - dayjs(second.timestamp).valueOf(),
-            filterType: 'date',
             templateRef: this.timestampTemplate(),
             width: '14rem',
         },

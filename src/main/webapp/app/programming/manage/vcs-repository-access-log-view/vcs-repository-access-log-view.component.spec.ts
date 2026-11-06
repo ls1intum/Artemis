@@ -54,14 +54,6 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         return Array.from(fixture.nativeElement.querySelectorAll(`[data-testid="table-cell"][data-column="${field}"]`));
     }
 
-    function filter(field: string, value: string) {
-        const input: HTMLInputElement = fixture.nativeElement.querySelector(`input[aria-label="${translationPrefix}${field}"]`);
-        expect(input).toBeTruthy();
-        input.value = value;
-        input.dispatchEvent(new Event('input'));
-        fixture.detectChanges();
-    }
-
     function table(): TableViewComponent<unknown> {
         const element = fixture.debugElement.query(By.directive(TableViewComponent));
         expect(element).toBeTruthy();
@@ -117,6 +109,12 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         expect(fixture.nativeElement.querySelector('th[aria-sort="descending"]')?.textContent).toContain(`${translationPrefix}timeStamp`);
     });
 
+    it('offers one global search without per-column search controls', () => {
+        createComponent();
+        expect(fixture.nativeElement.querySelectorAll('input[type="search"]')).toHaveLength(1);
+        expect(fixture.nativeElement.querySelectorAll('thead input')).toHaveLength(0);
+    });
+
     it('sorts authors and timestamps chronologically across timezone offsets', () => {
         participationLog.mockReturnValue(
             of([
@@ -149,11 +147,14 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         expect(cells('timestamp')[0].textContent).toContain('2021');
     });
 
-    it('filters fixed-offset Dayjs timestamps by the displayed local date', () => {
+    it('searches fixed-offset Dayjs timestamps by the displayed local date', async () => {
+        vi.useFakeTimers();
         const timestamp = dayjs('2021-01-03T10:00:00Z').utcOffset(-12 * 60);
         participationLog.mockReturnValue(of([{ ...entries[0], timestamp }]));
         createComponent();
-        filter('timeStamp', dayjs(timestamp.valueOf()).format('YYYY-MM-DD'));
+        table().onGlobalSearch(dayjs(timestamp.valueOf()).format('YYYY-MM-DD'));
+        await vi.advanceTimersByTimeAsync(300);
+        fixture.detectChanges();
         expect(cells('author')).toHaveLength(1);
     });
 
@@ -176,19 +177,23 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
         expect(table()['effectiveTotalRows']()).toBe(60);
     });
 
-    it('combines action, access type, user and date filters, and shows an empty state', () => {
+    it.each([
+        ['PUSH', 'Alice'],
+        ['PASSWORD', 'Bob'],
+        ['4', 'Alice'],
+    ])('finds %s through global search and shows an empty state for no matches', async (query, author) => {
+        vi.useFakeTimers();
         createComponent();
-        filter('actionType', 'PUSH');
-        filter('authMechanism', 'SSH');
-        filter('userId', '4');
-        filter('timeStamp', dayjs(entries[0].timestamp).format('YYYY-MM-DD'));
+        table().onGlobalSearch(query);
+        await vi.advanceTimersByTimeAsync(300);
+        fixture.detectChanges();
         expect(cells('author')).toHaveLength(1);
-        expect(cells('author')[0].textContent).toContain('Alice');
-        filter('authMechanism', 'PASSWORD');
+        expect(cells('author')[0].textContent).toContain(author);
+        table().onGlobalSearch('no matching access');
+        await vi.advanceTimersByTimeAsync(300);
+        fixture.detectChanges();
         expect(cells('author')).toHaveLength(0);
         expect(fixture.nativeElement.textContent).toContain(`${translationPrefix}empty`);
-        filter('authMechanism', '');
-        expect(cells('author')).toHaveLength(1);
     });
 
     it('renders and searches a build agent without an email or user ID', async () => {
