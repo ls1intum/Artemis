@@ -7,7 +7,7 @@ import { EMPTY } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faBars } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import {
     TumAetUiCheckboxComponent,
     TumAetUiSelectComponent,
@@ -28,6 +28,11 @@ import { CourseExerciseGroup, effectiveDate } from 'app/exercise/shared/entities
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseActionsComponent } from 'app/course/manage/exercises/exercise-row/exercise-actions.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
+import { programmingExerciseResultWarning } from 'app/programming/manage/status/programming-exercise-result-warning.util';
+import { findLatestResult } from 'app/foundation/util/utils';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 type SortColumn = 'title' | 'dueDate' | 'points' | 'difficulty';
 
@@ -57,6 +62,7 @@ interface ExerciseRow {
     exercise: Exercise;
     icon: IconProp;
     titleLink: (string | number)[] | undefined;
+    programmingBuildWarning: string | undefined;
     releaseDate: dayjs.Dayjs | undefined;
     dueDate: dayjs.Dayjs | undefined;
     assessmentDueDate: dayjs.Dayjs | undefined;
@@ -108,6 +114,7 @@ export class ExerciseTableComponent {
     private readonly translateService = inject(TranslateService);
 
     protected readonly faBars = faBars;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
 
     /** Emits on every language switch, so computeds building translated strings read it to be re-derived. */
     private readonly languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
@@ -185,6 +192,7 @@ export class ExerciseTableComponent {
                 exercise,
                 icon: this.icon(exercise),
                 titleLink: this.titleLink(exercise),
+                programmingBuildWarning: this.programmingBuildWarning(exercise),
                 releaseDate: this.effectiveReleaseDate(exercise),
                 dueDate: this.effectiveDueDate(exercise),
                 assessmentDueDate: this.effectiveAssessmentDueDate(exercise),
@@ -285,6 +293,24 @@ export class ExerciseTableComponent {
 
     urlSegment(exercise: Exercise): string {
         return getExerciseUrlSegment(exercise.type);
+    }
+
+    private programmingBuildWarning(exercise: Exercise): string | undefined {
+        if (exercise.type !== ExerciseType.PROGRAMMING) {
+            return undefined;
+        }
+        const programming = exercise as ProgrammingExercise;
+        const warnings = [
+            programmingExerciseResultWarning(
+                findLatestResult(getAllResultsOfAllSubmissions(programming.templateParticipation?.submissions)),
+                ProgrammingExerciseParticipationType.TEMPLATE,
+            ),
+            programmingExerciseResultWarning(
+                findLatestResult(getAllResultsOfAllSubmissions(programming.solutionParticipation?.submissions)),
+                ProgrammingExerciseParticipationType.SOLUTION,
+            ),
+        ].filter((warning): warning is string => warning !== undefined);
+        return warnings.length ? warnings.map((warning) => this.translateService.instant(warning)).join(' ') : undefined;
     }
 
     /** Detail-page link for the exercise, or `undefined` for unsaved drafts (RouterLink disables navigation for null/undefined). */
