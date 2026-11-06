@@ -12,7 +12,7 @@ const MARKDOWN_FILE_PATH = '/api/core/files/markdown/';
 /** Returns the query and fragment for a destination that points to the archived file. */
 export function markdownFileDestinationSuffix(url: string, fileName: string): string | undefined {
     try {
-        const parsedUrl = new URL(url, 'http://artemis.invalid');
+        const parsedUrl = new URL(url, 'https://artemis.invalid');
         const decodedPath = decodeURIComponent(parsedUrl.pathname);
         if (!decodedPath.endsWith(`${MARKDOWN_FILE_PATH}${fileName}`)) {
             return undefined;

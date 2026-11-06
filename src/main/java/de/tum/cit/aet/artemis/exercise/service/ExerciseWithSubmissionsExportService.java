@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -189,28 +190,33 @@ public abstract class ExerciseWithSubmissionsExportService {
                 continue;
             }
             String url = element.attr(element.normalName().equals("img") ? "src" : "href");
-            String path;
-            try {
-                path = URI.create(url).getPath();
-            }
-            catch (IllegalArgumentException e) {
-                // Malformed URLs cannot refer to a local embedded file.
-                continue;
-            }
-            if (path == null) {
-                continue;
-            }
-            Matcher matcher = EMBEDDED_FILE.matcher(path);
-            if (matcher.find()) {
-                String fileName = matcher.group(1);
-                // Uploaded markdown files lie directly in the markdown directory. A link with a path names none of them, and an editor must not
-                // be able to make the export copy a file from outside that directory.
-                if (!fileName.contains("/") && !fileName.contains("\\") && !fileName.equals("..")) {
-                    fileNames.add(fileName);
-                }
-            }
+            findEmbeddedFileName(url).ifPresent(fileNames::add);
         }
         return fileNames;
+    }
+
+    private static Optional<String> findEmbeddedFileName(String url) {
+        try {
+            String path = URI.create(url).getPath();
+            if (path == null) {
+                return Optional.empty();
+            }
+            Matcher matcher = EMBEDDED_FILE.matcher(path);
+            if (!matcher.find()) {
+                return Optional.empty();
+            }
+            String fileName = matcher.group(1);
+            // Uploaded markdown files lie directly in the markdown directory. A link with a path names none of them, and an editor must not
+            // be able to make the export copy a file from outside that directory.
+            if (fileName.contains("/") || fileName.contains("\\") || fileName.equals("..")) {
+                return Optional.empty();
+            }
+            return Optional.of(fileName);
+        }
+        catch (IllegalArgumentException _) {
+            // Malformed URLs cannot refer to a local embedded file.
+            return Optional.empty();
+        }
     }
 
     /**
