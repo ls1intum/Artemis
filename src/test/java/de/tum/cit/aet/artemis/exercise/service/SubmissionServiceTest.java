@@ -379,6 +379,32 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         assertThat(request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue-teams", HttpStatus.OK, AssessmentQueueTeamDTO.class)).isEmpty();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void currentTeamOwnerCannotCancelAnotherAssessorsCompletedResultWithoutResultId() throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId()), HttpStatus.OK, String.class);
+        var draft = submissionService
+                .<Submission>getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(exercise, userRepository.getUserWithAuthorities(), false, 0).getFirst();
+        var result = resultRepository.findByIdWithEagerFeedbacksAndAssessor(draft.getLatestResult().getId()).orElseThrow();
+        var feedback = new Feedback().text("Completed feedback").credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED);
+        feedback.setResult(result);
+        result.getFeedbacks().add(feedback);
+        result.setCompletionDate(ZonedDateTime.now().minusDays(2));
+        resultRepository.save(result);
+        exercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(1));
+        exerciseRepository.save(exercise);
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        var url = "/api/programming/programming-submissions/" + draft.getId() + "/cancel-assessment";
+        request.put(url, null, HttpStatus.FORBIDDEN);
+        assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(result.getId()).orElseThrow().getFeedbacks()).extracting(Feedback::getText)
+                .contains("Completed feedback");
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.put(url, null, HttpStatus.OK);
+    }
+
     private String assessmentProposalUrl(ExerciseType type, Long exerciseId) {
         var path = switch (type) {
             case TEXT -> "text/text";
