@@ -375,7 +375,7 @@ public class AgentLoopRunner {
             emitWaitingOnModel(stepListener, activity);
             ChatResponse response;
             try {
-                response = callModel(prompt, turn, cancelled, usageSink, stepListener, activity);
+                response = activeRunner.callModel(prompt, turn, cancelled, usageSink, stepListener, activity);
             }
             catch (UsageAccountingException | UsageUncertainException failure) {
                 return failed(turn, lastAssistantText, conversation, "The provider usage of a model call could not be accounted for, so no further model call was made.");

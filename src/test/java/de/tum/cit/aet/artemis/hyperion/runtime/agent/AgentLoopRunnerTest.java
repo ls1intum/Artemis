@@ -90,6 +90,33 @@ class AgentLoopRunnerTest {
     }
 
     @Test
+    void aMissingRepairModelDoesNotCoolDownTheHealthyPrimaryModel() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        AtomicBoolean repairFailed = new AtomicBoolean();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            Prompt prompt = invocation.getArgument(0);
+            if ("repair".equals(prompt.getOptions().getModel())) {
+                repairFailed.set(true);
+                throw new IllegalStateException("model_not_found", com.openai.errors.NotFoundException.builder().headers(com.openai.core.http.Headers.builder().build()).build());
+            }
+            return repairFailed.get() ? text("finished") : calls("edit-" + turn.incrementAndGet(), "write");
+        });
+        var cooldown = new TestProviderFailureCooldown();
+        var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "FRESH", 200_000,
+                org.springframework.ai.openai.OpenAiChatOptions.builder().model("primary").build(), false, true, "repair");
+        var configured = new AgentLoopRunner(List.of(model), 200_000, Duration.ofMinutes(5), cooldown).forSettings(settings);
+
+        var failedRepair = configured.run("system", "brief", new ProgressTools(), 180, () -> false, null, null);
+        assertThat(failedRepair.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(repairFailed).isTrue();
+        assertThat(cooldown.cooldownUntil("repair")).isAfter(java.time.Instant.now());
+        assertThat(cooldown.cooldownUntil("primary")).isNull();
+        var primary = configured.run("system", "another brief", new RecordingTools(), 2, () -> false, null, null);
+        assertThat(primary.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+    }
+
+    @Test
     void repairModelCannotCreateTurnsBeyondTheRemainingBudget() {
         ChatModel model = mock(ChatModel.class);
         AtomicInteger turn = new AtomicInteger();
