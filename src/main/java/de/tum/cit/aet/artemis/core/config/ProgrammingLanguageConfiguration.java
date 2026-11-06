@@ -253,7 +253,7 @@ public class ProgrammingLanguageConfiguration {
             }
             return (int) (Long.parseLong(trimmed) / (1024L * 1024L));
         }
-        catch (NumberFormatException e) {
+        catch (NumberFormatException _) {
             log.warn("Could not parse the Docker memory value {} of the default Docker flags", value);
             return 0;
         }

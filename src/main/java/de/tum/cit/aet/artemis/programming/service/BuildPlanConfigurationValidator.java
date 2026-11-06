@@ -25,6 +25,12 @@ public final class BuildPlanConfigurationValidator {
 
     private static final String ENTITY_NAME = "buildConfig";
 
+    /** The message parameter that names the build container an error refers to. */
+    private static final String CONTAINER_PARAMETER = "container";
+
+    /** The message parameter that names the build phase an error refers to. */
+    private static final String PHASE_PARAMETER = "phase";
+
     private BuildPlanConfigurationValidator() {
     }
 
@@ -82,7 +88,7 @@ public final class BuildPlanConfigurationValidator {
         for (final BuildContainerRepositoryDTO repository : container.repositories()) {
             if (repository == null || repository.type() == null) {
                 throw badRequest("A repository selection of a build container must name a repository type", "invalidBuildContainerRepository",
-                        Map.of("container", container.name()));
+                        Map.of(CONTAINER_PARAMETER, container.name()));
             }
         }
     }
@@ -91,13 +97,13 @@ public final class BuildPlanConfigurationValidator {
         // bean validation only covers the build plan endpoint; a build plan that arrives as JSON inside the build config of
         // an exercise update can still carry a null container
         if (container == null) {
-            throw badRequest("Invalid build container name", "invalidBuildContainerName", Map.of("container", ""));
+            throw badRequest("Invalid build container name", "invalidBuildContainerName", Map.of(CONTAINER_PARAMETER, ""));
         }
         if (container.name() == null || !BuildContainerDTO.BUILD_CONTAINER_NAME_PATTERN.matcher(container.name()).matches()) {
-            throw badRequest("Invalid build container name", "invalidBuildContainerName", Map.of("container", String.valueOf(container.name())));
+            throw badRequest("Invalid build container name", "invalidBuildContainerName", Map.of(CONTAINER_PARAMETER, String.valueOf(container.name())));
         }
         if (!alreadyUsedNames.add(container.name().toLowerCase(Locale.ROOT))) {
-            throw badRequest("Build container names must be unique", "duplicateBuildContainerName", Map.of("container", container.name()));
+            throw badRequest("Build container names must be unique", "duplicateBuildContainerName", Map.of(CONTAINER_PARAMETER, container.name()));
         }
     }
 
@@ -116,20 +122,20 @@ public final class BuildPlanConfigurationValidator {
         // the agent would replace a non-positive timeout by its instance maximum, which is not what an instructor who
         // typed it intended
         if (container.timeoutSeconds() <= 0) {
-            throw badRequest("The timeout of a build container must be positive", "invalidBuildContainerTimeout", Map.of("container", container.name()));
+            throw badRequest("The timeout of a build container must be positive", "invalidBuildContainerTimeout", Map.of(CONTAINER_PARAMETER, container.name()));
         }
         // a container timeout tightens the exercise timeout, which has to cover the slowest container; one above it
         // would extend the exercise's budget instead. An exercise timeout of 0 means the instance default, which the
         // agent applies as the upper bound of every job anyway.
         if (exerciseTimeoutSeconds > 0 && container.timeoutSeconds() > exerciseTimeoutSeconds) {
             throw badRequest("The timeout of a build container must not exceed the timeout of the exercise", "buildContainerTimeoutExceedsExerciseTimeout",
-                    Map.of("container", container.name(), "timeout", exerciseTimeoutSeconds));
+                    Map.of(CONTAINER_PARAMETER, container.name(), "timeout", exerciseTimeoutSeconds));
         }
     }
 
     private static void validatePhasesOf(BuildContainerDTO container) {
         if (container.phases() == null || container.phases().isEmpty()) {
-            throw badRequest("A build container must contain at least one build phase", "emptyBuildContainer", Map.of("container", container.name()));
+            throw badRequest("A build container must contain at least one build phase", "emptyBuildContainer", Map.of(CONTAINER_PARAMETER, container.name()));
         }
 
         // phase names only have to be unique within their container, as containers execute independently of each other
@@ -137,15 +143,16 @@ public final class BuildPlanConfigurationValidator {
         for (final BuildPhaseDTO phase : container.phases()) {
             if (phase == null || phase.name() == null || !BuildPhaseDTO.BUILD_PHASE_NAME_PATTERN.matcher(phase.name()).matches()) {
                 throw badRequest("Invalid build phase name", "invalidBuildPhaseName",
-                        Map.of("container", container.name(), "phase", phase == null ? "" : String.valueOf(phase.name())));
+                        Map.of(CONTAINER_PARAMETER, container.name(), PHASE_PARAMETER, phase == null ? "" : String.valueOf(phase.name())));
             }
 
             final String normalizedName = phase.name().toLowerCase(Locale.ROOT);
             if (BuildPhaseDTO.RESERVED_PHASE_NAMES.contains(normalizedName)) {
-                throw badRequest("Build phase names must not use reserved names", "reservedBuildPhaseName", Map.of("container", container.name(), "phase", phase.name()));
+                throw badRequest("Build phase names must not use reserved names", "reservedBuildPhaseName",
+                        Map.of(CONTAINER_PARAMETER, container.name(), PHASE_PARAMETER, phase.name()));
             }
             if (!phaseNames.add(normalizedName)) {
-                throw badRequest("Build phase names must be unique", "duplicateBuildPhaseName", Map.of("container", container.name(), "phase", phase.name()));
+                throw badRequest("Build phase names must be unique", "duplicateBuildPhaseName", Map.of(CONTAINER_PARAMETER, container.name(), PHASE_PARAMETER, phase.name()));
             }
 
         }

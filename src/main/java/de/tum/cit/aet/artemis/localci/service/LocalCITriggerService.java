@@ -324,23 +324,13 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null, null, estimatedDuration);
 
-        BuildPlanPhasesDTO buildPlanPhases = parseBuildPlan(programmingExerciseBuildConfig);
-        List<BuildContainerDTO> containers = buildPlanPhases.effectiveContainers();
-        // Running the containers of a plan as independent jobs is the orchestration that follows in a separate change;
-        // until then a plan with several containers is refused instead of silently building its first container only.
-        if (containers.size() > 1) {
-            throw new LocalCIException("The build plan of exercise " + programmingExercise.getId() + " defines " + containers.size()
-                    + " build containers, but executing more than one container is not supported yet");
-        }
-        // a build plan without any phase falls back to the default phases and image of the exercise
-        BuildContainerDTO container = containers.isEmpty() ? null : containers.getFirst();
+        BuildContainerDTO container = containerToBuild(programmingExercise, programmingExerciseBuildConfig);
 
         // the job receives only the repositories the container lists, which is what keeps the instructor's tests out of a
         // container that runs student-authored code
         RepositoryInfo repositoryInfo = scopeRepositoryInfo(getRepositoryInfo(participation, triggeredByPushTo, programmingExerciseBuildConfig), container);
 
-        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig, buildPlanPhases, container,
-                restricted);
+        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig, container, restricted);
 
         BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
 
@@ -460,15 +450,40 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     /**
+     * Determines the container a build of the exercise runs in. Running the containers of a plan as independent jobs is
+     * the orchestration that follows in a separate change; until then a plan with several containers is refused instead
+     * of silently building its first container only. A build plan without any phase is built in a container that runs
+     * the default phases of the exercise in the image of the plan and scopes no repositories.
+     *
+     * @param programmingExercise the exercise to build
+     * @param buildConfig         the build configuration of the exercise
+     * @return the container to build
+     * @throws LocalCIException if the build plan cannot be parsed or defines more than one container
+     */
+    private BuildContainerDTO containerToBuild(ProgrammingExercise programmingExercise, ProgrammingExerciseBuildConfig buildConfig) throws LocalCIException {
+        BuildPlanPhasesDTO buildPlanPhases = parseBuildPlan(buildConfig);
+        List<BuildContainerDTO> containers = buildPlanPhases.effectiveContainers();
+        if (containers.size() > 1) {
+            throw new LocalCIException("The build plan of exercise " + programmingExercise.getId() + " defines " + containers.size()
+                    + " build containers, but executing more than one container is not supported yet");
+        }
+        if (containers.isEmpty()) {
+            return new BuildContainerDTO(BuildContainerDTO.DEFAULT_CONTAINER_NAME, buildPlanPhases.dockerImage(),
+                    buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig));
+        }
+        return containers.getFirst();
+    }
+
+    /**
      * Restricts the repositories provisioned into a container to the ones it lists, so a container that does not list
      * the test repository never receives the instructor's tests. The participation's own repository is always provided.
      *
      * @param full      the full repository information of the participation
-     * @param container the container to scope for; null, or a container without a repository list, receives every repository
+     * @param container the container to scope for; a container without a repository list receives every repository
      * @return the repository information restricted to what the container lists
      */
-    private RepositoryInfo scopeRepositoryInfo(RepositoryInfo full, @Nullable BuildContainerDTO container) {
-        if (container == null || container.repositories() == null) {
+    private RepositoryInfo scopeRepositoryInfo(RepositoryInfo full, BuildContainerDTO container) {
+        if (container.repositories() == null) {
             return full;
         }
         Set<RepositoryType> types = container.repositories().stream().map(BuildContainerRepositoryDTO::type).collect(Collectors.toSet());
@@ -482,7 +497,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash, String testCommitHash,
-            ProgrammingExerciseBuildConfig buildConfig, BuildPlanPhasesDTO buildPlanPhasesDTO, @Nullable BuildContainerDTO container, boolean restricted) {
+            ProgrammingExerciseBuildConfig buildConfig, BuildContainerDTO container, boolean restricted) {
         String branch = participation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch() : buildConfig.getBranch();
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
@@ -490,12 +505,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
 
-        final List<BuildPhaseDTO> phases = container == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig) : container.phases();
-        final String configuredDockerImage = container == null ? buildPlanPhasesDTO.dockerImage() : container.dockerImage();
-        final String dockerImage = configuredDockerImage == null ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise) : configuredDockerImage;
+        final List<BuildPhaseDTO> phases = container.phases();
+        final String dockerImage = container.dockerImage() == null ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise) : container.dockerImage();
         // the container's Docker flags override the exercise's for its job, see BuildContainerDockerFlagsDTO
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise,
-                container == null ? null : container.dockerFlags());
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise, container.dockerFlags());
         if (restricted) {
             dockerRunConfig = restrictedRunConfig(dockerRunConfig);
         }
@@ -518,12 +531,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * validator rejects a larger container timeout on save; the cap covers a plan stored before that rule. An exercise
      * timeout of 0 means the instance default, which the agent applies as the bound of every job anyway.
      *
-     * @param container              the container to build, or null for the exercise default
+     * @param container              the container to build
      * @param exerciseTimeoutSeconds the timeout configured on the exercise, 0 for the instance default
      * @return the timeout of the job in seconds
      */
-    private static int timeoutSecondsOf(@Nullable BuildContainerDTO container, int exerciseTimeoutSeconds) {
-        if (container == null || container.timeoutSeconds() == null) {
+    private static int timeoutSecondsOf(BuildContainerDTO container, int exerciseTimeoutSeconds) {
+        if (container.timeoutSeconds() == null) {
             return exerciseTimeoutSeconds;
         }
         if (exerciseTimeoutSeconds <= 0) {

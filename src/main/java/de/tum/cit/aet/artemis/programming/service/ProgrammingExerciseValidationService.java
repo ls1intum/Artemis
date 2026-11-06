@@ -347,7 +347,7 @@ public class ProgrammingExerciseValidationService {
         try {
             exerciseFlags = programmingExerciseBuildConfigService.parseDockerFlags(buildConfig);
         }
-        catch (IllegalArgumentException e) {
+        catch (IllegalArgumentException _) {
             throw new BadRequestAlertException("Error while parsing the docker flags", "Exercise", "dockerFlagsParsingError");
         }
         int exerciseMemory = exerciseFlags == null ? 0 : exerciseFlags.memory();
