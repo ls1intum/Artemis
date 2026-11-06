@@ -141,7 +141,6 @@ export interface ProgrammingRepositoryBuildOverviewDetail extends DetailBase {
         solutionStatus: ProgrammingBuildStatusData;
         comparison?: ProgrammingDiffReportDetail;
         editBuildPlanLink?: string[];
-        editorBaseResource?: string;
         checkConsistency?: () => void;
     };
 }
