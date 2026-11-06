@@ -93,8 +93,8 @@ CHANGESET_TAG = f"{NAMESPACE}changeSet"
 UNBOUNDED_TEXT_TYPES = frozenset({"text", "mediumtext", "longtext", "clob"})
 
 # The (table, column) pairs that were already unbounded text when this guard was introduced. They are
-# grandfathered so the guard is green on day one; a new unbounded-text column must not be added (bind it
-# with varchar(n) or a CHECK). Tightening these existing columns is tracked by the text-length hardening
+# grandfathered so the guard is green on day one; a new unbounded-text column must not be added (give it a
+# bounded type, varchar(n)). Tightening these existing columns is tracked by the text-length hardening
 # effort, not by this guard. Consulted only by check_column_types. tinytext (255 bytes) and binary
 # blob/bytea are intentionally not covered; they are not unbounded free-form text. Deliberately decoupled
 # from the baseline so a re-cut cannot grow it -- only a reviewed edit here can.
