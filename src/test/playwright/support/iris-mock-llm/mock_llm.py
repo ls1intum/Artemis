@@ -325,18 +325,20 @@ class MockLLMHandler(BaseHTTPRequestHandler):
             wants_json = isinstance(response_format, dict) and response_format.get("type") == "json_object"
             tools = body.get("tools") or []
             messages = body.get("messages") or []
-            last_user_text = ""
-            for message in reversed(messages):
-                if isinstance(message, dict) and message.get("role") == "user":
-                    last_user_text = message_text(message)
+            last_user_index = -1
+            for index in range(len(messages) - 1, -1, -1):
+                if isinstance(messages[index], dict) and messages[index].get("role") == "user":
+                    last_user_index = index
                     break
+            last_user_text = message_text(messages[last_user_index]) if last_user_index >= 0 else ""
             tool_rounds = 0
             if tools and TWO_ROUND_TOOL_MARKER in last_user_text:
                 tool_rounds = 2
             elif tools and TOOL_MARKER in last_user_text:
                 tool_rounds = 1
             wants_tool_round = tool_rounds > 0
-            tool_results = sum(1 for m in messages if isinstance(m, dict) and m.get("role") == "tool")
+            # Only this turn's tool results count as finished rounds; results of earlier turns must not use them up.
+            tool_results = sum(1 for m in messages[last_user_index + 1 :] if isinstance(m, dict) and m.get("role") == "tool")
             has_tool_result = tool_results > 0
             wants_stream = bool(body.get("stream"))
             log(
