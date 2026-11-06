@@ -11,7 +11,7 @@ import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.co
     imports: [ConfirmIconComponent, ArtemisTranslatePipe],
 })
 export class GradingInstructionLinkIconComponent {
-    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private readonly artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
     linkIcon = input(faLink);
     feedback = input.required<Feedback>();
