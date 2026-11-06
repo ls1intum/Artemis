@@ -7,6 +7,20 @@ interface Destination {
     url: string;
 }
 
+/** Returns the query and fragment for a destination that points to the archived file. */
+export function markdownFileDestinationSuffix(url: string, fileName: string): string | undefined {
+    try {
+        const parsedUrl = new URL(url, 'http://artemis.invalid');
+        const decodedPath = decodeURIComponent(parsedUrl.pathname);
+        if (!decodedPath.endsWith(`markdown/${fileName}`)) {
+            return undefined;
+        }
+        return `${parsedUrl.search}${parsedUrl.hash}`;
+    } catch {
+        return undefined;
+    }
+}
+
 /**
  * Finds link destinations without reserializing Markdown or HTML. Source offsets let the importer change only URLs,
  * retaining code examples, comments, link labels/titles, HTML quoting and original whitespace (including CRLF).

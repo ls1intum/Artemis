@@ -138,7 +138,7 @@ export class ExerciseImportFromFileComponent {
             return true;
         }
         // Load source-aware parsers only when importing a problem statement.
-        const { markdownFileDestinations } = await import('./markdown-file-destinations');
+        const { markdownFileDestinations, markdownFileDestinationSuffix } = await import('./markdown-file-destinations');
         const destinations = markdownFileDestinations(statement);
         const replacements: { start: number; end: number; path: string }[] = [];
         for (const [entryName, data] of Object.entries(zipEntries)) {
@@ -146,14 +146,16 @@ export class ExerciseImportFromFileComponent {
             if (!entryName.startsWith('files/') || !fileName) {
                 continue;
             }
-            const references = destinations.filter((destination) => destination.url.endsWith(`markdown/${fileName}`));
+            const references = destinations
+                .map((destination) => ({ destination, suffix: markdownFileDestinationSuffix(destination.url, fileName) }))
+                .filter((reference): reference is { destination: (typeof destinations)[number]; suffix: string } => reference.suffix !== undefined);
             if (!references.length) {
                 continue;
             }
             try {
                 const response = await this.fileUploaderService.uploadMarkdownFile(new File([data], fileName), this.selectedCourseId());
-                for (const reference of references) {
-                    replacements.push({ start: reference.start, end: reference.end, path: response.path! });
+                for (const { destination, suffix } of references) {
+                    replacements.push({ start: destination.start, end: destination.end, path: response.path! + suffix });
                 }
             } catch {
                 // The localized alert identifies the failed file; the transport error provides no further action for the user.

@@ -119,6 +119,25 @@ describe('ExerciseImportFromFileComponent', () => {
         );
     });
 
+    it('should preserve file fragments and leave external query links unchanged during import', async () => {
+        const uploadSpy = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockResolvedValue({ path: '/api/core/files/markdown/new_A.pdf' });
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.problemStatement =
+            '[file](/api/core/files/markdown/A.pdf#page=2) [same file](/api/core/files/markdown/A.pdf) [external](https://example.org/?redirect=/api/core/files/markdown/A.pdf)';
+        const zip = new ZipBuilder();
+        zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
+        zip.file('files/A.pdf', 'pdf');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+
+        await component.uploadExercise();
+
+        expect(uploadSpy).toHaveBeenCalledOnce();
+        expect(component.exercise?.problemStatement).toBe(
+            '[file](/api/core/files/markdown/new_A.pdf#page=2) [same file](/api/core/files/markdown/new_A.pdf) [external](https://example.org/?redirect=/api/core/files/markdown/A.pdf)',
+        );
+    });
+
     it.each([
         '```text\n/api/core/files/markdown/A.png\n```',
         '~~~text\n![example](/api/core/files/markdown/A.png)\n~~~',

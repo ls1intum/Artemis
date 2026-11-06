@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { markdownFileDestinations } from './markdown-file-destinations';
+import { markdownFileDestinationSuffix, markdownFileDestinations } from './markdown-file-destinations';
 
 describe('markdownFileDestinations', () => {
+    it('matches the decoded URL path and returns only its query and fragment', () => {
+        expect(markdownFileDestinationSuffix('/api/core/files/markdown/A.pdf#page=2', 'A.pdf')).toBe('#page=2');
+        expect(markdownFileDestinationSuffix('/api/core/files/markdown/A%20B.pdf?download=1#page=2', 'A B.pdf')).toBe('?download=1#page=2');
+        expect(markdownFileDestinationSuffix('https://example.org/?redirect=/api/core/files/markdown/A.pdf', 'A.pdf')).toBeUndefined();
+    });
+
     it('locates only destinations, preserving labels, titles, quoting and CRLF source offsets', () => {
         const path = '/api/core/files/markdown/A.png';
         const source = `![${path}](<${path}> "${path}")\r\n[attachment][file]\r\n\r\n[file]: ${path} "${path}"\r\n\r\n<img SRC = '${path}' alt="${path}"> <a href=${path}>${path}</a>`;
