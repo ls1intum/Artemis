@@ -32,6 +32,16 @@ describe('PresentationInstanceActionsComponent', () => {
         expect(query('[data-testid="delete-instance-button"]')).not.toBeNull();
     });
 
+    it('should offer the edit button only when editing is allowed', () => {
+        fixture.componentRef.setInput('canEdit', false);
+        fixture.detectChanges();
+        expect(query('[data-testid="edit-instance-button"]')).toBeNull();
+
+        fixture.componentRef.setInput('canEdit', true);
+        fixture.detectChanges();
+        expect(query('[data-testid="edit-instance-button"]')).not.toBeNull();
+    });
+
     it('should emit when edit is clicked', () => {
         const editSpy = vi.fn();
         fixture.componentInstance.editRequested.subscribe(editSpy);

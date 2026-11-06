@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
-/** Edit and delete buttons of an assigned student; only editors may delete. */
+/** Edit and delete buttons of an assigned student; tutors only edit the presentations they assess, only editors may delete. */
 @Component({
     selector: 'jhi-presentation-instance-actions',
     templateUrl: './presentation-instance-actions.component.html',
@@ -17,6 +17,7 @@ export class PresentationInstanceActionsComponent {
     protected readonly faTrash = faTrash;
     protected readonly ActionType = ActionType;
 
+    readonly canEdit = input(true);
     readonly canDelete = input(false);
 
     readonly editRequested = output<void>();

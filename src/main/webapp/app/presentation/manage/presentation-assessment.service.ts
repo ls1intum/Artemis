@@ -2,6 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
+import { UserNameAndLoginDTO } from 'app/account/user/user.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import {
@@ -46,6 +47,13 @@ export class PresentationAssessmentService {
 
     getStatistics(courseId: number): Observable<HttpResponse<PresentationAssessmentStatistics>> {
         return this.http.get<PresentationAssessmentStatistics>(`api/assessment/courses/${courseId}/presentation-assessments/statistics`, { observe: 'response' });
+    }
+
+    searchAssessors(courseId: number, searchTerm: string): Observable<HttpResponse<UserNameAndLoginDTO[]>> {
+        return this.http.get<UserNameAndLoginDTO[]>(`api/assessment/courses/${courseId}/presentation-assessments/assessors`, {
+            params: { searchTerm },
+            observe: 'response',
+        });
     }
 
     create(courseId: number, presentationAssessment: PresentationAssessment): Observable<EntityResponseType> {
