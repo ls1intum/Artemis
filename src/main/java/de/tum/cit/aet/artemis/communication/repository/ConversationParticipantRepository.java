@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.dto.ConversationMentionCandidateDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
@@ -32,6 +34,41 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Lazy
 @Repository
 public interface ConversationParticipantRepository extends ArtemisJpaRepository<ConversationParticipant, Long> {
+
+    /**
+     * Searches eligible mention recipients, most recent message or reply first. Course-wide channels have implicit course members;
+     * other conversations only include their actual participants. Login breaks ties, including members who have never posted.
+     *
+     * @param conversationId the current conversation
+     * @param courseId       the owning course
+     * @param courseWide     whether course membership implies conversation membership
+     * @param searchTerm     the normalized login or full-name query
+     * @param noActivity     a timestamp before any message
+     * @param pageable       the result limit
+     * @return eligible users in activity order
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.communication.dto.ConversationMentionCandidateDTO(user.firstName, user.lastName, user.login)
+            FROM User user
+            WHERE user.deleted = FALSE
+                AND ((:courseWide = TRUE AND EXISTS (
+                    SELECT role.id FROM UserCourseRole role WHERE role.user = user AND role.course.id = :courseId
+                )) OR (:courseWide = FALSE AND EXISTS (
+                    SELECT participant.id FROM ConversationParticipant participant
+                    WHERE participant.user = user AND participant.conversation.id = :conversationId
+                )))
+                AND (:searchTerm = ''
+                    OR LOWER(user.login) LIKE CONCAT(:searchTerm, '%')
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', :searchTerm, '%'))
+            ORDER BY GREATEST(
+                COALESCE((SELECT MAX(message.creationDate) FROM Post message
+                    WHERE message.conversation.id = :conversationId AND message.author = user), :noActivity),
+                COALESCE((SELECT MAX(reply.creationDate) FROM AnswerPost reply
+                    WHERE reply.post.conversation.id = :conversationId AND reply.author = user), :noActivity)
+            ) DESC, user.login ASC
+            """)
+    List<ConversationMentionCandidateDTO> findMentionCandidates(@Param("conversationId") long conversationId, @Param("courseId") long courseId,
+            @Param("courseWide") boolean courseWide, @Param("searchTerm") String searchTerm, @Param("noActivity") ZonedDateTime noActivity, Pageable pageable);
 
     @Query("""
             SELECT DISTINCT conversationParticipant

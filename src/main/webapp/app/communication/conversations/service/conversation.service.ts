@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { TranslateService } from '@ngx-translate/core';
-import { User } from 'app/account/user/user.model';
+import { User, UserNameAndLoginDTO } from 'app/account/user/user.model';
 import { isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
@@ -73,6 +73,11 @@ export class ConversationService {
         } else {
             return '';
         }
+    }
+
+    searchMembersForUserMentions(courseId: number, conversationId: number, loginOrName: string): Observable<HttpResponse<UserNameAndLoginDTO[]>> {
+        const params = new HttpParams().set('loginOrName', loginOrName);
+        return this.http.get<UserNameAndLoginDTO[]>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/members/mentions`, { observe: 'response', params });
     }
 
     searchMembersOfConversation(
