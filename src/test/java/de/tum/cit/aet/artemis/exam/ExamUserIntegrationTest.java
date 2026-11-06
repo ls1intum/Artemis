@@ -640,7 +640,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
     @ParameterizedTest
     @CsvSource(value = { "login|1 2 3 4|4 3 2 1", "visibleRegistrationNumber|2 3 4 1|1 4 3 2", "plannedRoom|2 3 1 4|4 1 2 3", "plannedSeat|2 3 1 4|4 1 2 3",
-            "actualRoom|3 4 1 2|2 1 3 4", "actualSeat|3 4 1 2|2 1 3 4", "workingTime|2 3 1 4|4 1 2 3", "numberOfExamSessions|4 2 3 1|1 2 3 4", "name|4 2 3 1|1 2 3 4",
+            "actualRoom|3 4 1 2|2 1 3 4", "actualSeat|3 4 1 2|2 1 3 4", "workingTime|2 3 1 4|1 2 3 4", "numberOfExamSessions|4 2 3 1|1 2 3 4", "name|4 2 3 1|1 2 3 4",
             "progress|4 3 2 1|1 2 3 4", "unsupported|1 2 3 4|1 2 3 4", "NULL|1 2 3 4|1 2 3 4" }, delimiter = '|', nullValues = "NULL")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testPagedStudentSortPreservesOverridesAndStableTies(String column, String ascendingLogins, String descendingLogins) throws Exception {

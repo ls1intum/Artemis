@@ -30,7 +30,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Operation;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Task;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
@@ -47,6 +48,8 @@ import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 public class ParticipationDeletionService {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationDeletionService.class);
+
+    private final ParticipationCleanupService participationCleanupService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -76,15 +79,14 @@ public class ParticipationDeletionService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final Optional<SharedQueueManagementService> localCISharedBuildJobQueueService;
-
     public ParticipationDeletionService(StudentParticipationRepository studentParticipationRepository, ParticipantScoreRepository participantScoreRepository,
             SubmissionRepository submissionRepository, Optional<CompetencyProgressApi> competencyProgressApi, ParticipationRepository participationRepository,
             TeamScoreRepository teamScoreRepository, ResultService resultService, StudentScoreRepository studentScoreRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, GitService gitService,
             BuildLogEntryService buildLogEntryService, ParticipationVcsAccessTokenService participationVcsAccessTokenService,
-            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService) {
+            ParticipationCleanupService participationCleanupService) {
+        this.participationCleanupService = participationCleanupService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.submissionRepository = submissionRepository;
@@ -99,7 +101,6 @@ public class ParticipationDeletionService {
         this.gitService = gitService;
         this.buildLogEntryService = buildLogEntryService;
         this.participationVcsAccessTokenService = participationVcsAccessTokenService;
-        this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
     }
 
     /**
@@ -140,7 +141,8 @@ public class ParticipationDeletionService {
         participantScoreRepository.deleteAllByExerciseId(exercise.getId());
 
         if (recalculateCompetencyProgress) {
-            externalCleanup.accept(() -> competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise)));
+            var command = new ParticipationCleanupCommand(Operation.COMPETENCY_PROGRESS, 0, exercise.getId(), 0, null, null, null);
+            externalCleanup.accept(new Task(command, () -> competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise))));
         }
     }
 
@@ -181,31 +183,30 @@ public class ParticipationDeletionService {
 
             String projectKey = buildPlanId == null ? null : programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
             boolean hasRepository = programmingExerciseParticipation.getRepositoryUri() != null;
-            externalCleanup.accept(() -> {
-                try {
-                    if (buildPlanId != null) {
-                        continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
+            if (buildPlanId != null) {
+                var command = new ParticipationCleanupCommand(Operation.BUILD_PLAN, participationId, 0, 0, projectKey, buildPlanId, null);
+                externalCleanup.accept(new Task(command, () -> participationCleanupService.execute(command)));
+            }
+            if (hasRepository) {
+                var command = new ParticipationCleanupCommand(Operation.VC_REPOSITORY, participationId, 0, 0, null, null, repositoryUri.toString());
+                externalCleanup.accept(new Task(command, () -> {
+                    try {
+                        versionControlService.orElseThrow().deleteRepository(repositoryUri);
                     }
-                }
-                finally {
-                    // A failing build plan deletion must not leave the repositories behind; the failure still propagates.
-                    if (hasRepository) {
-                        try {
-                            versionControlService.orElseThrow().deleteRepository(repositoryUri);
-                        }
-                        catch (Exception ex) {
-                            log.error("Could not delete repository {} of participation {}", repositoryUri, participationId, ex);
-                        }
+                    catch (Exception ex) {
+                        log.error("Could not delete repository {} of participation {}", repositoryUri, participationId, ex);
                     }
-                    gitService.deleteLocalRepository(repositoryUri);
-                }
-            });
+                }));
+            }
+            var command = new ParticipationCleanupCommand(Operation.LOCAL_REPOSITORY, participationId, 0, 0, null, null, repositoryUri != null ? repositoryUri.toString() : null);
+            externalCleanup.accept(new Task(command, () -> participationCleanupService.execute(command)));
 
             participationVcsAccessTokenService.deleteByParticipationId(participationId);
         }
 
         // If local CI is active, remove all queued jobs for participation
-        externalCleanup.accept(() -> localCISharedBuildJobQueueService.ifPresent(service -> service.cancelAllJobsForParticipation(participationId)));
+        var cancelJobs = new ParticipationCleanupCommand(Operation.QUEUED_JOBS, participationId, 0, 0, null, null, null);
+        externalCleanup.accept(new Task(cancelJobs, () -> participationCleanupService.execute(cancelJobs)));
 
         deleteResultsAndSubmissionsOfParticipation(participationId, deleteParticipantScores, externalCleanup);
         studentParticipationRepository.delete(participation);

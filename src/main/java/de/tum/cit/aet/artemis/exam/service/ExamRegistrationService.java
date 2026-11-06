@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -124,9 +123,9 @@ public class ExamRegistrationService {
      * @param courseId     the id of the course
      * @param examId       the id of the exam
      * @param examUserDTOs the list of students (with at least one unique identifier) who should get access to the exam
-     * @return a result containing the students who could not be found and the staff members who were rejected
+     * @return the registration result and whether preparation of the saved registrations requires a retry
      */
-    public ExamRegistrationResultDTO registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
+    public RegistrationOutcome registerStudentsForExam(Long courseId, Long examId, List<ExamUserDTO> examUserDTOs) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
@@ -220,7 +219,6 @@ public class ExamRegistrationService {
         examUserRepository.saveAll(examUsersToUpdate);
 
         examRepository.save(exam);
-        studentExamService.invalidateExerciseStartStatus(exam.getId());
 
         try {
             User currentUser = userRepository.getUserWithAuthorities();
@@ -238,10 +236,8 @@ public class ExamRegistrationService {
             log.warn("Could not add audit event to audit log", ex);
         }
 
-        // The registrations are saved and audited above, so a busy preparation lock (409) cannot leave them unrecorded.
-        generateAndPrepareMissingExams(exam);
-
-        return new ExamRegistrationResultDTO(notFoundStudentsDTOs, rejectedStaffDTOs);
+        boolean preparationPending = prepareSavedRegistration(exam);
+        return new RegistrationOutcome(new ExamRegistrationResultDTO(notFoundStudentsDTOs, rejectedStaffDTOs), preparationPending);
     }
 
     /**
@@ -373,8 +369,9 @@ public class ExamRegistrationService {
      *
      * @param courseId Id of the course
      * @param exam     the exam with eagerly loaded registered users to which the course students should be added
+     * @return whether preparation of the saved registrations requires a retry
      */
-    public void addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
+    public boolean addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
         checkRegistrationOpen(exam);
         Course course = courseRepository.findByIdElseThrow(courseId);
         // Load students with their authorities eagerly so that isAdmin() can access
@@ -406,10 +403,23 @@ public class ExamRegistrationService {
         examUserRepository.saveAll(newExamUsers).forEach(exam::addExamUser);
 
         examRepository.save(exam);
-        studentExamService.invalidateExerciseStartStatus(exam.getId());
         AuditEvent auditEvent = new AuditEvent(userRepository.getUser().getLogin(), Constants.ADD_USER_TO_EXAM, userData);
         auditEventRepository.add(auditEvent);
-        generateAndPrepareMissingExams(exam);
+        return prepareSavedRegistration(exam);
+    }
+
+    /** The registration result remains successful even when its separately committed preparation needs a retry. */
+    public record RegistrationOutcome(ExamRegistrationResultDTO result, boolean preparationPending) {
+    }
+
+    private boolean prepareSavedRegistration(Exam exam) {
+        try {
+            return generateAndPrepareMissingExams(exam);
+        }
+        catch (RuntimeException exception) {
+            log.error("Registration for exam {} was saved, but exercise preparation remains pending", exam.getId(), exception);
+            return true;
+        }
     }
 
     private void checkRegistrationOpen(Exam exam) {
@@ -422,27 +432,27 @@ public class ExamRegistrationService {
         if (exam.isStarted() || studentExamService.getExerciseStartStatusOfExam(exam.getId()).isPresent()) {
             return true;
         }
-        // The progress cache can expire. Persisted initialized participations still show that preparation was started.
-        var examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
-        return examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
-                .anyMatch(exercise -> studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exercise.getId(), exam.getId()) > 0);
+        // Failed first preparations can leave only uninitialized participations after the progress cache expires.
+        return studentParticipationRepository.existsParticipationByExamIdIgnoreTestRuns(exam.getId());
     }
 
-    private void generateAndPrepareMissingExams(Exam exam) {
-        // Admission precedes the cohort read and preparation decision. A first preparation may have started since registration began.
-        examPreparationLockService.withPreparationLock(exam.getId(), () -> {
+    private boolean generateAndPrepareMissingExams(Exam exam) {
+        // Inspect preparation intent inside admission, before startExercises resets its progress status.
+        return examPreparationLockService.withPreparationLock(exam.getId(), () -> {
             if (!exam.isStarted() && examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId()) == 0) {
-                return null;
+                return false;
             }
             boolean prepareExercises = hasExercisePreparationStarted(exam);
-            List<StudentExam> newStudentExams = studentExamService.generateMissingStudentExams(exam);
-            if (prepareExercises && !newStudentExams.isEmpty()) {
-                List<Long> studentExamIds = newStudentExams.stream().map(DomainObject::getId).toList();
-                long start = System.nanoTime();
-                studentExamService.startExercisesForStudentExams(exam.getId(), studentExamIds).thenAccept(numberOfGeneratedParticipations -> log
-                        .info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), exam.getId()));
+            studentExamService.generateMissingStudentExams(exam);
+            if (!prepareExercises) {
+                return false;
             }
-            return null;
+            // A retry must also repair previously generated exams whose preparation failed. Initialized participations are skipped.
+            long start = System.nanoTime();
+            int numberOfGeneratedParticipations = studentExamService.startExercises(exam.getId()).join();
+            log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), exam.getId());
+            // Workers record failures in progress rather than completing the aggregate future exceptionally.
+            return studentExamService.getExerciseStartStatusOfExam(exam.getId()).map(status -> status.failed() > 0 || status.finished() < status.overall()).orElse(true);
         });
     }
 

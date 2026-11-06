@@ -30,6 +30,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Operation;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Task;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
@@ -411,11 +414,22 @@ public class BuildLogEntryService {
     public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission, Consumer<Runnable> externalCleanup) {
         long exerciseId = programmingSubmission.getParticipation().getExercise().getId();
         long submissionId = programmingSubmission.getId();
-        externalCleanup.accept(() -> failedBuildLogService.deleteBuildLogs(exerciseId, submissionId));
+        var command = new ParticipationCleanupCommand(Operation.BUILD_LOG_FILES, 0, exerciseId, submissionId, null, null, null);
+        externalCleanup.accept(new Task(command, () -> deleteBuildLogFiles(exerciseId, submissionId)));
         if (Hibernate.isInitialized(programmingSubmission.getBuildLogEntries())) {
             programmingSubmission.getBuildLogEntries().clear();
         }
         buildLogEntryRepository.deleteByProgrammingSubmissionId(submissionId);
+    }
+
+    /**
+     * Deletes captured submission log files without looking up database records that regeneration already removed.
+     *
+     * @param exerciseId   the owning exercise
+     * @param submissionId the deleted submission
+     */
+    public void deleteBuildLogFiles(long exerciseId, long submissionId) {
+        failedBuildLogService.deleteBuildLogs(exerciseId, submissionId);
     }
 
     private long exerciseIdOf(ProgrammingSubmission programmingSubmission) {

@@ -712,38 +712,22 @@ public class StudentExamService {
     }
 
     /**
-     * Starts all the exercises only for a specific list of student exams.
-     *
-     * @param examId         exam to which the student exams belong
-     * @param studentExamIds the ids of student exams for which to start exercises
-     * @return a future that will yield the number of generated participations
-     */
-    public CompletableFuture<Integer> startExercisesForStudentExams(Long examId, List<Long> studentExamIds) {
-        return this.startExercises(examId, studentExamIds);
-    }
-
-    /**
      * Starts all the exercises of all the student exams of an exam
      *
      * @param examId exam to which the student exams belong
      * @return a future that will yield the number of generated participations
      */
     public CompletableFuture<Integer> startExercises(Long examId) {
-        return this.startExercises(examId, null);
+        return examPreparationLockService.withPreparationLock(examId, () -> prepareExercises(examId));
     }
 
-    private CompletableFuture<Integer> startExercises(Long examId, List<Long> studentExamIds) {
-        return examPreparationLockService.withPreparationLock(examId, () -> prepareExercises(examId, studentExamIds));
-    }
-
-    private CompletableFuture<Integer> prepareExercises(Long examId, List<Long> studentExamIds) {
+    private CompletableFuture<Integer> prepareExercises(Long examId) {
         boolean testExam = examRepository.findIsTestExamById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         // One row per (student exam, exercise) pair, carrying ids and the student's login only. Loading the exam with its
         // student exams and their exercises instead would repeat the exam row and the full exercise row once per student
         // exam, which for a large exam transfers megabytes to convey a few kilobytes of distinct data.
-        var exerciseStartData = studentExamIds == null ? studentExamRepository.findExerciseStartDataByExamId(examId)
-                : studentExamRepository.findExerciseStartDataByExamIdAndStudentExamIds(examId, studentExamIds);
+        var exerciseStartData = studentExamRepository.findExerciseStartDataByExamId(examId);
         var exercisesById = loadExercisesForPreparation(exerciseStartData);
         // Which students are already set up, asked once per exercise rather than once per student and exercise. Test runs
         // are not prepared here, so only the graded participations count.

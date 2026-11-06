@@ -615,9 +615,8 @@ public class ExamService {
     private ExamResultInputs selectExamResultInputs(StudentExam studentExam, Set<ExamGradeScoreDTO> grades, List<StudentParticipation> participations) {
         var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
         if (!studentExam.isTestExam()) {
-            return new ExamResultInputs(exercises, exercises, grades, List.of());
+            return new ExamResultInputs(exercises, grades, List.of());
         }
-        var assignedExercises = exercises;
         exercises = exercises.stream()
                 .filter(exercise -> exercise instanceof QuizExercise || exercise instanceof ProgrammingExercise && exercise.getAssessmentType() == AssessmentType.AUTOMATIC)
                 .toList();
@@ -646,16 +645,10 @@ public class ExamService {
                 pendingExerciseIds.add(exercise.getId());
             }
         }
-        return new ExamResultInputs(exercises, assignedExercises, attemptGrades, pendingExerciseIds);
+        return new ExamResultInputs(exercises, attemptGrades, pendingExerciseIds);
     }
 
-    /**
-     * @param exercises          the exercises that contribute to the score
-     * @param assignedExercises  every exercise of the attempt, including those that are not scored (manual or pending), for submission metadata
-     * @param grades             the grades that contribute to the score
-     * @param pendingExerciseIds programming exercises that still await their build result
-     */
-    private record ExamResultInputs(List<Exercise> exercises, List<Exercise> assignedExercises, Set<ExamGradeScoreDTO> grades, List<Long> pendingExerciseIds) {
+    private record ExamResultInputs(List<Exercise> exercises, Set<ExamGradeScoreDTO> grades, List<Long> pendingExerciseIds) {
     }
 
     @Nullable
@@ -996,20 +989,23 @@ public class ExamService {
         var studentExercises = inputs.exercises();
         var examGrades = inputs.grades();
         Double attemptMaxPoints = studentExam.isTestExam() ? calculateMaxPointsSum(studentExercises, exam.getCourse()) : null;
+        Map<Long, ExamScoresDTO.ExerciseResultDTO> exerciseGroupIdToExerciseResult = studentExam.isTestExam()
+                ? buildPracticeAttemptExerciseMetadata(studentExam, participations, quizSubmittedAnswerCounts)
+                : new HashMap<>();
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
             String noParticipationGrade = gradingScale.map(GradingScale::getNoParticipationGradeOrDefault).orElse(GradingScale.DEFAULT_NO_PARTICIPATION_GRADE);
             return new ExamScoresDTO.StudentResultDTO(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
-                    0.0, noParticipationGrade, noParticipationGrade, false, 0.0, null, null, null, attemptMaxPoints);
+                    0.0, noParticipationGrade, noParticipationGrade, false, 0.0, null, studentExam.isTestExam() ? exerciseGroupIdToExerciseResult : null, null, attemptMaxPoints);
         }
         else if (plagiarismMapping.studentHasVerdict(user.getId(), PlagiarismVerdict.PLAGIARISM)) {
             String plagiarismGrade = gradingScale.map(GradingScale::getPlagiarismGradeOrDefault).orElse(GradingScale.DEFAULT_PLAGIARISM_GRADE);
             return new ExamScoresDTO.StudentResultDTO(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
-                    0.0, plagiarismGrade, plagiarismGrade, false, 0.0, null, null, PlagiarismVerdict.PLAGIARISM, attemptMaxPoints);
+                    0.0, plagiarismGrade, plagiarismGrade, false, 0.0, null, studentExam.isTestExam() ? exerciseGroupIdToExerciseResult : null, PlagiarismVerdict.PLAGIARISM,
+                    attemptMaxPoints);
         }
         var overallPointsAchieved = 0.0;
         var overallScoreAchieved = 0.0;
         var overallPointsAchievedInFirstCorrection = 0.0;
-        Map<Long, ExamScoresDTO.ExerciseResultDTO> exerciseGroupIdToExerciseResult = new HashMap<>();
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(user.getId());
         for (ExamGradeScoreDTO examGrade : examGrades) {
             ExamGradeScoreDTO finalExamGrade = examGrade;
@@ -1049,21 +1045,6 @@ public class ExamService {
             exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                     new ExamScoresDTO.ExerciseResultDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
         }
-        // Exercises without a score input (manual or pending programming in a practice attempt) still report their submission metadata, so that
-        // an attempt containing only those exercises is counted as non-empty. They add no points to the overall score.
-        for (Exercise exercise : inputs.assignedExercises()) {
-            if (exercise.getExerciseGroup() == null || exerciseGroupIdToExerciseResult.containsKey(exercise.getExerciseGroup().getId())) {
-                continue;
-            }
-            StudentParticipation studentParticipation = exercise.findParticipation(participations);
-            boolean hasNonEmptySubmission = studentParticipation != null && !studentParticipation.getSubmissions().isEmpty()
-                    && hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise);
-            if (exercise instanceof QuizExercise && quizSubmittedAnswerCounts != null && studentParticipation != null) {
-                hasNonEmptySubmission = hasNonEmptySubmissionInQuiz(studentParticipation, quizSubmittedAnswerCounts);
-            }
-            exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
-                    new ExamScoresDTO.ExerciseResultDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), 0.0, 0.0, hasNonEmptySubmission));
-        }
         // Round the points again to prevent floating point issues that might occur when summing up the exercise points (e.g. 0.3 + 0.3 + 0.3 = 0.8999999999999999)
         overallPointsAchieved = roundScoreSpecifiedByCourseSettings(overallPointsAchieved, exam.getCourse());
         var overallGrade = "";
@@ -1102,6 +1083,25 @@ public class ExamService {
                 inputs.pendingExerciseIds().isEmpty() ? overallPointsAchieved : null, inputs.pendingExerciseIds().isEmpty() ? overallScoreAchieved : null, overallGrade,
                 overallGradeInFirstCorrection, hasPassed, overallPointsAchievedInFirstCorrection, gradeWithBonus, exerciseGroupIdToExerciseResult, mostSevereVerdict,
                 attemptMaxPoints);
+    }
+
+    /** Keeps practice assignment/submission metadata available even when an exercise has no eligible automatic score. */
+    private Map<Long, ExamScoresDTO.ExerciseResultDTO> buildPracticeAttemptExerciseMetadata(StudentExam studentExam, List<StudentParticipation> participations,
+            List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts) {
+        Map<Long, ExamScoresDTO.ExerciseResultDTO> metadata = new HashMap<>();
+        for (Exercise exercise : studentExam.getExercises()) {
+            if (exercise == null) {
+                continue;
+            }
+            var participation = exercise.findParticipation(participations);
+            boolean nonEmpty = participation != null && !participation.getSubmissions().isEmpty() && hasNonEmptySubmission(participation.getSubmissions(), exercise);
+            if (exercise instanceof QuizExercise && quizSubmittedAnswerCounts != null && participation != null) {
+                nonEmpty = hasNonEmptySubmissionInQuiz(participation, quizSubmittedAnswerCounts);
+            }
+            metadata.put(exercise.getExerciseGroup().getId(),
+                    new ExamScoresDTO.ExerciseResultDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), null, null, nonEmpty));
+        }
+        return metadata;
     }
 
     private boolean hasNonEmptySubmissionInQuiz(StudentParticipation studentParticipation, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts) {

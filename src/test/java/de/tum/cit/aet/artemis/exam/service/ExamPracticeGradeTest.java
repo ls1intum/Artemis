@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -144,6 +143,7 @@ class ExamPracticeGradeTest {
         text.setId(2L);
         text.setMaxPoints(90.0);
         text.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        text.setExerciseGroup(quiz.getExerciseGroup());
         attempt.setExercises(List.of(quiz, text));
         GradingScale scale = new GradingScale();
         GradeStep passing = new GradeStep();
@@ -185,6 +185,7 @@ class ExamPracticeGradeTest {
         text.setId(2L);
         text.setMaxPoints(100.0);
         text.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        text.setExerciseGroup(quiz.getExerciseGroup());
         attempt.setExercises(List.of(text));
 
         var result = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of());
@@ -200,6 +201,7 @@ class ExamPracticeGradeTest {
         text.setId(2L);
         text.setMaxPoints(90.0);
         text.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        text.setExerciseGroup(quiz.getExerciseGroup());
         attempt.setExercises(List.of(quiz, text));
         exam.setExerciseGroups(List.of(quiz.getExerciseGroup()));
         exam.setNumberOfCorrectionRoundsInExam(1);
@@ -349,6 +351,61 @@ class ExamPracticeGradeTest {
         assertThat(result.pendingExerciseIds()).isEmpty();
         assertThat(result.studentResult().overallPointsAchieved()).isZero();
         assertThat(result.studentResult().overallScoreAchieved()).isZero();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false,false", "false,true", "true,false", "true,true" })
+    void unscoredAttemptsRetainAssignedExerciseAndNonEmptyMetadata(boolean manualOnly, boolean instructorView) {
+        StudentParticipation participation;
+        if (manualOnly) {
+            var text = new TextExercise();
+            text.setId(2L);
+            text.setTitle("Manual essay");
+            text.setMaxPoints(20.0);
+            text.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+            text.setExerciseGroup(quiz.getExerciseGroup());
+            attempt.setExercises(List.of(text));
+            participation = new StudentParticipation();
+            participation.setId(2L);
+            participation.setExercise(text);
+            var submission = new TextSubmission();
+            submission.setId(2L);
+            submission.setText("An actual non-empty answer");
+            participation.addSubmission(submission);
+        }
+        else {
+            participation = programmingParticipation();
+            participation.getExercise().setTitle("Programming");
+            var submission = new ProgrammingSubmission();
+            submission.setId(2L);
+            submission.setType(SubmissionType.MANUAL);
+            submission.setSubmitted(true);
+            submission.setSubmissionDate(ZonedDateTime.now());
+            participation.addSubmission(submission);
+        }
+        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(attempt, false)).thenReturn(List.of(participation));
+        de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO.StudentResultDTO result;
+        if (instructorView) {
+            exam.setExerciseGroups(List.of(quiz.getExerciseGroup()));
+            exam.setNumberOfCorrectionRoundsInExam(1);
+            when(examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(1L)).thenReturn(exam);
+            when(studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(1L)).thenReturn(Set.of(attempt));
+            when(studentParticipationRepository.findGradesByExamId(1L)).thenReturn(Set.of());
+            result = examService.calculateExamScores(1L).studentResults().getFirst();
+        }
+        else {
+            var summary = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of());
+            assertThat(summary.achievedPointsPerExercise()).isEmpty();
+            result = summary.studentResult();
+        }
+
+        assertThat(result.exerciseGroupIdToExerciseResult()).containsKey(quiz.getExerciseGroup().getId());
+        var metadata = result.exerciseGroupIdToExerciseResult().get(quiz.getExerciseGroup().getId());
+        assertThat(metadata.exerciseId()).isEqualTo(2L);
+        assertThat(metadata.hasNonEmptySubmission()).isTrue();
+        assertThat(metadata.achievedPoints()).isNull();
+        assertThat(metadata.achievedScore()).isNull();
+        assertThat(result.overallPointsAchieved()).isEqualTo(manualOnly ? 0.0 : null);
     }
 
     @Test
@@ -544,6 +601,7 @@ class ExamPracticeGradeTest {
         manual.setId(2L);
         manual.setMaxPoints(100.0);
         manual.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        manual.setExerciseGroup(quiz.getExerciseGroup());
         attempt.setExercises(List.of(manual));
         var manualSource = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of());
         assertThat(manualSource.maxPoints()).isZero();
@@ -678,82 +736,6 @@ class ExamPracticeGradeTest {
         source.setTestRun(testRun);
         source.setCreatedDate(Instant.EPOCH.plusSeconds(id));
         return source;
-    }
-
-    @Test
-    void manualOnlyAttemptKeepsNonEmptySubmissionMetadataWithoutScoring() {
-        var text = manualTextExercise(2L, 2L);
-        attempt.setExercises(List.of(text));
-        var participation = participationFor(3L, text);
-        var submission = new TextSubmission();
-        submission.setText("answer");
-        participation.addSubmission(submission);
-        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(attempt, false)).thenReturn(List.of(participation));
-
-        var result = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of()).studentResult();
-
-        assertThat(result.exerciseGroupIdToExerciseResult()).containsOnlyKeys(2L);
-        assertThat(result.exerciseGroupIdToExerciseResult().get(2L).hasNonEmptySubmission()).isTrue();
-        assertThat(result.exerciseGroupIdToExerciseResult().get(2L).achievedPoints()).isZero();
-        assertThat(result.overallPointsAchieved()).isZero();
-        assertThat(result.maxPoints()).isZero();
-    }
-
-    @Test
-    void pendingProgrammingOnlyAttemptKeepsNonEmptySubmissionMetadataWithoutScoring() {
-        var programming = programmingParticipation();
-        var submission = new ProgrammingSubmission();
-        submission.setId(1L);
-        submission.setType(SubmissionType.MANUAL);
-        submission.setSubmitted(true);
-        submission.setSubmissionDate(ZonedDateTime.now());
-        programming.addSubmission(submission);
-        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(attempt, false)).thenReturn(List.of(programming));
-
-        var result = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of()).studentResult();
-
-        assertThat(result.exerciseGroupIdToExerciseResult()).containsOnlyKeys(1L);
-        assertThat(result.exerciseGroupIdToExerciseResult().get(1L).hasNonEmptySubmission()).isTrue();
-        assertThat(result.overallPointsAchieved()).isNull();
-    }
-
-    @Test
-    void mixedAttemptKeepsMetadataOfScoredAndUnscoredExercises() {
-        var text = manualTextExercise(3L, 3L);
-        attempt.setExercises(List.of(quiz, text));
-        var quizParticipation = participationFor(1L, quiz);
-        var textParticipation = participationFor(3L, text);
-        var submission = new TextSubmission();
-        submission.setText("answer");
-        textParticipation.addSubmission(submission);
-        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(attempt, false)).thenReturn(List.of(quizParticipation, textParticipation));
-
-        var result = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of(grade(1L, 60.0))).studentResult();
-
-        assertThat(result.exerciseGroupIdToExerciseResult()).containsOnlyKeys(1L, 3L);
-        assertThat(result.exerciseGroupIdToExerciseResult().get(1L).achievedPoints()).isEqualTo(6.0);
-        assertThat(result.exerciseGroupIdToExerciseResult().get(3L).hasNonEmptySubmission()).isTrue();
-        assertThat(result.exerciseGroupIdToExerciseResult().get(3L).achievedPoints()).isZero();
-        assertThat(result.overallPointsAchieved()).isEqualTo(6.0);
-    }
-
-    private TextExercise manualTextExercise(long exerciseId, long groupId) {
-        TextExercise text = new TextExercise();
-        text.setId(exerciseId);
-        text.setMaxPoints(50.0);
-        text.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        ExerciseGroup group = new ExerciseGroup();
-        group.setId(groupId);
-        group.setExam(exam);
-        text.setExerciseGroup(group);
-        return text;
-    }
-
-    private StudentParticipation participationFor(long participationId, Exercise exercise) {
-        var participation = new StudentParticipation();
-        participation.setId(participationId);
-        participation.setExercise(exercise);
-        return participation;
     }
 
     private StudentParticipation programmingParticipation() {

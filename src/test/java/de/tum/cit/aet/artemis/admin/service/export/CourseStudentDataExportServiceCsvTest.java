@@ -269,6 +269,23 @@ class CourseStudentDataExportServiceCsvTest {
         assertThat(csv.value("Std Dev", "Overall Score")).isEqualTo("30.0");
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void exportsUngradedAssignmentMetadataWithoutInventingPracticePoints(boolean practiceExam) throws IOException {
+        var groups = List.of(new ExerciseGroupDTO(1L, "Group", 20.0, 1L, List.of()));
+        var assignment = new ExerciseResultDTO(7L, "Manual essay", 20.0, null, null, true);
+        var student = new StudentResultDTO(1L, "Student", null, null, null, true, 0.0, 0.0, null, null, false, null, null, Map.of(1L, assignment), null, practiceExam ? 0.0 : null);
+        var errors = new ArrayList<String>();
+
+        var files = service.exportExamScoresFromData(exam("Exam", 100, false, groups, List.of(student)), outputDirectory, errors, course);
+
+        assertThat(errors).isEmpty();
+        var csv = readCsv(files.getFirst());
+        assertThat(csv.value("Student", "Group Exercise")).isEqualTo("Manual essay");
+        assertThat(csv.value("Student", "Group Points")).isEqualTo(practiceExam ? "" : "0.0");
+        assertThat(csv.value("Student", "Group Score")).isEqualTo(practiceExam ? "" : "0.0");
+    }
+
     @Test
     void exportsTheSharedAutomaticMaximumForUniformTestAttempts() throws IOException {
         var student = new StudentResultDTO(1L, "First", null, null, null, true, 8.4, 80.0, null, null, false, null, null, Map.of(), null, 10.5);

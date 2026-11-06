@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +31,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.FailedBuildLogService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
@@ -45,6 +48,9 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
 
     @Autowired
     private BuildLogEntryService buildLogEntryService;
+
+    @Autowired
+    private FailedBuildLogService failedBuildLogService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -109,6 +115,37 @@ class ParticipationDeletionServiceTest extends AbstractSpringIntegrationJenkinsL
         assertThat(buildLogEntryService.getLatestBuildLogs(studentSubmission)).isNotEmpty();
         participationDeletionService.deleteResultsAndSubmissionsOfParticipation(studentParticipation.getId(), true);
         assertThat(buildLogEntryService.getLatestBuildLogs(studentSubmission)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeleteParticipationRetainsResourcesOnBuildPlanFailureAndCanRetry() throws Exception {
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
+        var result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, BUILD_LOG_TIME, submission, true, true, 80.0);
+        buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(BUILD_LOG_TIME, "Cleanup despite Jenkins failure")), submission, result);
+        var repositoryUri = new LocalVCRepositoryUri(participation.getRepositoryUri());
+        Path repositoryPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
+        assertThat(repositoryPath).exists();
+        mockDeleteBuildPlan(exercise.getProjectKey(), participation.getBuildPlanId(), true);
+        mockDeleteBuildPlan(exercise.getProjectKey(), participation.getBuildPlanId(), false);
+        org.mockito.Mockito.clearInvocations(gitServiceSpy);
+
+        assertThatThrownBy(() -> participationDeletionService.delete(participation.getId(), true)).isInstanceOf(RuntimeException.class);
+
+        assertThat(repositoryPath).exists();
+        assertThat(studentParticipationRepository.findById(participation.getId())).isPresent();
+        assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submission.getId(), result.getId())).isPresent();
+        org.mockito.Mockito.verify(gitServiceSpy, org.mockito.Mockito.never()).deleteLocalRepository(repositoryUri);
+
+        participationDeletionService.delete(participation.getId(), true);
+
+        assertThat(repositoryPath).doesNotExist();
+        assertThat(studentParticipationRepository.findById(participation.getId())).isEmpty();
+        assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submission.getId(), result.getId())).isEmpty();
+        verify(gitServiceSpy).deleteLocalRepository(repositoryUri);
     }
 
     @Test

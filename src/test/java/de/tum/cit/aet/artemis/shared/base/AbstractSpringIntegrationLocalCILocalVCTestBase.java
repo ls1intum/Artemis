@@ -137,7 +137,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @MockitoSpyBean
     protected SpringSecurityLdapTemplate ldapTemplate;
 
-    @Autowired
+    @MockitoSpyBean
     protected LocalVCService versionControlService;
 
     @MockitoSpyBean
@@ -268,10 +268,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(gitServiceSpy, studentExamServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, resourceLoaderService,
-                programmingMessagingService, competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService,
-                pyrisPipelineService, pyrisEventService, ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel, repositoryVcsAccessTokenService,
-                fallbackBuildLogEntryService);
+        Mockito.reset(gitServiceSpy, versionControlService, studentExamServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService,
+                resourceLoaderService, programmingMessagingService, competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService,
+                irisSessionPresenceService, pyrisPipelineService, pyrisEventService, ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel,
+                repositoryVcsAccessTokenService, fallbackBuildLogEntryService);
         buildAgentConfigurationOverrides.reset();
         // Preserve startup answers while discarding calls recorded by scheduled and build threads.
         Mockito.clearInvocations(buildAgentConfiguration);

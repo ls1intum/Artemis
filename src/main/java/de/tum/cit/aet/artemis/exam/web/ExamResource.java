@@ -142,6 +142,8 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Task;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
@@ -1156,7 +1158,7 @@ public class ExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     * @return the list of student exams with their corresponding users
+     * @return the committed student exams with their users; X-Artemis-Preparation-Pending signals that resource cleanup needs a preparation retry
      */
     @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
     @PostMapping("courses/{courseId}/exams/{examId}/generate-student-exams")
@@ -1166,21 +1168,34 @@ public class ExamResource {
         log.info("REST request to generate student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
-        List<StudentExam> studentExams = examPreparationLockService.withPreparationLock(examId, () -> {
-            List<Runnable> externalCleanup = new ArrayList<>();
+        record GenerationOutcome(List<StudentExam> studentExams, boolean preparationPending) {
+        }
+        var outcome = examPreparationLockService.withPreparationLock(examId, () -> {
+            List<ParticipationCleanupCommand> externalCleanup = new ArrayList<>();
             List<StudentExam> generated = examRepository.withStudentExamGenerationLock(examId, () -> {
                 // Database deletion and replacement roll back together; irreversible resource cleanup waits for commit.
-                examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(examId, externalCleanup::add);
+                examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(examId, cleanup -> {
+                    if (!(cleanup instanceof Task task)) {
+                        throw new IllegalStateException("Regeneration cleanup must provide serializable resource identifiers");
+                    }
+                    externalCleanup.add(task.command());
+                });
                 return studentExamService.generateStudentExams(exam);
             });
-            // Preparation cannot recreate repositories or build plans until the old resources have been removed.
-            examPreparationLockService.runAllCleanups(externalCleanup);
-            return generated;
+            // Acknowledge the committed replacement even if retained cleanup prevents preparation for now.
+            try {
+                examPreparationLockService.retainAndRunCleanup(examId, externalCleanup);
+                return new GenerationOutcome(generated, false);
+            }
+            catch (RuntimeException exception) {
+                log.error("Student exam generation for exam {} committed, but external cleanup remains pending", examId, exception);
+                return new GenerationOutcome(generated, true);
+            }
         });
-        log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
+        log.info("Generated {} student exams in {} for exam {}", outcome.studentExams().size(), formatDurationFrom(start), examId);
         // The client only counts the generated student exams; return the slim, exam-masked projection (no nested exam graph,
         // which is why the previous breakCyclesForSerialization is no longer needed).
-        return ResponseEntity.ok().body(studentExams.stream().map(StudentExamDTO::of).toList());
+        return preparationResponse(outcome.preparationPending()).body(outcome.studentExams().stream().map(StudentExamDTO::of).toList());
     }
 
     @NonNull
@@ -1269,7 +1284,7 @@ public class ExamResource {
      * @param courseId    the id of the course
      * @param examId      the id of the exam
      * @param studentDtos the list of students (with at least registration number) who should get access to the exam
-     * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     * @return the registration result; X-Artemis-Preparation-Pending signals saved registration with unfinished preparation
      */
     @FeatureUsage(UserFeature.EXAM_REGISTRATION)
     @PostMapping("courses/{courseId}/exams/{examId}/students")
@@ -1280,8 +1295,8 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        ExamRegistrationResultDTO notFoundStudentsDtos = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
-        return ResponseEntity.ok().body(notFoundStudentsDtos);
+        var outcome = examRegistrationService.registerStudentsForExam(courseId, examId, studentDtos);
+        return preparationResponse(outcome.preparationPending()).body(outcome.result());
     }
 
     /**
@@ -1289,7 +1304,7 @@ public class ExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     * @return status 200 for saved registrations, with X-Artemis-Preparation-Pending when preparation needs a retry, or status 404 if absent
      */
     @FeatureUsage(UserFeature.EXAM_REGISTRATION)
     @PostMapping("courses/{courseId}/exams/{examId}/register-course-students")
@@ -1305,8 +1320,16 @@ public class ExamResource {
             throw new BadRequestAlertException("Registration of course students is only allowed for real exams", ENTITY_NAME, "AddCourseStudentsOnlyForRealExams");
         }
 
-        examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
-        return ResponseEntity.ok().body(null);
+        boolean preparationPending = examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
+        return preparationResponse(preparationPending).build();
+    }
+
+    private ResponseEntity.BodyBuilder preparationResponse(boolean preparationPending) {
+        var response = ResponseEntity.ok();
+        if (preparationPending) {
+            response.header("X-Artemis-Preparation-Pending", "true");
+        }
+        return response;
     }
 
     /**

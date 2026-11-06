@@ -428,7 +428,7 @@ jhipster:
         #allowed-origin-patterns: "*"
         #allowed-methods: "*"
         #allowed-headers: "*"
-        #exposed-headers: "Authorization,Link,X-Total-Count"
+        #exposed-headers: "Authorization,Link,X-Total-Count,X-Artemis-Preparation-Pending"
         #allow-credentials: true
         #max-age: 1800
     mail:

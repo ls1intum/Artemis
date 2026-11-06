@@ -809,8 +809,11 @@ public class CourseStudentDataExportService {
 
                     if (exerciseResult != null) {
                         rowParts.add(escapeCSV(exerciseResult.title()));
-                        rowParts.add(exerciseResult.achievedPoints() != null ? formatValue(exerciseResult.achievedPoints(), course) : formatValue(0.0, course));
-                        rowParts.add(exerciseResult.achievedScore() != null ? formatValue(exerciseResult.achievedScore(), course) : formatValue(0.0, course));
+                        boolean ungradedPracticeExercise = studentResult.maxPoints() != null && exerciseResult.achievedPoints() == null;
+                        rowParts.add(ungradedPracticeExercise ? ""
+                                : exerciseResult.achievedPoints() != null ? formatValue(exerciseResult.achievedPoints(), course) : formatValue(0.0, course));
+                        rowParts.add(ungradedPracticeExercise ? ""
+                                : exerciseResult.achievedScore() != null ? formatValue(exerciseResult.achievedScore(), course) : formatValue(0.0, course));
 
                         // Collect for statistics
                         if (exerciseResult.achievedPoints() != null) {

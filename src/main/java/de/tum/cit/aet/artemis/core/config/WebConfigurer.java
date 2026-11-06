@@ -144,6 +144,10 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = jHipsterProperties.getCors();
         if (!CollectionUtils.isEmpty(config.getAllowedOrigins()) || !CollectionUtils.isEmpty(config.getAllowedOriginPatterns())) {
+            // Preserve the partial-success signal for clients hosted on a separately configured origin.
+            if (config.getExposedHeaders() == null || !config.getExposedHeaders().contains("X-Artemis-Preparation-Pending")) {
+                config.addExposedHeader("X-Artemis-Preparation-Pending");
+            }
             log.debug("Registering CORS filter");
             source.registerCorsConfiguration("/api/**", config);
             source.registerCorsConfiguration("/management/**", config);
