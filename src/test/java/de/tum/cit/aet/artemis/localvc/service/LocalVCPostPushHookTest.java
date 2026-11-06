@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.jgit.transport.ReceivePack;
 import org.junit.jupiter.api.Test;
@@ -25,15 +26,28 @@ class LocalVCPostPushHookTest {
         when(localVCServletService.getPasswordAuthenticationPushNotice()).thenReturn("please switch");
 
         // A push that updates nothing returns early, and must still tell the user.
-        new LocalVCPostPushHook(localVCServletService, new User(), AuthenticationMechanism.PASSWORD).onPostReceive(receivePack, List.of());
+        new LocalVCPostPushHook(localVCServletService, new User(), () -> AuthenticationMechanism.PASSWORD).onPostReceive(receivePack, List.of());
 
         verify(receivePack).sendMessage("please switch");
     }
 
     @Test
     void aPushWithATokenPrintsNothing() {
-        new LocalVCPostPushHook(localVCServletService, new User(), AuthenticationMechanism.USER_VCS_ACCESS_TOKEN).onPostReceive(receivePack, List.of());
+        new LocalVCPostPushHook(localVCServletService, new User(), () -> AuthenticationMechanism.USER_VCS_ACCESS_TOKEN).onPostReceive(receivePack, List.of());
 
         verify(receivePack, never()).sendMessage(anyString());
+    }
+
+    @Test
+    void readsTheMechanismOnlyOnceTheRequestWasAuthorized() {
+        when(localVCServletService.getPasswordAuthenticationPushNotice()).thenReturn("please switch");
+        AtomicReference<AuthenticationMechanism> mechanism = new AtomicReference<>();
+        // JGit builds the hook before the push filter has recorded the mechanism on the request.
+        LocalVCPostPushHook hook = new LocalVCPostPushHook(localVCServletService, new User(), mechanism::get);
+        mechanism.set(AuthenticationMechanism.PASSWORD);
+
+        hook.onPostReceive(receivePack, List.of());
+
+        verify(receivePack).sendMessage("please switch");
     }
 }

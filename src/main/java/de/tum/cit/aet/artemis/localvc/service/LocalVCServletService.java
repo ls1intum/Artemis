@@ -1787,13 +1787,14 @@ public class LocalVCServletService {
      * @param exercise the exercise whose repository the user accessed
      */
     void sendPasswordAuthenticationEmail(User user, GitRepositoryAccessDTO exercise) {
+        DistributedMap<Long, Boolean> cache = null;
         // A notice must never cost the user their git operation, whatever goes wrong while it is prepared or sent.
         try {
             if (user.getEmail() == null || user.getEmail().isBlank()) {
                 return;
             }
 
-            DistributedMap<Long, Boolean> cache = distributedDataProvider.getExpiringMap(HTTPS_CLONE_EMAIL_CACHE, Duration.ofHours(24));
+            cache = distributedDataProvider.getExpiringMap(HTTPS_CLONE_EMAIL_CACHE, Duration.ofHours(24));
             // putIfAbsent returns null if there was no entry, so only the first password authentication within 24 hours continues
             if (cache.putIfAbsent(user.getId(), Boolean.TRUE, Duration.ofHours(24)) != null) {
                 return;
@@ -1813,6 +1814,20 @@ public class LocalVCServletService {
         }
         catch (Exception e) {
             log.warn("Could not send the password authentication email for user {}: {}", user.getId(), e.getMessage());
+            // Give the slot back, so that the next password authentication can try again instead of waiting a day.
+            releaseEmailSlot(cache, user);
+        }
+    }
+
+    private void releaseEmailSlot(DistributedMap<Long, Boolean> cache, User user) {
+        if (cache == null) {
+            return;
+        }
+        try {
+            cache.remove(user.getId());
+        }
+        catch (Exception e) {
+            log.warn("Could not release the password authentication email slot of user {}: {}", user.getId(), e.getMessage());
         }
     }
 

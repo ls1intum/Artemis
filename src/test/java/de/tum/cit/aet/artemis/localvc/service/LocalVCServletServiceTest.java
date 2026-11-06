@@ -552,6 +552,7 @@ class LocalVCServletServiceTest {
             doThrow(new IllegalStateException("mail server away")).when(mailSendingService).buildAndSendAsync(any(), any(), any(), any());
 
             assertThatCode(() -> localVCServletService.sendPasswordAuthenticationEmail(testUser, exercise)).doesNotThrowAnyException();
+            verify(httpsCloneEmailCache).remove(testUser.getId());
         }
 
         @Test

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.lib.Repository;
@@ -35,7 +36,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
     private final User user;
 
-    private final AuthenticationMechanism authenticationMechanism;
+    private final Supplier<AuthenticationMechanism> authenticationMechanism;
 
     public LocalVCPostPushHook(LocalVCServletService localVCServletService, ServerSession serverSession, @NonNull User user) {
         this.localVCServletService = localVCServletService;
@@ -43,10 +44,14 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         this.exercise = serverSession.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
         this.vcsAccessLog = serverSession.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
         this.user = user;
-        this.authenticationMechanism = AuthenticationMechanism.SSH;
+        this.authenticationMechanism = () -> AuthenticationMechanism.SSH;
     }
 
-    public LocalVCPostPushHook(LocalVCServletService localVCServletService, @NonNull User user, AuthenticationMechanism authenticationMechanism) {
+    /**
+     * @param authenticationMechanism reads how the push authenticated. JGit creates the hook before the push filter authorizes the request, so the value is only read when the hook
+     *                                    runs.
+     */
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService, @NonNull User user, Supplier<AuthenticationMechanism> authenticationMechanism) {
         this.localVCServletService = localVCServletService;
         this.user = user;
         this.authenticationMechanism = authenticationMechanism;
@@ -66,7 +71,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
     public void onPostReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
 
         // Said before anything else, so that a push that updates nothing or is rejected below still tells the user.
-        if (authenticationMechanism == AuthenticationMechanism.PASSWORD) {
+        if (authenticationMechanism.get() == AuthenticationMechanism.PASSWORD) {
             receivePack.sendMessage(localVCServletService.getPasswordAuthenticationPushNotice());
         }
 
