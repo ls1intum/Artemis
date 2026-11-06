@@ -24,58 +24,14 @@
                             </a>
                         }
                     </div>
-                    <div class="mb-4! flex flex-wrap items-baseline gap-2">
-                        <span class="text-4xl font-bold leading-none text-color">{{ completedAssessments() }} / {{ totalAssessmentSlots() }}</span>
-                        <span class="text-base text-muted-color">
-                            <span jhiTranslate="artemisApp.assessmentDashboard.assessmentsCompleted"></span>
-                            ({{ assessedPercentage() }}%)
-                        </span>
-                    </div>
-                    <div
-                        class="relative my-1 h-[calc(var(--tumaet-ui-spacing)*5)] overflow-hidden rounded-md bg-(--artemis-control-disabled-background)"
-                        role="progressbar"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                        [attr.aria-valuenow]="assessedPercentage()"
-                        [attr.aria-label]="
-                            'artemisApp.assessmentDashboard.progressDescription'
-                                | artemisTranslate
-                                    : {
-                                          percentageAssessed: assessedPercentage(),
-                                          numberAssessed: completedAssessments(),
-                                          numberSubmissions: totalAssessmentSlots(),
-                                      }
-                        "
-                    >
-                        <span
-                            class="absolute inset-y-0 left-0 bg-state-success text-(--tumaet-ui-state-success-contrast)"
-                            [style.width.%]="assessedPercentage()"
-                            aria-hidden="true"
-                        ></span>
-                        <span
-                            class="pointer-events-none absolute inset-y-0 bg-state-warning"
-                            [style.left.%]="assessedPercentage()"
-                            [style.width.%]="inProgressPercentage()"
-                            aria-hidden="true"
-                        ></span>
-                    </div>
-                    <div class="flex flex-wrap gap-x-6! gap-y-4! text-sm text-muted-color">
-                        <span class="inline-flex items-center gap-1.5">
-                            <span class="h-3 w-3 rounded-sm bg-state-success text-(--tumaet-ui-state-success-contrast)"></span>
-                            <span jhiTranslate="artemisApp.assessmentDashboard.assessed"></span>
-                            {{ completedAssessments() }}
-                        </span>
-                        <span class="inline-flex items-center gap-1.5">
-                            <span class="h-3 w-3 rounded-sm bg-state-warning"></span>
-                            <span jhiTranslate="artemisApp.assessmentDashboard.inProgress"></span>
-                            {{ inProgressAssessments() }}
-                        </span>
-                        <span class="inline-flex items-center gap-1.5">
-                            <span class="h-3 w-3 rounded-sm bg-(--artemis-control-disabled-background)"></span>
-                            <span jhiTranslate="artemisApp.assessmentDashboard.open"></span>
-                            {{ openAssessments() }}
-                        </span>
-                    </div>
+                    <jhi-assessment-progress
+                        [completed]="completedAssessments()"
+                        [total]="totalAssessmentSlots()"
+                        [assessedPercentage]="assessedPercentage()"
+                        [inProgressPercentage]="inProgressPercentage()"
+                        [inProgress]="inProgressAssessments()"
+                        [open]="openAssessments()"
+                    />
                     @if (tutorParticipationStatus() !== NOT_PARTICIPATED) {
                         <div class="mt-6! border-t border-surface pt-4!">
                             <jhi-collapsable-assessment-instructions
@@ -98,21 +54,15 @@
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th
-                                        class="border-b border-surface bg-(--surface-ground) px-6 py-4! text-start text-base font-semibold text-color"
-                                        scope="col"
-                                        jhiTranslate="artemisApp.assessmentDashboard.assessmentInformation"
-                                    ></th>
-                                    <th
-                                        class="border-b border-surface bg-(--surface-ground) px-6 py-4! text-end text-base font-semibold text-color"
-                                        scope="col"
-                                        jhiTranslate="artemisApp.assessmentDashboard.exercise"
-                                    ></th>
-                                    <th
-                                        class="border-b border-surface bg-(--surface-ground) px-6 py-4! text-end text-base font-semibold text-color"
-                                        scope="col"
-                                        jhiTranslate="artemisApp.assessmentDashboard.yours"
-                                    ></th>
+                                    @for (heading of ['assessmentInformation', 'exercise', 'yours']; track heading; let first = $first) {
+                                        <th
+                                            class="border-b border-surface bg-(--surface-ground) px-6 py-4! text-base font-semibold text-color"
+                                            [class.text-start]="first"
+                                            [class.text-end]="!first"
+                                            scope="col"
+                                            [jhiTranslate]="'artemisApp.assessmentDashboard.' + heading"
+                                        ></th>
+                                    }
                                 </tr>
                             </thead>
                             <tbody>
@@ -557,53 +507,10 @@
                                                                         unassessedSubmissionByRound()[correctionRound]?.participation?.id;
                                                                     as participationId
                                                                 ) {
-                                                                    <button
-                                                                        type="button"
-                                                                        tumAetUiButton
-                                                                        severity="secondary"
-                                                                        variant="text"
-                                                                        size="small"
-                                                                        [tumAetUiMenuTrigger]="repositoryActions"
-                                                                        [attr.aria-label]="'artemisApp.exerciseDetail.moreActions' | artemisTranslate"
-                                                                        data-testid="assessment-row-more-actions"
-                                                                    >
-                                                                        <fa-icon [icon]="faEllipsisVertical" />
-                                                                    </button>
-                                                                    <ng-template #repositoryActions>
-                                                                        <tumaet-ui-menu>
-                                                                            <a
-                                                                                tumAetUiMenuItem
-                                                                                data-testid="assessment-row-repository"
-                                                                                [routerLink]="[
-                                                                                    '/course-management',
-                                                                                    courseId(),
-                                                                                    'programming-exercises',
-                                                                                    exerciseId(),
-                                                                                    'repository',
-                                                                                    RepositoryType.USER,
-                                                                                    participationId,
-                                                                                ]"
-                                                                                ><fa-icon [icon]="faFolderOpen" /><span jhiTranslate="artemisApp.repository.title"></span
-                                                                            ></a>
-                                                                            <a
-                                                                                tumAetUiMenuItem
-                                                                                data-testid="assessment-row-commits"
-                                                                                [routerLink]="[
-                                                                                    '/course-management',
-                                                                                    courseId(),
-                                                                                    'programming-exercises',
-                                                                                    exerciseId(),
-                                                                                    'repository',
-                                                                                    RepositoryType.USER,
-                                                                                    participationId,
-                                                                                    'commit-history',
-                                                                                ]"
-                                                                                ><fa-icon [icon]="faCodeCommit" /><span
-                                                                                    jhiTranslate="artemisApp.repository.commitHistory.title"
-                                                                                ></span
-                                                                            ></a>
-                                                                        </tumaet-ui-menu>
-                                                                    </ng-template>
+                                                                    <ng-container
+                                                                        [ngTemplateOutlet]="repositoryRowActions"
+                                                                        [ngTemplateOutletContext]="{ $implicit: participationId }"
+                                                                    />
                                                                 }
                                                             </td>
                                                         </tr>
@@ -666,53 +573,10 @@
                                                                     <!--                                                                    </ng-container>-->
                                                                 }
                                                                 @if (exercise().type === ExerciseType.PROGRAMMING && submission?.participation?.id; as participationId) {
-                                                                    <button
-                                                                        type="button"
-                                                                        tumAetUiButton
-                                                                        severity="secondary"
-                                                                        variant="text"
-                                                                        size="small"
-                                                                        [tumAetUiMenuTrigger]="repositoryActions"
-                                                                        [attr.aria-label]="'artemisApp.exerciseDetail.moreActions' | artemisTranslate"
-                                                                        data-testid="assessment-row-more-actions"
-                                                                    >
-                                                                        <fa-icon [icon]="faEllipsisVertical" />
-                                                                    </button>
-                                                                    <ng-template #repositoryActions>
-                                                                        <tumaet-ui-menu>
-                                                                            <a
-                                                                                tumAetUiMenuItem
-                                                                                data-testid="assessment-row-repository"
-                                                                                [routerLink]="[
-                                                                                    '/course-management',
-                                                                                    courseId(),
-                                                                                    'programming-exercises',
-                                                                                    exerciseId(),
-                                                                                    'repository',
-                                                                                    RepositoryType.USER,
-                                                                                    participationId,
-                                                                                ]"
-                                                                                ><fa-icon [icon]="faFolderOpen" /><span jhiTranslate="artemisApp.repository.title"></span
-                                                                            ></a>
-                                                                            <a
-                                                                                tumAetUiMenuItem
-                                                                                data-testid="assessment-row-commits"
-                                                                                [routerLink]="[
-                                                                                    '/course-management',
-                                                                                    courseId(),
-                                                                                    'programming-exercises',
-                                                                                    exerciseId(),
-                                                                                    'repository',
-                                                                                    RepositoryType.USER,
-                                                                                    participationId,
-                                                                                    'commit-history',
-                                                                                ]"
-                                                                                ><fa-icon [icon]="faCodeCommit" /><span
-                                                                                    jhiTranslate="artemisApp.repository.commitHistory.title"
-                                                                                ></span
-                                                                            ></a>
-                                                                        </tumaet-ui-menu>
-                                                                    </ng-template>
+                                                                    <ng-container
+                                                                        [ngTemplateOutlet]="repositoryRowActions"
+                                                                        [ngTemplateOutletContext]="{ $implicit: participationId }"
+                                                                    />
                                                                 }
                                                             </td>
                                                         </tr>
@@ -1005,3 +869,34 @@
         }
     </div>
 }
+
+<ng-template #repositoryRowActions let-participationId>
+    <button
+        type="button"
+        tumAetUiButton
+        severity="secondary"
+        variant="text"
+        size="small"
+        [tumAetUiMenuTrigger]="repositoryActions"
+        [attr.aria-label]="'artemisApp.exerciseDetail.moreActions' | artemisTranslate"
+        data-testid="assessment-row-more-actions"
+    >
+        <fa-icon [icon]="faEllipsisVertical" />
+    </button>
+    <ng-template #repositoryActions>
+        <tumaet-ui-menu>
+            <a
+                tumAetUiMenuItem
+                data-testid="assessment-row-repository"
+                [routerLink]="['/course-management', courseId(), 'programming-exercises', exerciseId(), 'repository', RepositoryType.USER, participationId]"
+                ><fa-icon [icon]="faFolderOpen" /><span jhiTranslate="artemisApp.repository.title"></span
+            ></a>
+            <a
+                tumAetUiMenuItem
+                data-testid="assessment-row-commits"
+                [routerLink]="['/course-management', courseId(), 'programming-exercises', exerciseId(), 'repository', RepositoryType.USER, participationId, 'commit-history']"
+                ><fa-icon [icon]="faCodeCommit" /><span jhiTranslate="artemisApp.repository.commitHistory.title"></span
+            ></a>
+        </tumaet-ui-menu>
+    </ng-template>
+</ng-template>

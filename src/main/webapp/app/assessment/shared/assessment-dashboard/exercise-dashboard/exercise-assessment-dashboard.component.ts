@@ -1,3 +1,5 @@
+import { NgTemplateOutlet } from '@angular/common';
+import { AssessmentProgressComponent } from '../assessment-progress.component';
 import {
     TumAetUiButtonDirective,
     TumAetUiMenuComponent,
@@ -108,6 +110,8 @@ export interface ExampleSubmissionQueryParams {
     styleUrls: ['./exercise-assessment-dashboard.component.scss'],
     providers: [CourseManagementService],
     imports: [
+        AssessmentProgressComponent,
+        NgTemplateOutlet,
         HeaderExercisePageWithDetailsComponent,
         SecondCorrectionEnableButtonComponent,
         TumAetUiPanelComponent,
