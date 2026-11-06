@@ -37,7 +37,8 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
 
     /**
      * Searches eligible mention recipients, most recent message or reply first. Course-wide channels have implicit course members;
-     * other conversations only include their actual participants. Login breaks ties, including members who have never posted.
+     * Other conversations only include their actual participants who retain course access, including administrators without
+     * an explicit course role. Login breaks ties, including members who have never posted.
      * Activity is aggregated once per conversation rather than looked up separately for every matching member. Names containing
      * mention delimiters are excluded before the limit because the editor and posting parser cannot encode them.
      *
@@ -70,6 +71,10 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
                 )) OR (:courseWide = FALSE AND EXISTS (
                     SELECT participant.id FROM ConversationParticipant participant
                     WHERE participant.user = user AND participant.conversation.id = :conversationId
+                ) AND (EXISTS (
+                    SELECT role.id FROM UserCourseRole role WHERE role.user = user AND role.course.id = :courseId
+                ) OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                    OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
                 )))
                 AND LOCATE('[', CONCAT(COALESCE(user.firstName, ''), COALESCE(user.lastName, ''))) = 0
                 AND LOCATE(']', CONCAT(COALESCE(user.firstName, ''), COALESCE(user.lastName, ''))) = 0

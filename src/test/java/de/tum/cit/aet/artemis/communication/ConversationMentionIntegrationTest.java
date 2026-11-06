@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,8 +17,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 
@@ -147,6 +152,60 @@ class ConversationMentionIntegrationTest extends AbstractConversationTest {
         userUtilService.enrollPrefixedUsersInCourse(exampleCourse, TEST_PREFIX);
 
         assertThat(mentions(channel.getId(), "candidate", HttpStatus.OK)).extracting(UserNameAndLoginDTO::login).containsExactlyElementsOf(expectedLogins);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void excludesUnenrolledParticipantsBeforeTheLimitAndReturnsMentionableRecipients() throws Exception {
+        var channel = createChannel(false, "current-members");
+        var expectedLogins = new ArrayList<String>();
+        for (int index = 1; index <= 23; index++) {
+            var suffix = String.format(Locale.ROOT, "studentrecipient%02d", index);
+            var candidate = userUtilService.createAndSaveUser(TEST_PREFIX + suffix);
+            candidate.setFirstName("Candidate");
+            candidate.setLastName("Member");
+            userRepository.saveAndFlush(candidate);
+            userUtilService.enrollUserInCourse(candidate, exampleCourse, CourseRole.STUDENT);
+            addUsersToConversation(channel.getId(), suffix);
+            if (index <= 11) {
+                userUtilService.unenrollUserFromCourse(candidate, exampleCourse);
+                assertThat(conversationParticipantRepository.existsByConversationIdAndUserId(channel.getId(), candidate.getId())).isTrue();
+            }
+            else if (index <= 21) {
+                expectedLogins.add(candidate.getLogin());
+            }
+        }
+        var formerMember = userUtilService.getUserByLogin(TEST_PREFIX + "studentrecipient01");
+        var invalidMessage = new CreatePostDTO("[user]" + formerMember.getName() + "(" + formerMember.getLogin() + ")[/user]", null, false,
+                new CreatePostConversationDTO(channel.getId()));
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", invalidMessage, HttpStatus.BAD_REQUEST);
+
+        var suggestions = mentions(channel.getId(), "candidate", HttpStatus.OK);
+        assertThat(suggestions).extracting(UserNameAndLoginDTO::login).containsExactlyElementsOf(expectedLogins);
+        var recipient = suggestions.getFirst();
+        var validMessage = new CreatePostDTO("[user]" + recipient.name() + "(" + recipient.login() + ")[/user]", null, false, new CreatePostConversationDTO(channel.getId()));
+        var created = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", validMessage, PostResponseDTO.class, HttpStatus.CREATED);
+        assertThat(created.content()).isEqualTo(validMessage.content());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ROLE_ADMIN", "ROLE_SUPER_ADMIN" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void administratorParticipantsWithoutCourseRolesRemainMentionable(String authority) throws Exception {
+        var channel = createChannel(false, "admin-recipient");
+        var administrator = userUtilService.createAndSaveUser(TEST_PREFIX + "administrator");
+        administrator.setFirstName("Administrator");
+        administrator.setLastName("Recipient");
+        administrator.setAuthorities(Set.of(Authority.USER_AUTHORITY, new Authority(authority)));
+        userRepository.saveAndFlush(administrator);
+        userUtilService.unenrollUserFromCourse(administrator, exampleCourse);
+        addUsersToConversation(channel.getId(), "administrator");
+
+        assertThat(mentions(channel.getId(), "administrator", HttpStatus.OK)).containsExactly(new UserNameAndLoginDTO(administrator.getName(), administrator.getLogin()));
+        var message = new CreatePostDTO("[user]" + administrator.getName() + "(" + administrator.getLogin() + ")[/user]", null, false,
+                new CreatePostConversationDTO(channel.getId()));
+        var created = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", message, PostResponseDTO.class, HttpStatus.CREATED);
+        assertThat(created.content()).isEqualTo(message.content());
     }
 
     @Test

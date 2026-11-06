@@ -40,6 +40,8 @@ import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 /**
  * Typed view onto the private/internal fields of {@link ProgrammingExerciseInstructionComponent}
@@ -141,6 +143,78 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(table.tabIndex).toBe(0);
         expect(table.getAttribute('aria-label')).toBe('Tabelle in der Aufgabenstellung');
         expect(table.querySelector('td')?.textContent).toBe('Wide content');
+    });
+
+    it('keeps authored table names and supplies a localized fallback only for unnamed rendered tables', async () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Instruction table');
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        fixture.componentRef.setInput('exercise', {
+            id: 3,
+            problemStatement: `
+<table><caption>Input constraints</caption><tr><td>Captioned content</td></tr></table>
+<table aria-label="Expected output"><tr><td>Named content</td></tr></table>
+<h3 id="complexity-heading">Complexity bounds</h3>
+<table aria-labelledby="complexity-heading"><tr><td>Referenced content</td></tr></table>
+<table title="Example runs"><tr><td>Titled content</td></tr></table>
+<table><tr><td>Unnamed content</td></tr></table>
+<table aria-label="  " aria-labelledby=" " title=" "><caption> </caption><tr><td>Empty names</td></tr></table>`,
+        } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', { id: 2, submissions: [{ results: [{ id: 1, feedbacks: [] }] }] });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const content: HTMLElement = fixture.nativeElement.querySelector('#programming-exercise-instructions-content');
+        const tables = Array.from(content.querySelectorAll('table'));
+        expect(tables).toHaveLength(6);
+        expect(tables[0].caption?.textContent).toBe('Input constraints');
+        expect(tables[0].hasAttribute('aria-label')).toBe(false);
+        expect(tables[1].getAttribute('aria-label')).toBe('Expected output');
+        expect(tables[2].getAttribute('aria-labelledby')).toBe('complexity-heading');
+        expect(content.querySelector('#complexity-heading')?.textContent).toBe('Complexity bounds');
+        expect(tables[2].hasAttribute('aria-label')).toBe(false);
+        expect(tables[3].title).toBe('Example runs');
+        expect(tables[3].hasAttribute('aria-label')).toBe(false);
+        expect(tables[4].getAttribute('aria-label')).toBe('Instruction table');
+        expect(tables[5].getAttribute('aria-label')).toBe('Instruction table');
+        for (const table of tables) {
+            expect(table.tabIndex).toBe(0);
+            expect(table.style.overflowX).toBe('scroll');
+        }
+    });
+
+    it('preserves accessible tables when a live exam update displays instruction differences', async () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Instruction table');
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        fixture.componentRef.setInput('exercise', {
+            id: 3,
+            type: ExerciseType.PROGRAMMING,
+            exerciseGroup: { id: 5 },
+            problemStatement: '<table><caption>Exercise requirements</caption><tr><td>Before update</td></tr></table>',
+        } as ProgrammingExercise);
+        fixture.componentRef.setInput('participation', { id: 2, submissions: [{ results: [{ id: 1, feedbacks: [] }] }] });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const content: HTMLElement = fixture.nativeElement.querySelector('#programming-exercise-instructions-content');
+        expect(content.textContent).toContain('Before update');
+        expect(content.textContent).not.toContain('After update');
+
+        TestBed.inject(ExamExerciseUpdateService).updateLiveExamExercise(3, '<table><caption>Exercise requirements</caption><tr><td>After update</td></tr></table>');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // The live update must display both the removed and added text, rather than silently replacing the instructions.
+        expect(content.textContent).toContain('Before');
+        expect(content.textContent).toContain('After update');
+        const tables = Array.from(content.querySelectorAll('table'));
+        expect(tables.length).toBeGreaterThan(0);
+        for (const table of tables) {
+            expect(table.tabIndex).toBe(0);
+            expect(table.caption?.textContent).toBe('Exercise requirements');
+            expect(table.hasAttribute('aria-label')).toBe(false);
+            expect(table.style.overflowX).toBe('scroll');
+        }
+        expect(fixture.nativeElement.querySelector('#highlightDiffButton')).not.toBeNull();
     });
 
     it('should on participation change clear old subscription for participation results set up new one', async () => {

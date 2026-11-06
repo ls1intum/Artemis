@@ -490,7 +490,11 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 table.style.overflowX = 'scroll';
                 table.style.display = 'block';
                 table.tabIndex = 0;
-                table.setAttribute('aria-label', this.translateService.instant('artemisApp.programmingExercise.instructionTableLabel'));
+                const hasAuthoredName =
+                    table.getAttribute('aria-label')?.trim() || table.getAttribute('aria-labelledby')?.trim() || table.caption?.textContent?.trim() || table.title.trim();
+                if (!hasAuthoredName) {
+                    table.setAttribute('aria-label', this.translateService.instant('artemisApp.programmingExercise.instructionTableLabel'));
+                }
             });
             return doc.body.innerHTML;
         }

@@ -9,16 +9,16 @@ This template uses [FACT](https://fact.readthedocs.io/en/latest/), a Python fram
 
 The default FACT build image, `ls1tum/artemis-fact-minimal-docker:1.1.0`, supplies Python, FACT, and its compiler dependencies. Custom build images must supply these dependencies too.
 
-For a local run, arrange the solution or student checkout beside this test repository:
+For a local run, use a disposable checkout of trusted solution code beside this test repository. `Tests.py` executes the compiled assignment with your user's permissions; run student submissions in the configured isolated build environment instead.
 
 ```text
 exercise/
-  assignment/       # solution or student sources
+  assignment/       # disposable trusted solution checkout
   tests/            # this repository
   test-reports/
 ```
 
-FACT expects the assignment at `../assignment` relative to the test directory. From the test directory in an environment with the dependencies above, copy the test-controlled Makefile into the assignment as the build does, then run the tests:
+FACT expects the assignment at `../assignment` relative to the test directory. Save any custom assignment Makefile outside the disposable checkout before continuing: the copy command replaces it. From the test directory in an environment with the dependencies above, copy the test-controlled Makefile into the assignment as the build does, then run the tests:
 
 ```sh
 cp Makefile ../assignment/Makefile

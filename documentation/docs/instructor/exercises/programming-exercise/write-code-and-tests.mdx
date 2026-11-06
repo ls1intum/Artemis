@@ -294,7 +294,7 @@ The test repository separates the runner from the test definitions:
 
 The default FACT build image, `ls1tum/artemis-fact-minimal-docker:1.1.0`, supplies FACT and its compiler dependencies. If you configure a custom image, verify that it supplies these dependencies too; the standard C GCC image is intended for the separate GCC template.
 
-For a local run, put the solution or student checkout in `assignment/` beside the test checkout, so it is available at `../assignment` from the test directory. In an environment with FACT and its compiler dependencies, run these commands from the test directory to reproduce the build's Makefile preparation and test execution:
+For a local run, put a disposable checkout of trusted solution code in `assignment/` beside the test checkout, so it is available at `../assignment` from the test directory. `Tests.py` executes the compiled assignment with your user's permissions; run student submissions in the configured isolated build environment instead. Save any custom assignment Makefile outside the disposable checkout before continuing: the copy command replaces it. In an environment with FACT and its compiler dependencies, run these commands from the test directory to reproduce the build's Makefile preparation and test execution:
 
 ```sh
 cp Makefile ../assignment/Makefile
