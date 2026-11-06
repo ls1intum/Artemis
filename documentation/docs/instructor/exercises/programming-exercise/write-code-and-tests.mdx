@@ -277,6 +277,8 @@ Write test cases in the Test repository using language-specific frameworks:
 
 The C **GCC** template ships its Python test framework in the test repository. `Tests.py` registers the classes in `tests/`, runs them through `testUtils/Tester.py`, and exports JUnit XML for Artemis. The default tests compile the C assignment, check its output, and repeat execution with address, undefined-behavior, and leak sanitizers.
 
+For a local run, use a checkout of trusted solution code. `Tests.py` executes the compiled assignment with your user's permissions; run student submissions in the configured isolated build environment instead.
+
 The runner expects the assignment in `../assignment` relative to the test directory. The build plan copies the test-controlled Makefile into that assignment checkout, preserving its source and include-directory settings. For a local run, reproduce this directory layout, use the exercise's build image or install GCC, GNU make, sanitizer runtimes and the Python dependencies from `requirements.txt`, then run `python3 Tests.py` from the test directory.
 
 Implement additional tests under `tests/` and register them in `Tests.py`. A test's prerequisites identify the tests that must pass before it can run. Keep names consistent with the grading configuration and problem statement. The generated test repository's README describes the supporting files and local layout.

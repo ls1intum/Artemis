@@ -8,11 +8,11 @@ Python runs this template's tests against compiled C programs. The runner and su
 - `Makefile` defines the build and sanitizer targets. Artemis copies it into the assignment checkout and preserves the assignment's `SOURCE` and `INCLUDEDIRS` settings. The runner expects that checkout at `../assignment`.
 - `requirements.txt` lists the Python dependencies. `Converter.py` is an optional helper for converting supported test data; the build runner does not invoke it.
 
-Arrange your local checkout like this:
+For a local run, use a checkout of trusted solution code. `Tests.py` executes the compiled assignment with your user's permissions; run student submissions in the configured isolated build environment instead. Arrange your local checkout like this:
 
 ```text
 exercise/
-  assignment/       # solution or student sources
+  assignment/       # trusted solution checkout
   tests/            # this repository
   test-reports/
 ```
