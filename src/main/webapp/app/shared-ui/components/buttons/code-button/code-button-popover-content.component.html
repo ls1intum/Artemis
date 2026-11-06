@@ -71,6 +71,22 @@
         </div>
     </div>
 
+    @if (repositoryEditorLink(); as editorLink) {
+        <div class="px-3! pb-3!">
+            <a
+                tumAetUiButton
+                severity="warn"
+                size="small"
+                [routerLink]="editorLink"
+                [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                data-testid="edit-repository-button"
+            >
+                <fa-icon [icon]="faPencilAlt" aria-hidden="true" />
+                <span jhiTranslate="entity.action.editInEditor"></span>
+            </a>
+        </div>
+    }
+
     <button
         type="button"
         class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 enabled:hover:bg-(--tumaet-ui-hover-background)! enabled:hover:text-(--tumaet-ui-accent-color)! disabled:text-state-success!"

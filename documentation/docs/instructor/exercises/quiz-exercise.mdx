@@ -2,7 +2,7 @@
 id: quiz-exercise
 title: Quiz Exercise
 sidebar_label: Quiz Exercise
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -13,6 +13,7 @@ import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 import manageExercisesDialog from './assets/general/manage-exercises-dialog.png';
 import createAQuizForm from './assets/quiz/create-a-quiz-form.png';
 import exerciseInList from './assets/quiz/course-dashboard-exercise-quiz.png';
+import exerciseDetailsQuiz from './assets/quiz/exercise-details-quiz.png';
 import multipleChoiceQuestion from './assets/quiz/multiple-choice-question.png';
 import dragAndDropQuestion from './assets/quiz/drag-and-drop-question.png';
 import apollonDiagrams from './assets/quiz/apollon-diagrams.png';
@@ -277,6 +278,23 @@ lifecycle button — **Start** while the quiz is waiting, **End** while it is ru
 **Statistics**, **Preview** and **Solution**. **Re-evaluate** appears there once the quiz has ended.
 
 <Image src={exerciseInList} alt="Course exercise list with the actions available on a quiz" size={ImageSize.large} caption="The quiz on the course's exercise list" />
+
+Select the quiz title to open its details. The header shows the saved title and exercise type, while **General**
+contains the **Exercise ID**. Section links scroll through the saved settings on the same page, keeping all
+sections available to browser search.
+
+The detail action bar groups **Participations**, **Statistics**, **Preview** and **Solution** separately from the
+editing actions. **Edit** is available before the quiz ends and is disabled while editing is unsafe. After the quiz
+ends, instructors see **Re-evaluate**, and **Evaluate quiz** appears when evaluation is available. **Create Variant**
+appears alongside these actions for supported quizzes when Hyperion is enabled and you have Editor access.
+Editors export all questions through **More actions → Export**. Course quizzes retain their lifecycle controls
+below the action bar; instructors find **Reset** and **Delete** in **Exercise administration** at the bottom,
+with their confirmations.
+
+<Image src={exerciseDetailsQuiz} alt="Quiz details with navigation, re-evaluation, variant creation and section links" size={ImageSize.large} caption="The quiz's details" />
+
+See [Exercise Details for Course Staff](/instructor/exercises/intro#exercise-details-for-course-staff) for shared
+navigation and compact-screen behavior.
 
 ## What Students See
 

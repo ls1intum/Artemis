@@ -1,5 +1,5 @@
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
-import { faRobot } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -58,7 +58,7 @@ describe('CreateVariantWithAiButtonComponent', () => {
         expect(button.severity()).toBe('warn');
         expect(button.variant()).toBe('solid');
         expect(button.size()).toBe('small');
-        expect(button.icon()).toBe(faRobot);
+        expect(button.icon()).toBe(faCodeBranch);
         expect(fixture.nativeElement.querySelector('[data-testid="create-variant-ai-button"]').textContent).not.toContain('Artemis Intelligence');
     });
 
