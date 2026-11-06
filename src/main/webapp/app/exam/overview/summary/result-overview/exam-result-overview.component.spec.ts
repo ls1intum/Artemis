@@ -229,6 +229,7 @@ describe('ExamResultOverviewComponent', () => {
             maxPoints: 10,
             maxBonusPoints: 0,
             achievedPointsPerExercise: { [quizExercise.id!]: 8 },
+            studentResult: { ...studentExamWithGrade.studentResult, overallPointsAchieved: 8, overallScoreAchieved: 80 },
             studentExam: { ...studentExamWithGrade.studentExam!, exercises: [textExercise, quizExercise], submitted: true, exam: { ...exam, testExam: true } },
         });
         fixture.detectChanges();
@@ -236,6 +237,11 @@ describe('ExamResultOverviewComponent', () => {
         expect(manualRow.querySelector('[jhiTranslate="artemisApp.exam.examSummary.notAutomaticallyAssessed"]')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('[data-testid="test-exam-partial-result"]')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('[data-testid="exam-result-grade"] [jhiTranslate="artemisApp.exam.examSummary.theoreticalGrade"]')).not.toBeNull();
+        expect(component.overallAchievedPoints()).toBe(8);
+        expect(component.maxPoints()).toBe(10);
+        expect(component.overallAchievedPercentageRoundedByCourseSettings()).toBe(80);
+        const aggregateCells = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('tfoot td'));
+        expect(aggregateCells.map((cell) => cell.textContent?.replace(/\s+/g, ' ').trim())).toEqual(['8', '10', '80 %']);
     });
 
     it('preserves authoritative zero totals even when excluded exercises earned points', () => {
