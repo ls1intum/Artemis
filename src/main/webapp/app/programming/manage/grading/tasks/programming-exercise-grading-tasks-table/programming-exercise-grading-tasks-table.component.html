@@ -1,35 +1,36 @@
 <div class="d-flex flex-column gap-3 mb-3">
     <h2 class="fw-medium">Tasks</h2>
-    <div class="d-flex justify-content-between">
-        <div>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap gap-2">
             @if (tasks().length !== 1) {
-                <jhi-button [shouldSubmit]="false" (click)="toggleAllTasksExpanded(true)" title="artemisApp.programmingExercise.configureGrading.expandAll" [icon]="faAngleDown">
-                    Expand all
-                </jhi-button>
+                <button tumAetUiButton size="small" severity="secondary" type="button" (click)="toggleAllTasksExpanded(true)">
+                    <fa-icon [icon]="faAngleDown" />
+                    <span jhiTranslate="artemisApp.programmingExercise.configureGrading.expandAll"></span>
+                </button>
             }
             @if (tasks().length !== 1) {
-                <jhi-button
-                    [shouldSubmit]="false"
-                    (click)="toggleAllTasksExpanded(false)"
-                    title="artemisApp.programmingExercise.configureGrading.collapseAll"
-                    [icon]="faAngleRight"
-                >
-                    Collapse all
-                </jhi-button>
+                <button tumAetUiButton size="small" severity="secondary" type="button" (click)="toggleAllTasksExpanded(false)">
+                    <fa-icon [icon]="faAngleRight" />
+                    <span jhiTranslate="artemisApp.programmingExercise.configureGrading.collapseAll"></span>
+                </button>
             }
         </div>
-        <div>
+        <div class="flex flex-wrap gap-2">
             <button
                 type="button"
                 (click)="saveTestCases()"
-                class="btn btn-primary"
+                tumAetUiButton
+                size="small"
+                severity="primary"
                 [disabled]="isSaving()"
                 jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
             ></button>
             <button
                 type="button"
                 (click)="resetTestCases()"
-                class="btn btn-secondary"
+                tumAetUiButton
+                size="small"
+                severity="danger"
                 [disabled]="isSaving()"
                 jhiTranslate="artemisApp.programmingExercise.configureGrading.reset"
             ></button>

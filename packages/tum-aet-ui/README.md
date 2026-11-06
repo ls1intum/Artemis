@@ -93,6 +93,11 @@ Colors:
   `--tumaet-ui-highlight-focus-background`;
 - states: `--tumaet-ui-state-{danger,success,warning,info}` and each corresponding
   `--tumaet-ui-state-*-contrast` and `--tumaet-ui-state-*-foreground`;
+- button-only palette: `--tumaet-ui-button-{primary,secondary,success,info,warn,danger,contrast}-background`,
+  `-contrast`, and `-foreground`, plus `--tumaet-ui-button-secondary-border`,
+  `--tumaet-ui-button-focus-color`, `--tumaet-ui-button-hover-overlay`, and
+  `--tumaet-ui-button-active-overlay`; these default to semantic aliases and can be overridden
+  independently of status messages/tags;
 - specialized roles: `--tumaet-ui-contrast-background`, `--tumaet-ui-contrast-color`,
   `--tumaet-ui-table-striped-background`, `--tumaet-ui-tooltip-background`,
   `--tumaet-ui-tooltip-color`.

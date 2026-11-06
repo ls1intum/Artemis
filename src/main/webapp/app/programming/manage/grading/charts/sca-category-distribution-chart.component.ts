@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
@@ -24,7 +25,9 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
                     @if (tableFiltered) {
                         <button
                             type="button"
-                            class="btn btn-info"
+                            tumAetUiButton
+                            size="small"
+                            severity="secondary"
                             (click)="resetTableFilter()"
                             jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.resetFilter"
                         ></button>
@@ -44,7 +47,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
             </div>
         </div>
     `,
-    imports: [TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class ScaCategoryDistributionChartComponent extends ProgrammingGradingChartsDirective {
     private translateService = inject(TranslateService);

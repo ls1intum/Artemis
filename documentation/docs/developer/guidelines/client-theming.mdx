@@ -87,19 +87,18 @@ cue as required by
 ## Button intent and hierarchy
 
 Use TUM AET UI `severity` for an action's established functional category, and `variant`, placement,
-and grouping for its emphasis. Exercise management already uses a richer scheme than blue primary
-and neutral secondary actions. Keep the same action recognizable in the course list, exam exercise
-groups, and exercise details.
+and grouping for its emphasis. These action families apply throughout Artemis. Keep the same action
+recognizable across course lists, exam exercise groups, details, dialogs, and other management areas.
 
-| Action category | Severity | Examples in exercise management |
-| --- | --- | --- |
-| Main workflow, work-area navigation, and creation | `primary` (blue) | Create Exercise, Participations, Teams, quiz Batches, Add Batch; ordinary Save actions |
-| Authoring, configuration, and changes requiring attention | `warn` (yellow) | Edit, Edit in Editor, Grading, Edit Build Plan, Iris Settings, Create Variant, Edit Selected, Evaluate and Re-evaluate Quiz, Show Quiz Now |
-| Analytics and assessment | `info` (cyan/teal) | Statistics, Assessment Dashboard |
-| Data transfer | `secondary` (neutral gray) | Import, Export, Export Results, Download Repository, Download Example Solution |
-| Preview, reference material, and positive execution or activation | `success` (green) | Quiz Preview, Quiz Solution, Example Submissions, Start Quiz, Start Batch, Activate Submission Policy |
-| Destructive, interrupting, or consequential bulk operation | `danger` (red) | Delete, reset participations, discard work, End Quiz Now, Re-evaluate All, Trigger All student builds |
-| Supporting utilities and overflow controls | `secondary` (neutral gray) | More actions, deselect, cancel; repository history, access log, Code |
+| Action category                                                   | Severity                   | Examples                                                                                                                                   |
+| ----------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Main workflow, work-area navigation, and creation                 | `primary` (blue)           | Create Exercise, Participations, Teams, quiz Batches, Add Batch; ordinary Save actions                                                     |
+| Authoring, configuration, and changes requiring attention         | `warn` (yellow)            | Edit, Edit in Editor, Grading, Edit Build Plan, Iris Settings, Create Variant, Edit Selected, Evaluate and Re-evaluate Quiz, Show Quiz Now |
+| Analytics and assessment                                          | `info` (cyan/teal)         | Statistics, Assessment Dashboard                                                                                                           |
+| Data transfer                                                     | `secondary` (neutral gray) | Import, Export, Export Results, Download Repository, Download Example Solution                                                             |
+| Preview, reference material, and positive execution or activation | `success` (green)          | Quiz Preview, Quiz Solution, Example Submissions, Start Quiz, Start Batch, Activate Submission Policy                                      |
+| Destructive, interrupting, or consequential bulk operation        | `danger` (red)             | Delete, reset participations, discard work, End Quiz Now, Re-evaluate All, Trigger All student builds                                      |
+| Supporting utilities and overflow controls                        | `secondary` (neutral gray) | More actions, deselect, ordinary Cancel/Close/Refresh; repository history, access log, Code                                                |
 
 Yellow authoring controls, cyan analysis controls, and green preview/reference controls are
 established action families. The color identifies the category of the action: green Preview opens a
@@ -145,10 +144,10 @@ Statistics/Preview/Solution/Re-evaluate, Example Submissions, and Delete. The pr
 retain these categories. `QuizExerciseLifecycleButtonsComponent` is shared by the course list and
 quiz details, keeping Start green, Show Now yellow, and End Now red in both locations.
 
-The source comparison also includes the course list's title, bulk and group controls; detail-page
-repository/build controls and Administration; and representative exercise forms, grading controls,
-and the assessment dashboard. It is a source audit of these workflows, not an application-wide visual
-audit.
+The convention also covers lecture/tutorial/competency authoring, FAQ and communication controls,
+account settings, imports/exports, assessment configuration, and code-editor actions. Application
+source audits trace wrapper defaults and handlers as well as explicit severities. Selected-state
+controls, ordinary links, menu entries, and status indicators require their own semantics.
 
 Some labels need their context to determine the category:
 
@@ -158,16 +157,24 @@ Some labels need their context to determine the category:
   details. Quiz Export inside
   More actions retains the menu component's presentation. Save or Confirm buttons keep the role of
   their form or dialog rather than inheriting the launcher's color automatically.
-- **Start or retry:** starting a quiz or batch is green. The programming build trigger normally uses
-  primary blue. Its existing failed-submission recovery state uses red; this is a specific existing
-  exception, not a rule that new retry buttons should be red. Show errors in status feedback and keep
-  an ordinary recovery action primary or secondary.
+- **Start or retry:** starting a quiz or batch is green. Triggering or retrying an ordinary programming
+  build is blue. An instructor build that overrides a manual result is red. A Retry that only reloads
+  a failed view is a gray utility; an error state does not make the recovery action destructive.
 - **Preview or assess:** opening reference examples from exercise management is green. Starting a
   tutor's assessment workflow can be a primary action on the assessment dashboard.
-- **Reset:** resetting student participations is destructive and red. The code-analysis grading
-  table currently has a neutral Reset button even though it calls the server to reset categories.
-  Review that existing exception with the grading workflow; use the actual effect of a reset to
-  decide its severity, including whether saved work is replaced.
+- **Reset:** resetting student participations or saved code-analysis/test-case grading configuration
+  is destructive and red. Reset Filter only clears the current view and is gray. Trace whether a
+  reset writes to the server before choosing its severity.
+- **Edit and Save:** opening a content/configuration editor, including inline editing and AI
+  refinement, is yellow. Save/Create stays blue. A shared Create/Edit button changes severity with
+  its actual action. If Edit first deletes an existing example assessment, its destructive effect
+  takes precedence and the launcher and confirmation stay red.
+- **Cancel and Close:** ordinary form/dialog cancellation and closing a completed workflow are gray.
+  Cancelling a saved assessment or tutorial session, deleting a draft question, or discarding saved
+  content is red. Explicit Approve, Activate, or Save and Approve operations remain green.
+- **Selection:** blue selected tabs, filters, and pressed view controls express selection, not a new
+  action family. Keep those states distinct. On a colored selected row, use a solid semantic button
+  when its text/outlined version would not provide enough contrast.
 
 When changing a complete action group, preserve these shared meanings and resolve differences for
 the same action together. Avoid a broad recoloring of established workflows as a side effect of a
@@ -197,6 +204,60 @@ hover, focus, loading, and disabled states in both themes. Normal-size button te
 contrast. Labels, icons, confirmation dialogs, and disabled semantics carry the meaning alongside color.
 White text is not automatically more readable: yellow, green, or cyan surfaces can require a dark
 foreground. Use the theme's paired contrast token instead of selecting a text color by appearance.
+
+### Change the global button palette
+
+Edit the **Button palette** blocks in `packages/tum-aet-ui/themes.css`. The light and dark blocks
+are the source of truth for button colors. Every severity has three paired properties:
+
+| Property                                   | Used by                                   |
+| ------------------------------------------ | ----------------------------------------- |
+| `--tumaet-ui-button-<severity>-background` | Solid fill and colored borders            |
+| `--tumaet-ui-button-<severity>-contrast`   | Text/icons on the solid fill              |
+| `--tumaet-ui-button-<severity>-foreground` | Text/outlined buttons on the page surface |
+
+`<severity>` is `primary`, `secondary`, `success`, `info`, `warn`, `danger`, or `contrast`.
+`--tumaet-ui-button-secondary-border` controls the neutral outlined border. Focus and interaction
+emphasis use `--tumaet-ui-button-focus-color`, `--tumaet-ui-button-hover-overlay`, and
+`--tumaet-ui-button-active-overlay` in the same blocks.
+
+Most defaults alias existing semantic colors; primary has a contrast-checked fill/text pair that
+is independent of legacy host branding. Override the button properties to adjust buttons
+without recoloring success/error messages, charts, status tags, or the rest of the brand palette.
+Always review the fill and its paired contrast color together; review text/outlined foregrounds
+against the actual surrounding surface. To customize a consuming application, declare unlayered
+light and dark overrides on the document element after loading the package stylesheet:
+
+```css
+:root,
+[data-theme='light'] {
+    --tumaet-ui-button-primary-background: #125293;
+    --tumaet-ui-button-primary-contrast: #fff;
+    --tumaet-ui-button-primary-foreground: #125293;
+}
+
+[data-theme='dark'] {
+    --tumaet-ui-button-primary-background: #8cb8e0;
+    --tumaet-ui-button-primary-contrast: #16191d;
+    --tumaet-ui-button-primary-foreground: #8cb8e0;
+}
+```
+
+TUM AET UI components/directives and the `jhi-button`/exercise-action adapters consume these roles.
+The temporary Bootstrap bridge in `src/main/webapp/content/scss/_button-colors.scss` and the button component tokens
+in `src/main/webapp/app/primeng-artemis-theme.ts` reference the same palette, so existing neighbours remain consistent.
+Do not add new Bootstrap or PrimeNG buttons to use the bridge. When changing a button, prefer a
+native `<button tumAetUiButton>` or `<a tumAetUiButton>` and migrate its adjacent action group to the
+same size, spacing, radius, and typography. Do not attach `tumAetUiButton` to an element already owned
+by an Angular component: the directive also renders a component. Attribute-selector adapters use
+the package's `tumAetUiButtonClasses()` helper on their existing native host instead.
+
+The **Actions / Button / Palette** Storybook story compares all families and variants. Its browser
+tests verify text contrast in both themes and that button-only overrides leave status colors alone.
+Run `pnpm --dir packages/tum-aet-ui run storybook:build` followed by
+`pnpm --dir packages/tum-aet-ui exec playwright test --config .storybook/playwright.config.ts button-palette.spec.ts`
+after editing the palette. Check the real affected pages, including hover/focus, disabled/loading,
+colored selected rows, and narrow layouts, before merging.
 
 ## Adding or changing a theme role
 

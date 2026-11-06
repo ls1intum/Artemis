@@ -305,7 +305,7 @@
                 {{ 'artemisApp.communication.formattedEditor.loading' | artemisTranslate }}
             } @else if (searchFailed()) {
                 {{ 'artemisApp.communication.formattedEditor.searchError' | artemisTranslate }}
-                <button type="button" tumAetUiButton size="small" variant="text" (mousedown)="$event.preventDefault()" (click)="refreshSuggestions()">
+                <button type="button" tumAetUiButton severity="secondary" size="small" variant="text" (mousedown)="$event.preventDefault()" (click)="refreshSuggestions()">
                     {{ 'artemisApp.communication.formattedEditor.retry' | artemisTranslate }}
                 </button>
             } @else if (!suggestions().length) {

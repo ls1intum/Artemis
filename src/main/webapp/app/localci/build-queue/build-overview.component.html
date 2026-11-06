@@ -69,7 +69,7 @@
                         <tumaet-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
                     </h5>
                     <div jhi-build-job-search class="flex items-center gap-2" [(searchTerm)]="searchTerm" (searchRequested)="triggerLoadFinishedJobs()"></div>
-                    <tumaet-ui-button size="small" (clicked)="loadFinishedBuildJobs()">
+                    <tumaet-ui-button size="small" severity="secondary" (clicked)="loadFinishedBuildJobs()">
                         <fa-icon [icon]="faSync" />
                         <span jhiTranslate="metrics.refresh.button"></span>
                     </tumaet-ui-button>
@@ -125,7 +125,7 @@
             <tumaet-ui-button type="button" severity="secondary" size="small" (clicked)="buildLogsModalVisible.set(false)">
                 <span jhiTranslate="artemisApp.buildQueue.filter.close"></span>
             </tumaet-ui-button>
-            <tumaet-ui-button size="small" (clicked)="downloadBuildLogs()">
+            <tumaet-ui-button size="small" severity="secondary" (clicked)="downloadBuildLogs()">
                 <span jhiTranslate="artemisApp.buildQueue.logs.download"></span>
             </tumaet-ui-button>
         </ng-template>

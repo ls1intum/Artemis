@@ -530,7 +530,7 @@
                         'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                     }}</tumaet-ui-button>
                     @if (generatedVariant()) {
-                        <tumaet-ui-button severity="primary" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-open-editor">
+                        <tumaet-ui-button severity="warn" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-open-editor">
                             {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
                         </tumaet-ui-button>
                     }
@@ -552,7 +552,7 @@
                         'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                     }}</tumaet-ui-button>
                     @if (generatedVariant()) {
-                        <tumaet-ui-button severity="primary" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-cancelled-open-editor">
+                        <tumaet-ui-button severity="warn" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-cancelled-open-editor">
                             {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
                         </tumaet-ui-button>
                     }
@@ -609,7 +609,7 @@
                         'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                     }}</tumaet-ui-button>
                     <tumaet-ui-button
-                        severity="primary"
+                        severity="warn"
                         size="small"
                         [icon]="faPenToSquare"
                         [disabled]="!generatedVariant()"

@@ -29,7 +29,7 @@
                 @if (showOriginalVersionButton() && !isStudentPath()) {
                     <button
                         tumAetUiButton
-                        severity="primary"
+                        severity="secondary"
                         variant="solid"
                         size="small"
                         type="button"
@@ -44,7 +44,7 @@
                 @if (showViewIsolatedButton()) {
                     <button
                         tumAetUiButton
-                        severity="primary"
+                        [severity]="viewIsolatedButtonSeverity()"
                         variant="solid"
                         size="small"
                         type="button"
@@ -59,7 +59,7 @@
                 @if (showFullscreenButton()) {
                     <button
                         tumAetUiButton
-                        severity="primary"
+                        severity="secondary"
                         variant="solid"
                         size="small"
                         type="button"

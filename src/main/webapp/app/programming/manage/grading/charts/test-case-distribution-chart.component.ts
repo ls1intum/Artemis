@@ -1,3 +1,4 @@
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -21,7 +22,7 @@ export type TestCaseColors = {
     selector: 'jhi-test-case-distribution-chart',
     styleUrls: ['./sca-category-distribution-chart.scss'],
     templateUrl: './test-case-distribution-chart.component.html',
-    imports: [TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
+    imports: [TumAetUiButtonDirective, TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective {
     private translateService = inject(TranslateService);

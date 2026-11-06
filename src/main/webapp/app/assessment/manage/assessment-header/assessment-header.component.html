@@ -100,7 +100,14 @@
             }
             <!-- Highlight the difference between first and second correction -->
             @if (!isProgrammingExercise() && result() && correctionRound() > 0) {
-                <button type="button" class="ms-2" (click)="toggleHighlightDifferences()" [disabled]="saveBusy() || submitBusy() || cancelBusy()" tumAetUiButton severity="primary">
+                <button
+                    type="button"
+                    class="ms-2"
+                    (click)="toggleHighlightDifferences()"
+                    [disabled]="saveBusy() || submitBusy() || cancelBusy()"
+                    tumAetUiButton
+                    severity="secondary"
+                >
                     @if (!highlightDifferences()) {
                         <span
                             tumAetUiTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOn' | artemisTranslate }}"
@@ -182,7 +189,7 @@
                     </button>
                 }
                 @if (result()?.completionDate && exercise()?.isAtLeastInstructor && (exercise()!.type === ExerciseType.MODELING || exercise()!.type === ExerciseType.TEXT)) {
-                    <button type="button" class="m-1" id="useAsExampleSubmission" (click)="onUseAsExampleSolutionClicked()" tumAetUiButton severity="primary">
+                    <button type="button" class="m-1" id="useAsExampleSubmission" (click)="onUseAsExampleSolutionClicked()" tumAetUiButton severity="secondary">
                         @if (submitBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         }
@@ -201,7 +208,7 @@
                         (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
                         [tumAetUiTooltip]="nextSubmissionShortcut"
                         tumAetUiButton
-                        severity="success"
+                        severity="primary"
                     >
                         @if (nextSubmissionBusy()) {
                             <fa-icon [icon]="faSpinner" animation="spin" />

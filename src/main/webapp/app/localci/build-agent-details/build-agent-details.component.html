@@ -115,7 +115,7 @@
                         <tumaet-ui-tag severity="info" [value]="finishedBuildJobs().length.toString()" />
                     </h4>
                     <div jhi-build-job-search class="flex items-center gap-2" [(searchTerm)]="searchTerm" (searchRequested)="triggerLoadFinishedJobs()"></div>
-                    <tumaet-ui-button size="small" (clicked)="loadFinishedBuildJobs()">
+                    <tumaet-ui-button size="small" severity="secondary" (clicked)="loadFinishedBuildJobs()">
                         <fa-icon [icon]="faSync" />
                         <span jhiTranslate="metrics.refresh.button"></span>
                     </tumaet-ui-button>

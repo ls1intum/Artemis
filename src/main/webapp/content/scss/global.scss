@@ -144,25 +144,11 @@ a.disabled {
     white-space: nowrap;
 }
 
-/* Default the color to white even on bootstrap 5 */
-.btn-primary,
-.btn-primary:hover,
-.btn-primary:disabled,
-.btn-info,
-.btn-info:hover,
-.btn-success,
-.btn-success:hover {
-    color: $colored-btn-font !important;
-}
+// Transitional Bootstrap buttons share the TUM AET UI palette and sizing.
+@import 'button-colors';
 
 a.btn {
     -webkit-appearance: none !important;
-}
-
-.btn-default {
-    color: $default-btn-font;
-    background-color: $default-btn-background;
-    border-color: $default-btn-border;
 }
 
 .popover {
