@@ -38,7 +38,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detail/programming-exercise-detail.component';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/course/shared/entities/course.model';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -73,6 +73,9 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { DialogService } from 'primeng/dynamicdialog';
+import * as downloadUtil from 'app/foundation/util/download.util';
+import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
 
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -123,6 +126,17 @@ describe('ProgrammingExerciseDetailComponent', () => {
         },
     } as unknown as RepositoryDiffInformation;
 
+    it('combines repository, checkout, result and comparison rows while retaining build configuration fields', () => {
+        const section = comp.getExerciseDetailsLanguageSection(mockProgrammingExercise);
+        const details = section.details.filter((detail) => !!detail);
+        expect(details.map((detail) => detail.type)).toContain('detail-repository-build-overview');
+        expect(
+            details.filter((detail) => ['detail-repository-buttons', 'detail-test-status', 'detail-checkout-directories', 'detail-diff-report'].includes(detail.type)),
+        ).toHaveLength(0);
+        expect(details.map((detail) => detail.title)).toContain('artemisApp.programmingExercise.programmingLanguage');
+        expect(details.map((detail) => detail.title)).toContain('artemisApp.programmingExercise.packageName');
+    });
+
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
         maxPointsOfExercise: 10,
@@ -147,6 +161,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             imports: [],
             providers: [
                 MockProvider(AlertService),
+                MockProvider(DialogService),
                 MockProvider(ProgrammingLanguageFeatureService),
                 LocalStorageService,
                 SessionStorageService,
@@ -216,6 +231,98 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('shows the saved title with its exercise type instead of the database ID', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.title = 'H01E01 - Lectures';
+        comp.programmingExercise.set(exercise);
+        fixture.detectChanges();
+
+        const heading = fixture.nativeElement.querySelector('h1') as HTMLElement;
+        expect(heading).not.toBeNull();
+        expect(heading.textContent).toContain(exercise.title);
+        expect(heading.textContent).not.toContain('21715');
+        expect(heading.querySelector('fa-icon')).not.toBeNull();
+    });
+
+    it('keeps version history as a link and moves secondary actions into a small menu', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.title = 'H01E01 - Lectures';
+        exercise.isAtLeastEditor = true;
+        comp.programmingExercise.set(exercise);
+        comp.baseResource.set('/course-management/1/programming-exercises/21715/');
+        fixture.detectChanges();
+
+        const history = fixture.nativeElement.querySelector('[data-testid="exercise-version-history"]') as HTMLAnchorElement;
+        expect(history?.tagName).toBe('A');
+        expect(router.createUrlTree).toHaveBeenCalledWith([comp.baseResource(), 'version-history'], expect.anything());
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="edit-in-editor-action"]')).toBeNull();
+    });
+
+    it('names the compact editing links when their visible labels are hidden', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.isAtLeastEditor = true;
+        comp.programmingExercise.set(exercise);
+        fixture.detectChanges();
+        const links = fixture.nativeElement.querySelectorAll('[data-testid="exercise-editing-actions"] a') as NodeListOf<HTMLAnchorElement>;
+        expect(Array.from(links, (link) => link.getAttribute('aria-label'))).toEqual(['entity.action.edit', 'artemisApp.programmingExercise.configureGrading.shortTitle']);
+    });
+
+    it('omits More actions when the editor has no available secondary commands', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 21715;
+        exercise.isAtLeastEditor = true;
+        exercise.programmingLanguage = ProgrammingLanguage.PYTHON;
+        comp.programmingExercise.set(exercise);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]')).toBeNull();
+    });
+
+    it('downloads the selected exercise and reports a failed download', () => {
+        comp.programmingExercise.set(mockProgrammingExercise);
+        const response = new HttpResponse({ body: new Blob(['exercise']) });
+        const exportExercise = vi
+            .spyOn(exerciseService, 'exportInstructorExercise')
+            .mockReturnValueOnce(of(response))
+            .mockReturnValueOnce(throwError(() => new Error('Failed')));
+        const download = vi.spyOn(downloadUtil, 'downloadZipFileFromResponse').mockImplementation(() => undefined);
+        const success = vi.spyOn(alertService, 'success');
+        const error = vi.spyOn(alertService, 'error');
+
+        comp.downloadExercise();
+
+        expect(exportExercise).toHaveBeenCalledWith(mockProgrammingExercise.id);
+        expect(download).toHaveBeenCalledExactlyOnceWith(response);
+        expect(success).toHaveBeenCalledWith('artemisApp.programmingExercise.export.successMessageExercise');
+
+        comp.downloadExercise();
+        expect(error).toHaveBeenCalledWith('error.exportFailed');
+    });
+
+    it('preserves sharing errors and does not export an unsaved exercise', () => {
+        const sharing = vi
+            .spyOn(TestBed.inject(ProgrammingExerciseSharingService), 'exportProgrammingExerciseToSharing')
+            .mockReturnValueOnce(of(new HttpResponse<string>({ body: null })))
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ error: { message: 'Sharing unavailable' } })));
+        const error = vi.spyOn(alertService, 'error');
+        comp.programmingExercise.set(mockProgrammingExercise);
+
+        comp.exportExerciseToSharing();
+        expect(sharing).toHaveBeenCalledWith(mockProgrammingExercise.id, window.location.href);
+        expect(error).toHaveBeenCalledWith('artemisApp.programmingExercise.sharing.error.noRedirect');
+
+        comp.exportExerciseToSharing();
+        expect(error).toHaveBeenCalledWith('artemisApp.programmingExercise.sharing.error.export', { message: 'Sharing unavailable' });
+
+        comp.programmingExercise.set(new ProgrammingExercise(undefined, undefined));
+        comp.exportExerciseToSharing();
+        expect(sharing).toHaveBeenCalledTimes(2);
     });
 
     it('should reload on participation change', async () => {

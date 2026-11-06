@@ -97,6 +97,11 @@
                         </a>
                     </li>
                     @if (!isExamActive() && !isExamStarted()) {
+                        <li class="mobile-course-enrollment">
+                            <a class="mobile-course-enrollment-link" data-testid="mobile-course-enrollment" [routerLink]="['/courses/enroll']" (click)="collapseNavbar()">
+                                <span jhiTranslate="artemisApp.studentDashboard.enroll.enrollInCourse"></span>
+                            </a>
+                        </li>
                         <li *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN">
                             <a class="dropdown-item" routerLink="/admin" routerLinkActive="active" (click)="collapseNavbar()" id="admin-menu">
                                 <fa-icon [icon]="faUserShield" [fixedWidth]="true" />

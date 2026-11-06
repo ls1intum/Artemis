@@ -11,6 +11,9 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
+import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { ExternalSubmissionCandidate } from 'app/exercise/external-submission/external-submission-candidate.model';
 
 describe('External Submission Service', () => {
     let httpMock: HttpTestingController;
@@ -51,6 +54,27 @@ describe('External Submission Service', () => {
         expect(convertDateFromServerSpy).toHaveBeenCalledWith(createResult);
         expect(createResult).toBeDefined();
         expect(createResult!.body).toEqual(returned);
+    });
+
+    it('searches candidates with paging parameters, without a global error alert, and maps the total count', () => {
+        const exercise = { id: 7 } as ProgrammingExercise;
+        let page: PageableResult<ExternalSubmissionCandidate> | undefined;
+
+        service.searchCandidates(exercise, 'jane', 0, 10).subscribe((result) => (page = result));
+
+        const req = httpMock.expectOne((request) => request.url === 'api/assessment/exercises/7/external-submission-candidates');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('searchTerm')).toBe('jane');
+        expect(req.request.params.get('page')).toBe('0');
+        expect(req.request.params.get('pageSize')).toBe('10');
+        expect(req.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+        const body: ExternalSubmissionCandidate[] = [
+            { login: 'ga12abc', name: 'Jane Doe' },
+            { login: 'ga34def', name: 'Jane Roe', ineligibility: 'RESULT_ALREADY_EXISTS' },
+        ];
+        req.flush(body, { headers: { 'X-Total-Count': '12' } });
+
+        expect(page).toEqual({ content: body, totalElements: 12 });
     });
 
     it('generates initial manual result correctly', () => {
