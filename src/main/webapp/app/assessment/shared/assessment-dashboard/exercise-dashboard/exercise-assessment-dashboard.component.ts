@@ -1,15 +1,5 @@
-import { NgTemplateOutlet } from '@angular/common';
 import { AssessmentProgressComponent } from '../assessment-progress.component';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiMenuComponent,
-    TumAetUiMenuItemDirective,
-    TumAetUiMenuTriggerDirective,
-    TumAetUiMessageComponent,
-    TumAetUiPanelComponent,
-    TumAetUiTableDirective,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiPanelComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
@@ -61,19 +51,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
-import {
-    faCheckCircle,
-    faCircleInfo,
-    faCodeCommit,
-    faEllipsisVertical,
-    faExclamationTriangle,
-    faFlag,
-    faFolderOpen,
-    faListAlt,
-    faQuestionCircle,
-    faSort,
-    faSpinner,
-} from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -111,13 +89,9 @@ export interface ExampleSubmissionQueryParams {
     providers: [CourseManagementService],
     imports: [
         AssessmentProgressComponent,
-        NgTemplateOutlet,
         HeaderExercisePageWithDetailsComponent,
         SecondCorrectionEnableButtonComponent,
         TumAetUiPanelComponent,
-        TumAetUiMenuComponent,
-        TumAetUiMenuItemDirective,
-        TumAetUiMenuTriggerDirective,
         TumAetUiButtonDirective,
         TranslateDirective,
         RouterLink,
@@ -338,8 +312,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     faQuestionCircle = faQuestionCircle;
     faCheckCircle = faCheckCircle;
     faFolderOpen = faFolderOpen;
-    readonly faEllipsisVertical = faEllipsisVertical;
-    readonly faCodeCommit = faCodeCommit;
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faListAlt = faListAlt;
