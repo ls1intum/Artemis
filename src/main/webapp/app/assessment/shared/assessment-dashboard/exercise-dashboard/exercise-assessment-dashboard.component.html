@@ -14,7 +14,7 @@
     <div>
         @if (!isTestRun()) {
             <div class="assessment-summary mt-2 mb-6! grid grid-cols-1 items-start gap-6! lg:grid-cols-[1.1fr_1fr]">
-                <tumaet-ui-panel class="min-w-0">
+                <tumaet-ui-panel class="min-w-0" data-testid="exercise-assessment-progress">
                     <div tumAetUiPanelHeader class="flex items-center justify-between gap-4">
                         <span class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.progressTitle"></span>
                         @if (!isTestRun()) {
