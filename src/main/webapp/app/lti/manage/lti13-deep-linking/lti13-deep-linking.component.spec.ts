@@ -201,6 +201,34 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.lti13.deepLinking.unknownError');
     });
 
+    it.each([
+        ['is cancelled', () => Promise.resolve(false)],
+        ['fails', () => Promise.reject(new Error('navigation failed'))],
+    ])('shows an error and stops linking when the navigation to the content selection %s', async (_case, navigation) => {
+        component.selectExercise(exercise1.id);
+        component.courseId = 123;
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of({ targetLinkUri: 'http://localhost:8090/lti/select-content?jwt=token&id=course' }));
+        routerMock.navigateByUrl.mockImplementation(navigation);
+
+        component.sendDeepLinkRequest();
+
+        await vi.waitFor(() => expect(component.isLinking()).toBe(false));
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.lti13.deepLinking.unknownError');
+    });
+
+    it('keeps linking while the navigation to the content selection succeeds', async () => {
+        component.selectExercise(exercise1.id);
+        component.courseId = 123;
+        ltiApiMock.lti13DeepLinking.mockReturnValue(of({ targetLinkUri: 'http://localhost:8090/lti/select-content?jwt=token&id=course' }));
+
+        component.sendDeepLinkRequest();
+        await Promise.resolve();
+
+        expect(routerMock.navigateByUrl).toHaveBeenCalledOnce();
+        expect(component.isLinking()).toBe(true);
+        expect(alertServiceMock.error).not.toHaveBeenCalled();
+    });
+
     it('should retrieve course lectures on init when user is authenticated', async () => {
         const loggedInUser: User = { id: 3, login: 'lti_user', firstName: 'TestUser', lastName: 'Moodle' } as User;
         accountServiceMock.identity.mockReturnValue(Promise.resolve(loggedInUser));

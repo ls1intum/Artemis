@@ -252,10 +252,16 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 next: (response) => {
                     const target = this.localDeepLinkTarget(response?.targetLinkUri);
                     if (target) {
-                        void this.router.navigateByUrl(target, { replaceUrl: true });
+                        this.router.navigateByUrl(target, { replaceUrl: true }).then(
+                            (navigated) => {
+                                if (!navigated) {
+                                    this.stopLinkingWithUnknownError();
+                                }
+                            },
+                            () => this.stopLinkingWithUnknownError(),
+                        );
                     } else {
-                        this.isLinking.set(false);
-                        this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
+                        this.stopLinkingWithUnknownError();
                     }
                 },
                 error: (error) => {
@@ -266,6 +272,11 @@ export class Lti13DeepLinkingComponent implements OnInit {
         } else {
             this.alertService.error('artemisApp.lti13.deepLinking.selectToLink');
         }
+    }
+
+    private stopLinkingWithUnknownError(): void {
+        this.isLinking.set(false);
+        this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
     }
 
     /** Restricts the server's deep-link response to the local content-selection route. */
