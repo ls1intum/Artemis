@@ -2,7 +2,12 @@
     <jhi-detail-overview-navigation-bar [sectionHeadlines]="headlines()" />
 }
 @for (section of sections(); track section) {
-    <h3 class="section-headline" [id]="headlinesRecord()[section.headline]">{{ section.headline | artemisTranslate }}</h3>
+    <div class="detail-section-heading">
+        <h2 class="section-headline" [id]="headlinesRecord()[section.headline]">{{ section.headline | artemisTranslate }}</h2>
+        @if (sectionActions()[section.headline]; as actions) {
+            <ng-container *ngTemplateOutlet="actions" />
+        }
+    </div>
     <dl class="section-detail-list">
         @for (detail of section.details; track $index) {
             @if (!!detail) {
@@ -90,19 +95,6 @@
                                 <ng-container *ngTemplateOutlet="noData" />
                             }
                         </dd>
-                    }
-                    @case (DetailType.ProgrammingCheckoutDirectories) {
-                        @defer (on idle) {
-                            <dd id="detail-value-{{ detail.title }}">
-                                <jhi-programming-exercise-repository-and-build-plan-details
-                                    [programmingExercise]="detail.data.exercise"
-                                    [programmingLanguage]="detail.data.programmingLanguage"
-                                    [checkoutSolutionRepository]="detail.data.exercise.buildConfig?.checkoutSolutionRepository || false"
-                                />
-                            </dd>
-                        } @placeholder {
-                            <dd class="detail-defer-placeholder"></dd>
-                        }
                     }
                     @case (DetailType.ProgrammingBuildContainers) {
                         @defer (on idle) {

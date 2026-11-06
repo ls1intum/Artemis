@@ -1,8 +1,9 @@
-<div class="grid grid-cols-12 gap-4 justify-center overflow-hidden">
+<div class="overflow-x-auto" data-testid="tutor-participation-graph">
     <ul>
         <li class="not_participated" [ngClass]="calculateClasses(NOT_PARTICIPATED)">0</li>
         <li
             class="ms-0"
+            data-testid="tutor-instructions-step"
             [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)"
             (click)="navigate()"
             [tumAetUiTooltip]="'artemisApp.assessmentDashboard.readGradingInstructions' | artemisTranslate"
@@ -19,6 +20,7 @@
         @if (exercise().type !== ExerciseType.PROGRAMMING) {
             <li
                 [ngClass]="calculateClasses(TRAINED)"
+                data-testid="tutor-training-step"
                 (click)="navigate()"
                 [tumAetUiTooltip]="'artemisApp.assessmentDashboard.trainOnExampleSubmissions' | artemisTranslate"
                 [attr.aria-label]="'artemisApp.assessmentDashboard.trainOnExampleSubmissions' | artemisTranslate"
@@ -35,7 +37,7 @@
         @if (shouldShowManualAssessments()) {
             @for (numberOfAssessedSubmissions of numberOfAssessmentsOfCorrectionRounds(); track numberOfAssessedSubmissions; let i = $index) {
                 <li class="progress-bar-li stacked-li" [ngClass]="progressBarClass()">
-                    <div class="stacked-item">
+                    <div class="stacked-item" data-testid="tutor-progress-branch">
                         <jhi-progress-bar
                             [tooltip]="'artemisApp.assessmentDashboard.assessStudentsSubmissions' | artemisTranslate"
                             [percentage]="percentageInTimeAssessmentProgressOfCorrectionRound()[i]"
@@ -44,7 +46,7 @@
                         />
                     </div>
                     @if (numberOfSubmissions() && numberOfSubmissions()!.late > 0) {
-                        <div class="stacked-item">
+                        <div class="stacked-item" data-testid="tutor-progress-branch">
                             <jhi-progress-bar
                                 [tooltip]="'artemisApp.assessmentDashboard.assessStudentsLateSubmissions' | artemisTranslate"
                                 [percentage]="percentageLateAssessmentProgressOfCorrectionRound()[i]"

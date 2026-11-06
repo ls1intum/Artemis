@@ -1,6 +1,21 @@
 {
     "artemisApp": {
         "programmingExercise": {
+            "repositoryBuildOverview": {
+                "title": "Repositories und Builds",
+                "template": "Vorlage",
+                "solution": "Lösung",
+                "tests": "Tests",
+                "auxiliary": "Zusätzliches Repository",
+                "templateDescription": "Der Ausgangspunkt für Studierende.",
+                "solutionDescription": "Die Referenzimplementierung.",
+                "templateExpectedScore": "Erwartete Bewertung: 0%, bevor Studierende die Lösung implementieren.",
+                "solutionExpectedScore": "Erwartete Bewertung: 100% für die Referenzimplementierung.",
+                "result": "Build-Ergebnis",
+                "resultsLoading": "Build-Ergebnis wird geladen…",
+                "checkoutLoading": "Checkout-Verzeichnisse werden geladen…",
+                "checkoutUnavailable": "Checkout-Verzeichnisse konnten nicht geladen werden."
+            },
             "home": {
                 "title": "Programmieraufgabe",
                 "createLabel": "Programmieraufgabe erstellen",
@@ -383,8 +398,8 @@
                 "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
             },
             "status": {
-                "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
-                "templateFulfillsTest": "Das Template-Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem mit dem Template-Repository oder den Testfällen hinweisen."
+                "solutionFailsTest": "Die Musterlösung sollte 100% erreichen und alle Tests bestehen. Prüfe das Solution-Repository und die Testfälle.",
+                "templateFulfillsTest": "Die Vorlage sollte 0% erreichen. Prüfe bei einer abweichenden Bewertung das Template-Repository und die Testfälle."
             },
             "testCaseAnalysis": {
                 "invalidTestCases": "{{number}} Testfälle sind Teil der Aufgabenstellung aber können nicht im Test-Repository gefunden werden:",

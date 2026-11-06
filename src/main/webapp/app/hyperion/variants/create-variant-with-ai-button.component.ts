@@ -1,7 +1,7 @@
 import { injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
-import { faRobot } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -27,14 +27,14 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
     template: `
         @if (supported()) {
             <!-- The reason is a tooltip on the wrapper: a disabled button receives no pointer events of its own. -->
-            <!-- White text in both themes, like the Bootstrap warning buttons it stands next to. -->
+            <!-- Use the UI kit's theme-specific warning contrast for readable text and icons. -->
             <span class="inline-flex flex-col items-start gap-1 {{ styleClass() }}" [attr.title]="blocker() || '' | artemisTranslate" data-testid="create-variant-ai">
                 <tumaet-ui-button
-                    class="[--tumaet-ui-state-warning-contrast:var(--white)] [&_button]:gap-1! [&_button]:rounded-[0.1rem]! [&_button]:px-2! [&_button]:py-1! [&_button]:text-[0.7875rem]! [&_button]:leading-normal!"
+                    class="min-w-0 [&_button]:h-full! [&_button]:min-w-0! [&_button]:whitespace-normal!"
                     severity="warn"
                     variant="solid"
                     size="small"
-                    [icon]="faRobot"
+                    [icon]="faCodeBranch"
                     [disabled]="!!blocker()"
                     [loading]="generationCapabilities.isLoading()"
                     (clicked)="openWizard()"
@@ -104,5 +104,5 @@ export class CreateVariantWithAiButtonComponent {
     readonly resolvedCourseId = computed(() => this.exercise().course?.id ?? this.exercise().exerciseGroup?.exam?.course?.id);
 
     protected readonly modalVisible = signal(false);
-    protected readonly faRobot = faRobot;
+    protected readonly faCodeBranch = faCodeBranch;
 }
