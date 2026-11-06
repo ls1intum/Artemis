@@ -587,6 +587,32 @@ describe('ProgrammingBuildNotificationsComponent', () => {
         expect(icons[0].href).toContain('favicon-result');
     });
 
+    it('keeps both initial result revisions as baselines for a queued rebuild without timing', async () => {
+        fixture.destroy();
+        const replay: Result = { id: 4, completionDate: dayjs('2026-11-06T10:00:00Z'), submission: { id: 3 } };
+        const snapshot: Result = { id: 5, completionDate: dayjs('2026-11-06T10:01:00Z'), submission: { id: 3 } };
+        results = new BehaviorSubject<Result | undefined>(replay);
+        fixture = TestBed.createComponent(ProgrammingBuildNotificationsComponent);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { ...participation, submissions: [{ id: 3, results: [snapshot] }] });
+        fixture.detectChanges();
+        await enableNotifications();
+        state(ProgrammingSubmissionState.IS_QUEUED);
+        // A fallback GET can return a cloned, pre-rebuild result after the queue message.
+        results.next({ id: snapshot.id, completionDate: snapshot.completionDate, submission: { id: 3 } });
+        fixture.detectChanges();
+        expect(icons[0].href).toContain('favicon-building');
+        state(ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION);
+        await fixture.whenStable();
+        expect(showNotification).not.toHaveBeenCalled();
+        // The real completion must still be accepted without another build-state update.
+        snapshot.completionDate = dayjs('2026-11-06T10:02:00Z');
+        results.next(snapshot);
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-result');
+        expect(showNotification).toHaveBeenCalledOnce();
+    });
+
     it('handles an initial replay when build timing proves it completed this pending attempt', () => {
         fixture.destroy();
         results = new BehaviorSubject<Result | undefined>({ id: 4, completionDate: dayjs('2026-11-06T10:01:00Z'), submission: { id: 3 } });

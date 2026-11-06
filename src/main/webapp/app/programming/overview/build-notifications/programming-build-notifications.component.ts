@@ -59,6 +59,7 @@ export class ProgrammingBuildNotificationsComponent {
     private pendingBuildStartedAt?: number;
     private latestResult?: Result;
     private initialReplay?: Result;
+    private initialResults: { source: Result | undefined; revision: string | undefined }[] = [];
     private handledResult?: { source?: Result; revision?: string; submissionId?: number; completion?: number };
     private notification?: Notification;
     private closePersistentNotification?: () => void;
@@ -87,7 +88,11 @@ export class ProgrammingBuildNotificationsComponent {
                         initialResult = false;
                         this.latestResult = result;
                         this.initialReplay = result;
-                        this.rememberHandledResult(result ?? getLatestResultOfStudentParticipation(this.participation(), true));
+                        const snapshot = getLatestResultOfStudentParticipation(this.participation(), true);
+                        // The shared websocket cache and page snapshot can contain different old revisions.
+                        // Keep both baselines so a later fallback GET cannot complete an untimed rebuild.
+                        this.initialResults = [result, snapshot].map((source) => ({ source, revision: this.resultRevision(source) }));
+                        this.rememberHandledResult(result ?? snapshot);
                         return;
                     }
                     this.onResult(result);
@@ -155,6 +160,7 @@ export class ProgrammingBuildNotificationsComponent {
                     this.pendingBuildStartedAt = undefined;
                     this.latestResult = undefined;
                     this.initialReplay = undefined;
+                    this.initialResults = [];
                     this.handledResult = undefined;
                     this.permissionRequest++;
                     this.requestingPermission.set(false);
@@ -257,7 +263,8 @@ export class ProgrammingBuildNotificationsComponent {
 
     /** Deduplicates persisted revisions, while retaining reference identity for unpersisted results. */
     private isHandledResult(result: Result | undefined): boolean {
-        return result?.id === undefined ? result === this.handledResult?.source : this.resultRevision(result) === this.handledResult?.revision;
+        const revision = this.resultRevision(result);
+        return [this.handledResult, ...this.initialResults].some((previous) => (result?.id === undefined ? result === previous?.source : revision === previous?.revision));
     }
 
     /** A semi-automatic result may keep its ID across builds, so completion time is part of its revision. */
