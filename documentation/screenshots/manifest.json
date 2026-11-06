@@ -1502,11 +1502,25 @@
             "image": "instructor/exercises/assets/programming/create-form-language.png",
             "pages": ["instructor/exercises/programming-exercise/create-an-exercise.mdx"],
             "user": "instructor",
-            "route": "/course-management/{courseId}/programming-exercises/{exercise:Sorting Algorithms in Java}/edit",
+            "route": "/course-management/{courseId}/programming-exercises/new",
             "viewport": {
                 "width": 1440,
                 "height": 4000
             },
+            "steps": [
+                {
+                    "click": "[data-testid=\"switch-edit-mode-button\"]"
+                },
+                {
+                    "select": {
+                        "selector": "#field_programmingLanguage",
+                        "label": "Java"
+                    }
+                },
+                {
+                    "waitFor": "#field_projectType"
+                }
+            ],
             "selector": "h3:text-is(\"Language\")",
             "until": "h3:text-is(\"Problem\")",
             "source": ["src/main/webapp/app/programming"]
@@ -1666,7 +1680,7 @@
                     "waitFor": "text=Select what you want to import"
                 },
                 {
-                    "click": "cdk-dialog-container :text-is(\"Select\") >> nth=0"
+                    "click": "[data-testid=\"import-programming-exercise\"]"
                 },
                 {
                     "waitFor": "text=Search for exercise"
@@ -1689,7 +1703,7 @@
                     "waitFor": "text=Select what you want to import"
                 },
                 {
-                    "click": "cdk-dialog-container :text-is(\"Select\") >> nth=3"
+                    "click": "[data-testid=\"import-text-exercise\"]"
                 },
                 {
                     "waitFor": "text=Search for exercise"
@@ -1712,7 +1726,7 @@
                     "waitFor": "text=Select what you want to import"
                 },
                 {
-                    "click": "cdk-dialog-container :text-is(\"Select\") >> nth=2"
+                    "click": "[data-testid=\"import-modeling-exercise\"]"
                 },
                 {
                     "waitFor": "text=Search for exercise"
@@ -1735,7 +1749,7 @@
                     "waitFor": "text=Select what you want to import"
                 },
                 {
-                    "click": "cdk-dialog-container :text-is(\"Select\") >> nth=1"
+                    "click": "[data-testid=\"import-quiz-exercise\"]"
                 },
                 {
                     "waitFor": "text=Search for"
@@ -1757,6 +1771,9 @@
             "steps": [
                 {
                     "waitFor": "text=Charts"
+                },
+                {
+                    "waitFor": "jhi-programming-exercise-task"
                 }
             ],
             "source": ["src/main/webapp/app/programming/manage"]
@@ -1810,7 +1827,10 @@
                     "click": "[role=option]:has-text(\"Lock Repository\")"
                 },
                 {
-                    "waitFor": "text=Submission Limit"
+                    "fill": {
+                        "selector": "#field_submissionLimit",
+                        "value": "5"
+                    }
                 }
             ],
             "selector": "jhi-submission-policy-update",
@@ -1948,6 +1968,12 @@
                 },
                 {
                     "waitFor": "text=Select calculation"
+                },
+                {
+                    "click": "jhi-bonus button:text-is(\"−\")"
+                },
+                {
+                    "waitFor": "[data-testid=\"bonus-source-grading-scale\"]"
                 }
             ],
             "selector": "jhi-bonus",
@@ -1961,7 +1987,7 @@
             "route": "/courses/{courseId}/statistics",
             "viewport": {
                 "width": 1440,
-                "height": 1400
+                "height": 2400
             },
             "steps": [
                 {
@@ -1989,23 +2015,6 @@
             ],
             "selector": "jhi-course-statistics-results",
             "source": ["src/main/webapp/app/course/overview/course-statistics"]
-        },
-        {
-            "id": "text-exercise-assessment-dashboard",
-            "image": "instructor/assessment-grading/assets/assessment/exercise-dashboard.png",
-            "pages": ["instructor/assessment-grading/assessment.mdx"],
-            "user": "instructor",
-            "route": "/course-management/{courseId}/assessment-dashboard/{exercise:Essay: The Value of Code Reviews}",
-            "viewport": {
-                "width": 1440,
-                "height": 1000
-            },
-            "steps": [
-                {
-                    "waitFor": "text=Exercise Assessment Dashboard"
-                }
-            ],
-            "source": ["src/main/webapp/app/exercise/dashboards"]
         },
         {
             "id": "tutor-leaderboard",
@@ -2220,45 +2229,11 @@
             "source": ["src/main/webapp/app/course/shared/course-sidebar"]
         },
         {
-            "id": "modeling-assessment-dashboard",
-            "image": "instructor/exercises/assets/modeling/submissions-dashboard.png",
-            "pages": ["instructor/exercises/modeling-exercise.mdx"],
-            "user": "instructor",
-            "route": "/course-management/{courseId}/assessment-dashboard/{exercise:Class Diagram: Online Shop}",
-            "viewport": {
-                "width": 1440,
-                "height": 1000
-            },
-            "steps": [
-                {
-                    "waitFor": "text=Exercise Assessment Dashboard"
-                }
-            ],
-            "source": ["src/main/webapp/app/exercise/dashboards"]
-        },
-        {
-            "id": "text-assessment-dashboard-monolith",
-            "image": "instructor/exercises/assets/text/exercise-assessment-dashboard-2.png",
-            "pages": ["instructor/exercises/text-exercise.mdx"],
-            "user": "instructor",
-            "route": "/course-management/{courseId}/assessment-dashboard/{exercise:Essay: Monolith or Microservices?}",
-            "viewport": {
-                "width": 1440,
-                "height": 1000
-            },
-            "steps": [
-                {
-                    "waitFor": "text=Exercise Assessment Dashboard"
-                }
-            ],
-            "source": ["src/main/webapp/app/exercise/dashboards"]
-        },
-        {
             "id": "student-competency-detail",
             "image": "student/assets/adaptive-learning/students-learning-goals-statistics-detail.png",
             "pages": ["student/progress-analytics/adaptive-learning.mdx"],
             "user": "student",
-            "route": "/courses/{courseId}/competencies/2",
+            "route": "/courses/{courseId}/competencies/{competency:Evaluate architectural styles}",
             "viewport": {
                 "width": 1440,
                 "height": 1000

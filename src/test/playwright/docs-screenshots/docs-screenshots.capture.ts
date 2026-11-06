@@ -117,6 +117,7 @@ async function itemId(api: APIRequestContext, kind: string, title: string, cours
         exercise: `api/course/courses/${courseId}/with-exercises`,
         exam: `api/exam/courses/${courseId}/exams`,
         lecture: `api/lecture/courses/${courseId}/lectures`,
+        competency: `api/atlas/courses/${courseId}/competencies`,
     };
     const response = await api.get(listings[kind]);
     expect(response.ok(), `the ${kind} list of the demo course could not be loaded`).toBe(true);
@@ -127,10 +128,10 @@ async function itemId(api: APIRequestContext, kind: string, title: string, cours
     return item!.id;
 }
 
-/** Replaces {courseId} and the {exercise:Title}, {exam:Title} and {lecture:Title} placeholders of a route by the ids of the demo course. */
+/** Replaces {courseId} and the {exercise:Title}, {exam:Title}, {lecture:Title} and {competency:Title} placeholders of a route by the ids of the demo course. */
 async function resolveRoute(baseURL: string | undefined, route: string, courseId: number): Promise<string> {
     let resolved = route.replace('{courseId}', String(courseId));
-    const placeholders = Array.from(route.matchAll(/\{(exercise|exam|lecture):([^}]+)\}/g));
+    const placeholders = Array.from(route.matchAll(/\{(exercise|exam|lecture|competency):([^}]+)\}/g));
     if (placeholders.length === 0) {
         return resolved;
     }

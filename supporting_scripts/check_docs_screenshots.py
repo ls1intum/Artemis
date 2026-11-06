@@ -38,8 +38,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DOCS_ROOT = REPO_ROOT / "documentation" / "docs"
 MANIFEST = REPO_ROOT / "documentation" / "screenshots" / "manifest.json"
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
-# {courseId} is the demo course. {exercise:Title}, {exam:Title} and {lecture:Title} are the id of the item of the demo course with that title.
-PLACEHOLDERS = {"courseId": False, "exercise": True, "exam": True, "lecture": True}
+# {courseId} is the demo course. {exercise:Title}, {exam:Title}, {lecture:Title} and {competency:Title} are the id of the item of the demo course with that title.
+PLACEHOLDERS = {"courseId": False, "exercise": True, "exam": True, "lecture": True, "competency": True}
 PLACEHOLDER = re.compile(r"\{([A-Za-z]+)(?::([^}]*))?\}")
 IMPORT_PATH = re.compile(r"""(?:from|require\()\s*['"]([^'"]+\.(?:png|jpe?g|gif|webp))['"]""", re.IGNORECASE)
 PNG_SIGNATURE =b"\x89PNG\r\n\x1a\n"
@@ -522,6 +522,8 @@ def self_test() -> None:
         assert any("`padding`" in problem for problem in broken(padding=12)), "padding without a selector"
         assert any("`padding`" in problem for problem in broken(selector="main", padding=0))
         assert broken(selector="h3", until="h4") == []
+        for invalid_until in ("", "  ", None, 12):
+            assert any("`until` must be a CSS selector" in problem for problem in broken(selector="h3", until=invalid_until)), invalid_until
         assert any("`until`" in problem for problem in broken(until="h4")), "until without a selector"
         assert any("`until`" in problem for problem in broken(selector="h3", until="h4", padding=8))
         assert any("viewport" in problem for problem in broken(viewport={"width": 0, "height": 5}))

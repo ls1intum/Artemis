@@ -171,7 +171,7 @@ light theme, in English and with reduced motion. An entry has these fields:
 | --- | --- |
 | `image`, `pages` | The image below `documentation/docs` and the pages that show it. |
 | `user` | A demo user: `student`, `tutor`, `instructor`, `participant`, or `uploader`. The `participant` and the `uploader` are students whom no other image shows, so that an entry can start an exercise, a quiz or a learning path without changing the pages of the others. The `uploader` never submits anything, for the image of an exercise before the submission. |
-| `route` | The route, with `{courseId}` for the demo course and `{exercise:Title}`, `{exam:Title}` or `{lecture:Title}` for the id of the item of the demo course with that title. |
+| `route` | The route, with `{courseId}` for the demo course and `{exercise:Title}`, `{exam:Title}`, `{lecture:Title}` or `{competency:Title}` for the id of the item of the demo course with that title. |
 | `viewport`, `deviceScaleFactor` | The size of the browser window and its pixel density. |
 | `selector` or `clip` | A crop of the page: the element that the image shows (a CSS selector), or a box `{x, y, width, height}` in CSS pixels. Without either, the image is the whole window. A page that scrolls inside the window shows only the part that fits, so a `selector` of a tall element needs a `viewport` that is tall enough. |
 | `padding` | With `selector`: CSS pixels around the element, so that the border of a field at its edge is not cut off. |
@@ -220,7 +220,7 @@ that you keep. The script needs Docker, JDK 25 and Node and takes about eight mi
 `docs-maintenance.yml` needs no stack and lists the images whose `source` files changed after the image (`--stale`) in an issue of its own, which tells you
 which images to look at first.
 
-The manifest covers 128 images of the student and instructor guides. They show the one demo course, "Introduction to Software Engineering", so
+The manifest covers 125 images of the student and instructor guides. They show the one demo course, "Introduction to Software Engineering", so
 the same users, exercises, lectures and exam run through the whole documentation. **An image has to show what the text around it says.** A screenshot
 does not have to reproduce the older hand-made image pixel by pixel, but it has to show the same screen and the controls that the text names. When the
 demo course cannot show them (an iPad app, the exercise list during an exam, the test cases of a programming exercise), the image
