@@ -68,11 +68,13 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SeededStructuralTests;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleSeeder;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.VerificationRequest;
@@ -339,6 +341,38 @@ class GenerationOrchestratorTest {
         verify(stagedGenerationRunner, times(1)).run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(),
                 anyBoolean(), any(), any());
         verify(agentLoopRunner, never()).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    void terminalDraftKeepsTheExecutedDefectFromItsSelectedCheckpoint(boolean redesignFails) {
+        var stagedService = newService(true);
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
+        var survivor = SemanticMutant.printedTranscript("src/Attempt.java", "attempt 1", "print only", "Attempt");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(survivor, SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE)));
+        if (redesignFails) {
+            var continuation = new StagedAssessmentContinuation(java.time.Instant.now(), 0, "approved SPEC", "executed bypass", List.of(), List.of(), GenerationStage.SPEC,
+                    "executed bypass");
+            when(stagedGenerationRunner.requestAssessmentRedesign(any(), anyString(), any(), anyString(), any())).thenReturn(continuation);
+            when(stagedGenerationRunner.resume(any(), any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(),
+                    anyBoolean(), any(), any()))
+                    .thenReturn(new StagedGenerationRunner.StagedRunOutcome(new AgentLoopResult(AgentLoopResult.Status.ERROR, 1, "No replacement concept"), null, List.of(),
+                            TerminationReason.NO_ADMISSIBLE_CONCEPT));
+        }
+        List<GenerationOutcome> checkpoints = new ArrayList<>();
+
+        var outcome = stagedService.generate(exercise, SEED, "Build a bubble sort exercise.", JOB_ID, Mode.GENERATE, () -> false, null, null, null, null, null, _ -> {
+        }, checkpoints::add);
+
+        assertThat(outcome.isMechanicallyVerified()).isTrue();
+        assertThat(outcome.specFidelityReport().hasBlockingFindings()).isTrue();
+        assertThat(outcome.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        assertThat(outcome.specFidelityReport()).isEqualTo(checkpoints.getLast().specFidelityReport());
+        assertThat(outcome.capturedProducedFiles()).isEqualTo(checkpoints.getLast().capturedProducedFiles());
+        assertThat(outcome.terminationReason()).isEqualTo(redesignFails ? TerminationReason.NO_ADMISSIBLE_CONCEPT : TerminationReason.NO_SCHEDULABLE_SURFACE);
     }
 
     @Test

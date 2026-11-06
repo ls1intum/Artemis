@@ -576,11 +576,11 @@ class GenerationAttemptLoop {
         }
         if (loopResult.status() == AgentLoopResult.Status.ERROR) {
             terminationReason = stagedTerminationReason == null ? TerminationReason.AGENT_ERROR : stagedTerminationReason;
-            if (terminationReason == TerminationReason.NO_ADMISSIBLE_CONCEPT) {
-                return GenerationOutcome.error(loopResult, "No generated exercise concept satisfied the instructor brief and learning-fit review.");
-            }
             if (lastMechanicallyVerifiedCandidate != null) {
                 return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
+            }
+            if (terminationReason == TerminationReason.NO_ADMISSIBLE_CONCEPT) {
+                return GenerationOutcome.error(loopResult, "No generated exercise concept satisfied the instructor brief and learning-fit review.");
             }
             GenerationOutcome partial = capture.partialOutcome(loopResult, "The agent stopped before verification; the partial candidate requires manual review.");
             if (partial != null) {
