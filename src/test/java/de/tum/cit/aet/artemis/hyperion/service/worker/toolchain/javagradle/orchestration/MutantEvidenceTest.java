@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
@@ -117,6 +118,86 @@ class MutantEvidenceTest {
         evidence.beginRepair();
         assertThat(evidence.record(new SemanticMutantOutcome(replacement.rekeyedTo("class Main { int anotherChange; }"), Disposition.SURVIVED_GRADED_SUITE))).isTrue();
         assertThat(evidence.killsSinceRepairBegan()).isZero();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void aRegeneratedSurvivorRecordedBeforeInheritanceCanLaterBeKilled(boolean earlierKill) {
+        var evidence = new MutantEvidence();
+        var replacement = SemanticMutant.printedTranscript("src/Main.java", "class Main { int changed; }", "class Main { int changed; /* print */ }", "Main");
+        evidence.record(new SemanticMutantOutcome(PRINT_ONLY, Disposition.SURVIVED_GRADED_SUITE));
+        if (earlierKill) {
+            evidence.record(new SemanticMutantOutcome(PRINT_ONLY, Disposition.KILLED_BY_GRADED_SUITE));
+        }
+        evidence.beginRepair();
+        // The native completion callback runs before the ledger maps the regenerated probe to its original identity.
+        evidence.record(new SemanticMutantOutcome(replacement, Disposition.SURVIVED_GRADED_SUITE));
+        evidence.inheritIdentity(PRINT_ONLY, replacement);
+
+        assertThat(evidence.surviving()).containsExactly(replacement);
+        assertThat(evidence.regressions()).hasSize(earlierKill ? 1 : 0);
+        evidence.record(new SemanticMutantOutcome(replacement, Disposition.KILLED_BY_GRADED_SUITE));
+
+        assertThat(evidence.unresolvedSurvivors()).isEmpty();
+        assertThat(evidence.kills()).containsExactly(replacement);
+        assertThat(evidence.killsSinceRepairBegan()).isEqualTo(earlierKill ? 0 : 1);
+    }
+
+    @Test
+    void mergingAlreadyCreditedProbeIdentitiesCountsOneLogicalKill() {
+        var evidence = new MutantEvidence();
+        var replacement = SemanticMutant.printedTranscript("src/Main.java", "class Main { int changed; }", "class Main { int changed; /* print */ }", "Main");
+        for (var probe : List.of(PRINT_ONLY, replacement)) {
+            evidence.record(new SemanticMutantOutcome(probe, Disposition.SURVIVED_GRADED_SUITE));
+        }
+        evidence.beginRepair();
+        for (var probe : List.of(PRINT_ONLY, replacement)) {
+            evidence.record(new SemanticMutantOutcome(probe, Disposition.KILLED_BY_GRADED_SUITE));
+        }
+        assertThat(evidence.killsSinceRepairBegan()).isEqualTo(2);
+
+        evidence.inheritIdentity(PRINT_ONLY, replacement);
+        evidence.inheritIdentity(PRINT_ONLY, replacement);
+
+        assertThat(evidence.kills()).containsExactly(replacement);
+        assertThat(evidence.unresolvedSurvivors()).isEmpty();
+        assertThat(evidence.killsSinceRepairBegan()).isOne();
+    }
+
+    @Test
+    void mergingAnUnverifiedReplacementKeepsItsHistoricalKill() {
+        var evidence = new MutantEvidence();
+        var replacement = SemanticMutant.printedTranscript("src/Main.java", "class Main { int changed; }", "class Main { int changed; /* print */ }", "Main");
+        evidence.record(new SemanticMutantOutcome(PRINT_ONLY, Disposition.SURVIVED_GRADED_SUITE));
+        evidence.record(new SemanticMutantOutcome(replacement, Disposition.SURVIVED_GRADED_SUITE));
+        evidence.record(new SemanticMutantOutcome(replacement, Disposition.KILLED_BY_GRADED_SUITE));
+        evidence.beginRepair();
+        evidence.recordWithoutVerdict(replacement);
+
+        evidence.inheritIdentity(PRINT_ONLY, replacement);
+
+        assertThat(evidence.kills()).containsExactly(replacement);
+        assertThat(evidence.unverifiedKills()).containsExactly(replacement);
+        assertThat(evidence.unresolvedSurvivors()).isEmpty();
+        assertThat(evidence.killsSinceRepairBegan()).isZero();
+    }
+
+    @Test
+    void anEarlierReplacementAliasFollowsTheMergedCanonicalIdentity() {
+        var evidence = new MutantEvidence();
+        var replacement = SemanticMutant.printedTranscript("src/Main.java", "class Main { int changed; }", "class Main { int changed; /* print */ }", "Main");
+        var later = SemanticMutant.printedTranscript("src/Main.java", "class Main { int changedAgain; }", "class Main { int changedAgain; /* print */ }", "Main");
+        evidence.record(new SemanticMutantOutcome(PRINT_ONLY, Disposition.SURVIVED_GRADED_SUITE));
+        evidence.inheritIdentity(replacement, later);
+        evidence.record(new SemanticMutantOutcome(later, Disposition.SURVIVED_GRADED_SUITE));
+        evidence.beginRepair();
+
+        evidence.inheritIdentity(PRINT_ONLY, replacement);
+        evidence.record(new SemanticMutantOutcome(later, Disposition.KILLED_BY_GRADED_SUITE));
+
+        assertThat(evidence.unresolvedSurvivors()).isEmpty();
+        assertThat(evidence.kills()).containsExactly(later);
+        assertThat(evidence.killsSinceRepairBegan()).isOne();
     }
 
     @Test

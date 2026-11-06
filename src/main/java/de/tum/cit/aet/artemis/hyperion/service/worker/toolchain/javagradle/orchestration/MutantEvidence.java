@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,11 +60,34 @@ final class MutantEvidence {
 
     /** A server-derived replacement probe continues the evidence record of the probe it replaces. */
     void inheritIdentity(SemanticMutant original, SemanticMutant replacement) {
-        inheritedIdentities.put(new Variant(replacement.exclusion(), replacement.mutantSource(), replacement.evidence()), identity(original));
+        Variant inherited = identity(original);
+        Variant previousIdentity = identity(replacement);
+        if (previousIdentity.equals(inherited)) {
+            return;
+        }
+        Entry latest = entries.remove(previousIdentity);
+        inheritedIdentities.replaceAll((alias, target) -> target.equals(previousIdentity) ? inherited : target);
+        inheritedIdentities.put(new Variant(replacement.exclusion(), replacement.mutantSource(), replacement.evidence()), inherited);
+        if (killsSinceRepairBegan.remove(previousIdentity)) {
+            killsSinceRepairBegan.add(inherited);
+        }
+        if (latest == null) {
+            return;
+        }
+        Entry previous = entries.get(inherited);
+        if (latest.killed() && (previous == null || !previous.killed())) {
+            entries.put(inherited, new Entry(latest.mutant(), Status.KILL_UNVERIFIED));
+        }
+        Disposition disposition = switch (latest.status()) {
+            case KILLED -> Disposition.KILLED_BY_GRADED_SUITE;
+            case SURVIVING, REGRESSED -> Disposition.SURVIVED_GRADED_SUITE;
+            default -> Disposition.INCONCLUSIVE;
+        };
+        record(new SemanticMutantOutcome(latest.mutant(), disposition));
     }
 
     /** Tracked survivors a later candidate's suite killed since the current repair began, from any path. */
-    private int killsSinceRepairBegan;
+    private final Set<Variant> killsSinceRepairBegan = new HashSet<>();
 
     /**
      * Records one outcome. A kill of a survivor credits the current repair; a survivor that a later check kills becomes regression coverage; a survival of an earlier kill is
@@ -84,7 +108,7 @@ final class MutantEvidence {
             return false;
         }
         if (status == Status.KILLED && !previous.killed()) {
-            killsSinceRepairBegan++;
+            killsSinceRepairBegan.add(identity(mutant));
         }
         entries.put(identity(mutant), new Entry(mutant, status));
         return outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE && previous != null && previous.killed();
@@ -105,11 +129,11 @@ final class MutantEvidence {
     }
 
     void beginRepair() {
-        killsSinceRepairBegan = 0;
+        killsSinceRepairBegan.clear();
     }
 
     int killsSinceRepairBegan() {
-        return killsSinceRepairBegan;
+        return killsSinceRepairBegan.size();
     }
 
     /** Current survivors, the weaknesses a repair must close. */
