@@ -75,7 +75,10 @@
 @source './app/exercise/review';
 @source './app/programming/manage/code-editor/instructor-and-editor-container';
 @source './app/programming/manage/detail';
+@source './app/programming/manage/vcs-repository-access-log-view';
 @source './app/programming/manage/status';
+@source './app/programming/shared/instructions-render/step-wizard';
+@source './app/localvc/repository-view';
 @source './app/quiz/manage/detail';
 @source './app/quiz/manage/manage-buttons';
 @source './app/quiz/manage/lifecyle-buttons';
@@ -151,6 +154,7 @@
 @source './app/text/overview/text-editor';
 @source './app/fileupload/overview/file-upload-submission';
 @source './app/exercise/dashboards/tutor-leaderboard';
+@source './app/exercise/dashboards/tutor-participation-graph';
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
 @source './app/exercise/structured-grading-criterion/grading-instructions-details';

@@ -23,10 +23,16 @@
                             <jhi-atlas-orchestration-trigger [exercise]="quizExercise()" [showLabel]="true" />
                         }
                     </ng-template>
-                    <jhi-detail-overview-list [sections]="detailOverviewSections()" [sectionActions]="{ 'artemisApp.exercise.sections.mode': competencyActions }" />
+                    <jhi-detail-overview-list
+                        [footerSection]="quizExercise().isAtLeastInstructor ? { headline: 'artemisApp.exerciseDetail.administration', content: administrationActions } : undefined"
+                        [sections]="detailOverviewSections()"
+                        [sectionActions]="{ 'artemisApp.exercise.sections.mode': competencyActions }"
+                    />
                 }
 
-                <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise()" [isDetailPage]="true" detailPageSection="administration" (loadQuizExercises)="load()" />
+                <ng-template #administrationActions>
+                    <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise()" [isDetailPage]="true" detailPageSection="administration" (loadQuizExercises)="load()" />
+                </ng-template>
             </div>
         }
     </div>
