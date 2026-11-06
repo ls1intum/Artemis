@@ -309,40 +309,51 @@ describe('CourseLectureDetailsComponent', () => {
         expect(TestBed.inject(IrisChatService).openChat).toHaveBeenCalledWith(ChatServiceMode.LECTURE, courseLecturesDetailsComponent.lecture()!.id);
     });
 
-    /**
-     * `startsCollapsed` as the Iris panel itself received it, which is what the template binding decides. Read off the
-     * panels component's own content children: a `jhiPanel` sits on an `ng-template`, which is not an element and so
-     * never turns up in a `By.directive` query.
-     */
-    const irisPanelInput = (): boolean =>
-        (fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent)
-            .panels()
-            .find((panel) => panel.label() === 'artemisApp.courseOverview.exerciseDetails.iris')!
-            .startsCollapsed();
+    it.each([LLMSelectionDecision.NO_AI, LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.LOCAL_AI, undefined])(
+        'should start the Iris panel collapsed for AI selection %s',
+        async (selectedLLMUsage) => {
+            const accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
+            accountService.userIdentity.set({ selectedLLMUsage } as User);
+            courseLecturesDetailsComponent.irisSettings.set({
+                courseId: course.id!,
+                settings: { enabled: true, variant: 'default' },
+                effectiveRateLimit: {},
+                applicationRateLimitDefaults: {},
+            });
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
 
-    it('should open the iris panel collapsed for a user who declined AI', async () => {
-        const accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
-        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
-        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: true } } as any);
+            const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+
+            expect(resizablePanels.isRightPanelCollapsed()).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="right-panel-content"]').hidden).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="collapsed-panel-tab"][aria-label="artemisApp.courseOverview.exerciseDetails.iris"]')).not.toBeNull();
+        },
+    );
+
+    it('should allow users to open Iris manually', async () => {
+        courseLecturesDetailsComponent.irisSettings.set({
+            courseId: course.id!,
+            settings: { enabled: true, variant: 'default' },
+            effectiveRateLimit: {},
+            applicationRateLimitDefaults: {},
+        });
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
-        // Their chat says only that they declined, so an open panel would cost them lecture width on every visit.
-        expect(courseLecturesDetailsComponent.irisPanelStartsCollapsed()).toBeTruthy();
-        // Asserted on the panel input rather than the rendered rail: jsdom reports no width, so the panels always
-        // render in their narrow single-tab mode and never show a collapsed rail to look for.
-        expect(irisPanelInput()).toBeTruthy();
-    });
-
-    it('should open the iris panel expanded for a user who accepted AI', async () => {
-        const accountService = TestBed.inject(AccountService) as unknown as MockAccountService;
-        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
-        courseLecturesDetailsComponent.irisSettings.set({ settings: { enabled: true } } as any);
+        const irisTab = fixture.nativeElement.querySelector(
+            '[data-testid="collapsed-panel-tab"][aria-label="artemisApp.courseOverview.exerciseDetails.iris"]',
+        ) as HTMLButtonElement;
+        irisTab.click();
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
-        expect(courseLecturesDetailsComponent.irisPanelStartsCollapsed()).toBeFalsy();
-        expect(irisPanelInput()).toBeFalsy();
+        const resizablePanels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+
+        expect(resizablePanels.isRightPanelCollapsed()).toBe(false);
+        expect(resizablePanels.rightPanels()[resizablePanels.activeRightIndex()].label()).toBe('artemisApp.courseOverview.exerciseDetails.iris');
+        expect(fixture.nativeElement.querySelector('[data-testid="right-panel-content"]').hidden).toBe(false);
+        expect(fixture.nativeElement.querySelector('[data-testid="right-panel-content"] jhi-iris-base-chatbot')).not.toBeNull();
     });
 
     it('should not show the iris panel when iris is disabled for the course', async () => {
