@@ -47,7 +47,7 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent
 import { RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
+import { Subject, defer, of, throwError } from 'rxjs';
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -353,6 +353,26 @@ describe('ExamResultSummaryComponent', () => {
         await vi.advanceTimersByTimeAsync(2000);
         expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(0);
         expect(load).toHaveBeenCalledTimes(3);
+        vi.useRealTimers();
+    });
+
+    it('retries a failed initial grade request for a test exam', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        let subscriptions = 0;
+        // A retry resubscribes to the same observable, as it does for a cold HTTP request.
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(
+            defer(() => {
+                subscriptions++;
+                return subscriptions === 1 ? throwError(() => new Error('offline')) : of({ ...gradeInfo, pendingExerciseIds: [] });
+            }),
+        );
+        fixture.detectChanges();
+        expect(component.studentExamGradeInfoDTO()).toBeUndefined();
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(0);
+        expect(subscriptions).toBe(2);
+        expect(load).toHaveBeenCalledTimes(1);
         vi.useRealTimers();
     });
 

@@ -1,4 +1,4 @@
-import { EMPTY, catchError, expand, map, of, switchMap, timer } from 'rxjs';
+import { EMPTY, catchError, expand, map, of, retry, switchMap, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
@@ -226,6 +226,11 @@ export class ExamResultSummaryComponent implements OnInit {
             let pollCount = 0;
             grades
                 .pipe(
+                    // A transient failure of the first request must not end the flow before polling can start. Test exams retry it with backoff.
+                    retry({
+                        count: this.isTestExam ? 5 : 0,
+                        delay: (_error, retryCount) => timer(Math.min(2000 * 2 ** (retryCount - 1), 30000)),
+                    }),
                     expand((gradeInfo) => {
                         if (!this.isTestExam || this.studentExam().id !== studentExam.id || !gradeInfo.pendingExerciseIds?.length) {
                             return EMPTY;
