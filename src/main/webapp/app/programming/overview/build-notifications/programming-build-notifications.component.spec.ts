@@ -12,6 +12,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('ProgrammingBuildNotificationsComponent', () => {
     let fixture: ComponentFixture<ProgrammingBuildNotificationsComponent>;
@@ -124,6 +125,108 @@ describe('ProgrammingBuildNotificationsComponent', () => {
     it('shows progress for queued builds too', () => {
         state(ProgrammingSubmissionState.IS_QUEUED);
         expect(icons[0].href).toContain('favicon-building');
+    });
+
+    it('shows the clock when a build starts in the focused tab', () => {
+        hidden = false;
+        focused = true;
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        expect(icons[0].href).toContain('favicon-building');
+    });
+
+    it('ignores pending and completed Athena feedback while waiting for the build result', async () => {
+        await enableNotifications();
+        state(ProgrammingSubmissionState.IS_QUEUED);
+        const athena: Result = { id: 8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs('2026-11-06T10:05:00Z'), submission: { id: 3 } };
+        results.next(athena);
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-building');
+        expect(showNotification).not.toHaveBeenCalled();
+        results.next({ ...athena, successful: true, completionDate: dayjs('2026-11-06T10:01:00Z') });
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-building');
+        expect(showNotification).not.toHaveBeenCalled();
+        complete();
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-result');
+        expect(showNotification).toHaveBeenCalledOnce();
+    });
+
+    it('does not mistake an initial Athena replay for the pending build completion', async () => {
+        fixture.destroy();
+        results = new BehaviorSubject<Result | undefined>({
+            id: 8,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            completionDate: dayjs('2026-11-06T10:05:00Z'),
+            submission: { id: 3 },
+        });
+        fixture = TestBed.createComponent(ProgrammingBuildNotificationsComponent);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
+        await enableNotifications();
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, 3, dayjs('2026-11-06T10:00:00Z'));
+        // The shared submission service also interprets its Athena replay as no-pending.
+        state(ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION);
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-building');
+        expect(showNotification).not.toHaveBeenCalled();
+        complete();
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-result');
+        expect(showNotification).toHaveBeenCalledOnce();
+    });
+
+    it('keeps progress when the shared service clears pending after a later Athena update', async () => {
+        fixture.destroy();
+        results = new BehaviorSubject<Result | undefined>({ id: 4, completionDate: dayjs('2026-11-06T10:00:00Z'), submission: { id: 3 } });
+        fixture = TestBed.createComponent(ProgrammingBuildNotificationsComponent);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
+        await enableNotifications();
+        results.next({ id: 8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs('2026-11-06T10:05:00Z'), submission: { id: 3 } });
+        state(ProgrammingSubmissionState.IS_QUEUED);
+        state(ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION);
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-building');
+        expect(showNotification).not.toHaveBeenCalled();
+        complete(3, 5);
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-result');
+        expect(showNotification).toHaveBeenCalledOnce();
+    });
+
+    it('retains an early real completion when Athena feedback arrives before the pending request resolves', async () => {
+        await enableNotifications();
+        complete();
+        results.next({ id: 8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs('2026-11-06T10:05:00Z'), submission: { id: 3 } });
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-result');
+        expect(showNotification).toHaveBeenCalledOnce();
+        expect(showNotification.mock.calls[0][1].tag).toBe('artemis-build-7-2-3-4');
+    });
+
+    it('chooses the latest ordinary snapshot by completion time when newer Athena feedback exists', async () => {
+        fixture.destroy();
+        const oldBuild: Result = { id: 4, assessmentType: AssessmentType.SEMI_AUTOMATIC, completionDate: dayjs('2026-11-06T10:00:00Z'), submission: { id: 3 } };
+        const olderBuild: Result = { id: 6, assessmentType: AssessmentType.AUTOMATIC, completionDate: dayjs('2026-11-06T09:00:00Z'), submission: { id: 3 } };
+        const athena: Result = { id: 8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs('2026-11-06T10:05:00Z'), submission: { id: 3 } };
+        fixture = TestBed.createComponent(ProgrammingBuildNotificationsComponent);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', { ...participation, submissions: [{ id: 3, results: [oldBuild, athena, olderBuild] }] });
+        fixture.detectChanges();
+        await enableNotifications();
+        state(ProgrammingSubmissionState.IS_QUEUED);
+        results.next({ ...oldBuild });
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-building');
+        expect(showNotification).not.toHaveBeenCalled();
+        results.next({ ...oldBuild, completionDate: dayjs('2026-11-06T10:02:00Z') });
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-result');
+        expect(showNotification).toHaveBeenCalledOnce();
     });
 
     it('shows result received for the matching completed build, including unsuccessful results', () => {

@@ -5,15 +5,17 @@ import { faBell, faBellSlash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { AccountService } from 'app/core/auth/account.service';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { BUILD_NOTIFICATIONS_LOCAL_STORAGE_KEY_PREFIX, LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import dayjs from 'dayjs/esm';
-import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
+import { orderBy } from 'lodash-es';
 
 /** Observes only the participation displayed on the student exercise page; leaving it restores the tab. */
 @Component({
@@ -81,18 +83,24 @@ export class ProgrammingBuildNotificationsComponent {
                 }
                 let initialResult = true;
                 let hasNoPendingSubmission = false;
+                let latestResultIsAthena = false;
                 const resultSubscription = this.participationWebsocketService.subscribeForLatestResultOfParticipation(participationId, true, exerciseId).subscribe((result) => {
+                    latestResultIsAthena = result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
                     if (initialResult) {
                         // This BehaviorSubject immediately replays its previous result. It is the
                         // baseline, not completion of a build that may already be running again.
                         initialResult = false;
-                        this.latestResult = result;
-                        this.initialReplay = result;
-                        const snapshot = getLatestResultOfStudentParticipation(this.participation(), true);
+                        const replay = latestResultIsAthena ? undefined : result;
+                        this.latestResult = replay;
+                        this.initialReplay = replay;
+                        const buildResults = getAllResultsOfAllSubmissions(this.participation()?.submissions).filter(
+                            (entry) => entry.assessmentType !== AssessmentType.AUTOMATIC_ATHENA,
+                        );
+                        const snapshot = orderBy(buildResults, 'completionDate', 'desc')[0];
                         // The shared websocket cache and page snapshot can contain different old revisions.
                         // Keep both baselines so a later fallback GET cannot complete an untimed rebuild.
-                        this.initialResults = [result, snapshot].map((source) => ({ source, revision: this.resultRevision(source) }));
-                        this.rememberHandledResult(result ?? snapshot);
+                        this.initialResults = [replay, snapshot].map((source) => ({ source, revision: this.resultRevision(source) }));
+                        this.rememberHandledResult(replay ?? snapshot);
                         return;
                     }
                     this.onResult(result);
@@ -137,6 +145,8 @@ export class ProgrammingBuildNotificationsComponent {
                                         !this.destroyRef.destroyed &&
                                         feedbackGeneration === this.feedbackGeneration &&
                                         hasNoPendingSubmission &&
+                                        // The shared stream also emits no-pending for Athena feedback.
+                                        !latestResultIsAthena &&
                                         this.pendingSubmissionId === pendingSubmissionId &&
                                         !this.predatesPendingBuild(this.latestResult)
                                     ) {
@@ -221,6 +231,10 @@ export class ProgrammingBuildNotificationsComponent {
 
     /** Accepts only a fresh matching result, using build timing when the existing stream supplies it. */
     private onResult(result: Result | undefined, initialReplayMatches = false): void {
+        // Athena publishes preliminary and completed feedback on the result stream, but neither completes a build.
+        if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+            return;
+        }
         if (result) {
             this.latestResult = result;
         }
