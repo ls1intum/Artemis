@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -82,14 +83,10 @@ public class QuizExerciseWithSubmissionsExportService {
      * @throws IOException if the export is incomplete, for example because an image is missing, or the zip file could not be created
      */
     public Path exportQuizExerciseForDownload(QuizExercise quizExercise) throws IOException {
-        var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
+        var timestamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String zipFileName = quizExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName() + "-" + quizExercise.getTitle() + "-" + quizExercise.getId() + "-"
                 + timestamp + ".zip";
         Path exportDir = fileService.createTemporaryDirectory(FilePathConverter.getTempFilePath(), "exercise-export-", 5);
-        // never true, but static analysis cannot see through the deletion scheduling that the created directory exists
-        if (exportDir == null) {
-            throw new IOException("Could not create the export directory");
-        }
         List<String> exportErrors = new ArrayList<>();
         List<Path> pathsToBeZipped = exportExerciseDefinition(quizExercise, exportDir, exportErrors);
         // A missing image or details file would make the import fail, so the instructor gets an error instead of the file.
@@ -127,31 +124,37 @@ public class QuizExerciseWithSubmissionsExportService {
         }
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                List<Path> imagesToExport = new ArrayList<>();
-                String backgroundFilePath = dragAndDropQuestion.getBackgroundFilePath();
-                if (backgroundFilePath != null) {
-                    imagesToExport.add(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path());
-                }
-                for (var dragItem : dragAndDropQuestion.getDragItems()) {
-                    String pictureFilePath = dragItem.getPictureFilePath();
-                    if (pictureFilePath != null) {
-                        imagesToExport.add(new FileSystemLocation.DragItem(pictureFilePath).path());
-                    }
-                }
-                if (!imagesToExport.isEmpty()) {
-                    var imagesDir = exerciseExportDir.resolve("images-for-drag-and-drop-question-" + dragAndDropQuestion.getId());
-                    FileUtil.createDirectory(imagesDir);
-                    exportedPaths.add(imagesDir);
-                    imagesToExport.forEach(path -> {
-                        try {
-                            FileUtils.copyFile(path.toFile(), imagesDir.resolve(path.getFileName()).toFile());
-                        }
-                        catch (IOException e) {
-                            exportErrors.add("Failed to export image file with file path " + path + " for drag and drop question with id " + dragAndDropQuestion.getId());
-                        }
-                    });
-                }
+                exportedPaths.addAll(exportDragAndDropImages(dragAndDropQuestion, exerciseExportDir, exportErrors));
             }
+        }
+        return exportedPaths;
+    }
+
+    private static List<Path> exportDragAndDropImages(DragAndDropQuestion dragAndDropQuestion, Path exerciseExportDir, List<String> exportErrors) {
+        List<Path> exportedPaths = new ArrayList<>();
+        List<Path> imagesToExport = new ArrayList<>();
+        String backgroundFilePath = dragAndDropQuestion.getBackgroundFilePath();
+        if (backgroundFilePath != null) {
+            imagesToExport.add(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path());
+        }
+        for (var dragItem : dragAndDropQuestion.getDragItems()) {
+            String pictureFilePath = dragItem.getPictureFilePath();
+            if (pictureFilePath != null) {
+                imagesToExport.add(new FileSystemLocation.DragItem(pictureFilePath).path());
+            }
+        }
+        if (!imagesToExport.isEmpty()) {
+            var imagesDir = exerciseExportDir.resolve("images-for-drag-and-drop-question-" + dragAndDropQuestion.getId());
+            FileUtil.createDirectory(imagesDir);
+            exportedPaths.add(imagesDir);
+            imagesToExport.forEach(path -> {
+                try {
+                    FileUtils.copyFile(path.toFile(), imagesDir.resolve(path.getFileName()).toFile());
+                }
+                catch (IOException e) {
+                    exportErrors.add("Failed to export image file with file path " + path + " for drag and drop question with id " + dragAndDropQuestion.getId());
+                }
+            });
         }
         return exportedPaths;
     }

@@ -1,13 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { faArrowLeft, faArrowRight, faCheckDouble, faDownload, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
@@ -22,8 +21,6 @@ import { importFromFileNavigation } from 'app/exercise/import/import-from-file-n
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 
 export type AddModalMode = 'create' | 'import' | 'export' | 'unified';
 

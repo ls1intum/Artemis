@@ -52,18 +52,9 @@ export function markdownFileDestinations(source: string): Destination[] {
                 }
                 return;
             }
-            const attributeName = node.tagName === 'img' ? 'src' : node.tagName === 'a' ? 'href' : undefined;
-            const attribute = node.attrs.find((attr) => attr.name === attributeName);
-            const attributeLocation = attributeName ? location?.attrs?.[attributeName] : undefined;
-            if (attribute && attributeLocation) {
-                const raw = source.slice(attributeLocation.startOffset, attributeLocation.endOffset);
-                const valueStart = raw.indexOf('=') + 1;
-                const whitespace = raw.slice(valueStart).length - raw.slice(valueStart).trimStart().length;
-                const quote = raw[valueStart + whitespace];
-                const quoted = quote === '"' || quote === "'";
-                const start = attributeLocation.startOffset + valueStart + whitespace + (quoted ? 1 : 0);
-                const end = attributeLocation.endOffset - (quoted ? 1 : 0);
-                destinations.push({ start, end, url: attribute.value });
+            const destination = htmlDestination(source, node);
+            if (destination) {
+                destinations.push(destination);
             }
         }
         if ('childNodes' in node) {
@@ -72,4 +63,31 @@ export function markdownFileDestinations(source: string): Destination[] {
     };
     visit(parseFragment(html, { sourceCodeLocationInfo: true }));
     return destinations.filter((destination) => !excludedRanges.some((range) => destination.start >= range.start && destination.start < range.end));
+}
+
+/** Reads a destination attribute's value and exact source range, leaving its name, spacing and quotes intact. */
+function htmlDestination(source: string, node: DefaultTreeAdapterTypes.Element): Destination | undefined {
+    let attributeName: string;
+    if (node.tagName === 'img') {
+        attributeName = 'src';
+    } else if (node.tagName === 'a') {
+        attributeName = 'href';
+    } else {
+        return undefined;
+    }
+    const attribute = node.attrs.find((attr) => attr.name === attributeName);
+    const location = node.sourceCodeLocation?.attrs?.[attributeName];
+    if (!attribute || !location) {
+        return undefined;
+    }
+    const raw = source.slice(location.startOffset, location.endOffset);
+    const valueStart = raw.indexOf('=') + 1;
+    const whitespace = raw.slice(valueStart).length - raw.slice(valueStart).trimStart().length;
+    const quote = raw[valueStart + whitespace];
+    const quoted = quote === '"' || quote === "'";
+    return {
+        start: location.startOffset + valueStart + whitespace + (quoted ? 1 : 0),
+        end: location.endOffset - (quoted ? 1 : 0),
+        url: attribute.value,
+    };
 }

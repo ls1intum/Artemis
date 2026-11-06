@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -95,10 +96,6 @@ public abstract class ExerciseWithSubmissionsExportService {
      */
     public Path exportExerciseForDownload(Exercise exercise) throws IOException {
         Path exportDir = fileService.createTemporaryDirectory(FilePathConverter.getTempFilePath(), "exercise-export-", 5);
-        // never true, but static analysis cannot see through the deletion scheduling that the created directory exists
-        if (exportDir == null) {
-            throw new IOException("Could not create the export directory");
-        }
         List<Path> pathsToBeZipped = new ArrayList<>();
         List<String> exportErrors = new ArrayList<>();
         exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
@@ -107,7 +104,7 @@ public abstract class ExerciseWithSubmissionsExportService {
         if (exercise.getProblemStatement() != null && !exportErrors.isEmpty()) {
             throw new IOException(String.join(" ", exportErrors));
         }
-        var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
+        var timestamp = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String zipFileName = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId() + "-" + timestamp
                 + ".zip";
         Path zipFilePath = exportDir.resolve(FileUtil.sanitizeFilename(zipFileName));
@@ -154,25 +151,7 @@ public abstract class ExerciseWithSubmissionsExportService {
      * @param exportErrors    List of failures that occurred during the export
      */
     private void copyEmbeddedFiles(Exercise exercise, Path outputDir, List<Path> pathsToBeZipped, List<String> exportErrors) {
-        Set<String> fileNames = new LinkedHashSet<>();
-        // Rendering escapes code spans and fenced/indented code blocks. Parsing the resulting HTML also distinguishes actual
-        // attributes from comments and literal paths in prose, while supporting reference-style Markdown and raw HTML links.
-        // This HTML is only used to discover files; the exported problem statement remains unchanged.
-        String html = HtmlRenderer.builder().build().render(Parser.builder().build().parse(exercise.getProblemStatement()));
-        for (var element : Jsoup.parseBodyFragment(html).select("img[src], a[href]")) {
-            if (element.closest("pre, code") != null) {
-                continue;
-            }
-            Matcher matcher = EMBEDDED_FILE.matcher(element.attr(element.normalName().equals("img") ? "src" : "href"));
-            if (matcher.find()) {
-                String fileName = matcher.group(1);
-                // Uploaded markdown files lie directly in the markdown directory. A link with a path names none of them, and an editor must not
-                // be able to make the export copy a file from outside that directory.
-                if (!fileName.contains("/") && !fileName.contains("\\") && !fileName.equals("..")) {
-                    fileNames.add(fileName);
-                }
-            }
-        }
+        Set<String> fileNames = findEmbeddedFileNames(exercise.getProblemStatement());
         log.debug("Found embedded files: {} ", fileNames);
         if (fileNames.isEmpty()) {
             return;
@@ -196,6 +175,29 @@ public abstract class ExerciseWithSubmissionsExportService {
                 log.warn("Could not copy embedded file {} for exercise with id {}", fileName, exercise.getId());
             }
         }
+    }
+
+    private static Set<String> findEmbeddedFileNames(String problemStatement) {
+        Set<String> fileNames = new LinkedHashSet<>();
+        // Rendering escapes code spans and fenced/indented code blocks. Parsing the resulting HTML also distinguishes actual
+        // attributes from comments and literal paths in prose, while supporting reference-style Markdown and raw HTML links.
+        // This HTML is only used to discover files; the exported problem statement remains unchanged.
+        String html = HtmlRenderer.builder().build().render(Parser.builder().build().parse(problemStatement));
+        for (var element : Jsoup.parseBodyFragment(html).select("img[src], a[href]")) {
+            if (element.closest("pre, code") != null) {
+                continue;
+            }
+            Matcher matcher = EMBEDDED_FILE.matcher(element.attr(element.normalName().equals("img") ? "src" : "href"));
+            if (matcher.find()) {
+                String fileName = matcher.group(1);
+                // Uploaded markdown files lie directly in the markdown directory. A link with a path names none of them, and an editor must not
+                // be able to make the export copy a file from outside that directory.
+                if (!fileName.contains("/") && !fileName.contains("\\") && !fileName.equals("..")) {
+                    fileNames.add(fileName);
+                }
+            }
+        }
+        return fileNames;
     }
 
     /**

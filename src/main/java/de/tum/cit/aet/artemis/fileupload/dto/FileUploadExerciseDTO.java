@@ -120,12 +120,7 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
 
     private static FileUploadExerciseDTO map(FileUploadExercise exercise, boolean includeContext, boolean includeInitializedAssociations, boolean forExport) {
         Set<String> categories = initialized(exercise.getCategories()) ? Set.copyOf(exercise.getCategories()) : null;
-        FileUploadTeamAssignmentConfigDTO teamAssignmentConfig = includeInitializedAssociations && initialized(exercise.getTeamAssignmentConfig())
-                ? FileUploadTeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
-                : null;
-        if (forExport && teamAssignmentConfig != null) {
-            teamAssignmentConfig = teamAssignmentConfig.withoutId();
-        }
+        FileUploadTeamAssignmentConfigDTO teamAssignmentConfig = mapTeamAssignmentConfig(exercise, includeInitializedAssociations, forExport);
         List<GradingCriterionDTO> gradingCriteria = includeInitializedAssociations ? mapGradingCriteria(exercise.getGradingCriteria()) : null;
         if (forExport && gradingCriteria != null) {
             gradingCriteria = gradingCriteria.stream().map(GradingCriterionDTO::withoutIds).toList();
@@ -147,6 +142,14 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(),
                 exercise.getFilePattern(), exercise.isGradingInstructionFeedbackUsed(), course, exerciseGroup, exerciseVariantGroup, gradingCriteria, competencyLinks,
                 plagiarismDetectionConfig);
+    }
+
+    private static @Nullable FileUploadTeamAssignmentConfigDTO mapTeamAssignmentConfig(FileUploadExercise exercise, boolean includeInitializedAssociations, boolean forExport) {
+        if (!includeInitializedAssociations || !initialized(exercise.getTeamAssignmentConfig())) {
+            return null;
+        }
+        FileUploadTeamAssignmentConfigDTO config = FileUploadTeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig());
+        return forExport ? config.withoutId() : config;
     }
 
     private static List<GradingCriterionDTO> mapGradingCriteria(@Nullable Set<GradingCriterion> gradingCriteria) {

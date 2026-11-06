@@ -134,10 +134,11 @@ export class ExerciseService {
      * @param exercise the exercise to export
      */
     exportToFile(exercise: Exercise): Observable<HttpResponse<Blob>> {
+        const module = exercise.type === ExerciseType.FILE_UPLOAD ? 'fileupload' : exercise.type;
         const url =
             exercise.type === ExerciseType.PROGRAMMING
                 ? `api/programming/programming-exercises/${exercise.id}/export-instructor-exercise`
-                : `api/${exercise.type === ExerciseType.FILE_UPLOAD ? 'fileupload' : exercise.type}/${exercise.type}-exercises/${exercise.id}/export`;
+                : `api/${module}/${exercise.type}-exercises/${exercise.id}/export`;
         return this.http.get(url, { observe: 'response', responseType: 'blob' });
     }
 

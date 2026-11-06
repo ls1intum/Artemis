@@ -133,7 +133,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly participationWebsocketService = inject(ParticipationWebsocketService);
-
     private readonly featureToggleService = inject(FeatureToggleService);
 
     protected readonly faPlus = faPlus;

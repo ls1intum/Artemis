@@ -27,10 +27,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [TumAetUiButtonComponent, TranslateDirective, HelpIconComponent, ArtemisTranslatePipe],
 })
 export class ExerciseImportFromFileComponent {
-    private dialogRef = inject(TumAetUiDialogRef, { optional: true });
-    private dialogConfig = inject(TumAetUiDialogConfig, { optional: true });
-    private alertService = inject(AlertService);
-    private fileUploaderService = inject(FileUploaderService);
+    private readonly dialogRef = inject(TumAetUiDialogRef, { optional: true });
+    private readonly dialogConfig = inject(TumAetUiDialogConfig, { optional: true });
+    private readonly alertService = inject(AlertService);
+    private readonly fileUploaderService = inject(FileUploaderService);
 
     exerciseType = input<ExerciseType | undefined>();
     /** The course to import into, which owns the uploaded problem statement images; for hosts that embed the component without dialog data. */
@@ -155,14 +155,16 @@ export class ExerciseImportFromFileComponent {
                 for (const reference of references) {
                     replacements.push({ start: reference.start, end: reference.end, path: response.path! });
                 }
-            } catch (error) {
+            } catch {
+                // The localized alert identifies the failed file; the transport error provides no further action for the user.
                 this.alertService.error('artemisApp.exercise.importFromFile.imageUploadFailed', { fileName });
                 return false;
             }
         }
         // Apply from the end so changing a URL's length cannot shift any remaining source positions.
         exercise.problemStatement = statement;
-        for (const replacement of replacements.sort((a, b) => b.start - a.start)) {
+        replacements.sort((a, b) => b.start - a.start);
+        for (const replacement of replacements) {
             exercise.problemStatement = exercise.problemStatement.slice(0, replacement.start) + replacement.path + exercise.problemStatement.slice(replacement.end);
         }
         return true;
