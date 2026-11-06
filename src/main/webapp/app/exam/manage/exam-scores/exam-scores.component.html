@@ -491,7 +491,7 @@
                                             }
                                             @if (gradingScaleExists() && isFirst) {
                                                 <td [rowSpan]="exerciseGroupResult.exerciseResults.length">
-                                                    {{ exerciseGroupResult.averageGrade !== null ? exerciseGroupResult.averageGrade : '-' }}
+                                                    {{ exerciseGroupResult.averageGrade ?? '-' }}
                                                 </td>
                                             }
                                             <td>{{ exerciseResult.title }}</td>

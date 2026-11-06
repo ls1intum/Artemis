@@ -56,6 +56,7 @@ vi.mock('@e965/xlsx', async (importOriginal) => {
     return { ...actual, writeFile: vi.fn() };
 });
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -475,7 +476,7 @@ describe('ExamScoresComponent', () => {
             averagePercentage: 56.666666666666664,
         } as AggregatedExerciseGroupResult;
 
-        expect(groupResult1).toEqual(expectedGroupResult);
+        expect(groupResult1).toMatchObject(expectedGroupResult);
 
         const totalPoints = exResult1ForGroup1.achievedPoints! + exResult2ForGroup1.achievedPoints! + exResult3ForGroup1.achievedPoints!;
         expect(groupResult1!.totalPoints).toBe(totalPoints);
@@ -557,7 +558,7 @@ describe('ExamScoresComponent', () => {
             averagePoints: 60,
             averagePercentage: 60,
         };
-        expect(groupResult1).toEqual(expectedGroupResult);
+        expect(groupResult1).toMatchObject(expectedGroupResult);
 
         const totalPoints = exResult1ForGroup1.achievedPoints! + exResult2ForGroup1.achievedPoints!;
         expect(groupResult1!.totalPoints).toBe(totalPoints);
@@ -723,6 +724,167 @@ describe('ExamScoresComponent', () => {
         expect(comp.tableState.absoluteAmountOfTotalExams).toBe(3);
         expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
         expect(Number(comp.tableState.relativeAmountOfSubmittedExams)).toBeCloseTo(66.67, 0);
+    });
+
+    it.each([undefined, null, Number.NaN])('keeps nonempty unscored exercise metadata out of numeric averages (%s)', (missingScore) => {
+        const dto = deepClone(examScoreDTO);
+        dto.hasSecondCorrectionAndStarted = false;
+        dto.exerciseGroups = [
+            {
+                id: 1,
+                title: 'Scored quiz',
+                maxPoints: 10,
+                numberOfParticipants: 3,
+                containedExercises: [{ exerciseId: 11, title: 'Quiz', maxPoints: 10, numberOfParticipants: 3, exerciseType: 'QuizExercise' }],
+            },
+            {
+                id: 2,
+                title: 'Manual essay',
+                maxPoints: 20,
+                numberOfParticipants: 2,
+                containedExercises: [{ exerciseId: 12, title: 'Essay', maxPoints: 20, numberOfParticipants: 2, exerciseType: 'TextExercise' }],
+            },
+            {
+                id: 3,
+                title: 'Pending programming',
+                maxPoints: 20,
+                numberOfParticipants: 1,
+                containedExercises: [{ exerciseId: 13, title: 'Programming', maxPoints: 20, numberOfParticipants: 1, exerciseType: 'ProgrammingExercise' }],
+            },
+        ];
+        dto.studentResults.forEach((result, index) => {
+            result.submitted = true;
+            result.maxPoints = index === 2 ? 20 : 10;
+            result.overallPointsAchieved = index === 2 ? (missingScore === undefined ? undefined : 0) : index === 0 ? 4 : 0;
+            result.overallScoreAchieved = index === 2 ? (missingScore as number | undefined) : index === 0 ? 40 : 0;
+            result.overallPointsAchievedInFirstCorrection = result.overallPointsAchieved;
+            result.overallGrade = index === 0 ? '3' : '4';
+            result.overallGradeInFirstCorrection = result.overallGrade;
+            result.hasPassed = index === 0;
+            // JSON omits nullable achieved fields on actual manual and pending server metadata.
+            result.exerciseGroupIdToExerciseResult =
+                index === 2
+                    ? {
+                          1: { exerciseId: 11, title: 'Quiz', maxScore: 10, hasNonEmptySubmission: true },
+                          3: { exerciseId: 13, title: 'Programming', maxScore: 20, hasNonEmptySubmission: true },
+                      }
+                    : {
+                          1: { exerciseId: 11, title: 'Quiz', maxScore: 10, achievedPoints: index === 0 ? 4 : 0, achievedScore: index === 0 ? 40 : 0, hasNonEmptySubmission: true },
+                          2: {
+                              exerciseId: 12,
+                              title: 'Essay',
+                              maxScore: 20,
+                              achievedPoints: missingScore as number | undefined,
+                              achievedScore: missingScore as number | undefined,
+                              hasNonEmptySubmission: true,
+                          },
+                      };
+        });
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        const realGradingService = TestBed.runInInjectionContext(() => new GradingService());
+        vi.spyOn(gradingService, 'findMatchingGradeStep').mockImplementation((steps, percentage) => realGradingService.findMatchingGradeStep(steps, percentage));
+        fixture.detectChanges();
+
+        const [quiz, manual, pending] = comp.aggregatedExerciseGroupResults();
+        expect(quiz.noOfParticipantsWithFilter).toBe(3);
+        expect(quiz.noOfScoredParticipantsWithFilter).toBe(2);
+        expect(quiz.averagePoints).toBe(2);
+        expect(quiz.averagePercentage).toBe(20);
+        expect(quiz.exerciseResults[0].averagePoints).toBe(2);
+        expect(manual.noOfParticipantsWithFilter).toBe(2);
+        expect(manual.noOfScoredParticipantsWithFilter).toBe(0);
+        expect(manual.averagePoints).toBeUndefined();
+        expect(manual.averagePercentage).toBeUndefined();
+        expect(manual.exerciseResults[0].noOfParticipantsWithFilter).toBe(2);
+        expect(manual.exerciseResults[0].averagePoints).toBeUndefined();
+        expect(pending.noOfParticipantsWithFilter).toBe(1);
+        expect(pending.noOfScoredParticipantsWithFilter).toBe(0);
+        expect(pending.averagePoints).toBeUndefined();
+        expect(pending.exerciseResults[0].noOfParticipantsWithFilter).toBe(1);
+        expect(comp.aggregatedExamResults().noOfExamsNonEmpty).toBe(3);
+        expect(comp.scores()).toEqual([40, 0]);
+        expect(fixture.nativeElement.textContent).not.toContain('NaN');
+        const essayCells = Array.from(fixture.nativeElement.querySelectorAll('td') as NodeListOf<HTMLTableCellElement>)
+            .map((cell) => cell.textContent?.replace(/\s+/g, ' ').trim())
+            .filter((text) => text?.startsWith('Essay :'));
+        expect(essayCells).toEqual(['Essay : - ( - %)', 'Essay : - ( - %)']);
+        const manualStatistics = Array.from(fixture.nativeElement.querySelectorAll('tr') as NodeListOf<HTMLTableRowElement>).find(
+            (row) => row.cells[1]?.textContent?.trim() === 'Manual essay',
+        );
+        expect(manualStatistics?.cells[4].textContent?.trim()).toBe('-');
+    });
+
+    it('refreshes rendered chart eligibility after filtering and keeps first-render exercise navigation valid', async () => {
+        const dto = deepClone(examScoreDTO);
+        dto.hasSecondCorrectionAndStarted = false;
+        dto.exerciseGroups = [
+            {
+                id: 1,
+                title: 'Quiz group',
+                maxPoints: 10,
+                numberOfParticipants: 1,
+                containedExercises: [{ exerciseId: 11, title: 'Quiz', maxPoints: 10, numberOfParticipants: 1, exerciseType: 'QuizExercise' }],
+            },
+            {
+                id: 2,
+                title: 'Pending group',
+                maxPoints: 20,
+                numberOfParticipants: 1,
+                containedExercises: [{ exerciseId: 13, title: 'Programming', maxPoints: 20, numberOfParticipants: 1, exerciseType: 'ProgrammingExercise' }],
+            },
+        ];
+        dto.studentResults = dto.studentResults.slice(0, 2);
+        dto.studentResults.forEach((result, index) => {
+            result.submitted = true;
+            result.maxPoints = index === 0 ? 10 : 20;
+            result.overallPointsAchieved = index === 0 ? 0 : undefined;
+            result.overallScoreAchieved = index === 0 ? 0 : undefined;
+            result.exerciseGroupIdToExerciseResult =
+                index === 0
+                    ? {
+                          1: { exerciseId: 11, title: 'Quiz', maxScore: 10, achievedPoints: 0, achievedScore: 0, hasNonEmptySubmission: false },
+                      }
+                    : {
+                          2: { exerciseId: 13, title: 'Programming', maxScore: 20, hasNonEmptySubmission: true },
+                      };
+        });
+        vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+            width: 600,
+            height: 300,
+            top: 0,
+            left: 0,
+            right: 600,
+            bottom: 300,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        } as DOMRect);
+        (TestBed.inject(ActivatedRoute) as MockActivatedRoute).setParameters({ courseId: 123, examId: 1 });
+        comp.course.set({ accuracyOfScores: 1 });
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        const navigate = vi.spyOn(TestBed.inject(ArtemisNavigationUtilService), 'routeInNewTab').mockImplementation(() => {});
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const bars = fixture.nativeElement.querySelectorAll('jhi-exam-scores-average-scores-graph rect[role="button"]') as NodeListOf<SVGRectElement>;
+        expect(bars).toHaveLength(2);
+        expect(bars[1].getAttribute('aria-label')).toContain('11 Quiz');
+        vi.useFakeTimers();
+        try {
+            bars[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            vi.advanceTimersByTime(1000);
+            expect(navigate).toHaveBeenCalledExactlyOnceWith(['course-management', 123, 'exams', 1, 'exercise-groups', 1, 'quiz-exercises', 11, 'participations']);
+        } finally {
+            vi.useRealTimers();
+        }
+
+        comp.toggleFilterForNonEmptySubmission();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(comp.aggregatedExerciseGroupResults()[0].averagePoints).toBeUndefined();
+        expect(comp.aggregatedExerciseGroupResults()[1].noOfParticipantsWithFilter).toBe(1);
+        expect(fixture.nativeElement.querySelectorAll('jhi-exam-scores-average-scores-graph rect[role="button"]')).toHaveLength(0);
     });
 
     it('retains registration and submission counts when no test attempt has a completed automatic score', () => {

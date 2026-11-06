@@ -303,8 +303,8 @@ export class ExamScoresComponent implements OnInit {
     private calculateExerciseGroupStatistics(exerciseGroupResults: AggregatedExerciseGroupResult[]) {
         for (const groupResult of exerciseGroupResults) {
             // For average points for exercise groups
-            if (groupResult.noOfParticipantsWithFilter) {
-                groupResult.averagePoints = groupResult.totalPoints / groupResult.noOfParticipantsWithFilter;
+            if (groupResult.noOfScoredParticipantsWithFilter) {
+                groupResult.averagePoints = groupResult.totalPoints / groupResult.noOfScoredParticipantsWithFilter;
                 groupResult.averagePercentage = (groupResult.averagePoints / groupResult.maxPoints) * 100;
                 if (this.gradingScaleExists()) {
                     const gradeStep = this.gradingService.findMatchingGradeStep(this.gradingScale()!.gradeSteps, groupResult.averagePercentage);
@@ -313,8 +313,8 @@ export class ExamScoresComponent implements OnInit {
             }
             // Calculate average points for exercises
             groupResult.exerciseResults.forEach((exResult: AggregatedExerciseResult) => {
-                if (exResult.noOfParticipantsWithFilter) {
-                    exResult.averagePoints = exResult.totalPoints / exResult.noOfParticipantsWithFilter;
+                if (exResult.noOfScoredParticipantsWithFilter) {
+                    exResult.averagePoints = exResult.totalPoints / exResult.noOfScoredParticipantsWithFilter;
                     exResult.averagePercentage = (exResult.averagePoints / exResult.maxPoints) * 100;
                 }
             });
@@ -347,18 +347,17 @@ export class ExamScoresComponent implements OnInit {
 
         // Calculate the total points and number of participants when filters apply for each exercise group and exercise
         for (const studentResult of this.studentResults()) {
-            if (this.isUnscoredTestAttempt(studentResult)) {
-                continue;
-            }
             // Do not take un-submitted exams into account for the exercise statistics if the option was set
             if (!studentResult.submitted && this.filterForSubmittedExams()) {
                 continue;
             }
-            scoresToVisualize.push(studentResult.overallScoreAchieved ?? 0);
-            if (this.hasBonus()) {
-                gradesWithBonusToVisualize.push(studentResult.gradeWithBonus?.finalGrade?.toString() ?? '');
+            if (!this.isUnscoredTestAttempt(studentResult)) {
+                scoresToVisualize.push(studentResult.overallScoreAchieved ?? 0);
+                if (this.hasBonus()) {
+                    gradesWithBonusToVisualize.push(studentResult.gradeWithBonus?.finalGrade?.toString() ?? '');
+                }
+                this.noOfExamsFiltered++;
             }
-            this.noOfExamsFiltered++;
             if (!studentResult.exerciseGroupIdToExerciseResult) {
                 continue;
             }
@@ -376,17 +375,23 @@ export class ExamScoresComponent implements OnInit {
                     throw new Error(`ExerciseGroup with id ${exGroupId} does not exist in this exam!`);
                 }
                 exGroupResult.noOfParticipantsWithFilter++;
-                exGroupResult.totalPoints += studentExerciseResult.achievedPoints!;
 
                 // Update the specific exercise statistic
                 const exerciseResult = exGroupResult.exerciseResults.find((exResult) => exResult.exerciseId === studentExerciseResult.exerciseId);
                 if (!exerciseResult) {
                     // This should never be thrown. Indicates that the information in the ExamScoresDTO is inconsistent
                     throw new Error(`Exercise with id ${studentExerciseResult.exerciseId} does not exist in this exam!`);
-                } else {
-                    exerciseResult.noOfParticipantsWithFilter++;
-                    exerciseResult.totalPoints += studentExerciseResult.achievedPoints!;
                 }
+                exerciseResult.noOfParticipantsWithFilter++;
+                // Assignment/submission metadata remains meaningful before an exercise has a score.
+                const points = studentExerciseResult.achievedPoints;
+                if (points == null || !Number.isFinite(points) || !Number.isFinite(studentExerciseResult.achievedScore)) {
+                    continue;
+                }
+                exGroupResult.noOfScoredParticipantsWithFilter++;
+                exGroupResult.totalPoints += points;
+                exerciseResult.noOfScoredParticipantsWithFilter++;
+                exerciseResult.totalPoints += points;
             }
         }
         // Calculate exercise group and exercise statistics
@@ -493,7 +498,10 @@ export class ExamScoresComponent implements OnInit {
     }
 
     private isUnscoredTestAttempt(result: StudentResult): boolean {
-        return result.maxPoints !== undefined && (result.maxPoints <= 0 || result.overallScoreAchieved == null);
+        return (
+            result.maxPoints !== undefined &&
+            (!Number.isFinite(result.maxPoints) || result.maxPoints <= 0 || !Number.isFinite(result.overallScoreAchieved) || !Number.isFinite(result.overallPointsAchieved))
+        );
     }
 
     /** Test attempts can have different automatic maxima, so percentages must be aggregated before converting them to statistics. */
@@ -867,7 +875,7 @@ export class ExamScoresComponent implements OnInit {
      * @returns localized string representation of the rounded points
      */
     roundAndPerformLocalConversion(points: number | undefined): string {
-        return this.localize(roundValueSpecifiedByCourseSettings(points, this.course()));
+        return points == null || !Number.isFinite(points) ? '-' : this.localize(roundValueSpecifiedByCourseSettings(points, this.course()));
     }
 
     /**

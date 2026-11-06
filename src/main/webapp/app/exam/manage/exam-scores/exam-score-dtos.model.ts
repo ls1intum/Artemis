@@ -173,6 +173,8 @@ export class AggregatedExerciseGroupResult {
     public maxPoints: number;
     public totalParticipants: number;
     public noOfParticipantsWithFilter = 0;
+    /** Only completed numeric exercise results contribute to the average denominator. */
+    public noOfScoredParticipantsWithFilter = 0;
     public totalPoints = 0;
     public averagePoints?: number;
     public averagePercentage?: number;
@@ -195,6 +197,8 @@ export class AggregatedExerciseResult {
     public exerciseType: ExerciseType;
     public totalParticipants: number;
     public noOfParticipantsWithFilter = 0;
+    /** Only completed numeric exercise results contribute to the average denominator. */
+    public noOfScoredParticipantsWithFilter = 0;
     public totalPoints = 0;
     public averagePoints?: number;
     public averagePercentage?: number;
