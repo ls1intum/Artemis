@@ -68,13 +68,6 @@ public class StagedGenerationRunner {
 
     private static final int[] STAGE_BASE_BUDGETS = { 7, 54, 7 };
 
-    /**
-     * Hard ceiling on authoring-agent turns across the phases of one staged authoring attempt. A stage (or re-entry) is only started while at least {@link #MIN_STAGE_BUDGET} turns
-     * remain, so
-     * the cap holds. Concept discovery shares this pool; resolved settings may narrow it further.
-     */
-    private static final int POOL_HARD_CAP = 83;
-
     private static final int STATEMENT_TURN_RESERVE = STAGE_BASE_BUDGETS[2];
 
     private static final int MIN_STAGE_BUDGET = 3;
@@ -125,6 +118,8 @@ public class StagedGenerationRunner {
     /** Derived from the configured job deadline; see {@link #authoringBudget(Duration)}. Never a private ceiling that could outrank an operator who changed that deadline. */
     private final Duration authoringBudget;
 
+    private final Duration maxJobDuration;
+
     private final int maxTurns;
 
     /** Test hook so a wall-clock test can advance time deterministically instead of sleeping; production always uses the real clock. */
@@ -153,9 +148,9 @@ public class StagedGenerationRunner {
 
     StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPrompt systemPromptService, StageChecks stageCheckService, AgentTranscriptWriter transcriptWriter,
             ApprovedSpecRegistry approvedSpecs, @Nullable SpecFidelityCritic specificationReviewer, @Nullable ExerciseConceptSelector conceptSelector, String stagedContext,
-            Duration maxJobDuration) {
+            Duration maxJobDuration, int maxTurns) {
         this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, specificationReviewer, conceptSelector, StagedContext.parse(stagedContext),
-                maxJobDuration, POOL_HARD_CAP, Instant::now);
+                maxJobDuration, maxTurns, Instant::now);
     }
 
     private StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPrompt systemPromptService, StageChecks stageCheckService, AgentTranscriptWriter transcriptWriter,
@@ -170,7 +165,8 @@ public class StagedGenerationRunner {
         this.conceptSelector = conceptSelector;
         this.stagedContext = stagedContext;
         this.authoringBudget = authoringBudget(maxJobDuration);
-        this.maxTurns = Math.min(POOL_HARD_CAP, maxTurns);
+        this.maxJobDuration = maxJobDuration;
+        this.maxTurns = maxTurns;
         this.clock = clock;
     }
 
@@ -184,6 +180,11 @@ public class StagedGenerationRunner {
                 profileConceptSelector, StagedContext.parse(settings.stagedContext()), settings.maxJobDuration(), settings.maxTurns(), clock);
     }
 
+    StagedGenerationRunner withTurnLimit(int remainingTurns) {
+        return new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, specificationReviewer, conceptSelector,
+                stagedContext, maxJobDuration, Math.min(maxTurns, remainingTurns), clock);
+    }
+
     /** Leaves time for differential verification without consuming more than half of a short job deadline. */
     static Duration authoringBudget(Duration maxJobDuration) {
         if (maxJobDuration == null || maxJobDuration.isZero() || maxJobDuration.isNegative()) {
@@ -195,23 +196,23 @@ public class StagedGenerationRunner {
 
     StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPrompt systemPromptService, StageChecks stageCheckService, AgentTranscriptWriter transcriptWriter,
             String stagedContext) {
-        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, new ApprovedSpecRegistry(), null, null, stagedContext, DEFAULT_MAX_JOB_DURATION);
+        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, new ApprovedSpecRegistry(), null, null, stagedContext, DEFAULT_MAX_JOB_DURATION, 83);
     }
 
     StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPrompt systemPromptService, StageChecks stageCheckService, AgentTranscriptWriter transcriptWriter,
             ApprovedSpecRegistry approvedSpecs, String stagedContext) {
-        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, null, null, stagedContext, DEFAULT_MAX_JOB_DURATION);
+        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, null, null, stagedContext, DEFAULT_MAX_JOB_DURATION, 83);
     }
 
     StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPrompt systemPromptService, StageChecks stageCheckService, AgentTranscriptWriter transcriptWriter,
             ApprovedSpecRegistry approvedSpecs, SpecFidelityCritic specificationReviewer, String stagedContext) {
-        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, specificationReviewer, null, stagedContext, DEFAULT_MAX_JOB_DURATION);
+        this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, specificationReviewer, null, stagedContext, DEFAULT_MAX_JOB_DURATION, 83);
     }
 
     StagedGenerationRunner(AgentLoopRunner agentLoopRunner, AgentSystemPrompt systemPromptService, StageChecks stageCheckService, AgentTranscriptWriter transcriptWriter,
             ApprovedSpecRegistry approvedSpecs, SpecFidelityCritic specificationReviewer, ExerciseConceptSelector conceptSelector, String stagedContext) {
         this(agentLoopRunner, systemPromptService, stageCheckService, transcriptWriter, approvedSpecs, specificationReviewer, conceptSelector, stagedContext,
-                DEFAULT_MAX_JOB_DURATION);
+                DEFAULT_MAX_JOB_DURATION, 83);
     }
 
     /**
@@ -456,7 +457,8 @@ public class StagedGenerationRunner {
                 conversation = null;
             }
 
-            int allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], rollover, allocatablePool(stage, remainingPool));
+            int allocation = stage == GenerationStage.TESTS ? allocatablePool(stage, remainingPool)
+                    : allocateStageBudget(STAGE_BASE_BUDGETS[index], rollover, allocatablePool(stage, remainingPool));
             enterStep(progress, stage);
             emit(progress, STAGE_PROGRESS_LABELS.get(index));
             baseTools.enterStage(stage);

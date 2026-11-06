@@ -75,6 +75,8 @@ final class ExecutableEvidenceLedger {
     /** Mutant probes of the latest executable review that neither survived nor were killed; reported on the next review-round event, never as evidence. */
     private int inconclusiveMutantProbes;
 
+    private SpecFidelityReport assessmentFindings = SpecFidelityReport.empty();
+
     private List<ContractWitness> referenceWitnessesAwaitingPass = List.of();
 
     private List<ContractWitness> referenceWitnessesAwaitingAdjudication = List.of();
@@ -133,25 +135,16 @@ final class ExecutableEvidenceLedger {
         outcomes.addAll(studentTestOutcomes);
         List<SemanticMutant> counterexamples = outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE).map(SemanticMutantOutcome::mutant)
                 .toList();
-        if (counterexamples.isEmpty()) {
-            if (outcomes.stream().anyMatch(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)) {
-                List<String> reasons = new ArrayList<>(result.reasons());
-                reasons.add(
-                        "The assessment counterexample produced no conclusive build/test verdict. Keep the approved contract and repair the executable artifacts before checkpointing.");
-                outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE).map(SemanticMutantOutcome::diagnostic)
-                        .filter(diagnostic -> !diagnostic.isBlank()).distinct().forEach(reasons::add);
-                return new AssessmentVerdict(
-                        new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), reasons, result.templateFailureEvidence()), List.of());
-            }
-            return new AssessmentVerdict(result, List.of());
+        assessmentFindings = new SpecFidelityReport(counterexamples.stream().map(GenerationReviewSupport::semanticMutantFinding).toList());
+        if (outcomes.stream().anyMatch(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)) {
+            List<SpecFidelityReport.Finding> findings = new ArrayList<>(assessmentFindings.findings());
+            String detail = "The draft passed mechanical verification, but assessment evidence is incomplete. "
+                    + outcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE).map(SemanticMutantOutcome::diagnostic)
+                            .filter(diagnostic -> !diagnostic.isBlank()).distinct().collect(Collectors.joining("\n"));
+            findings.addAll(SpecFidelityReport.executableEvidenceUnavailable(detail).findings());
+            assessmentFindings = new SpecFidelityReport(findings);
         }
-        List<String> reasons = new ArrayList<>(result.reasons());
-        counterexamples.forEach(mutant -> reasons.add("The executed assessment accepts "
-                + (mutant.testsLearnerAssertions() ? "learner-written JUnit tests without effective assertion failures" : "a print-only replacement") + " in "
-                + mutant.solutionPath() + " (" + mutant.ruleId()
-                + "). The graded tests must distinguish the learner-owned operations before a candidate can become a checkpoint."));
-        return new AssessmentVerdict(new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), reasons, result.templateFailureEvidence()),
-                counterexamples);
+        return new AssessmentVerdict(result, counterexamples);
     }
 
     /**
@@ -481,7 +474,14 @@ final class ExecutableEvidenceLedger {
         transcriptProbeVerdicts = Map.copyOf(verdicts);
     }
 
+    SpecFidelityReport preserveAssessmentFindings(SpecFidelityReport report) {
+        List<SpecFidelityReport.Finding> mandatory = new ArrayList<>(report.findings());
+        assessmentFindings.findings().stream().filter(finding -> !mandatory.contains(finding)).forEach(mandatory::add);
+        return new SpecFidelityReport(mandatory);
+    }
+
     SpecFidelityReport preserveExecutableEvidenceState(SpecFidelityReport report) {
+        report = preserveAssessmentFindings(report);
         SpecFidelityReport preserved = GenerationReviewSupport.preserveSemanticMutantState(preserveReferenceWitnessState(report), evidence.unresolvedSurvivors());
         if (evidence.unverifiedKills().isEmpty()) {
             return preserved;

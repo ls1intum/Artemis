@@ -125,6 +125,7 @@ class GenerationAttemptLoopTest {
         stageChecks = mock(StageChecks.class);
         specFidelityCritic = mock(SpecFidelityCritic.class);
         stagedGenerationRunner = mock(StagedGenerationRunner.class);
+        when(stagedGenerationRunner.withTurnLimit(anyInt())).thenReturn(stagedGenerationRunner);
         // A mock, not the shared fake: the repair scope is a write barrier with no reader, so the call carrying the scheduled surface's roots is the only observable form.
         baseTools = mock(SandboxAgentTools.class);
         sandbox = new FakeInteractiveSandbox();
@@ -160,6 +161,22 @@ class GenerationAttemptLoopTest {
 
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.ATTEMPT_CAP_REACHED);
         verify(recordingSink, times(3)).recordAttempt();
+    }
+
+    @Test
+    void retriesConsumeOnlyTheRemainingSharedAuthoringBudget() {
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            int remaining = invocation.getArgument(4);
+            return loopSession(new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, Math.min(60, remaining), "incomplete artifacts"));
+        });
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected("still invalid"));
+        GenerationAttemptLoop loop = newGenerateLoop(10, 1);
+        loop.run();
+        ArgumentCaptor<Integer> limits = ArgumentCaptor.forClass(Integer.class);
+        verify(agentLoopRunner, times(2)).runSession(anyString(), any(), anyString(), any(), limits.capture(), any(), any(), any());
+        assertThat(limits.getAllValues()).containsExactly(100, 40);
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REPAIR_BUDGET_EXHAUSTED);
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNull();
     }
 
     /** A loop over the fixture above. The mode also decides the semantic repair budget's ceiling. */
@@ -208,7 +225,7 @@ class GenerationAttemptLoopTest {
     void anAdaptAttemptThatRanOutOfStepsWithoutEditingIsNotVerified_andIsAskedToEditFirst() {
         // The baseline problem statement is null, so an empty read-back means the workspace is byte-identical to the seeded exercise.
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("");
-        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "");
+        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 20, "");
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(exhausted));
 
         GenerationAttemptLoop loop = newLoop(Mode.ADAPT, 3, 1);
@@ -231,7 +248,7 @@ class GenerationAttemptLoopTest {
     void anAdaptAttemptThatEditsAfterBeingAskedToIsVerifiedNormally() {
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("", "Adapted statement");
         when(specFidelityCritic.critiqueAdaptation(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(SpecFidelityReport.empty());
-        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "");
+        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 20, "");
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(exhausted), loopSession(completed()));
 
         GenerationAttemptLoop loop = newLoop(Mode.ADAPT, 3, 1);
@@ -245,7 +262,7 @@ class GenerationAttemptLoopTest {
     @Test
     void repeatedNoEditAdaptAttemptsAreBoundedByTheMechanicalPhaseEvenUnderALargeAttemptCap() {
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("");
-        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "");
+        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 20, "");
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(exhausted));
 
         GenerationAttemptLoop loop = newLoop(Mode.ADAPT, 20, 1);
@@ -259,7 +276,7 @@ class GenerationAttemptLoopTest {
     @Test
     void aGenerateAttemptThatRanOutOfStepsWithoutEditingIsStillVerified() {
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("");
-        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "");
+        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 20, "");
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(exhausted));
 
         GenerationAttemptLoop loop = newGenerateLoop(1, 0);
@@ -277,7 +294,7 @@ class GenerationAttemptLoopTest {
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("Generated statement");
         String evidence = "The solution does not pass its own tests (1 failing of 5).\nSolution failure evidence (sanitized, untrusted excerpts):\n- addsInterest: expected: <105.0> but was: <100.0>";
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(rejected(evidence));
-        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 100, "");
+        AgentLoopResult exhausted = new AgentLoopResult(AgentLoopResult.Status.BUDGET_EXHAUSTED, 20, "");
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()), loopSession(exhausted));
 
         GenerationAttemptLoop loop = newGenerateLoop(10, 1);
@@ -376,7 +393,7 @@ class GenerationAttemptLoopTest {
 
     @ParameterizedTest
     @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS", "NON_FAILING_STUDENT_TESTS" })
-    void anAssessmentBypassAuthoredByAMechanicalRetryNeverBecomesACheckpoint(SemanticMutant.Evidence evidence) {
+    void aMechanicallyValidDraftRetainsExecutedAssessmentDefects(SemanticMutant.Evidence evidence) {
         stubSchedulerFixture();
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
                 any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
@@ -398,14 +415,16 @@ class GenerationAttemptLoopTest {
         GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 2, 0, true);
         loop.run();
 
-        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNull();
-        verify(service, never()).preserveCandidate(any(), any(), anyString(), any());
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNotNull();
+        assertThat(loop.lastMechanicallyVerifiedCandidate().verification().mechanicallyVerified()).isTrue();
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().hasBlockingFindings()).isTrue();
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.NO_SCHEDULABLE_SURFACE);
     }
 
     @ParameterizedTest
     @EnumSource(value = SemanticMutant.Evidence.class, names = { "PRINTED_TRANSCRIPT", "EMPTY_STUDENT_TESTS", "NON_FAILING_STUDENT_TESTS" })
-    void anInconclusiveAssessmentNeitherCreatesACheckpointNorAuthorizesRedesign(SemanticMutant.Evidence evidence) {
+    void anInconclusiveAssessmentKeepsADraftWithAnExplicitReviewFinding(SemanticMutant.Evidence evidence) {
         stubSchedulerFixture();
         when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
                 any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
@@ -427,8 +446,9 @@ class GenerationAttemptLoopTest {
         GenerationAttemptLoop loop = newLoop(Mode.GENERATE, 1, 0, true);
         loop.run();
 
-        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNull();
-        verify(service, never()).preserveCandidate(any(), any(), anyString(), any());
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNotNull();
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().findings())
+                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE);
         verify(stagedGenerationRunner, never()).requestAssessmentRedesign(any(), anyString(), any(), anyString(), any());
     }
 
@@ -496,7 +516,8 @@ class GenerationAttemptLoopTest {
         loop.run();
 
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.CANCELLED);
-        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNull();
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNotNull();
+        assertThat(loop.lastMechanicallyVerifiedCandidate().reviewReport().hasBlockingFindings()).isTrue();
         verify(stagedGenerationRunner, never()).requestAssessmentRedesign(any(), anyString(), any(), anyString(), any());
     }
 
@@ -552,7 +573,7 @@ class GenerationAttemptLoopTest {
         assertThat(loop.run()).isSameAs(preserved);
         assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REPAIR_DID_NOT_IMPROVE);
         ArgumentCaptor<GenerationAttemptLoop.CandidateSnapshot> checkpoint = ArgumentCaptor.forClass(GenerationAttemptLoop.CandidateSnapshot.class);
-        verify(service, times(3)).preserveCandidate(checkpoint.capture(), any(), anyString(), any());
+        verify(service, times(4)).preserveCandidate(checkpoint.capture(), any(), anyString(), any());
         assertThat(checkpoint.getValue().problemStatement()).isEqualTo("PROBLEM STATEMENT 1");
         verify(agentLoopRunner, times(2)).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
     }
@@ -1769,7 +1790,7 @@ class GenerationAttemptLoopTest {
         loop.run();
 
         ArgumentCaptor<GenerationAttemptLoop.CandidateSnapshot> preserved = ArgumentCaptor.forClass(GenerationAttemptLoop.CandidateSnapshot.class);
-        verify(service, times(4)).preserveCandidate(preserved.capture(), any(), anyString(), any());
+        verify(service, times(5)).preserveCandidate(preserved.capture(), any(), anyString(), any());
         assertThat(preserved.getValue().verification().testCount()).isEqualTo(8);
         assertThat(preserved.getValue().producedFiles().get(RepositoryRole.TESTS)).containsKey("test/ImprovedTest.java").doesNotContainKey("test/OriginalTest.java");
         assertThat(preserved.getValue().reviewReport().hasFindings()).isFalse();
@@ -1796,7 +1817,7 @@ class GenerationAttemptLoopTest {
         loop.run();
 
         ArgumentCaptor<GenerationAttemptLoop.CandidateSnapshot> preserved = ArgumentCaptor.forClass(GenerationAttemptLoop.CandidateSnapshot.class);
-        verify(service, times(4)).preserveCandidate(preserved.capture(), any(), anyString(), any());
+        verify(service, times(5)).preserveCandidate(preserved.capture(), any(), anyString(), any());
         assertThat(preserved.getValue().verification().testCount()).isEqualTo(19);
         assertThat(preserved.getValue().producedFiles().get(RepositoryRole.TESTS)).containsKey("test/ImprovedTest.java").doesNotContainKey("test/OriginalTest.java");
         assertThat(preserved.getValue().reviewReport().findings()).singleElement()
@@ -1825,7 +1846,7 @@ class GenerationAttemptLoopTest {
         loop.run();
 
         ArgumentCaptor<GenerationAttemptLoop.CandidateSnapshot> preserved = ArgumentCaptor.forClass(GenerationAttemptLoop.CandidateSnapshot.class);
-        verify(service, times(3)).preserveCandidate(preserved.capture(), any(), anyString(), any());
+        verify(service, times(4)).preserveCandidate(preserved.capture(), any(), anyString(), any());
         assertThat(preserved.getValue().verification().testCount()).isEqualTo(7);
         assertThat(preserved.getValue().producedFiles().get(RepositoryRole.TESTS)).containsKey("test/ReviewedTest.java").doesNotContainKey("test/UnreviewedRepairTest.java");
         assertThat(preserved.getValue().reviewReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.QUALITY_REVIEW_UNAVAILABLE);

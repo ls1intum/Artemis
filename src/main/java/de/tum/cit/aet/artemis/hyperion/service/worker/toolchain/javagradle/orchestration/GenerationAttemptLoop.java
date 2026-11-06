@@ -126,7 +126,7 @@ class GenerationAttemptLoop {
 
     private final AgentTranscriptWriter transcriptWriter;
 
-    private final int maxTurns;
+    private int remainingAuthoringTurns;
 
     private final int maxGenerationAttempts;
 
@@ -264,7 +264,7 @@ class GenerationAttemptLoop {
         this.specFidelityCritic = dependencies.specFidelityCritic();
         this.stagedGenerationRunner = dependencies.stagedGenerationRunner();
         this.transcriptWriter = dependencies.transcriptWriter();
-        this.maxTurns = dependencies.maxTurns();
+        this.remainingAuthoringTurns = dependencies.maxTurns();
         this.maxGenerationAttempts = dependencies.maxGenerationAttempts();
         this.specObserver = context.specObserver();
         this.checkpointObserver = context.checkpointObserver();
@@ -302,6 +302,11 @@ class GenerationAttemptLoop {
     @Nullable
     GenerationOutcome run() {
         for (int attempt = 1; attempt <= maxGenerationAttempts; attempt++) {
+            if (remainingAuthoringTurns <= 0) {
+                terminationReason = TerminationReason.REPAIR_BUDGET_EXHAUSTED;
+                emit("The shared authoring-turn budget ended; retaining the best available draft and its findings.");
+                break;
+            }
             runAttempt(attempt);
             if (stagedContinuation != null) {
                 if (!canContinueAssessment(attempt)) {
@@ -370,11 +375,13 @@ class GenerationAttemptLoop {
             }
             emit(verification.report());
             if (!assessed.counterexamples().isEmpty()) {
+                checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot);
                 if (cancelled.getAsBoolean()) {
                     return cancelledOutcome(cancelledResult(loopResult));
                 }
-                stagedContinuation = lastMechanicallyVerifiedCandidate == null && attempt < maxGenerationAttempts && mechanicalAttemptsBeforeAnyRepair + 1 < MAX_MECHANICAL_ATTEMPTS
-                        ? stagedGenerationRunner.requestAssessmentRedesign(exercise, sessionId, stagedAuthoringStartedAt, verification.report(), unresolvedConceptFindings)
+                stagedContinuation = attempt < maxGenerationAttempts && mechanicalAttemptsBeforeAnyRepair + 1 < MAX_MECHANICAL_ATTEMPTS
+                        ? stagedGenerationRunner.requestAssessmentRedesign(exercise, sessionId, stagedAuthoringStartedAt,
+                                specFidelityCritic.renderForRetryPrompt(executableEvidence.preserveAssessmentFindings(SpecFidelityReport.empty())), unresolvedConceptFindings)
                         : null;
                 if (stagedContinuation == null) {
                     terminationReason = TerminationReason.NO_SCHEDULABLE_SURFACE;
@@ -498,14 +505,15 @@ class GenerationAttemptLoop {
                 specSnapshot.set(spec);
                 specObserver.accept(spec);
             };
+            StagedGenerationRunner boundedStages = stagedGenerationRunner.withTurnLimit(remainingAuthoringTurns);
             StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedContinuation == null
-                    ? stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot, sandbox, sessionId, cancelled, usageSink, progress,
+                    ? boundedStages.run(exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot, sandbox, sessionId, cancelled, usageSink, progress,
                             () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies, conceptSelectionApplies, publishSpec,
                             capture::recordStageBoundary)
-                    : stagedGenerationRunner.resume(stagedContinuation, exercise, baseTools, tools,
-                            stagedContinuation.stage() == GenerationStage.SPEC ? reviewBrief : currentPrompt, reviewBrief, testsSeedSnapshot, sandbox, sessionId, cancelled,
-                            usageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies, conceptSelectionApplies,
-                            publishSpec, capture::recordStageBoundary);
+                    : boundedStages.resume(stagedContinuation, exercise, baseTools, tools, stagedContinuation.stage() == GenerationStage.SPEC ? reviewBrief : currentPrompt,
+                            reviewBrief, testsSeedSnapshot, sandbox, sessionId, cancelled, usageSink, progress,
+                            () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies, conceptSelectionApplies, publishSpec,
+                            capture::recordStageBoundary);
             stagedContinuation = stagedOutcome.assessmentContinuation();
             loopResult = stagedOutcome.result();
             stagedTerminationReason = stagedOutcome.terminationReason();
@@ -530,7 +538,8 @@ class GenerationAttemptLoop {
             }
             try {
                 // Repairs start from durable workspace/server state; replaying a failed trajectory buries current evidence and grows quadratically. Checkpoints keep the audit.
-                AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, null, currentPrompt, tools, maxTurns, cancelled, usageSink, progress);
+                AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, null, currentPrompt, tools, remainingAuthoringTurns, cancelled, usageSink,
+                        progress);
                 loopResult = session.result();
                 carriedConversation = session.conversation();
                 transcriptWriter.write(exercise.id(), "attempt-" + attempt + (attempt == 1 ? "-single-loop-" : "-repair-") + loopResult.status().name().toLowerCase(Locale.ROOT),
@@ -540,6 +549,7 @@ class GenerationAttemptLoop {
                 baseTools.exitRepairScope();
             }
         }
+        remainingAuthoringTurns = Math.max(0, remainingAuthoringTurns - loopResult.turns());
         totalAgentTurns += loopResult.turns();
         if (activity != null) {
             // Authoring is over; verification, review, and repair scheduling belong to no substep.
@@ -635,6 +645,10 @@ class GenerationAttemptLoop {
                     candidateProblemStatement, specDocumentSnapshot, testPlanSnapshot);
         };
         VerificationResult result = verifyWithInfrastructureRetry(artifacts.verificationRequest(), restoreCandidate);
+        if (result.mechanicallyVerified() && lastMechanicallyVerifiedCandidate == null) {
+            verification = result;
+            checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot);
+        }
         if (result.mechanicallyVerified()) {
             result = executableEvidence.recheckAfterVerification(result, candidateFiles, testPlanSnapshot, candidateBeforeCurrentRepair != null, seededStructuralTests,
                     restoreCandidate);
@@ -662,7 +676,8 @@ class GenerationAttemptLoop {
     /** Checkpoints the first verified candidate; a later semantic repair is promoted only once its review has run, see {@link #promoteReviewedCandidate}. */
     private void checkpointMechanicallyVerifiedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         CandidateSnapshot mechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
-                SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the mechanically verified candidate received its full-artifact review."),
+                executableEvidence.preserveExecutableEvidenceState(
+                        SpecFidelityReport.qualityReviewUnavailable("This mechanically verified draft still requires full quality review before study qualification.")),
                 specDocumentSnapshot, artifacts.testPlanJson());
         if (candidateBeforeCurrentRepair == null) {
             lastMechanicallyVerifiedCandidate = mechanicallyVerifiedCandidate;
@@ -754,8 +769,8 @@ class GenerationAttemptLoop {
 
     /** Re-attaches both contested-authority states after a fresh review, which only ever reports on artifacts and cannot discharge either. */
     private SpecFidelityReport preserveDesignAuthorityState(SpecFidelityReport report) {
-        return GenerationReviewSupport.preserveConceptAdmissionState(GenerationReviewSupport.preserveSpecificationReviewState(report, unresolvedSpecificationFindings),
-                unresolvedConceptFindings);
+        return executableEvidence.preserveAssessmentFindings(GenerationReviewSupport
+                .preserveConceptAdmissionState(GenerationReviewSupport.preserveSpecificationReviewState(report, unresolvedSpecificationFindings), unresolvedConceptFindings));
     }
 
     /**

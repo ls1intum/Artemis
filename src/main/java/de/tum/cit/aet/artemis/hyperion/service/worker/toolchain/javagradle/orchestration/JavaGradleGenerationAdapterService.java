@@ -159,7 +159,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         var critic = new SpecFidelityCritic(ChatClient.create(new HarmonyScrubbingChatModel(model)), mapper, new PromptTemplates(), model.getOptions().getModel(),
                 Duration.ofMinutes(5), cooldown, parameters.contextWindowTokens(), models);
         var stages = new StagedGenerationRunner(runner, prompt, stageChecks, transcripts, approvedSpecs, critic, new ExerciseConceptSelector(runner, critic),
-                parameters.stagedContext(), parameters.maxDuration());
+                parameters.stagedContext(), parameters.maxDuration(), parameters.maxTurns());
         var orchestrator = new GenerationOrchestrator(sandbox.forExecution(assignment.identity().executionId()), workspace, runner, verifier, prompt,
                 new StructuralOracleSeeder(workspace, approvedSpecs), critic, parameters.maxTurns(), maxSemanticRepairs, stages, parameters.stagedGeneration(), stageChecks,
                 transcripts, approvedSpecs);
@@ -218,7 +218,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
             builder.verbosity(parameters.verbosity());
         }
         return new HyperionGenerationSettings(parameters.effortProfile(), null, parameters.maxTurns(), parameters.maxDuration(), parameters.maxTokens(),
-                parameters.stagedGeneration(), parameters.stagedContext(), parameters.contextWindowTokens(), builder.build(), false, true);
+                parameters.stagedGeneration(), parameters.stagedContext(), parameters.contextWindowTokens(), builder.build(), false, true, parameters.repairModel());
     }
 
     private static String boundedSpec(String spec) {

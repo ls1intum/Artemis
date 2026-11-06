@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-06
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -293,30 +293,52 @@ model authoring starts. The worker receives a frozen, bounded repository snapsho
 against that snapshot before persisting them, and checks repository heads and
 exercise metadata again before writing.
 
-Before statement authoring, whole-exercise generation runs an executable assessment
-check on eligible student-owned `main` methods. Source calls prioritize candidates;
-reflection does not exclude them. The check first empties the body to establish
-whether weighted tests observe it. An ungraded demonstration is not a defect.
-It then replaces the body with statements printing the reference transcript and
-runs the weighted tests. If those
-tests still pass, or every non-preservation student-work test passes on the
-unchanged template, the staged controller can reopen the exact specification once,
-review a coherent redesign, and rebuild the artifacts under the existing shared
-turn and time limits. The agent cannot reopen the contract itself. A second proven
-bypass, or insufficient budget for redesign, stops generation before publication;
-infrastructure failures do not authorize a contract change. With staged generation
-enabled, authoritative verification repeats the eligible assessment check before
-creating any checkpoint, including candidates authored by later mechanical repairs.
-Before the first checkpoint, a new executed counterexample can use the same single
-session-wide redesign allowance in the next existing authoring attempt. Once that
-allowance is used, or a checkpoint exists, a proven bypass is rejected without
-reopening the contract or replacing the earlier checkpoint. If the approved redesign
-exhausts an authoring attempt before its executable stage passes, that stage can
-resume once in the next existing authoring attempt. It keeps the current workspace,
-exact approval and original authoring deadline; it does not repeat concept or SPEC
-work, raise configured limits or allow another contract redesign. No statement is
-authored until that assessment passes. This check supplements
-the later quality review and does not establish overall teaching suitability.
+Whole-exercise generation separates a usable draft from study qualification. Mandatory
+verification still requires the solution to pass, the starter to fail the intended
+student-work tests, valid task bindings, and unchanged server-owned harness assets.
+A candidate that fails those checks is retained for inspection rather than saved as
+a working exercise. Authorization, sandbox isolation and persistence checks remain
+mandatory.
+
+Executable assessment probes check whether a print-only entry point or ineffective
+learner-written tests can still pass the grading suite. A mechanically valid draft
+with a confirmed grading defect is checkpointed with the executed finding and saved
+as **Needs review** if bounded repair cannot improve it. An incomplete assessment
+also remains an explicit review finding. Neither a model review nor a later failed
+repair can silently clear that evidence. The saved draft requires instructor review
+and independent qualification before use in a study or release to students.
+
+If every student-work test passes on the unchanged starter, the staged controller
+can reopen the exact specification once. This candidate has not passed mandatory
+differential verification. Redesign uses the remaining shared budget and the original
+deadline. A confirmed bypass found after mechanical verification can also request
+that single redesign, while retaining the existing draft and its findings. A failed
+redesign returns the earlier draft. It does not turn that draft into a qualified result.
+
+The configured `artemis.hyperion.agent.max-turns` is a **job-wide authoring limit**,
+shared by concept selection, stages, continuations and repair attempts. There is no
+hidden 83-turn staged cap and a retry does not receive a new full allocation.
+Verification and review still use the job's token and wall-clock guards. Every twenty
+authoring turns, the agent receives a work checkpoint. A current passing tool check
+returns control to the authoritative gate; two blocks without a verified reduction
+in failures stop that session and return its artifacts for verification. Writes alone
+do not establish progress. A new stage starts its own progress assessment.
+
+Administrators can configure `artemis.hyperion.agent.repair-model`, or a profile's
+`repair-model`, to use one different model on the existing provider for a stalled
+repair. The handoff continues from current files and diagnostics for at most twenty
+turns, within the remaining authoring, token and time limits. It is available only
+once per job. Confirm that the configured route is supported and actually resolves
+to the intended model; an alias is not evidence that a stronger model was used.
+An unset repair model stops stalled work without a model handoff. Deploy matching
+core and worker versions together: these resolved settings use worker protocol 6.
+
+A development pilot can set `max-turns: 180`, `max-tokens-per-job: 6000000` and
+`max-job-duration: PT2H` in its selected effort profile. These are experimental limits,
+not new deployment defaults or a quality guarantee. Keep the stale-job timeout above
+the selected duration, record the effective settings, and compare all outcomes,
+including failures and drafts that need review.
+
 Supplied APIs must record learner operations automatically. Grading must not depend on
 learner calls to undeclared recorders or callbacks; a mechanically passing reference
 solution alone cannot establish that the student-facing task is sufficient.
@@ -350,7 +372,7 @@ unchanged work or rerun the reviewer to obtain a different verdict.
 Once a learner-test counterexample is confirmed, its source file, method and probe kind remain
 part of the job's assessment obligations. A later candidate that removes, renames or
 supplies that learner test surface cannot silently retire the evidence: a missing
-applicable probe is inconclusive and blocks a new checkpoint. A successful check
+applicable probe is inconclusive and keeps the draft under review. A successful check
 resolves the current candidate but keeps the obligation for later repairs. Retained
 artifacts remain available when the replacement cannot be verified.
 

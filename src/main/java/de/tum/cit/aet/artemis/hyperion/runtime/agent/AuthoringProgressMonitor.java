@@ -1,0 +1,39 @@
+package de.tum.cit.aet.artemis.hyperion.runtime.agent;
+
+/** Assesses twenty-turn blocks from tool evidence, with one diagnostic block before stopping or handing off. */
+final class AuthoringProgressMonitor {
+
+    static final int BLOCK_TURNS = 20;
+
+    enum Decision {
+        CONTINUE, VERIFIED, STALLED
+    }
+
+    private long lastChecks;
+
+    private int bestRemainingFailures;
+
+    private int blocksWithoutProgress;
+
+    AuthoringProgressMonitor(AuthoringProgress.Snapshot initial) {
+        lastChecks = initial.checks();
+        bestRemainingFailures = initial.remainingFailures();
+    }
+
+    Decision assess(AuthoringProgress.Snapshot current) {
+        if (current.verified()) {
+            return Decision.VERIFIED;
+        }
+        boolean improved = current.checks() > lastChecks && current.remainingFailures() < bestRemainingFailures;
+        lastChecks = current.checks();
+        if (improved) {
+            bestRemainingFailures = current.remainingFailures();
+            blocksWithoutProgress = 0;
+        }
+        else {
+            blocksWithoutProgress++;
+        }
+        // Writes are useful pending work, but never reset stagnation without a confirming verification.
+        return blocksWithoutProgress >= 2 ? Decision.STALLED : Decision.CONTINUE;
+    }
+}

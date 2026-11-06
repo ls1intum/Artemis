@@ -635,7 +635,7 @@ public class StageChecks {
             return List.of();
         }
         List<String> ids = new ArrayList<>();
-        for (String partition : row.admittedPartitions().split(";")) {
+        for (String partition : splitRiskPartitions(row.admittedPartitions())) {
             java.util.regex.Matcher matcher = RISK_PARTITION.matcher(normalizeTestingCell(partition.replace("`", "")));
             if (!matcher.matches() || !matcher.group(1).startsWith(row.seamId() + ".")) {
                 return List.of();
@@ -643,6 +643,32 @@ public class StageChecks {
             ids.add(matcher.group(1));
         }
         return List.copyOf(ids);
+    }
+
+    private static List<String> splitRiskPartitions(String cell) {
+        List<String> partitions = new ArrayList<>();
+        int depth = 0;
+        int start = 0;
+        for (int index = 0; index < cell.length(); index++) {
+            char character = cell.charAt(index);
+            if (character == '(') {
+                depth++;
+            }
+            else if (character == ')') {
+                if (--depth < 0) {
+                    return List.of("");
+                }
+            }
+            else if (character == ';' && depth == 0) {
+                partitions.add(cell.substring(start, index));
+                start = index + 1;
+            }
+        }
+        if (depth != 0) {
+            return List.of("");
+        }
+        partitions.add(cell.substring(start));
+        return partitions;
     }
 
     private static String section(String document, String heading) {

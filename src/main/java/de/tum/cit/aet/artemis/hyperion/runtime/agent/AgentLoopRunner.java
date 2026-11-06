@@ -130,6 +130,9 @@ public class AgentLoopRunner {
     /** The model's usable context window in tokens; compaction keeps the conversation below {@code contextWindow - RESERVE_TOKENS}. Configurable because deployments cap it. */
     private final int contextWindowTokens;
 
+    @Nullable
+    private final String repairModel;
+
     /**
      * Injects the collection (not a single {@link ChatModel}) and uses the first available one: multiple beans may be on the classpath, so a single-bean injection would be
      * ambiguous and fail startup.
@@ -146,16 +149,22 @@ public class AgentLoopRunner {
         this.toolCallingManager = ToolCallingManager.builder().unlimitedCallsPerTool().unlimitedTotalToolCalls()
                 .toolExecutionExceptionProcessor(DefaultToolExecutionExceptionProcessor.builder().alwaysThrow(true).build()).build();
         this.contextWindowTokens = contextWindowTokens;
+        this.repairModel = null;
         this.providerHardFailureCooldown = providerHardFailureCooldown;
         this.providerFailureCooldown = providerFailureCooldown;
     }
 
     /** Derivation constructor for {@link #forSettings}; shares the wrapped model, tool manager, and cooldown state of the deployment-wide runner. */
     private AgentLoopRunner(AgentLoopRunner deploymentRunner, HyperionGenerationSettings settings) {
+        this(deploymentRunner, settings.chatOptions() != null ? settings.chatOptions() : deploymentRunner.effectiveOptions, settings.contextWindowTokens(), settings.repairModel());
+    }
+
+    private AgentLoopRunner(AgentLoopRunner deploymentRunner, @Nullable ChatOptions options, int contextWindowTokens, @Nullable String repairModel) {
         this.chatModel = deploymentRunner.chatModel;
-        this.effectiveOptions = settings.chatOptions() != null ? settings.chatOptions() : deploymentRunner.effectiveOptions;
+        this.effectiveOptions = options;
         this.toolCallingManager = deploymentRunner.toolCallingManager;
-        this.contextWindowTokens = settings.contextWindowTokens();
+        this.contextWindowTokens = contextWindowTokens;
+        this.repairModel = repairModel;
         this.providerHardFailureCooldown = deploymentRunner.providerHardFailureCooldown;
         this.providerFailureCooldown = deploymentRunner.providerFailureCooldown;
         this.emptyResponseRetryBaseMillis = deploymentRunner.emptyResponseRetryBaseMillis;
@@ -294,7 +303,11 @@ public class AgentLoopRunner {
         if (cancelled.getAsBoolean()) {
             return session(AgentLoopResult.Status.CANCELLED, 0, "", conversation);
         }
-        Prompt prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation, 0, 0, toolDefinitionTokens));
+        AgentLoopRunner activeRunner = this;
+        AuthoringProgress progressSource = tools instanceof AuthoringProgress source ? source : null;
+        AuthoringProgressMonitor workMonitor = progressSource == null ? null : new AuthoringProgressMonitor(progressSource.authoringProgress());
+        int repairLastTurn = maxTurns;
+        Prompt prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, 0, 0, toolDefinitionTokens));
         String lastAssistantText = "";
         int consecutiveToolFailures = 0;
         int consecutiveRejectedActions = 0;
@@ -312,6 +325,36 @@ public class AgentLoopRunner {
             if (cancelled.getAsBoolean()) {
                 emit(stepListener, "Cancelling generation…");
                 return session(AgentLoopResult.Status.CANCELLED, turn - 1, lastAssistantText, conversation);
+            }
+            if (turn > repairLastTurn) {
+                return session(AgentLoopResult.Status.BUDGET_EXHAUSTED, turn - 1, "The bounded repair-model block ended; verify and retain the best draft.", conversation);
+            }
+            if (workMonitor != null && (turn - 1) > 0 && (turn - 1) % AuthoringProgressMonitor.BLOCK_TURNS == 0) {
+                AuthoringProgressMonitor.Decision decision = workMonitor.assess(progressSource.authoringProgress());
+                if (decision == AuthoringProgressMonitor.Decision.VERIFIED) {
+                    emit(stepListener, "The current artifact passed its tool check; handing it to authoritative verification.");
+                    return session(AgentLoopResult.Status.COMPLETED, turn - 1, lastAssistantText, conversation);
+                }
+                if (decision == AuthoringProgressMonitor.Decision.STALLED) {
+                    if (activeRunner == this && repairModel != null && !repairModel.equals(configuredModel()) && progressSource.claimRepairModelHandoff()) {
+                        activeRunner = new AgentLoopRunner(this, configuredOptionsBuilder().model(repairModel).build(), contextWindowTokens, null);
+                        repairLastTurn = Math.min(maxTurns, turn - 1 + AuthoringProgressMonitor.BLOCK_TURNS);
+                        emit(stepListener, "No verified improvement across two work blocks; handing the current repair to " + repairModel
+                                + " for at most 20 turns within the remaining job budget.");
+                        conversation.add(new UserMessage(
+                                "Continue from the current files and latest verifier evidence. Diagnose the repeated failure and make one scoped correction. Do not restart the exercise or add requirements."));
+                    }
+                    else {
+                        emit(stepListener, "No verified improvement across two work blocks; checking and retaining the current draft instead of spending further turns.");
+                        return session(AgentLoopResult.Status.BUDGET_EXHAUSTED, turn - 1, "Authoring paused after two blocks without verified improvement.", conversation);
+                    }
+                }
+                else {
+                    emit(stepListener, "Authoring work checkpoint: require a concrete verification result before extending another block.");
+                    conversation.add(new UserMessage(
+                            "Work checkpoint: use the structured verifier on the current artifacts, fix its concrete failures, and submit once this stage passes. File edits alone are not evidence of improvement."));
+                }
+                prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens));
             }
             // Recorded unconditionally and before anything can fail, so a run abandoned at a gate still reports the turns it spent.
             recordTurn(usageSink);
@@ -372,8 +415,8 @@ public class AgentLoopRunner {
                     previousReplyCutOffWithoutAction = true;
                     conversation.add(new UserMessage("Your previous reply was cut off at the output token limit before it took any action, so it was discarded. Reply "
                             + "briefly and act through a tool call; split large content across several smaller calls."));
-                    prompt = new Prompt(conversation,
-                            agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
+                    prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0,
+                            messagesAtLastCall, toolDefinitionTokens));
                     continue;
                 }
                 // Append this closing turn before returning so a caller carrying the conversation forward does not lose it.
@@ -396,8 +439,8 @@ public class AgentLoopRunner {
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
-                prompt = new Prompt(conversation,
-                        agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
+                prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0,
+                        messagesAtLastCall, toolDefinitionTokens));
                 continue;
             }
 
@@ -418,8 +461,8 @@ public class AgentLoopRunner {
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
-                prompt = new Prompt(conversation,
-                        agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
+                prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0,
+                        messagesAtLastCall, toolDefinitionTokens));
                 continue;
             }
             ToolExecutionResult toolExecutionResult;
@@ -501,8 +544,8 @@ public class AgentLoopRunner {
                 if (cancelled.getAsBoolean()) {
                     return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
                 }
-                prompt = new Prompt(conversation,
-                        agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
+                prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0,
+                        messagesAtLastCall, toolDefinitionTokens));
                 continue;
             }
 
@@ -529,8 +572,8 @@ public class AgentLoopRunner {
             if (cancelled.getAsBoolean()) {
                 return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
             }
-            prompt = new Prompt(conversation,
-                    agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0, messagesAtLastCall, toolDefinitionTokens));
+            prompt = new Prompt(conversation, activeRunner.agentOptions(toolCallbacks, conversation, lastPromptConversation == conversation ? lastPromptTokens : 0,
+                    messagesAtLastCall, toolDefinitionTokens));
         }
 
         emit(stepListener, "The generation step limit was reached.");

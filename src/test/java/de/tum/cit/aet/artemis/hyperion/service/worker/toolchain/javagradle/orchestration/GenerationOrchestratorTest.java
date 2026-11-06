@@ -130,6 +130,7 @@ class GenerationOrchestratorTest {
         structuralOracleSeeder = mock(StructuralOracleSeeder.class);
         specFidelityCritic = mock(SpecFidelityCritic.class);
         stagedGenerationRunner = mock(StagedGenerationRunner.class);
+        when(stagedGenerationRunner.withTurnLimit(anyInt())).thenReturn(stagedGenerationRunner);
         stageCheckService = mock(StageChecks.class);
 
         when(sandbox.createSession()).thenReturn(SESSION_ID);

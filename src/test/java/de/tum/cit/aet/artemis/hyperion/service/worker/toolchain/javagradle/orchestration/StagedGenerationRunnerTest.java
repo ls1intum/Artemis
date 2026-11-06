@@ -229,6 +229,11 @@ class StagedGenerationRunnerTest {
                 List.of());
     }
 
+    private static AgentVerifyReport nondiscriminatingReport() {
+        return new AgentVerifyReport(1, true, List.of(), List.of(), 1, true, false, List.of(), List.of("testFoo"), List.of("testFoo"), List.of(), List.of(), false,
+                List.of("the starter passes every student test"));
+    }
+
     private static AgentVerifyReport failingReport() {
         return new AgentVerifyReport(1, false, List.of("testFoo"), List.of(), 1, true, false, List.of(), List.of(), List.of("testFoo"), List.of(), List.of(), false,
                 List.of("the solution does not pass"));
@@ -239,12 +244,12 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void executedAssessmentFailureReopensAndReapprovesTheContractBeforeStatementAuthoring() {
+    void aNonDiscriminatingAssessmentReopensAndReapprovesTheContractBeforeStatementAuthoring() {
         var reviewer = mock(SpecFidelityCritic.class);
         when(reviewer.reviewSpecification(anyString(), anyString(), any(), any())).thenReturn(new SpecFidelityCritic.SpecificationReview(true, List.of()));
         when(reviewer.reviewSpecification(anyString(), any(), anyString(), any(SpecFidelityCritic.SpecificationReview.class), any(), any())).thenAnswer(invocation -> {
             SpecFidelityCritic.SpecificationReview prior = invocation.getArgument(3);
-            assertThat(prior.riskHistory()).singleElement().asString().contains("print", "src/Client.java");
+            assertThat(prior.riskHistory()).singleElement().asString().contains("unchanged template");
             return new SpecFidelityCritic.SpecificationReview(true, false, false, List.of(), "The revised API addresses the counterexample", null, prior.riskHistory());
         });
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
@@ -260,7 +265,7 @@ class StagedGenerationRunnerTest {
             }
             return completed(1, "done");
         });
-        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), passingReport("testFoo"));
 
         AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
@@ -275,6 +280,30 @@ class StagedGenerationRunnerTest {
         stages.verify(baseTools).enterStage(GenerationStage.SPEC);
         stages.verify(baseTools).enterStage(GenerationStage.TESTS);
         stages.verify(baseTools).enterStage(GenerationStage.STATEMENT);
+    }
+
+    @Test
+    void executedGradingWeaknessStillAllowsACompleteDraftForAuthoritativeReview() {
+        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+        assertThat(run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY).status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        verify(baseTools).enterStage(GenerationStage.STATEMENT);
+        assertThat(approvedSpecs.approved("s")).hasValue(VALID_SPEC_DOCUMENT);
+    }
+
+    @Test
+    void aLargeConfiguredBudgetReachesExecutableAuthoringWithoutAHiddenCap() {
+        var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "FRESH", 200_000, null, false, false);
+        runner = runner.forSettings(settings, agentLoopRunner, null);
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+        assertThat(run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY).status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        ArgumentCaptor<Integer> limits = ArgumentCaptor.forClass(Integer.class);
+        verify(agentLoopRunner, times(3)).run(anyString(), anyString(), any(), limits.capture(), any(), any(), any());
+        assertThat(limits.getAllValues().get(1)).isGreaterThan(83).isLessThan(180);
     }
 
     @Test
@@ -297,12 +326,12 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void repeatedExecutedAssessmentFailureStopsBeforeStatementOrOuterRepairs() {
+    void repeatedNonDiscriminatingAssessmentStopsBeforeStatementOrOuterRepairs() {
         var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
         when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport());
 
         AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
@@ -365,6 +394,7 @@ class StagedGenerationRunnerTest {
         when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
 
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport());
         var resumed = resume(continuation);
 
         assertThat(resumed.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
@@ -421,7 +451,7 @@ class StagedGenerationRunnerTest {
         var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
         when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
-        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"), failingReport(), passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), failingReport(), passingReport("testFoo"));
         AtomicInteger calls = new AtomicInteger();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
             int budget = invocation.getArgument(3);
@@ -456,7 +486,7 @@ class StagedGenerationRunnerTest {
         when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> completed(invocation.getArgument(3), "done"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport());
 
         AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
@@ -490,7 +520,7 @@ class StagedGenerationRunnerTest {
         when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"), failingReport(), failingReport());
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), failingReport(), failingReport());
 
         AgentLoopResult result = run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY);
 
@@ -506,7 +536,7 @@ class StagedGenerationRunnerTest {
         var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
         when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
                 .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
-        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), passingReport("testFoo"));
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any()))
                 .thenReturn(new AgentLoopRunner.AgentLoopSession(completed(1, "done"), List.of(new UserMessage("rejected artifact trajectory"))));
         @SuppressWarnings("unchecked")
@@ -1172,7 +1202,7 @@ class StagedGenerationRunnerTest {
         // The companion of the test above, differing only in the configured deadline: only a budget derived from artemis.hyperion.agent.max-job-duration lets the same elapsed 23
         // minutes reach all three stages, so any private wall-clock ceiling at or below 23 minutes fails here.
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, null, null, "FRESH",
-                Duration.ofMinutes(60));
+                Duration.ofMinutes(60), 83);
         AtomicBoolean firstPhaseCompleted = new AtomicBoolean();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
             firstPhaseCompleted.set(true);

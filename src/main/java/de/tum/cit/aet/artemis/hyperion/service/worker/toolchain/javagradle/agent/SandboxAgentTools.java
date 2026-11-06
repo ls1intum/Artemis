@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxUnavailableException;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopRunner;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.AuthoringProgress;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.SubmitVetoAware;
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
@@ -47,7 +48,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.works
  * Nothing here is synchronized: one session's tool calls are serial, and the volatile fields exist only because the orchestrator may hand a stage over from a different thread
  * between two of them.
  */
-public class SandboxAgentTools implements SubmitVetoAware {
+public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
 
@@ -106,6 +107,37 @@ public class SandboxAgentTools implements SubmitVetoAware {
     private final boolean adaptation;
 
     private int bashSequence = 0;
+
+    private long structuredMutations;
+
+    private long verificationChecks;
+
+    private int remainingFailures = Integer.MAX_VALUE;
+
+    private boolean lastCheckPassed;
+
+    private boolean repairModelUsed;
+
+    @Override
+    public boolean claimRepairModelHandoff() {
+        if (repairModelUsed) {
+            return false;
+        }
+        repairModelUsed = true;
+        return true;
+    }
+
+    @Override
+    public AuthoringProgress.Snapshot authoringProgress() {
+        return new AuthoringProgress.Snapshot(structuredMutations, verificationChecks, remainingFailures, lastCheckPassed && !dirtySinceLastPassingCheck);
+    }
+
+    private void recordVerification(boolean passed, @Nullable AgentVerifyReport report) {
+        verificationChecks++;
+        lastCheckPassed = passed;
+        remainingFailures = passed ? 0
+                : report == null ? Integer.MAX_VALUE : Math.max(1, report.solutionFailedNames().size() + report.templateWronglyPassing().size() + report.blockingReasons().size());
+    }
 
     private boolean sandboxSessionTerminated;
 
@@ -369,6 +401,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
             return "ERROR: could not write '" + safe + "': " + failure.getMessage();
         }
         latestMutationContent = content;
+        structuredMutations++;
         markDirty();
         return "Wrote " + content.length() + " characters to " + safe;
     }
@@ -466,6 +499,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (!"DELETED".equals(result.stdout())) {
             return "ERROR: could not determine whether '" + safe + "' was deleted.";
         }
+        structuredMutations++;
         markDirty();
         return "Deleted " + safe;
     }
@@ -815,6 +849,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
             return "ERROR: the verify tool is unavailable in this session. Stop and report this configuration failure. Internal verification scripts remove sources for isolation and require server-managed restoration; they are not a shell fallback.";
         }
         AgentVerifyReport report = verifier.selfCheck(sandbox, sessionId, exercise, seedTestsFiles, adaptation, refreshStructuralOracle());
+        recordVerification(report.wouldBeAccepted(), report);
+        if (report.wouldBeAccepted()) {
+            dirtySinceLastPassingCheck = false;
+        }
         return screenObservation("tool/verify", report.toObservation());
     }
 
@@ -862,6 +900,7 @@ public class SandboxAgentTools implements SubmitVetoAware {
             refreshStructuralOracle();
         }
         StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport.get(), seededStructuralTests.get());
+        recordVerification(result.passed(), result.report());
         if (stage == GenerationStage.TESTS && result.report() != null) {
             lastTestsReport.set(result.report());
         }

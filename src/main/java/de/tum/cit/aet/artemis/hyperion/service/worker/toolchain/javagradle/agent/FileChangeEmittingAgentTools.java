@@ -10,12 +10,13 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationProgress.FileChange;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.AuthoringProgress;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.SubmitVetoAware;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.TurnAware;
 
 /** Decorates sandbox tools with lightweight file-change notifications for the instructor UI. */
-public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware {
+public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware, AuthoringProgress {
 
     private static final Logger log = LoggerFactory.getLogger(FileChangeEmittingAgentTools.class);
 
@@ -43,6 +44,16 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
         this.delegate = delegate;
         this.changeSink = changeSink;
         this.activityTracker = activityTracker;
+    }
+
+    @Override
+    public boolean claimRepairModelHandoff() {
+        return delegate.claimRepairModelHandoff();
+    }
+
+    @Override
+    public AuthoringProgress.Snapshot authoringProgress() {
+        return delegate.authoringProgress();
     }
 
     @Override

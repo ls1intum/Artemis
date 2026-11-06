@@ -173,10 +173,18 @@ class SandboxAgentToolsTest {
         tools.enterStage(GenerationStage.TESTS);
         tools.verify();
         assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).isPresent();
+        assertThat(tools.authoringProgress().verified()).isTrue();
+        assertThat(tools.authoringProgress().checks()).isEqualTo(1);
 
         assertThat(tools.search("problem-statement.md", "Elevator list is empty"))
                 .isEqualTo("problem-statement.md:2:Elevator list is empty\nproblem-statement.md:3:last Elevator list is empty");
         assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).contains(StageCheckResult.passed("clean"));
+        assertThat(tools.authoringProgress().verified()).isTrue();
+        assertThat(tools.claimRepairModelHandoff()).isTrue();
+        assertThat(tools.claimRepairModelHandoff()).isFalse();
+        assertThat(tools.writeFile("solution/src/Example.java", "class Example {} ")).startsWith("Wrote");
+        assertThat(tools.authoringProgress().verified()).isFalse();
+        assertThat(tools.authoringProgress().mutations()).isEqualTo(1);
     }
 
     @Test

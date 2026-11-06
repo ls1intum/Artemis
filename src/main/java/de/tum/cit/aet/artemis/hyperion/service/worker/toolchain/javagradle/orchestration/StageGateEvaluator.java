@@ -50,7 +50,10 @@ final class StageGateEvaluator {
             StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport, baseTools.seededStructuralTests());
             result = classifyAssessment(result, baseTools.seededStructuralTests());
             if (result.passed() && result.report() != null) {
-                result = stageCheckService.assessmentFailure(sandbox, sessionId, exercise, baseTools.seededStructuralTests(), result.report()).orElse(result);
+                Optional<StageCheckResult> assessment = stageCheckService.assessmentFailure(sandbox, sessionId, exercise, baseTools.seededStructuralTests(), result.report());
+                if (assessment.isPresent()) {
+                    result = new StageCheckResult(true, result.observation() + "\nDraft assessment requires review: " + assessment.get().observation(), result.report());
+                }
             }
             if (ownershipCorrection.isPresent()) {
                 result = new StageCheckResult(result.outcome(), ownershipCorrection.get() + "\n" + result.observation(), result.report());

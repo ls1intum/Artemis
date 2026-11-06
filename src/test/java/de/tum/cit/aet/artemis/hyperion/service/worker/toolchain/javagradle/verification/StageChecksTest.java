@@ -1348,7 +1348,7 @@ class StageChecksTest {
             exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
                     GenerationBuildTool.GRADLE);
             for (String partitions : List.of("S1.P1: typical; S1.P2: extrema", "`S1.P1: typical`; `S1.P2: extrema`", "`S1.P1`: typical; `S1.P2`: extrema",
-                    "`S1.P1: typical; S1.P2: extrema`")) {
+                    "`S1.P1: typical; S1.P2: extrema`", "S1.P1: empty (passes in both modes; fault returns zero); S1.P2: nonempty (nested (case; detail))")) {
                 sandbox.spec = VALID_SPEC.replace("S1.P1: typical, zero, negative, and int extrema", partitions);
                 assertThat(check(GenerationStage.SPEC).passed()).as(partitions).isTrue();
                 assertThat(StageChecks.riskPartitionIds(sandbox.spec)).containsExactly("S1.P1", "S1.P2");
@@ -1359,7 +1359,8 @@ class StageChecksTest {
         void formattedRiskPartitionsStillRequireDescriptionsCorrectOwnershipAndUniqueIds() {
             exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
                     GenerationBuildTool.GRADLE);
-            for (String partitions : List.of("`S1.P1:`", "`S2.P1: typical`", "`S1.P0: typical`", "`S1.P1: typical`; `S1.P1: duplicate`")) {
+            for (String partitions : List.of("`S1.P1:`", "`S2.P1: typical`", "`S1.P0: typical`", "`S1.P1: typical`; `S1.P1: duplicate`", "S1.P1: typical; unlabeled",
+                    "S1.P1: typical (unclosed; S1.P2: extrema", "S1.P1: typical); S1.P2: extrema")) {
                 sandbox.spec = VALID_SPEC.replace("S1.P1: typical, zero, negative, and int extrema", partitions);
                 assertThat(check(GenerationStage.SPEC).passed()).as(partitions).isFalse();
             }

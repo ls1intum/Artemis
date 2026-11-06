@@ -21,7 +21,7 @@ without using the API. For collaboration, trace the learner-owned selection, inj
 collaborators separately is not evidence of student-owned integration. Do not invent tests that the specification does not describe.
 For an operation sequence, replay the entire declared invocation before checking its postconditions. State when each required observation is available: a final-state
 accessor cannot prove an earlier state erased by a later operation. Intermediate observations must be supported by the declared API or supplied recording behavior.
-Observe the same learner execution that the task grades. A second independently implemented entry point cannot provide evidence for the first.
+Observe the same learner execution that the task grades. Collect related objects and intermediate observations from one execution per test; repeated accessor-triggered executions mix unrelated objects and duplicate recording. Reset supplied observation state before the scenario and capture immutable transition values rather than mutable object references. A second independently implemented entry point cannot provide evidence for the first.
 If an entry point delegates to a testable operation, declare that delegation and observe the operation reached through that entry point; do not duplicate the scenario.
 A print-only replacement of a graded entry point must lose its behavioral credit even if another helper still returns correct objects.
 For each intermediate action, name the runtime observation that would change if that action were omitted while the final state stayed the same.
