@@ -65,7 +65,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      */
     @Transactional
     default <T> T withStudentExamGenerationLock(long examId, Supplier<T> generation) {
-        findForStudentExamGenerationById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        getValueElseThrow(findForStudentExamGenerationById(examId), examId);
         return generation.get();
     }
 
