@@ -509,6 +509,25 @@ describe('ExamResultSummaryComponent', () => {
         vi.useRealTimers();
     });
 
+    it.each([401, 403])('stops polling a pending refresh that fails with permanent status %s', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+            const load = vi
+                .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+                .mockReturnValueOnce(of(pending))
+                .mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(120000);
+            expect(load).toHaveBeenCalledTimes(2);
+            expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(1);
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
     it('refreshes supplied pending management grades through the instructor API', async () => {
         vi.useFakeTimers();
         fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
