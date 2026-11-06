@@ -7,7 +7,8 @@ These checks run; layout and text-introductions need no database, the rest run a
   layout            Structural rules the others depend on: every folded changelog pins its
                     logicalFilePath, and no folded changelog is gated by a context.
   text-introductions  No changelog under changelog/ introduces an unbounded-text column (text/longtext)
-                    that is not deliberately allow-listed (safeguard against findings F-005/F-007).
+                    that is not deliberately allow-listed (safeguard against findings F-005/F-007). Runs as
+                    part of --check layout; it is not separately selectable via --check.
   replay            An empty database accepts the whole folded history in order.
   converge          The baseline produces the same schema as replaying the history it folded.
   fresh-vs-upgrade  A fresh installation and one that replayed the whole folded history end up with
@@ -156,24 +157,28 @@ GRANDFATHERED_UNBOUNDED_TEXT: set[tuple[str, str]] = {
     ("weaviate_outbox", "params"),
 }
 
-# (changelog_file, changeset_id, table, column) -> reason. Consulted only by scan_text_introductions.
-ALLOWED_TEXT_INTRODUCTIONS: dict[tuple[str, str, str, str], str] = {
-    ("config/liquibase/changelog/20260808192146_changelog.xml", "20260808192146-1", "weaviate_outbox", "params"):
+# (changelog_file, changeset_id, author, table, column) -> reason. Consulted only by scan_text_introductions.
+# Keyed by the full Liquibase changeset identity (id + author + file) so that reusing an id in the same file
+# under a different author does not inherit this approval.
+ALLOWED_TEXT_INTRODUCTIONS: dict[tuple[str, str, str, str, str], str] = {
+    ("config/liquibase/changelog/20260808192146_changelog.xml", "20260808192146-1", "nayerkotry", "weaviate_outbox", "params"):
         "Transactional-outbox payload for the Weaviate search sync; an internal, serialized operation record, not a user-facing free-text field.",
-    ("config/liquibase/changelog/20261004235109_changelog.xml", "20261004235109-1-add-sender-origin-postgres", "iris_message", "sender_origin"):
+    ("config/liquibase/changelog/20261004235109_changelog.xml", "20261004235109-1-add-sender-origin-postgres", "senan-aslan", "iris_message", "sender_origin"):
         "A short enum ('IOS'/'ANDROID'); MySQL uses ENUM(...), PostgreSQL has no inline enum so it is stored as text. Effectively bounded, not free-form text.",
 }
 
-# (changelog_file, changeset_id) -> (reason, introduces). A changeset under changelog/ the scanner cannot
-# fully read -- <sqlFile>, a custom change class, or a raw <sql> block mentioning a text type -- is
-# hard-failed unless listed here. `introduces` is the tuple of (table, column) pairs the changeset is
-# attested to add or re-add as unbounded text, or () when it adds none. Each declared pair must also be in
-# ALLOWED_TEXT_INTRODUCTIONS (keyed by this changeset) and in GRANDFATHERED_UNBOUNDED_TEXT, so exempting a
-# raw-SQL drop/re-add of a grandfathered column still needs an explicit, changeset-scoped introduction
-# entry and cannot pass on the column name alone. An empty () is an explicit, reviewed attestation that the
-# changeset adds no unbounded-text column; it cannot be machine-verified for opaque SQL and is a
-# deliberate, documented trust point.
-UNVERIFIABLE_CHANGESETS: dict[tuple[str, str], tuple[str, tuple[tuple[str, str], ...]]] = {
+# (changelog_file, changeset_id, author) -> (reason, introduces). A changeset under changelog/ the scanner
+# cannot fully read -- <sqlFile>, a custom change class, a raw <sql> block mentioning a text type, or a
+# column whose type is an unresolved ${property} -- is hard-failed unless listed here. `introduces` is the
+# tuple of (table, column) pairs the changeset is attested to add or re-add as unbounded text, or () when it
+# adds none. Each declared pair must also be in ALLOWED_TEXT_INTRODUCTIONS (keyed by this changeset), so
+# exempting a raw-SQL drop/re-add of a grandfathered column still needs an explicit, changeset-scoped
+# introduction entry and cannot pass on the column name alone. (The final-state list is not required here:
+# check_column_types already demands that any column still unbounded in the schema be grandfathered, and
+# coupling the two would deadlock once a later migration bounds or drops the column.) An empty () is an
+# explicit, reviewed attestation that the changeset adds no unbounded-text column; it cannot be
+# machine-verified for opaque SQL and is a deliberate, documented trust point.
+UNVERIFIABLE_CHANGESETS: dict[tuple[str, str, str], tuple[str, tuple[tuple[str, str], ...]]] = {
 }
 
 RESOURCES = REPO / "src/main/resources"
@@ -182,6 +187,7 @@ CREATE_TABLE_TAG = f"{NAMESPACE}createTable"
 ADD_COLUMN_TAG = f"{NAMESPACE}addColumn"
 COLUMN_TAG = f"{NAMESPACE}column"
 MODIFY_DATA_TYPE_TAG = f"{NAMESPACE}modifyDataType"
+ROLLBACK_TAG = f"{NAMESPACE}rollback"
 SQL_TAG = f"{NAMESPACE}sql"
 # <sqlFile> (an external file) and a custom change class cannot be read at all, so they are always
 # flagged for review. A raw <sql> block, by contrast, is read: it is only flagged when its text mentions
@@ -723,10 +729,24 @@ def check_seed(engine: Engine, liquibase: Liquibase, port: int) -> list[str]:
         return failures
 
 
+def iter_forward_elements(element):
+    """
+    Yield every descendant of a changeset except those inside a <rollback> block.
+
+    A <rollback> describes the reverse operation; treating its createTable/addColumn/sql as a forward change
+    would raise false positives (e.g. a rollback that restores a text column or carries a <sqlFile>).
+    """
+    for child in element:
+        if child.tag == ROLLBACK_TAG:
+            continue
+        yield child
+        yield from iter_forward_elements(child)
+
+
 def unbounded_text_introductions(changeset) -> set[tuple[str, str]]:
     """Every (table, column) a changeset introduces as unbounded text, via createTable/addColumn/modifyDataType."""
     found: set[tuple[str, str]] = set()
-    for element in changeset.iter():
+    for element in iter_forward_elements(changeset):
         if element.tag in (CREATE_TABLE_TAG, ADD_COLUMN_TAG):
             table = normalize_identifier(element.get("tableName"))
             for column in element:
@@ -737,74 +757,83 @@ def unbounded_text_introductions(changeset) -> set[tuple[str, str]]:
     return found
 
 
+def needs_manual_review(changeset) -> bool:
+    """
+    True when a changeset (outside its <rollback>) carries something the scanner cannot read for certain: a
+    <sqlFile> or custom change class, a raw <sql> block mentioning a text type, or a column whose type is an
+    unresolved ${property}. Such a changeset must be attested in UNVERIFIABLE_CHANGESETS.
+    """
+    for element in iter_forward_elements(changeset):
+        if element.tag in HARD_OPAQUE_TAGS or element.get("class"):
+            return True
+        if element.tag == SQL_TAG and element.text and TEXT_TYPE_TOKEN.search(element.text):
+            return True
+        if element.tag == COLUMN_TAG and "${" in (element.get("type") or ""):
+            return True
+        if element.tag == MODIFY_DATA_TYPE_TAG and "${" in (element.get("newDataType") or ""):
+            return True
+    return False
+
+
 def changelog_files() -> list[tuple[str, Path]]:
-    """(path relative to src/main/resources, absolute path) for every changelog under changelog/."""
-    return [(path.relative_to(RESOURCES).as_posix(), path) for path in sorted(CHANGELOG_DIR.glob("*.xml"))]
+    """(path relative to src/main/resources, absolute path) for every changelog under changelog/, recursively."""
+    return [(path.relative_to(RESOURCES).as_posix(), path) for path in sorted(CHANGELOG_DIR.rglob("*.xml"))]
 
 
-def scan_text_introductions(files: list[tuple[str, Path]], allowed_introductions, unverifiable_changesets, grandfathered) -> list[str]:
+def scan_text_introductions(files: list[tuple[str, Path]], allowed_introductions, unverifiable_changesets) -> list[str]:
     """
     Static, no-database scan of the post-baseline changelogs (see the safeguard block near the top).
 
-    Pure: every input is passed in, so the unit tests drive it with temporary changelogs. Returns a list
-    of problem strings; empty means the changelogs add no unreviewed unbounded-text column. An opaque
-    exemption waives only the opaque hard-failure; declarative changes in the same changeset are still
-    checked, so an exemption cannot silently cover a later-added structured change.
+    Pure: every input is passed in, so the unit tests drive it with temporary changelogs. Returns a list of
+    problem strings; empty means the changelogs add no unreviewed unbounded-text column. Changesets are keyed
+    by their full Liquibase identity (file, id, author); <rollback> blocks are ignored. An opaque attestation
+    waives only the opaque hard-failure; declarative changes in the same changeset are still checked, so an
+    attestation cannot silently cover a later-added structured change.
     """
     failures: list[str] = []
-    seen_introductions: set[tuple[str, str, str, str]] = set()
-    seen_unverifiable: set[tuple[str, str]] = set()
+    seen_introductions: set[tuple[str, str, str, str, str]] = set()
+    seen_unverifiable: set[tuple[str, str, str]] = set()
     for relative, path in files:
         for changeset in ElementTree.parse(path).getroot().iter(CHANGESET_TAG):
             identifier = changeset.get("id", "?")
-            needs_review = any(
-                element.tag in HARD_OPAQUE_TAGS
-                or element.get("class")
-                or (element.tag == SQL_TAG and element.text and TEXT_TYPE_TOKEN.search(element.text))
-                for element in changeset.iter()
-            )
-            if needs_review:
-                key = (relative, identifier)
+            author = changeset.get("author", "?")
+            if needs_manual_review(changeset):
+                key = (relative, identifier, author)
                 seen_unverifiable.add(key)
                 entry = unverifiable_changesets.get(key)
                 if entry is None:
                     failures.append(
-                        f"{relative}: changeset {identifier} uses a raw <sql>/<sqlFile>/custom change the guard cannot "
-                        f'fully read and that may introduce unbounded text. Review it, then add ("{relative}", '
-                        f'"{identifier}"): ("<reason>", (<(table, column) pairs it introduces, or empty>)) to '
-                        f"UNVERIFIABLE_CHANGESETS."
+                        f"{relative}: changeset {identifier} ({author}) carries a raw <sql>/<sqlFile>/custom change or a "
+                        f"${{property}}-typed column the guard cannot read and that may introduce unbounded text. Review it, "
+                        f'then add ("{relative}", "{identifier}", "{author}"): ("<reason>", (<(table, column) pairs it '
+                        f"introduces, or empty>)) to UNVERIFIABLE_CHANGESETS."
                     )
                 else:
                     _reason, introduces = entry
                     for declared_table, declared_column in introduces:
                         pair = (normalize_identifier(declared_table), normalize_identifier(declared_column))
-                        intro_key = (relative, identifier, pair[0], pair[1])
+                        intro_key = (relative, identifier, author, pair[0], pair[1])
                         seen_introductions.add(intro_key)
                         if intro_key not in allowed_introductions:
                             failures.append(
-                                f"{relative}: changeset {identifier} is exempted as introducing {pair[0]}.{pair[1]}, but "
-                                f"{intro_key} is not in ALLOWED_TEXT_INTRODUCTIONS."
-                            )
-                        if pair not in grandfathered:
-                            failures.append(
-                                f"{relative}: changeset {identifier} is exempted as introducing {pair[0]}.{pair[1]}, but "
-                                f"{pair} is not in GRANDFATHERED_UNBOUNDED_TEXT."
+                                f"{relative}: changeset {identifier} ({author}) is attested to introduce {pair[0]}.{pair[1]}, "
+                                f"but {intro_key} is not in ALLOWED_TEXT_INTRODUCTIONS."
                             )
             for table, column in unbounded_text_introductions(changeset):
-                key = (relative, identifier, table, column)
+                key = (relative, identifier, author, table, column)
                 seen_introductions.add(key)
                 if key not in allowed_introductions:
                     failures.append(
-                        f"{relative}: changeset {identifier} introduces unbounded-text column {table}.{column}. Give it a "
-                        f"bound (varchar(n) or a CHECK), or, if it is deliberate, add "
-                        f'("{relative}", "{identifier}", "{table}", "{column}") to ALLOWED_TEXT_INTRODUCTIONS with a reason.'
+                        f"{relative}: changeset {identifier} ({author}) introduces unbounded-text column {table}.{column}. "
+                        f"Give it a bounded type (varchar(n)), or, if it is deliberate, add "
+                        f'("{relative}", "{identifier}", "{author}", "{table}", "{column}") to ALLOWED_TEXT_INTRODUCTIONS with a reason.'
                     )
     for key in sorted(allowed_introductions):
         if key not in seen_introductions:
             failures.append(f"ALLOWED_TEXT_INTRODUCTIONS entry {key} matches no current unbounded-text introduction; remove it.")
     for key in sorted(unverifiable_changesets):
         if key not in seen_unverifiable:
-            failures.append(f"UNVERIFIABLE_CHANGESETS entry {key} matches no current opaque changeset; remove it.")
+            failures.append(f"UNVERIFIABLE_CHANGESETS entry {key} matches no current reviewed changeset; remove it.")
     return failures
 
 
@@ -826,8 +855,8 @@ def evaluate_unbounded_text_columns(schema: db_schema.SchemaModel, grandfathered
             present.add(key)
             if key not in grandfathered:
                 failures.append(
-                    f"{table}.{column} is unbounded text ({meta.get('type')}) and is not grandfathered. Give it a bound "
-                    f'(varchar(n) or a CHECK), or, if it is deliberate, add ("{key[0]}", "{key[1]}") to '
+                    f"{table}.{column} is unbounded text ({meta.get('type')}) and is not grandfathered. Give it a bounded "
+                    f'type (varchar(n)), or, if it is deliberate, add ("{key[0]}", "{key[1]}") to '
                     f"GRANDFATHERED_UNBOUNDED_TEXT with a reason."
                 )
     if check_stale:
@@ -888,7 +917,7 @@ def main() -> int:
         log("   ok" if not layout_failures else f"   {len(layout_failures)} problem(s)")
 
         log("== text-introductions ==")
-        introduction_failures = scan_text_introductions(changelog_files(), ALLOWED_TEXT_INTRODUCTIONS, UNVERIFIABLE_CHANGESETS, GRANDFATHERED_UNBOUNDED_TEXT)
+        introduction_failures = scan_text_introductions(changelog_files(), ALLOWED_TEXT_INTRODUCTIONS, UNVERIFIABLE_CHANGESETS)
         failures["text-introductions"] = introduction_failures
         log("   ok" if not introduction_failures else f"   {len(introduction_failures)} problem(s)")
 
