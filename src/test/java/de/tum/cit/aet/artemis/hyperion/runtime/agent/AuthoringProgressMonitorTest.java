@@ -7,6 +7,15 @@ import org.junit.jupiter.api.Test;
 class AuthoringProgressMonitorTest {
 
     @Test
+    void aPreviousStagesPassCannotHideCurrentVerificationProgress() {
+        var monitor = new AuthoringProgressMonitor(new AuthoringProgress.Snapshot(10, 3, 0, false));
+        assertThat(monitor.assess(new AuthoringProgress.Snapshot(20, 4, 8, false))).isEqualTo(AuthoringProgressMonitor.Decision.CONTINUE);
+        assertThat(monitor.assess(new AuthoringProgress.Snapshot(30, 5, 3, false))).isEqualTo(AuthoringProgressMonitor.Decision.CONTINUE);
+        assertThat(monitor.assess(new AuthoringProgress.Snapshot(40, 5, 3, false))).isEqualTo(AuthoringProgressMonitor.Decision.CONTINUE);
+        assertThat(monitor.assess(new AuthoringProgress.Snapshot(50, 6, 8, false))).isEqualTo(AuthoringProgressMonitor.Decision.STALLED);
+    }
+
+    @Test
     void writesAloneCannotExtendAStalledRepair() {
         var monitor = new AuthoringProgressMonitor(new AuthoringProgress.Snapshot(0, 1, 4, false));
         assertThat(monitor.assess(new AuthoringProgress.Snapshot(20, 1, 4, false))).isEqualTo(AuthoringProgressMonitor.Decision.CONTINUE);

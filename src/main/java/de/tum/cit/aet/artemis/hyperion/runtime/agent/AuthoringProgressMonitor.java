@@ -17,7 +17,8 @@ final class AuthoringProgressMonitor {
 
     AuthoringProgressMonitor(AuthoringProgress.Snapshot initial) {
         lastChecks = initial.checks();
-        bestRemainingFailures = initial.remainingFailures();
+        // A previous stage's pass is stale after changing stage or files; zero is not a baseline for the new work.
+        bestRemainingFailures = initial.remainingFailures() == 0 && !initial.verified() ? Integer.MAX_VALUE : initial.remainingFailures();
     }
 
     Decision assess(AuthoringProgress.Snapshot current) {
