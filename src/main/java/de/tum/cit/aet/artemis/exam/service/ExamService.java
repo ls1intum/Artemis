@@ -663,6 +663,10 @@ public class ExamService {
                 achievedPresentationScore = result.achievedPresentationScore();
                 presentationScoreThreshold = result.presentationScoreThreshold();
             }
+            if (result != null && sourceAchievedPoints == null) {
+                // The source is a test exam whose automatic results are still pending: no bonus can be derived yet.
+                return new BonusResultDTO(bonusStrategy, bonusFromTitle, null, null, null, null, verdict, achievedPresentationScore, presentationScoreThreshold);
+            }
             BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, bonusToAchievedPoints, sourceAchievedPoints, sourceReachablePoints);
             String bonusGrade = null;
             if (result == null || !result.hasParticipated()) {
