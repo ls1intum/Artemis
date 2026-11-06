@@ -630,8 +630,8 @@
                                     <td>
                                         {{ studentResult.gradeWithBonus?.bonusGrade ?? '-' }}
                                     </td>
-                                    <td>
-                                        {{ studentResult.gradeWithBonus?.finalGrade ?? studentResult.overallGrade ?? '-' }}
+                                    <td data-testid="exam-final-grade">
+                                        {{ studentResult.gradeWithBonus?.pending ? '-' : (studentResult.gradeWithBonus?.finalGrade ?? studentResult.overallGrade ?? '-') }}
                                     </td>
                                 }
                                 @if (gradingScaleExists() && !isBonus() && studentResult.overallGrade && studentResult.hasPassed) {

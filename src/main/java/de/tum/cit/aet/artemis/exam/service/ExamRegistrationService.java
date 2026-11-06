@@ -87,10 +87,13 @@ public class ExamRegistrationService {
 
     private final StudentExamService studentExamService;
 
+    private final ExamPreparationLockService examPreparationLockService;
+
     public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService,
             ParticipationDeletionService participationDeletionService, UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository,
             StudentExamRepository studentExamRepository, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService,
-            UserCourseRoleRepository userCourseRoleRepository, ExamUserService examUserService, StudentExamService studentExamService) {
+            UserCourseRoleRepository userCourseRoleRepository, ExamUserService examUserService, StudentExamService studentExamService,
+            ExamPreparationLockService examPreparationLockService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -104,6 +107,7 @@ public class ExamRegistrationService {
         this.examUserRepository = examUserRepository;
         this.examUserService = examUserService;
         this.studentExamService = studentExamService;
+        this.examPreparationLockService = examPreparationLockService;
     }
 
     /**
@@ -131,7 +135,6 @@ public class ExamRegistrationService {
         }
 
         checkRegistrationOpen(exam);
-        boolean prepareNewExercises = hasExercisePreparationStarted(exam);
 
         // Pre-fetch the ids of all course staff once to avoid one isStaffMemberOfCourse EXISTS query per submitted student.
         Set<Long> staffUserIds = userCourseRoleRepository.findUsersByCourse_IdAndRoleIn(course.getId(), CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT)).stream()
@@ -219,7 +222,7 @@ public class ExamRegistrationService {
         examRepository.save(exam);
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
-        generateAndPrepareMissingExams(exam, prepareNewExercises);
+        generateAndPrepareMissingExams(exam);
 
         try {
             User currentUser = userRepository.getUserWithAuthorities();
@@ -372,7 +375,6 @@ public class ExamRegistrationService {
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
         checkRegistrationOpen(exam);
-        boolean prepareNewExercises = hasExercisePreparationStarted(exam);
         Course course = courseRepository.findByIdElseThrow(courseId);
         // Load students with their authorities eagerly so that isAdmin() can access
         // user.getAuthorities() without triggering a LazyInitializationException on
@@ -404,7 +406,7 @@ public class ExamRegistrationService {
 
         examRepository.save(exam);
         studentExamService.invalidateExerciseStartStatus(exam.getId());
-        generateAndPrepareMissingExams(exam, prepareNewExercises);
+        generateAndPrepareMissingExams(exam);
         AuditEvent auditEvent = new AuditEvent(userRepository.getUser().getLogin(), Constants.ADD_USER_TO_EXAM, userData);
         auditEventRepository.add(auditEvent);
     }
@@ -425,17 +427,22 @@ public class ExamRegistrationService {
                 .anyMatch(exercise -> studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exercise.getId(), exam.getId()) > 0);
     }
 
-    private void generateAndPrepareMissingExams(Exam exam, boolean prepareExercises) {
-        if (!exam.isStarted() && examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId()) == 0) {
-            return;
-        }
-        List<StudentExam> newStudentExams = studentExamService.generateMissingStudentExams(exam);
-        if (prepareExercises && !newStudentExams.isEmpty()) {
-            List<Long> studentExamIds = newStudentExams.stream().map(DomainObject::getId).toList();
-            long start = System.nanoTime();
-            studentExamService.startExercisesForStudentExams(exam.getId(), studentExamIds).thenAccept(numberOfGeneratedParticipations -> log
-                    .info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), exam.getId()));
-        }
+    private void generateAndPrepareMissingExams(Exam exam) {
+        // Admission precedes the cohort read and preparation decision. A first preparation may have started since registration began.
+        examPreparationLockService.withPreparationLock(exam.getId(), () -> {
+            if (!exam.isStarted() && examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId()) == 0) {
+                return null;
+            }
+            boolean prepareExercises = hasExercisePreparationStarted(exam);
+            List<StudentExam> newStudentExams = studentExamService.generateMissingStudentExams(exam);
+            if (prepareExercises && !newStudentExams.isEmpty()) {
+                List<Long> studentExamIds = newStudentExams.stream().map(DomainObject::getId).toList();
+                long start = System.nanoTime();
+                studentExamService.startExercisesForStudentExams(exam.getId(), studentExamIds).thenAccept(numberOfGeneratedParticipations -> log
+                        .info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), exam.getId()));
+            }
+            return null;
+        });
     }
 
     private ExamUser createExamUser(Exam exam, User user) {

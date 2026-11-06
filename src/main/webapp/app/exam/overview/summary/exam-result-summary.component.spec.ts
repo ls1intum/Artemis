@@ -337,6 +337,37 @@ describe('ExamResultSummaryComponent', () => {
         vi.useRealTimers();
     });
 
+    it.each([true, false])('refreshes a pending bonus source and stops after completion (test exam: %s)', async (testExam) => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', testExam ? { ...studentExamForTestExam, submitted: true } : studentExam);
+        const pending = { ...gradeInfo, pendingExerciseIds: [], studentResult: { ...gradeInfo.studentResult, gradeWithBonus: { pending: true } } };
+        const completed = { ...gradeInfo, pendingExerciseIds: [], studentResult: { ...gradeInfo.studentResult, gradeWithBonus: { pending: false, finalGrade: '1.0' } } };
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValueOnce(of(pending)).mockReturnValue(of(completed));
+        fixture.detectChanges();
+        expect(component.studentExamGradeInfoDTO()?.studentResult.gradeWithBonus?.pending).toBe(true);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(component.studentExamGradeInfoDTO()?.studentResult.gradeWithBonus?.finalGrade).toBe('1.0');
+        await vi.advanceTimersByTimeAsync(4000);
+        expect(load).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('does not poll a completed zero-point bonus source', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(
+            of({
+                ...gradeInfo,
+                studentResult: { ...gradeInfo.studentResult, gradeWithBonus: { pending: false, studentPointsOfBonusSource: 0, bonusGrade: 0, finalGrade: '3.0' } },
+            }),
+        );
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(10000);
+        expect(load).toHaveBeenCalledOnce();
+        expect(component.studentExamGradeInfoDTO()?.studentResult.gradeWithBonus?.studentPointsOfBonusSource).toBe(0);
+        vi.useRealTimers();
+    });
+
     it('recovers from a failed pending-result refresh', async () => {
         vi.useFakeTimers();
         fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });

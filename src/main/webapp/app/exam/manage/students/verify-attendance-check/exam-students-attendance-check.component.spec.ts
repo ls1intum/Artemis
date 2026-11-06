@@ -124,6 +124,26 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(component.savingAttendance()).toBeUndefined();
     });
 
+    it('preserves the selected descending order after a manual correction and reload', () => {
+        const alpha = { id: 5, login: 'alpha', started: true, attendanceChecked: false } as ExamUserAttendanceCheckDTO;
+        const zulu = { id: 6, login: 'zulu', started: true, attendanceChecked: false } as ExamUserAttendanceCheckDTO;
+        vi.spyOn(examManagementService, 'verifyExamUserAttendance')
+            .mockReturnValueOnce(of(new HttpResponse({ body: [alpha, zulu] })))
+            .mockReturnValueOnce(of(new HttpResponse({ body: [{ ...alpha, attendanceOverride: false, attendanceChecked: true }, zulu] })));
+        vi.spyOn(examManagementService, 'updateAttendance').mockReturnValue(of(undefined));
+        fixture.detectChanges();
+        component.predicate.set('login');
+        component.ascending.set(false);
+        component.sortRows();
+        component.hasExamEnded.set(true);
+
+        component.setAttendance(alpha, 'false');
+
+        expect(component.allExamUsersAttendanceCheck().map((row) => row.login)).toEqual(['zulu', 'alpha']);
+        expect(component.allExamUsersAttendanceCheck()[1].attendanceOverride).toBe(false);
+        expect(component.uncheckedCount()).toBe(1);
+    });
+
     it('should identify signed students with incomplete identity checks', () => {
         const users = [
             { id: 5, login: 'incomplete', started: true, signingImagePath: 'signature.png', attendanceChecked: false },

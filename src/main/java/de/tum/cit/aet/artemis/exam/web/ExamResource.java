@@ -129,6 +129,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.exam.service.ExamPreparationLockService;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
@@ -184,6 +185,8 @@ public class ExamResource {
 
     private final ExamDeletionService examDeletionService;
 
+    private final ExamPreparationLockService examPreparationLockService;
+
     private final ExamDateService examDateService;
 
     private final ExamRegistrationService examRegistrationService;
@@ -229,11 +232,12 @@ public class ExamResource {
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
             ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
             Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, ExamPreparationLockService examPreparationLockService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
         this.examDeletionService = examDeletionService;
+        this.examPreparationLockService = examPreparationLockService;
         this.submissionService = submissionService;
         this.examDateService = examDateService;
         this.examRegistrationService = examRegistrationService;
@@ -1162,10 +1166,16 @@ public class ExamResource {
         log.info("REST request to generate student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
-        List<StudentExam> studentExams = examRepository.withStudentExamGenerationLock(examId, () -> {
-            // Keep deletion and replacement under the same lock as registration-triggered and individual generation.
-            examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(examId);
-            return studentExamService.generateStudentExams(exam);
+        List<StudentExam> studentExams = examPreparationLockService.withPreparationLock(examId, () -> {
+            List<Runnable> externalCleanup = new ArrayList<>();
+            List<StudentExam> generated = examRepository.withStudentExamGenerationLock(examId, () -> {
+                // Database deletion and replacement roll back together; irreversible resource cleanup waits for commit.
+                examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(examId, externalCleanup::add);
+                return studentExamService.generateStudentExams(exam);
+            });
+            // Preparation cannot recreate repositories or build plans until the old resources have been removed.
+            externalCleanup.forEach(Runnable::run);
+            return generated;
         });
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         // The client only counts the generated student exams; return the slim, exam-masked projection (no nested exam graph,

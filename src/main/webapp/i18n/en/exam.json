@@ -117,6 +117,7 @@
                 "theoreticalGradeBeforeBonus": "Theoretical grade before bonus:",
                 "theoreticalGradeAfterBonus": "Theoretical grade after bonus:",
                 "automaticResultsPending": "Automatic assessment is still running. The total points and theoretical grade will appear when the results are ready.",
+                "bonusResultPending": "The bonus source is still being assessed. Your points and grade before bonus are available; the final bonus grade will appear when the source results are ready.",
                 "automaticResultPending": "Assessment pending",
                 "backToOverview": "Back to overview",
                 "examResults": "Exam Results",

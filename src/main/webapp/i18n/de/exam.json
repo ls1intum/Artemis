@@ -117,6 +117,7 @@
                 "theoreticalGradeBeforeBonus": "Theoretische Note vor Bonus:",
                 "theoreticalGradeAfterBonus": "Theoretische Note nach Bonus:",
                 "automaticResultsPending": "Die automatische Bewertung läuft noch. Gesamtpunktzahl und theoretische Note werden angezeigt, sobald die Ergebnisse vorliegen.",
+                "bonusResultPending": "Die Bonusquelle wird noch bewertet. Ihre Punktzahl und Note vor Bonus sind verfügbar; die endgültige Note mit Bonus wird angezeigt, sobald die Ergebnisse der Bonusquelle vorliegen.",
                 "automaticResultPending": "Bewertung läuft",
                 "backToOverview": "Zurück zur Übersicht",
                 "examResults": "Prüfungsergebnisse",

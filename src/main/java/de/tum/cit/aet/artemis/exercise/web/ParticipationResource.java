@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -163,7 +164,12 @@ public class ParticipationResource {
         }
         StudentParticipation participation;
         try {
-            participation = participationService.startExercise(exercise, participant, true);
+            participation = exercise.isExamExercise() && !exercise.getExam().isTestExam() ? studentExamApi.orElseThrow()
+                    .withParticipationPreparationLock(exercise.getExam().getId(), () -> participationService.startExercise(exercise, participant, true))
+                    : participationService.startExercise(exercise, participant, true);
+        }
+        catch (ConcurrencyFailureException exception) {
+            throw exception;
         }
         catch (Exception e) {
             if (e instanceof VersionControlException && e.getCause() instanceof LargeObjectException) {
@@ -249,6 +255,15 @@ public class ParticipationResource {
     public ResponseEntity<StudentParticipationDTO> resumeParticipation(@PathVariable Long exerciseId, @PathVariable Long participationId) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        if (programmingExercise.isExamExercise() && !programmingExercise.getExam().isTestExam()) {
+            return studentExamApi.orElseThrow().withParticipationPreparationLock(programmingExercise.getExam().getId(),
+                    () -> resumeProgrammingParticipation(programmingExercise, participationId));
+        }
+        return resumeProgrammingParticipation(programmingExercise, participationId);
+    }
+
+    private ResponseEntity<StudentParticipationDTO> resumeProgrammingParticipation(ProgrammingExercise programmingExercise, long participationId) {
+        // Read participation state only after admission: regeneration may have deleted the old participation while this request was waiting.
         var participation = programmingExerciseStudentParticipationRepository.findWithTeamStudentsByIdElseThrow(participationId);
         // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);

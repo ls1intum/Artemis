@@ -232,7 +232,8 @@ export class ExamResultSummaryComponent implements OnInit {
                         delay: (_error, retryCount) => timer(Math.min(2000 * 2 ** (retryCount - 1), 30000)),
                     }),
                     expand((gradeInfo) => {
-                        if (!this.isTestExam || this.studentExam().id !== studentExam.id || !gradeInfo.pendingExerciseIds?.length) {
+                        const pendingAutomaticResults = this.isTestExam && !!gradeInfo.pendingExerciseIds?.length;
+                        if (this.studentExam().id !== studentExam.id || (!pendingAutomaticResults && !gradeInfo.studentResult?.gradeWithBonus?.pending)) {
                             return EMPTY;
                         }
                         const pollDelay = Math.min(2000 * 2 ** Math.max(0, pollCount++ - 2), 30000);

@@ -3,9 +3,12 @@ package de.tum.cit.aet.artemis.exam;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +17,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +25,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -40,17 +45,27 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.CreateTestRunDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.service.ExamPreparationLockService;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.FailedBuildLogService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -75,10 +90,22 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private StudentExamService studentExamService;
 
     @Autowired
+    private ExamPreparationLockService examPreparationLockService;
+
+    @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private ChannelRepository channelRepository;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
+
+    @Autowired
+    private FailedBuildLogService failedBuildLogService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -130,7 +157,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @ParameterizedTest
     @ValueSource(strings = { "missing", "individual", "regenerate" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testGenerationPathsWaitForConcurrentGenerationWithoutCreatingDuplicates(String generationPath) throws Exception {
+    void testGenerationPathsRejectConcurrentGenerationAndAllowRetryWithoutDuplicates(String generationPath) throws Exception {
         Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         exam.setStartDate(ZonedDateTime.now().plusHours(1));
@@ -138,6 +165,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         exam.setExamMaxPoints(exam.getExerciseGroups().stream().mapToInt(group -> group.getExercises().iterator().next().getMaxPoints().intValue()).sum());
         examRepository.save(exam);
         long examId = exam.getId();
+        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
         var firstEntered = new CountDownLatch(1);
         var releaseFirst = new CountDownLatch(1);
         var secondStarted = new CountDownLatch(1);
@@ -162,10 +190,12 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
                     try {
                         Exam current = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
                         switch (generationPath) {
-                            case "missing" -> studentExamService.generateMissingStudentExams(current);
-                            case "individual" -> studentExamService.generateIndividualStudentExam(current, student1);
+                            case "missing" ->
+                                assertThatThrownBy(() -> studentExamService.generateMissingStudentExams(current)).isInstanceOf(PessimisticLockingFailureException.class);
+                            case "individual" -> assertThatThrownBy(() -> studentExamService.generateIndividualStudentExam(current, student1))
+                                    .isInstanceOf(PessimisticLockingFailureException.class);
                             case "regenerate" -> request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/generate-student-exams",
-                                    Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+                                    Optional.empty(), StudentExamDTO.class, HttpStatus.CONFLICT);
                             default -> throw new IllegalArgumentException(generationPath);
                         }
                         return null;
@@ -175,10 +205,18 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
                     }
                 });
                 assertThat(secondStarted.await(10, TimeUnit.SECONDS)).isTrue();
-                assertThatThrownBy(() -> second.get(250, TimeUnit.MILLISECONDS)).isInstanceOf(TimeoutException.class);
+                second.get(2, TimeUnit.SECONDS);
+                assertThat(first.isDone()).isFalse();
                 releaseFirst.countDown();
                 first.get(10, TimeUnit.SECONDS);
-                second.get(10, TimeUnit.SECONDS);
+                Exam current = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+                switch (generationPath) {
+                    case "missing" -> studentExamService.generateMissingStudentExams(current);
+                    case "individual" -> studentExamService.generateIndividualStudentExam(current, student1);
+                    case "regenerate" -> request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/generate-student-exams", Optional.empty(),
+                            StudentExamDTO.class, HttpStatus.OK);
+                    default -> throw new IllegalArgumentException(generationPath);
+                }
                 assertThat(studentExamRepository.findByExamId(examId)).singleElement()
                         .satisfies(studentExam -> assertThat(studentExam.getUser().getId()).isEqualTo(student1.getId()));
                 assertThat(studentExamRepository.findWithExercisesByUserIdAndExamId(student1.getId(), examId, false)).isPresent();
@@ -187,6 +225,147 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 releaseFirst.countDown();
             }
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegenerationCleansExternalRepositoryOnlyAfterSuccessfulCommit(boolean failGeneration) throws Exception {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, true);
+        exam.setStartDate(ZonedDateTime.now().minusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        exam.setExamMaxPoints(exam.getExerciseGroups().stream().mapToInt(group -> group.getExercises().iterator().next().getMaxPoints().intValue()).sum());
+        examRepository.save(exam);
+        long examId = exam.getId();
+        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
+        var previousExam = studentExamService.generateMissingStudentExams(exam).getFirst();
+        var exercise = (ProgrammingExercise) previousExam.getExercises().stream().filter(ProgrammingExercise.class::isInstance).findFirst().orElseThrow();
+        var participation = localVCLocalCITestService.createParticipation(exercise, student1.getLogin());
+        var repositoryUri = (LocalVCRepositoryUri) participation.getVcsRepositoryUri();
+        localVCLocalCITestService.createRepository(repositoryUri.getProjectKey(), localVCLocalCITestService.getRepositorySlug(repositoryUri.getProjectKey(), student1.getLogin()));
+        Path repositoryPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
+        assertThat(repositoryPath).exists();
+        var oldTestRun = studentExamService.createTestRun(exam, List.of(exercise.getId()), 3600);
+        var oldTestRunParticipation = programmingExerciseStudentParticipationRepository
+                .findAllWithSubmissionsByExerciseIdAndStudentId(exercise.getId(), oldTestRun.getUser().getId()).stream()
+                .filter(participationToCheck -> participationToCheck.isTestRun()).findFirst().orElseThrow();
+        Path testRunRepositoryPath = ((LocalVCRepositoryUri) oldTestRunParticipation.getVcsRepositoryUri()).getLocalRepositoryPath(localVCBasePath);
+        assertThat(testRunRepositoryPath).exists();
+        var testRunConfiguration = new CreateTestRunDTO(examId, List.of(exercise.getId()), 3600);
+        String testRunUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/test-runs";
+        var result = participationUtilService.addSampleFeedbackToResults(participationUtilService.createSubmissionAndResult(participation, 0, true));
+        var storedResult = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId());
+        assertThat(storedResult.getCompletionDate()).isNotNull();
+        assertThat(storedResult.getFeedbacks()).hasSize(2);
+        var submission = (ProgrammingSubmission) result.getSubmission();
+        var buildLogs = List.of(new BuildLogEntry(ZonedDateTime.parse("2026-01-15T10:00:00Z"), "Compiler failure retained across rollback"));
+        buildLogEntryService.saveBuildLogs(buildLogs, submission, result);
+        assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submission.getId(), result.getId())).isPresent();
+        var generationCompleted = new AtomicBoolean();
+        doAnswer(invocation -> {
+            assertThat(repositoryPath).as("external resources must survive until the generation transaction commits").exists();
+            assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submission.getId(), result.getId())).as("build-log files must also survive until commit").isPresent();
+            var generated = invocation.callRealMethod();
+            generationCompleted.set(true);
+            if (failGeneration) {
+                throw new IllegalStateException("Force replacement generation rollback");
+            }
+            return generated;
+        }).when(studentExamService).generateStudentExams(any(Exam.class));
+
+        String generationUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/generate-student-exams";
+        if (failGeneration) {
+            request.postListWithResponseBody(generationUrl, Optional.empty(), StudentExamDTO.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        else {
+            var cleanupEntered = new CountDownLatch(1);
+            var releaseCleanup = new CountDownLatch(1);
+            doAnswer(invocation -> {
+                // This query runs after the generation repository transaction returned, proving its deletion committed.
+                assertThat(programmingExerciseStudentParticipationRepository.findById(participation.getId())).isEmpty();
+                cleanupEntered.countDown();
+                assertThat(releaseCleanup.await(10, TimeUnit.SECONDS)).isTrue();
+                return invocation.callRealMethod();
+            }).when(gitServiceSpy).deleteLocalRepository(repositoryUri);
+            var context = SecurityContextHolder.getContext();
+            try (var executor = Executors.newSingleThreadExecutor()) {
+                var regeneration = executor.submit(() -> {
+                    SecurityContextHolder.setContext(context);
+                    try {
+                        return request.postListWithResponseBody(generationUrl, Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+                    }
+                    finally {
+                        SecurityContextHolder.clearContext();
+                    }
+                });
+                try {
+                    assertThat(cleanupEntered.await(10, TimeUnit.SECONDS)).isTrue();
+                    assertThatThrownBy(() -> studentExamService.startExercises(examId)).isInstanceOf(CannotAcquireLockException.class);
+                    request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/student-exams/start-exercises", Optional.empty(),
+                            HttpStatus.CONFLICT);
+                    request.postWithResponseBody(testRunUrl, testRunConfiguration, StudentExamDTO.class, HttpStatus.CONFLICT);
+                    assertThat(studentExamRepository.findAllTestRunsByExamId(examId)).isEmpty();
+                    userUtilService.changeUser(student1.getLogin());
+                    try {
+                        request.postWithoutResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", Optional.empty(), HttpStatus.CONFLICT);
+                        assertThat(studentParticipationRepository.findByExerciseId(exercise.getId())).isEmpty();
+                        request.putWithResponseBody(
+                                "/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
+                                StudentParticipationDTO.class, HttpStatus.CONFLICT);
+                    }
+                    finally {
+                        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+                    }
+                    assertThat(regeneration.isDone()).isFalse();
+                }
+                finally {
+                    releaseCleanup.countDown();
+                }
+                regeneration.get(10, TimeUnit.SECONDS);
+            }
+        }
+        verify(studentExamService).generateStudentExams(any(Exam.class));
+        assertThat(generationCompleted.get()).as("the injected failure must occur after replacement generation, not during deletion or fixture assertions").isTrue();
+        try (var executor = Executors.newSingleThreadExecutor()) {
+            assertThat(executor.submit(() -> examPreparationLockService.withPreparationLock(examId, () -> true)).get(2, TimeUnit.SECONDS))
+                    .as("success and rollback both release preparation admission for another thread").isTrue();
+        }
+
+        if (failGeneration) {
+            assertThat(repositoryPath).exists();
+            assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submission.getId(), result.getId()).orElseThrow()).singleElement().extracting(BuildLogEntry::getLog)
+                    .isEqualTo("Compiler failure retained across rollback");
+            assertThat(programmingExerciseStudentParticipationRepository.findById(participation.getId())).isPresent();
+            assertThat(resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(result.getId()).getFeedbacks()).hasSize(2);
+            assertThat(studentExamRepository.findByExamId(examId).stream().filter(studentExam -> !studentExam.isTestRun()).toList()).singleElement().extracting(StudentExam::getId)
+                    .isEqualTo(previousExam.getId());
+            assertThat(studentExamRepository.findAllTestRunsByExamId(examId)).singleElement().extracting(StudentExam::getId).isEqualTo(oldTestRun.getId());
+            assertThat(testRunRepositoryPath).exists();
+        }
+        else {
+            assertThat(repositoryPath).doesNotExist();
+            assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submission.getId(), result.getId())).isEmpty();
+            assertThat(programmingExerciseStudentParticipationRepository.findById(participation.getId())).isEmpty();
+            assertThat(resultRepository.findById(result.getId())).isEmpty();
+            assertThat(studentExamRepository.findByExamId(examId)).singleElement().extracting(StudentExam::getId).isNotEqualTo(previousExam.getId());
+            assertThat(testRunRepositoryPath).doesNotExist();
+            userUtilService.changeUser(student1.getLogin());
+            try {
+                request.postWithoutResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", Optional.empty(), HttpStatus.CREATED);
+                assertThat(repositoryPath).exists();
+                request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
+                        StudentParticipationDTO.class, HttpStatus.NOT_FOUND);
+                assertThat(repositoryPath).as("a stale resume cannot touch the replacement repository").exists();
+            }
+            finally {
+                userUtilService.changeUser(TEST_PREFIX + "instructor1");
+            }
+            request.postWithResponseBody(testRunUrl, testRunConfiguration, StudentExamDTO.class, HttpStatus.OK);
+            assertThat(studentExamRepository.findAllTestRunsByExamId(examId)).hasSize(1);
+            assertThat(testRunRepositoryPath).as("retry recreates a repository only after old cleanup finished").exists();
+        }
+        assertThat(examUserRepository.findAllByExamId(examId)).singleElement().extracting(examUser -> examUser.getUser().getId()).isEqualTo(student1.getId());
     }
 
     @Test
@@ -267,6 +446,84 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         await().untilAsserted(() -> assertThat(exerciseIds.stream()
                 .mapToLong(exerciseId -> studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exerciseId, examId)).sum())
                 .isEqualTo(expectedParticipations));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationDefersStudentExamCreationWhenPreparationIsBusyAndRetryPreparesIt() throws Exception {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        long examId = exam.getId();
+        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
+        studentExamService.generateMissingStudentExams(exam);
+        assertThat(studentExamService.getExerciseStartStatusOfExam(examId)).isEmpty();
+        User newStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        var student = new StudentDTO(newStudent.getLogin(), "", "", "", "");
+        String url = "/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/students";
+        var preparationEntered = new CountDownLatch(1);
+        var releasePreparation = new CountDownLatch(1);
+        try (var executor = Executors.newSingleThreadExecutor()) {
+            var preparation = executor.submit(() -> examPreparationLockService.withPreparationLock(examId, () -> {
+                preparationEntered.countDown();
+                try {
+                    assertThat(releasePreparation.await(10, TimeUnit.SECONDS)).isTrue();
+                }
+                catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(exception);
+                }
+                return null;
+            }));
+            try {
+                assertThat(preparationEntered.await(10, TimeUnit.SECONDS)).isTrue();
+                request.postWithoutLocation(url, List.of(student), HttpStatus.CONFLICT, null);
+                assertThat(examUserRepository.findUserIdsByExamId(examId)).contains(newStudent.getId());
+                assertThat(studentExamRepository.findWithExercisesByUserIdAndExamId(newStudent.getId(), examId, false)).isEmpty();
+            }
+            finally {
+                releasePreparation.countDown();
+            }
+            preparation.get(10, TimeUnit.SECONDS);
+        }
+
+        // The first preparation completes before retry and its progress cache expires. Admission must re-read persisted preparation state.
+        studentExamService.startExercises(examId).join();
+        studentExamService.invalidateExerciseStartStatus(examId);
+        request.postWithoutLocation(url, List.of(student), HttpStatus.OK, null);
+
+        var generated = studentExamRepository.findWithExercisesByUserIdAndExamId(newStudent.getId(), examId, false).orElseThrow();
+        assertThat(generated.getExercises()).hasSize(exam.getNumberOfExercisesInExam());
+        assertThat(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(generated, false)).hasSize(exam.getNumberOfExercisesInExam());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationRechecksPreparationThatCompletesWhileResolvingStudents() throws Exception {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        long examId = exam.getId();
+        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
+        studentExamService.generateMissingStudentExams(exam);
+        assertThat(studentExamService.getExerciseStartStatusOfExam(examId)).isEmpty();
+        String login = TEST_PREFIX + "fastprepstudent";
+        var ldapStudent = new LdapUserDto().firstName("Fast").lastName("Preparation").login(login).registrationNumber("79870122").email(login + "@tum.de");
+        doAnswer(invocation -> {
+            // Registration has begun, but user resolution can take long enough for a first preparation to finish.
+            studentExamService.startExercises(examId).join();
+            studentExamService.invalidateExerciseStartStatus(examId);
+            return Optional.of(ldapStudent);
+        }).when(ldapUserService).findByLogin(login);
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/students", List.of(new StudentDTO(login, "", "", "", "")), HttpStatus.OK, null);
+
+        var generated = studentExamRepository.findWithExercisesByUserIdAndExamId(userUtilService.getUserByLogin(login).getId(), examId, false).orElseThrow();
+        assertThat(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(generated, false)).hasSize(exam.getNumberOfExercisesInExam());
     }
 
     @Test

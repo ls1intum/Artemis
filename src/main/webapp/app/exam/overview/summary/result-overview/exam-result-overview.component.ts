@@ -55,9 +55,20 @@ export class ExamResultOverviewComponent implements OnInit {
     readonly isTestExam = computed(() => !!this.studentExamWithGrade()?.studentExam?.exam?.testExam);
     readonly pendingExerciseIds = computed(() => new Set(this.isTestExam() ? (this.studentExamWithGrade()?.pendingExerciseIds ?? []) : []));
     readonly hasAutomaticScore = computed(() => !this.isTestExam() || (this.studentExamWithGrade()?.maxPoints > 0 && this.pendingExerciseIds().size === 0));
-    readonly hasManuallyAssessedExercises = computed(
-        () => this.studentExamWithGrade()?.studentExam?.exercises?.some((exercise) => this.isManuallyAssessedTestExercise(exercise)) ?? false,
+    readonly manuallyAssessedExerciseIds = computed(
+        () =>
+            new Set(
+                (this.isTestExam() ? (this.studentExamWithGrade()?.studentExam?.exercises ?? []) : [])
+                    .filter(
+                        (exercise) =>
+                            exercise.type !== ExerciseType.QUIZ &&
+                            !(exercise.type === ExerciseType.PROGRAMMING && (!exercise.assessmentType || exercise.assessmentType === AssessmentType.AUTOMATIC)),
+                    )
+                    .map((exercise) => exercise.id),
+            ),
     );
+    readonly hasManuallyAssessedExercises = computed(() => this.manuallyAssessedExerciseIds().size > 0);
+    readonly bonusPending = computed(() => !!this.studentExamWithGrade()?.studentResult?.gradeWithBonus?.pending);
     readonly grade = computed(() => this.studentExamWithGrade()?.studentResult?.overallGrade);
     readonly isBonus = computed(() => this.studentExamWithGrade()?.gradeType === GradeType.BONUS);
     // Gated on gradingScaleExists to preserve the previous behavior: without a grading scale
@@ -139,14 +150,6 @@ export class ExamResultOverviewComponent implements OnInit {
 
         this.overallAchievedPoints.set(this.getOverallAchievedPoints());
         this.overallAchievedPercentageRoundedByCourseSettings.set(this.getOverallAchievedPercentageRoundedByCourseSettings());
-    }
-
-    isManuallyAssessedTestExercise(exercise: Exercise): boolean {
-        return (
-            this.isTestExam() &&
-            exercise.type !== ExerciseType.QUIZ &&
-            !(exercise.type === ExerciseType.PROGRAMMING && (!exercise.assessmentType || exercise.assessmentType === AssessmentType.AUTOMATIC))
-        );
     }
 
     /**

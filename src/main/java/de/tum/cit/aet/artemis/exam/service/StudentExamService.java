@@ -139,6 +139,8 @@ public class StudentExamService {
 
     private final CourseAthenaConfigRepository courseAthenaConfigRepository;
 
+    private final ExamPreparationLockService examPreparationLockService;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
             Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
@@ -146,7 +148,7 @@ public class StudentExamService {
             ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository, ExamUserRepository examUserRepository,
             CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService,
             StudentExamSubmitMapper studentExamSubmitMapper, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            CourseAthenaConfigRepository courseAthenaConfigRepository, ExamPreparationLockService examPreparationLockService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -170,6 +172,7 @@ public class StudentExamService {
         this.examService = examService;
         this.studentExamSubmitMapper = studentExamSubmitMapper;
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
+        this.examPreparationLockService = examPreparationLockService;
     }
 
     /**
@@ -538,10 +541,12 @@ public class StudentExamService {
      * @return the created testRun studentExam
      */
     public StudentExam createTestRun(Exam exam, List<Long> exerciseIds, Integer workingTime) {
-        List<Exercise> exercises = resolveExamExercises(exam, exerciseIds);
-        StudentExam testRun = generateTestRun(exam, exercises, workingTime);
-        setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
-        return testRun;
+        return examPreparationLockService.withPreparationLock(exam.getId(), () -> {
+            List<Exercise> exercises = resolveExamExercises(exam, exerciseIds);
+            StudentExam testRun = generateTestRun(exam, exercises, workingTime);
+            setUpTestRunExerciseParticipationsAndSubmissions(testRun.getId());
+            return testRun;
+        });
     }
 
     /**
@@ -728,6 +733,10 @@ public class StudentExamService {
     }
 
     private CompletableFuture<Integer> startExercises(Long examId, List<Long> studentExamIds) {
+        return examPreparationLockService.withPreparationLock(examId, () -> prepareExercises(examId, studentExamIds));
+    }
+
+    private CompletableFuture<Integer> prepareExercises(Long examId, List<Long> studentExamIds) {
         boolean testExam = examRepository.findIsTestExamById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         // One row per (student exam, exercise) pair, carrying ids and the student's login only. Loading the exam with its

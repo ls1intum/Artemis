@@ -640,6 +640,87 @@ describe('ExamScoresComponent', () => {
         expect(exported.mock.calls[0][1][0]['Overall Exam Score']).toBe('80%');
     });
 
+    it('counts pending and manual-only attempts independently of scored statistics in every submission filter', () => {
+        const dto = deepClone(examScoreDTO);
+        dto.hasSecondCorrectionAndStarted = false;
+        dto.studentResults[0].maxPoints = 10;
+        dto.studentResults[0].overallPointsAchieved = 0;
+        dto.studentResults[0].overallScoreAchieved = 0;
+        dto.studentResults[1].maxPoints = 10;
+        dto.studentResults[1].overallPointsAchieved = undefined;
+        dto.studentResults[1].overallScoreAchieved = undefined;
+        dto.studentResults[2].maxPoints = 0;
+        dto.studentResults[2].overallPointsAchieved = 0;
+        dto.studentResults[2].overallScoreAchieved = 0;
+        for (const result of dto.studentResults) {
+            for (const exerciseResult of Object.values(result.exerciseGroupIdToExerciseResult ?? {})) {
+                exerciseResult.hasNonEmptySubmission = true;
+            }
+        }
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        fixture.detectChanges();
+        expect(comp.aggregatedExamResults().noOfRegisteredUsers).toBe(3);
+        expect(comp.aggregatedExamResults().noOfExamsSubmitted).toBe(2);
+        expect(comp.aggregatedExamResults().noOfExamsNonEmpty).toBe(3);
+        expect(comp.aggregatedExamResults().noOfExamsSubmittedAndNotEmpty).toBe(2);
+        expect(Number(comp.tableState.relativeAmountOfSubmittedExams)).toBeCloseTo(66.67, 0);
+        expect(comp.aggregatedExamResults().meanPointsTotal).toBe(0);
+        expect(comp.scores()).toEqual([0]);
+        comp.toggleFilterForSubmittedExam();
+        expect(comp.tableState.absoluteAmountOfTotalExams).toBe(2);
+        expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
+        expect(comp.tableState.relativeAmountOfSubmittedExams).toBe('100');
+        comp.toggleFilterForNonEmptySubmission();
+        expect(comp.tableState.absoluteAmountOfTotalExams).toBe(2);
+        expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
+        comp.toggleFilterForSubmittedExam();
+        expect(comp.tableState.absoluteAmountOfTotalExams).toBe(3);
+        expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
+        expect(Number(comp.tableState.relativeAmountOfSubmittedExams)).toBeCloseTo(66.67, 0);
+    });
+
+    it('retains registration and submission counts when no test attempt has a completed automatic score', () => {
+        const dto = deepClone(examScoreDTO);
+        for (const result of dto.studentResults) {
+            result.maxPoints = 0;
+            result.overallPointsAchieved = 0;
+            result.overallScoreAchieved = 0;
+        }
+        dto.studentResults[1].maxPoints = 10;
+        dto.studentResults[1].overallPointsAchieved = undefined;
+        dto.studentResults[1].overallScoreAchieved = undefined;
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        fixture.detectChanges();
+        expect(comp.aggregatedExamResults().noOfRegisteredUsers).toBe(3);
+        expect(comp.aggregatedExamResults().noOfExamsSubmitted).toBe(2);
+        expect(comp.tableState.absoluteAmountOfTotalExams).toBe(3);
+        expect(comp.tableState.absoluteAmountOfSubmittedExams).toBe(2);
+        expect(comp.tableState.averagePointsTotal).toBe('-');
+        expect(comp.tableState.averageScoreTotal).toBe('-');
+        expect(comp.scores()).toEqual([]);
+    });
+
+    it('leaves a pending bonus final grade blank in the table and exported CSV', () => {
+        const dto = deepClone(examScoreDTO);
+        dto.studentResults[0].overallGrade = '3';
+        dto.studentResults[0].gradeWithBonus = { bonusStrategy: BonusStrategy.POINTS, pending: true };
+        dto.studentResults[1].gradeWithBonus = { bonusStrategy: BonusStrategy.POINTS, pending: false, finalGrade: '1.0' };
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: toGradingScaleDTO(gradingScale) })));
+        fixture.detectChanges();
+        const finalGrades = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('[data-testid="exam-final-grade"]')).map((cell) => cell.textContent?.trim());
+        expect(finalGrades.slice(0, 2)).toEqual(['-', '1.0']);
+        const exported = vi.spyOn(comp, 'exportAsCsv');
+        comp.exportExamResults({
+            fieldSeparator: CsvFieldSeparator.SEMICOLON,
+            quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteStrings: true,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
+        });
+        expect(exported.mock.calls[0][1][0][FINAL_GRADE_KEY]).toBe('');
+        expect(exported.mock.calls[0][1][1][FINAL_GRADE_KEY]).toBe('1.0');
+    });
+
     it('should generate csv correctly', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));

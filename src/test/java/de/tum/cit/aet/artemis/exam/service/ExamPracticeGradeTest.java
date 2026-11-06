@@ -1,13 +1,14 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,19 +17,22 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
 import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
@@ -39,8 +43,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
-import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -79,7 +81,7 @@ class ExamPracticeGradeTest {
     private ExerciseTestRepository exerciseRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
     private AuthorizationCheckService authorizationCheckService;
@@ -88,6 +90,7 @@ class ExamPracticeGradeTest {
     private Optional<PlagiarismCaseApi> plagiarismCaseApi = Optional.empty();
 
     @InjectMocks
+    @Spy
     private ExamService examService;
 
     private Exam exam;
@@ -294,69 +297,293 @@ class ExamPracticeGradeTest {
         assertThat(result.studentResult().overallScoreAchieved()).isEqualTo(90.0);
         assertThat(result.studentResult().gradeWithBonus().finalGrade()).isEqualTo("1.0");
         assertThat(result.studentResult().gradeWithBonus().finalPoints()).isEqualTo(10.0);
+        assertThat(result.studentResult().gradeWithBonus().pending()).isFalse();
     }
 
-    @Test
-    void resultCompletedBetweenGradeAndParticipationReadStaysPending() {
-        var programming = programmingParticipation();
-        var submission = new ProgrammingSubmission();
-        submission.setId(1L);
-        submission.setSubmitted(true);
-        submission.setSubmissionDate(ZonedDateTime.now());
-        var completed = new Result();
-        completed.setScore(80.0);
-        completed.setCompletionDate(ZonedDateTime.now());
-        submission.addResult(completed);
-        programming.addSubmission(submission);
-        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(attempt, false)).thenReturn(List.of(programming));
-        // The grade query ran before the build finished, so it carries no score for this participation.
-        var staleGrade = new ExamGradeScoreDTO(programming.getId(), 1L, 2L, null, 20.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
-
-        var result = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of(staleGrade));
-
-        assertThat(result.pendingExerciseIds()).containsExactly(2L);
-        assertThat(result.studentResult().overallPointsAchieved()).isNull();
-    }
-
-    @Test
-    void partialTestExamBonusSourceIsRescaledToItsConfiguredMaximum() {
-        var targetScale = new GradingScale();
-        targetScale.setExam(exam);
-        targetScale.setBonusStrategy(BonusStrategy.POINTS);
+    @ParameterizedTest
+    @EnumSource(value = BonusStrategy.class, names = { "POINTS", "GRADES_CONTINUOUS" })
+    void pendingBonusSourceKeepsTheTargetScoreWithoutInventingAFinalGrade(BonusStrategy strategy) {
+        var scale = new GradingScale();
+        scale.setExam(exam);
+        scale.setBonusStrategy(strategy);
         var passing = new GradeStep();
         passing.setGradeName("1.0");
         passing.setIsPassingGrade(true);
-        var sourceExam = new Exam();
-        sourceExam.setId(5L);
-        sourceExam.setTestExam(true);
-        sourceExam.setExamMaxPoints(100);
+        var sourceCourse = new Course();
+        sourceCourse.setId(2L);
+        sourceCourse.setMaxPoints(100);
+        sourceCourse.setTitle("Pending bonus source");
+        var sourceScale = new GradingScale();
+        sourceScale.setCourse(sourceCourse);
+        var bonus = new Bonus();
+        bonus.setSourceGradingScale(sourceScale);
+        scale.addBonusFrom(bonus);
+        when(gradingScaleRepository.findByExamIdWithBonusFrom(1L)).thenReturn(Optional.of(scale));
+        when(gradingScaleRepository.matchPercentageToGradeStep(anyDouble(), eq(scale))).thenReturn(passing);
+        // This is the nullable source-result contract produced by an exam whose submitted programming build is pending.
+        when(courseScoreCalculationService.calculateCourseScoresForExamBonusSource(sourceCourse, sourceScale, List.of(1L)))
+                .thenReturn(Map.of(1L, new BonusSourceResultDTO(null, null, null, null, true)));
+        when(courseScoreCalculationService.calculateReachablePoints(eq(sourceScale), org.mockito.ArgumentMatchers.any())).thenReturn(100.0);
+        // Exercise the real arithmetic if the pending source is incorrectly forwarded to the bonus strategy.
+        org.mockito.Mockito.lenient().when(bonusService.calculateGradeWithBonus(eq(bonus), anyDouble(), org.mockito.ArgumentMatchers.nullable(Double.class), eq(100.0)))
+                .thenAnswer(invocation -> new BonusService(null, gradingScaleRepository).calculateGradeWithBonus(bonus, invocation.getArgument(1), invocation.getArgument(2),
+                        invocation.getArgument(3)));
+
+        var result = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of(grade(1L, 90.0)));
+
+        assertThat(result.studentResult().overallPointsAchieved()).isEqualTo(9.0);
+        assertThat(result.studentResult().overallScoreAchieved()).isEqualTo(90.0);
+        assertThat(result.studentResult().overallGrade()).isEqualTo("1.0");
+        assertThat(result.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isNull();
+        assertThat(result.studentResult().gradeWithBonus().finalPoints()).isNull();
+        assertThat(result.studentResult().gradeWithBonus().finalGrade()).isNull();
+        assertThat(result.studentResult().gradeWithBonus().pending()).isTrue();
+        assertThat(new tools.jackson.databind.json.JsonMapper().writeValueAsString(result.studentResult().gradeWithBonus())).contains("\"pending\":true");
+        verifyNoInteractions(bonusService);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void practiceBonusUsesTheLatestSubmittedSourceAttemptIncludingWhenItIsPending(boolean pending) {
+        var sourceExam = sourceExam();
+        var previous = sourceAttempt(10L, sourceExam, attempt.getUser(), true, false);
+        var latest = sourceAttempt(11L, sourceExam, attempt.getUser(), true, false);
+        var unsubmitted = sourceAttempt(12L, sourceExam, attempt.getUser(), false, false);
+        var testRun = sourceAttempt(13L, sourceExam, attempt.getUser(), true, true);
+        var sourceExercise = new ProgrammingExercise();
+        sourceExercise.setId(2L);
+        sourceExercise.setMaxPoints(20.0);
+        sourceExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        sourceExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        sourceExercise.setExerciseGroup(sourceExam.getExerciseGroups().getFirst());
+        latest.setExercises(List.of(sourceExercise));
+        var sourceParticipation = new StudentParticipation();
+        sourceParticipation.setId(11L);
+        sourceParticipation.setExercise(sourceExercise);
+        if (pending) {
+            var submission = new ProgrammingSubmission();
+            submission.setId(11L);
+            submission.setSubmitted(true);
+            submission.setSubmissionDate(ZonedDateTime.now());
+            sourceParticipation.addSubmission(submission);
+        }
+        when(examRepository.findByIdElseThrow(2L)).thenReturn(sourceExam);
+        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(latest, false)).thenReturn(List.of(sourceParticipation));
+        var sourceGrade = examService.calculateStudentResultWithGradeAndPoints(latest,
+                pending ? Set.of() : Set.of(new ExamGradeScoreDTO(11L, 1L, 2L, 80.0, 20.0, IncludedInOverallScore.INCLUDED_COMPLETELY)));
         var sourceScale = new GradingScale();
         sourceScale.setExam(sourceExam);
+        var bonus = bonusFrom(sourceScale);
+        when(userRepository.findByIdWithAuthoritiesElseThrow(1L)).thenReturn(attempt.getUser());
+        org.mockito.Mockito.lenient().when(studentExamRepository.findWithExercisesByUserIdAndExamId(1L, 2L, false)).thenThrow(new IncorrectResultSizeDataAccessException(1, 4));
+        org.mockito.Mockito.lenient().when(studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(1L, 2L)).thenReturn(List.of(previous, latest, unsubmitted, testRun));
+        org.mockito.Mockito.lenient().when(studentExamRepository.findWithExercisesById(11L)).thenReturn(Optional.of(latest));
+        org.mockito.Mockito.lenient().doReturn(sourceGrade).when(examService).getStudentExamGradesForSummary(attempt.getUser(), latest, false);
+        if (!pending) {
+            org.mockito.Mockito.lenient().when(bonusService.calculateGradeWithBonus(eq(bonus), anyDouble(), eq(16.0), eq(20.0)))
+                    .thenReturn(new BonusExampleDTO(90.0, 16.0, "1.0", 1.0, 100.0, "1.0", false));
+        }
+
+        var target = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of(grade(1L, 90.0)));
+
+        assertThat(target.studentResult().gradeWithBonus().pending()).isEqualTo(pending);
+        assertThat(target.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(pending ? null : 16.0);
+        org.mockito.Mockito.verify(examService).getStudentExamGradesForSummary(attempt.getUser(), latest, false);
+        org.mockito.Mockito.verify(studentExamRepository, org.mockito.Mockito.never()).findWithExercisesByUserIdAndExamId(1L, 2L, false);
+    }
+
+    @Test
+    void bulkBonusCalculationUsesOneLatestSubmittedPracticeAttemptPerStudent() {
+        var sourceExam = sourceExam();
+        sourceExam.setExamMaxPoints(100);
+        var secondUser = new User();
+        secondUser.setId(2L);
+        var secondTarget = sourceAttempt(2L, exam, secondUser, true, false);
+        secondTarget.setExercises(List.of(quiz));
+        var secondParticipation = new StudentParticipation();
+        secondParticipation.setId(2L);
+        secondParticipation.setExercise(quiz);
+        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(secondTarget, false)).thenReturn(List.of(secondParticipation));
+        exam.setExerciseGroups(List.of(quiz.getExerciseGroup()));
+        exam.setNumberOfCorrectionRoundsInExam(1);
+        when(examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(1L)).thenReturn(exam);
+        when(studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(1L)).thenReturn(Set.of(attempt, secondTarget));
+        when(studentParticipationRepository.findGradesByExamId(1L))
+                .thenReturn(Set.of(grade(1L, 60.0), new ExamGradeScoreDTO(2L, 2L, 1L, 60.0, 10.0, IncludedInOverallScore.INCLUDED_COMPLETELY)));
+        var sourceQuiz = new QuizExercise();
+        sourceQuiz.setId(2L);
+        sourceQuiz.setMaxPoints(20.0);
+        sourceQuiz.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        sourceQuiz.setExerciseGroup(sourceExam.getExerciseGroups().getFirst());
+        var sourceAttempts = new HashSet<StudentExam>();
+        var sourceGrades = new HashSet<ExamGradeScoreDTO>();
+        for (long id : List.of(10L, 11L, 12L, 13L, 20L, 21L)) {
+            var source = sourceAttempt(id, sourceExam, id < 20 ? attempt.getUser() : secondUser, id != 12, id == 13);
+            source.setExercises(List.of(sourceQuiz));
+            sourceAttempts.add(source);
+            var participation = new StudentParticipation();
+            participation.setId(id);
+            participation.setExercise(sourceQuiz);
+            org.mockito.Mockito.lenient().when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(source, false)).thenReturn(List.of(participation));
+            sourceGrades.add(new ExamGradeScoreDTO(id, source.getUser().getId(), 2L, id == 11 ? 60.0 : id == 21 ? 80.0 : 100.0, 20.0, IncludedInOverallScore.INCLUDED_COMPLETELY));
+        }
+        when(examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(2L)).thenReturn(sourceExam);
+        when(studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(2L)).thenReturn(sourceAttempts);
+        when(studentParticipationRepository.findGradesByExamId(2L)).thenReturn(sourceGrades);
+        var sourceScale = new GradingScale();
+        sourceScale.setExam(sourceExam);
+        var bonus = bonusFrom(sourceScale);
+        org.mockito.Mockito.lenient().when(bonusService.calculateGradeWithBonus(eq(bonus), anyDouble(), anyDouble(), eq(20.0))).thenAnswer(invocation -> {
+            double sourcePoints = invocation.getArgument(2);
+            return new BonusExampleDTO(60.0, sourcePoints, "1.0", 1.0, 60 + sourcePoints, "1.0", false);
+        });
+
+        var results = examService.calculateExamScores(1L).studentResults();
+
+        assertThat(results).hasSize(2);
+        assertThat(results).extracting(result -> result.gradeWithBonus().studentPointsOfBonusSource()).containsExactlyInAnyOrder(12.0, 16.0);
+    }
+
+    @Test
+    void manualOnlySourceHasAuthoritativeZeroPointsAndDoesNotRemainPending() {
+        var manual = new TextExercise();
+        manual.setId(2L);
+        manual.setMaxPoints(100.0);
+        manual.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        attempt.setExercises(List.of(manual));
+        var manualSource = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of());
+        assertThat(manualSource.maxPoints()).isZero();
+        assertThat(manualSource.studentResult().overallPointsAchieved()).isZero();
+        assertThat(manualSource.pendingExerciseIds()).isEmpty();
+        attempt.setExercises(List.of(quiz));
+        var course = new Course();
+        course.setId(2L);
+        course.setMaxPoints(100);
+        var sourceScale = new GradingScale();
+        sourceScale.setCourse(course);
+        var bonus = bonusFrom(sourceScale);
+        when(courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, sourceScale, List.of(1L)))
+                .thenReturn(Map.of(1L, new BonusSourceResultDTO(manualSource.studentResult().overallPointsAchieved(), null, null, null, true)));
+        when(courseScoreCalculationService.calculateReachablePoints(eq(sourceScale), org.mockito.ArgumentMatchers.any())).thenReturn(100.0);
+        when(bonusService.calculateGradeWithBonus(eq(bonus), anyDouble(), eq(0.0), eq(100.0))).thenReturn(new BonusExampleDTO(90.0, 0.0, "1.0", 0.0, 90.0, "1.0", false));
+
+        var target = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of(grade(1L, 90.0)));
+
+        assertThat(target.studentResult().gradeWithBonus().pending()).isFalse();
+        assertThat(target.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isZero();
+        assertThat(target.studentResult().gradeWithBonus().finalGrade()).isEqualTo("1.0");
+        assertThat(target.studentResult().gradeWithBonus().finalPoints()).isEqualTo(9.0);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void practiceBonusUsesItsAutomaticDenominatorAndKeepsManualOnlySourcesTerminal(boolean manualOnly) {
+        var sourceExam = sourceExam();
+        sourceExam.setExamMaxPoints(100);
+        var sourceAttempt = sourceAttempt(11L, sourceExam, attempt.getUser(), true, false);
+        var sourceQuiz = new QuizExercise();
+        sourceQuiz.setId(2L);
+        sourceQuiz.setMaxPoints(30.5);
+        sourceQuiz.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        sourceQuiz.setExerciseGroup(sourceExam.getExerciseGroups().getFirst());
+        var manual = new TextExercise();
+        manual.setId(3L);
+        manual.setMaxPoints(manualOnly ? 100.0 : 69.5);
+        manual.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        manual.setExerciseGroup(sourceQuiz.getExerciseGroup());
+        sourceAttempt.setExercises(manualOnly ? List.of(manual) : List.of(sourceQuiz, manual));
+        var participation = new StudentParticipation();
+        participation.setId(11L);
+        participation.setExercise(sourceQuiz);
+        when(examRepository.findByIdElseThrow(2L)).thenReturn(sourceExam);
+        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(sourceAttempt, false)).thenReturn(List.of(participation));
+        var sourceGrade = examService.calculateStudentResultWithGradeAndPoints(sourceAttempt,
+                Set.of(new ExamGradeScoreDTO(11L, 1L, 2L, 20.0 / 30.5 * 100, 30.5, IncludedInOverallScore.INCLUDED_COMPLETELY)));
+        assertThat(sourceGrade.maxPoints()).isEqualTo(manualOnly ? 0.0 : 30.5);
+        assertThat(sourceGrade.studentResult().overallPointsAchieved()).isEqualTo(manualOnly ? 0.0 : 20.0);
+        var sourceScale = new GradingScale();
+        sourceScale.setExam(sourceExam);
+        var bonus = bonusFrom(sourceScale, false);
+        bonus.setWeight(1.0);
+        var before = new GradeStep();
+        before.setGradeName("3.0");
+        before.setIsPassingGrade(true);
+        var after = new GradeStep();
+        after.setGradeName("1.0");
+        after.setIsPassingGrade(true);
+        when(gradingScaleRepository.matchPercentageToGradeStep(anyDouble(), eq(bonus.getBonusToGradingScale())))
+                .thenAnswer(invocation -> (double) invocation.getArgument(0) >= 90 ? after : before);
+        var noBonus = new GradeStep();
+        noBonus.setGradeName("0.0");
+        var earnedBonus = new GradeStep();
+        earnedBonus.setGradeName("10.0");
+        when(gradingScaleRepository.matchPercentageToGradeStep(anyDouble(), eq(sourceScale)))
+                .thenAnswer(invocation -> (double) invocation.getArgument(0) >= 50 ? earnedBonus : noBonus);
+        when(userRepository.findByIdWithAuthoritiesElseThrow(1L)).thenReturn(attempt.getUser());
+        when(studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(1L, 2L)).thenReturn(List.of(sourceAttempt));
+        when(studentExamRepository.findWithExercisesById(11L)).thenReturn(Optional.of(sourceAttempt));
+        org.mockito.Mockito.doReturn(sourceGrade).when(examService).getStudentExamGradesForSummary(attempt.getUser(), sourceAttempt, false);
+        when(bonusService.calculateGradeWithBonus(eq(bonus), anyDouble(), anyDouble(), anyDouble())).thenAnswer(invocation -> new BonusService(null, gradingScaleRepository)
+                .calculateGradeWithBonus(bonus, invocation.getArgument(1), invocation.getArgument(2), invocation.getArgument(3)));
+
+        var target = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of(grade(1L, 80.0)));
+
+        assertThat(target.studentResult().overallPointsAchieved()).isEqualTo(8.0);
+        assertThat(target.studentResult().overallGrade()).isEqualTo("3.0");
+        assertThat(target.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(manualOnly ? 0.0 : 20.0);
+        assertThat(target.studentResult().gradeWithBonus().bonusGrade()).isEqualTo(manualOnly ? "0.0" : "10.0");
+        assertThat(target.studentResult().gradeWithBonus().finalPoints()).isEqualTo(manualOnly ? 8.0 : 9.0);
+        assertThat(target.studentResult().gradeWithBonus().finalGrade()).isEqualTo(manualOnly ? "3.0" : "1.0");
+        assertThat(target.studentResult().gradeWithBonus().pending()).isFalse();
+        double expectedSourcePercentage = manualOnly ? 0.0 : 20.0 / 30.5 * 100;
+        org.mockito.Mockito.verify(gradingScaleRepository).matchPercentageToGradeStep(
+                org.mockito.ArgumentMatchers.doubleThat(value -> Double.isFinite(value) && Math.abs(value - expectedSourcePercentage) < 1e-9), eq(sourceScale));
+    }
+
+    private Bonus bonusFrom(GradingScale sourceScale) {
+        return bonusFrom(sourceScale, true);
+    }
+
+    private Bonus bonusFrom(GradingScale sourceScale, boolean stubTargetGrade) {
+        var targetScale = new GradingScale();
+        targetScale.setExam(exam);
+        targetScale.setBonusStrategy(BonusStrategy.POINTS);
         var bonus = new Bonus();
         bonus.setSourceGradingScale(sourceScale);
         targetScale.addBonusFrom(bonus);
+        var passing = new GradeStep();
+        passing.setGradeName("1.0");
+        passing.setIsPassingGrade(true);
         when(gradingScaleRepository.findByExamIdWithBonusFrom(1L)).thenReturn(Optional.of(targetScale));
-        when(gradingScaleRepository.matchPercentageToGradeStep(anyDouble(), eq(targetScale))).thenReturn(passing);
-        var sourceUser = attempt.getUser();
-        var sourceAttempt = new StudentExam();
-        sourceAttempt.setId(9L);
-        sourceAttempt.setExam(exam);
-        sourceAttempt.setUser(sourceUser);
-        sourceAttempt.setSubmitted(true);
-        sourceAttempt.setExercises(List.of());
-        when(userRepository.findByIdWithAuthoritiesElseThrow(1L)).thenReturn(sourceUser);
-        when(studentExamRepository.findWithExercisesByUserIdAndExamId(eq(1L), eq(5L), anyBoolean())).thenReturn(Optional.of(sourceAttempt));
-        var spiedService = org.mockito.Mockito.spy(examService);
-        org.mockito.Mockito
-                .doReturn(new StudentExamWithGradeDTO(10.0, 0.0, null, null,
-                        new ExamScoresDTO.StudentResultDTO(1L, null, null, null, null, true, 8.0, 80.0, "", "", false, 0.0, null, Map.of(), null, 10.0), Map.of(), List.of()))
-                .when(spiedService).getStudentExamGradesForSummary(any(User.class), any(StudentExam.class), anyBoolean());
-        // 8 of 10 automatic points in the source attempt must reach the bonus calculation as 80 of 100.
-        when(bonusService.calculateGradeWithBonus(eq(bonus), anyDouble(), eq(80.0), eq(100.0))).thenReturn(new BonusExampleDTO(9.0, 80.0, "1.0", 10.0, 19.0, "1.0", false));
+        if (stubTargetGrade) {
+            when(gradingScaleRepository.matchPercentageToGradeStep(anyDouble(), eq(targetScale))).thenReturn(passing);
+        }
+        return bonus;
+    }
 
-        var result = spiedService.calculateStudentResultWithGradeAndPoints(attempt, Set.of(grade(1L, 90.0)));
+    private Exam sourceExam() {
+        var source = new Exam();
+        source.setId(2L);
+        source.setCourse(exam.getCourse());
+        source.setTestExam(true);
+        source.setExamMaxPoints(20);
+        source.setNumberOfCorrectionRoundsInExam(1);
+        var group = new ExerciseGroup();
+        group.setId(2L);
+        group.setExam(source);
+        source.setExerciseGroups(List.of(group));
+        return source;
+    }
 
-        assertThat(result.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(80.0);
+    private StudentExam sourceAttempt(long id, Exam sourceExam, User user, boolean submitted, boolean testRun) {
+        var source = new StudentExam();
+        source.setId(id);
+        source.setExam(sourceExam);
+        source.setUser(user);
+        source.setSubmitted(submitted);
+        source.setTestRun(testRun);
+        source.setCreatedDate(Instant.EPOCH.plusSeconds(id));
+        return source;
     }
 
     private StudentParticipation programmingParticipation() {

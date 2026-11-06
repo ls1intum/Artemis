@@ -13,8 +13,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.apache.commons.io.FileUtils;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -397,11 +399,23 @@ public class BuildLogEntryService {
      * @param programmingSubmission the programming submission for which the build logs should be deleted
      */
     public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
+        deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission, Runnable::run);
+    }
+
+    /**
+     * Deletes log rows while letting an enclosing atomic deletion defer irreversible file cleanup until commit.
+     *
+     * @param programmingSubmission the submission whose logs are deleted
+     * @param externalCleanup       accepts file cleanup to run after the surrounding transaction commits
+     */
+    public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission, Consumer<Runnable> externalCleanup) {
         long exerciseId = programmingSubmission.getParticipation().getExercise().getId();
-        failedBuildLogService.deleteBuildLogs(exerciseId, programmingSubmission.getId());
-        programmingSubmission.setBuildLogEntries(Set.of());
-        programmingSubmissionRepository.save(programmingSubmission);
-        buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
+        long submissionId = programmingSubmission.getId();
+        externalCleanup.accept(() -> failedBuildLogService.deleteBuildLogs(exerciseId, submissionId));
+        if (Hibernate.isInitialized(programmingSubmission.getBuildLogEntries())) {
+            programmingSubmission.getBuildLogEntries().clear();
+        }
+        buildLogEntryRepository.deleteByProgrammingSubmissionId(submissionId);
     }
 
     private long exerciseIdOf(ProgrammingSubmission programmingSubmission) {

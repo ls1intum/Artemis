@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -265,16 +266,17 @@ public class ExamDeletionService {
     /**
      * Deletes student exams and existing participations for an exam.
      *
-     * @param examId the ID of the exam where the student exams and participations should be deleted
+     * @param examId          the ID of the exam where the student exams and participations should be deleted
+     * @param externalCleanup accepts external cleanup to run only after the regeneration transaction commits
      */
-    public void deleteStudentExamsAndExistingParticipationsForExam(@NonNull Long examId) {
+    public void deleteStudentExamsAndExistingParticipationsForExam(@NonNull Long examId, Consumer<Runnable> externalCleanup) {
         User user = userRepository.getUser();
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         log.info("User {} has requested to delete existing student exams and participations for exam {}", user.getLogin(), exam.getTitle());
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup != null) {
                 for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseDeletionService.deletePlagiarismResultsAndParticipations(exercise);
+                    exerciseDeletionService.deletePlagiarismResultsAndParticipations(exercise, externalCleanup);
                 }
             }
         }

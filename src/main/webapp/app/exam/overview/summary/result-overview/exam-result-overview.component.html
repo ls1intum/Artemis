@@ -8,6 +8,9 @@
         @if (pendingExerciseIds().size > 0) {
             <p class="mb-3! text-sm" data-testid="test-exam-results-pending" jhiTranslate="artemisApp.exam.examSummary.automaticResultsPending"></p>
         }
+        @if (bonusPending()) {
+            <p class="mb-3! text-sm" data-testid="test-exam-bonus-pending" jhiTranslate="artemisApp.exam.examSummary.bonusResultPending"></p>
+        }
         <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-table']" [toggleCollapse]="toggleCollapse('grading-table')">
             <div class="header truncate text-base font-semibold" jhiTranslate="artemisApp.exam.examSummary.resultTable"></div>
 
@@ -61,7 +64,7 @@
                                     <td class="text-center" data-testid="exercise-achieved-points">
                                         @if (pendingExerciseIds().has(exercise.id!)) {
                                             <span jhiTranslate="artemisApp.exam.examSummary.automaticResultPending"></span>
-                                        } @else if (isManuallyAssessedTestExercise(exercise)) {
+                                        } @else if (manuallyAssessedExerciseIds().has(exercise.id!)) {
                                             <span jhiTranslate="artemisApp.exam.examSummary.notAutomaticallyAssessed"></span>
                                         } @else {
                                             {{ achievedPointsForExercise(exercise.id!) }}
@@ -75,7 +78,7 @@
                                     <td class="text-center" data-testid="exercise-achieved-percentage">
                                         @if (
                                             !pendingExerciseIds().has(exercise.id!) &&
-                                            !isManuallyAssessedTestExercise(exercise) &&
+                                            !manuallyAssessedExerciseIds().has(exercise.id!) &&
                                             exerciseInfos()[exercise.id!] !== undefined &&
                                             exerciseInfos()[exercise.id!].achievedPercentage !== undefined
                                         ) {
@@ -151,7 +154,7 @@
                                 }}
                             </p>
                         }
-                        @if (studentExamWithGrade().studentResult.gradeWithBonus !== undefined) {
+                        @if (studentExamWithGrade().studentResult.gradeWithBonus !== undefined && !bonusPending()) {
                             <p class="m-0 text-sm" data-testid="exam-result-bonus-sentence">
                                 {{
                                     'artemisApp.exam.examSummary.points.youAchievedFromBonus.' + studentExamWithGrade().studentResult.gradeWithBonus!.bonusStrategy

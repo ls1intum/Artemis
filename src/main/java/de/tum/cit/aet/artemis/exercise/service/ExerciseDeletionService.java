@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -264,16 +265,17 @@ public class ExerciseDeletionService {
     }
 
     /**
-     * Deletes all plagiarism results and participations for an exercise.
+     * Deletes exercise data while letting the caller defer external participation cleanup until its transaction commits.
      *
-     * @param exercise for which the plagiarism results and participations should be deleted
+     * @param exercise        the exercise whose data is deleted
+     * @param externalCleanup accepts work to run after a successful commit
      */
-    public void deletePlagiarismResultsAndParticipations(Exercise exercise) {
+    public void deletePlagiarismResultsAndParticipations(Exercise exercise, Consumer<Runnable> externalCleanup) {
         // delete all plagiarism results for this exercise
         plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exercise.getId()));
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         // TODO: recalculateCompetencyProgress = true does not make sense here for exam exercises
-        participationDeletionService.deleteAllByExercise(exercise, true);
+        participationDeletionService.deleteAllByExercise(exercise, true, externalCleanup);
     }
 }

@@ -480,6 +480,10 @@ public class ExamService {
      * @return return ExamScoresDTO with students, scores, exerciseGroups, bonus and related plagiarism verdicts for the exam
      */
     public ExamScoresDTO calculateExamScores(Long examId) {
+        return calculateExamScores(examId, false);
+    }
+
+    private ExamScoresDTO calculateExamScores(Long examId, boolean latestSubmittedPracticeAttemptsOnly) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         var examGrades = studentParticipationRepository.findGradesByExamId(examId);
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
@@ -516,6 +520,9 @@ public class ExamService {
 
         // Adding registered student information to DTO
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(examId);
+        if (latestSubmittedPracticeAttemptsOnly && exam.isTestExam()) {
+            studentExams = new HashSet<>(latestSubmittedPracticeAttempts(studentExams).values());
+        }
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(examId);
         List<Long> studentIds = studentExams.stream().map(studentExam -> studentExam.getUser().getId()).toList();
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, studentIds);
@@ -617,18 +624,11 @@ public class ExamService {
         var exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         var attemptGrades = grades.stream().filter(grade -> participationIds.contains(grade.participationId()) && exerciseIds.contains(grade.exerciseId()))
                 .collect(Collectors.toSet());
-        var scoredParticipationIds = attemptGrades.stream().filter(grade -> grade.score() != null).map(ExamGradeScoreDTO::participationId).collect(Collectors.toSet());
         var pendingExerciseIds = exercises.stream().filter(ProgrammingExercise.class::isInstance).filter(exercise -> {
             var participation = exercise.findParticipation(participations);
             var latest = participation != null ? participation.findLatestSubmission().orElse(null) : null;
-            if (!(latest instanceof ProgrammingSubmission submission) || !Boolean.TRUE.equals(submission.isSubmitted()) || submission.getSubmissionDate() == null
-                    || submission.isBuildFailed()) {
-                return false;
-            }
-            var completed = submission.getLatestCompletedResult();
-            // The grades and the participations are read separately. A result that completed in between is visible on the participation but
-            // missing in the grades, so it stays pending until both reads agree and the points are not reported incomplete.
-            return completed == null || completed.getScore() != null && !scoredParticipationIds.contains(participation.getId());
+            return latest instanceof ProgrammingSubmission submission && Boolean.TRUE.equals(submission.isSubmitted()) && submission.getSubmissionDate() != null
+                    && !submission.isBuildFailed() && submission.getLatestCompletedResult() == null;
         }).map(Exercise::getId).toList();
         return new ExamResultInputs(exercises, attemptGrades, pendingExerciseIds);
     }
@@ -645,7 +645,7 @@ public class ExamService {
         GradingScale bonusToGradingScale = gradingScale.get();
         var bonus = bonusToGradingScale.getBonusFrom().stream().findAny().orElseThrow();
         GradingScale sourceGradingScale = bonus.getSourceGradingScale();
-        Map<Long, BonusSourceResultDTO> scoresMap = calculateBonusSourceStudentPoints(sourceGradingScale, studentIds);
+        Map<Long, BonusSourceScore> scoresMap = calculateBonusSourceStudentPoints(sourceGradingScale, studentIds);
         String bonusFromTitle = bonus.getSourceGradingScale().getTitle();
         BonusStrategy bonusStrategy = bonus.getBonusToGradingScale().getBonusStrategy();
 
@@ -659,7 +659,8 @@ public class ExamService {
         final double sourceReachablePoints = tempSourceReachablePoints;
 
         return (studentId, bonusToAchievedPoints) -> {
-            BonusSourceResultDTO result = scoresMap != null ? scoresMap.get(studentId) : null;
+            BonusSourceScore sourceScore = scoresMap != null ? scoresMap.get(studentId) : null;
+            BonusSourceResultDTO result = sourceScore != null ? sourceScore.result() : null;
             Double sourceAchievedPoints = 0.0;
             PlagiarismVerdict verdict = null;
             Integer presentationScoreThreshold = null;
@@ -670,11 +671,12 @@ public class ExamService {
                 achievedPresentationScore = result.achievedPresentationScore();
                 presentationScoreThreshold = result.presentationScoreThreshold();
             }
-            if (result != null && sourceAchievedPoints == null) {
-                // The source is a test exam whose automatic results are still pending: no bonus can be derived yet.
+            if (sourceAchievedPoints == null) {
                 return new BonusResultDTO(bonusStrategy, bonusFromTitle, null, null, null, null, verdict, achievedPresentationScore, presentationScoreThreshold);
             }
-            BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, bonusToAchievedPoints, sourceAchievedPoints, sourceReachablePoints);
+            double studentSourceReachablePoints = sourceScore != null && sourceScore.maxPoints() != null && sourceScore.maxPoints() > 0 ? sourceScore.maxPoints()
+                    : sourceReachablePoints;
+            BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, bonusToAchievedPoints, sourceAchievedPoints, studentSourceReachablePoints);
             String bonusGrade = null;
             if (result == null || !result.hasParticipated()) {
                 bonusGrade = bonus.getSourceGradingScale().getNoParticipationGradeOrDefault();
@@ -692,13 +694,14 @@ public class ExamService {
     }
 
     @Nullable
-    private Map<Long, BonusSourceResultDTO> calculateBonusSourceStudentPoints(GradingScale sourceGradingScale, Collection<Long> studentIds) {
+    private Map<Long, BonusSourceScore> calculateBonusSourceStudentPoints(GradingScale sourceGradingScale, Collection<Long> studentIds) {
         try {
             if (sourceGradingScale.getCourse() != null) {
-                return courseScoreCalculationService.calculateCourseScoresForExamBonusSource(sourceGradingScale.getCourse(), sourceGradingScale, studentIds);
+                var scores = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(sourceGradingScale.getCourse(), sourceGradingScale, studentIds);
+                return scores == null ? null : scores.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> new BonusSourceScore(entry.getValue(), null)));
             }
             else {
-                return calculateExamScoresAsBonusSource(sourceGradingScale.getExam().getId(), studentIds, sourceGradingScale.getMaxPoints());
+                return calculateExamScoresAsBonusSource(sourceGradingScale.getExam(), studentIds);
             }
         }
         catch (AccessForbiddenException e) {
@@ -708,35 +711,51 @@ public class ExamService {
         }
     }
 
-    private Map<Long, BonusSourceResultDTO> calculateExamScoresAsBonusSource(Long examId, Collection<Long> studentIds, double sourceReachablePoints) {
+    private Map<Long, BonusSourceScore> calculateExamScoresAsBonusSource(Exam sourceExam, Collection<Long> studentIds) {
+        Long examId = sourceExam.getId();
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
             Long studentId = studentIds.iterator().next();
             User targetUser = userRepository.findByIdWithAuthoritiesElseThrow(studentId);
-            StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(targetUser.getId(), examId, IS_TEST_RUN)
-                    .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + studentId));
+            StudentExam studentExam;
+            if (sourceExam.isTestExam()) {
+                var latest = latestSubmittedPracticeAttempts(studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(studentId, examId)).get(studentId);
+                if (latest == null) {
+                    return Map.of();
+                }
+                studentExam = studentExamRepository.findWithExercisesById(latest.getId()).orElseThrow();
+            }
+            else {
+                studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(targetUser.getId(), examId, IS_TEST_RUN)
+                        .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + studentId));
+            }
 
             StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummary(targetUser, studentExam,
                     authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), targetUser));
             var studentResult = studentExamWithGradeDTO.studentResult();
-            return Map.of(studentId, toBonusSourceResult(studentResult, sourceReachablePoints));
+            return Map.of(studentId, new BonusSourceScore(new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null,
+                    Boolean.TRUE.equals(studentResult.submitted())), studentResult.maxPoints()));
         }
-        var scores = calculateExamScores(examId);
+        var scores = calculateExamScores(examId, true);
         var studentIdSet = new HashSet<>(studentIds);
         return scores.studentResults().stream().filter(studentResult -> studentIdSet.contains(studentResult.userId()))
-                .collect(Collectors.toMap(ExamScoresDTO.StudentResultDTO::userId, studentResult -> toBonusSourceResult(studentResult, sourceReachablePoints)));
+                .collect(
+                        Collectors
+                                .toMap(ExamScoresDTO.StudentResultDTO::userId,
+                                        studentResult -> new BonusSourceScore(new BonusSourceResultDTO(studentResult.overallPointsAchieved(),
+                                                studentResult.mostSeverePlagiarismVerdict(), null, null, Boolean.TRUE.equals(studentResult.submitted())),
+                                                studentResult.maxPoints())));
+
     }
 
-    /**
-     * Converts a source exam result into bonus source points. The bonus calculation compares the points with the configured maximum of the source,
-     * so the points of a partial test-exam attempt are rescaled from the attempt maximum to that maximum. A pending (null) result stays pending.
-     */
-    private BonusSourceResultDTO toBonusSourceResult(ExamScoresDTO.StudentResultDTO studentResult, double sourceReachablePoints) {
-        Double points = studentResult.overallPointsAchieved();
-        Double attemptMaxPoints = studentResult.maxPoints();
-        if (points != null && attemptMaxPoints != null && attemptMaxPoints > 0) {
-            points = points * sourceReachablePoints / attemptMaxPoints;
-        }
-        return new BonusSourceResultDTO(points, studentResult.mostSeverePlagiarismVerdict(), null, null, Boolean.TRUE.equals(studentResult.submitted()));
+    /** The optional attempt maximum keeps raw source points in their own units while applying the configured percentage-based grading key. */
+    private record BonusSourceScore(BonusSourceResultDTO result, Double maxPoints) {
+    }
+
+    /** Selects the newest created submitted attempt, using its id to break creation-time ties; unfinished attempts and test runs never replace an earned bonus. */
+    private Map<Long, StudentExam> latestSubmittedPracticeAttempts(Collection<StudentExam> attempts) {
+        Comparator<StudentExam> recency = Comparator.comparing(StudentExam::getCreatedDate, Comparator.nullsFirst(Comparator.naturalOrder())).thenComparing(StudentExam::getId);
+        return attempts.stream().filter(attempt -> Boolean.TRUE.equals(attempt.isSubmitted()) && !attempt.isTestRun())
+                .collect(Collectors.toMap(attempt -> attempt.getUser().getId(), Function.identity(), (first, second) -> recency.compare(first, second) >= 0 ? first : second));
     }
 
     /**

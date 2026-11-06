@@ -14,6 +14,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -242,6 +243,74 @@ describe('ExamResultOverviewComponent', () => {
         expect(component.overallAchievedPercentageRoundedByCourseSettings()).toBe(80);
         const aggregateCells = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('tfoot td'));
         expect(aggregateCells.map((cell) => cell.textContent?.replace(/\s+/g, ' ').trim())).toEqual(['8', '10', '80 %']);
+    });
+
+    it('reclassifies the same exercises when switching between real and test exams', () => {
+        const dto = {
+            ...studentExamWithGrade,
+            studentExam: {
+                ...studentExamWithGrade.studentExam!,
+                exercises: [{ ...textExercise, studentParticipations: [{ ...textParticipation, submissions: [{ results: [textResult] }] }] }, quizExercise, programmingExercise],
+                submitted: true,
+            },
+        };
+        for (const testExam of [true, false, true]) {
+            fixture.componentRef.setInput('studentExamWithGrade', { ...dto, studentExam: { ...dto.studentExam, exam: { ...exam, testExam } } });
+            fixture.detectChanges();
+            const rows = fixture.nativeElement.querySelectorAll('tbody tr');
+            expect(rows[0].querySelector('[jhiTranslate="artemisApp.exam.examSummary.notAutomaticallyAssessed"]') !== null).toBe(testExam);
+            expect(rows[1].querySelector('[jhiTranslate="artemisApp.exam.examSummary.notAutomaticallyAssessed"]')).toBeNull();
+            expect(rows[2].querySelector('[jhiTranslate="artemisApp.exam.examSummary.notAutomaticallyAssessed"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="test-exam-partial-result"]') !== null).toBe(testExam);
+        }
+    });
+
+    it.each([undefined, AssessmentType.AUTOMATIC, AssessmentType.MANUAL, AssessmentType.SEMI_AUTOMATIC])(
+        'classifies programming assessment type %s in submitted test exams',
+        (assessmentType) => {
+            fixture.componentRef.setInput('studentExamWithGrade', {
+                ...studentExamWithGrade,
+                studentExam: {
+                    ...studentExamWithGrade.studentExam!,
+                    exercises: [{ ...programmingExercise, assessmentType }],
+                    submitted: true,
+                    exam: { ...exam, testExam: true },
+                },
+            });
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('[jhiTranslate="artemisApp.exam.examSummary.notAutomaticallyAssessed"]') !== null).toBe(
+                assessmentType === AssessmentType.MANUAL || assessmentType === AssessmentType.SEMI_AUTOMATIC,
+            );
+        },
+    );
+
+    it('keeps the target grade visible while the bonus source is pending and clears the notice when it completes', () => {
+        const dto = {
+            ...studentExamWithGrade,
+            studentExam: { ...studentExamWithGrade.studentExam!, exercises: [quizExercise], submitted: true, exam: { ...exam, testExam: true } },
+        };
+        fixture.componentRef.setInput('studentExamWithGrade', {
+            ...dto,
+            studentResult: { ...dto.studentResult, gradeWithBonus: { pending: true, bonusFromTitle: 'Pending source' } },
+        });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="test-exam-bonus-pending"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-result-grade"]').textContent).toContain('1.7');
+        expect(fixture.nativeElement.querySelector('tfoot')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-result-bonus-sentence"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-result-grade-after-bonus"]')).toBeNull();
+
+        fixture.componentRef.setInput('studentExamWithGrade', {
+            ...dto,
+            studentResult: {
+                ...dto.studentResult,
+                gradeWithBonus: { pending: false, bonusFromTitle: 'Pending source', bonusStrategy: BonusStrategy.GRADES_DISCRETE, bonusGrade: 0.3, finalGrade: '1.3' },
+            },
+        });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="test-exam-bonus-pending"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-result-bonus-sentence"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-result-grade-after-bonus"]').textContent).toContain('1.3');
     });
 
     it('preserves authoritative zero totals even when excluded exercises earned points', () => {

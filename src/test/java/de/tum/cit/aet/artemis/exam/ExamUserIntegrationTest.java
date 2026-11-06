@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -39,6 +41,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamAttendanceUpdateDTO;
@@ -48,6 +51,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -58,6 +62,9 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ExamSessionRepository examSessionRepository;
 
     private Course course1;
 
@@ -629,6 +636,82 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         var allLogins = new ArrayList<>(page0.stream().map(ExamStudentDTO::login).toList());
         allLogins.addAll(page1.stream().map(ExamStudentDTO::login).toList());
         assertThat(allLogins).doesNotHaveDuplicates().hasSize(4);
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = { "login|1 2 3 4|4 3 2 1", "visibleRegistrationNumber|2 3 4 1|1 4 3 2", "plannedRoom|2 3 1 4|4 1 2 3", "plannedSeat|2 3 1 4|4 1 2 3",
+            "actualRoom|3 4 1 2|2 1 3 4", "actualSeat|3 4 1 2|2 1 3 4", "workingTime|2 3 1 4|4 1 2 3", "numberOfExamSessions|4 2 3 1|1 2 3 4", "name|4 2 3 1|1 2 3 4",
+            "progress|4 3 2 1|1 2 3 4", "unsupported|1 2 3 4|1 2 3 4", "NULL|1 2 3 4|1 2 3 4" }, delimiter = '|', nullValues = "NULL")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testPagedStudentSortPreservesOverridesAndStableTies(String column, String ascendingLogins, String descendingLogins) throws Exception {
+        var exam = createPaginationTestExam();
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam);
+        String[] firstNames = { "Beta", "alpha", "Alpha", null };
+        String[] lastNames = { "Zulu", "Able", "Able", null };
+        String[] registrationNumbers = { "30", "10", "11", "20" };
+        String[] plannedRooms = { "B", "A", "A", "C" };
+        String[] plannedSeats = { "2", "1", "1", "3" };
+        for (int index = 0; index < 4; index++) {
+            var user = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (index + 1));
+            user.setFirstName(firstNames[index]);
+            user.setLastName(lastNames[index]);
+            user.setRegistrationNumber("9" + exam.getId() + "0" + registrationNumbers[index]);
+            userTestRepository.save(user);
+            var registered = examUserRepository.findByExamIdAndUserId(exam.getId(), user.getId()).orElseThrow();
+            registered.setPlannedRoom(plannedRooms[index]);
+            registered.setPlannedSeat(plannedSeats[index]);
+            registered.setActualRoom(index == 1 ? "D" : index == 3 ? "A" : null);
+            registered.setActualSeat(index == 1 ? "4" : index == 3 ? "1" : null);
+            examUserRepository.save(registered);
+            if (index == 0 || index == 2) {
+                request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exam-users/" + registered.getId() + "/attendance",
+                        new ExamAttendanceUpdateDTO(index == 2), HttpStatus.NO_CONTENT);
+            }
+            if (index < 3) {
+                var attempt = studentExamRepository.findByExamIdAndUserId(exam.getId(), user.getId()).orElseThrow();
+                attempt.setWorkingTime(index == 0 ? 200 : 100);
+                studentExamRepository.save(attempt);
+                for (int sessionIndex = 0; sessionIndex < (index == 0 ? 2 : 1); sessionIndex++) {
+                    var session = new ExamSession();
+                    session.setStudentExam(attempt);
+                    examSessionRepository.save(session);
+                }
+            }
+        }
+        var testRun = buildStudentExam(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        testRun.setTestRun(true);
+        testRun.setWorkingTime(10000);
+        studentExamRepository.save(testRun);
+        var ignoredSession = new ExamSession();
+        ignoredSession.setStudentExam(testRun);
+        examSessionRepository.save(ignoredSession);
+
+        for (boolean descending : new boolean[] { false, true }) {
+            var params = pageParams("");
+            params.set("pageSize", "2");
+            if (column == null) {
+                params.remove("sortedColumn");
+                params.remove("sortingOrder");
+            }
+            else {
+                params.set("sortedColumn", column);
+            }
+            if (descending || column != null) {
+                params.set("sortingOrder", descending ? "DESCENDING" : "ASCENDING");
+            }
+            var rows = new ArrayList<>(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, params));
+            params.set("page", "1");
+            rows.addAll(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, params));
+            var expected = Arrays.stream((descending ? descendingLogins : ascendingLogins).split(" ")).map(number -> TEST_PREFIX + "student" + number).toList();
+            assertThat(rows).extracting(ExamStudentDTO::login).containsExactlyElementsOf(expected);
+            assertThat(rows).extracting(ExamStudentDTO::id).doesNotHaveDuplicates();
+            var submitted = rows.stream().filter(row -> row.login().equals(TEST_PREFIX + "student1")).findFirst().orElseThrow();
+            assertThat(submitted.didExamUserAttendExam()).isFalse();
+            assertThat(submitted.workingTime()).isEqualTo(200);
+            assertThat(submitted.numberOfExamSessions()).isEqualTo(2);
+            assertThat(rows.stream().filter(row -> row.login().equals(TEST_PREFIX + "student3")).findFirst().orElseThrow().didExamUserAttendExam()).isTrue();
+        }
     }
 
     @Test
