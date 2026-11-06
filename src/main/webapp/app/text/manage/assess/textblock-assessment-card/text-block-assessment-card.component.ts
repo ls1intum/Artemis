@@ -7,7 +7,6 @@ import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
-import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 
 type OptionalTextBlockRef = TextBlockRef | undefined;
 
@@ -27,7 +26,6 @@ export class TextBlockAssessmentCardComponent {
     selected = input<boolean>(false);
     readOnly = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
-    criteria = input<GradingCriterion[]>();
     /** Moves the focus to the feedback editor as soon as it is rendered, e.g. for a block that was just selected manually. */
     focusFeedback = input<boolean>(false);
 

@@ -107,7 +107,8 @@ export class AthenaService {
                     // Programming feedback suggestions are automatically accepted, so we can set the text directly:
                     feedback.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + suggestion.title;
                     feedback.detailText = suggestion.description;
-                    if (suggestion.filePath && Number.isInteger(suggestion.lineStart) && suggestion.lineStart! > 0) {
+                    // Athena numbers lines from 0, like the editor lines stored in the reference
+                    if (suggestion.filePath && Number.isInteger(suggestion.lineStart) && suggestion.lineStart! >= 0) {
                         // Referenced feedback
                         feedback.type = FeedbackType.MANUAL;
                         const lineEnd = Number.isInteger(suggestion.lineEnd) && suggestion.lineEnd! > suggestion.lineStart! ? suggestion.lineEnd : suggestion.lineStart;
