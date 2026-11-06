@@ -686,7 +686,8 @@ public class SubmissionService {
             result = saveNewEmptyResult(submission);
         }
 
-        if (result.getAssessor() == null || submission.getParticipation().getExercise().isTeamMode() && result.getCompletionDate() == null) {
+        if (result.getAssessor() == null || submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
+                && participation.getTeam().isPresent() && result.getCompletionDate() == null) {
             result.setAssessor(userRepository.getUser());
         }
 

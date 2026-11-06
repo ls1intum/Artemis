@@ -445,7 +445,8 @@ public class ProgrammingSubmissionResource {
             }
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
-        else if (programmingExercise.isTeamMode() && programmingSubmission.getResultForCorrectionRound(correctionRound) != null
+        else if (programmingExercise.isTeamMode() && participation instanceof ProgrammingExerciseStudentParticipation studentParticipation
+                && studentParticipation.getTeam().isPresent() && programmingSubmission.getResultForCorrectionRound(correctionRound) != null
                 && programmingSubmission.getResultForCorrectionRound(correctionRound).getCompletionDate() == null) {
             var draft = programmingSubmission.getResultForCorrectionRound(correctionRound);
             if (draft.getAssessor() == null || !draft.getAssessor().getId().equals(user.getId())) {

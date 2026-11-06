@@ -497,7 +497,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         SubmissionService.checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         var assignedResult = submission.getResultForCorrectionRound(correctionRound);
-        if (submission.getParticipation().getExercise().isTeamMode() && assignedResult != null && assignedResult.getAssessor() != null) {
+        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
+                && participation.getTeam().isPresent() && assignedResult != null && assignedResult.getAssessor() != null) {
             if (assignedResult.getCompletionDate() == null) {
                 assignedResult.setAssessor(userRepository.getUser());
                 resultRepository.save(assignedResult);
@@ -525,7 +526,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // Resolving the latest commit can select a different submission whose assessment is already assigned.
         authCheckService.checkTeamAssessmentAccessElseThrow(existingSubmission);
         assignedResult = existingSubmission.getResultForCorrectionRound(correctionRound);
-        if (existingSubmission.getParticipation().getExercise().isTeamMode() && assignedResult != null && assignedResult.getAssessor() != null) {
+        if (existingSubmission.getParticipation().getExercise().isTeamMode() && existingSubmission.getParticipation() instanceof StudentParticipation participation
+                && participation.getTeam().isPresent() && assignedResult != null && assignedResult.getAssessor() != null) {
             if (assignedResult.getCompletionDate() == null) {
                 assignedResult.setAssessor(userRepository.getUser());
                 resultRepository.save(assignedResult);

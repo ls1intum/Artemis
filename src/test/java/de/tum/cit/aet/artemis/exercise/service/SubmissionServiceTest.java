@@ -115,6 +115,9 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     @Autowired
     private AthenaRequestMockProvider athenaRequestMockProvider;
 
+    @Autowired
+    private de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository studentParticipationRepository;
+
     private User student1;
 
     private User tutor1;
@@ -424,6 +427,44 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         userUtilService.changeUser(TEST_PREFIX + "tutor2");
         request.get(url, HttpStatus.LOCKED, String.class);
         assertThat(resultRepository.findByIdWithEagerFeedbacksAndAssessor(draft.getId()).orElseThrow().getAssessor()).isEqualTo(tutor1);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ExerciseType.class, names = { "MODELING", "FILE_UPLOAD", "PROGRAMMING" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void teamlessPracticeDraftRetainsAssessorWhenOpenedByAnotherTutor(ExerciseType type) throws Exception {
+        var exercise = teamExercise(type);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        StudentParticipation participation = type == ExerciseType.PROGRAMMING ? new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation()
+                : new StudentParticipation();
+        participation.setExercise(exercise);
+        participation.setInitializationState(submission.getParticipation().getInitializationState());
+        participation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participation.setTestRun(true);
+        participation = studentParticipationRepository.save(participation);
+        submission.setParticipation(participation);
+        submissionRepository.save(submission);
+        var draft = new Result();
+        draft.setSubmission(submission);
+        draft.setExerciseId(exercise.getId());
+        draft.setAssessmentType(type == ExerciseType.PROGRAMMING ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.MANUAL);
+        draft.setAssessor(tutor1);
+        draft.setCorrectionRound(0);
+        draft = resultRepository.save(draft);
+        request.get(assessmentStartUrl(type, submission.getId()), HttpStatus.OK, String.class);
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        request.get(assessmentStartUrl(type, submission.getId()), HttpStatus.OK, String.class);
+        var saved = resultRepository.findByIdWithEagerFeedbacksAndAssessor(draft.getId()).orElseThrow();
+        assertThat(saved.getAssessor()).isEqualTo(tutor1);
+        completeTeamAssessment(type, submission, draft.getId(), HttpStatus.FORBIDDEN);
+        String cancelUrl = switch (type) {
+            case MODELING -> "/api/modeling/modeling-submissions/";
+            case FILE_UPLOAD -> "/api/fileupload/file-upload-submissions/";
+            case PROGRAMMING -> "/api/programming/programming-submissions/";
+            default -> throw new IllegalArgumentException();
+        };
+        request.put(cancelUrl + submission.getId() + "/cancel-assessment", null, HttpStatus.FORBIDDEN);
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).hasSize(1);
     }
 
     private String assessmentProposalUrl(ExerciseType type, Long exerciseId) {
