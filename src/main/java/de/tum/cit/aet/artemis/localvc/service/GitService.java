@@ -903,16 +903,19 @@ public class GitService extends AbstractGitService {
             return;
         }
         Path localPath = getDefaultLocalCheckOutPathOfRepo(repoUri);
-        if (Files.notExists(localPath)) {
-            return;
-        }
-        Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri);
-        if (repository != null) {
-            deleteLocalRepository(repository);
-        }
-        if (!Files.notExists(localPath)) {
-            throw new IOException("Local repository checkout remains at " + localPath);
-        }
+        workingCopyLocks.withIOLock(localPath, () -> {
+            if (Files.notExists(localPath)) {
+                return null;
+            }
+            Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri);
+            if (repository != null) {
+                deleteLocalRepository(repository);
+            }
+            if (!Files.notExists(localPath)) {
+                throw new IOException("Local repository checkout remains at " + localPath);
+            }
+            return null;
+        });
     }
 
     /**

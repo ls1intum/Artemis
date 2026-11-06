@@ -11,14 +11,19 @@ import java.nio.file.Path;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.RefSpec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -48,6 +53,8 @@ class GitServiceRepositoryStateTest {
     void setUp() {
         gitService = new GitService();
         ReflectionTestUtils.setField(gitService, "localVCBasePath", baseDir);
+        ReflectionTestUtils.setField(gitService, "artemisGitName", "Artemis service");
+        ReflectionTestUtils.setField(gitService, "artemisGitEmail", "artemis@example.com");
         bareGitRepositoryService = new BareGitRepositoryService();
         ReflectionTestUtils.setField(bareGitRepositoryService, "localVCBasePath", baseDir);
     }
@@ -170,7 +177,153 @@ class GitServiceRepositoryStateTest {
 
         Path workingCopy = baseDir.resolve("checkout-" + repositorySlug);
         Git.cloneRepository().setURI(bare.toUri().toString()).setDirectory(workingCopy.toFile()).call().close();
-        return new Repository(workingCopy.resolve(".git").toString(), uriFor(repositorySlug));
+        Repository repository = new Repository(workingCopy.resolve(".git").toString(), uriFor(repositorySlug));
+        ReflectionTestUtils.setField(repository, "localPath", workingCopy);
+        return repository;
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void stagedCommitAndMatchingLeasePublishOnlyStagedWork(boolean attributedToUser) throws Exception {
+        String slug = "abc-staged-lease";
+        try (Repository repository = checkoutOf(slug); Git git = new Git(repository)) {
+            String initialHead = repository.resolve(Constants.HEAD).name();
+            Path workingTree = repository.getLocalPath();
+            FileUtils.write(workingTree.resolve("generated.txt").toFile(), "Generated exercise", StandardCharsets.UTF_8);
+            git.add().addFilepattern("generated.txt").call();
+            FileUtils.write(workingTree.resolve("private-editor-answer.txt").toFile(), "Unstaged private answer", StandardCharsets.UTF_8);
+            User user = null;
+            if (attributedToUser) {
+                user = new User();
+                user.setFirstName("Editor");
+                user.setLastName("Example");
+                user.setEmail("editor@example.com");
+            }
+
+            String committedHead = gitService.commitStagedChanges(repository, "Commit generated exercise", user);
+
+            assertThat(committedHead).isNotEqualTo(initialHead).isEqualTo(repository.resolve(Constants.HEAD).name());
+            assertThat(remoteHead(slug)).as("creating the local commit must not push it").isEqualTo(initialHead);
+            var committed = git.log().setMaxCount(1).call().iterator().next();
+            assertThat(committed.getCommitterIdent().getName()).isEqualTo(attributedToUser ? "Editor Example" : "Artemis service");
+            assertThat(committed.getCommitterIdent().getEmailAddress()).isEqualTo(attributedToUser ? "editor@example.com" : "artemis@example.com");
+            assertThat(git.status().call().getUntracked()).contains("private-editor-answer.txt");
+            assertThat(workingTree.resolve("private-editor-answer.txt")).hasContent("Unstaged private answer");
+
+            gitService.pushCommitWithLease(repository, committedHead, DEFAULT_BRANCH, initialHead);
+
+            assertThat(remoteHead(slug)).isEqualTo(committedHead);
+            assertThat(repository.resolve(Constants.HEAD).name()).isEqualTo(committedHead);
+            assertThat(workingTree.resolve("private-editor-answer.txt")).hasContent("Unstaged private answer");
+            try (Git verification = Git.cloneRepository().setURI(pathFor(slug).toUri().toString()).setDirectory(baseDir.resolve("verified-staged").toFile()).call()) {
+                Path published = verification.getRepository().getWorkTree().toPath();
+                assertThat(published.resolve("generated.txt")).hasContent("Generated exercise");
+                assertThat(published.resolve("private-editor-answer.txt")).doesNotExist();
+            }
+        }
+    }
+
+    @Test
+    void stalePushLeaseRejectsEvenAFastForwardAndRetainsPrivateLocalWork() throws Exception {
+        String slug = "abc-stale-push";
+        try (Repository repository = checkoutOf(slug); Git git = new Git(repository)) {
+            String capturedHead = remoteHead(slug);
+            String otherEditorHead = pushOtherEditorWork(slug);
+            git.pull().call();
+            assertThat(repository.resolve(Constants.HEAD).name()).isEqualTo(otherEditorHead);
+            String privateHead = commitFile(repository, "private-editor-answer.txt", "Private local answer");
+
+            assertThatExceptionOfType(TransportException.class).isThrownBy(() -> gitService.pushCommitWithLease(repository, privateHead, DEFAULT_BRANCH, capturedHead));
+
+            assertThat(remoteHead(slug)).as("the remote must stay at the other editor's commit despite our candidate being a fast-forward").isEqualTo(otherEditorHead);
+            assertThat(repository.resolve(Constants.HEAD).name()).isEqualTo(privateHead);
+            assertThat(repository.getLocalPath().resolve("private-editor-answer.txt")).hasContent("Private local answer");
+            try (Git verification = Git.cloneRepository().setURI(pathFor(slug).toUri().toString()).setDirectory(baseDir.resolve("verified-stale-push").toFile()).call()) {
+                Path published = verification.getRepository().getWorkTree().toPath();
+                assertThat(published.resolve("other-editor.txt")).hasContent("Other editor's committed answer");
+                assertThat(published.resolve("private-editor-answer.txt")).doesNotExist();
+            }
+        }
+    }
+
+    @Test
+    void matchingResetLeaseCompensatesExactlyThePublishedCommit() throws Exception {
+        String slug = "abc-matching-reset";
+        try (Repository repository = checkoutOf(slug)) {
+            String initialHead = remoteHead(slug);
+            String generatedHead = commitFile(repository, "generated.txt", "Generated exercise");
+            gitService.pushCommitWithLease(repository, generatedHead, DEFAULT_BRANCH, initialHead);
+            assertThat(remoteHead(slug)).isEqualTo(generatedHead);
+
+            gitService.resetToCommitAndForcePush(repository, initialHead, generatedHead, DEFAULT_BRANCH);
+
+            assertThat(remoteHead(slug)).isEqualTo(initialHead);
+            assertThat(repository.resolve(Constants.HEAD).name()).isEqualTo(initialHead);
+            assertThat(repository.getLocalPath().resolve("generated.txt")).doesNotExist();
+            assertThat(repository.getLocalPath().resolve("README.md")).hasContent("initial");
+        }
+    }
+
+    @Test
+    void staleResetLeaseRetainsTheOtherEditorsCommitAndRestoresTheLocalRemoteState() throws Exception {
+        String slug = "abc-stale-reset";
+        try (Repository repository = checkoutOf(slug)) {
+            String initialHead = remoteHead(slug);
+            String generatedHead = commitFile(repository, "generated.txt", "Generated exercise");
+            gitService.pushCommitWithLease(repository, generatedHead, DEFAULT_BRANCH, initialHead);
+            String otherEditorHead = pushOtherEditorWork(slug);
+
+            assertThatExceptionOfType(TransportException.class).isThrownBy(() -> gitService.resetToCommitAndForcePush(repository, initialHead, generatedHead, DEFAULT_BRANCH));
+
+            assertThat(remoteHead(slug)).as("compensation must not overwrite a newer editor's work").isEqualTo(otherEditorHead);
+            assertThat(repository.resolve(Constants.HEAD).name()).as("a rejected compensation restores the local checkout to the actual remote").isEqualTo(otherEditorHead);
+            assertThat(repository.getLocalPath().resolve("other-editor.txt")).hasContent("Other editor's committed answer");
+            assertThat(repository.getLocalPath().resolve("generated.txt")).hasContent("Generated exercise");
+        }
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " " })
+    void missingLeasesNeverMutateLocalOrRemoteWork(String missingLease) throws Exception {
+        String slug = "abc-missing-lease";
+        try (Repository repository = checkoutOf(slug)) {
+            String initialHead = remoteHead(slug);
+            String privateHead = commitFile(repository, "private-editor-answer.txt", "Private local answer");
+
+            assertThatExceptionOfType(TransportException.class).isThrownBy(() -> gitService.pushCommitWithLease(repository, privateHead, DEFAULT_BRANCH, missingLease));
+            assertThat(remoteHead(slug)).isEqualTo(initialHead);
+            assertThat(repository.resolve(Constants.HEAD).name()).isEqualTo(privateHead);
+
+            assertThatExceptionOfType(TransportException.class).isThrownBy(() -> gitService.resetToCommitAndForcePush(repository, initialHead, missingLease, DEFAULT_BRANCH));
+            assertThat(remoteHead(slug)).isEqualTo(initialHead);
+            assertThat(repository.resolve(Constants.HEAD).name()).isEqualTo(privateHead);
+            assertThat(repository.getLocalPath().resolve("private-editor-answer.txt")).hasContent("Private local answer");
+        }
+    }
+
+    private String remoteHead(String slug) throws Exception {
+        try (Git remote = Git.open(pathFor(slug).toFile())) {
+            return remote.getRepository().resolve(Constants.R_HEADS + DEFAULT_BRANCH).name();
+        }
+    }
+
+    private String commitFile(Repository repository, String filename, String content) throws Exception {
+        FileUtils.write(repository.getLocalPath().resolve(filename).toFile(), content, StandardCharsets.UTF_8);
+        try (Git git = new Git(repository)) {
+            git.add().addFilepattern(filename).call();
+        }
+        return gitService.commitStagedChanges(repository, "Commit local work", null);
+    }
+
+    private String pushOtherEditorWork(String slug) throws Exception {
+        try (Git other = Git.cloneRepository().setURI(pathFor(slug).toUri().toString()).setDirectory(baseDir.resolve("other-" + slug).toFile()).call()) {
+            FileUtils.write(other.getRepository().getWorkTree().toPath().resolve("other-editor.txt").toFile(), "Other editor's committed answer", StandardCharsets.UTF_8);
+            other.add().addFilepattern("other-editor.txt").call();
+            String hash = GitService.commit(other).setMessage("Other editor's work").call().name();
+            other.push().call();
+            return hash;
+        }
     }
 
     @Test
