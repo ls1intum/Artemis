@@ -25,7 +25,10 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { MockRepositoryFileService } from 'test/helpers/mocks/service/mock-repository-file.service';
 
-import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
+import {
+    CodeEditorTutorAssessmentContainerComponent,
+    canLeaveCodeEditorTutorAssessmentContainer,
+} from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -34,7 +37,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { ActivatedRoute, ParamMap, Router, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, ParamMap, Router, RouterStateSnapshot, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -257,6 +260,48 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('should block assessment save, submit, and next submission while an inline card is unsaved', async () => {
+        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({ hasUnsavedInlineFeedback: () => true } as CodeEditorContainerComponent);
+        const saveSpy = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.participation.set(participation);
+        comp.submission.set(submission);
+        comp.manualResult.set(result);
+
+        comp.save();
+        await comp.submit();
+        comp.nextSubmission();
+
+        const beforeUnload = new Event('beforeunload', { cancelable: true }) as BeforeUnloadEvent;
+        comp.handleBeforeUnload(beforeUnload);
+        expect(beforeUnload.defaultPrevented).toBe(true);
+        expect(canLeaveCodeEditorTutorAssessmentContainer(comp, {} as ActivatedRouteSnapshot, {} as RouterStateSnapshot, {} as RouterStateSnapshot)).toBe(false);
+        expect(saveSpy).not.toHaveBeenCalled();
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).not.toHaveBeenCalled();
+        expect(comp.saveBusy()).toBe(false);
+        expect(comp.submitBusy()).toBe(false);
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.programmingAssessment.saveInlineFeedbackFirst');
+    });
+
+    it('keeps inline feedback read-only until the assessment save response returns', async () => {
+        comp.participation.set(participation);
+        comp.exercise.set(exercise);
+        comp.submission.set(submission);
+        comp.manualResult.set(result);
+        const saveResponse = new Subject<HttpResponse<Result>>();
+        vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(saveResponse);
+        comp.save();
+        expect(comp.inlineFeedbackReadOnly()).toBe(true);
+
+        const savedFeedback = { ...new Feedback(), id: 404, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:1', detailText: 'Saved' };
+        const savedResult = { ...result, feedbacks: [savedFeedback], submission };
+        saveResponse.next(new HttpResponse({ body: savedResult }));
+        saveResponse.complete();
+        await flushMicrotasks();
+        expect(comp.manualResult()?.feedbacks?.[0].id).toBe(404);
+        expect(comp.inlineFeedbackReadOnly()).toBe(false);
     });
 
     it('should highlight lines that were changed', async () => {
@@ -710,6 +755,12 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         await flushMicrotasks();
         const navigateBackStub = vi.spyOn(comp, 'navigateBack');
+        let hasUnsavedInlineFeedback = true;
+        const discardInlineFeedback = vi.fn(() => (hasUnsavedInlineFeedback = false));
+        vi.spyOn(comp, 'codeEditorContainer').mockReturnValue({
+            hasUnsavedInlineFeedback: () => hasUnsavedInlineFeedback,
+            discardUnsavedInlineFeedback: discardInlineFeedback,
+        } as unknown as CodeEditorContainerComponent);
         const cancelBackStub = vi.spyOn(programmingAssessmentManualResultService, 'cancelAssessment').mockReturnValue(of(undefined));
         global.confirm = () => true;
         const confirmSpy = vi.spyOn(window, 'confirm');
@@ -718,6 +769,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(confirmSpy).toHaveBeenCalledOnce();
         expect(comp.cancelBusy()).toBe(false);
         expect(navigateBackStub).toHaveBeenCalledOnce();
+        expect(discardInlineFeedback).toHaveBeenCalledOnce();
+        expect(discardInlineFeedback.mock.invocationCallOrder[0]).toBeLessThan(navigateBackStub.mock.invocationCallOrder[0]);
+        expect(canLeaveCodeEditorTutorAssessmentContainer(comp, {} as ActivatedRouteSnapshot, {} as RouterStateSnapshot, {} as RouterStateSnapshot)).toBe(true);
         expect(cancelBackStub).toHaveBeenCalledOnce();
     });
 

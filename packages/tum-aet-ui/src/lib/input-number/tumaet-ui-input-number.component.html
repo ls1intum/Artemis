@@ -26,25 +26,29 @@
     <span class="tumaet-ui-input-number-button-group">
         <button
             type="button"
-            tabindex="-1"
-            aria-hidden="true"
+            [attr.tabindex]="horizontalButtons() ? null : -1"
+            [attr.aria-hidden]="horizontalButtons() ? null : true"
             class="tumaet-ui-input-number-button tumaet-ui-input-number-increment tumaet:text-muted tumaet:hover:bg-hover-background tumaet:hover:text-text-hover"
             [disabled]="isDisabled()"
             (mousedown)="$event.preventDefault()"
+            [attr.aria-label]="incrementLabel()"
+            data-testid="input-number-increment"
             (click)="onStep(step())"
         >
-            <fa-icon [icon]="faChevronUp" />
+            <fa-icon [icon]="horizontalButtons() ? faPlus : faChevronUp" />
         </button>
         <button
             type="button"
-            tabindex="-1"
-            aria-hidden="true"
+            [attr.tabindex]="horizontalButtons() ? null : -1"
+            [attr.aria-hidden]="horizontalButtons() ? null : true"
             class="tumaet-ui-input-number-button tumaet-ui-input-number-decrement tumaet:text-muted tumaet:hover:bg-hover-background tumaet:hover:text-text-hover"
             [disabled]="isDisabled()"
             (mousedown)="$event.preventDefault()"
+            [attr.aria-label]="decrementLabel()"
+            data-testid="input-number-decrement"
             (click)="onStep(-step())"
         >
-            <fa-icon [icon]="faChevronDown" />
+            <fa-icon [icon]="horizontalButtons() ? faMinus : faChevronDown" />
         </button>
     </span>
 }

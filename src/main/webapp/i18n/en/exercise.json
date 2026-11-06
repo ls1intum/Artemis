@@ -432,7 +432,12 @@
             "exerciseAssessmentDashboard": "Assessment Dashboard",
             "applyInstruction": "Apply this assessment instruction",
             "applyInstructionHint": "Tick an assessment instruction to add it to the feedback, or drag & drop it onto a feedback element",
-            "instructionAppliedToReferencedElement": "Already applied to a feedback element. Remove it there to untick it."
+            "instructionAppliedToReferencedElement": "Already applied to a feedback element. Remove it there to untick it.",
+            "applyArmedInstruction": "Apply the selected assessment instruction to this feedback",
+            "armInstruction": "Select this instruction, then open a feedback on a code line or element and apply it there",
+            "unarmInstruction": "Unselect this instruction",
+            "increaseInstructionUsage": "Apply this assessment instruction once more",
+            "decreaseInstructionUsage": "Remove one application of this assessment instruction"
         }
     }
 }

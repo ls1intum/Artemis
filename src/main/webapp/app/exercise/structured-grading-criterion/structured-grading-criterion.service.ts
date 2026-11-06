@@ -1,6 +1,7 @@
-import { Service } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { parseJson } from 'app/foundation/util/json.util';
 import { getPositiveAndCappedTotalScore } from 'app/exercise/util/exercise.utils';
 
@@ -18,6 +19,8 @@ export interface AssessmentScore {
 
 @Service()
 export class StructuredGradingCriterionService {
+    private readonly selectionService = inject(GradingInstructionSelectionService);
+
     /**
      * Connects the structured grading instructions with the feedback of a submission element
      * @param {Event} event - The drop event
@@ -28,16 +31,38 @@ export class StructuredGradingCriterionService {
     updateFeedbackWithStructuredGradingInstructionEvent(feedback: Feedback, event: Event) {
         event.preventDefault();
         try {
-            const data = (event as DragEvent).dataTransfer!.getData('text/plain');
-            const instruction = parseJson<GradingInstruction>(data);
-            feedback.gradingInstruction = instruction;
-            feedback.credits = instruction.credits;
+            const data = (event as DragEvent).dataTransfer?.getData('text/plain');
+            if (!data) {
+                return;
+            }
+            this.applyInstructionToFeedback(feedback, parseJson<GradingInstruction>(data));
         } catch (err) {
             // Rethrow any non syntax error. syntax errors are caused by invalid JSON if someone drops something unrelated, ignore them
             if (!(err instanceof SyntaxError)) {
                 throw err;
             }
         }
+    }
+
+    /**
+     * Keyboard stand-in for drop: applies and clears a previously armed instruction onto {@code feedback}.
+     * @returns whether an instruction was applied
+     */
+    applyArmedInstructionToFeedback(feedback: Feedback): boolean {
+        const instruction = this.selectionService.consumeArmedInstruction();
+        if (!instruction) {
+            return false;
+        }
+        this.applyInstructionToFeedback(feedback, instruction);
+        return true;
+    }
+
+    private applyInstructionToFeedback(feedback: Feedback, instruction: GradingInstruction | undefined): void {
+        if (!instruction) {
+            return;
+        }
+        feedback.gradingInstruction = instruction;
+        feedback.credits = instruction.credits;
     }
 
     computeTotalScore(assessments: Feedback[]) {

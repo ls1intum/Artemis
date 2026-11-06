@@ -23,6 +23,30 @@ describe('TumAetUiInputNumberComponent', () => {
         return fixture.debugElement.query(By.css('input')).nativeElement;
     }
 
+    it('supports labelled horizontal stepping without moving focus or losing raw decimals', () => {
+        fixture.componentRef.setInput('showButtons', true);
+        fixture.componentRef.setInput('horizontalButtons', true);
+        fixture.componentRef.setInput('maxFractionDigits', 3);
+        fixture.componentRef.setInput('locale', 'en-US');
+        fixture.componentRef.setInput('incrementLabel', 'Increase points');
+        fixture.componentRef.setInput('decrementLabel', 'Decrease points');
+        fixture.componentRef.setInput('step', 0.5);
+        fixture.componentRef.setInput('snapToStep', true);
+        fixture.detectChanges();
+        input().value = '1.3';
+        input().dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        const increase = fixture.nativeElement.querySelector('[data-testid="input-number-increment"]') as HTMLButtonElement;
+        expect(increase.getAttribute('aria-label')).toBe('Increase points');
+        expect(increase.getAttribute('aria-hidden')).toBeNull();
+        const down = new MouseEvent('mousedown', { cancelable: true });
+        increase.dispatchEvent(down);
+        expect(down.defaultPrevented).toBe(true);
+        increase.click();
+        fixture.detectChanges();
+        expect(input().value).toBe('1.5');
+    });
+
     it('forwards native input and accessibility attributes', () => {
         fixture.componentRef.setInput('inputId', 'capacity');
         fixture.componentRef.setInput('placeholder', 'Capacity');

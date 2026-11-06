@@ -20,6 +20,8 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
+import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('TextAssessmentAreaComponent', () => {
     let component: TextAssessmentAreaComponent;
@@ -40,6 +42,7 @@ describe('TextAssessmentAreaComponent', () => {
             imports: [TextAssessmentAreaComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 MockProvider(StructuredGradingCriterionService),
                 MockProvider(TextAssessmentAnalytics),
@@ -298,7 +301,7 @@ describe('TextAssessmentAreaComponent', () => {
         const feedbackTextareas = (): HTMLTextAreaElement[] => Array.from(fixture.nativeElement.querySelectorAll('textarea.unified-feedback-detail-input'));
 
         const deleteFeedbackOfNewBlock = () => {
-            // an empty feedback is dismissed without confirmation when Escape is pressed in its editor
+            // Escape arms the inline delete confirmation.
             const unifiedFeedback = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent));
             unifiedFeedback.nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
             fixture.detectChanges();
@@ -344,6 +347,8 @@ describe('TextAssessmentAreaComponent', () => {
             const handleErrorSpy = vi.spyOn(TestBed.inject(ErrorHandler), 'handleError');
             selectWordsManually();
             deleteFeedbackOfNewBlock();
+            (fixture.nativeElement.querySelector('[data-testid="delete-feedback"] button') as HTMLButtonElement).click();
+            fixture.detectChanges();
             expect(feedbackTextareas()).toHaveLength(0);
 
             pressAlt('keyup');

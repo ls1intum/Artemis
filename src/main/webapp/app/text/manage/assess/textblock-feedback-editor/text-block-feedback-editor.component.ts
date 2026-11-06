@@ -80,6 +80,12 @@ export class TextBlockFeedbackEditorComponent {
     /**
      * Hook to indicate a score change; resets the correction status because it is now stale
      */
+    applyArmedInstruction(): void {
+        if (!this.readOnly() && this.structuredGradingCriterionService.applyArmedInstructionToFeedback(this.feedback())) {
+            this.onScoreChange();
+        }
+    }
+
     onScoreChange(): void {
         this.feedback().correctionStatus = undefined;
         this.didChange();

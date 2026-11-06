@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, booleanAttribute, computed, forwardRef, input, linkedSignal, numberAttribute, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronUp, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiInputDirective } from '../input/tumaet-ui-input.directive';
 
 interface LocaleNumberSyntax {
@@ -22,6 +22,7 @@ interface LocaleNumberSyntax {
         class: 'tumaet-ui-input-number',
         '[class.tumaet-ui-input-number-fluid]': 'fluid()',
         '[class.tumaet-ui-input-number-buttons]': 'showButtons()',
+        '[class.tumaet-ui-input-number-horizontal]': 'horizontalButtons() && showButtons()',
     },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumAetUiInputNumberComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,6 +41,11 @@ export class TumAetUiInputNumberComponent implements ControlValueAccessor {
      */
     readonly snapToStep = input(false, { transform: booleanAttribute });
     /** Shows increment and decrement controls. */
+    readonly horizontalButtons = input(false, { transform: booleanAttribute });
+    readonly incrementLabel = input<string>();
+    readonly decrementLabel = input<string>();
+    protected readonly faMinus = faMinus;
+    protected readonly faPlus = faPlus;
     readonly showButtons = input(false, { transform: booleanAttribute });
     /** Text displayed before the formatted number. */
     readonly prefix = input<string>();
