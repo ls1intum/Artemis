@@ -411,6 +411,71 @@ class GenerationOrchestratorTest {
         assertThat(outcome.capturedProducedFiles()).isEqualTo(checkpoints.getLast().capturedProducedFiles());
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void aRedesignedCandidateKeepsPriorLearnerObligationsBeforeTranscriptWorkCanFail(boolean checkpointDeliveryFails) {
+        var redesigned = new AtomicBoolean();
+        var stagedService = newService(true);
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+        var continuation = new StagedAssessmentContinuation(java.time.Instant.now(), 0, "approved SPEC", "learner assertion bypass", List.of(), List.of(), GenerationStage.SPEC,
+                "learner assertion bypass");
+        when(stagedGenerationRunner.requestAssessmentRedesign(any(), anyString(), any(), anyString(), any())).thenReturn(continuation);
+        when(stagedGenerationRunner.resume(any(), any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(),
+                any(), any())).thenAnswer(invocation -> {
+                    redesigned.set(true);
+                    return new StagedGenerationRunner.StagedRunOutcome(completed(), null);
+                });
+        when(workspace.extractRepository(any(), anyString(), any(), any())).thenAnswer(invocation -> new GenerationWorkspace.RepositoryExtraction(
+                invocation.getArgument(2) == RepositoryRole.SOLUTION ? redesigned.get() ? Map.of("src/Runner.java", "class Runner { public static void main(String[] args) {} }")
+                        : Map.of("src/LearnerChecks.java", "class LearnerChecks { @org.junit.jupiter.api.Test void checks() {} }") : Map.of(),
+                false));
+        when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(new VerificationResult(true, true, true, 2, List.of()),
+                new VerificationResult(true, true, true, 7, List.of()));
+        var learner = SemanticMutant.emptyStudentTests("src/LearnerChecks.java", "original learner checks", "empty learner checks");
+        var unavailable = new SemanticMutantOutcome(learner, SemanticMutantOutcome.Disposition.INCONCLUSIVE,
+                "A previously confirmed learner-test counterexample can no longer be rechecked at src/LearnerChecks.java");
+        var suppressed = SemanticMutant.nonFailingStudentTests("src/LearnerChecks.java", "original learner checks", "suppressed learner checks");
+        var suppressedUnavailable = new SemanticMutantOutcome(suppressed, SemanticMutantOutcome.Disposition.INCONCLUSIVE,
+                "A previously confirmed assertion-suppression obligation can no longer be rechecked at src/LearnerChecks.java");
+        when(verifier.pendingStudentTestAssessments(anyString())).thenAnswer(invocation -> redesigned.get() ? List.of(unavailable, suppressedUnavailable) : List.of());
+        when(verifier.probeStudentTestAssertions(any(), anyString(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            var outcomes = redesigned.get() ? List.of(unavailable, suppressedUnavailable)
+                    : List.of(new SemanticMutantOutcome(learner, SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE),
+                            new SemanticMutantOutcome(suppressed, SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE));
+            outcomes.forEach(invocation.<Consumer<SemanticMutantOutcome>>getArgument(8));
+            return outcomes;
+        });
+        var main = SemanticMutant.printedTranscript("src/Runner.java", "original main", "print only", "Runner");
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            if (!redesigned.get()) {
+                return List.of();
+            }
+            invocation.<Consumer<SemanticMutantOutcome>>getArgument(10).accept(new SemanticMutantOutcome(main, SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE));
+            throw new DifferentialVerifier.VerificationInfrastructureException("The next transcript build lost its session", null);
+        });
+        List<GenerationOutcome> checkpoints = new ArrayList<>();
+
+        var outcome = stagedService.generate(exercise, SEED, "Build learner test exercises.", JOB_ID, Mode.GENERATE, () -> false, null, null, null, null, null, _ -> {
+        }, checkpoint -> {
+            checkpoints.add(checkpoint);
+            if (redesigned.get() && checkpointDeliveryFails) {
+                throw new DifferentialVerifier.VerificationInfrastructureException("Replacement checkpoint delivery failed", null);
+            }
+        });
+
+        assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.RUN_FAILED);
+        assertThat(outcome.isMechanicallyVerified()).isTrue();
+        assertThat(outcome.verification().testCount()).isEqualTo(7);
+        assertThat(outcome.capturedProducedFiles().get(RepositoryRole.SOLUTION)).containsKey("src/Runner.java").doesNotContainKey("src/LearnerChecks.java");
+        assertThat(outcome.specFidelityReport().findings())
+                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE && finding.detail().contains("src/LearnerChecks.java"));
+        assertThat(outcome.specFidelityReport().findings())
+                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE && finding.detail().contains("assertion-suppression obligation"));
+        assertThat(outcome.specFidelityReport()).isEqualTo(checkpoints.getLast().specFidelityReport());
+        assertThat(outcome.capturedProducedFiles()).isEqualTo(checkpoints.getLast().capturedProducedFiles());
+    }
+
     @Test
     void exhaustedAssessmentRedesignStillAllowsAnOracleRepairWithinTheFrozenContract() {
         var repaired = new AtomicBoolean();

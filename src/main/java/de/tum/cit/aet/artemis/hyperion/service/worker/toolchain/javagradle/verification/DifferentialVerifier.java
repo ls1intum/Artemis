@@ -794,6 +794,16 @@ public class DifferentialVerifier {
     }
 
     /**
+     * Projects earlier learner-test counterexamples as unavailable until the current candidate rechecks them. This performs no sandbox work.
+     *
+     * @param sessionId active generation session
+     * @return all earlier learner-test obligations awaiting a current result
+     */
+    public List<SemanticMutantOutcome> pendingStudentTestAssessments(String sessionId) {
+        return studentTestAssessmentHistory.complete(sessionId, List.of());
+    }
+
+    /**
      * Executes empty-body and assertion-suppression counterexamples separately for each changed learner-owned JUnit method after a passing reference build. Unchanged supplied
      * classes and
      * non-empty test lifecycles are excluded. Other methods remain unchanged so they cannot mask the selected method. A compilation failure is inconclusive; only the executed
@@ -813,7 +823,7 @@ public class DifferentialVerifier {
     public List<SemanticMutantOutcome> probeStudentTestAssertions(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> producedTemplateFiles,
             Map<String, String> producedSolutionFiles, @Nullable String testPlanJson, SeededStructuralTests seededStructuralTests, Runnable restoreCandidate,
             Consumer<SemanticMutantOutcome> completed) {
-        studentTestAssessmentHistory.complete(sessionId, List.of()).forEach(completed);
+        pendingStudentTestAssessments(sessionId).forEach(completed);
         List<SemanticMutant> probes = new ArrayList<>();
         producedSolutionFiles.forEach((path, source) -> {
             if (path.startsWith("src/") && path.endsWith(".java") && !source.equals(producedTemplateFiles.get(path))) {

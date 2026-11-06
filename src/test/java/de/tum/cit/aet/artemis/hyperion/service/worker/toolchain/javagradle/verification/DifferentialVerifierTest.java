@@ -399,8 +399,7 @@ class DifferentialVerifierTest {
                 throw failure;
             }
         }, retry::add)).isSameAs(failure);
-        var retained = verifier.probeStudentTestAssertions(sandbox, "s", input(), learnerTests(), learnerTests(), null, SeededStructuralTests.EMPTY, NO_RESTORE, _ -> {
-        });
+        var retained = verifier.pendingStudentTestAssessments("s");
         assertThat(retained).singleElement().satisfies(outcome -> {
             assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE);
             assertThat(outcome.diagnostic()).contains("previously confirmed");

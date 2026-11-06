@@ -40,6 +40,10 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 final class ExecutableEvidenceLedger {
 
     private record AssessmentProbe(String path, SemanticMutant.Evidence kind, String rule) {
+
+        static AssessmentProbe of(SemanticMutantOutcome outcome) {
+            return new AssessmentProbe(outcome.mutant().solutionPath(), outcome.mutant().evidence(), outcome.mutant().ruleId());
+        }
     }
 
     private static final int MAX_TRACKED_SEMANTIC_MUTANTS = 6;
@@ -127,8 +131,13 @@ final class ExecutableEvidenceLedger {
             SeededStructuralTests seeded, Runnable restoreCandidate, Consumer<VerificationResult> evidenceUpdated) {
         Map<String, SemanticMutantOutcome> known = transcriptVerdicts(candidateFiles, plan);
         Map<AssessmentProbe, SemanticMutantOutcome> outcomes = new LinkedHashMap<>();
+        verifier.pendingStudentTestAssessments(sessionId).forEach(outcome -> outcomes.put(AssessmentProbe.of(outcome), outcome));
+        if (!outcomes.isEmpty()) {
+            updateAssessmentFindings(outcomes.values());
+            evidenceUpdated.accept(result);
+        }
         Consumer<SemanticMutantOutcome> completed = outcome -> {
-            var probe = new AssessmentProbe(outcome.mutant().solutionPath(), outcome.mutant().evidence(), outcome.mutant().ruleId());
+            var probe = AssessmentProbe.of(outcome);
             if (outcome.equals(outcomes.put(probe, outcome))) {
                 return;
             }
