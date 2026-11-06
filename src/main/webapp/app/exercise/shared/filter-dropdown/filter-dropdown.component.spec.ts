@@ -68,7 +68,7 @@ describe('Participation filter toolbar', () => {
         (fixture.nativeElement.querySelector('button[tumAetUiButton]') as HTMLButtonElement).click();
         fixture.detectChanges();
         expect(changed).toHaveBeenLastCalledWith([]);
-        expect(fixture.nativeElement.querySelector('button[tumAetUiButton]')).toBeNull();
+        expect((fixture.nativeElement.querySelector('button[tumAetUiButton]') as HTMLButtonElement).disabled).toBe(true);
     });
 
     it('stays open on scroll and input refresh, and closes when the backdrop is clicked', () => {

@@ -56,9 +56,9 @@
             </tumaet-ui-multi-select>
         }
     }
-    @if (activeFilters().length) {
-        <button type="button" tumAetUiButton variant="text" size="small" (click)="filterChange.emit([])">
+    <span [tumAetUiTooltip]="activeFilters().length ? '' : ('artemisApp.participation.resetDisabled' | artemisTranslate)" [attr.tabindex]="activeFilters().length ? null : 0">
+        <button [disabled]="!activeFilters().length" type="button" tumAetUiButton variant="text" size="small" (click)="filterChange.emit([])">
             {{ 'artemisApp.assessment.dashboard.resetFilter' | artemisTranslate }}
         </button>
-    }
+    </span>
 </fieldset>

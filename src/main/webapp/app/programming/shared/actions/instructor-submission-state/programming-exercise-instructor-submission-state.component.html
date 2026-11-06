@@ -15,7 +15,7 @@
                 | artemisTranslate: { number: buildingSummary()?.[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0 };
         @let failedLabel =
             'artemisApp.programmingExercise.failedSubmissions' | artemisTranslate: { number: buildingSummary()?.[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0 };
-        <div id="build-state" class="flex shrink-0 flex-col gap-0.5">
+        <div id="build-state" class="flex shrink-0 items-center gap-2">
             <tumaet-ui-tag
                 id="build-state-building"
                 class="[&>span]:w-full"
@@ -34,7 +34,7 @@
             <tumaet-ui-tag
                 id="build-state-failed"
                 class="[&>span]:w-full [&>span]:justify-center"
-                [severity]="(buildingSummary()?.[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0) > 0 ? 'danger' : 'success'"
+                [severity]="(buildingSummary()?.[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0) > 0 ? 'danger' : 'secondary'"
                 size="sm"
                 role="img"
                 [attr.aria-label]="failedLabel"

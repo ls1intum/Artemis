@@ -202,7 +202,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(comp.hasFailedSubmissions()).toBe(false);
         expect(comp.isBuildingFailedSubmissions()).toBe(false);
         expect(comp.buildingSummary()).toEqual(compressedSummary);
-        expect(debugElement.query(By.css('#build-state-failed')).componentInstance.severity()).toBe('success');
+        expect(debugElement.query(By.css('#build-state-failed')).componentInstance.severity()).toBe('secondary');
         expect(debugElement.query(By.css('#build-state-failed')).nativeElement.textContent).toContain('0');
 
         expect(getTriggerAllButton()).not.toBeNull();

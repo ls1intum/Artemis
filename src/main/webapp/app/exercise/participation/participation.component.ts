@@ -25,7 +25,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import {
     faCheck,
     faChevronDown,
-    faCircleInfo,
     faCircleNotch,
     faComment,
     faDownload,
@@ -156,7 +155,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly gradingService = inject(GradingService);
     private readonly websocketService = inject(WebsocketService);
 
-    protected readonly faCircleInfo = faCircleInfo;
     protected readonly faComment = faComment;
     protected readonly faChevronDown = faChevronDown;
     protected readonly faDownload = faDownload;

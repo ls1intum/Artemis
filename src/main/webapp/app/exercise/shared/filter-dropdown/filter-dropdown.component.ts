@@ -1,7 +1,14 @@
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiChipComponent, TumAetUiMultiSelectComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiCheckboxComponent,
+    TumAetUiChipComponent,
+    TumAetUiMultiSelectComponent,
+    TumAetUiSelectComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export interface FilterGroup {
@@ -13,7 +20,16 @@ export interface FilterGroup {
 @Component({
     selector: 'jhi-filter-dropdown',
     templateUrl: './filter-dropdown.component.html',
-    imports: [FormsModule, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiChipComponent, TumAetUiMultiSelectComponent, TumAetUiSelectComponent],
+    imports: [
+        FormsModule,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiChipComponent,
+        TumAetUiMultiSelectComponent,
+        TumAetUiSelectComponent,
+        TumAetUiTooltipDirective,
+    ],
     styleUrls: ['./filter-dropdown.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

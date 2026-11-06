@@ -2,9 +2,9 @@
     "artemisApp": {
         "participation": {
             "triggerOptions": "Trigger builds",
-            "searchHint": "Separate search terms with commas",
-            "searchStudents": "Search students",
-            "searchTeams": "Search teams",
+            "resetDisabled": "No filters selected",
+            "searchStudents": "Search: Smith, Jones",
+            "searchTeams": "Search: Team 1, Team 2",
             "onlineEditor": "Online editor",
             "home": {
                 "title": "Participation",

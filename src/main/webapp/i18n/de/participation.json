@@ -2,9 +2,9 @@
     "artemisApp": {
         "participation": {
             "triggerOptions": "Builds auslösen",
-            "searchHint": "Suchbegriffe durch Kommas trennen",
-            "searchStudents": "Studierende suchen",
-            "searchTeams": "Teams suchen",
+            "resetDisabled": "Keine Filter ausgewählt",
+            "searchStudents": "Suchen: Müller, Schmidt",
+            "searchTeams": "Suchen: Team 1, Team 2",
             "onlineEditor": "Online-Editor",
             "home": {
                 "title": "Teilnahmen",
