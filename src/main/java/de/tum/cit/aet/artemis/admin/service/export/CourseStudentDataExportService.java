@@ -855,7 +855,7 @@ public class CourseStudentDataExportService {
 
                 if (hasGrade) {
                     rowParts.add(studentResult.overallGrade() != null ? escapeCSV(studentResult.overallGrade()) : "");
-                    rowParts.add(studentResult.hasPassed() != null ? String.valueOf(studentResult.hasPassed()) : "");
+                    rowParts.add(!unscoredAttempt && studentResult.hasPassed() != null ? String.valueOf(studentResult.hasPassed()) : "");
                 }
 
                 if (hasSecondCorrection) {

@@ -348,6 +348,11 @@ class CourseStudentDataExportServiceCsvTest {
         CsvData csv = readCsv(files.get(1));
         assertThat(csv.rows()).contains(List.of("GRADE", "P", "50.0", "100.0", "true", "1", "50.0"), List.of("GRADE", "F", "0.0", "50.0", "false", "1", "50.0"),
                 List.of("INTERVAL", "0-10%", "0", "10", "", "1", "50.0"), List.of("INTERVAL", "80-90%", "80", "90", "", "1", "50.0"));
+        CsvData scores = readCsv(files.getFirst());
+        assertThat(scores.value("Zero", "Passed")).isEqualTo("false");
+        assertThat(scores.value("Passing", "Passed")).isEqualTo("true");
+        assertThat(scores.value("Pending", "Passed")).isEmpty();
+        assertThat(scores.value("Manual only", "Passed")).isEmpty();
     }
 
     @ParameterizedTest
