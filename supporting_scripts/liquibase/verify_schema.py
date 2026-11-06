@@ -2,10 +2,12 @@
 """
 Verifies that the Liquibase changelogs in this repository produce the schema they claim to.
 
-Six checks, each run against PostgreSQL and MySQL:
+These checks run; layout and text-introductions need no database, the rest run against PostgreSQL and MySQL:
 
   layout            Structural rules the others depend on: every folded changelog pins its
                     logicalFilePath, and no folded changelog is gated by a context.
+  text-introductions  No changelog under changelog/ introduces an unbounded-text column (text/longtext)
+                    that is not deliberately allow-listed (safeguard against findings F-005/F-007).
   replay            An empty database accepts the whole folded history in order.
   converge          The baseline produces the same schema as replaying the history it folded.
   fresh-vs-upgrade  A fresh installation and one that replayed the whole folded history end up with
@@ -13,6 +15,7 @@ Six checks, each run against PostgreSQL and MySQL:
   upgrade-from-floor  An installation at the oldest release this one can upgrade from ends up matching
                     a fresh installation.
   seed              The seed data actually lands on a fresh installation.
+  column-types      The final applied schema contains no unbounded-text column that is not grandfathered.
 
 Run everything, which is what CI does:
 
@@ -70,6 +73,143 @@ ORPHANED_ON_UPGRADE = {
 
 NAMESPACE = "{http://www.liquibase.org/xml/ns/dbchangelog}"
 CHANGESET_TAG = f"{NAMESPACE}changeSet"
+
+# --- Unbounded-text safeguard (Layer 1 / Safeguard S1) ---------------------------------------------
+# Free-form text columns declared as an unbounded type (text/mediumtext/longtext/clob) accept
+# arbitrarily large values, a storage-exhaustion and parse-cost risk (findings F-005/F-007). This guard
+# stops the set of such columns from growing unreviewed. Two independent checks share three lists:
+#   * check_column_types (database phase) asserts the final applied schema contains no unbounded-text
+#     column that is not in GRANDFATHERED_UNBOUNDED_TEXT.
+#   * scan_text_introductions (layout phase, no database) asserts that no changelog under changelog/
+#     introduces an unbounded-text column that is not in ALLOWED_TEXT_INTRODUCTIONS, and that every
+#     changeset the scanner cannot fully read and that might introduce unbounded text (<sqlFile>, a
+#     custom change, or a raw <sql> block mentioning a text type) is in UNVERIFIABLE_CHANGESETS.
+# The grandfather list is keyed by (table, column) and is deliberately decoupled from the baseline, so a
+# baseline re-cut cannot grow it -- only a reviewed edit here can. Introductions are keyed by their full
+# historical identity so that dropping a grandfathered column and re-adding it under the same name in a
+# NEW changeset is not waved through by the name alone.
+
+UNBOUNDED_TEXT_TYPES = frozenset({"text", "mediumtext", "longtext", "clob"})
+
+# The (table, column) pairs that were already unbounded text when this guard was introduced. They are
+# grandfathered so the guard is green on day one; a new unbounded-text column must not be added (bind it
+# with varchar(n) or a CHECK). Tightening these existing columns is tracked by the text-length hardening
+# effort, not by this guard. Consulted only by check_column_types. tinytext (255 bytes) and binary
+# blob/bytea are intentionally not covered; they are not unbounded free-form text. Deliberately decoupled
+# from the baseline so a re-cut cannot grow it -- only a reviewed edit here can.
+GRANDFATHERED_UNBOUNDED_TEXT: set[tuple[str, str]] = {
+    ("answer_post", "content"),
+    ("apollon_diagram", "json_representation"),
+    ("assessment_note", "note"),
+    ("competency", "description"),
+    ("complaint", "complaint_text"),
+    ("complaint_response", "response_text"),
+    ("course", "description"),
+    ("course", "info_sharing_messaging_code_of_conduct"),
+    ("course_request", "decision_reason"),
+    ("course_request", "reason"),
+    ("exam", "confirmation_end_text"),
+    ("exam", "confirmation_start_text"),
+    ("exam", "end_text"),
+    ("exam", "start_text"),
+    ("exam_live_event", "problem_statement"),
+    ("exam_live_event", "text_content"),
+    ("exercise", "example_solution"),
+    ("exercise", "example_solution_explanation"),
+    ("exercise", "example_solution_model"),
+    ("exercise", "grading_instructions"),
+    ("exercise", "problem_statement"),
+    ("feedback_message", "text"),
+    ("grading_instruction", "feedback"),
+    ("grading_instruction", "instruction_description"),
+    ("iris_json_message_content", "json_content"),
+    ("iris_message", "origin"),
+    ("iris_message", "proactive_outcome"),
+    ("iris_message", "sender_origin"),
+    ("iris_message", "tool_activity"),
+    ("iris_proactive_episode", "hint_text"),
+    ("iris_session", "chat_mode"),
+    ("iris_session", "latest_suggestions"),
+    ("iris_text_message_content", "text_content"),
+    ("lecture", "description"),
+    ("lecture_transcription", "transcription_status"),
+    ("lecture_unit", "content"),
+    ("lecture_unit", "description"),
+    ("lecture_unit", "source"),
+    ("long_feedback_text", "feedback_text"),
+    ("plagiarism_case", "verdict_message"),
+    ("programming_exercise_build_config", "build_plan_configuration"),
+    ("programming_exercise_build_config", "docker_flags"),
+    ("review_comment", "type"),
+    ("review_comment_thread", "target_type"),
+    ("spring_ai_chat_memory", "content"),
+    ("spring_ai_chat_memory", "type"),
+    ("submission", "explanation_text"),
+    ("submission", "model"),
+    ("submission", "text"),
+    ("submission_version", "content"),
+    ("system_notification", "text"),
+    ("text_block", "text"),
+    ("tutorial_group", "additional_information"),
+    ("tutorial_group_schedule", "location"),
+    ("tutorial_group_session", "location"),
+    ("weaviate_outbox", "params"),
+}
+
+# (changelog_file, changeset_id, table, column) -> reason. Consulted only by scan_text_introductions.
+ALLOWED_TEXT_INTRODUCTIONS: dict[tuple[str, str, str, str], str] = {
+    ("config/liquibase/changelog/20260808192146_changelog.xml", "20260808192146-1", "weaviate_outbox", "params"):
+        "Transactional-outbox payload for the Weaviate search sync; an internal, serialized operation record, not a user-facing free-text field.",
+    ("config/liquibase/changelog/20261004235109_changelog.xml", "20261004235109-1-add-sender-origin-postgres", "iris_message", "sender_origin"):
+        "A short enum ('IOS'/'ANDROID'); MySQL uses ENUM(...), PostgreSQL has no inline enum so it is stored as text. Effectively bounded, not free-form text.",
+}
+
+# (changelog_file, changeset_id) -> (reason, introduces). A changeset under changelog/ the scanner cannot
+# fully read -- <sqlFile>, a custom change class, or a raw <sql> block mentioning a text type -- is
+# hard-failed unless listed here. `introduces` is the tuple of (table, column) pairs the changeset is
+# attested to add or re-add as unbounded text, or () when it adds none. Each declared pair must also be in
+# ALLOWED_TEXT_INTRODUCTIONS (keyed by this changeset) and in GRANDFATHERED_UNBOUNDED_TEXT, so exempting a
+# raw-SQL drop/re-add of a grandfathered column still needs an explicit, changeset-scoped introduction
+# entry and cannot pass on the column name alone. An empty () is an explicit, reviewed attestation that the
+# changeset adds no unbounded-text column; it cannot be machine-verified for opaque SQL and is a
+# deliberate, documented trust point.
+UNVERIFIABLE_CHANGESETS: dict[tuple[str, str], tuple[str, tuple[tuple[str, str], ...]]] = {
+}
+
+RESOURCES = REPO / "src/main/resources"
+CHANGELOG_DIR = LIQUIBASE_DIR / "changelog"
+CREATE_TABLE_TAG = f"{NAMESPACE}createTable"
+ADD_COLUMN_TAG = f"{NAMESPACE}addColumn"
+COLUMN_TAG = f"{NAMESPACE}column"
+MODIFY_DATA_TYPE_TAG = f"{NAMESPACE}modifyDataType"
+SQL_TAG = f"{NAMESPACE}sql"
+# <sqlFile> (an external file) and a custom change class cannot be read at all, so they are always
+# flagged for review. A raw <sql> block, by contrast, is read: it is only flagged when its text mentions
+# an unbounded-text type, so the many raw-SQL data migrations (FK backfills, constraints) pass untouched
+# while a raw-SQL text-column introduction still needs a conscious decision. check_column_types backstops
+# everything by inspecting the final materialised schema regardless of how a column was created.
+HARD_OPAQUE_TAGS = frozenset({f"{NAMESPACE}sqlFile", f"{NAMESPACE}customChange"})
+TEXT_TYPE_TOKEN = re.compile(r"\b(?:text|longtext|mediumtext|clob)\b", re.IGNORECASE)
+
+
+def normalize_identifier(name: str | None) -> str:
+    """Lower-cases an identifier and strips one surrounding quote/backtick/bracket pair."""
+    if not name:
+        return ""
+    name = name.strip()
+    for opener, closer in (('"', '"'), ("`", "`"), ("[", "]")):
+        if len(name) >= 2 and name[0] == opener and name[-1] == closer:
+            name = name[1:-1]
+            break
+    return name.lower()
+
+
+def is_unbounded_text(sql_type: str | None) -> bool:
+    """True for text/mediumtext/longtext/clob, ignoring any length argument and case."""
+    if not sql_type:
+        return False
+    base = sql_type.strip().lower().split("(", 1)[0].strip()
+    return base in UNBOUNDED_TEXT_TYPES
 
 
 def log(message: str) -> None:
@@ -583,12 +723,140 @@ def check_seed(engine: Engine, liquibase: Liquibase, port: int) -> list[str]:
         return failures
 
 
+def unbounded_text_introductions(changeset) -> set[tuple[str, str]]:
+    """Every (table, column) a changeset introduces as unbounded text, via createTable/addColumn/modifyDataType."""
+    found: set[tuple[str, str]] = set()
+    for element in changeset.iter():
+        if element.tag in (CREATE_TABLE_TAG, ADD_COLUMN_TAG):
+            table = normalize_identifier(element.get("tableName"))
+            for column in element:
+                if column.tag == COLUMN_TAG and is_unbounded_text(column.get("type")):
+                    found.add((table, normalize_identifier(column.get("name"))))
+        elif element.tag == MODIFY_DATA_TYPE_TAG and is_unbounded_text(element.get("newDataType")):
+            found.add((normalize_identifier(element.get("tableName")), normalize_identifier(element.get("columnName"))))
+    return found
+
+
+def changelog_files() -> list[tuple[str, Path]]:
+    """(path relative to src/main/resources, absolute path) for every changelog under changelog/."""
+    return [(path.relative_to(RESOURCES).as_posix(), path) for path in sorted(CHANGELOG_DIR.glob("*.xml"))]
+
+
+def scan_text_introductions(files: list[tuple[str, Path]], allowed_introductions, unverifiable_changesets, grandfathered) -> list[str]:
+    """
+    Static, no-database scan of the post-baseline changelogs (see the safeguard block near the top).
+
+    Pure: every input is passed in, so the unit tests drive it with temporary changelogs. Returns a list
+    of problem strings; empty means the changelogs add no unreviewed unbounded-text column. An opaque
+    exemption waives only the opaque hard-failure; declarative changes in the same changeset are still
+    checked, so an exemption cannot silently cover a later-added structured change.
+    """
+    failures: list[str] = []
+    seen_introductions: set[tuple[str, str, str, str]] = set()
+    seen_unverifiable: set[tuple[str, str]] = set()
+    for relative, path in files:
+        for changeset in ElementTree.parse(path).getroot().iter(CHANGESET_TAG):
+            identifier = changeset.get("id", "?")
+            needs_review = any(
+                element.tag in HARD_OPAQUE_TAGS
+                or element.get("class")
+                or (element.tag == SQL_TAG and element.text and TEXT_TYPE_TOKEN.search(element.text))
+                for element in changeset.iter()
+            )
+            if needs_review:
+                key = (relative, identifier)
+                seen_unverifiable.add(key)
+                entry = unverifiable_changesets.get(key)
+                if entry is None:
+                    failures.append(
+                        f"{relative}: changeset {identifier} uses a raw <sql>/<sqlFile>/custom change the guard cannot "
+                        f'fully read and that may introduce unbounded text. Review it, then add ("{relative}", '
+                        f'"{identifier}"): ("<reason>", (<(table, column) pairs it introduces, or empty>)) to '
+                        f"UNVERIFIABLE_CHANGESETS."
+                    )
+                else:
+                    _reason, introduces = entry
+                    for declared_table, declared_column in introduces:
+                        pair = (normalize_identifier(declared_table), normalize_identifier(declared_column))
+                        intro_key = (relative, identifier, pair[0], pair[1])
+                        seen_introductions.add(intro_key)
+                        if intro_key not in allowed_introductions:
+                            failures.append(
+                                f"{relative}: changeset {identifier} is exempted as introducing {pair[0]}.{pair[1]}, but "
+                                f"{intro_key} is not in ALLOWED_TEXT_INTRODUCTIONS."
+                            )
+                        if pair not in grandfathered:
+                            failures.append(
+                                f"{relative}: changeset {identifier} is exempted as introducing {pair[0]}.{pair[1]}, but "
+                                f"{pair} is not in GRANDFATHERED_UNBOUNDED_TEXT."
+                            )
+            for table, column in unbounded_text_introductions(changeset):
+                key = (relative, identifier, table, column)
+                seen_introductions.add(key)
+                if key not in allowed_introductions:
+                    failures.append(
+                        f"{relative}: changeset {identifier} introduces unbounded-text column {table}.{column}. Give it a "
+                        f"bound (varchar(n) or a CHECK), or, if it is deliberate, add "
+                        f'("{relative}", "{identifier}", "{table}", "{column}") to ALLOWED_TEXT_INTRODUCTIONS with a reason.'
+                    )
+    for key in sorted(allowed_introductions):
+        if key not in seen_introductions:
+            failures.append(f"ALLOWED_TEXT_INTRODUCTIONS entry {key} matches no current unbounded-text introduction; remove it.")
+    for key in sorted(unverifiable_changesets):
+        if key not in seen_unverifiable:
+            failures.append(f"UNVERIFIABLE_CHANGESETS entry {key} matches no current opaque changeset; remove it.")
+    return failures
+
+
+def evaluate_unbounded_text_columns(schema: db_schema.SchemaModel, grandfathered: set[tuple[str, str]], check_stale: bool) -> list[str]:
+    """
+    The pure core of the final-state check: given a schema, report unbounded-text columns that are not
+    grandfathered, and (when check_stale) grandfather entries that no longer name an unbounded-text
+    column. Separated from the database plumbing so it can be unit-tested without Docker.
+    """
+    failures: list[str] = []
+    present: set[tuple[str, str]] = set()
+    for table in sorted(schema.tables):
+        if normalize_identifier(table) in ("databasechangelog", "databasechangeloglock"):
+            continue
+        for column, meta in sorted(schema.tables[table]["columns"].items()):
+            if not is_unbounded_text(meta.get("type")):
+                continue
+            key = (normalize_identifier(table), normalize_identifier(column))
+            present.add(key)
+            if key not in grandfathered:
+                failures.append(
+                    f"{table}.{column} is unbounded text ({meta.get('type')}) and is not grandfathered. Give it a bound "
+                    f'(varchar(n) or a CHECK), or, if it is deliberate, add ("{key[0]}", "{key[1]}") to '
+                    f"GRANDFATHERED_UNBOUNDED_TEXT with a reason."
+                )
+    if check_stale:
+        for key in sorted(grandfathered):
+            if key not in present:
+                failures.append(f"GRANDFATHERED_UNBOUNDED_TEXT entry {key} is no longer an unbounded-text column; remove it.")
+    return failures
+
+
+def check_column_types(engine: Engine, liquibase: Liquibase, port: int) -> list[str]:
+    """The final applied schema must contain no unbounded-text column that is not grandfathered."""
+    with Database(engine, "column-types", port) as database:
+        liquibase.apply(database, MASTER)
+        schema = database.schema()
+    # The stale-entry check runs on PostgreSQL only. PostgreSQL has no inline enum type, so a column
+    # declared ENUM(...) is stored as text there while MySQL keeps it as a bounded enum; such a column is
+    # legitimately grandfathered (it is unbounded text on PostgreSQL) yet is not unbounded text on MySQL.
+    # PostgreSQL is the superset -- every column that is unbounded text on MySQL is also text on
+    # PostgreSQL -- so it is the right reference for "this grandfathered column is no longer unbounded".
+    return evaluate_unbounded_text_columns(schema, GRANDFATHERED_UNBOUNDED_TEXT, check_stale=engine.name == "postgres")
+
+
 CHECKS = {
     "replay": check_replay,
     "converge": check_converge,
     "fresh-vs-upgrade": check_fresh_vs_upgrade,
     "upgrade-from-floor": check_upgrade_from_floor,
     "seed": check_seed,
+    "column-types": check_column_types,
 }
 
 
@@ -618,6 +886,11 @@ def main() -> int:
         layout_failures = check_layout()
         failures["layout"] = layout_failures
         log("   ok" if not layout_failures else f"   {len(layout_failures)} problem(s)")
+
+        log("== text-introductions ==")
+        introduction_failures = scan_text_introductions(changelog_files(), ALLOWED_TEXT_INTRODUCTIONS, UNVERIFIABLE_CHANGESETS, GRANDFATHERED_UNBOUNDED_TEXT)
+        failures["text-introductions"] = introduction_failures
+        log("   ok" if not introduction_failures else f"   {len(introduction_failures)} problem(s)")
 
     database_checks = [arguments.check] if arguments.check in CHECKS else list(CHECKS)
     engines = list(ENGINES) if arguments.database == "both" else [arguments.database]
