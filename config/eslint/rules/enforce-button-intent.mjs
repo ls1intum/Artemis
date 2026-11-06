@@ -1,4 +1,5 @@
 import { readFileSync, readdirSync } from 'node:fs';
+import { URL } from 'node:url';
 
 // Product action families, independent of emphasis (solid/outlined/text) and interaction state.
 const SEVERITIES = { workflow: 'primary', authoring: 'warn', transfer: 'secondary', utility: 'secondary', analytics: 'info', positive: 'success', destructive: 'danger' };
@@ -51,8 +52,10 @@ function translated(value) {
 }
 
 function intentForLabel(value) {
+    // Separate formatted words for classification; this text is never rendered as HTML.
     const label = translated(value)
-        .replace(/<[^>]*>/g, '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
         .trim();
     if (/^(?:import|export|download)\b/i.test(label)) return 'transfer';
     if (/^(?:save (?:and|&) approve|approve|preview)\b/i.test(label)) return 'positive';
