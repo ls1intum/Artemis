@@ -208,14 +208,15 @@ describe('ProgrammingBuildNotificationsComponent', () => {
         expect(showNotification.mock.calls[0][1].tag).toBe('artemis-build-7-2-3-4');
     });
 
-    it('chooses the latest ordinary snapshot by completion time when newer Athena feedback exists', async () => {
+    it('chooses the latest completed ordinary snapshot ahead of Athena and undated results', async () => {
         fixture.destroy();
         const oldBuild: Result = { id: 4, assessmentType: AssessmentType.SEMI_AUTOMATIC, completionDate: dayjs('2026-11-06T10:00:00Z'), submission: { id: 3 } };
         const olderBuild: Result = { id: 6, assessmentType: AssessmentType.AUTOMATIC, completionDate: dayjs('2026-11-06T09:00:00Z'), submission: { id: 3 } };
         const athena: Result = { id: 8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs('2026-11-06T10:05:00Z'), submission: { id: 3 } };
+        const undated: Result = { id: 9, assessmentType: AssessmentType.SEMI_AUTOMATIC, submission: { id: 3 } };
         fixture = TestBed.createComponent(ProgrammingBuildNotificationsComponent);
         fixture.componentRef.setInput('exercise', exercise);
-        fixture.componentRef.setInput('participation', { ...participation, submissions: [{ id: 3, results: [oldBuild, athena, olderBuild] }] });
+        fixture.componentRef.setInput('participation', { ...participation, submissions: [{ id: 3, results: [oldBuild, athena, olderBuild, undated] }] });
         fixture.detectChanges();
         await enableNotifications();
         state(ProgrammingSubmissionState.IS_QUEUED);

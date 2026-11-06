@@ -96,7 +96,8 @@ export class ProgrammingBuildNotificationsComponent {
                         const buildResults = getAllResultsOfAllSubmissions(this.participation()?.submissions).filter(
                             (entry) => entry.assessmentType !== AssessmentType.AUTOMATIC_ATHENA,
                         );
-                        const snapshot = orderBy(buildResults, 'completionDate', 'desc')[0];
+                        const datedBuildResults = buildResults.filter((entry) => entry.completionDate);
+                        const snapshot = orderBy(datedBuildResults.length ? datedBuildResults : buildResults, 'completionDate', 'desc')[0];
                         // The shared websocket cache and page snapshot can contain different old revisions.
                         // Keep both baselines so a later fallback GET cannot complete an untimed rebuild.
                         this.initialResults = [replay, snapshot].map((source) => ({ source, revision: this.resultRevision(source) }));
@@ -261,6 +262,7 @@ export class ProgrammingBuildNotificationsComponent {
         }
     }
 
+    /** A visible tab is also away when its browser window has lost focus. */
     private isAway(): boolean {
         return this.document.hidden || !this.document.hasFocus();
     }
