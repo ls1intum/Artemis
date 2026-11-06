@@ -247,6 +247,21 @@ paths:
             application/json:
               schema: {type: object}
         '200': {description: OK}
+  /api/quiz/quiz-exercises/{quizExerciseId}/end-now:
+    put:
+      tags: [quiz-exercise]
+      operationId: endQuizExercise
+      parameters:
+      - name: quizExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizExerciseDates'}
   /api/quiz/quiz-exercises/{quizExerciseId}/add-batch:
     put:
       tags: [quiz-exercise-batch]
@@ -1432,6 +1447,40 @@ paths:
                 type: array
                 items: {type: string}
                 uniqueItems: true
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/for-tutor:
+    get:
+      tags: [tutorial-group]
+      operationId: getTutorialGroupsForCourseForTutor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TutorialGroupSummary'}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups/for-instructor:
+    get:
+      tags: [tutorial-group]
+      operationId: getTutorialGroupsForCourseForInstructor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/TutorialGroupSummary'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/export/json:
     get:
       tags: [tutorial-group]
@@ -1764,6 +1813,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizExerciseForStudentResponse'}
+  /api/quiz/quiz-exercises/{quizExerciseId}/for-exam:
+    get:
+      tags: [quiz-exercise-retrieval]
+      operationId: getQuizExerciseForExam
+      parameters:
+      - name: quizExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizExerciseDetails'}
   /api/quiz/quiz-exercises/{exerciseId}/participations/{participationId}/result:
     get:
       tags: [quiz-participation]
@@ -3588,6 +3652,10 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    CourseWithId:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     MissingEntity:
       type: object
       properties:
@@ -3893,6 +3961,7 @@ components:
         testRunParticipationsExist: {type: boolean}
         isEditable: {type: boolean}
         canBeEvaluated: {type: boolean}
+        exerciseGroup: {$ref: '#/components/schemas/ExerciseGroupWithIdAndExam'}
     TutorialGroupSummary:
       type: object
       properties:
@@ -4832,6 +4901,11 @@ components:
           items: {$ref: '#/components/schemas/QuestionStatistics'}
         participantsRated: {type: integer, format: int32}
         participantsUnrated: {type: integer, format: int32}
+    ExamWithIdAndCourse:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        course: {$ref: '#/components/schemas/CourseWithId'}
     QuizPointStatistic:
       type: object
       properties:
@@ -5259,6 +5333,11 @@ components:
             (1-indexed)}
         endLine: {type: integer, format: int32, description: 'Ending line number (1-indexed,
             inclusive)'}
+    ExerciseGroupWithIdAndExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exam: {$ref: '#/components/schemas/ExamWithIdAndCourse'}
     SubmittedAnswerBeforeEvaluation:
       discriminator:
         propertyName: type
