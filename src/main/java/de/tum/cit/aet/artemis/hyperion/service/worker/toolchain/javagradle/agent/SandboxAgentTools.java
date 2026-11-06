@@ -622,9 +622,7 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
     public void enterStage(GenerationStage stage) {
         this.repairWritableRoots.set(null);
         this.currentStage = stage;
-        this.dirtySinceLastPassingCheck = true;
-        this.cachedPassingCheckStage = null;
-        this.cachedPassingCheck.set(null);
+        resetVerificationProgress();
     }
 
     /**
@@ -636,6 +634,7 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
     public void enterRepairScope(Set<String> writableRoots) {
         this.currentStage = null;
         this.repairWritableRoots.set(Set.copyOf(writableRoots));
+        resetVerificationProgress();
     }
 
     public void exitRepairScope() {
@@ -768,9 +767,7 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
     public void exitStagedGeneration() {
         this.currentStage = null;
         this.repairWritableRoots.set(null);
-        this.dirtySinceLastPassingCheck = true;
-        this.cachedPassingCheckStage = null;
-        this.cachedPassingCheck.set(null);
+        resetVerificationProgress();
     }
 
     /**
@@ -795,6 +792,14 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
      */
     public void recordLastTestsReport(@Nullable AgentVerifyReport report) {
         this.lastTestsReport.set(report);
+    }
+
+    private void resetVerificationProgress() {
+        this.dirtySinceLastPassingCheck = true;
+        this.cachedPassingCheckStage = null;
+        this.cachedPassingCheck.set(null);
+        this.lastCheckPassed = false;
+        this.remainingFailures = Integer.MAX_VALUE;
     }
 
     private void markDirty() {

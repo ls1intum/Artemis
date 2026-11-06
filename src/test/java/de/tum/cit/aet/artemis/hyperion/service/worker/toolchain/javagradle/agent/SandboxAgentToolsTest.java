@@ -162,6 +162,34 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void stageTransitionsAndRepairScopesStartWithAnUnknownVerificationBaseline() {
+        var sandbox = new FakeInteractiveSandbox();
+        var exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
+        var checks = mock(StageChecks.class);
+        when(checks.check(any(), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class))).thenReturn(StageCheckResult.passed("passed"));
+        var tools = stagedTools(sandbox, exercise, checks);
+        tools.enterStage(GenerationStage.SPEC);
+        tools.verify();
+        assertThat(tools.authoringProgress().verified()).isTrue();
+        assertThat(tools.authoringProgress().remainingFailures()).isZero();
+
+        tools.enterStage(GenerationStage.TESTS);
+        assertThat(tools.authoringProgress().verified()).isFalse();
+        assertThat(tools.authoringProgress().remainingFailures()).isEqualTo(Integer.MAX_VALUE);
+        tools.verify();
+        assertThat(tools.authoringProgress().verified()).isTrue();
+        tools.enterRepairScope(Set.of("tests"));
+        assertThat(tools.authoringProgress().verified()).isFalse();
+        assertThat(tools.authoringProgress().remainingFailures()).isEqualTo(Integer.MAX_VALUE);
+        tools.enterStage(GenerationStage.STATEMENT);
+        tools.verify();
+        tools.exitStagedGeneration();
+        assertThat(tools.authoringProgress().verified()).isFalse();
+        assertThat(tools.authoringProgress().remainingFailures()).isEqualTo(Integer.MAX_VALUE);
+        assertThat(tools.authoringProgress().checks()).isEqualTo(3);
+    }
+
+    @Test
     void search_returnsMatchingLinesWithoutDirtyingTheWorkspace() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0,
                 "/workspace/problem-statement.md:2:Elevator list is empty\n/workspace/problem-statement.md:3:last Elevator list is empty\n", "", false));
