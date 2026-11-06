@@ -159,7 +159,7 @@ public class SubmissionService {
      */
     public void checkSubmissionLockLimit(long courseId) {
         long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId,
-                authCheckService.isAtLeastInstructorInCourse(courseId));
+                authCheckService.isCurrentUserAdminAccessEnabled());
         if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
             throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
         }
@@ -173,7 +173,7 @@ public class SubmissionService {
      */
     public List<Submission> getLockedSubmissions(long courseId) {
         return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId,
-                authCheckService.isAtLeastInstructorInCourse(courseId));
+                authCheckService.isCurrentUserAdminAccessEnabled());
     }
 
     /**

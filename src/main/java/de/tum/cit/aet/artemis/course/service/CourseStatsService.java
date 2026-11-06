@@ -346,7 +346,7 @@ public class CourseStatsService {
         final long numberOfComplaintResponses = complaintService.countComplaintResponsesByExerciseIds(courseExerciseIds);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
         final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), course.getId(),
-                authCheckService.isAtLeastInstructorInCourse(course.getId()));
+                authCheckService.isCurrentUserAdminAccessEnabled());
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseIds(courseExerciseIds);
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);

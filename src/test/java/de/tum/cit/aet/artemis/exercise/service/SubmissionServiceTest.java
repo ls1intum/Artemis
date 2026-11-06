@@ -116,7 +116,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     private AthenaRequestMockProvider athenaRequestMockProvider;
 
     @Autowired
-    private de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository studentParticipationRepository;
+    private de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService programmingSubmissionService;
