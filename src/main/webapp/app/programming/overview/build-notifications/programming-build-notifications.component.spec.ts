@@ -29,8 +29,8 @@ describe('ProgrammingBuildNotificationsComponent', () => {
     const exercise = { id: 1, title: 'Sorting', type: ExerciseType.PROGRAMMING };
     const participation = { id: 2, type: ParticipationType.PROGRAMMING };
 
-    function state(submissionState: ProgrammingSubmissionState, id = 3) {
-        submissions.next({ participationId: 2, submissionState, submission: { id } });
+    function state(submissionState: ProgrammingSubmissionState, id = 3, buildStartDate?: dayjs.Dayjs) {
+        submissions.next({ participationId: 2, submissionState, submission: { id }, buildTimingInfo: { buildStartDate } });
         fixture.detectChanges();
     }
 
@@ -222,7 +222,7 @@ describe('ProgrammingBuildNotificationsComponent', () => {
         complete();
         await fixture.whenStable();
         expect(showNotification).toHaveBeenCalledOnce();
-        expect(showNotification.mock.calls[0][1]).toMatchObject({ silent: true, tag: 'artemis-build-7-2-3' });
+        expect(showNotification.mock.calls[0][1]).toMatchObject({ silent: true, tag: 'artemis-build-7-2-3-4' });
         expect(button().getAttribute('aria-pressed')).toBe('true');
     });
 
@@ -335,7 +335,7 @@ describe('ProgrammingBuildNotificationsComponent', () => {
         const close = vi.fn();
         Object.defineProperty(navigator, 'serviceWorker', {
             configurable: true,
-            value: { getRegistration: async () => ({ showNotification: display, getNotifications: async () => [{ close }] }) },
+            value: { getRegistration: async () => ({ active: {}, showNotification: display, getNotifications: async () => [{ close }] }) },
         });
         await enableNotifications();
         state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
@@ -440,11 +440,172 @@ describe('ProgrammingBuildNotificationsComponent', () => {
 
     it('accepts a newer completion of a semi-automatic result updated in place', () => {
         state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
-        results.next({ id: 4, completionDate: dayjs('2026-11-06T10:00:00Z'), submission: { id: 3 } });
+        const result: Result = { id: 4, completionDate: dayjs('2026-11-06T10:00:00Z'), submission: { id: 3 } };
+        results.next(result);
         state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
-        results.next({ id: 4, completionDate: dayjs('2026-11-06T10:01:00Z'), submission: { id: 3 } });
+        result.completionDate = dayjs('2026-11-06T10:01:00Z');
+        results.next(result);
         fixture.detectChanges();
         expect(icons[0].href).toContain('favicon-result');
+    });
+
+    it('keeps the building favicon when system notifications are disabled', async () => {
+        await enableNotifications();
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        await enableNotifications();
+        expect(icons[0].href).toContain('favicon-building');
+        complete();
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-result');
+        expect(showNotification).not.toHaveBeenCalled();
+    });
+
+    it('still closes notifications when persisting opt-out fails', async () => {
+        await enableNotifications();
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        complete();
+        await fixture.whenStable();
+        vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+            throw new DOMException('Storage is full', 'QuotaExceededError');
+        });
+        await enableNotifications();
+        expect(closeNotification).toHaveBeenCalledOnce();
+        expect(button().getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('honors an opt-out from another tab without removing build feedback', async () => {
+        await enableNotifications();
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        localStorage.setItem('buildNotifications.7', 'false');
+        window.dispatchEvent(new StorageEvent('storage', { key: 'buildNotifications.7', newValue: 'false' }));
+        fixture.detectChanges();
+        expect(button().getAttribute('aria-pressed')).toBe('false');
+        expect(icons[0].href).toContain('favicon-building');
+        complete();
+        await fixture.whenStable();
+        expect(showNotification).not.toHaveBeenCalled();
+    });
+
+    it('does not let an older permission prompt override another tab’s opt-out', async () => {
+        let resolvePermission!: (permission: NotificationPermission) => void;
+        requestPermission.mockImplementation(() => new Promise<NotificationPermission>((resolve) => (resolvePermission = resolve)));
+        button().click();
+        localStorage.setItem('buildNotifications.7', 'false');
+        window.dispatchEvent(new StorageEvent('storage', { key: 'buildNotifications.7', newValue: 'false' }));
+        permission = 'granted';
+        resolvePermission(permission);
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(button().getAttribute('aria-pressed')).toBe('false');
+        expect(localStorage.getItem('buildNotifications.7')).toBe('false');
+    });
+
+    it('refreshes permission when another tab enables notifications', () => {
+        permission = 'granted';
+        localStorage.setItem('buildNotifications.7', 'true');
+        window.dispatchEvent(new StorageEvent('storage', { key: 'buildNotifications.7', newValue: 'true' }));
+        fixture.detectChanges();
+        expect(button().getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('retains favicon tracking when preference storage is unavailable', () => {
+        fixture.destroy();
+        const originalGetItem = Storage.prototype.getItem;
+        vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (this: Storage, key: string) {
+            if (key.startsWith('buildNotifications.')) {
+                throw new DOMException('Storage is blocked', 'SecurityError');
+            }
+            return originalGetItem.call(this, key);
+        });
+        fixture = TestBed.createComponent(ProgrammingBuildNotificationsComponent);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', participation);
+        expect(() => fixture.detectChanges()).not.toThrow();
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        complete();
+        expect(icons[0].href).toContain('favicon-result');
+    });
+
+    it('falls back to a page notification while the service worker is installing', async () => {
+        const display = vi.fn().mockRejectedValue(new TypeError('No active worker'));
+        Object.defineProperty(navigator, 'serviceWorker', {
+            configurable: true,
+            value: { getRegistration: async () => ({ active: null, showNotification: display, getNotifications: async () => [] }) },
+        });
+        await enableNotifications();
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        complete();
+        await fixture.whenStable();
+        expect(display).not.toHaveBeenCalled();
+        expect(showNotification).toHaveBeenCalledOnce();
+    });
+
+    it('does not let delayed cleanup of one build close a later build notification', async () => {
+        let finishFirstDisplay!: () => void;
+        const closeFirst = vi.fn();
+        const closeSecond = vi.fn();
+        const tags: string[] = [];
+        const notifications = new Map<string, { close: () => void }>();
+        const display = vi.fn((_title: string, options: NotificationOptions) => {
+            tags.push(options.tag!);
+            notifications.set(options.tag!, { close: tags.length === 1 ? closeFirst : closeSecond });
+            return tags.length === 1 ? new Promise<void>((resolve) => (finishFirstDisplay = resolve)) : Promise.resolve();
+        });
+        Object.defineProperty(navigator, 'serviceWorker', {
+            configurable: true,
+            value: {
+                getRegistration: async () => ({
+                    active: {},
+                    showNotification: display,
+                    getNotifications: async ({ tag }: { tag: string }) => (notifications.has(tag) ? [notifications.get(tag)!] : []),
+                }),
+            },
+        });
+        await enableNotifications();
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        complete();
+        await fixture.whenStable();
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        complete(3, 5);
+        await fixture.whenStable();
+        expect(tags).toHaveLength(2);
+        expect(tags[0]).not.toBe(tags[1]);
+        finishFirstDisplay();
+        await fixture.whenStable();
+        await Promise.resolve();
+        expect(closeSecond).not.toHaveBeenCalled();
+    });
+
+    it('does not apply an older cached completion to a build that started later', async () => {
+        results.next({ id: 4, completionDate: dayjs('2026-11-06T10:00:00Z'), submission: { id: 3 } });
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, 3, dayjs('2026-11-06T10:01:00Z'));
+        state(ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION);
+        await fixture.whenStable();
+        expect(icons[0].href).toContain('favicon-building');
+        results.next({ id: 5, completionDate: dayjs('2026-11-06T10:02:00Z'), submission: { id: 3 } });
+        fixture.detectChanges();
+        expect(icons[0].href).toContain('favicon-result');
+    });
+
+    it('handles an initial replay when build timing proves it completed this pending attempt', () => {
+        fixture.destroy();
+        results = new BehaviorSubject<Result | undefined>({ id: 4, completionDate: dayjs('2026-11-06T10:01:00Z'), submission: { id: 3 } });
+        fixture = TestBed.createComponent(ProgrammingBuildNotificationsComponent);
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('participation', participation);
+        fixture.detectChanges();
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, 3, dayjs('2026-11-06T10:00:00Z'));
+        expect(icons[0].href).toContain('favicon-result');
+    });
+
+    it('ignores a snapshot of a handled attempt while permitting a newer same-submission build', () => {
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, 3, dayjs('2026-11-06T10:00:00Z'));
+        results.next({ id: 4, completionDate: dayjs('2026-11-06T10:01:00Z'), submission: { id: 3 } });
+        fixture.detectChanges();
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, 3, dayjs('2026-11-06T10:00:00Z'));
+        expect(icons[0].href).toContain('favicon-result');
+        state(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, 3, dayjs('2026-11-06T10:02:00Z'));
+        expect(icons[0].href).toContain('favicon-building');
     });
 
     it('uses the participation snapshot as its baseline before any websocket result has arrived', () => {

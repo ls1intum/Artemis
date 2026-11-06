@@ -56,21 +56,25 @@ export class ProgrammingBuildNotificationsComponent {
     private readonly participationId = computed(() => this.participation()?.id);
     private readonly originalIcons = new Map<HTMLLinkElement, { href: string | null; type: string | null; sizes: string | null }>();
     private pendingSubmissionId?: number;
+    private pendingBuildStartedAt?: number;
     private latestResult?: Result;
-    private lastHandledResult?: Result;
+    private initialReplay?: Result;
+    private handledResult?: { source?: Result; revision?: string; submissionId?: number; completion?: number };
     private notification?: Notification;
     private closePersistentNotification?: () => void;
     /** Invalidates display promises when the page, user, participation or build changes. */
     private generation = 0;
+    private feedbackGeneration = 0;
     private permissionRequest = 0;
 
+    /** Owns observers only for the displayed participation and releases them with the page or account context. */
     constructor() {
         effect((onCleanup) => {
             const userId = this.userId();
             const exerciseId = this.exerciseId();
             const participationId = this.participationId();
             untracked(() => {
-                this.optedIn.set(userId !== undefined && this.localStorage.retrieve<boolean>(BUILD_NOTIFICATIONS_LOCAL_STORAGE_KEY_PREFIX + userId) === true);
+                this.readPreference();
                 if (userId === undefined || exerciseId === undefined || participationId === undefined || this.exercise().type !== ExerciseType.PROGRAMMING) {
                     return;
                 }
@@ -82,38 +86,54 @@ export class ProgrammingBuildNotificationsComponent {
                         // baseline, not completion of a build that may already be running again.
                         initialResult = false;
                         this.latestResult = result;
-                        this.lastHandledResult = result ?? getLatestResultOfStudentParticipation(this.participation(), true);
+                        this.initialReplay = result;
+                        this.rememberHandledResult(result ?? getLatestResultOfStudentParticipation(this.participation(), true));
                         return;
                     }
                     this.onResult(result);
                 });
                 const submissionSubscription = this.submissionService
                     .getLatestPendingSubmissionByParticipationId(participationId, exerciseId, true)
-                    .subscribe(({ submissionState, submission }) => {
+                    .subscribe(({ submissionState, submission, buildTimingInfo }) => {
                         hasNoPendingSubmission = submissionState === ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION;
                         if (submissionState === ProgrammingSubmissionState.IS_QUEUED || submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION) {
+                            const buildStart = buildTimingInfo?.buildStartDate ?? submission?.buildStartDate;
+                            const startedAt = buildStart ? dayjs(buildStart).valueOf() : undefined;
+                            if (
+                                startedAt !== undefined &&
+                                this.handledResult?.submissionId === submission?.id &&
+                                this.latestResult !== this.initialReplay &&
+                                this.isHandledResult(this.latestResult) &&
+                                this.handledResult?.completion !== undefined &&
+                                this.handledResult.completion >= startedAt
+                            ) {
+                                return;
+                            }
                             if (this.pendingSubmissionId !== submission?.id) {
                                 this.clearFeedback();
                             }
                             this.pendingSubmissionId = submission?.id;
+                            this.pendingBuildStartedAt = startedAt;
                             this.setFavicon('building');
                             // The initial pending-submission GET can resolve after the result websocket.
                             // Reconcile its snapshot with the result we already received.
-                            if (!this.isHandledResult(this.latestResult)) {
-                                this.onResult(this.latestResult);
-                            }
+                            const replayCompletion = this.completionTime(this.initialReplay);
+                            const initialReplayMatches =
+                                this.latestResult === this.initialReplay && startedAt !== undefined && replayCompletion !== undefined && replayCompletion >= startedAt;
+                            this.onResult(this.latestResult, initialReplayMatches);
                             if (this.pendingSubmissionId !== undefined) {
                                 const pendingSubmissionId = this.pendingSubmissionId;
-                                const generation = this.generation;
+                                const feedbackGeneration = this.feedbackGeneration;
                                 // An initial REST snapshot can synchronously replay building -> no-pending
                                 // before the UI renders. Drop only that transient progress state. A later
                                 // fallback GET replaying an old result must not hide a genuine rebuild.
                                 window.queueMicrotask(() => {
                                     if (
                                         !this.destroyRef.destroyed &&
-                                        generation === this.generation &&
+                                        feedbackGeneration === this.feedbackGeneration &&
                                         hasNoPendingSubmission &&
-                                        this.pendingSubmissionId === pendingSubmissionId
+                                        this.pendingSubmissionId === pendingSubmissionId &&
+                                        !this.predatesPendingBuild(this.latestResult)
                                     ) {
                                         this.clearFeedback();
                                     }
@@ -132,8 +152,10 @@ export class ProgrammingBuildNotificationsComponent {
                     resultSubscription.unsubscribe();
                     this.submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
                     this.pendingSubmissionId = undefined;
+                    this.pendingBuildStartedAt = undefined;
                     this.latestResult = undefined;
-                    this.lastHandledResult = undefined;
+                    this.initialReplay = undefined;
+                    this.handledResult = undefined;
                     this.permissionRequest++;
                     this.requestingPermission.set(false);
                     this.notificationError.set(false);
@@ -143,13 +165,16 @@ export class ProgrammingBuildNotificationsComponent {
         });
         this.document.addEventListener('visibilitychange', this.onReturn);
         window.addEventListener('focus', this.onReturn);
+        window.addEventListener('storage', this.onStorage);
         this.destroyRef.onDestroy(() => {
             this.document.removeEventListener('visibilitychange', this.onReturn);
             window.removeEventListener('focus', this.onReturn);
+            window.removeEventListener('storage', this.onStorage);
             this.clearFeedback();
         });
     }
 
+    /** Requests permission only from the opt-in gesture, and keeps notification opt-out independent of favicons. */
     protected async toggleNotifications(): Promise<void> {
         this.notificationError.set(false);
         const userId = this.userId();
@@ -158,8 +183,12 @@ export class ProgrammingBuildNotificationsComponent {
         }
         if (this.enabled()) {
             this.optedIn.set(false);
-            this.localStorage.store(BUILD_NOTIFICATIONS_LOCAL_STORAGE_KEY_PREFIX + userId, false);
-            this.clearFeedback();
+            this.clearNotifications();
+            try {
+                this.localStorage.store(BUILD_NOTIFICATIONS_LOCAL_STORAGE_KEY_PREFIX + userId, false);
+            } catch {
+                this.notificationError.set(true);
+            }
             return;
         }
         const permissionRequest = ++this.permissionRequest;
@@ -184,23 +213,31 @@ export class ProgrammingBuildNotificationsComponent {
         }
     }
 
-    private onResult(result: Result | undefined): void {
+    /** Accepts only a fresh matching result, using build timing when the existing stream supplies it. */
+    private onResult(result: Result | undefined, initialReplayMatches = false): void {
         if (result) {
             this.latestResult = result;
         }
-        if (this.pendingSubmissionId === undefined || result?.submission?.id !== this.pendingSubmissionId || this.isHandledResult(result)) {
+        if (
+            this.pendingSubmissionId === undefined ||
+            result?.submission?.id !== this.pendingSubmissionId ||
+            (this.isHandledResult(result) && !initialReplayMatches) ||
+            this.predatesPendingBuild(result)
+        ) {
             return;
         }
         const submissionId = this.pendingSubmissionId;
-        this.lastHandledResult = result;
+        this.rememberHandledResult(result);
+        this.initialReplay = undefined;
         this.pendingSubmissionId = undefined;
+        this.pendingBuildStartedAt = undefined;
         this.clearFeedback();
         if (!this.isAway()) {
             return;
         }
         this.setFavicon('result');
         if (this.enabled() && Notification.permission === 'granted') {
-            void this.showNotification(submissionId);
+            void this.showNotification(submissionId, this.resultRevision(result) ?? 'event-' + this.generation);
         }
     }
 
@@ -208,20 +245,67 @@ export class ProgrammingBuildNotificationsComponent {
         return this.document.hidden || !this.document.hasFocus();
     }
 
-    private isHandledResult(result: Result | undefined): boolean {
-        if (result === this.lastHandledResult) {
-            return true;
-        }
-        if (result?.id === undefined || result.id !== this.lastHandledResult?.id) {
-            return false;
-        }
-        // Fallback GETs can replay a previously handled result as a new object. Semi-automatic
-        // results can also be updated in place after a rebuild, keeping their ID but changing completion time.
-        const completion = result.completionDate ? dayjs(result.completionDate).valueOf() : undefined;
-        const previousCompletion = this.lastHandledResult.completionDate ? dayjs(this.lastHandledResult.completionDate).valueOf() : undefined;
-        return completion === previousCompletion;
+    /** Snapshots value identity so a producer can mutate and re-emit the same result object safely. */
+    private rememberHandledResult(result: Result | undefined): void {
+        this.handledResult = {
+            source: result,
+            revision: this.resultRevision(result),
+            submissionId: result?.submission?.id,
+            completion: this.completionTime(result),
+        };
     }
 
+    /** Deduplicates persisted revisions, while retaining reference identity for unpersisted results. */
+    private isHandledResult(result: Result | undefined): boolean {
+        return result?.id === undefined ? result === this.handledResult?.source : this.resultRevision(result) === this.handledResult?.revision;
+    }
+
+    /** A semi-automatic result may keep its ID across builds, so completion time is part of its revision. */
+    private resultRevision(result: Result | undefined): string | undefined {
+        if (result?.id === undefined) {
+            return undefined;
+        }
+        const completion = this.completionTime(result);
+        return String(result.id) + (completion === undefined ? '' : '@' + completion);
+    }
+
+    /** Normalizes both websocket date strings and converted Dayjs dates without inventing a date for missing values. */
+    private completionTime(result: Result | undefined): number | undefined {
+        return result?.completionDate ? dayjs(result.completionDate).valueOf() : undefined;
+    }
+
+    /** An old completion cannot finish a rebuild whose processing is known to have started later. */
+    private predatesPendingBuild(result: Result | undefined): boolean {
+        const completion = this.completionTime(result);
+        return completion !== undefined && this.pendingBuildStartedAt !== undefined && completion < this.pendingBuildStartedAt;
+    }
+
+    /** Preference storage is optional; a blocked storage API must not prevent build subscriptions. */
+    private readPreference(): void {
+        try {
+            const userId = this.userId();
+            this.optedIn.set(userId !== undefined && this.localStorage.retrieve<boolean>(BUILD_NOTIFICATIONS_LOCAL_STORAGE_KEY_PREFIX + userId) === true);
+        } catch {
+            this.optedIn.set(false);
+        }
+    }
+
+    /** Applies another tab's preference changes without clearing the independent favicon feedback. */
+    private readonly onStorage = (event: StorageEvent) => {
+        if (event.key === null || event.key === BUILD_NOTIFICATIONS_LOCAL_STORAGE_KEY_PREFIX + this.userId()) {
+            this.permissionRequest++;
+            this.requestingPermission.set(false);
+            if (this.supported) {
+                this.permission.set(Notification.permission);
+            }
+            this.readPreference();
+            if (!this.optedIn()) {
+                this.clearNotifications();
+            }
+        }
+    };
+
+    /** Acknowledges feedback only when the exercise tab is visible and focused. */
     private readonly onReturn = () => {
         if (this.supported) {
             this.permission.set(Notification.permission);
@@ -231,6 +315,7 @@ export class ProgrammingBuildNotificationsComponent {
         }
     };
 
+    /** Updates every advertised icon variant, retaining all attributes needed to restore the original links. */
     private setFavicon(state: 'building' | 'result'): void {
         this.document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]').forEach((icon) => {
             if (!this.originalIcons.has(icon)) {
@@ -242,8 +327,10 @@ export class ProgrammingBuildNotificationsComponent {
         });
     }
 
+    /** Restores tab branding and discards notification work for the acknowledged or abandoned build. */
     private clearFeedback(): void {
-        this.generation++;
+        this.feedbackGeneration++;
+        this.clearNotifications();
         this.originalIcons.forEach((attributes, icon) => {
             for (const [name, value] of Object.entries(attributes)) {
                 if (value === null) {
@@ -254,15 +341,21 @@ export class ProgrammingBuildNotificationsComponent {
             }
         });
         this.originalIcons.clear();
+    }
+
+    /** Cancels only notification resources, leaving build correlation and favicon feedback intact. */
+    private clearNotifications(): void {
+        this.generation++;
         this.notification?.close();
         this.notification = undefined;
         this.closePersistentNotification?.();
         this.closePersistentNotification = undefined;
     }
 
-    private async showNotification(submissionId: number): Promise<void> {
+    /** Uses an active worker where available and scopes asynchronous cleanup to this result revision. */
+    private async showNotification(submissionId: number, revision: string): Promise<void> {
         const generation = this.generation;
-        const tag = 'artemis-build-' + this.userId() + '-' + this.participationId() + '-' + submissionId;
+        const tag = 'artemis-build-' + this.userId() + '-' + this.participationId() + '-' + submissionId + '-' + revision;
         const title = this.translateService.instant('artemisApp.programmingExercise.buildNotifications.resultReceived');
         const options: NotificationOptions = {
             body: this.exercise().title,
@@ -277,7 +370,7 @@ export class ProgrammingBuildNotificationsComponent {
             if (!stillRelevant()) {
                 return;
             }
-            if (registration) {
+            if (registration?.active) {
                 const close = () => {
                     void registration
                         .getNotifications({ tag })

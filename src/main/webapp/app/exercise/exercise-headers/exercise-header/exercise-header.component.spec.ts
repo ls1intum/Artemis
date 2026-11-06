@@ -135,6 +135,29 @@ describe('ExerciseHeaderComponent', () => {
         globalThis.ResizeObserver = originalResizeObserver;
     });
 
+    it('binds build notifications to the active graded or practice participation', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 1;
+        const graded = new StudentParticipation();
+        graded.id = 2;
+        const practice = new StudentParticipation();
+        practice.id = 3;
+        practice.testRun = true;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('studentParticipation', graded);
+        fixture.componentRef.setInput('practiceParticipation', practice);
+        fixture.detectChanges();
+        const notifications = fixture.debugElement.query(By.directive(ProgrammingBuildNotificationsComponent)).componentInstance as ProgrammingBuildNotificationsComponent;
+        expect(notifications.participation()).toBe(graded);
+        fixture.componentInstance.participationMode.set('practice');
+        fixture.detectChanges();
+        expect(notifications.participation()).toBe(practice);
+        fixture.componentInstance.participationMode.set('graded');
+        fixture.detectChanges();
+        expect(notifications.participation()).toBe(graded);
+    });
+
     it('should hide submit button when the due date has passed', () => {
         const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         exercise.id = 1;
