@@ -298,6 +298,22 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.studentExamGradeInfoDTO()).toEqual({ ...gradeInfo, studentExam });
     });
 
+    it('should load the grade overview for a submitted test exam without a publication date', () => {
+        const submittedTestExam = { ...studentExamForTestExam, submitted: true };
+        fixture.componentRef.setInput('studentExam', submittedTestExam);
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo }));
+        fixture.detectChanges();
+        expect(owner).toHaveBeenCalledWith(1, testExam.id, submittedTestExam.id);
+        expect(component.studentExamGradeInfoDTO()).toBeDefined();
+    });
+
+    it('should not request grades while a test exam is still being conducted', () => {
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: false });
+        const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        fixture.detectChanges();
+        expect(owner).not.toHaveBeenCalled();
+    });
+
     it('should retrieve grade info correctly', () => {
         const serviceSpy = vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo }));
 

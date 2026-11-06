@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
@@ -36,10 +37,12 @@ import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -59,6 +62,12 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ExamRegistrationService examRegistrationService;
+
+    @Autowired
+    private StudentExamService studentExamService;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private ChannelRepository channelRepository;
@@ -108,6 +117,70 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void tearDown() {
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
         participantScoreScheduleService.shutdown();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationRejectedAfterExamEnd() throws Exception {
+        exam1.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam1);
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId();
+        request.postWithoutLocation(base + "/students", List.of(student), HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation(base + "/register-course-students", null, HttpStatus.BAD_REQUEST, null);
+        assertThat(examUserRepository.findAllByExamId(exam1.getId())).isEmpty();
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(userUtilService.getUserByLogin(OTHER_PREFIX + "student1").getId(), course1.getId(),
+                CourseRole.STUDENT)).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationGeneratesMissingExamsBeforeStart() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        examUtilService.addStudentExamWithUser(exam, student1);
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testBulkRegistrationGeneratesMissingExamsBeforeStart() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        examUtilService.addStudentExamWithUser(exam, student1);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
+        assertThat(studentExamRepository.findUserIdsWithStudentExamsForExam(exam.getId()))
+                .containsExactlyInAnyOrderElementsOf(examUserRepository.findUserIdsByExamId(exam.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRegistrationPreparesExercisesBeforeStartAfterProgressCacheExpires() throws Exception {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        studentExamService.generateStudentExams(exam);
+        studentExamService.startExercises(exam.getId()).join();
+        studentExamService.invalidateExerciseStartStatus(exam.getId());
+        var student = new StudentDTO(OTHER_PREFIX + "student1", "", "", "", "");
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", List.of(student), HttpStatus.OK, null);
+        long examId = exam.getId();
+        var exerciseIds = exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).map(exercise -> exercise.getId()).toList();
+        long expectedParticipations = 2L * exam.getNumberOfExercisesInExam();
+        await().untilAsserted(() -> assertThat(exerciseIds.stream()
+                .mapToLong(exerciseId -> studentParticipationRepository.countInitializedParticipationsByExerciseIdAndExamIdIgnoreTestRuns(exerciseId, examId)).sum())
+                .isEqualTo(expectedParticipations));
     }
 
     @Test

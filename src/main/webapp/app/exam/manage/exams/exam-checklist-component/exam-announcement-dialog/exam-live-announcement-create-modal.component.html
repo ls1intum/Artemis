@@ -34,6 +34,20 @@
                 <jhi-exam-live-event [event]="announcement" />
             }
         }
+        <section class="flex flex-col gap-2" data-testid="announcement-history">
+            <h3 class="my-0! text-lg font-semibold" jhiTranslate="artemisApp.examManagement.announcementCreate.history"></h3>
+            @if (historyLoadingFailed()) {
+                <p class="text-state-danger" jhiTranslate="artemisApp.examManagement.announcementCreate.historyFailed"></p>
+            } @else if (pastAnnouncements().length === 0) {
+                <p jhiTranslate="artemisApp.examManagement.announcementCreate.historyEmpty"></p>
+            }
+            @for (event of pastAnnouncements(); track event.id) {
+                <article class="flex flex-col gap-1 border-t border-(--border-color) pt-2">
+                    <time [attr.datetime]="event.createdDate?.toISOString()">{{ event.createdDate | artemisDate: 'long' }}</time>
+                    <jhi-exam-live-event [event]="event" />
+                </article>
+            }
+        </section>
     </form>
     <ng-template #footer>
         <button tumAetUiButton type="button" severity="secondary" (click)="clear()" jhiTranslate="entity.action.close"></button>

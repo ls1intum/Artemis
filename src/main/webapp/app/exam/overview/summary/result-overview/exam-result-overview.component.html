@@ -2,6 +2,9 @@
     <div>
         <h3 class="mt-6! mb-[12px]! text-base! font-semibold!" data-testid="exam-summary-heading" jhiTranslate="artemisApp.exam.examSummary.points.overview"></h3>
 
+        @if (hasManuallyAssessedExercises()) {
+            <p class="mb-3! text-sm" data-testid="test-exam-partial-result" jhiTranslate="artemisApp.exam.examSummary.partialTestExamResult"></p>
+        }
         <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-table']" [toggleCollapse]="toggleCollapse('grading-table')">
             <div class="header truncate text-base font-semibold" jhiTranslate="artemisApp.exam.examSummary.resultTable"></div>
 
@@ -53,7 +56,11 @@
                                         <td class="text-center">{{ exerciseService.isIncludedInScore(exercise) }}</td>
                                     }
                                     <td class="text-center" data-testid="exercise-achieved-points">
-                                        {{ achievedPointsForExercise(exercise.id!) }}
+                                        @if (isManuallyAssessedTestExercise(exercise)) {
+                                            <span jhiTranslate="artemisApp.exam.examSummary.notAutomaticallyAssessed"></span>
+                                        } @else {
+                                            {{ achievedPointsForExercise(exercise.id!) }}
+                                        }
                                     </td>
                                     <td class="text-center" data-testid="exercise-max-points">
                                         @if (exercise.maxPoints !== undefined) {
@@ -61,7 +68,11 @@
                                         }
                                     </td>
                                     <td class="text-center" data-testid="exercise-achieved-percentage">
-                                        @if (exerciseInfos()[exercise.id!] !== undefined && exerciseInfos()[exercise.id!].achievedPercentage !== undefined) {
+                                        @if (
+                                            !isManuallyAssessedTestExercise(exercise) &&
+                                            exerciseInfos()[exercise.id!] !== undefined &&
+                                            exerciseInfos()[exercise.id!].achievedPercentage !== undefined
+                                        ) {
                                             <span [class]="exerciseInfos()[exercise.id!].colorClass"> {{ exerciseInfos()[exercise.id!].achievedPercentage }} % </span>
                                         } @else {
                                             -
@@ -154,7 +165,11 @@
                         </p>
                     } @else if (gradingScaleExists()) {
                         <p class="m-0 text-base font-semibold" data-testid="exam-result-grade">
-                            <span jhiTranslate="artemisApp.exam.examSummary.grade"></span>
+                            @if (isTestExam()) {
+                                <span jhiTranslate="artemisApp.exam.examSummary.theoreticalGrade"></span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.exam.examSummary.grade"></span>
+                            }
                             {{ studentExamWithGrade().studentResult.overallGrade }}
                         </p>
                     }

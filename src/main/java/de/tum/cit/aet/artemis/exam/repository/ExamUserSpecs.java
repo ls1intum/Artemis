@@ -126,9 +126,10 @@ public final class ExamUserSpecs {
     /** Matches exam users who have a signing image and all attendance checks completed. */
     @NonNull
     private static Specification<ExamUser> isAttendanceChecked() {
-        return (root, query, builder) -> builder.and(builder.isNotNull(root.get(ExamUser_.SIGNING_IMAGE_PATH)), builder.notEqual(root.get(ExamUser_.SIGNING_IMAGE_PATH), ""),
-                builder.isTrue(root.get(ExamUser_.DID_CHECK_IMAGE)), builder.isTrue(root.get(ExamUser_.DID_CHECK_NAME)), builder.isTrue(root.get(ExamUser_.DID_CHECK_LOGIN)),
-                builder.isTrue(root.get(ExamUser_.DID_CHECK_REGISTRATION_NUMBER)));
+        return (root, query, builder) -> builder.or(builder.isNotNull(root.get(ExamUser_.ATTENDANCE_OVERRIDE)),
+                builder.and(builder.isNotNull(root.get(ExamUser_.SIGNING_IMAGE_PATH)), builder.notEqual(root.get(ExamUser_.SIGNING_IMAGE_PATH), ""),
+                        builder.isTrue(root.get(ExamUser_.DID_CHECK_IMAGE)), builder.isTrue(root.get(ExamUser_.DID_CHECK_NAME)),
+                        builder.isTrue(root.get(ExamUser_.DID_CHECK_LOGIN)), builder.isTrue(root.get(ExamUser_.DID_CHECK_REGISTRATION_NUMBER))));
     }
 
     /** Matches exam users whose non-test-run StudentExam was started but attendance checks are incomplete. */
@@ -144,14 +145,15 @@ public final class ExamUserSpecs {
             Predicate checkIncomplete = builder.or(builder.isNull(root.get(ExamUser_.SIGNING_IMAGE_PATH)), builder.equal(root.get(ExamUser_.SIGNING_IMAGE_PATH), ""),
                     builder.isFalse(root.get(ExamUser_.DID_CHECK_IMAGE)), builder.isFalse(root.get(ExamUser_.DID_CHECK_NAME)), builder.isFalse(root.get(ExamUser_.DID_CHECK_LOGIN)),
                     builder.isFalse(root.get(ExamUser_.DID_CHECK_REGISTRATION_NUMBER)));
-            return builder.and(hasStarted, checkIncomplete);
+            return builder.and(hasStarted, builder.isNull(root.get(ExamUser_.ATTENDANCE_OVERRIDE)), checkIncomplete);
         };
     }
 
     /** Matches exam users who never started the exam: either no student exam was generated (ExamMissing) or the student exam was not started (NotStarted). */
     @NonNull
     private static Specification<ExamUser> isDidNotAttend() {
-        return Specification.where(isExamMissing()).or(isNotStarted());
+        return (root, query, builder) -> builder.or(builder.isFalse(root.get(ExamUser_.ATTENDANCE_OVERRIDE)),
+                builder.and(builder.isNull(root.get(ExamUser_.ATTENDANCE_OVERRIDE)), Specification.where(isExamMissing()).or(isNotStarted()).toPredicate(root, query, builder)));
     }
 
     /**

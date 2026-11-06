@@ -477,6 +477,19 @@ public class ExamResource {
     }
 
     /**
+     * @param courseId the course containing the exam
+     * @param examId   the exam whose announcement history is requested
+     * @return all exam-wide announcements, including their original timestamps
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/announcements")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<List<ExamWideAnnouncementEventDTO>> getExamAnnouncements(@PathVariable Long courseId, @PathVariable Long examId) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        return ResponseEntity.ok(examLiveEventsService.getAnnouncements(examId));
+    }
+
+    /**
      * POST /courses/{courseId}/exams/{examId}/announcements : Create a new announcement for the exam.
      *
      * @param courseId the course to which the exam belongs

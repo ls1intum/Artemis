@@ -16,15 +16,13 @@
                     </tumaet-ui-tag>
                 </div>
             } @else {
-                @if (allExamUsersAttendanceCheck() && allExamUsersAttendanceCheck().length > 0) {
+                @if (uncheckedCount() > 0) {
                     <div>
                         <span [jhiTranslate]="'artemisApp.examManagement.examStudents.notCheckedStudents'">Students who did not sign</span>:
-                        <tumaet-ui-tag severity="danger" class="ms-1" id="#registered-users" data-testid="not-checked-count">
-                            {{ allExamUsersAttendanceCheck().length }}</tumaet-ui-tag
-                        >
+                        <tumaet-ui-tag severity="danger" class="ms-1" id="#registered-users" data-testid="not-checked-count"> {{ uncheckedCount() }}</tumaet-ui-tag>
                     </div>
                 }
-                @if (!allExamUsersAttendanceCheck() || allExamUsersAttendanceCheck().length === 0) {
+                @if (uncheckedCount() === 0) {
                     <div data-testid="all-students-checked" class="flex items-center gap-2 text-state-success">
                         <span class="text-2xl" [jhiTranslate]="'artemisApp.examManagement.examStudents.allStudentsCheckedPassed'">All students passed</span>
                         <fa-icon [icon]="faCheck" size="2x" />
@@ -54,6 +52,7 @@
                         <th>
                             <span jhiTranslate="artemisApp.examManagement.examStudents.attendanceChecks"></span>
                         </th>
+                        <th jhiTranslate="artemisApp.examManagement.examStudents.manualAttendance.title"></th>
                         <th>
                             <span jhiTranslate="artemisApp.studentExams.started"></span>
                         </th>
@@ -94,7 +93,7 @@
                                 </span>
                             </td>
                             <td>
-                                @if (allExamUsersAttendanceCheck().length === 0 && examUser?.signingImagePath) {
+                                @if (examUser.signingImagePath) {
                                     <img
                                         class="max-w-full"
                                         width="60"
@@ -106,6 +105,20 @@
                                 } @else {
                                     <fa-icon class="text-state-danger" size="lg" [icon]="faXmark" />
                                 }
+                            </td>
+                            <td>
+                                <select
+                                    class="rounded border border-(--border-color) bg-(--module-bg) p-2 text-(--body-color)"
+                                    data-testid="manual-attendance"
+                                    [attr.aria-label]="('artemisApp.examManagement.examStudents.manualAttendance.title' | artemisTranslate) + ': ' + examUser.login"
+                                    [disabled]="!hasExamEnded() || isTestExam() || savingAttendance() !== undefined"
+                                    [ngModel]="examUser.attendanceOverride === undefined ? '' : examUser.attendanceOverride ? 'true' : 'false'"
+                                    (ngModelChange)="setAttendance(examUser, $event)"
+                                >
+                                    <option value="" jhiTranslate="artemisApp.examManagement.examStudents.manualAttendance.automatic"></option>
+                                    <option value="true" jhiTranslate="artemisApp.examManagement.examStudents.manualAttendance.present"></option>
+                                    <option value="false" jhiTranslate="artemisApp.examManagement.examStudents.manualAttendance.absent"></option>
+                                </select>
                             </td>
                             <td>
                                 <span jhiTranslate="{{ examUser?.started ? 'global.generic.yes' : 'global.generic.no' }}"></span>

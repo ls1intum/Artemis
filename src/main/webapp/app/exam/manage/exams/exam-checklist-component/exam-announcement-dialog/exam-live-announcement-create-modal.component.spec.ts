@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Subject, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { By } from '@angular/platform-browser';
@@ -34,6 +34,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
         fixture.componentRef.setInput('courseId', 2);
         global.ResizeObserver = MockResizeObserver as any;
         mockExamManagementService = TestBed.inject(ExamManagementService);
+        vi.spyOn(mockExamManagementService, 'getAnnouncements').mockReturnValue(of([]));
     });
 
     afterEach(() => {
@@ -46,6 +47,17 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
         expect(component.examId()).toBe(1);
         expect(component.courseId()).toBe(2);
         expect(component.visible()).toBe(true);
+    });
+
+    it('should load past announcements and refresh after sending', () => {
+        const past = { id: 5, text: 'Earlier announcement' } as ExamWideAnnouncementEvent;
+        vi.mocked(mockExamManagementService.getAnnouncements).mockReturnValue(of([past]));
+        vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(of({ id: 6 } as ExamWideAnnouncementEvent));
+        fixture.detectChanges();
+        expect(mockExamManagementService.getAnnouncements).toHaveBeenCalledWith(2, 1);
+        expect(component.pastAnnouncements()).toEqual([past]);
+        component.submitAnnouncement();
+        expect(mockExamManagementService.getAnnouncements).toHaveBeenCalledTimes(2);
     });
 
     it('should update text content and announcement when textContentChanged() is called', () => {

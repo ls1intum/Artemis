@@ -367,7 +367,7 @@ public class ExamUserService {
         ZonedDateTime startedDate = se != null ? se.startedDate() : null;
         ZonedDateTime submissionDate = se != null ? se.submissionDate() : null;
         long examSessionCount = se != null ? se.examSessionCount() : 0L;
-        boolean didAttend = Boolean.TRUE.equals(started);
+        boolean didAttend = eu.getAttendanceOverride() != null ? eu.getAttendanceOverride() : Boolean.TRUE.equals(started);
 
         String progress;
         if (se == null) {
@@ -385,6 +385,7 @@ public class ExamUserService {
 
         return new ExamStudentDTO(eu.getId(), userId, login, name, email, registrationNumber, eu.getStudentImagePath(), eu.getPlannedRoom(), eu.getActualRoom(),
                 eu.getPlannedSeat(), eu.getActualSeat(), eu.getDidCheckImage(), eu.getDidCheckName(), eu.getDidCheckLogin(), eu.getDidCheckRegistrationNumber(),
-                eu.getSigningImagePath(), didAttend, studentExamId, workingTime, started, submitted, startedDate, submissionDate, examSessionCount, progress);
+                eu.getSigningImagePath(), didAttend, eu.getAttendanceOverride(), studentExamId, workingTime, started, submitted, startedDate, submissionDate, examSessionCount,
+                progress);
     }
 }

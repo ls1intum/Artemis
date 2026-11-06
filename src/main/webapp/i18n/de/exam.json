@@ -111,6 +111,9 @@
                 }
             },
             "examSummary": {
+                "partialTestExamResult": "Dieses Teilergebnis und die theoretische Note berücksichtigen nur automatisch bewertete Aufgaben. Manuell zu bewertende Aufgaben wurden nicht bewertet.",
+                "notAutomaticallyAssessed": "Nicht automatisch bewertet",
+                "theoreticalGrade": "Theoretische Note:",
                 "backToOverview": "Zurück zur Übersicht",
                 "examResults": "Prüfungsergebnisse",
                 "generalInformation": "Allgemeine Informationen",
@@ -678,6 +681,14 @@
                     "distribute": "Studierende verteilen",
                     "verifyAttendance": "Anwesenheit prüfen"
                 },
+                "registrationClosed": "Die Anmeldung ist geschlossen, da die Prüfung beendet ist.",
+                "registrationAfterGeneration": "Die individuellen Prüfungen wurden bereits generiert. Neu angemeldete Studierende erhalten automatisch eine eigene Prüfung. Falls die Vorbereitung bereits gestartet wurde, werden auch ihre Aufgaben vorbereitet. Fortfahren?",
+                "manualAttendance": {
+                    "title": "Anwesenheitsentscheidung",
+                    "automatic": "Automatisch (Prüfungsaktivität)",
+                    "present": "Anwesend (manuell)",
+                    "absent": "Abwesend (manuell)"
+                },
                 "addDialog": {
                     "title": "Studierende hinzufügen",
                     "description": "Suche nach Kursteilnehmenden per Name, Matrikelnummer, Login oder E-Mail. Bereits angemeldete Studierende sind markiert und können nicht erneut angemeldet werden.",
@@ -891,6 +902,9 @@
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
             },
             "announcementCreate": {
+                "history": "Bisherige Ankündigungen",
+                "historyEmpty": "Es wurden noch keine Ankündigungen gesendet.",
+                "historyFailed": "Die bisherigen Ankündigungen konnten nicht geladen werden.",
                 "button": "Ankündigung erstellen",
                 "title": "Klausurweite Ankündigung erstellen",
                 "task": "Gib deine Ankündigung hier ein.",

@@ -111,6 +111,9 @@
                 }
             },
             "examSummary": {
+                "partialTestExamResult": "This partial result and theoretical grade use only automatically assessed exercises. Manually assessed exercises have not been graded.",
+                "notAutomaticallyAssessed": "Not automatically assessed",
+                "theoreticalGrade": "Theoretical grade:",
                 "backToOverview": "Back to overview",
                 "examResults": "Exam Results",
                 "generalInformation": "General Information",
@@ -678,6 +681,14 @@
                     "distribute": "Distribute students",
                     "verifyAttendance": "Verify attendance"
                 },
+                "registrationClosed": "Registration is closed because the exam has ended.",
+                "registrationAfterGeneration": "Student exams have already been generated. Newly registered students will receive their own exam automatically. Exercises will also be prepared if preparation has already started. Continue?",
+                "manualAttendance": {
+                    "title": "Attendance decision",
+                    "automatic": "Automatic (exam activity)",
+                    "present": "Present (manual)",
+                    "absent": "Absent (manual)"
+                },
                 "addDialog": {
                     "title": "Add Students",
                     "description": "Search for course students by name, matriculation number, login, or email. Already registered students are marked and cannot be registered again.",
@@ -891,6 +902,9 @@
                 "typeNameToConfirm": "Please type in the name of the exam to confirm:"
             },
             "announcementCreate": {
+                "history": "Past announcements",
+                "historyEmpty": "No announcements have been sent.",
+                "historyFailed": "The announcement history could not be loaded.",
                 "button": "Create Announcement",
                 "title": "Make Live Exam Announcement",
                 "task": "Enter your announcement below.",

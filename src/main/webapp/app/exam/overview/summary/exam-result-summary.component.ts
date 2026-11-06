@@ -209,7 +209,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
         this.exerciseInfos.set(this.getExerciseInfos());
 
-        if (this.instructorView() || isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService)) {
+        if (this.instructorView() || (this.isTestExam ? studentExam.submitted : isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService))) {
             const suppliedGrades = this.managementGradeInfo();
             const grades = this.instructorView()
                 ? suppliedGrades

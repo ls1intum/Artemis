@@ -18,6 +18,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import dayjs from 'dayjs/esm';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -32,7 +33,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     const route = {
         snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },
         url: new Observable<UrlSegment[]>(),
-        data: { subscribe: (fn: (value: any) => void) => fn({ exam: examWithCourse }) },
+        data: of({ exam: examWithCourse }),
     } as any as ActivatedRoute;
 
     let component: ExamStudentsAttendanceCheckComponent;
@@ -89,6 +90,72 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         }
     });
 
+    it('should distinguish an automatic decision from signed attendance for an unchecked student', async () => {
+        const unsigned = { id: 5, login: 'student1', started: true, attendanceChecked: false } as ExamUserAttendanceCheckDTO;
+        vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [unsigned] })));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const select = fixture.nativeElement.querySelector('[data-testid="manual-attendance"]') as HTMLSelectElement;
+        expect(select.value).toBe('');
+        expect(select.selectedOptions[0].getAttribute('jhiTranslate')).toBe('artemisApp.examManagement.examStudents.manualAttendance.automatic');
+        expect(select.parentElement?.querySelector('span')).toBeNull();
+        expect(component.uncheckedCount()).toBe(1);
+    });
+
+    it('should save a manual absence after conduction and retain the signature', () => {
+        fixture.detectChanges();
+        component.hasExamEnded.set(true);
+        const signed = { id: 5, login: 'student1', signingImagePath: 'signature.png', attendanceOverride: false } as ExamUserAttendanceCheckDTO;
+        const save = vi.spyOn(examManagementService, 'updateAttendance').mockReturnValue(of(undefined));
+        vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [signed] })));
+        component.setAttendance(signed, 'false');
+        expect(save).toHaveBeenCalledWith(course.id, examWithCourse.id, 5, false);
+        expect(component.allExamUsersAttendanceCheck()[0].signingImagePath).toBe('signature.png');
+        expect(component.savingAttendance()).toBeUndefined();
+    });
+
+    it('should not edit attendance during the exam', () => {
+        fixture.detectChanges();
+        const save = vi.spyOn(examManagementService, 'updateAttendance');
+        component.hasExamEnded.set(false);
+        component.setAttendance({ id: 5 } as ExamUserAttendanceCheckDTO, 'true');
+        expect(save).not.toHaveBeenCalled();
+    });
+
+    it('should unlock attendance correction at the synchronized exam end and clean up its timer', () => {
+        vi.useFakeTimers();
+        const oldEndDate = examWithCourse.endDate;
+        try {
+            examWithCourse.endDate = dayjs().add(1, 'second');
+            vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [] })));
+            fixture.detectChanges();
+            expect(component.hasExamEnded()).toBe(false);
+            vi.advanceTimersByTime(1000);
+            expect(component.hasExamEnded()).toBe(true);
+            examWithCourse.endDate = dayjs().add(1, 'hour');
+            component['scheduleAttendanceDeadline']();
+            expect(vi.getTimerCount()).toBeGreaterThan(0);
+            component.ngOnDestroy();
+            expect(vi.getTimerCount()).toBe(0);
+        } finally {
+            examWithCourse.endDate = oldEndDate;
+            vi.useRealTimers();
+        }
+    });
+
+    it('should use the server clock when opening attendance after the exam', () => {
+        const oldEndDate = examWithCourse.endDate;
+        try {
+            examWithCourse.endDate = dayjs().add(1, 'hour');
+            vi.spyOn(TestBed.inject(ArtemisServerDateService), 'now').mockImplementation(() => dayjs().add(2, 'hours'));
+            vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [] })));
+            fixture.detectChanges();
+            expect(component.hasExamEnded()).toBe(true);
+        } finally {
+            examWithCourse.endDate = oldEndDate;
+        }
+    });
+
     it('should test on error', () => {
         component.onError('ErrorString');
         expect(component.isTransitioning()).toBe(false);
@@ -118,7 +185,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         fixture.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledOnce();
-        expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id);
+        expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(component.allExamUsersAttendanceCheck()).toEqual(response);
         expect(component.allExamUsersAttendanceCheck()).toHaveLength(1);
         expect(component.isLoading()).toBe(false);

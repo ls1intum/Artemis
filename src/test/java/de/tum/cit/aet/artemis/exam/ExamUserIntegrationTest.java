@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamAttendanceUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
@@ -105,6 +106,55 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         for (LocalVCTestRepository studentRepo : studentRepos) {
             studentRepo.deleteWorkingCopy();
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendancePreservesSignatureAndCanBeReset() throws Exception {
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam1);
+        ExamUser registered = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        registered.setSigningImagePath("existing-signature.png");
+        examUserRepository.save(registered);
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId();
+        String path = base + "/exam-users/" + registered.getId() + "/attendance";
+        request.putWithoutResponseBody(path, new ExamAttendanceUpdateDTO(false), HttpStatus.NO_CONTENT);
+        ExamUser updated = examUserRepository.findByIdElseThrow(registered.getId());
+        assertThat(updated.getAttendanceOverride()).isFalse();
+        assertThat(updated.getSigningImagePath()).endsWith("existing-signature.png");
+        var attendance = request.getList(base + "/verify-exam-users?includeAll=true", HttpStatus.OK, ExamUserAttendanceCheckDTO.class);
+        assertThat(attendance).anySatisfy(row -> {
+            assertThat(row.id()).isEqualTo(registered.getId());
+            assertThat(row.attendanceOverride()).isFalse();
+            assertThat(row.signingImagePath()).endsWith("existing-signature.png");
+        });
+        request.putWithoutResponseBody(path, new ExamAttendanceUpdateDTO(null), HttpStatus.NO_CONTENT);
+        assertThat(examUserRepository.findByIdElseThrow(registered.getId()).getAttendanceOverride()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testManualAttendanceRequiresInstructor() throws Exception {
+        ExamUser registered = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exam-users/" + registered.getId() + "/attendance",
+                new ExamAttendanceUpdateDTO(true), Void.class, HttpStatus.FORBIDDEN);
+        assertThat(examUserRepository.findByIdElseThrow(registered.getId()).getAttendanceOverride()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendanceRejectedBeforeEndAndForOtherExam() throws Exception {
+        ExamUser registered = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/";
+        exam1.setEndDate(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam1);
+        request.putWithResponseBody(base + exam1.getId() + "/exam-users/" + registered.getId() + "/attendance", new ExamAttendanceUpdateDTO(true), Void.class,
+                HttpStatus.BAD_REQUEST);
+        Exam otherExam = examUtilService.addExam(course1);
+        otherExam.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(otherExam);
+        request.putWithResponseBody(base + otherExam.getId() + "/exam-users/" + registered.getId() + "/attendance", new ExamAttendanceUpdateDTO(true), Void.class,
+                HttpStatus.NOT_FOUND);
     }
 
     @Test

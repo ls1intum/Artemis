@@ -84,6 +84,17 @@ export class ExamManagementService {
             .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
+    getAnnouncements(courseId: number, examId: number): Observable<ExamWideAnnouncementEvent[]> {
+        return this.http.get<ExamWideAnnouncementEvent[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/announcements`).pipe(
+            map((events) => {
+                for (const event of events) {
+                    event.createdDate = convertDateFromServer(event.createdDate)!;
+                }
+                return events;
+            }),
+        );
+    }
+
     createAnnouncement(courseId: number, examId: number, content: string): Observable<ExamWideAnnouncementEvent> {
         return this.http.post<ExamWideAnnouncementEvent>(`${this.resourceUrl}/${courseId}/exams/${examId}/announcements`, content, { observe: 'response' }).pipe(
             map((res: HttpResponse<ExamWideAnnouncementEvent>) => {
@@ -383,8 +394,12 @@ export class ExamManagementService {
      * @param examId The exam id.
      * @returns Exam users with incomplete attendance check data.
      */
-    verifyExamUserAttendance(courseId: number, examId: number): Observable<HttpResponse<ExamUserAttendanceCheckDTO[]>> {
-        return this.http.get<ExamUserAttendanceCheckDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response' });
+    verifyExamUserAttendance(courseId: number, examId: number, includeAll = false): Observable<HttpResponse<ExamUserAttendanceCheckDTO[]>> {
+        return this.http.get<ExamUserAttendanceCheckDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response', params: { includeAll } });
+    }
+
+    updateAttendance(courseId: number, examId: number, examUserId: number, attended: boolean | undefined): Observable<void> {
+        return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users/${examUserId}/attendance`, { attended });
     }
 
     /**

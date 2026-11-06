@@ -474,6 +474,7 @@ describe('ExamStudentsComponent', () => {
             fixture.detectChanges();
             const addSpy = vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(of(new HttpResponse<void>()));
             const reloadSpy = vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
+            vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm').mockImplementation((options) => options.accept());
 
             component.registerAllStudentsFromCourse();
 
@@ -483,6 +484,44 @@ describe('ExamStudentsComponent', () => {
     });
 
     describe('exam student registration', () => {
+        it('should confirm registration when student exams already exist', () => {
+            fixture.detectChanges();
+            component.studentExamCount.set(2);
+            const openSpy = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open: openSpy } as never);
+            const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+            component.openAddStudentsDialog();
+            expect(openSpy).not.toHaveBeenCalled();
+            expect(confirmSpy).toHaveBeenCalledOnce();
+            confirmSpy.mock.calls[0][0].accept();
+            expect(openSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should disable registration when the deadline arrives while the page is open', () => {
+            vi.useFakeTimers();
+            try {
+                fixture.detectChanges();
+                component.exam.update((exam) => ({ ...exam, endDate: dayjs().add(1, 'second') }));
+                component['scheduleRegistrationDeadline']();
+                expect(component.manageStudentsMenuActions()[0].disabled).toBe(false);
+                vi.advanceTimersByTime(1001);
+                expect(component.manageStudentsMenuActions()[0].disabled).toBe(true);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
+        it('should reject registration and disable its menu actions after exam end', () => {
+            fixture.detectChanges();
+            component.exam.update((exam) => ({ ...exam, endDate: dayjs().subtract(1, 'minute') }));
+            const openSpy = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open: openSpy } as never);
+            component.openAddStudentsDialog();
+            expect(openSpy).not.toHaveBeenCalled();
+            expect(component.manageStudentsMenuActions()[0].disabled).toBe(true);
+        });
+
         it('should search users through the exam management service', () => {
             fixture.detectChanges();
             const searchSpy = vi.spyOn(examManagementService, 'searchUsersForExamRegistration').mockReturnValue(of({ content: [], totalElements: 0 }));
@@ -546,6 +585,7 @@ describe('ExamStudentsComponent', () => {
 
         it('should open the add students dialog', () => {
             fixture.detectChanges();
+            component.studentExamCount.set(0);
             const openSpy = vi.fn();
             vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open: openSpy } as never);
 

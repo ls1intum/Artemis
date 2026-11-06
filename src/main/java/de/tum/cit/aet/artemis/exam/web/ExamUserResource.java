@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.web;
 
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -20,6 +21,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -30,6 +33,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -43,6 +47,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.dto.ExamAttendanceUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentSearchDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
@@ -159,18 +164,46 @@ public class ExamUserResource {
     /**
      * GET courses/{courseId}/exams/{examId}/verify-exam-users : Retrieves a list of students who started the exam but did not sign
      *
-     * @param courseId the id of the course
-     * @param examId   the id of the exam
+     * @param courseId   the id of the course
+     * @param examId     the id of the exam
+     * @param includeAll include every registered student, also students with a complete attendance check
      * @return list of students who did not sign ResponseEntity with status 200 (OK)
      */
     @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @GetMapping("courses/{courseId}/exams/{examId}/verify-exam-users")
     @EnforceAtLeastStudent
     @ManualConfig
-    public ResponseEntity<Set<ExamUserAttendanceCheckDTO>> getAllWhoDidNotSign(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Set<ExamUserAttendanceCheckDTO>> getAllWhoDidNotSign(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestParam(defaultValue = "false") boolean includeAll) {
         log.debug("REST request to get all students who did not sign for exam with id: {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        return ResponseEntity.ok().body(examUserRepository.findAllExamUsersWhoDidNotSign(examId));
+        return ResponseEntity.ok().body(examUserRepository.findForAttendanceCheck(examId, includeAll));
+    }
+
+    /**
+     * Corrects attendance after conduction without changing signatures or the original identity checks.
+     *
+     * @param courseId   the course containing the exam
+     * @param examId     the exam containing the registration
+     * @param examUserId the registration to update
+     * @param update     the attendance decision, or null to restore the automatic status
+     * @return an empty response
+     */
+    @PutMapping("courses/{courseId}/exams/{examId}/exam-users/{examUserId}/attendance")
+    @EnforceAtLeastStudent
+    @ManualConfig
+    public ResponseEntity<Void> updateAttendance(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long examUserId,
+            @RequestBody ExamAttendanceUpdateDTO update) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        ExamUser examUser = examUserRepository.findWithExamById(examUserId).filter(registration -> registration.getExam().getId().equals(examId))
+                .orElseThrow(() -> new EntityNotFoundException("Exam user not found in the requested exam"));
+        var exam = examUser.getExam();
+        if (exam.isTestExam() || exam.getEndDate() == null || ZonedDateTime.now().isBefore(exam.getEndDate())) {
+            throw new BadRequestAlertException("Attendance can only be corrected after a real exam has ended", "exam", "attendanceCorrectionNotAllowed");
+        }
+        examUser.setAttendanceOverride(update.attended());
+        examUserRepository.save(examUser);
+        return ResponseEntity.noContent().build();
     }
 
     /**

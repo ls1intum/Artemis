@@ -1,4 +1,4 @@
-import { Component, inject, input, model, signal } from '@angular/core';
+import { Component, OnInit, inject, input, model, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -17,6 +17,7 @@ import { UnorderedListAction } from 'app/editor/monaco-editor/model/actions/unor
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
@@ -24,6 +25,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     templateUrl: './exam-live-announcement-create-modal.component.html',
     imports: [
         FormsModule,
+        ArtemisDatePipe,
         TranslateDirective,
         ArtemisTranslatePipe,
         MarkdownEditorMonacoComponent,
@@ -33,7 +35,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
         TumAetUiDialogComponent,
     ],
 })
-export class ExamLiveAnnouncementCreateModalComponent {
+export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
     private examManagementService = inject(ExamManagementService);
 
     actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new UnorderedListAction()];
@@ -47,11 +49,26 @@ export class ExamLiveAnnouncementCreateModalComponent {
 
     readonly status = signal<'not_submitted' | 'submitting' | 'submitted'>('not_submitted');
 
+    readonly pastAnnouncements = signal<ExamWideAnnouncementEvent[]>([]);
+    readonly historyLoadingFailed = signal(false);
+
     readonly announcement = signal<ExamWideAnnouncementEvent | undefined>(undefined);
 
     // Icons
     faSpinner = faSpinner;
     faCheckCircle = faCheckCircle;
+
+    ngOnInit() {
+        this.loadAnnouncements();
+    }
+
+    private loadAnnouncements() {
+        this.historyLoadingFailed.set(false);
+        this.examManagementService.getAnnouncements(this.courseId(), this.examId()).subscribe({
+            next: (events) => this.pastAnnouncements.set(events),
+            error: () => this.historyLoadingFailed.set(true),
+        });
+    }
 
     submitAnnouncement() {
         this.status.set('submitting');
@@ -59,6 +76,7 @@ export class ExamLiveAnnouncementCreateModalComponent {
             next: (event: ExamWideAnnouncementEvent) => {
                 this.status.set('submitted');
                 this.announcement.set(event);
+                this.loadAnnouncements();
             },
             error: () => {
                 this.status.set('not_submitted');

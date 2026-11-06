@@ -9,4 +9,6 @@ export class ExamUserAttendanceCheckDTO implements BaseEntity {
     signingImagePath!: string;
     started!: boolean;
     submitted!: boolean;
+    attendanceOverride?: boolean;
+    attendanceChecked?: boolean;
 }

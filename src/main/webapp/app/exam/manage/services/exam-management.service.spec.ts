@@ -958,6 +958,28 @@ describe('Exam Management Service Tests', () => {
         httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/2/statistics' }).flush({ numberOfGeneratedStudentExams: 3 });
     });
 
+    it('loads announcement history and converts every timestamp', () => {
+        service.getAnnouncements(1, 2).subscribe((events) => {
+            expect(events).toHaveLength(1);
+            expect(events[0].createdDate.toISOString()).toBe('2026-10-25T08:00:00.000Z');
+        });
+        httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/2/announcements' }).flush([{ id: 3, createdDate: '2026-10-25T08:00:00Z' }]);
+    });
+
+    it('requests all registered users for manual attendance correction', () => {
+        service.verifyExamUserAttendance(1, 2, true).subscribe();
+        const req = httpMock.expectOne((request) => request.url === 'api/exam/courses/1/exams/2/verify-exam-users');
+        expect(req.request.params.get('includeAll')).toBe('true');
+        req.flush([]);
+    });
+
+    it('saves an explicit absence separately from signed attendance data', () => {
+        service.updateAttendance(1, 2, 3, false).subscribe();
+        const req = httpMock.expectOne({ method: 'PUT', url: 'api/exam/courses/1/exams/2/exam-users/3/attendance' });
+        expect(req.request.body).toEqual({ attended: false });
+        req.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
     it('creates an announcement and converts its publication date', () => {
         service.createAnnouncement(1, 2, 'Exam starts soon').subscribe((event) => {
             expect(dayjs.isDayjs(event.createdDate)).toBe(true);

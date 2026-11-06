@@ -65,6 +65,7 @@ import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { onError } from 'app/foundation/util/global.utils';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
@@ -132,6 +133,7 @@ export class ExamStudentsComponent implements OnDestroy {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private websocketService = inject(WebsocketService);
     private examChecklistService = inject(ExamChecklistService);
+    private serverDateService = inject(ArtemisServerDateService);
 
     protected readonly ActionType = ActionType;
     protected readonly missingImage = '/content/images/missing_image.png';
@@ -231,6 +233,7 @@ export class ExamStudentsComponent implements OnDestroy {
     });
     private searchTerm = '';
     private searchTimer?: ReturnType<typeof setTimeout>;
+    private registrationDeadlineTimer?: ReturnType<typeof setTimeout>;
     private requestId = 0;
     private lastLoadEvent: TumAetUiTableQueryEvent | undefined;
     // True while a lazy load was recorded but skipped because the exam id was not yet available. It lets the
@@ -318,11 +321,16 @@ export class ExamStudentsComponent implements OnDestroy {
         return cols;
     });
 
-    readonly manageStudentsMenuActions = signal<ExamStudentsMenuItem[]>([
-        { label: 'artemisApp.examManagement.examStudents.menu.addStudents', icon: faUserPlus, command: () => this.openAddStudentsDialog() },
-        { label: 'artemisApp.examManagement.examStudents.menu.importUsers', icon: faFileImport, command: () => this.openImportUsersDialog() },
+    readonly manageStudentsMenuActions = computed<ExamStudentsMenuItem[]>(() => [
+        { label: 'artemisApp.examManagement.examStudents.menu.addStudents', icon: faUserPlus, disabled: this.hasExamEnded(), command: () => this.openAddStudentsDialog() },
+        { label: 'artemisApp.examManagement.examStudents.menu.importUsers', icon: faFileImport, disabled: this.hasExamEnded(), command: () => this.openImportUsersDialog() },
         { label: 'artemisApp.examManagement.examStudents.menu.exportUsers', icon: faFileExport, command: () => this.openExportUsersDialog() },
-        { label: 'artemisApp.examManagement.examStudents.menu.registerCourseStudents', icon: faUserPlus, command: () => this.registerAllStudentsFromCourse() },
+        {
+            label: 'artemisApp.examManagement.examStudents.menu.registerCourseStudents',
+            icon: faUserPlus,
+            disabled: this.hasExamEnded(),
+            command: () => this.registerAllStudentsFromCourse(),
+        },
         {
             label: 'artemisApp.examManagement.examStudents.menu.removeAllStudents',
             icon: faUserMinus,
@@ -390,7 +398,7 @@ export class ExamStudentsComponent implements OnDestroy {
                 tap((exam: Exam) => {
                     this.exam.set(exam);
                     this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
-                    this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
+                    this.scheduleRegistrationDeadline();
                     // The paginated table fires its initial lazy load before the exam id is available, so
                     // loadExamStudents early-returns (leaving isLoading=true and totalExamStudents=0). Replay that one
                     // skipped load now that the exam has resolved, otherwise the "Generate student exams" button stays
@@ -466,6 +474,7 @@ export class ExamStudentsComponent implements OnDestroy {
 
     ngOnDestroy() {
         clearTimeout(this.searchTimer);
+        clearTimeout(this.registrationDeadlineTimer);
         this.dialogErrorSource.unsubscribe();
     }
 
@@ -535,11 +544,11 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     openImportUsersDialog() {
-        this.usersImportDialog()?.open();
+        this.confirmRegistration(() => this.usersImportDialog()?.open());
     }
 
     openAddStudentsDialog() {
-        this.addStudentsModal()?.open();
+        this.confirmRegistration(() => this.addStudentsModal()?.open());
     }
 
     openExportUsersDialog() {
@@ -621,14 +630,42 @@ export class ExamStudentsComponent implements OnDestroy {
      * Registers all students who are enrolled in the course for the exam
      */
     registerAllStudentsFromCourse() {
-        const exam = this.exam();
-        if (exam?.id) {
-            this.examManagementService.addAllStudentsOfCourseToExam(this.courseId(), exam.id).subscribe({
-                next: () => {
-                    this.reloadStudentsView();
-                },
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        this.confirmRegistration(() => {
+            const exam = this.exam();
+            if (exam?.id) {
+                this.examManagementService.addAllStudentsOfCourseToExam(this.courseId(), exam.id).subscribe({
+                    next: () => this.reloadStudentsView(),
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+            }
+        });
+    }
+
+    private scheduleRegistrationDeadline() {
+        clearTimeout(this.registrationDeadlineTimer);
+        const remaining = this.exam().endDate?.diff(this.serverDateService.now());
+        this.hasExamEnded.set(remaining !== undefined && remaining <= 0);
+        if (remaining !== undefined && remaining > 0) {
+            this.registrationDeadlineTimer = setTimeout(() => this.scheduleRegistrationDeadline(), Math.min(remaining, 2_147_483_647));
+        }
+    }
+
+    private confirmRegistration(action: () => void) {
+        if (this.exam().endDate && !this.serverDateService.now().isBefore(this.exam().endDate)) {
+            this.hasExamEnded.set(true);
+            this.alertService.error('artemisApp.examManagement.examStudents.registrationClosed');
+            return;
+        }
+        if (this.studentExamCount() > 0) {
+            this.confirmationService.confirm({
+                header: this.artemisTranslatePipe.transform('artemisApp.examManagement.examStudents.addDialog.title'),
+                message: this.artemisTranslatePipe.transform('artemisApp.examManagement.examStudents.registrationAfterGeneration'),
+                acceptLabel: this.artemisTranslatePipe.transform('global.form.confirm'),
+                rejectLabel: this.artemisTranslatePipe.transform('global.form.cancel'),
+                accept: action,
             });
+        } else {
+            action();
         }
     }
 
@@ -721,6 +758,7 @@ export class ExamStudentsComponent implements OnDestroy {
         return (
             examUser?.didExamUserAttendExam &&
             this.hasExamEnded() &&
+            examUser.attendanceOverride === undefined &&
             (!examUser.didCheckLogin || !examUser.didCheckImage || !examUser.didCheckName || !examUser.didCheckRegistrationNumber || !examUser.signingImagePath)
         );
     }
@@ -728,11 +766,8 @@ export class ExamStudentsComponent implements OnDestroy {
     attendanceCheckPassed(examUser: ExamStudentDTO | undefined) {
         return (
             examUser?.didExamUserAttendExam &&
-            examUser.didCheckLogin &&
-            examUser.didCheckImage &&
-            examUser.didCheckName &&
-            examUser.didCheckRegistrationNumber &&
-            examUser.signingImagePath &&
+            (examUser.attendanceOverride === true ||
+                (examUser.didCheckLogin && examUser.didCheckImage && examUser.didCheckName && examUser.didCheckRegistrationNumber && examUser.signingImagePath)) &&
             this.hasExamEnded()
         );
     }

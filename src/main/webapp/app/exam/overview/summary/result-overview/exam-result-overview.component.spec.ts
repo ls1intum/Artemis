@@ -214,6 +214,30 @@ describe('ExamResultOverviewComponent', () => {
         expect(component.gradingScaleExists()).toBe(false);
     });
 
+    it('should show submitted test exam results without waiting for a publication date', () => {
+        fixture.componentRef.setInput('studentExamWithGrade', {
+            ...studentExamWithGrade,
+            studentExam: { ...studentExamWithGrade.studentExam!, submitted: true, exam: { ...exam, testExam: true, publishResultsDate: undefined } },
+        });
+        fixture.detectChanges();
+        expect(component.showResultOverview()).toBe(true);
+    });
+
+    it('should mark manual test exam exercises as ungraded and explain the partial result', () => {
+        fixture.componentRef.setInput('studentExamWithGrade', {
+            ...studentExamWithGrade,
+            maxPoints: 10,
+            maxBonusPoints: 0,
+            achievedPointsPerExercise: { [quizExercise.id!]: 8 },
+            studentExam: { ...studentExamWithGrade.studentExam!, exercises: [textExercise, quizExercise], submitted: true, exam: { ...exam, testExam: true } },
+        });
+        fixture.detectChanges();
+        const manualRow = fixture.nativeElement.querySelectorAll('tbody tr')[0] as HTMLElement;
+        expect(manualRow.querySelector('[jhiTranslate="artemisApp.exam.examSummary.notAutomaticallyAssessed"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="test-exam-partial-result"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-result-grade"] [jhiTranslate="artemisApp.exam.examSummary.theoreticalGrade"]')).not.toBeNull();
+    });
+
     it('should retrieve exam grade correctly', () => {
         fixture.detectChanges();
 

@@ -3,31 +3,51 @@
     <jhi-resizeable-container [examTimeline]="examTimeline()">
         <!--region Left Panel-->
         <span class="exercise-title" left-header>{{ examTimeline() ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
-        <div left-body class="w-full px-2 pb-2">
+        <div left-body class="w-full px-2 pb-2" data-testid="exam-file-upload-area">
             @if (isActive && !result && exercise() && studentSubmission() && !readonly()) {
                 <div>
-                    <label for="fileUploadInput" class="mb-2 inline-block" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
-                    <!-- The field grows with the panel up to a maximum and Upload follows right after it, so the button belongs to the field; Upload wraps below on a narrow panel. -->
-                    <div class="flex flex-wrap items-center gap-2">
-                        <div class="max-w-xl min-w-0 grow basis-96 overflow-hidden rounded-md border border-(--border-color)" data-testid="file-upload-field">
-                            <!-- file:text-sm! beats Bootstrap's unlayered font on the selector, which keeps the field as tall (34px) as the small Upload button. -->
-                            <input
-                                #fileInput
-                                id="fileUploadInput"
-                                type="file"
-                                class="block w-full cursor-pointer file:mr-3 file:cursor-pointer file:border-0 file:border-r file:border-(--border-color) file:bg-(--hover-slightly-darker-body-bg) file:px-2.5 file:py-1.5 file:text-sm! file:text-(--tumaet-ui-text-color) hover:file:bg-(--border-color)"
-                                (change)="setFileSubmissionForExercise($event)"
-                            />
+                    <input
+                        #fileInput
+                        [id]="'fileUploadInput-' + exercise().id"
+                        data-testid="exam-file-upload-input"
+                        type="file"
+                        hidden
+                        [accept]="acceptedFileTypes()"
+                        [disabled]="uploading()"
+                        (change)="setFileSubmissionForExercise($event)"
+                    />
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="outlined"
+                        class="flex! min-h-40 w-full min-w-0 flex-col gap-2 rounded-lg border-2! border-dashed! p-3! text-center whitespace-normal! sm:p-6!"
+                        data-testid="file-upload-field"
+                        [attr.aria-controls]="'fileUploadInput-' + exercise().id"
+                        [disabled]="uploading()"
+                        [attr.aria-busy]="uploading()"
+                        (click)="fileInput.click()"
+                        (dragover)="$event.preventDefault()"
+                        (drop)="onDrop($event)"
+                    >
+                        <fa-icon [icon]="uploading() ? faSpinner : faCloudArrowUp" [animation]="uploading() ? 'spin' : undefined" class="text-3xl" />
+                        <span
+                            class="max-w-full [overflow-wrap:anywhere]"
+                            [jhiTranslate]="uploading() ? 'artemisApp.fileUploadSubmission.examUploading' : 'artemisApp.fileUploadSubmission.examSelectOrDrop'"
+                        ></span>
+                        <span class="max-w-full text-sm [overflow-wrap:anywhere]" jhiTranslate="artemisApp.fileUploadSubmission.examAutomaticUpload"></span>
+                    </button>
+                    @if (uploadFailed()) {
+                        <div class="mt-2 text-state-danger" role="alert" data-testid="file-upload-error">
+                            <span jhiTranslate="error.fileUploadSavingError"></span>
+                            <button type="button" tumAetUiButton size="small" variant="outlined" data-testid="file-upload-retry" (click)="saveUploadedFile()">
+                                <span jhiTranslate="artemisApp.fileUploadSubmission.examRetry"></span>
+                            </button>
                         </div>
-                        <button
-                            type="button"
-                            tumAetUiButton
-                            size="small"
-                            class="shrink-0"
-                            data-testid="file-upload-submit"
-                            (click)="saveUploadedFile()"
-                            jhiTranslate="artemisApp.examParticipation.uploadFile"
-                        ></button>
+                    }
+                    <div class="sr-only" role="status" aria-live="polite">
+                        @if (uploading()) {
+                            <span jhiTranslate="artemisApp.fileUploadSubmission.examUploading"></span>
+                        }
                     </div>
                     <div class="mt-2 flex flex-wrap items-center gap-1">
                         <span jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></span>
@@ -38,7 +58,19 @@
                 </div>
             }
             @if (submittedFileName() && submittedFileUrl()) {
-                <div class="mt-3!">
+                <div class="mt-3! rounded-lg border border-(--border-color) p-3!" data-testid="file-upload-confirmation" role="status">
+                    @if (isImage()) {
+                        <img
+                            [src]="submittedFileUrl()"
+                            [alt]="submittedFileName()!"
+                            class="mb-3! max-h-64 max-w-full rounded object-contain"
+                            data-testid="file-upload-preview"
+                            loading="lazy"
+                            decoding="async"
+                        />
+                    } @else {
+                        <fa-icon [icon]="faFile" class="mb-2 inline-block text-3xl" />
+                    }
                     <h6 jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName() }"></h6>
                     <button
                         type="button"

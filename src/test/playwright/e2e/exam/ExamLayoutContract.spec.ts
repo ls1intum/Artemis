@@ -9,7 +9,6 @@ import {
     expectExamContentInsets,
     expectExamSummaryLayout,
     expectFileBrowserDividerResizes,
-    expectFileUploadRow,
     expectHandInInsets,
     expectPageNotToScrollSideways,
     expectProblemStatementDivider,
@@ -23,7 +22,7 @@ import {
     visibleTitleRow,
 } from '../../support/examLayoutAssertions';
 import { test } from '../../support/fixtures';
-import { expectAligned, expectHeight, expectSameValue, forEachViewport, measure } from '../../support/layout';
+import { expectAligned, expectHeight, expectInset, expectSameValue, forEachViewport, measure } from '../../support/layout';
 import { SEED_COURSES } from '../../support/seedData';
 import { admin, studentTwo } from '../../support/users';
 
@@ -55,8 +54,8 @@ const LONG_GROUP_TITLE_SUFFIX = ' with a group title that is much longer than th
  * room, and below it where there is not. The exam bar is 40px, the sidebar and the content end on the same line, and none of it scrolls
  * sideways. The panels of a page are set apart by the 6px divider of the application: the solution and the problem statement of the text,
  * modeling and file upload page, also while the problem statement is collapsed, and the file browser, the editor, the instructions and the
- * build output of the programming page; the dividers can still be dragged. The file input of the file upload page and its Upload button are
- * one row where the panel has room. The hand-in page and the summary keep the same title row and insets, and the summary scroller ends inside
+ * build output of the programming page; the dividers can still be dragged. The file upload page has a prominent drop/select area
+ * at least 160px high that fills the solution panel. The hand-in page and the summary keep the same title row and insets, and the summary scroller ends inside
  * the window. See the section on layout contract tests in the E2E documentation.
  */
 test.describe('Exam layout contract', { tag: '@slow' }, () => {
@@ -167,7 +166,13 @@ test.describe('Exam layout contract', { tag: '@slow' }, () => {
                             await expectProblemStatementDivider(page, `the ${examPage.name} page`);
                         }
                         if (examPage.name === ExerciseType.FILE_UPLOAD) {
-                            await expectFileUploadRow(page, viewport);
+                            const uploadArea = page.getByTestId('file-upload-field').filter({ visible: true });
+                            const solutionPanel = page.getByTestId('exam-file-upload-area').filter({ visible: true });
+                            await expect
+                                .poll(async () => (await measure(uploadArea)).height, { message: 'the file drop/select area is at least 160px high' })
+                                .toBeGreaterThanOrEqual(160);
+                            await expectInset(uploadArea, solutionPanel, 'left', 8, { name: 'the file drop/select area' });
+                            await expectInset(uploadArea, solutionPanel, 'right', 8, { name: 'the file drop/select area' });
                         }
                         await expectPageNotToScrollSideways(page, row);
                     });

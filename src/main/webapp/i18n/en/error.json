@@ -1,5 +1,7 @@
 {
     "error": {
+        "registrationClosed": "Registration is closed because the exam has ended.",
+        "attendanceCorrectionNotAllowed": "Attendance can only be corrected after a real exam has ended.",
         "exerciseGenerationCancellationUnavailable": "The cancellation could not be confirmed. Check the current run status, then try again.",
         "title": "Error page!",
         "http": {
