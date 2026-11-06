@@ -47,7 +47,9 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -57,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @ExtendWith(MockitoExtension.class)
 class ExamPracticeGradeTest {
@@ -675,6 +678,82 @@ class ExamPracticeGradeTest {
         source.setTestRun(testRun);
         source.setCreatedDate(Instant.EPOCH.plusSeconds(id));
         return source;
+    }
+
+    @Test
+    void manualOnlyAttemptKeepsNonEmptySubmissionMetadataWithoutScoring() {
+        var text = manualTextExercise(2L, 2L);
+        attempt.setExercises(List.of(text));
+        var participation = participationFor(3L, text);
+        var submission = new TextSubmission();
+        submission.setText("answer");
+        participation.addSubmission(submission);
+        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(attempt, false)).thenReturn(List.of(participation));
+
+        var result = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of()).studentResult();
+
+        assertThat(result.exerciseGroupIdToExerciseResult()).containsOnlyKeys(2L);
+        assertThat(result.exerciseGroupIdToExerciseResult().get(2L).hasNonEmptySubmission()).isTrue();
+        assertThat(result.exerciseGroupIdToExerciseResult().get(2L).achievedPoints()).isZero();
+        assertThat(result.overallPointsAchieved()).isZero();
+        assertThat(result.maxPoints()).isZero();
+    }
+
+    @Test
+    void pendingProgrammingOnlyAttemptKeepsNonEmptySubmissionMetadataWithoutScoring() {
+        var programming = programmingParticipation();
+        var submission = new ProgrammingSubmission();
+        submission.setId(1L);
+        submission.setType(SubmissionType.MANUAL);
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        programming.addSubmission(submission);
+        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(attempt, false)).thenReturn(List.of(programming));
+
+        var result = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of()).studentResult();
+
+        assertThat(result.exerciseGroupIdToExerciseResult()).containsOnlyKeys(1L);
+        assertThat(result.exerciseGroupIdToExerciseResult().get(1L).hasNonEmptySubmission()).isTrue();
+        assertThat(result.overallPointsAchieved()).isNull();
+    }
+
+    @Test
+    void mixedAttemptKeepsMetadataOfScoredAndUnscoredExercises() {
+        var text = manualTextExercise(3L, 3L);
+        attempt.setExercises(List.of(quiz, text));
+        var quizParticipation = participationFor(1L, quiz);
+        var textParticipation = participationFor(3L, text);
+        var submission = new TextSubmission();
+        submission.setText("answer");
+        textParticipation.addSubmission(submission);
+        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(attempt, false)).thenReturn(List.of(quizParticipation, textParticipation));
+
+        var result = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of(grade(1L, 60.0))).studentResult();
+
+        assertThat(result.exerciseGroupIdToExerciseResult()).containsOnlyKeys(1L, 3L);
+        assertThat(result.exerciseGroupIdToExerciseResult().get(1L).achievedPoints()).isEqualTo(6.0);
+        assertThat(result.exerciseGroupIdToExerciseResult().get(3L).hasNonEmptySubmission()).isTrue();
+        assertThat(result.exerciseGroupIdToExerciseResult().get(3L).achievedPoints()).isZero();
+        assertThat(result.overallPointsAchieved()).isEqualTo(6.0);
+    }
+
+    private TextExercise manualTextExercise(long exerciseId, long groupId) {
+        TextExercise text = new TextExercise();
+        text.setId(exerciseId);
+        text.setMaxPoints(50.0);
+        text.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        ExerciseGroup group = new ExerciseGroup();
+        group.setId(groupId);
+        group.setExam(exam);
+        text.setExerciseGroup(group);
+        return text;
+    }
+
+    private StudentParticipation participationFor(long participationId, Exercise exercise) {
+        var participation = new StudentParticipation();
+        participation.setId(participationId);
+        participation.setExercise(exercise);
+        return participation;
     }
 
     private StudentParticipation programmingParticipation() {

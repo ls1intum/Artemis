@@ -615,8 +615,9 @@ public class ExamService {
     private ExamResultInputs selectExamResultInputs(StudentExam studentExam, Set<ExamGradeScoreDTO> grades, List<StudentParticipation> participations) {
         var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
         if (!studentExam.isTestExam()) {
-            return new ExamResultInputs(exercises, grades, List.of());
+            return new ExamResultInputs(exercises, exercises, grades, List.of());
         }
+        var assignedExercises = exercises;
         exercises = exercises.stream()
                 .filter(exercise -> exercise instanceof QuizExercise || exercise instanceof ProgrammingExercise && exercise.getAssessmentType() == AssessmentType.AUTOMATIC)
                 .toList();
@@ -645,10 +646,16 @@ public class ExamService {
                 pendingExerciseIds.add(exercise.getId());
             }
         }
-        return new ExamResultInputs(exercises, attemptGrades, pendingExerciseIds);
+        return new ExamResultInputs(exercises, assignedExercises, attemptGrades, pendingExerciseIds);
     }
 
-    private record ExamResultInputs(List<Exercise> exercises, Set<ExamGradeScoreDTO> grades, List<Long> pendingExerciseIds) {
+    /**
+     * @param exercises          the exercises that contribute to the score
+     * @param assignedExercises  every exercise of the attempt, including those that are not scored (manual or pending), for submission metadata
+     * @param grades             the grades that contribute to the score
+     * @param pendingExerciseIds programming exercises that still await their build result
+     */
+    private record ExamResultInputs(List<Exercise> exercises, List<Exercise> assignedExercises, Set<ExamGradeScoreDTO> grades, List<Long> pendingExerciseIds) {
     }
 
     @Nullable
@@ -1041,6 +1048,21 @@ public class ExamService {
             double resultScore = studentExam.isTestRun() ? examGrade.score() : (relevantResult != null && relevantResult.getScore() != null) ? relevantResult.getScore() : 0.0;
             exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                     new ExamScoresDTO.ExerciseResultDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
+        }
+        // Exercises without a score input (manual or pending programming in a practice attempt) still report their submission metadata, so that
+        // an attempt containing only those exercises is counted as non-empty. They add no points to the overall score.
+        for (Exercise exercise : inputs.assignedExercises()) {
+            if (exercise.getExerciseGroup() == null || exerciseGroupIdToExerciseResult.containsKey(exercise.getExerciseGroup().getId())) {
+                continue;
+            }
+            StudentParticipation studentParticipation = exercise.findParticipation(participations);
+            boolean hasNonEmptySubmission = studentParticipation != null && !studentParticipation.getSubmissions().isEmpty()
+                    && hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise);
+            if (exercise instanceof QuizExercise && quizSubmittedAnswerCounts != null && studentParticipation != null) {
+                hasNonEmptySubmission = hasNonEmptySubmissionInQuiz(studentParticipation, quizSubmittedAnswerCounts);
+            }
+            exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
+                    new ExamScoresDTO.ExerciseResultDTO(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), 0.0, 0.0, hasNonEmptySubmission));
         }
         // Round the points again to prevent floating point issues that might occur when summing up the exercise points (e.g. 0.3 + 0.3 + 0.3 = 0.8999999999999999)
         overallPointsAchieved = roundScoreSpecifiedByCourseSettings(overallPointsAchieved, exam.getCourse());
