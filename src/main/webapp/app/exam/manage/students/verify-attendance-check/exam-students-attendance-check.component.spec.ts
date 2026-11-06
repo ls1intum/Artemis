@@ -102,6 +102,16 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(component.uncheckedCount()).toBe(1);
     });
 
+    it('should reapply the selected sort after reloading attendance', () => {
+        const users = [{ id: 1, login: 'b' } as ExamUserAttendanceCheckDTO, { id: 2, login: 'a' } as ExamUserAttendanceCheckDTO];
+        vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: users })));
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty');
+        fixture.detectChanges();
+        component.predicate.set('login');
+        component.reloadAttendance();
+        expect(sortSpy).toHaveBeenLastCalledWith(users, 'login', true);
+    });
+
     it('should save a manual absence after conduction and retain the signature', () => {
         const signed = { id: 5, login: 'student1', signingImagePath: 'signature.png', attendanceOverride: false } as ExamUserAttendanceCheckDTO;
         const save = vi.spyOn(examManagementService, 'updateAttendance').mockReturnValue(of(undefined));

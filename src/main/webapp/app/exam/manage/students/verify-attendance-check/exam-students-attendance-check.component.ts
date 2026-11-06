@@ -100,6 +100,8 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
         this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!, true).subscribe({
             next: (res: HttpResponse<ExamUserAttendanceCheckDTO[]>) => {
                 this.allExamUsersAttendanceCheck.set(res.body ?? []);
+                // The server order may differ from the instructor's selected sort.
+                this.sortRows();
                 this.attendanceReloadFailed.set(false);
                 this.savingAttendance.set(undefined);
                 this.isLoading.set(false);
