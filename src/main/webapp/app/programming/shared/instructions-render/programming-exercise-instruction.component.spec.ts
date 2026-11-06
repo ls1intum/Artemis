@@ -206,6 +206,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         // The live update must display both the removed and added text, rather than silently replacing the instructions.
         expect(content.textContent).toContain('Before');
         expect(content.textContent).toContain('After update');
+        expect(content.querySelector('del')?.textContent).toContain('Before');
+        expect(content.querySelector('ins')?.textContent).toContain('After');
         const tables = Array.from(content.querySelectorAll('table'));
         expect(tables.length).toBeGreaterThan(0);
         for (const table of tables) {
