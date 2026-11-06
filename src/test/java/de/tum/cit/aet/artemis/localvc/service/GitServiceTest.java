@@ -1,7 +1,14 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.spy;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -21,6 +28,8 @@ import org.eclipse.jgit.transport.RefSpec;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 
 class GitServiceTest {
 
@@ -112,6 +121,61 @@ class GitServiceTest {
         finally {
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    void strictDeletionRetainsEditorFilesOnUnderlyingIOExceptionAndRetriesWhileOrdinaryDeletionStaysBestEffort() throws Exception {
+        GitService service = spy(new GitService());
+        ReflectionTestUtils.setField(service, "repoClonePath", tempDirectory.resolve("checkouts"));
+        ReflectionTestUtils.setField(service, "defaultBranch", "main");
+        var uri = new LocalVCRepositoryUri(URI.create("http://localhost"), "STRICT", "strict-student");
+        Path checkout = service.getDefaultLocalCheckOutPathOfRepo(uri);
+        Path answer = checkout.resolve("private-editor-answer.txt");
+        try (Git ignored = Git.init().setInitialBranch("main").setDirectory(checkout.toFile()).call()) {
+            FileUtils.writeStringToFile(answer.toFile(), "Uncommitted private answer", StandardCharsets.UTF_8);
+        }
+        var failure = new IOException("Working copy cannot be renamed or deleted");
+        doAnswer(invocation -> {
+            Repository repository = invocation.getArgument(0);
+            repository.closeBeforeDelete();
+            throw failure;
+        }).when(service).deleteLocalRepository(any(Repository.class));
+
+        assertThatCode(() -> service.deleteLocalRepository(uri)).doesNotThrowAnyException();
+        assertThat(Files.readString(answer)).isEqualTo("Uncommitted private answer");
+        assertThatThrownBy(() -> service.deleteLocalRepositoryStrictly(uri)).isSameAs(failure);
+        assertThat(Files.readString(answer)).isEqualTo("Uncommitted private answer");
+
+        doCallRealMethod().when(service).deleteLocalRepository(any(Repository.class));
+        service.deleteLocalRepositoryStrictly(uri);
+        assertThat(checkout).doesNotExist();
+        assertThatCode(() -> service.deleteLocalRepositoryStrictly(uri)).doesNotThrowAnyException();
+        assertThatCode(() -> service.deleteLocalRepositoryStrictly(null)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void strictDeletionDoesNotClearAnUnopenableCheckoutContainingEditorFiles() throws Exception {
+        GitService service = new GitService();
+        ReflectionTestUtils.setField(service, "repoClonePath", tempDirectory.resolve("checkouts"));
+        ReflectionTestUtils.setField(service, "defaultBranch", "main");
+        var uri = new LocalVCRepositoryUri(URI.create("http://localhost"), "STRICT", "strict-student");
+        Path checkout = service.getDefaultLocalCheckOutPathOfRepo(uri);
+        Path answer = checkout.resolve("private-editor-answer.txt");
+        try (Git ignored = Git.init().setInitialBranch("main").setDirectory(checkout.toFile()).call()) {
+            FileUtils.writeStringToFile(answer.toFile(), "Answer surviving incomplete cleanup", StandardCharsets.UTF_8);
+        }
+        // The existing lookup converts an invalid configured branch into null; the editor files are still present.
+        ReflectionTestUtils.setField(service, "defaultBranch", "invalid branch");
+        assertThat(service.getExistingCheckedOutRepositoryByLocalPath(checkout, uri)).isNull();
+        assertThatCode(() -> service.deleteLocalRepository(uri)).doesNotThrowAnyException();
+        assertThatThrownBy(() -> service.deleteLocalRepositoryStrictly(uri)).isInstanceOf(IOException.class).hasMessageContaining(checkout.toString());
+        assertThat(Files.readString(answer)).isEqualTo("Answer surviving incomplete cleanup");
+
+        // JGit reports malformed metadata as an unchecked failure, which must also reach retained cleanup.
+        ReflectionTestUtils.setField(service, "defaultBranch", "main");
+        FileUtils.writeStringToFile(checkout.resolve(".git/config").toFile(), "[core\n", StandardCharsets.UTF_8);
+        assertThatThrownBy(() -> service.deleteLocalRepositoryStrictly(uri)).isInstanceOf(IllegalArgumentException.class);
+        assertThat(Files.readString(answer)).isEqualTo("Answer surviving incomplete cleanup");
     }
 
     private static void pushCommitWithManyFiles(Git source, Path bareRepositoryPath, int round) throws Exception {

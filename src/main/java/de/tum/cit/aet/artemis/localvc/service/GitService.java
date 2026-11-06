@@ -892,6 +892,30 @@ public class GitService extends AbstractGitService {
     }
 
     /**
+     * Deletes an editor checkout without hiding failures from retained cleanup. An unreadable checkout must not be treated
+     * as already deleted while its original path could still contain student answers.
+     *
+     * @param repoUri URL of the repository, or null if no repository was assigned
+     * @throws IOException if the original checkout path cannot be confirmed absent after deletion
+     */
+    public void deleteLocalRepositoryStrictly(LocalVCRepositoryUri repoUri) throws IOException {
+        if (repoUri == null) {
+            return;
+        }
+        Path localPath = getDefaultLocalCheckOutPathOfRepo(repoUri);
+        if (Files.notExists(localPath)) {
+            return;
+        }
+        Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri);
+        if (repository != null) {
+            deleteLocalRepository(repository);
+        }
+        if (!Files.notExists(localPath)) {
+            throw new IOException("Local repository checkout remains at " + localPath);
+        }
+    }
+
+    /**
      * delete the folder in the file system that contains all repositories for the given programming exercise
      *
      * @param programmingExercise contains the project key which is used as the folder name

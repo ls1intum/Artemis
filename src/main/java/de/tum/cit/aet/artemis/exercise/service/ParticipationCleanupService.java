@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
@@ -58,7 +60,14 @@ public class ParticipationCleanupService {
         switch (command.operation()) {
             case BUILD_PLAN -> continuousIntegrationService.orElseThrow().deleteBuildPlan(command.projectKey(), command.buildPlanId());
             case VC_REPOSITORY -> versionControlService.orElseThrow().deleteRepository(new LocalVCRepositoryUri(command.repositoryUri()));
-            case LOCAL_REPOSITORY -> gitService.deleteLocalRepository(command.repositoryUri() != null ? new LocalVCRepositoryUri(command.repositoryUri()) : null);
+            case LOCAL_REPOSITORY -> {
+                try {
+                    gitService.deleteLocalRepositoryStrictly(command.repositoryUri() != null ? new LocalVCRepositoryUri(command.repositoryUri()) : null);
+                }
+                catch (IOException exception) {
+                    throw new UncheckedIOException("Could not delete retained local repository", exception);
+                }
+            }
             case QUEUED_JOBS -> localCISharedBuildJobQueueService.ifPresent(service -> service.cancelAllJobsForParticipation(command.participationId()));
             case BUILD_LOG_FILES -> buildLogEntryService.deleteBuildLogFiles(command.exerciseId(), command.submissionId());
             case COMPETENCY_PROGRESS -> competencyProgressApi

@@ -199,7 +199,7 @@ public class ParticipationDeletionService {
                 }));
             }
             var command = new ParticipationCleanupCommand(Operation.LOCAL_REPOSITORY, participationId, 0, 0, null, null, repositoryUri != null ? repositoryUri.toString() : null);
-            externalCleanup.accept(new Task(command, () -> participationCleanupService.execute(command)));
+            externalCleanup.accept(new Task(command, () -> gitService.deleteLocalRepository(repositoryUri)));
 
             participationVcsAccessTokenService.deleteByParticipationId(participationId);
         }

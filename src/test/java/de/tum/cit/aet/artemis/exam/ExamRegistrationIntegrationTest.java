@@ -8,6 +8,8 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -78,6 +80,7 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.FailedBuildLogService;
@@ -322,7 +325,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 cleanupEntered.countDown();
                 assertThat(releaseCleanup.await(10, TimeUnit.SECONDS)).isTrue();
                 return invocation.callRealMethod();
-            }).when(gitServiceSpy).deleteLocalRepository(repositoryUri);
+            }).when(gitServiceSpy).deleteLocalRepositoryStrictly(repositoryUri);
             var context = SecurityContextHolder.getContext();
             try (var executor = Executors.newSingleThreadExecutor()) {
                 var regeneration = executor.submit(() -> {
@@ -460,7 +463,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "ci", "vc", "ci-local" })
+    @ValueSource(strings = { "ci", "vc", "ci-local", "local-io" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegenerationRetainsFailedCleanupAndReplaysItBeforePreparingNewRepositories(String failedAdapter) throws Exception {
         Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
@@ -481,6 +484,8 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var participations = new ArrayList<>(programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId()));
         assertThat(participations).hasSize(2);
         var repositoryPaths = new ArrayList<Path>();
+        var editorPaths = new ArrayList<Path>();
+        boolean localDeletionFails = failedAdapter.equals("ci-local") || failedAdapter.equals("local-io");
         var submissions = new ArrayList<ProgrammingSubmission>();
         var resultIds = new ArrayList<Long>();
         for (var participation : participations) {
@@ -495,6 +500,11 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 de.tum.cit.aet.artemis.localvc.service.GitService.commit(repository.workingCopy()).setMessage("Commit previous student answer").call();
                 repository.workingCopy().push().call();
             }
+            try (var editorRepository = gitServiceSpy.getOrCheckoutRepository(uri, true, false)) {
+                Path editorPath = editorRepository.getLocalPath();
+                editorPaths.add(editorPath);
+                FileUtils.writeStringToFile(editorPath.resolve("old-editor-answer.txt").toFile(), "Uncommitted private editor answer", StandardCharsets.UTF_8);
+            }
             var result = participationUtilService.createSubmissionAndResult(participation, 80, true);
             var submission = (ProgrammingSubmission) result.getSubmission();
             buildLogEntryService.saveBuildLogs(List.of(new BuildLogEntry(ZonedDateTime.parse("2026-01-15T10:00:00Z"), "Retained until commit")), submission, result);
@@ -503,21 +513,27 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
             resultIds.add(result.getId());
         }
         var sharedFailure = new IllegalStateException("Injected cleanup failure");
-        var localFailure = new IllegalStateException("Injected local cleanup failure");
-        if (!failedAdapter.equals("vc")) {
+        var localFailure = new IOException("Injected working-copy deletion failure");
+        if (failedAdapter.equals("ci") || failedAdapter.equals("ci-local")) {
             org.mockito.Mockito.doThrow(sharedFailure).when(continuousIntegrationService).deleteBuildPlan(org.mockito.ArgumentMatchers.eq(exercise.getProjectKey()),
                     org.mockito.ArgumentMatchers.anyString());
         }
-        else {
+        else if (failedAdapter.equals("vc")) {
             org.mockito.Mockito.doThrow(sharedFailure).when(versionControlService).deleteRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
         }
-        if (failedAdapter.equals("ci-local")) {
-            org.mockito.Mockito.doThrow(localFailure).when(gitServiceSpy).deleteLocalRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
+        if (localDeletionFails) {
+            doAnswer(invocation -> {
+                Repository repository = invocation.getArgument(0);
+                repository.closeBeforeDelete();
+                throw localFailure;
+            }).when(gitServiceSpy).deleteLocalRepository(any(Repository.class));
         }
 
         try {
-            var committed = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", null,
-                    StudentExamDTO.class, HttpStatus.OK, null, Map.of("X-Artemis-Preparation-Pending", "true"));
+            var response = request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", null, HttpStatus.OK,
+                    null);
+            assertThat(response.getHeader("X-Artemis-Preparation-Pending")).isEqualTo("true");
+            var committed = List.of(request.getObjectMapper().readValue(response.getContentAsString(), StudentExamDTO[].class));
             var committedIds = committed.stream().map(StudentExamDTO::id).toList();
             assertThat(committedIds).hasSize(2).doesNotContainAnyElementsOf(previousIds);
             assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(committedIds);
@@ -535,29 +551,50 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
                     assertThat(repositoryPaths.get(index)).doesNotExist();
                 }
                 assertThat(failedBuildLogService.getBuildLogs(exercise.getId(), submissions.get(index).getId(), resultIds.get(index))).isEmpty();
-                verify(gitServiceSpy).deleteLocalRepository((LocalVCRepositoryUri) participations.get(index).getVcsRepositoryUri());
+                Path editorPath = editorPaths.get(index);
+                if (localDeletionFails) {
+                    assertThat(Files.readString(editorPath.resolve("old-editor-answer.txt"))).isEqualTo("Uncommitted private editor answer");
+                }
+                else {
+                    assertThat(editorPath).doesNotExist();
+                }
+                verify(gitServiceSpy).deleteLocalRepository(org.mockito.ArgumentMatchers.argThat((Repository repository) -> repository.getLocalPath().equals(editorPath)));
             }
             verify(continuousIntegrationService).deleteBuildPlan(exercise.getProjectKey(), participations.get(1).getBuildPlanId());
             long examId = exam.getId();
             var cleanupMap = distributedDataProvider.<Long, List<ParticipationCleanupCommand>>getMap("exam-unfinished-resource-cleanup");
-            if (failedAdapter.equals("ci-local")) {
+            if (localDeletionFails) {
                 var retained = cleanupMap.get(examId);
-                assertThat(retained).hasSize(4);
+                assertThat(retained).hasSize(failedAdapter.equals("ci-local") ? 4 : 2);
                 for (var participation : participations) {
-                    assertThat(retained).filteredOn(command -> command.participationId() == participation.getId()).extracting(ParticipationCleanupCommand::operation)
-                            .containsExactlyInAnyOrder(Operation.BUILD_PLAN, Operation.LOCAL_REPOSITORY);
+                    var operations = assertThat(retained).filteredOn(command -> command.participationId() == participation.getId())
+                            .extracting(ParticipationCleanupCommand::operation);
+                    if (failedAdapter.equals("ci-local")) {
+                        operations.containsExactlyInAnyOrder(Operation.BUILD_PLAN, Operation.LOCAL_REPOSITORY);
+                    }
+                    else {
+                        operations.containsExactly(Operation.LOCAL_REPOSITORY);
+                    }
                 }
             }
             assertThatThrownBy(() -> studentExamService.startExercises(examId)).isInstanceOf(CannotAcquireLockException.class).satisfies(exception -> {
-                if (failedAdapter.equals("ci-local")) {
-                    assertThat(exception.getCause().getSuppressed()).containsExactlyInAnyOrder(sharedFailure, sharedFailure, localFailure, localFailure);
+                if (localDeletionFails) {
+                    var failures = List.of(exception.getCause().getSuppressed());
+                    assertThat(failures).filteredOn(UncheckedIOException.class::isInstance).hasSize(2).allSatisfy(failure -> assertThat(failure.getCause()).isSameAs(localFailure));
+                    if (failedAdapter.equals("ci-local")) {
+                        assertThat(failures).filteredOn(failure -> failure == sharedFailure).hasSize(2);
+                        assertThat(failures).hasSize(4);
+                    }
+                    else {
+                        assertThat(failures).hasSize(2);
+                    }
                 }
             });
             assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId())).isEmpty();
             org.mockito.Mockito.doCallRealMethod().when(continuousIntegrationService).deleteBuildPlan(org.mockito.ArgumentMatchers.eq(exercise.getProjectKey()),
                     org.mockito.ArgumentMatchers.anyString());
             org.mockito.Mockito.doCallRealMethod().when(versionControlService).deleteRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
-            org.mockito.Mockito.doCallRealMethod().when(gitServiceSpy).deleteLocalRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
+            org.mockito.Mockito.doCallRealMethod().when(gitServiceSpy).deleteLocalRepository(any(Repository.class));
             studentExamService.startExercises(examId).join();
             assertThat(cleanupMap.get(examId)).isNull();
             assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(committedIds);
@@ -568,13 +605,16 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 try (var repository = localVCLocalCITestService.cloneWorkingCopy(uri.getProjectKey(), slug)) {
                     assertThat(repository.workingCopyPath().resolve("old-student-answer.txt")).doesNotExist();
                 }
+                try (var editorRepository = gitServiceSpy.getOrCheckoutRepository(uri, true, false)) {
+                    assertThat(editorRepository.getLocalPath().resolve("old-editor-answer.txt")).doesNotExist();
+                }
             }
         }
         finally {
             org.mockito.Mockito.doCallRealMethod().when(continuousIntegrationService).deleteBuildPlan(org.mockito.ArgumentMatchers.eq(exercise.getProjectKey()),
                     org.mockito.ArgumentMatchers.anyString());
             org.mockito.Mockito.doCallRealMethod().when(versionControlService).deleteRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
-            org.mockito.Mockito.doCallRealMethod().when(gitServiceSpy).deleteLocalRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
+            org.mockito.Mockito.doCallRealMethod().when(gitServiceSpy).deleteLocalRepository(any(Repository.class));
             examPreparationLockService.withPreparationLock(exam.getId(), () -> null);
         }
     }

@@ -269,6 +269,9 @@ public class ParticipationResource {
     private ResponseEntity<StudentParticipationDTO> resumeProgrammingParticipation(ProgrammingExercise programmingExercise, long participationId) {
         // Read participation state only after admission: regeneration may have deleted the old participation while this request was waiting.
         var participation = programmingExerciseStudentParticipationRepository.findWithTeamStudentsByIdElseThrow(participationId);
+        if (!participation.getExercise().getId().equals(programmingExercise.getId())) {
+            throw new BadRequestAlertException("Participation does not belong to the exercise", ENTITY_NAME, "participationExerciseMismatch");
+        }
         // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
         var participant = participation.getParticipant();
