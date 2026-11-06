@@ -483,6 +483,7 @@ describe('ProgrammingBuildNotificationsComponent', () => {
         resolveRegistration({ showNotification: display });
         await Promise.resolve();
         expect(display).not.toHaveBeenCalled();
+        expect(showNotification).not.toHaveBeenCalled();
     });
 
     it('keeps showing the result favicon if native notification delivery fails', async () => {
