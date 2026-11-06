@@ -68,8 +68,11 @@ class TutorLeaderboardServiceTest {
             }
             default -> throw new IllegalArgumentException(scope);
         }
-        assertThat(leaderboard).extracting(TutorLeaderboardDTO::userId).containsExactlyInAnyOrder(tutor.getId(), editor.getId(), instructor.getId(), negativeInstructor.getId());
+        assertThat(leaderboard).extracting(TutorLeaderboardDTO::userId).containsExactlyInAnyOrder(tutor.getId(), editor.getId(), instructor.getId(), cancelledEditor.getId(),
+                negativeInstructor.getId());
         assertThat(leaderboard).filteredOn(entry -> entry.userId() == tutor.getId()).extracting(TutorLeaderboardDTO::points).containsExactly(0.0);
+        // Assessments and penalties cancel out, but the recorded activity keeps the staff member listed.
+        assertThat(leaderboard).filteredOn(entry -> entry.userId() == cancelledEditor.getId()).extracting(TutorLeaderboardDTO::points).containsExactly(0.0);
         assertThat(leaderboard).filteredOn(entry -> entry.userId() == negativeInstructor.getId()).extracting(TutorLeaderboardDTO::points).containsExactly(-2.0);
     }
 

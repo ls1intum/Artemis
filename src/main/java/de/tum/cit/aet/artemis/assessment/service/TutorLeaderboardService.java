@@ -157,8 +157,11 @@ public class TutorLeaderboardService {
             }
 
             // Keep every tutor, including those who have not assessed yet. Higher staff only appear when
-            // their work contributes points to this leaderboard's exercise, course or exam scope.
-            if (!tutors.contains(tutor) && points == 0.0) {
+            // they have recorded activity in this leaderboard's exercise, course or exam scope. Net zero points
+            // (for example points cancelled out by penalties) must not hide that activity.
+            boolean hasActivity = numberOfAssessments > 0 || numberOfComplaintResponses > 0 || numberOfTutorComplaints > 0 || numberOfTutorMoreFeedbackRequests > 0
+                    || numberOfAnsweredMoreFeedbackRequests > 0;
+            if (!tutors.contains(tutor) && !hasActivity) {
                 continue;
             }
 
