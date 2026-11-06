@@ -602,6 +602,8 @@ describe('ExamScoresComponent', () => {
         expect(comp.aggregatedExamResults().medianRelativeSubmitted).toBe(50);
         expect(comp.aggregatedExamResults().meanPointsRelativePassed).toBe(80);
         expect(comp.scores()).toEqual([80, 20]);
+        expect(comp.aggregatedExamResults().noOfRegisteredUsers).toBe(dto.studentResults.length);
+        expect(comp.aggregatedExamResults().noOfExamsSubmitted).toBe(dto.studentResults.filter((result) => result.submitted).length);
         expect(Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('[data-testid="attempt-max-points"]')).map((cell) => cell.textContent?.trim())).toEqual([
             '10.5',
             '20',

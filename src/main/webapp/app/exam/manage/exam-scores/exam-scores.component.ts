@@ -485,6 +485,9 @@ export class ExamScoresComponent implements OnInit {
                 studentGradesTotalInFirstCorrectionRound,
             ),
         );
+        // Attempt counts do not depend on score eligibility, unscored attempts only stay out of the score statistics.
+        this.aggregatedExamResults().noOfRegisteredUsers = this.studentResults().length;
+        this.aggregatedExamResults().noOfExamsSubmitted = this.studentResults().filter((result) => result.submitted).length;
         this.aggregatedExamResults().noOfExamsNonEmpty = numberNonEmptySubmissions;
         this.aggregatedExamResults().noOfExamsSubmittedAndNotEmpty = numberNonEmptySubmittedSubmissions;
         this.updateValuesAccordingToFilter();
