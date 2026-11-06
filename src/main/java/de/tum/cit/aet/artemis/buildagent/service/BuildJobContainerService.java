@@ -223,13 +223,17 @@ public class BuildJobContainerService {
             if (adjustedMemory > 0 && adjustedMemorySwap > 0 && adjustedMemorySwap < adjustedMemory) {
                 long maxTotal = maxMemorySwap > 0 ? convertMemoryFromMBToBytes(maxMemorySwap) : Long.MAX_VALUE;
                 if (adjustedMemory <= maxTotal) {
-                    log.warn("The memory swap limit {} of container {} is below its memory limit {}; the container runs without swap",
-                            BuildAgentConfiguration.formatMemory(adjustedMemorySwap), containerName, BuildAgentConfiguration.formatMemory(adjustedMemory));
+                    if (log.isWarnEnabled()) {
+                        log.warn("The memory swap limit {} of container {} is below its memory limit {}; the container runs without swap",
+                                BuildAgentConfiguration.formatMemory(adjustedMemorySwap), containerName, BuildAgentConfiguration.formatMemory(adjustedMemory));
+                    }
                     adjustedMemorySwap = adjustedMemory;
                 }
                 else {
-                    log.warn("The memory limit {} of container {} exceeds the maximum total memory and swap limit {} of this build agent; both are set to the maximum",
-                            BuildAgentConfiguration.formatMemory(adjustedMemory), containerName, BuildAgentConfiguration.formatMemory(maxTotal));
+                    if (log.isWarnEnabled()) {
+                        log.warn("The memory limit {} of container {} exceeds the maximum total memory and swap limit {} of this build agent; both are set to the maximum",
+                                BuildAgentConfiguration.formatMemory(adjustedMemory), containerName, BuildAgentConfiguration.formatMemory(maxTotal));
+                    }
                     adjustedMemory = maxTotal;
                     adjustedMemorySwap = maxTotal;
                 }
