@@ -617,11 +617,18 @@ public class ExamService {
         var exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         var attemptGrades = grades.stream().filter(grade -> participationIds.contains(grade.participationId()) && exerciseIds.contains(grade.exerciseId()))
                 .collect(Collectors.toSet());
+        var scoredParticipationIds = attemptGrades.stream().filter(grade -> grade.score() != null).map(ExamGradeScoreDTO::participationId).collect(Collectors.toSet());
         var pendingExerciseIds = exercises.stream().filter(ProgrammingExercise.class::isInstance).filter(exercise -> {
             var participation = exercise.findParticipation(participations);
             var latest = participation != null ? participation.findLatestSubmission().orElse(null) : null;
-            return latest instanceof ProgrammingSubmission submission && Boolean.TRUE.equals(submission.isSubmitted()) && submission.getSubmissionDate() != null
-                    && !submission.isBuildFailed() && submission.getLatestCompletedResult() == null;
+            if (!(latest instanceof ProgrammingSubmission submission) || !Boolean.TRUE.equals(submission.isSubmitted()) || submission.getSubmissionDate() == null
+                    || submission.isBuildFailed()) {
+                return false;
+            }
+            var completed = submission.getLatestCompletedResult();
+            // The grades and the participations are read separately. A result that completed in between is visible on the participation but
+            // missing in the grades, so it stays pending until both reads agree and the points are not reported incomplete.
+            return completed == null || completed.getScore() != null && !scoredParticipationIds.contains(participation.getId());
         }).map(Exercise::getId).toList();
         return new ExamResultInputs(exercises, attemptGrades, pendingExerciseIds);
     }
@@ -691,7 +698,7 @@ public class ExamService {
                 return courseScoreCalculationService.calculateCourseScoresForExamBonusSource(sourceGradingScale.getCourse(), sourceGradingScale, studentIds);
             }
             else {
-                return calculateExamScoresAsBonusSource(sourceGradingScale.getExam().getId(), studentIds);
+                return calculateExamScoresAsBonusSource(sourceGradingScale.getExam().getId(), studentIds, sourceGradingScale.getMaxPoints());
             }
         }
         catch (AccessForbiddenException e) {
@@ -701,7 +708,7 @@ public class ExamService {
         }
     }
 
-    private Map<Long, BonusSourceResultDTO> calculateExamScoresAsBonusSource(Long examId, Collection<Long> studentIds) {
+    private Map<Long, BonusSourceResultDTO> calculateExamScoresAsBonusSource(Long examId, Collection<Long> studentIds, double sourceReachablePoints) {
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
             Long studentId = studentIds.iterator().next();
             User targetUser = userRepository.findByIdWithAuthoritiesElseThrow(studentId);
@@ -711,15 +718,25 @@ public class ExamService {
             StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummary(targetUser, studentExam,
                     authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), targetUser));
             var studentResult = studentExamWithGradeDTO.studentResult();
-            return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null,
-                    Boolean.TRUE.equals(studentResult.submitted())));
+            return Map.of(studentId, toBonusSourceResult(studentResult, sourceReachablePoints));
         }
         var scores = calculateExamScores(examId);
         var studentIdSet = new HashSet<>(studentIds);
         return scores.studentResults().stream().filter(studentResult -> studentIdSet.contains(studentResult.userId()))
-                .collect(Collectors.toMap(ExamScoresDTO.StudentResultDTO::userId, studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(),
-                        studentResult.mostSeverePlagiarismVerdict(), null, null, Boolean.TRUE.equals(studentResult.submitted()))));
+                .collect(Collectors.toMap(ExamScoresDTO.StudentResultDTO::userId, studentResult -> toBonusSourceResult(studentResult, sourceReachablePoints)));
+    }
 
+    /**
+     * Converts a source exam result into bonus source points. The bonus calculation compares the points with the configured maximum of the source,
+     * so the points of a partial test-exam attempt are rescaled from the attempt maximum to that maximum. A pending (null) result stays pending.
+     */
+    private BonusSourceResultDTO toBonusSourceResult(ExamScoresDTO.StudentResultDTO studentResult, double sourceReachablePoints) {
+        Double points = studentResult.overallPointsAchieved();
+        Double attemptMaxPoints = studentResult.maxPoints();
+        if (points != null && attemptMaxPoints != null && attemptMaxPoints > 0) {
+            points = points * sourceReachablePoints / attemptMaxPoints;
+        }
+        return new BonusSourceResultDTO(points, studentResult.mostSeverePlagiarismVerdict(), null, null, Boolean.TRUE.equals(studentResult.submitted()));
     }
 
     /**

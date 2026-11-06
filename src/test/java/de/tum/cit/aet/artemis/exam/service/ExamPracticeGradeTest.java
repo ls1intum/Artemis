@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -20,20 +22,25 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
 import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.service.BonusService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -70,6 +77,12 @@ class ExamPracticeGradeTest {
 
     @Mock
     private ExerciseTestRepository exerciseRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private AuthorizationCheckService authorizationCheckService;
 
     @Spy
     private Optional<PlagiarismCaseApi> plagiarismCaseApi = Optional.empty();
@@ -281,6 +294,69 @@ class ExamPracticeGradeTest {
         assertThat(result.studentResult().overallScoreAchieved()).isEqualTo(90.0);
         assertThat(result.studentResult().gradeWithBonus().finalGrade()).isEqualTo("1.0");
         assertThat(result.studentResult().gradeWithBonus().finalPoints()).isEqualTo(10.0);
+    }
+
+    @Test
+    void resultCompletedBetweenGradeAndParticipationReadStaysPending() {
+        var programming = programmingParticipation();
+        var submission = new ProgrammingSubmission();
+        submission.setId(1L);
+        submission.setSubmitted(true);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        var completed = new Result();
+        completed.setScore(80.0);
+        completed.setCompletionDate(ZonedDateTime.now());
+        submission.addResult(completed);
+        programming.addSubmission(submission);
+        when(studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(attempt, false)).thenReturn(List.of(programming));
+        // The grade query ran before the build finished, so it carries no score for this participation.
+        var staleGrade = new ExamGradeScoreDTO(programming.getId(), 1L, 2L, null, 20.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
+
+        var result = examService.calculateStudentResultWithGradeAndPoints(attempt, Set.of(staleGrade));
+
+        assertThat(result.pendingExerciseIds()).containsExactly(2L);
+        assertThat(result.studentResult().overallPointsAchieved()).isNull();
+    }
+
+    @Test
+    void partialTestExamBonusSourceIsRescaledToItsConfiguredMaximum() {
+        var targetScale = new GradingScale();
+        targetScale.setExam(exam);
+        targetScale.setBonusStrategy(BonusStrategy.POINTS);
+        var passing = new GradeStep();
+        passing.setGradeName("1.0");
+        passing.setIsPassingGrade(true);
+        var sourceExam = new Exam();
+        sourceExam.setId(5L);
+        sourceExam.setTestExam(true);
+        sourceExam.setExamMaxPoints(100);
+        var sourceScale = new GradingScale();
+        sourceScale.setExam(sourceExam);
+        var bonus = new Bonus();
+        bonus.setSourceGradingScale(sourceScale);
+        targetScale.addBonusFrom(bonus);
+        when(gradingScaleRepository.findByExamIdWithBonusFrom(1L)).thenReturn(Optional.of(targetScale));
+        when(gradingScaleRepository.matchPercentageToGradeStep(anyDouble(), eq(targetScale))).thenReturn(passing);
+        var sourceUser = attempt.getUser();
+        var sourceAttempt = new StudentExam();
+        sourceAttempt.setId(9L);
+        sourceAttempt.setExam(exam);
+        sourceAttempt.setUser(sourceUser);
+        sourceAttempt.setSubmitted(true);
+        sourceAttempt.setExercises(List.of());
+        when(userRepository.findByIdWithAuthoritiesElseThrow(1L)).thenReturn(sourceUser);
+        when(studentExamRepository.findWithExercisesByUserIdAndExamId(eq(1L), eq(5L), anyBoolean())).thenReturn(Optional.of(sourceAttempt));
+        var spiedService = org.mockito.Mockito.spy(examService);
+        org.mockito.Mockito
+                .doReturn(new StudentExamWithGradeDTO(10.0, 0.0, null, null,
+                        new ExamScoresDTO.StudentResultDTO(1L, null, null, null, null, true, 8.0, 80.0, "", "", false, 0.0, null, Map.of(), null, 10.0), Map.of(), List.of()))
+                .when(spiedService).getStudentExamGradesForSummary(any(User.class), any(StudentExam.class), anyBoolean());
+        // 8 of 10 automatic points in the source attempt must reach the bonus calculation as 80 of 100.
+        when(bonusService.calculateGradeWithBonus(eq(bonus), anyDouble(), eq(80.0), eq(100.0))).thenReturn(new BonusExampleDTO(9.0, 80.0, "1.0", 10.0, 19.0, "1.0", false));
+
+        var result = spiedService.calculateStudentResultWithGradeAndPoints(attempt, Set.of(grade(1L, 90.0)));
+
+        assertThat(result.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(80.0);
     }
 
     private StudentParticipation programmingParticipation() {
