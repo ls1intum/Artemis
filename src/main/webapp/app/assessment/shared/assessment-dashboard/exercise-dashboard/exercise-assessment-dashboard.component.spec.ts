@@ -329,10 +329,29 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.inProgressPercentage()).toBe(20);
 
         comp.isExamMode.set(true);
-        comp.numberOfAssessmentsOfCorrectionRounds.set([new DueDateStat(), new DueDateStat()]);
+        comp.numberOfAssessmentsOfCorrectionRounds.set([Object.assign(new DueDateStat(), { inTime: 2 }), new DueDateStat()]);
         expect(comp.totalAssessmentSlots()).toBe(10);
         expect(comp.openAssessments()).toBe(7);
         expect(comp.assessedPercentage()).toBe(20);
+    });
+
+    it.each([TutorParticipationStatus.NOT_PARTICIPATED, TutorParticipationStatus.TRAINED])('should keep test-run instructions available with participation status %s', (status) => {
+        fixture.detectChanges();
+        comp.isTestRun.set(true);
+        comp.tutorParticipationStatus.set(status);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="test-run-instructions"]')).not.toBeNull();
+    });
+
+    it('should show fully completed progress for a two-round exam', () => {
+        comp.isExamMode.set(true);
+        comp.numberOfSubmissions.set(Object.assign(new DueDateStat(), { inTime: 5 }));
+        comp.totalNumberOfAssessments.set(5);
+        comp.numberOfAssessmentsOfCorrectionRounds.set([Object.assign(new DueDateStat(), { inTime: 5 }), Object.assign(new DueDateStat(), { inTime: 5 })]);
+        expect(comp.totalAssessmentSlots()).toBe(10);
+        expect(comp.completedAssessments()).toBe(10);
+        expect(comp.assessedPercentage()).toBe(100);
+        expect(comp.openAssessments()).toBe(0);
     });
 
     it('should keep progress bounded for empty and fully locked exercises', () => {
@@ -357,7 +376,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.tutor()).toEqual(user);
     });
 
-    it('should hide the complaints shortcut when the course has complaints disabled', () => {
+    it('should hide the complaint links when the course has complaints disabled', () => {
         accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
         exerciseServiceGetStatsForTutorsStub.mockReturnValue(
             of(new HttpResponse({ body: { ...stats, complaintsEnabled: false } as StatsForDashboard, headers: new HttpHeaders() })),
@@ -366,21 +385,26 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         fixture.detectChanges();
 
         expect(comp.complaintsEnabled()).toBe(false);
-        expect(fixture.nativeElement.querySelector('[data-testid="exercise-complaints"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-complaints-total"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-complaints-tutor"]')).toBeNull();
     });
 
-    it('should show the complaints shortcut when the course has complaints enabled', () => {
+    it('should show the complaint links when the course has complaints enabled', () => {
         accountService.userIdentity.set({ id: 10, login: 'tutor1' } as User);
         exerciseServiceGetStatsForTutorsStub.mockReturnValue(
             of(new HttpResponse({ body: { ...stats, complaintsEnabled: true } as StatsForDashboard, headers: new HttpHeaders() })),
         );
 
+        const instructorExercise = deepClone(modelingExercise);
+        instructorExercise.isAtLeastInstructor = true;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: instructorExercise })));
         fixture.detectChanges();
 
         expect(comp.complaintsEnabled()).toBe(true);
-        const complaintsLink = fixture.nativeElement.querySelector('[data-testid="exercise-complaints"]') as HTMLAnchorElement;
-        expect(complaintsLink).not.toBeNull();
-        expect(complaintsLink.getAttribute('aria-label')).toBe('artemisApp.exercise.complaints');
+        const totalLink = fixture.nativeElement.querySelector('[data-testid="exercise-complaints-total"]') as HTMLAnchorElement;
+        const tutorLink = fixture.nativeElement.querySelector('[data-testid="exercise-complaints-tutor"]') as HTMLAnchorElement;
+        expect(totalLink.getAttribute('href')).toBe('/course-management/1/modeling-exercises/17/complaints');
+        expect(tutorLink.getAttribute('href')).toBe('/course-management/1/modeling-exercises/17/complaints?tutorId=10');
     });
 
     it('should initialize with tutor leaderboard entry', () => {
@@ -513,6 +537,36 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.hasBeenCompletedByTutor(1)).toBe(true);
     });
 
+    it('should count a completed submission only once across correction rounds', () => {
+        const submission = {
+            id: 42,
+            results: [
+                { correctionRound: 0, completionDate: dayjs() },
+                { correctionRound: 1, completionDate: dayjs() },
+            ],
+        };
+        comp.assessedSubmissionsByRound.set([[submission], [submission]]);
+        comp.numberOfSubmissions.set({ total: 2, inTime: 2, late: 0 });
+        expect(comp.numberOfTutorAssessedSubmissions()).toBe(1);
+        expect(comp.tutorSubmissionPercentage()).toBe(50);
+    });
+
+    it('should show resolved and open complaints for automatically assessed programming exercises', () => {
+        const exercise = deepClone(modelingExercise);
+        exercise.type = ExerciseType.PROGRAMMING;
+        exercise.allowComplaintsForAutomaticAssessments = true;
+        comp.exercise.set(exercise);
+        comp.statsForDashboard.update((stats) => {
+            stats.numberOfComplaints = 5;
+            stats.numberOfOpenComplaints = 2;
+            stats.totalNumberOfAssessmentLocks = 0;
+            return stats;
+        });
+        expect(comp.totalAssessmentSlots()).toBe(5);
+        expect(comp.completedAssessments()).toBe(3);
+        expect(comp.openAssessments()).toBe(2);
+    });
+
     it('should call readInstruction', () => {
         const tutorParticipationServiceCreateStub = vi.spyOn(tutorParticipationService, 'create');
         const dto: TutorParticipationDTO = {
@@ -530,7 +584,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.tutorParticipation()).toBeUndefined();
         expect(comp.isLoading()).toBe(false);
 
+        expect(comp.assessmentInstructionsCollapsed()).toBe(true);
         comp.readInstruction();
+        expect(comp.assessmentInstructionsCollapsed()).toBe(false);
 
         expect(tutorParticipationServiceCreateStub).toHaveBeenCalledTimes(1);
         expect(tutorParticipationServiceCreateStub).toHaveBeenCalledWith(comp.exerciseId());

@@ -126,7 +126,7 @@
                                     </th>
                                     <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">{{ numberOfSubmissions().total }}</td>
                                     <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">
-                                        {{ numberOfTutorAssessments() }} ({{ tutorAssessmentPercentage() }}%)
+                                        {{ numberOfTutorAssessedSubmissions() }} ({{ tutorSubmissionPercentage() }}%)
                                     </td>
                                 </tr>
                                 <tr>
@@ -147,7 +147,7 @@
                                         ></th>
                                         <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">
                                             @if (exercise().isAtLeastInstructor) {
-                                                <a class="font-semibold" [routerLink]="complaintsLink()"
+                                                <a data-testid="exercise-complaints-total" class="font-semibold" [routerLink]="complaintsLink()"
                                                     >{{ complaintsDashboardInfo().total - (complaintsDashboardInfo().done ?? 0) }}
                                                     <span jhiTranslate="artemisApp.assessmentDashboard.open"></span
                                                 ></a>
@@ -157,9 +157,13 @@
                                             }
                                         </td>
                                         <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">
-                                            <a class="font-semibold" [routerLink]="complaintsLink()" [queryParams]="{ tutorId: tutor()?.id }">{{
-                                                complaintsDashboardInfo().tutor
-                                            }}</a>
+                                            <a
+                                                data-testid="exercise-complaints-tutor"
+                                                class="font-semibold"
+                                                [routerLink]="complaintsLink()"
+                                                [queryParams]="{ tutorId: tutor()?.id }"
+                                                >{{ complaintsDashboardInfo().tutor }}</a
+                                            >
                                         </td>
                                     </tr>
                                 }
@@ -202,6 +206,10 @@
                     </div>
                 </tumaet-ui-panel>
             </div>
+        }
+
+        @if (isTestRun()) {
+            <jhi-collapsable-assessment-instructions data-testid="test-run-instructions" class="mb-6!" [readOnly]="true" [exercise]="exercise()" [collapsed]="true" />
         }
 
         @if (tutorParticipationStatus() === NOT_PARTICIPATED && !isTestRun()) {

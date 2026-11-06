@@ -224,10 +224,34 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly complaintsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
     readonly moreFeedbackRequestsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
     readonly ratingsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
-    readonly totalAssessmentSlots = computed(() => this.numberOfSubmissions().total * (this.isExamMode() ? this.correctionRoundIndices().length : 1));
-    readonly completedAssessments = computed(() => this.totalNumberOfAssessments());
+    readonly numberOfTutorAssessedSubmissions = computed(
+        () =>
+            new Set(
+                this.assessedSubmissionsByRound().flatMap((submissions, correctionRound) =>
+                    submissions
+                        .filter((submission) => submission.id !== undefined && getSubmissionResultByCorrectionRound(submission, correctionRound)?.completionDate)
+                        .map((submission) => submission.id),
+                ),
+            ).size,
+    );
+    readonly tutorSubmissionPercentage = computed(() =>
+        this.numberOfSubmissions().total > 0 ? Math.floor((100 * this.numberOfTutorAssessedSubmissions()) / this.numberOfSubmissions().total) : 100,
+    );
+    readonly showsComplaintProgress = computed(() => this.exercise()?.type === ExerciseType.PROGRAMMING && !!this.exercise().allowComplaintsForAutomaticAssessments);
+    readonly totalAssessmentSlots = computed(() =>
+        this.showsComplaintProgress()
+            ? this.statsForDashboard().numberOfComplaints
+            : this.numberOfSubmissions().total * (this.isExamMode() ? this.correctionRoundIndices().length : 1),
+    );
+    readonly completedAssessments = computed(() =>
+        this.showsComplaintProgress()
+            ? this.statsForDashboard().numberOfComplaints - this.statsForDashboard().numberOfOpenComplaints
+            : this.isExamMode()
+              ? this.numberOfAssessmentsOfCorrectionRounds().reduce((total, round) => total + round.inTime, 0)
+              : this.totalNumberOfAssessments(),
+    );
     readonly inProgressAssessments = computed(() =>
-        Math.min(Math.max(0, this.totalAssessmentSlots() - this.completedAssessments()), this.statsForDashboard().totalNumberOfAssessmentLocks),
+        this.showsComplaintProgress() ? 0 : Math.min(Math.max(0, this.totalAssessmentSlots() - this.completedAssessments()), this.statsForDashboard().totalNumberOfAssessmentLocks),
     );
     readonly openAssessments = computed(() => Math.max(0, this.totalAssessmentSlots() - this.completedAssessments() - this.inProgressAssessments()));
     readonly assessedPercentage = computed(() =>
