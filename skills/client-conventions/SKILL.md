@@ -219,6 +219,20 @@ Details: the _Exercise update forms_ subsection of
 Use TUM AET UI components (`@tumaet/ui-angular`) and Tailwind v4 utilities. Do not add Bootstrap or
 ng-bootstrap in new work.
 
+Choose button severity by the established action family and its context, following
+[Button intent and hierarchy](../../documentation/docs/developer/guidelines/client-theming.mdx#button-intent-and-hierarchy).
+In exercise management, preserve blue workflow/navigation, yellow authoring/configuration, cyan
+analytics/assessment, green preview/reference and positive execution/activation, red destructive/stop
+or consequential bulk actions, and neutral utilities consistently across course lists, exam lists
+and details. Use variants and grouping for
+emphasis rather than changing an action's category. Equivalent utilities share a size and severity;
+an exercise toolbar may contain several action families. Data transfer is a distinct functional
+category: standalone import/export/download buttons, including report exports and dialog launchers,
+use gray `secondary`; menu entries retain menu styling. Neutral `secondary` is an
+enabled gray-toned utility style, independent of disabled state. Distinguish action colours from
+status/validation feedback.
+Let TUM AET UI choose the contrasting foreground; do not override button text or icon colours.
+
 Colours use semantic tokens. Use TUM AET UI component variants, or `text-state-danger`,
 `text-state-success`, `text-state-warning`, `text-state-info` for plain markup. Never `--p-<color>-N`
 primitives, never `text-red-500`, never `text-danger`, never the superseded arbitrary
