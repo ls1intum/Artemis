@@ -556,6 +556,15 @@ class LocalVCServletServiceTest {
         }
 
         @Test
+        void aFailedClaimDoesNotReleaseTheSlotOfAnotherRequest() {
+            when(httpsCloneEmailCache.putIfAbsent(eq(testUser.getId()), eq(Boolean.TRUE), any(Duration.class))).thenThrow(new IllegalStateException("redis timeout"));
+
+            assertThatCode(() -> localVCServletService.sendPasswordAuthenticationEmail(testUser, exercise)).doesNotThrowAnyException();
+            verify(httpsCloneEmailCache, never()).remove(testUser.getId());
+            verifyNoInteractions(mailSendingService);
+        }
+
+        @Test
         void thePushNoticeNamesTheEndDateOnlyWhenOneIsConfigured() {
             assertThat(localVCServletService.getPasswordAuthenticationPushNotice()).contains("access token or an SSH key").doesNotContain("plan to stop");
 

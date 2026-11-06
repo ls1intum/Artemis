@@ -1788,6 +1788,7 @@ public class LocalVCServletService {
      */
     void sendPasswordAuthenticationEmail(User user, GitRepositoryAccessDTO exercise) {
         DistributedMap<Long, Boolean> cache = null;
+        boolean slotClaimed = false;
         // A notice must never cost the user their git operation, whatever goes wrong while it is prepared or sent.
         try {
             if (user.getEmail() == null || user.getEmail().isBlank()) {
@@ -1799,6 +1800,7 @@ public class LocalVCServletService {
             if (cache.putIfAbsent(user.getId(), Boolean.TRUE, Duration.ofHours(24)) != null) {
                 return;
             }
+            slotClaimed = true;
 
             var titles = programmingExerciseRepository.findExerciseAndCourseTitlesById(exercise.exerciseId()).orElse(null);
             Map<String, Object> variables = new HashMap<>();
@@ -1814,8 +1816,11 @@ public class LocalVCServletService {
         }
         catch (Exception e) {
             log.warn("Could not send the password authentication email for user {}: {}", user.getId(), e.getMessage());
-            // Give the slot back, so that the next password authentication can try again instead of waiting a day.
-            releaseEmailSlot(cache, user);
+            // Give back only a slot this attempt claimed, so that the next password authentication can try again instead of waiting a day.
+            // A failed claim must not remove the slot of a concurrent request.
+            if (slotClaimed) {
+                releaseEmailSlot(cache, user);
+            }
         }
     }
 
