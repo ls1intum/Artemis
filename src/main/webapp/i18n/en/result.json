@@ -74,8 +74,8 @@
             "manualResult": "Manual result",
             "invalidScore": "Score is required and should be a number between 0 and 100.",
             "resultStringRequired": "Result text is required.",
-            "studentLogin": "Student Login",
-            "studentLoginRequired": "Student login is required.",
+            "studentLogin": "Student",
+            "studentLoginRequired": "Select a student.",
             "exerciseStillOpen": "Exercise is still open for submissions!",
             "studentOverride": "The due date of this exercise has not been reached yet. The student might override this manual assessment by committing a new solution.",
             "addFeedback": "Add new Feedback",
@@ -140,6 +140,20 @@
                 "scoreDrop": "Oops, your score dropped. Try a different path!",
                 "stuck": "Stuck? Try a new approach.",
                 "aiFeedbackReceived": "AI feedback on your code is ready."
+            }
+        },
+        "externalSubmission": {
+            "searchPlaceholder": "Search by login, name, email or registration number",
+            "searchTooShort": "Type at least {{ min }} characters to search.",
+            "noResults": "No matching students.",
+            "moreResults": "Showing the first {{ shown }} of {{ total }} matching students. Type more to narrow the search.",
+            "searchFailed": "The search failed. Try again.",
+            "clearSelection": "Clear the selected student",
+            "ineligible": {
+                "notInCourse": "not a student of this course",
+                "noStudentExam": "has no student exam",
+                "exerciseNotInStudentExam": "exercise not in their student exam",
+                "resultAlreadyExists": "already has a result"
             }
         }
     }
