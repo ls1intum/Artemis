@@ -25,7 +25,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
     const entries: VcsAccessLogDTO[] = [
         {
             id: 1,
-            userId: 4,
+            userId: 98765,
             name: 'Alice',
             email: 'alice@example.org',
             commitHash: 'abcde',
@@ -180,7 +180,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
     it.each([
         ['PUSH', 'Alice'],
         ['PASSWORD', 'Bob'],
-        ['4', 'Alice'],
+        ['98765', 'Alice'],
     ])('finds %s through global search and shows an empty state for no matches', async (query, author) => {
         vi.useFakeTimers();
         createComponent();
