@@ -92,7 +92,8 @@
                 "noExerciseDetailsJson": "Das Zip-Archiv enthält nicht genau eine JSON-Datei mit den Aufgabendetails.",
                 "exerciseTypeDoesntMatch": "Die Datei enthält keine Aufgabe des gewählten Typs.",
                 "missingImage": "Das Zip-Archiv enthält das Bild {{ fileName }} nicht.",
-                "imageUploadFailed": "Das Bild {{ fileName }} konnte nicht hochgeladen werden."
+                "imageUploadFailed": "Das Bild {{ fileName }} konnte nicht hochgeladen werden.",
+                "importFailed": "Der Aufgabenimport konnte nicht vorbereitet werden. Bitte versuche es erneut."
             },
             "exercise": "Aufgabe",
             "results": "Ergebnisse",

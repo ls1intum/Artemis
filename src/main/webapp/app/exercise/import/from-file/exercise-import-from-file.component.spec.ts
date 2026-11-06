@@ -124,7 +124,7 @@ describe('ExerciseImportFromFileComponent', () => {
         fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
         const exercise = new TextExercise(undefined, undefined);
         exercise.problemStatement =
-            '[file](/api/core/files/markdown/A.pdf#page=2) [same file](/api/core/files/markdown/A.pdf) [external](https://example.org/?redirect=/api/core/files/markdown/A.pdf)';
+            '[file](/api/core/files/markdown/A.pdf#page=2) [same file](/api/core/files/markdown/A.pdf) [external](https://example.org/?redirect=/api/core/files/markdown/A.pdf) [unrelated](/x/foomarkdown/A.pdf)';
         const zip = new ZipBuilder();
         zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
         zip.file('files/A.pdf', 'pdf');
@@ -134,8 +134,33 @@ describe('ExerciseImportFromFileComponent', () => {
 
         expect(uploadSpy).toHaveBeenCalledOnce();
         expect(component.exercise?.problemStatement).toBe(
-            '[file](/api/core/files/markdown/new_A.pdf#page=2) [same file](/api/core/files/markdown/new_A.pdf) [external](https://example.org/?redirect=/api/core/files/markdown/A.pdf)',
+            '[file](/api/core/files/markdown/new_A.pdf#page=2) [same file](/api/core/files/markdown/new_A.pdf) [external](https://example.org/?redirect=/api/core/files/markdown/A.pdf) [unrelated](/x/foomarkdown/A.pdf)',
         );
+    });
+
+    it('should show an error and reset the importing state if the markdown parser fails to load', async () => {
+        vi.doMock('./markdown-file-destinations', () => {
+            throw new Error('chunk unavailable');
+        });
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.problemStatement = '![image](/api/core/files/markdown/A.png)';
+        const zip = new ZipBuilder();
+        zip.file('Exercise-Details-Test.json', JSON.stringify(exercise));
+        zip.file('files/A.png', 'image');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+        const alertSpy = vi.spyOn(alertService, 'error');
+        const openImportSpy = vi.spyOn(component, 'openImport');
+
+        try {
+            await component.uploadExercise();
+        } finally {
+            vi.doUnmock('./markdown-file-destinations');
+        }
+
+        expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.importFromFile.importFailed');
+        expect(openImportSpy).not.toHaveBeenCalled();
+        expect(component.isImporting()).toBe(false);
     });
 
     it.each([

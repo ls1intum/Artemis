@@ -138,7 +138,12 @@ export class ExerciseImportFromFileComponent {
             return true;
         }
         // Load source-aware parsers only when importing a problem statement.
-        const { markdownFileDestinations, markdownFileDestinationSuffix } = await import('./markdown-file-destinations');
+        const markdownFileModule = await import('./markdown-file-destinations').catch(() => undefined);
+        if (!markdownFileModule) {
+            this.alertService.error('artemisApp.exercise.importFromFile.importFailed');
+            return false;
+        }
+        const { markdownFileDestinations, markdownFileDestinationSuffix } = markdownFileModule;
         const destinations = markdownFileDestinations(statement);
         const replacements: { start: number; end: number; path: string }[] = [];
         for (const [entryName, data] of Object.entries(zipEntries)) {

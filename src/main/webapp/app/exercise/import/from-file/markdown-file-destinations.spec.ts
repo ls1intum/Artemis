@@ -6,6 +6,7 @@ describe('markdownFileDestinations', () => {
         expect(markdownFileDestinationSuffix('/api/core/files/markdown/A.pdf#page=2', 'A.pdf')).toBe('#page=2');
         expect(markdownFileDestinationSuffix('/api/core/files/markdown/A%20B.pdf?download=1#page=2', 'A B.pdf')).toBe('?download=1#page=2');
         expect(markdownFileDestinationSuffix('https://example.org/?redirect=/api/core/files/markdown/A.pdf', 'A.pdf')).toBeUndefined();
+        expect(markdownFileDestinationSuffix('/x/foomarkdown/A.pdf', 'A.pdf')).toBeUndefined();
     });
 
     it('locates only destinations, preserving labels, titles, quoting and CRLF source offsets', () => {
