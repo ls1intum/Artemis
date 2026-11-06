@@ -2,7 +2,7 @@
 id: modeling-exercise
 title: Modeling Exercise
 sidebar_label: Modeling Exercise
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -20,6 +20,7 @@ import exampleSubmissionForAssessmentTraining from './assets/modeling/example-su
 import assessmentTrainingMode from './assets/modeling/assessment-training-mode.png';
 import importModelingExerciseModal from './assets/modeling/import-modeling-exercise-modal.png';
 import courseDashboardExerciseModeling from './assets/modeling/course-dashboard-exercise-modeling.png';
+import exerciseDetailsModeling from './assets/modeling/exercise-details-modeling.png';
 import submissionsDashboard from './assets/modeling/submissions-dashboard.png';
 import assessmentModal from './assets/modeling/assessment-modal.png';
 import assessmentInstruction from './assets/modeling/assessment-instruction.png';
@@ -135,6 +136,20 @@ assessors train on, **Edit** reopens the form and **Delete** removes it. Whateve
 narrow window moves behind the row's overflow menu. The title opens the exercise itself.
 
 <Image src={courseDashboardExerciseModeling} alt="Course exercise list with the actions available on a modeling exercise" size={ImageSize.large} caption="The exercise on the course's exercise list" />
+
+Select the title to open the exercise details. The saved title and exercise type appear in the header, while the
+**Exercise ID** is in **General**. Section links scroll to the configuration, problem statement, solution diagram
+and grading information on the same page; all sections remain available to browser search.
+
+The action bar groups **Participations**, **Statistics**, **Assessment Dashboard** and **Example submissions**
+separately from **Edit**, with **Teams** for team exercises. Available controls depend on your role and whether
+the exercise belongs to a course or an exam. Instructors find **Delete** in **Exercise administration** at the
+bottom of the page, where deletion still requires confirmation.
+
+<Image src={exerciseDetailsModeling} alt="Modeling exercise details with the saved title, assessment navigation and section links" size={ImageSize.large} caption="The modeling exercise's details" />
+
+See [Exercise Details for Course Staff](/instructor/exercises/intro#exercise-details-for-course-staff) for shared
+navigation and compact-screen behavior.
 
 ## Assess Submissions
 

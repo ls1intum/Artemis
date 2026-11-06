@@ -74,6 +74,14 @@
 @source './app/exercise/import';
 @source './app/exercise/review';
 @source './app/programming/manage/code-editor/instructor-and-editor-container';
+@source './app/programming/manage/detail';
+@source './app/programming/manage/status';
+@source './app/quiz/manage/detail';
+@source './app/quiz/manage/manage-buttons';
+@source './app/quiz/manage/lifecyle-buttons';
+@source './app/text/manage/detail';
+@source './app/modeling/manage/detail';
+@source './app/fileupload/manage/exercise-details';
 @source './app/iris/manage/settings';
 @source './app/course/manage/athena-settings-update';
 @source './app/course/manage/control-center/about-athena-modal';
@@ -143,6 +151,7 @@
 @source './app/text/overview/text-editor';
 @source './app/fileupload/overview/file-upload-submission';
 @source './app/exercise/dashboards/tutor-leaderboard';
+@source './app/exercise/dashboards/tutor-participation-graph';
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
 @source './app/exercise/exercise-headers/exercise-header-actions';
