@@ -31,4 +31,33 @@ class ApprovedSpecRegistryTest {
         assertThat(registry.amend("session", "approved contract", "corrected contract")).isTrue();
         assertThat(registry.approved("session")).contains("corrected contract");
     }
+
+    @Test
+    void staleApprovalCannotReopenAnotherContract() {
+        var registry = new ApprovedSpecRegistry();
+        registry.approve("s", "first");
+        assertThat(registry.reopenForAssessment("s", "stale")).isFalse();
+        assertThat(registry.approved("s")).hasValue("first");
+        assertThat(registry.reopenForAssessment("s", "first")).isTrue();
+        registry.approve("s", "redesigned");
+        assertThat(registry.reopenForAssessment("s", "first")).isFalse();
+        assertThat(registry.approved("s")).hasValue("redesigned");
+    }
+
+    @Test
+    void reapprovalAndOwnershipCorrectionCannotRefreshTheSessionRedesignAllowance() {
+        var registry = new ApprovedSpecRegistry();
+        registry.approve("s", "first");
+        assertThat(registry.reopenForAssessment("s", "first")).isTrue();
+        registry.approve("s", "redesigned");
+        assertThat(registry.amend("s", "redesigned", "ownership correction")).isTrue();
+
+        assertThat(registry.assessmentReopened("s")).isTrue();
+        assertThat(registry.reopenForAssessment("s", "ownership correction")).isFalse();
+        assertThat(registry.approved("s")).hasValue("ownership correction");
+        registry.forget("s");
+        registry.approve("s", "new session");
+        assertThat(registry.reopenForAssessment("s", "new session")).isTrue();
+    }
+
 }

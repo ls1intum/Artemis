@@ -322,6 +322,10 @@ The single contract-redesign allowance is separate from scoped repair: after it 
 spent, the verified draft receives its full quality review and may use remaining
 repair rounds within the frozen contract. An exhausted redesign allowance alone
 does not mean that no test repair is possible.
+Optional assessment probes run on the complete candidate after statement authoring,
+where their evidence is bound to the verified draft. The TESTS-stage gate still
+checks compilation, reference/starter grading and the grading plan; it does not
+repeat the optional probes before a complete draft can be checkpointed.
 Verification and review still use the job's token and wall-clock guards. Every twenty
 authoring turns, the agent receives a work checkpoint. A current passing tool check
 returns control to the authoritative gate; two blocks without a verified reduction

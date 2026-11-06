@@ -82,21 +82,6 @@ public class StageChecks {
     }
 
     /**
-     * Runs the executed assessment check only at the official artifact boundary, after the differential and grading-plan gates pass.
-     *
-     * @param sandbox   the isolated workspace
-     * @param sessionId the active sandbox session
-     * @param exercise  the exercise whose tests and solution were verified
-     * @param seeded    the server-owned structural test authority
-     * @param report    the passing differential report
-     * @return a typed assessment failure, or empty when no counterexample blocks the artifact handoff
-     */
-    public Optional<StageCheckResult> assessmentFailure(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, SeededStructuralTests seeded,
-            AgentVerifyReport report) {
-        return StageAssessmentCheck.failure(verifier, sandbox, sessionId, exercise, seeded, report);
-    }
-
-    /**
      * Rejects a workspace mutation that would undo an approved ownership decision, at the write boundary rather than at the next build: a type assigned to the student cannot be
      * restored to the template to make direct-reference tests compile. Executable artifacts stay writable so later stages can still repair real implementation defects.
      *

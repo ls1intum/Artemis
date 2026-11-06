@@ -51,14 +51,11 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentTranscriptWriter;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
-import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SeededStructuralTests;
-import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome;
-import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome.Disposition;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
 
@@ -253,9 +250,6 @@ class StagedGenerationRunnerTest {
             return new SpecFidelityCritic.SpecificationReview(true, false, false, List.of(), "The revised API addresses the counterexample", null, prior.riskHistory());
         });
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, reviewer, "FRESH");
-        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
-                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
         AtomicInteger calls = new AtomicInteger();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
             if (calls.incrementAndGet() == 3) {
@@ -280,18 +274,6 @@ class StagedGenerationRunnerTest {
         stages.verify(baseTools).enterStage(GenerationStage.SPEC);
         stages.verify(baseTools).enterStage(GenerationStage.TESTS);
         stages.verify(baseTools).enterStage(GenerationStage.STATEMENT);
-    }
-
-    @Test
-    void executedGradingWeaknessStillAllowsACompleteDraftForAuthoritativeReview() {
-        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
-                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
-        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
-        assertThat(run(NEVER_CANCELLED, () -> SeededStructuralTests.EMPTY).status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        verify(baseTools).enterStage(GenerationStage.STATEMENT);
-        assertThat(approvedSpecs.approved("s")).hasValue(VALID_SPEC_DOCUMENT);
     }
 
     @Test
@@ -327,9 +309,6 @@ class StagedGenerationRunnerTest {
 
     @Test
     void repeatedNonDiscriminatingAssessmentStopsBeforeStatementOrOuterRepairs() {
-        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
-                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
         when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport());
 
@@ -390,9 +369,6 @@ class StagedGenerationRunnerTest {
     @Test
     void aContinuationCannotReopenTheContractAgainWhenItsTestsStillAcceptABypass() {
         StagedAssessmentContinuation continuation = exhaustRedesignedAssessment();
-        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
-                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
 
         when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport());
         var resumed = resume(continuation);
@@ -448,9 +424,6 @@ class StagedGenerationRunnerTest {
     private StagedAssessmentContinuation exhaustRedesignedAssessment() {
         var settings = new HyperionGenerationSettings("small", null, 40, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
         runner = runner.forSettings(settings, agentLoopRunner, null);
-        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
-                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
         when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), failingReport(), passingReport("testFoo"));
         AtomicInteger calls = new AtomicInteger();
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
@@ -482,9 +455,6 @@ class StagedGenerationRunnerTest {
     void assessmentRedesignCannotExceedTheSharedTurnBudget() {
         var settings = new HyperionGenerationSettings("small", null, 24, Duration.ofMinutes(30), 1_000_000, true, "FRESH", 32_000, null, false, false);
         runner = runner.forSettings(settings, agentLoopRunner, null);
-        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
-                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> completed(invocation.getArgument(3), "done"));
         when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport());
 
@@ -497,15 +467,13 @@ class StagedGenerationRunnerTest {
     }
 
     @Test
-    void cancellationAfterAssessmentPreservesTheExistingApprovalAndDoesNotStartRedesign() {
+    void cancellationAfterTheTestsGatePreservesTheExistingApprovalAndDoesNotStartStatementAuthoring() {
         AtomicBoolean cancelled = new AtomicBoolean();
-        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any())).thenAnswer(invocation -> {
-            cancelled.set(true);
-            return List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE));
-        });
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
-        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(passingReport("testFoo"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenAnswer(invocation -> {
+            cancelled.set(true);
+            return passingReport("testFoo");
+        });
 
         AgentLoopResult result = run(cancelled::get, () -> SeededStructuralTests.EMPTY);
 
@@ -516,9 +484,6 @@ class StagedGenerationRunnerTest {
 
     @Test
     void anUnbuiltRedesignCannotReachTheStatementOrEscapeIntoOrdinaryRepair() {
-        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
-                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
         when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "done"));
         when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), failingReport(), failingReport());
 
@@ -533,9 +498,6 @@ class StagedGenerationRunnerTest {
     @Test
     void assessmentRedesignDiscardsTheRejectedContinuousConversation() {
         runner = new StagedGenerationRunner(agentLoopRunner, systemPromptService, stageCheckService, new AgentTranscriptWriter(""), approvedSpecs, "CONTINUOUS");
-        var mutant = SemanticMutant.printedTranscript("src/Client.java", "original", "print only", "Client");
-        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), anyMap(), anyMap(), anyMap(), anyString(), any(), any(), any()))
-                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)), List.of());
         when(verifier.selfCheckTestsStage(any(), anyString(), any(), anyMap(), any())).thenReturn(nondiscriminatingReport(), passingReport("testFoo"));
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any()))
                 .thenReturn(new AgentLoopRunner.AgentLoopSession(completed(1, "done"), List.of(new UserMessage("rejected artifact trajectory"))));

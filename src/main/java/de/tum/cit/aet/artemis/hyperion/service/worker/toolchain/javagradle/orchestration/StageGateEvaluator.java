@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 
-/** Evaluates official stage boundaries against current structural authority, mechanical results and executed assessment evidence. */
+/** Evaluates official stage boundaries against current structural authority and mechanical results. */
 final class StageGateEvaluator {
 
     private StageGateEvaluator() {
@@ -49,12 +49,6 @@ final class StageGateEvaluator {
             Optional<String> ownershipCorrection = stageCheckService.correctGivenOwnership(sandbox, sessionId);
             StageCheckResult result = stageCheckService.check(stage, sandbox, sessionId, exercise, seedTestsFiles, lastTestsReport, baseTools.seededStructuralTests());
             result = classifyAssessment(result, baseTools.seededStructuralTests());
-            if (result.passed() && result.report() != null) {
-                Optional<StageCheckResult> assessment = stageCheckService.assessmentFailure(sandbox, sessionId, exercise, baseTools.seededStructuralTests(), result.report());
-                if (assessment.isPresent()) {
-                    result = new StageCheckResult(true, result.observation() + "\nDraft assessment requires review: " + assessment.get().observation(), result.report());
-                }
-            }
             if (ownershipCorrection.isPresent()) {
                 result = new StageCheckResult(result.outcome(), ownershipCorrection.get() + "\n" + result.observation(), result.report());
             }

@@ -628,15 +628,15 @@ class DockerGradleBuildTest {
         }
         assertThat(sandbox.exec(session, java.time.Duration.ofSeconds(5), "sh", "-c", "test ! -e /workspace/verify.sh").isSuccess())
                 .as("source-destructive verification is available only through server-managed tools").isTrue();
-        var failure = StageAssessmentCheck.failure(verifier, sandbox, session, exercise, structural, org.mockito.Mockito.mock(AgentVerifyReport.class));
+        var outcomes = assessmentOutcomes(verifier, session, structural);
 
         if (assessment == 1) {
-            assertThat(failure).isEmpty();
+            assertThat(outcomes).isNotEmpty().allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE));
         }
         else {
-            assertThat(failure).hasValueSatisfying(result -> {
-                assertThat(result.contractRedesignRequired()).isTrue();
-                assertThat(result.observation()).contains("LearnerCheck.java");
+            assertThat(outcomes).anySatisfy(outcome -> {
+                assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+                assertThat(outcome.mutant().solutionPath()).contains("LearnerCheck.java");
             });
         }
         assertThat(JavaSourceSnapshot.capture(sandbox, session).solutionFiles()).containsEntry(path, learner);
@@ -644,12 +644,10 @@ class DockerGradleBuildTest {
             var before = JavaSourceSnapshot.capture(sandbox, session);
             sandbox.copyIn(session, "/workspace/template", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, learner), Map.of()));
             try {
-                assertThat(StageAssessmentCheck.failure(verifier, sandbox, session, exercise, structural, org.mockito.Mockito.mock(AgentVerifyReport.class)))
-                        .hasValueSatisfying(unresolved -> {
-                            assertThat(unresolved.passed()).isFalse();
-                            assertThat(unresolved.contractRedesignRequired()).isFalse();
-                            assertThat(unresolved.observation()).contains("previously confirmed", "Preserve the assigned learner work");
-                        });
+                assertThat(assessmentOutcomes(verifier, session, structural)).anySatisfy(unresolved -> {
+                    assertThat(unresolved.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE);
+                    assertThat(unresolved.diagnostic()).contains("previously confirmed", "Preserve the assigned learner work");
+                });
             }
             finally {
                 before.restore(sandbox, session);
@@ -669,7 +667,7 @@ class DockerGradleBuildTest {
 
     @ParameterizedTest
     @ValueSource(ints = { 0, 1, 2 })
-    void assessmentGateDistinguishesTranscriptGradingFromSuppliedRuntimeObservation(int assessment) throws IOException {
+    void executedAssessmentDistinguishesTranscriptGradingFromSuppliedRuntimeObservation(int assessment) throws IOException {
         boolean observeInteraction = assessment == 1;
         String sourcePath = "src/de/tum/cit/aet/reference/ScoreCalculator.java";
         String reference = """
@@ -766,16 +764,32 @@ class DockerGradleBuildTest {
         }
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of("solution/" + sourcePath, reference), Map.of()));
 
-        var failure = StageAssessmentCheck.failure(new DifferentialVerifier(commands), sandbox, session, exercise, SeededStructuralTests.EMPTY,
-                org.mockito.Mockito.mock(AgentVerifyReport.class));
+        var outcomes = assessmentOutcomes(new DifferentialVerifier(commands), session, SeededStructuralTests.EMPTY);
 
         if (observeInteraction) {
-            assertThat(failure).isEmpty();
+            assertThat(outcomes).noneMatch(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE
+                    || outcome.disposition() == SemanticMutantOutcome.Disposition.INCONCLUSIVE);
         }
         else {
-            assertThat(failure).hasValueSatisfying(result -> assertThat(result.contractRedesignRequired()).isTrue());
+            assertThat(outcomes).anyMatch(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
         }
         assertThat(sandbox.exec(session, Duration.ofSeconds(10), "cat", "/workspace/solution/" + sourcePath).stdout()).isEqualTo(reference);
+    }
+
+    private List<SemanticMutantOutcome> assessmentOutcomes(DifferentialVerifier verifier, String session, SeededStructuralTests structural) {
+        var sources = JavaSourceSnapshot.capture(sandbox, session);
+        String plan = GenerationWorkspace.readRootArtifact(sandbox, session, "test-plan.json");
+        List<SemanticMutantOutcome> outcomes = new ArrayList<>();
+        try {
+            outcomes.addAll(verifier.probeOutputOnlyMains(sandbox, session, exercise, sources.testsFiles(), sources.templateFiles(), sources.solutionFiles(), plan, structural,
+                    Set.of(), () -> sources.restore(sandbox, session)));
+            outcomes.addAll(verifier.probeStudentTestAssertions(sandbox, session, exercise, sources.templateFiles(), sources.solutionFiles(), plan, structural,
+                    () -> sources.restore(sandbox, session)));
+        }
+        finally {
+            sources.restore(sandbox, session);
+        }
+        return outcomes;
     }
 
     @Test

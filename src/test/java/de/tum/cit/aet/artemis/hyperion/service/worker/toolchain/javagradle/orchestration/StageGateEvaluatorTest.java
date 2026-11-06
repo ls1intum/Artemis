@@ -1,18 +1,54 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageCheckResult;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
 
 class StageGateEvaluatorTest {
+
+    @Test
+    void aMechanicallyValidTestsStageReachesStatementAuthoringBeforeOptionalAssessment() {
+        var verifier = mock(DifferentialVerifier.class);
+        var sandbox = new FakeInteractiveSandbox();
+        var exercise = mock(GenerationInput.class);
+        var tools = mock(SandboxAgentTools.class);
+        when(tools.seededStructuralTests()).thenReturn(SeededStructuralTests.EMPTY);
+        var checks = spy(new StageChecks(verifier, new ApprovedSpecRegistry()));
+        var report = report(true, true, List.of(), List.of("testStudent"), List.of());
+        var mechanicallyPassed = new StageCheckResult(true, "mechanical checks passed", report);
+        doReturn(Optional.empty()).when(checks).correctGivenOwnership(sandbox, "s");
+        doReturn(mechanicallyPassed).when(checks).check(GenerationStage.TESTS, sandbox, "s", exercise, Map.of(), null, SeededStructuralTests.EMPTY);
+        when(verifier.probeOutputOnlyMains(any(), anyString(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenThrow(new AssertionError("Optional assessment started before the complete draft could be checkpointed"));
+
+        var result = StageGateEvaluator.evaluate(checks, GenerationStage.TESTS, tools, sandbox, "s", exercise, Map.of(), null);
+
+        assertThat(result.result().passed()).isTrue();
+        assertThat(result.result().report()).isSameAs(report);
+        assertThat(result.reused()).isFalse();
+    }
 
     @Test
     void passingEveryStudentTestOnTheStarterReopensAssessmentWithoutCountingSuppliedChecks() {
