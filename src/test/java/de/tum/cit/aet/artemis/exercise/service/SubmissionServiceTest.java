@@ -118,6 +118,9 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     @Autowired
     private de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository studentParticipationRepository;
 
+    @Autowired
+    private de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService programmingSubmissionService;
+
     private User student1;
 
     private User tutor1;
@@ -465,6 +468,81 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         };
         request.put(cancelUrl + submission.getId() + "/cancel-assessment", null, HttpStatus.FORBIDDEN);
         assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getManualResults()).hasSize(1);
+    }
+
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingTeamDraftNoteSurvivesReopenAndSave(boolean transfer) throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var submission = teamSubmission(exercise, tutor1, "own");
+        var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, submission.getId()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        var resultId = opened.results().getFirst().id();
+        var saveUrl = "/api/programming/participations/" + opened.participation().id() + "/manual-results";
+        request.put(saveUrl,
+                Map.of("id", resultId, "rated", true, "score", 0.0, "successful", false, "feedbacks", List.of(), "assessmentNote", Map.of("note", "Keep this saved note")),
+                HttpStatus.OK);
+        var saved = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
+        var noteId = saved.getAssessmentNote().getId();
+        if (transfer) {
+            var team = teamRepository.findWithStudentsByIdElseThrow(((StudentParticipation) submission.getParticipation()).getTeam().orElseThrow().getId());
+            team.setOwner(tutor2);
+            teamRepository.save(exercise, team);
+            userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        }
+        var reopened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, opened.id()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        var result = reopened.results().getFirst();
+        assertThat(result.assessmentNote()).isNotNull();
+        assertThat(result.assessmentNote().note()).isEqualTo("Keep this saved note");
+        request.put(saveUrl, result, HttpStatus.OK);
+        var resaved = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
+        assertThat(resaved.getAssessmentNote().getId()).isEqualTo(noteId);
+        assertThat(resaved.getAssessmentNote().getNote()).isEqualTo("Keep this saved note");
+        assertThat(resaved.getAssessor()).isEqualTo(transfer ? tutor2 : tutor1);
+    }
+
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingReclaimsUnassignedManualDraft(boolean resolveLatestCommit) throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var original = teamSubmission(exercise, tutor1, "own");
+        var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        var resultId = opened.results().getFirst().id();
+        var draft = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
+        draft.setAssessor(null);
+        var note = new de.tum.cit.aet.artemis.assessment.domain.AssessmentNote();
+        note.setNote("Unassigned saved draft");
+        draft.setAssessmentNote(note);
+        resultRepository.save(draft);
+        var reclaimed = programmingSubmissionService.lockAndGetProgrammingSubmission(resolveLatestCommit ? original.getId() : opened.id(), 0);
+        assertThat(reclaimed.getResultForCorrectionRound(0).getId()).isEqualTo(resultId);
+        var saved = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
+        assertThat(saved.getAssessor()).isEqualTo(tutor1);
+        assertThat(saved.getAssessmentNote().getNote()).isEqualTo("Unassigned saved draft");
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(opened.id()).getManualResults()).hasSize(1);
+    }
+
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void programmingDoesNotReclaimUnassignedCompletedOrUntypedResult(boolean completed) throws Exception {
+        var exercise = teamExercise(ExerciseType.PROGRAMMING);
+        var original = teamSubmission(exercise, tutor1, "own");
+        var opened = request.get(assessmentStartUrl(ExerciseType.PROGRAMMING, original.getId()), HttpStatus.OK,
+                de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO.class);
+        var resultId = opened.results().getFirst().id();
+        var result = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId);
+        result.setAssessor(null);
+        result.setAssessmentType(completed ? AssessmentType.SEMI_AUTOMATIC : null);
+        result.setCompletionDate(completed ? ZonedDateTime.now() : null);
+        resultRepository.save(result);
+        var locked = programmingSubmissionService.lockSubmission(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(opened.id()), 0);
+        assertThat(locked.getId()).isNotEqualTo(resultId);
+        assertThat(resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(resultId).getAssessor()).isNull();
     }
 
     private String assessmentProposalUrl(ExerciseType type, Long exerciseId) {

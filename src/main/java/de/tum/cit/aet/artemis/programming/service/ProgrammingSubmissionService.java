@@ -481,6 +481,27 @@ public class ProgrammingSubmissionService extends SubmissionService {
         return (ProgrammingSubmission) manualResult.getSubmission();
     }
 
+    /**
+     * Reuses an existing team result and assigns unfinished drafts to the current authorized assessor.
+     *
+     * @param submission      the submission whose result may be reused
+     * @param correctionRound the requested correction round
+     * @return the reusable result, or empty when a new result is needed
+     */
+    private Optional<Result> reuseTeamAssessmentResult(Submission submission, int correctionRound) {
+        var assignedResult = submission.getResultForCorrectionRound(correctionRound);
+        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
+                && participation.getTeam().isPresent() && assignedResult != null
+                && (assignedResult.getAssessor() != null || assignedResult.isManual() && assignedResult.getCompletionDate() == null)) {
+            if (assignedResult.getCompletionDate() == null) {
+                assignedResult.setAssessor(userRepository.getUser());
+                resultRepository.save(assignedResult);
+            }
+            return Optional.of(assignedResult);
+        }
+        return Optional.empty();
+    }
+
     // TODO SE: explain in what context this method is even called
 
     /**
@@ -496,14 +517,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
     public Result lockSubmission(Submission submission, int correctionRound) {
         SubmissionService.checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         authCheckService.checkTeamAssessmentAccessElseThrow(submission);
-        var assignedResult = submission.getResultForCorrectionRound(correctionRound);
-        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
-                && participation.getTeam().isPresent() && assignedResult != null && assignedResult.getAssessor() != null) {
-            if (assignedResult.getCompletionDate() == null) {
-                assignedResult.setAssessor(userRepository.getUser());
-                resultRepository.save(assignedResult);
-            }
-            return assignedResult;
+        var assignedResult = reuseTeamAssessmentResult(submission, correctionRound);
+        if (assignedResult.isPresent()) {
+            return assignedResult.get();
         }
         Optional<Result> optionalExistingResult;
         if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
@@ -525,14 +541,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 SubmissionType.MANUAL);
         // Resolving the latest commit can select a different submission whose assessment is already assigned.
         authCheckService.checkTeamAssessmentAccessElseThrow(existingSubmission);
-        assignedResult = existingSubmission.getResultForCorrectionRound(correctionRound);
-        if (existingSubmission.getParticipation().getExercise().isTeamMode() && existingSubmission.getParticipation() instanceof StudentParticipation participation
-                && participation.getTeam().isPresent() && assignedResult != null && assignedResult.getAssessor() != null) {
-            if (assignedResult.getCompletionDate() == null) {
-                assignedResult.setAssessor(userRepository.getUser());
-                resultRepository.save(assignedResult);
-            }
-            return assignedResult;
+        assignedResult = reuseTeamAssessmentResult(existingSubmission, correctionRound);
+        if (assignedResult.isPresent()) {
+            return assignedResult.get();
         }
         Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userRepository.getUser());
