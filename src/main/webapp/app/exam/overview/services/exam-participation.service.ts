@@ -21,6 +21,7 @@ import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { retryOnConcurrencyFailure } from 'app/foundation/util/retry-concurrency.util';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
@@ -175,6 +176,7 @@ export class ExamParticipationService {
     public getOwnStudentExam(courseId: number, examId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/own-student-exam';
         return this.httpClient.get<StudentExam>(url).pipe(
+            retryOnConcurrencyFailure(),
             map((studentExam: StudentExam) => {
                 const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);

@@ -136,6 +136,74 @@ describe('ExamParticipationService', () => {
         req.flush(returnedFromService);
     });
 
+    it('recovers an own exam load after a generation conflict without emitting a missing exam', async () => {
+        vi.useFakeTimers();
+        try {
+            let received: StudentExam | undefined;
+            let error: unknown;
+            service.getOwnStudentExam(1, 2).subscribe({ next: (value) => (received = value), error: (value) => (error = value) });
+            const url = 'api/exam/courses/1/exams/2/own-student-exam';
+            httpMock.expectOne(url).flush({ message: 'error.concurrencyFailure' }, { status: 409, statusText: 'Conflict' });
+            expect(received).toBeUndefined();
+            expect(error).toBeUndefined();
+            await vi.advanceTimersByTimeAsync(250);
+            httpMock.expectOne(url).flush({ id: 42, exam: { id: 2, testExam: true }, exercises: [] });
+            expect(received?.id).toBe(42);
+            expect(error).toBeUndefined();
+            await vi.advanceTimersByTimeAsync(10000);
+            httpMock.expectNone(url);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([401, 403, 409])('does not retry an unrelated own exam load failure (%s)', async (status) => {
+        vi.useFakeTimers();
+        try {
+            let error: HttpErrorResponse | undefined;
+            service.getOwnStudentExam(1, 2).subscribe({ error: (value) => (error = value) });
+            const url = 'api/exam/courses/1/exams/2/own-student-exam';
+            httpMock.expectOne(url).flush({ message: 'error.otherConflict' }, { status, statusText: 'Failure' });
+            await vi.advanceTimersByTimeAsync(10000);
+            httpMock.expectNone(url);
+            expect(error?.status).toBe(status);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('cancels a generation-conflict retry when the exam load is unsubscribed', async () => {
+        vi.useFakeTimers();
+        try {
+            const subscription = service.getOwnStudentExam(1, 2).subscribe({ error: () => undefined });
+            const url = 'api/exam/courses/1/exams/2/own-student-exam';
+            httpMock.expectOne(url).flush({ message: 'error.concurrencyFailure' }, { status: 409, statusText: 'Conflict' });
+            subscription.unsubscribe();
+            await vi.advanceTimersByTimeAsync(10000);
+            httpMock.expectNone(url);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('ends an own exam load after three retries so the caller can offer an explicit retry', async () => {
+        vi.useFakeTimers();
+        try {
+            let error: HttpErrorResponse | undefined;
+            service.getOwnStudentExam(1, 2).subscribe({ error: (value) => (error = value) });
+            const url = 'api/exam/courses/1/exams/2/own-student-exam';
+            for (const delay of [250, 500, 1000, 0]) {
+                httpMock.expectOne(url).flush({ message: 'error.concurrencyFailure' }, { status: 409, statusText: 'Conflict' });
+                await vi.advanceTimersByTimeAsync(delay);
+            }
+            expect(error?.status).toBe(409);
+            await vi.advanceTimersByTimeAsync(10000);
+            httpMock.expectNone(url);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('should load a StudentExam', async () => {
         const sendExam = Object.assign(
             {

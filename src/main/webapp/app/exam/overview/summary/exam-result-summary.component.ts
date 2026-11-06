@@ -262,9 +262,10 @@ export class ExamResultSummaryComponent implements OnInit {
                                     ? this.studentExamService.find(this.courseId(), studentExam.exam!.id!, studentExam.id!).pipe(map((response) => response.body!))
                                     : this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam!.id!, studentExam.id!);
                             }),
-                            // A permanent authorization failure ends the polling; the HTTP interceptor has already reported it.
                             // A transient refresh failure leaves the pending state visible and retries on the next interval.
-                            catchError((error: unknown) => (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403) ? EMPTY : of(gradeInfo))),
+                            catchError((error: unknown) =>
+                                error instanceof HttpErrorResponse && error.status !== 0 && (error.status < 500 || error.status >= 600) ? EMPTY : of(gradeInfo),
+                            ),
                         );
                     }),
                     takeUntilDestroyed(this.destroyRef),

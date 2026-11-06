@@ -36,7 +36,9 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import dayjs from 'dayjs/esm';
 import { Subject, of, throwError } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Router } from '@angular/router';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -69,8 +71,11 @@ describe('ExerciseHeaderActionsComponent', () => {
         return exercise;
     }
 
-    function createComponent(exercise: Exercise, options: { athenaEnabled?: boolean; examMode?: boolean; llmAccepted?: boolean; quizStatus?: QuizStatus } = {}) {
-        const { athenaEnabled = true, examMode = false, llmAccepted = true, quizStatus } = options;
+    function createComponent(
+        exercise: Exercise,
+        options: { athenaEnabled?: boolean; examMode?: boolean; llmAccepted?: boolean; quizStatus?: QuizStatus; realCourseExercise?: boolean } = {},
+    ) {
+        const { athenaEnabled = true, examMode = false, llmAccepted = true, quizStatus, realCourseExercise = false } = options;
 
         const accountService = new MockAccountService();
         if (llmAccepted) {
@@ -85,7 +90,10 @@ describe('ExerciseHeaderActionsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(QuizExerciseService, { getStatus: () => quizStatus as QuizStatus }),
                 MockProvider(AlertService),
-                MockProvider(CourseExerciseService),
+                realCourseExercise ? CourseExerciseService : MockProvider(CourseExerciseService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(ParticipationWebsocketService),
                 MockProvider(ParticipationService, {
                     getSpecificStudentParticipation: (participations: StudentParticipation[], testRun: boolean) =>
                         participations.find((participation) => !!participation.testRun === testRun),
@@ -791,6 +799,110 @@ describe('ExerciseHeaderActionsComponent', () => {
             expect(successSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.resumeProgrammingExercise');
             expect(fixture.componentInstance.studentParticipations().find((participation) => participation.id === expectedId)).toBe(resumed);
             expect(fixture.componentInstance.isLoading()).toBe(false);
+        });
+
+        it.each([
+            ['start', 'exercise change'],
+            ['start', 'destroy'],
+            ['resume', 'exercise change'],
+            ['resume', 'destroy'],
+        ])('cancels %s when its action surface leaves on %s', (operation, cancellation) => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise);
+            const pending = new Subject<StudentParticipation>();
+            const service = TestBed.inject(CourseExerciseService);
+            vi.spyOn(service, 'startExercise').mockReturnValue(pending);
+            vi.spyOn(service, 'resumeProgrammingExercise').mockReturnValue(pending);
+            const output = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+            if (operation === 'resume') {
+                fixture.componentInstance.resumeProgrammingExercise(false);
+            } else {
+                fixture.componentInstance.startExercise();
+            }
+            expect(pending.observed).toBe(true);
+            if (cancellation === 'destroy') {
+                fixture.destroy();
+            } else {
+                const replacement = programming(true);
+                replacement.id = 8;
+                fixture.componentRef.setInput('exercise', replacement);
+                fixture.detectChanges();
+            }
+            expect(pending.observed).toBe(false);
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+            pending.next({ id: 42 });
+            expect(output).not.toHaveBeenCalled();
+        });
+
+        it.each(['start', 'resume'])('keeps an in-flight %s when the same exercise is refreshed', (operation) => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise);
+            const pending = new Subject<StudentParticipation>();
+            const service = TestBed.inject(CourseExerciseService);
+            vi.spyOn(service, 'startExercise').mockReturnValue(pending);
+            vi.spyOn(service, 'resumeProgrammingExercise').mockReturnValue(pending);
+            const output = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+            if (operation === 'resume') {
+                fixture.componentInstance.resumeProgrammingExercise(false);
+            } else {
+                fixture.componentInstance.startExercise();
+            }
+            fixture.componentRef.setInput('exercise', programming(true));
+            fixture.detectChanges();
+            expect(pending.observed).toBe(true);
+            expect(fixture.componentInstance.isLoading()).toBe(true);
+            pending.next({ id: 42, initializationState: InitializationState.INITIALIZED });
+            pending.complete();
+            expect(output).toHaveBeenCalledOnce();
+            expect(fixture.componentInstance.isLoading()).toBe(false);
+        });
+
+        it('shows the retryable concurrency error after four actual resume HTTP conflicts and releases the button', async () => {
+            vi.useFakeTimers();
+            try {
+                const exercise = programming(true);
+                exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+                createComponent(exercise, { realCourseExercise: true });
+                const http = TestBed.inject(HttpTestingController);
+                const error = vi.spyOn(TestBed.inject(AlertService), 'error');
+                fixture.componentInstance.resumeProgrammingExercise(false);
+                for (const delay of [250, 500, 1000, 0]) {
+                    http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation').flush(
+                        { message: 'error.concurrencyFailure' },
+                        { status: 409, statusText: 'Conflict' },
+                    );
+                    await vi.advanceTimersByTimeAsync(delay);
+                }
+                fixture.detectChanges();
+                expect(error).toHaveBeenCalledExactlyOnceWith('error.concurrencyFailure');
+                expect(fixture.componentInstance.isLoading()).toBe(false);
+                const button = fixture.nativeElement.querySelector('#resume-exercise-7') as HTMLButtonElement;
+                expect(button).not.toBeNull();
+                expect(button.disabled).toBe(false);
+                button.click();
+                const retry = http.expectOne('api/exercise/exercises/7/participations/10/resume-programming-participation');
+                fixture.destroy();
+                expect(retry.cancelled).toBe(true);
+                http.verify();
+            } finally {
+                fixture?.destroy();
+                vi.useRealTimers();
+            }
+        });
+
+        it('ignores a second resume click before rendering so the first request remains tracked', () => {
+            const exercise = programming(true);
+            exercise.studentParticipations = [{ id: 10, testRun: false, initializationState: InitializationState.INACTIVE }];
+            createComponent(exercise);
+            const pending = new Subject<StudentParticipation>();
+            const resume = vi.spyOn(TestBed.inject(CourseExerciseService), 'resumeProgrammingExercise').mockReturnValue(pending);
+            fixture.componentInstance.resumeProgrammingExercise(false);
+            fixture.componentInstance.resumeProgrammingExercise(false);
+            expect(resume).toHaveBeenCalledOnce();
+            fixture.destroy();
+            expect(pending.observed).toBe(false);
         });
 
         it('should alert the error key of the server when resuming fails', () => {

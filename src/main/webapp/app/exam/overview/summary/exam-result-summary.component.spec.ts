@@ -509,7 +509,7 @@ describe('ExamResultSummaryComponent', () => {
         vi.useRealTimers();
     });
 
-    it.each([401, 403])('stops polling a pending refresh that fails with permanent status %s', async (status) => {
+    it.each([400, 401, 403, 404, 409])('stops pending owner refreshes after a permanent HTTP %s response', async (status) => {
         vi.useFakeTimers();
         try {
             fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
@@ -519,9 +519,51 @@ describe('ExamResultSummaryComponent', () => {
                 .mockReturnValueOnce(of(pending))
                 .mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
             fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toEqual([programmingExercise.id!]);
             await vi.advanceTimersByTimeAsync(120000);
             expect(load).toHaveBeenCalledTimes(2);
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([401, 403])('stops pending instructor refreshes after HTTP %s without querying owner grades', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            fixture.componentRef.setInput('instructorView', true);
+            fixture.componentRef.setInput('managementGradeInfo', { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] });
+            const load = vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(throwError(() => new HttpErrorResponse({ status })));
+            const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(122000);
+            expect(load).toHaveBeenCalledOnce();
+            expect(owner).not.toHaveBeenCalled();
+        } finally {
+            fixture.destroy();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([0, 500, 503])('recovers pending owner grades after transient HTTP %s', async (status) => {
+        vi.useFakeTimers();
+        try {
+            fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+            const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+            const load = vi
+                .spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary')
+                .mockReturnValueOnce(of(pending))
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status })))
+                .mockReturnValue(of({ ...gradeInfo, pendingExerciseIds: [] }));
+            fixture.detectChanges();
+            await vi.advanceTimersByTimeAsync(2000);
             expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(1);
+            await vi.advanceTimersByTimeAsync(2000);
+            expect(component.studentExamGradeInfoDTO()?.pendingExerciseIds).toHaveLength(0);
+            await vi.advanceTimersByTimeAsync(120000);
+            expect(load).toHaveBeenCalledTimes(3);
         } finally {
             fixture.destroy();
             vi.useRealTimers();

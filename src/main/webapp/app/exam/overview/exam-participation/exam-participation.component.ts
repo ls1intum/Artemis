@@ -9,7 +9,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, takeUntil, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -64,6 +64,7 @@ import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.compone
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
 import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
+import { isConcurrencyFailure } from 'app/foundation/util/retry-concurrency.util';
 import { QuizSubmissionApi } from 'app/openapi/api/quiz-submission-api';
 import { toQuizSubmissionFromLiveClient } from 'app/quiz/shared/util/generated-quiz-exercise.util';
 
@@ -176,6 +177,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // True while the last summary request failed. The summary is then withheld entirely instead of falling back to the
     // conduction-era exam cached on this device, which carries no results and would read as a complete summary (#13317).
     readonly summaryLoadFailed = signal(false);
+    readonly examLoadConflict = signal(false);
     // Repeats whichever summary request failed; set alongside summaryLoadFailed
     private retrySummaryLoad?: () => void;
 
@@ -215,6 +217,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private synchronizationAlert = new Subject<void>();
 
     private programmingSubmissionSubscriptions: Subscription[] = [];
+    private readonly participationStartCancelled = new Subject<void>();
 
     readonly loadingExam = signal<boolean>(undefined!);
     // Render-version signal read by the template-bound isOver()/isGracePeriodOver() getters. Bumped whenever
@@ -276,14 +279,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             } else if (this.testExam() && this.studentExamId()) {
                 this.loadTestExamStudentExamForSummary();
             } else {
-                this.examLoadSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
-                    next: (studentExam) => {
-                        this.handleStudentExam(studentExam);
-                    },
-                    error: () => {
-                        this.handleNoStudentExam();
-                    },
-                });
+                this.loadOwnStudentExam();
             }
         });
 
@@ -340,6 +336,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
     }
 
+    /** Loads the owner attempt, keeping exhausted generation conflicts explicitly retryable. */
+    private loadOwnStudentExam(): void {
+        this.resetForNewLoad();
+        this.examLoadSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
+            next: (studentExam) => this.handleStudentExam(studentExam),
+            error: (error: unknown) => {
+                if (isConcurrencyFailure(error)) {
+                    this.handleFailedSummaryLoad(() => this.loadOwnStudentExam());
+                    this.examLoadConflict.set(true);
+                } else {
+                    this.handleNoStudentExam();
+                }
+            },
+        });
+    }
+
     /**
      * Drops everything the previously displayed exam left behind before a new load starts: the request still in flight,
      * the retryable summary-failure state, and the summary view itself. Every entry point that begins a load goes
@@ -383,6 +395,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * one, in the case of a working-time update even reconstructing a student exam that was just dropped (#13317).
      */
     private stopConductionOfPreviousExam(): void {
+        this.participationStartCancelled.next();
+        this.generateParticipationStatus.next('success');
         this.stopAutoSaveTimer();
         this.workingTimeUpdateEventsSubscription?.unsubscribe();
         this.workingTimeUpdateEventsSubscription = undefined;
@@ -422,6 +436,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     private clearFailedSummaryLoad(): void {
         this.summaryLoadFailed.set(false);
+        this.examLoadConflict.set(false);
         this.retrySummaryLoad = undefined;
     }
 
@@ -825,6 +840,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     ngOnDestroy(): void {
+        this.participationStartCancelled.next();
+        this.participationStartCancelled.complete();
         this.programmingSubmissionSubscriptions.forEach((subscription) => {
             subscription.unsubscribe();
         });
@@ -1102,6 +1119,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | undefined> {
         this.generateParticipationStatus.next('generating');
         return this.courseExerciseService.startExercise(exercise.id!, exercise).pipe(
+            takeUntil(this.participationStartCancelled),
             map((createdParticipation: StudentParticipation) => {
                 // note: it is important that we exchange the existing student participation and that we do not push it
                 exercise.studentParticipations = [createdParticipation];

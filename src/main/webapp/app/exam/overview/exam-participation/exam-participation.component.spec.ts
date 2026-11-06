@@ -414,6 +414,63 @@ describe('ExamParticipationComponent', () => {
         expect(comp.exam()).toEqual(studentExam.exam);
     });
 
+    it.each(['route change', 'destroy'])('cancels a fallback participation start on %s', (cancellation) => {
+        const pending = new Subject<StudentParticipation>();
+        vi.spyOn(courseExerciseService, 'startExercise').mockReturnValue(pending);
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.id = 7;
+        comp.createParticipationForExercise(exercise).subscribe();
+        expect(pending.observed).toBe(true);
+        if (cancellation === 'destroy') {
+            comp.ngOnDestroy();
+        } else {
+            TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '999' });
+            comp.ngOnInit();
+        }
+        expect(pending.observed).toBe(false);
+        pending.next({ id: 42 });
+        expect(exercise.studentParticipations).toBeUndefined();
+    });
+
+    it.each(['route change', 'destroy'])('cancels an own exam load on %s', (cancellation) => {
+        const pending = new Subject<StudentExam>();
+        vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(pending);
+        const params = new Subject<{ courseId: string; examId: string }>();
+        TestBed.inject(ActivatedRoute).params = params;
+        comp.ngOnInit();
+        params.next({ courseId: '1', examId: '2' });
+        expect(pending.observed).toBe(true);
+        if (cancellation === 'destroy') {
+            comp.ngOnDestroy();
+        } else {
+            vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(NEVER);
+            params.next({ courseId: '1', examId: '999' });
+        }
+        expect(pending.observed).toBe(false);
+    });
+
+    it('offers an explicit exam-load retry after generation conflicts instead of reporting a missing exam', () => {
+        const studentExam = new StudentExam();
+        studentExam.id = 42;
+        studentExam.exam = new Exam();
+        studentExam.exam.testExam = true;
+        studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
+        studentExam.workingTime = 150;
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+        const load = vi
+            .spyOn(examParticipationService, 'getOwnStudentExam')
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 409, error: { message: 'error.concurrencyFailure' } })))
+            .mockReturnValue(of(studentExam));
+        comp.ngOnInit();
+        expect(comp.summaryLoadFailed()).toBe(true);
+        expect(comp.loadingExam()).toBe(false);
+        expect(comp.studentExam()).toBeUndefined();
+        comp.retryLoadSummary();
+        expect(load).toHaveBeenCalledTimes(2);
+        expect(comp.summaryLoadFailed()).toBe(false);
+        expect(comp.studentExam()?.id).toBe(studentExam.id);
+    });
+
     it('should determine tutor status if no exam was loaded', () => {
         const httpError = new HttpErrorResponse({
             error: { errorKey: 'No student exam for you' },

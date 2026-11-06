@@ -1,4 +1,4 @@
-import { Directive, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { DestroyRef, Directive, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -17,6 +17,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { Subscription } from 'rxjs';
+import { isConcurrencyFailure } from 'app/foundation/util/retry-concurrency.util';
 
 /** Shared participation state and student exercise actions used by both exercise action surfaces. */
 @Directive()
@@ -25,11 +27,19 @@ export abstract class StudentExerciseActionsDirective {
     private courseExerciseService = inject(CourseExerciseService);
     protected participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
+    private destroyRef = inject(DestroyRef);
+
+    private participationAction?: { exerciseId: number; subscription: Subscription };
 
     constructor() {
+        this.destroyRef.onDestroy(() => this.participationAction?.subscription.unsubscribe());
         effect(() => {
             const exercise = this.exercise();
             untracked(() => {
+                if (this.participationAction && this.participationAction.exerciseId !== exercise?.id) {
+                    this.participationAction.subscription.unsubscribe();
+                    this.participationAction = undefined;
+                }
                 if (!exercise) {
                     return;
                 }
@@ -156,7 +166,8 @@ export abstract class StudentExerciseActionsDirective {
         }
         this._isLoading.set(true);
         const programmingExercise = this._programmingExercise();
-        this.courseExerciseService
+        const exerciseId = this.exercise().id!;
+        const subscription = this.courseExerciseService
             .startExercise(this.exercise().id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
@@ -181,15 +192,20 @@ export abstract class StudentExerciseActionsDirective {
                     }
                 },
             });
+        this.participationAction = { exerciseId, subscription };
     }
 
     /**
      * resume the programming exercise
      */
     resumeProgrammingExercise(testRun: boolean) {
+        if (this._isLoading()) {
+            return;
+        }
         this._isLoading.set(true);
         const participation = testRun ? this._practiceParticipation() : this._gradedParticipation();
-        this.courseExerciseService
+        const exerciseId = this.exercise().id!;
+        const subscription = this.courseExerciseService
             .resumeProgrammingExercise(this.exercise().id!, participation!.id!, this.exercise())
             .pipe(finalize(() => this._isLoading.set(false)))
             .subscribe({
@@ -198,9 +214,10 @@ export abstract class StudentExerciseActionsDirective {
                     this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                 },
                 error: (error) => {
-                    this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+                    this.alertService.error(isConcurrencyFailure(error) ? 'error.concurrencyFailure' : `artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             });
+        this.participationAction = { exerciseId, subscription };
     }
 
     get isBeforeStartDateAndStudent(): boolean {
