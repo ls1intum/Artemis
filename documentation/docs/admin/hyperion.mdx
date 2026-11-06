@@ -324,6 +324,11 @@ returns control to the authoritative gate; two blocks without a verified reducti
 in failures stop that session and return its artifacts for verification. Writes alone
 do not establish progress. A new stage starts its own progress assessment.
 
+Verification checks the job's stop signal before each build and transcript capture.
+An in-flight bounded build can finish, but no further build starts after the signal.
+Unexecuted checks do not establish a pass. A previously verified draft can still be
+saved with its unresolved findings and any incomplete assessment evidence.
+
 Administrators can configure `artemis.hyperion.agent.repair-model`, or a profile's
 `repair-model`, to use one different model on the existing provider for a stalled
 repair. The handoff continues from current files and diagnostics for at most twenty

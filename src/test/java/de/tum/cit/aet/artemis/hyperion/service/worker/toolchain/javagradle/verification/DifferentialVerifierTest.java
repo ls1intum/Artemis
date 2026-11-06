@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -69,13 +70,13 @@ class DifferentialVerifierTest {
     }
 
     private static DifferentialVerifier newVerifier() {
-        return new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry());
+        return new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), () -> false);
     }
 
     private static DifferentialVerifier newVerifier(String approvedSpecification) {
         ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
         approvedSpecs.approve("s", approvedSpecification);
-        return new DifferentialVerifier(sandboxBuildCommandService(), approvedSpecs);
+        return new DifferentialVerifier(sandboxBuildCommandService(), approvedSpecs, () -> false);
     }
 
     /**
@@ -338,6 +339,79 @@ class DifferentialVerifierTest {
     }
 
     @Test
+    void stoppedOptionalAssessmentDoesNotReportUnexecutedLearnerProbesAsPassing() {
+        var restores = new AtomicInteger();
+        var verifier = new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), () -> true);
+        var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
+        var outcomes = verifier.probeStudentTestAssertions(sandbox, "s", input(), Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, restores::incrementAndGet);
+
+        assertThat(restores).hasValue(0);
+        assertThat(outcomes).hasSize(4).allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE));
+    }
+
+    @Test
+    void optionalAssessmentFinishesTheCurrentProbeAndStopsBeforeTheNextOne() {
+        var stopped = new AtomicBoolean();
+        var restores = new AtomicInteger();
+        var verifier = new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), stopped::get);
+        var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
+        var outcomes = verifier.probeStudentTestAssertions(sandbox, "s", input(), Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, () -> {
+            if (restores.incrementAndGet() == 2) {
+                stopped.set(true);
+            }
+        });
+
+        assertThat(restores).hasValue(2);
+        assertThat(outcomes).hasSize(4);
+        assertThat(outcomes.getFirst().disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+        assertThat(outcomes.subList(1, 4)).allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE));
+    }
+
+    @Test
+    void stoppedOutputAssessmentDoesNotStartAnotherTranscriptCapture() {
+        var restores = new AtomicInteger();
+        var verifier = new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), () -> true);
+        var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
+        var sources = Map.of("src/de/test/Main.java", "package de.test; public class Main { public static void main(String[] args) { System.out.println(1); } }");
+
+        var outcomes = verifier.probeOutputOnlyMains(sandbox, "s", input(), Map.of(), Map.of(), sources, null, SeededStructuralTests.EMPTY, Set.of(), restores::incrementAndGet);
+
+        assertThat(outcomes).isEmpty();
+        assertThat(restores).hasValue(0);
+    }
+
+    @Test
+    void stoppingBeforeTheStarterBuildCannotProduceAVerifiedCandidate() {
+        var stopped = new AtomicBoolean();
+        var restores = new AtomicInteger();
+        var verifier = new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), stopped::get);
+        var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
+
+        var result = verifier.verify(sandbox, "s", input(), new VerificationRequest(harness(), harness(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()),
+                () -> {
+                    if (restores.incrementAndGet() == 2) {
+                        stopped.set(true);
+                    }
+                });
+
+        assertThat(result.solutionPassed()).isTrue();
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(restores).hasValue(3);
+    }
+
+    private static Map<String, String> learnerTests() {
+        return Map.of("src/de/test/LearnerTest.java", """
+                package de.test;
+                import org.junit.jupiter.api.Test;
+                import static org.junit.jupiter.api.Assertions.assertEquals;
+                class LearnerTest {
+                    @Test void firstCase() { assertEquals(1, 1); }
+                    @Test void secondCase() { assertEquals(2, 2); }
+                }
+                """);
+    }
+
+    @Test
     void authoritativeVerificationRestoresTheCapturedCandidateBeforeAndAfterSourceIsolatedBuilds() {
         List<String> names = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
         ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK);
@@ -436,7 +510,7 @@ class DifferentialVerifierTest {
                 |---|---|---|
                 | `PlaybackStrategy` | abstraction students design | student-creates |
                 """);
-        DifferentialVerifier verifier = new DifferentialVerifier(sandboxBuildCommandService(), approvedSpecs);
+        DifferentialVerifier verifier = new DifferentialVerifier(sandboxBuildCommandService(), approvedSpecs, () -> false);
         VerificationRequest request = new VerificationRequest(harness(), Map.of(), Map.of(), harness(),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { /* TODO */ }"),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { int order(); }"), Set.of(), SeededStructuralTests.EMPTY, Set.of(),
@@ -464,7 +538,7 @@ class DifferentialVerifierTest {
                 | strategy | typical values | 3 | no |
                 """;
         String plan = "{\"tests\":[{\"name\":\"sortsUnsortedArray\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
-        DifferentialVerifier verifier = new DifferentialVerifier(sandboxBuildCommandService(), approvedSpecs);
+        DifferentialVerifier verifier = new DifferentialVerifier(sandboxBuildCommandService(), approvedSpecs, () -> false);
         VerificationRequest request = new VerificationRequest(harness(), Map.of(), Map.of(), harness(),
                 Map.of("src/de/test/PlaybackStrategy.java", "package de.test; public interface PlaybackStrategy { /* TODO */ }", "src/de/test/Track.java",
                         "package de.test; public class Track {}"),

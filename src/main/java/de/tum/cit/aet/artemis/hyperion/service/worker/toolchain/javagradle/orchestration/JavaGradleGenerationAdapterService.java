@@ -151,7 +151,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         var commands = new SandboxBuildCommands(resources);
         var workspace = new GenerationWorkspace(resources);
         var approvedSpecs = new ApprovedSpecRegistry();
-        var verifier = new DifferentialVerifier(commands, approvedSpecs);
+        var verifier = new DifferentialVerifier(commands, approvedSpecs, stopAuthoring);
         var stageChecks = new StageChecks(verifier, approvedSpecs);
         var prompt = new AgentSystemPrompt(commands);
         var runner = new AgentLoopRunner(models, parameters.contextWindowTokens(), Duration.ofMinutes(5), cooldown);

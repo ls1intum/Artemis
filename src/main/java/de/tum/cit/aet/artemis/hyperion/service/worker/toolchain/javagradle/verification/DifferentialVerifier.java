@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -68,15 +69,18 @@ public class DifferentialVerifier {
 
     private final ApprovedSpecRegistry approvedSpecs;
 
+    private final BooleanSupplier stopVerification;
+
     private final StudentTestAssessmentHistory studentTestAssessmentHistory = new StudentTestAssessmentHistory();
 
-    public DifferentialVerifier(SandboxBuildCommands sandboxBuildCommandService, ApprovedSpecRegistry approvedSpecs) {
+    public DifferentialVerifier(SandboxBuildCommands sandboxBuildCommandService, ApprovedSpecRegistry approvedSpecs, BooleanSupplier stopVerification) {
         this.sandboxBuildCommandService = sandboxBuildCommandService;
         this.approvedSpecs = approvedSpecs;
+        this.stopVerification = stopVerification;
     }
 
     DifferentialVerifier(SandboxBuildCommands sandboxBuildCommandService) {
-        this(sandboxBuildCommandService, new ApprovedSpecRegistry());
+        this(sandboxBuildCommandService, new ApprovedSpecRegistry(), () -> false);
     }
 
     private String readProblemStatement(InteractiveSandbox sandbox, String sessionId) {
@@ -611,7 +615,14 @@ public class DifferentialVerifier {
      * @param assignmentName the assignment directory name ({@code solution}/{@code template}); also the reports subdirectory name and the copyOut prefix
      */
     private BuildSummary runPristineBuild(InteractiveSandbox sandbox, String sessionId, String buildCommand, String assignmentName) {
+        if (stopVerification.getAsBoolean()) {
+            return stoppedBuild();
+        }
         return runPristineBuildWithExecution(sandbox, sessionId, buildCommand, assignmentName).summary();
+    }
+
+    private static BuildSummary stoppedBuild() {
+        return new BuildSummary(0, 0, -1, false, List.of(), List.of(), List.of(), "The job stopped before this verification build ran.");
     }
 
     private PristineBuildExecution runPristineBuildWithExecution(InteractiveSandbox sandbox, String sessionId, String buildCommand, String assignmentName) {
@@ -753,6 +764,9 @@ public class DifferentialVerifier {
             Set<String> pendingSolutionPaths, Runnable restoreCandidate) {
         List<SemanticMutantOutcome> outcomes = OutputOnlyMainProbe.evaluate(producedTestsFiles, producedTemplateFiles, producedSolutionFiles, testPlanJson, pendingSolutionPaths,
                 target -> {
+                    if (stopVerification.getAsBoolean()) {
+                        return Optional.empty();
+                    }
                     restoreCandidate.run();
                     SandboxExecResultDTO capture;
                     try {
@@ -860,6 +874,9 @@ public class DifferentialVerifier {
 
     private BuildSummary runSemanticMutantProbe(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, SeededStructuralTests seededStructuralTests,
             @Nullable SemanticMutant mutant, @Nullable Map<String, String> counterexampleProbe, Runnable restoreCandidate) {
+        if (stopVerification.getAsBoolean()) {
+            return stoppedBuild();
+        }
         return SemanticMutantWorkspaceProbe.run(sandbox, sessionId, mutant, counterexampleProbe, restoreCandidate,
                 () -> seedPristineVerifyScript(sandbox, sessionId, exercise, seededStructuralTests),
                 () -> runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.behavioralSolutionBuildCommand(), GenerationWorkspace.directoryFor(RepositoryRole.SOLUTION)));
