@@ -2,7 +2,7 @@
 id: write-code-and-tests
 title: Write the Exercise Code and Tests
 sidebar_label: Write the Exercise Code and Tests
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -120,7 +120,9 @@ cd tests || exit 1
 
 **Alternative 2: Edit in Browser**
 
-Open **Edit in Editor** in Artemis and adapt the code in the online editor.
+Select the exercise title in course management and scroll to **Repositories and builds**. Open **Code** in the
+**Template** or **Solution** panel, then choose **Edit in editor** to adapt that repository in the online editor.
+This action requires Editor access. The editor lets you switch between the exercise's repositories.
 
 <Image src={instructorEditor} alt="Online editor on the template repository, with the tasks beside the code" size={ImageSize.large} caption="Editing the template repository" />
 
@@ -137,7 +139,7 @@ file simultaneously with automatic conflict resolution and cursor awareness.
 
 Artemis supports real-time collaborative editing for programming exercises. Multiple instructors and editors can work on the same exercise simultaneously, with no additional setup required. Collaboration spans two views:
 
-- **Online Code Editor** (**Edit in Editor**) — live synchronization of code files, the file tree, and the problem statement.
+- **Online Code Editor** (**Edit in editor**) — live synchronization of code files, the file tree, and the problem statement.
 - **Edit Page** (**Edit**) — synchronization of exercise settings and the problem statement.
 
 To start collaborating, have a second instructor or editor open the same exercise. Both users are connected automatically.
@@ -152,7 +154,7 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
 
 **File Tree Synchronization:** File creation, deletion, and renaming are broadcast to all connected editors immediately. If another user had a deleted or renamed file open, it is handled gracefully.
 
-**Problem Statement Synchronization:** The markdown problem statement editor supports the same real-time collaboration with cursor awareness. This works both in the online code editor (**Edit in Editor**) and on the edit page (**Edit**).
+**Problem Statement Synchronization:** The markdown problem statement editor supports the same real-time collaboration with cursor awareness. This works both in the online code editor (**Edit in editor**) and on the edit page (**Edit**).
 
 <Image src={collaborativeProblemStatement} alt="Two instructors editing the problem statement simultaneously" size={ImageSize.large} caption="Live collaborative problem statement editing" />
 
@@ -176,7 +178,7 @@ When someone pushes a commit to a repository (e.g., via Git CLI, an IDE, or "Sub
 
 ## Review Earlier Versions of the Exercise
 
-Artemis keeps a version history for a programming exercise, so you can see how it changed over a semester and what a previous run of the course actually looked like. Open the exercise in Course Management and choose **Version History**.
+Artemis keeps a version history for a programming exercise, so you can see how it changed over a semester and what a previous run of the course actually looked like. Open the exercise in course management and choose **Version History** beside its title.
 
 The timeline lists the versions on the left; selecting one shows the exercise metadata as it was at that point, including the programming-specific settings that are easy to forget you changed:
 
@@ -192,7 +194,7 @@ Values that were not set show as **Unset**. If a whole area is missing from a sn
 
 The problem statement is what students read, and it is *interactive*: when you bind a task to test cases, Artemis shows each student whether their latest submission passes that task, right inside the description. Getting these bindings right is what turns a wall of text into a checklist students can work through.
 
-Edit it either with **Edit** on the exercise, or with **Edit in Editor** to have it side by side with the code. Both editors synchronize in real time when several people work at once — see [Collaborative Editing](#collaborative-editing).
+Edit it either with **Edit** on the exercise, or with **Code → Edit in editor** in a repository panel to have it side by side with the code. Both editors synchronize in real time when several people work at once — see [Collaborative Editing](#collaborative-editing).
 
 The problem statement is Markdown, plus the two Artemis-specific constructs below.
 
@@ -288,7 +290,7 @@ Ares 2 is a JUnit extension for easy and secure Java testing on Artemis.
 The Java and Kotlin test templates use Ares 2 and contain a security policy file (`SecurityPolicy.yaml`, in the root of the test repository) that is referenced by the `@Policy` annotation of the test classes.
 Add every new test class to `theFollowingClassesAreTestClasses` in this policy and allow additional resources (e.g. package imports of libraries used in the exercise) in `theFollowingResourceAccessesArePermitted`.
 Exercises that were created before the introduction of Ares 2 keep their stored Docker image and keep working with Ares 1 (`artemis-java-test-sandbox`).
-The new default Docker image for Java and Kotlin (`ls1tum/artemis-maven-template:java25-3`) does not contain the dependencies of Ares 1 anymore, and Ares 1 does not run on Java 25, because it relies on the Java security manager.
+The new default Docker images for Java (`ls1tum/artemis-maven-template:java25-3`) and Kotlin (`ghcr.io/ls1intum/artemis-kotlin-docker:v1.0.0`) do not contain the dependencies of Ares 1 anymore, and Ares 1 does not run on Java 25, because it relies on the Java security manager.
 
 Main features:
 
