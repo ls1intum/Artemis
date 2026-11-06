@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.localci.service;
 
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -123,23 +124,17 @@ public class LocalCIMissingJobService {
         // counts are raised with it so that the retry limit applies to the build as a whole.
         Set<String> retriedBuildGroups = new HashSet<>();
         for (BuildJob buildJob : missingJobs) {
+            String buildGroupId = buildJob.getBuildGroupId();
             if (buildJob.getRetryCount() >= maxMissingJobRetries) {
                 log.warn("Build job with id {} for participation {} has reached the maximum number of {} retries and will not be retried.", buildJob.getBuildJobId(),
                         buildJob.getParticipationId(), maxMissingJobRetries);
-                continue;
             }
-            String buildGroupId = buildJob.getBuildGroupId();
-            if (buildGroupId != null && !retriedBuildGroups.add(buildGroupId)) {
+            else if (buildGroupId != null && !retriedBuildGroups.add(buildGroupId)) {
                 log.debug("Build job with id {} belongs to build group {}, which was already retried in this run", buildJob.getBuildJobId(), buildGroupId);
                 buildJobRepository.incrementRetryCount(buildJob.getBuildJobId());
-                continue;
             }
-            try {
-                localCITriggerService.retryBuildJob(buildJob, (ProgrammingExerciseParticipation) participationRepository.findByIdElseThrow(buildJob.getParticipationId()));
-                buildJobRepository.incrementRetryCount(buildJob.getBuildJobId());
-            }
-            catch (Exception e) {
-                log.error("Failed to retry build job with id {} for participation {}", buildJob.getBuildJobId(), buildJob.getParticipationId(), e);
+            else {
+                retryMissingJob(buildJob);
             }
         }
 
@@ -155,10 +150,22 @@ public class LocalCIMissingJobService {
     @Scheduled(fixedRateString = "${artemis.continuous-integration.retry-missing-jobs-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.retry-missing-jobs-delay-seconds:120}", timeUnit = TimeUnit.SECONDS)
     public void finalizeCompletedBuildGroups() {
         log.debug("Checking for complete build groups whose aggregated result stayed in progress");
-        int finalizedGroups = localCIResultProcessingService.finalizeCompletedBuildGroups(maxMissingJobRetries, ZonedDateTime.now().minus(MISSING_JOB_RETRY_WINDOW));
+        int finalizedGroups = localCIResultProcessingService.finalizeCompletedBuildGroups(maxMissingJobRetries,
+                ZonedDateTime.now(ZoneId.systemDefault()).minus(MISSING_JOB_RETRY_WINDOW));
         if (finalizedGroups > 0) {
             log.info("Finalized {} complete build groups whose aggregated result had stayed in progress", finalizedGroups);
         }
+    }
+
+    private void retryMissingJob(BuildJob buildJob) {
+        try {
+            localCITriggerService.retryBuildJob(buildJob, (ProgrammingExerciseParticipation) participationRepository.findByIdElseThrow(buildJob.getParticipationId()));
+            buildJobRepository.incrementRetryCount(buildJob.getBuildJobId());
+        }
+        catch (Exception e) {
+            log.error("Failed to retry build job with id {} for participation {}", buildJob.getBuildJobId(), buildJob.getParticipationId(), e);
+        }
+
     }
 
     private boolean checkIfBuildJobIsStillBuilding(List<String> processingJobIds, String buildJobId) {

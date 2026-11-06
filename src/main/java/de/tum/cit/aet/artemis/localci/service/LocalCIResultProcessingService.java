@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localci.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -400,7 +401,7 @@ public class LocalCIResultProcessingService {
      * @return the number of build groups finalized by this run
      */
     public int finalizeCompletedBuildGroups(int maxMissingJobRetries, ZonedDateTime missingJobsRetriedSince) {
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
         List<String> buildGroupIds = buildJobRepository.findBuildGroupsWithResultInProgressAndNoRunningJob(FINISHED_BUILD_STATUSES, now.minus(SWEEP_LOOKBACK),
                 now.minus(COMPLETED_GROUP_GRACE_PERIOD), PageRequest.of(0, COMPLETED_GROUPS_PER_SWEEP));
         int finalizedGroups = 0;
@@ -432,7 +433,7 @@ public class LocalCIResultProcessingService {
             log.debug("Not finalizing build group {} now: the result processing of exercise {} is not admitted", buildGroupId, exerciseId);
             return false;
         }
-        try (var permit = admission.get()) {
+        try (var _ = admission.get()) {
             return finalizeCompletedBuildGroup(buildGroupId, maxMissingJobRetries, missingJobsRetriedSince);
         }
     }
@@ -512,10 +513,6 @@ public class LocalCIResultProcessingService {
     }
 
     /**
-     * Marks the lost jobs as finished, so that a result one of them still reports is not merged, and as failed to build,
-     * since they never reported.
-     */
-    /**
      * Whether LocalCIMissingJobService will still retry a job: it is missing, has retries left, lies within the retry window
      * and no newer job of its participation exists, as BuildJobRepository#findMissingJobsToRetryInTimeRange selects them.
      */
@@ -526,6 +523,10 @@ public class LocalCIResultProcessingService {
                 && !buildJobRepository.existsByParticipationIdAndBuildSubmissionDateAfter(job.getParticipationId(), submissionDate);
     }
 
+    /**
+     * Marks the lost jobs as finished, so that a result one of them still reports is not merged, and as failed to build,
+     * since they never reported.
+     */
     private void closeLostJobs(List<BuildJob> lostJobs, BuildStatus status) {
         if (lostJobs.isEmpty()) {
             return;
@@ -577,9 +578,7 @@ public class LocalCIResultProcessingService {
         aggregationLocks.lock(buildGroupId);
         try {
             // Append, link and finalize each commit on their own, as Artemis keeps transactions out of services.
-            ContainerOutcome outcome = null;
-            Result appendedResult = null;
-            BuildJob linkedContainerJob = null;
+            LinkedContainer linked = null;
             try {
                 // A job that has already finished, because the sweep closed it as lost or its result arrived twice, is not
                 // merged: that would change a result that was already reported or deleted.
@@ -589,68 +588,95 @@ public class LocalCIResultProcessingService {
                             buildJob.id(), buildGroupId);
                     return new ContainerOutcome(null, finishedJob.get(), false, true);
                 }
-                // The aggregate is found through the group's job links: a retry or re-push of the same commit opens a new
-                // group, and a tutor's draft assessment on the submission must not be taken for it.
-                Long aggregatedResultId = findAggregatedResultId(buildGroupId);
-                // The container that creates the aggregate holds the participation's lock until its job links to it, so
-                // that the cleanup in a finalization never takes the unlinked aggregate for an abandoned one.
-                String creationLock = aggregatedResultId == null ? participationLockKey(participation.getId()) : null;
-                if (creationLock != null) {
-                    aggregationLocks.lock(creationLock);
-                }
-                AppendedContainerResult appended;
-                try {
-                    appended = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected, buildGroup.containerName(),
-                            aggregatedResultId);
-                    if (appended != null) {
-                        appendedResult = appended.result();
-                        linkedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, appendedResult, appended.containerFailed(), ranClean(effectiveBuildResult));
-                        if (linkedContainerJob == null) {
-                            // Without the link the group's count stays one short, so the recovery below records the job instead.
-                            throw new IllegalStateException("the build job of container " + buildGroup.containerName() + " could not be saved after its result was merged");
-                        }
-                    }
-                }
-                finally {
-                    if (creationLock != null) {
-                        aggregationLocks.unlock(creationLock);
-                    }
-                }
-                if (appended != null) {
+                linked = appendAndLinkContainer(participation, buildJob, buildGroup, effectiveBuildResult, buildStatus, testsExpected, aggregationLocks);
+                if (linked != null) {
                     Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate(),
                             effectiveBuildResult);
-                    outcome = new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob, finalizedResult != null);
+                    return new ContainerOutcome(finalizedResult != null ? finalizedResult : linked.appendedResult(), linked.job(), finalizedResult != null);
                 }
             }
             catch (RuntimeException e) {
                 log.error("Could not merge the result of container {} of build job {}", buildGroup.containerName(), buildJob.id(), e);
             }
-            if (outcome != null) {
-                return outcome;
+            if (linked != null) {
+                return finalizeAfterAFailedFinalization(linked, buildJob, buildGroup, effectiveBuildResult, participation);
             }
-            if (linkedContainerJob != null) {
-                // Only the finalization failed. Keep the link: the recovery below would mark a merged container as failed and,
-                // for the group's first container, make the next sibling open a second aggregate. finalizeCompletedBuildGroups
-                // covers a second failure.
-                Result finalizedResult = null;
-                try {
-                    finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate(), effectiveBuildResult);
-                }
-                catch (RuntimeException e) {
-                    log.error("Could not finalize build group {} after container {} of build job {} merged; the group's aggregated result stays in progress", buildGroupId,
-                            buildGroup.containerName(), buildJob.id(), e);
-                }
-                return new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob, finalizedResult != null);
-            }
-            // The merge failed: record the job as finished anyway, without a link, so the group's count still advances and, if
-            // this was the last container, the siblings' aggregate is finalized now, as failed.
-            BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, BuildStatus.ERROR, null);
-            Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate(), effectiveBuildResult);
-            return new ContainerOutcome(finalizedResult, savedContainerJob, finalizedResult != null);
+            return recordUnmergedContainer(buildJob, buildGroup, effectiveBuildResult, participation);
         }
         finally {
             aggregationLocks.unlock(buildGroupId);
         }
+    }
+
+    /**
+     * Appends a container's result to its group's aggregated result, which the group's first container creates, and links
+     * the container's job to it.
+     *
+     * @return the aggregated result and the linked job, or null if the result could not be appended
+     */
+    private @Nullable LinkedContainer appendAndLinkContainer(ProgrammingExerciseParticipation participation, BuildJobQueueItem buildJob,
+            BuildJobQueueItem.BuildGroupMembership buildGroup, BuildResult buildResult, BuildStatus buildStatus, boolean testsExpected,
+            DistributedMap<String, Boolean> aggregationLocks) {
+        // The aggregate is found through the group's job links: a retry or re-push of the same commit opens a new
+        // group, and a tutor's draft assessment on the submission must not be taken for it.
+        Long aggregatedResultId = findAggregatedResultId(buildGroup.buildGroupId());
+        // The container that creates the aggregate holds the participation's lock until its job links to it, so
+        // that the cleanup in a finalization never takes the unlinked aggregate for an abandoned one.
+        String creationLock = aggregatedResultId == null ? participationLockKey(participation.getId()) : null;
+        if (creationLock != null) {
+            aggregationLocks.lock(creationLock);
+        }
+        try {
+            AppendedContainerResult appended = programmingExerciseGradingService.appendContainerResult(participation, buildResult, testsExpected, buildGroup.containerName(),
+                    aggregatedResultId);
+            if (appended == null) {
+                return null;
+            }
+            BuildJob linkedJob = saveFinishedBuildJob(buildJob, buildStatus, appended.result(), appended.containerFailed(), ranClean(buildResult));
+            if (linkedJob == null) {
+                // Without the link the group's count stays one short, so the recovery records the job instead.
+                throw new IllegalStateException("the build job of container " + buildGroup.containerName() + " could not be saved after its result was merged");
+            }
+            return new LinkedContainer(appended.result(), linkedJob);
+        }
+        finally {
+            if (creationLock != null) {
+                aggregationLocks.unlock(creationLock);
+            }
+        }
+    }
+
+    /**
+     * Only the finalization of a merged container failed. The link is kept: recording the container as unmerged would mark it
+     * as failed and, for the group's first container, make the next sibling open a second aggregate.
+     * finalizeCompletedBuildGroups covers a second failure.
+     */
+    private ContainerOutcome finalizeAfterAFailedFinalization(LinkedContainer linked, BuildJobQueueItem buildJob, BuildJobQueueItem.BuildGroupMembership buildGroup,
+            BuildResult buildResult, ProgrammingExerciseParticipation participation) {
+        Result finalizedResult = null;
+        try {
+            finalizedResult = finalizeIfGroupComplete(buildGroup.buildGroupId(), buildGroup.expectedContainerCount(), participation, buildResult.buildRunDate(), buildResult);
+        }
+        catch (RuntimeException e) {
+            log.error("Could not finalize build group {} after container {} of build job {} merged; the group's aggregated result stays in progress", buildGroup.buildGroupId(),
+                    buildGroup.containerName(), buildJob.id(), e);
+        }
+        return new ContainerOutcome(finalizedResult != null ? finalizedResult : linked.appendedResult(), linked.job(), finalizedResult != null);
+    }
+
+    /**
+     * The merge failed: records the job as finished anyway, without a link, so the group's count still advances and, if this
+     * was the last container, the siblings' aggregate is finalized now, as failed.
+     */
+    private ContainerOutcome recordUnmergedContainer(BuildJobQueueItem buildJob, BuildJobQueueItem.BuildGroupMembership buildGroup, BuildResult buildResult,
+            ProgrammingExerciseParticipation participation) {
+        BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, BuildStatus.ERROR, null);
+        Result finalizedResult = finalizeIfGroupComplete(buildGroup.buildGroupId(), buildGroup.expectedContainerCount(), participation, buildResult.buildRunDate(), buildResult);
+        return new ContainerOutcome(finalizedResult, savedContainerJob, finalizedResult != null);
+    }
+
+    /** a container whose result was appended to the aggregated result, and its job linked to that */
+    private record LinkedContainer(Result appendedResult, BuildJob job) {
     }
 
     private Long findAggregatedResultId(String buildGroupId) {

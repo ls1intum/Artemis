@@ -266,8 +266,6 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                 this.websocketService.subscribe<FinishedBuildJob>(`/topic/admin/finished-jobs`).subscribe((finishedBuildJob: FinishedBuildJob) => {
                     this.handleFinishedBuildJobUpdate(finishedBuildJob);
                 }),
-            );
-            this.websocketSubscriptions.push(
                 this.websocketService.subscribe<FinishedBuildJob>(`/topic/admin/finished-job-updates`).subscribe((finishedBuildJob: FinishedBuildJob) => {
                     this.handleFinishedBuildJobChange(finishedBuildJob);
                 }),

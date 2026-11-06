@@ -34,6 +34,9 @@ function envVarsOf(rows: [string, string][]): EnvVars | undefined {
 }
 
 /** Edits a single build container of a build plan: its name, image, timeout, repositories, Docker flags and phases. */
+/** what a number field hands to its change handler: a number, the raw text, or null once it is cleared */
+type NumberFieldValue = number | string | null;
+
 @Component({
     selector: 'jhi-build-container-editor',
     templateUrl: './build-container-editor.component.html',
@@ -133,7 +136,7 @@ export class BuildContainerEditorComponent {
         this.container.update((container) => cloneWith(container, { dockerImage }));
     }
 
-    setTimeoutSeconds(value: number | string | null): void {
+    setTimeoutSeconds(value: NumberFieldValue): void {
         const timeoutSeconds = value === null || value === '' ? undefined : Number(value);
         this.container.update((container) => cloneWith(container, { timeoutSeconds }));
     }

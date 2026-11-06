@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -137,7 +138,7 @@ public class BuildLogEntryService {
         List<BuildLogEntry> stored;
         try {
             // the build's own date, as for a single-container result: a rebuild of an old submission keeps its logs for the full period
-            ZonedDateTime retentionTime = buildRunDate != null ? buildRunDate : ZonedDateTime.now();
+            ZonedDateTime retentionTime = buildRunDate != null ? buildRunDate : ZonedDateTime.now(ZoneId.systemDefault());
             stored = failedBuildLogService.appendBuildLogs(aggregatedResult.getExerciseId(), programmingSubmission.getId(), aggregatedResult.getId(), retentionTime, containerName,
                     buildLogs);
         }
@@ -163,7 +164,7 @@ public class BuildLogEntryService {
         long exerciseId = aggregatedResult.getExerciseId();
         if (buildFailed) {
             // retained from this build's completion, which the assessment's own dates do not reflect
-            ZonedDateTime retentionTime = aggregatedResult.getCompletionDate() != null ? aggregatedResult.getCompletionDate() : ZonedDateTime.now();
+            ZonedDateTime retentionTime = aggregatedResult.getCompletionDate() != null ? aggregatedResult.getCompletionDate() : ZonedDateTime.now(ZoneId.systemDefault());
             failedBuildLogService.getBuildLogs(exerciseId, programmingSubmission.getId(), aggregatedResult.getId())
                     .ifPresent(buildLogs -> saveBuildLogs(buildLogs, programmingSubmission, manualResult, retentionTime));
         }

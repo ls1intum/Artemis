@@ -2,9 +2,7 @@
     <div class="flex items-end gap-3 mb-2">
         @if (showsSettings()) {
             <div class="grow">
-                <label [for]="'field_container_name_' + containerIndex()">
-                    <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.containerName"></span>
-                </label>
+                <label [for]="'field_container_name_' + containerIndex()">{{ 'artemisApp.programmingExercise.buildContainersEditor.containerName' | artemisTranslate }}</label>
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.containerNameHelp" />
                 <input
                     type="text"
@@ -18,9 +16,7 @@
             </div>
         }
         <div class="grow">
-            <label [for]="'field_container_image_' + containerIndex()">
-                <span jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>
-            </label>
+            <label [for]="'field_container_image_' + containerIndex()">{{ 'artemisApp.programmingExercise.dockerImage' | artemisTranslate }}</label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeDockerImage" />
             <input
                 type="text"
@@ -35,9 +31,7 @@
         </div>
         @if (showsSettings()) {
             <div>
-                <label [for]="'field_container_timeout_' + containerIndex()">
-                    <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.timeout"></span>
-                </label>
+                <label [for]="'field_container_timeout_' + containerIndex()">{{ 'artemisApp.programmingExercise.buildContainersEditor.timeout' | artemisTranslate }}</label>
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.timeoutHelp" />
                 <input
                     type="number"
@@ -89,9 +83,9 @@
                     (ngModelChange)="toggleRepositoryScoping($event)"
                     [name]="'containerScoped_' + containerIndex()"
                 />
-                <label class="form-check-label" [for]="'field_container_scoped_' + containerIndex()">
-                    <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.scopeRepositories"></span>
-                </label>
+                <label class="form-check-label" [for]="'field_container_scoped_' + containerIndex()">{{
+                    'artemisApp.programmingExercise.buildContainersEditor.scopeRepositories' | artemisTranslate
+                }}</label>
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.scopeRepositoriesHelp" />
             </div>
             @if (scopesRepositories()) {
@@ -126,18 +120,18 @@
                     (ngModelChange)="toggleDockerFlags($event)"
                     [name]="'containerDockerFlags_' + containerIndex()"
                 />
-                <label class="form-check-label" [for]="'field_container_docker_flags_' + containerIndex()">
-                    <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.overrideDockerFlags"></span>
-                </label>
+                <label class="form-check-label" [for]="'field_container_docker_flags_' + containerIndex()">{{
+                    'artemisApp.programmingExercise.buildContainersEditor.overrideDockerFlags' | artemisTranslate
+                }}</label>
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildContainersEditor.overrideDockerFlagsHelp" />
             </div>
             @if (overridesDockerFlags()) {
                 <div class="flex flex-wrap items-start gap-3 mt-1">
                     @if (customNetworks(); as networks) {
                         <div>
-                            <label [for]="'field_container_network_' + containerIndex()">
-                                <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.network"></span>
-                            </label>
+                            <label [for]="'field_container_network_' + containerIndex()">{{
+                                'artemisApp.programmingExercise.buildContainersEditor.network' | artemisTranslate
+                            }}</label>
                             <select
                                 class="form-select"
                                 [id]="'field_container_network_' + containerIndex()"
@@ -157,9 +151,9 @@
                         </div>
                     }
                     <div>
-                        <label [for]="'field_container_cpu_count_' + containerIndex()">
-                            <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.cpuCount"></span>
-                        </label>
+                        <label [for]="'field_container_cpu_count_' + containerIndex()">{{
+                            'artemisApp.programmingExercise.buildContainersEditor.cpuCount' | artemisTranslate
+                        }}</label>
                         <input
                             type="number"
                             class="form-control"
@@ -175,9 +169,7 @@
                         }
                     </div>
                     <div>
-                        <label [for]="'field_container_memory_' + containerIndex()">
-                            <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.memory"></span>
-                        </label>
+                        <label [for]="'field_container_memory_' + containerIndex()">{{ 'artemisApp.programmingExercise.buildContainersEditor.memory' | artemisTranslate }}</label>
                         <input
                             type="number"
                             class="form-control"
@@ -193,9 +185,9 @@
                         }
                     </div>
                     <div>
-                        <label [for]="'field_container_memory_swap_' + containerIndex()">
-                            <span jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.memorySwap"></span>
-                        </label>
+                        <label [for]="'field_container_memory_swap_' + containerIndex()">{{
+                            'artemisApp.programmingExercise.buildContainersEditor.memorySwap' | artemisTranslate
+                        }}</label>
                         <input
                             type="number"
                             class="form-control"

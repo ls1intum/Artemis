@@ -60,7 +60,7 @@
     <div class="d-flex align-items-start gap-2 mb-2">
         @if (!readonly()) {
             <div class="d-flex flex-column gap-1">
-                <label [for]="idPrefix() + 'phase-name-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.phaseName"></label>
+                <label [for]="idPrefix() + 'phase-name-input-' + index()">{{ 'artemisApp.programmingExercise.buildPhasesEditor.phaseName' | artemisTranslate }}</label>
                 <input
                     [id]="idPrefix() + 'phase-name-input-' + index()"
                     data-testid="phase-name-input"
@@ -81,7 +81,7 @@
         @if (!readonly() || phase().condition !== 'ALWAYS') {
             <div class="d-flex flex-column gap-1">
                 <div class="d-flex gap-1">
-                    <label [for]="idPrefix() + 'phase-condition-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.condition"></label>
+                    <label [for]="idPrefix() + 'phase-condition-input-' + index()">{{ 'artemisApp.programmingExercise.buildPhasesEditor.condition' | artemisTranslate }}</label>
                 </div>
                 <p-select
                     [inputId]="idPrefix() + 'phase-condition-input-' + index()"
@@ -123,7 +123,7 @@
                 size="small"
             />
             <div class="d-flex gap-1">
-                <label [for]="idPrefix() + 'phase-force-run-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.forceRun"></label>
+                <label [for]="idPrefix() + 'phase-force-run-input-' + index()">{{ 'artemisApp.programmingExercise.buildPhasesEditor.forceRun' | artemisTranslate }}</label>
                 <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.forceRunHelp" />
             </div>
         </div>
@@ -153,7 +153,9 @@
                 size="small"
             />
             <div class="d-flex gap-1">
-                <label [for]="idPrefix() + 'phase-tests-expected-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.testsExpected"></label>
+                <label [for]="idPrefix() + 'phase-tests-expected-input-' + index()">{{
+                    'artemisApp.programmingExercise.buildPhasesEditor.testsExpected' | artemisTranslate
+                }}</label>
                 <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.resultPathsHelp" />
             </div>
         </div>

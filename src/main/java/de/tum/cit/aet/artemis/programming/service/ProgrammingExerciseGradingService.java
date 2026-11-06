@@ -623,22 +623,24 @@ public class ProgrammingExerciseGradingService {
      */
     private void deleteAbandonedAggregates(List<Result> resultsOfSubmission, long resultId) {
         for (Result result : resultsOfSubmission) {
-            boolean otherAggregateInProgress = result.getAssessmentType() == AssessmentType.AUTOMATIC && result.getCompletionDate() == null && result.getId() != resultId;
-            if (!otherAggregateInProgress) {
-                continue;
+            if (result.getAssessmentType() == AssessmentType.AUTOMATIC && result.getCompletionDate() == null && result.getId() != resultId) {
+                deleteIfAbandoned(result);
             }
-            try {
-                if (buildJobRepository.existsByResultId(result.getId())) {
-                    continue;
-                }
-                if (result.getSubmission() instanceof ProgrammingSubmission submission) {
-                    buildLogService.deleteContainerBuildLogs(submission, result);
-                }
-                resultService.deleteResult(result, true);
+        }
+    }
+
+    private void deleteIfAbandoned(Result result) {
+        try {
+            if (buildJobRepository.existsByResultId(result.getId())) {
+                return;
             }
-            catch (RuntimeException e) {
-                log.warn("Could not delete the abandoned aggregated result {}", result.getId(), e);
+            if (result.getSubmission() instanceof ProgrammingSubmission submission) {
+                buildLogService.deleteContainerBuildLogs(submission, result);
             }
+            resultService.deleteResult(result, true);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not delete the abandoned aggregated result {}", result.getId(), e);
         }
     }
 
