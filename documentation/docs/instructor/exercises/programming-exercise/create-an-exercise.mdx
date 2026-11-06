@@ -2,7 +2,7 @@
 id: create-an-exercise
 title: Create a Programming Exercise
 sidebar_label: Create a Programming Exercise
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-05
 ---
 
 import Callout from "../../../../src/components/Callout/Callout";
@@ -17,6 +17,7 @@ import createFormVersionControl from '../assets/programming/create-form-version-
 import createFormProblem from '../assets/programming/create-form-problem.png';
 import createFormGrading from '../assets/programming/create-form-grading.png';
 import exerciseInList from '../assets/programming/course-dashboard-exercise-programming.png';
+import exerciseDetailsProgramming from '../assets/general/exercise-details-programming.png';
 import importModal from '../assets/programming/import-programming-exercise-modal.png';
 import importOptions from '../assets/programming/programming-import-options.png';
 
@@ -225,6 +226,17 @@ the footer lists what needs fixing.
 The exercise then appears on the course's exercise list.
 
 <Image src={exerciseInList} alt="Course exercise list with the new programming exercise" size={ImageSize.large} caption="The exercise on the course's exercise list" />
+
+Select the exercise title to open its details. **Edit** reopens the form, **Grading** opens the test case and code
+analysis configuration, and **Version History** beside the heading shows earlier saved versions. Section links
+scroll to the saved settings on the same page; the **Exercise ID** is in **General**.
+
+<Image src={exerciseDetailsProgramming} alt="Programming exercise details with the saved title, editing actions and section navigation" size={ImageSize.large} caption="The programming exercise's details" />
+
+**More actions** contains **Plagiarism**, **Download Exercise** and other supported secondary actions, depending on
+your role and the enabled features. Repository operations are in **Repositories and builds**: each **Template**
+and **Solution** panel has its own **Code** and **Download Repository** controls alongside the build result.
+Exercise reset and deletion are in **Exercise administration** at the bottom of the page.
 
 Artemis creates three repositories:
 
