@@ -52,7 +52,7 @@ class CourseUpdateCodeOfConductLengthIntegrationTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_codeOfConductAtExactLimit_isAccepted() throws Exception {
         String atLimit = "x".repeat(CODE_OF_CONDUCT_LIMIT);
 
@@ -64,7 +64,7 @@ class CourseUpdateCodeOfConductLengthIntegrationTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_codeOfConductOverLimit_isRejectedAndDbUnchanged() throws Exception {
         assertThat(persistedCodeOfConduct()).isEqualTo(SENTINEL);
         String overLimit = "x".repeat(CODE_OF_CONDUCT_LIMIT + 1);
@@ -77,7 +77,7 @@ class CourseUpdateCodeOfConductLengthIntegrationTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_codeOfConductJustUnderLimit_isAccepted() throws Exception {
         String justUnder = "x".repeat(CODE_OF_CONDUCT_LIMIT - 1);
 
@@ -88,7 +88,7 @@ class CourseUpdateCodeOfConductLengthIntegrationTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_codeOfConductNull_isAccepted() throws Exception {
         MvcResult result = performUpdate(null);
 
@@ -97,7 +97,7 @@ class CourseUpdateCodeOfConductLengthIntegrationTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void updateCourse_codeOfConductEmpty_isAccepted() throws Exception {
         MvcResult result = performUpdate("");
 
