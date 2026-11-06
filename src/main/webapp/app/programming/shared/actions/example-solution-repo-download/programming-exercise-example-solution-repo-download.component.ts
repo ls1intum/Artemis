@@ -7,7 +7,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     selector: 'jhi-programming-exercise-example-solution-repo-download',
     template: `<jhi-button
         [disabled]="!exerciseId()"
-        [btnType]="displayedOnExamSummary() ? ButtonType.PRIMARY_OUTLINE : ButtonType.INFO"
+        [btnType]="ButtonType.SECONDARY"
         [btnSize]="displayedOnExamSummary() ? ButtonSize.SMALL : ButtonSize.MEDIUM"
         [shouldSubmit]="false"
         [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
