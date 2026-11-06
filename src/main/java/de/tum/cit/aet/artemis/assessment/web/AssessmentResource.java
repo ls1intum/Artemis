@@ -277,7 +277,7 @@ public abstract class AssessmentResource {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
-        boolean isTeamDraft = exercise.isTeamMode() && resultForAuthorization.getCompletionDate() == null;
+        boolean isTeamDraft = exercise.isTeamMode() && studentParticipation.getTeam().isPresent() && resultForAuthorization.getCompletionDate() == null;
         if (isTeamDraft) {
             authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         }
