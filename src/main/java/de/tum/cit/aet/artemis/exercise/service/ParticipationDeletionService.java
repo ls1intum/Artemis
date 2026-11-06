@@ -85,7 +85,7 @@ public class ParticipationDeletionService {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, GitService gitService,
             BuildLogEntryService buildLogEntryService, ParticipationVcsAccessTokenService participationVcsAccessTokenService,
-            @Lazy ParticipationCleanupService participationCleanupService) {
+            ParticipationCleanupService participationCleanupService) {
         this.participationCleanupService = participationCleanupService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.participantScoreRepository = participantScoreRepository;

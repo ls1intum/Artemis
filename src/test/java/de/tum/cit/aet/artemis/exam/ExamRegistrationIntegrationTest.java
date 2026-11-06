@@ -42,12 +42,14 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -65,8 +67,13 @@ import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupCommand.Operation;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationCleanupService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -76,6 +83,7 @@ import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.FailedBuildLogService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -100,6 +108,18 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ExamPreparationLockService examPreparationLockService;
+
+    @Autowired
+    private DistributedDataProvider distributedDataProvider;
+
+    @Autowired
+    private ParticipationCleanupService participationCleanupService;
+
+    @Autowired
+    private ExerciseTestRepository exerciseRepository;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -367,11 +387,28 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
             assertThat(testRunRepositoryPath).doesNotExist();
             userUtilService.changeUser(student1.getLogin());
             try {
-                request.postWithoutResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", Optional.empty(), HttpStatus.CREATED);
+                var replacement = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", Optional.empty(), StudentParticipationDTO.class,
+                        HttpStatus.CREATED);
                 assertThat(repositoryPath).exists();
                 request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
                         StudentParticipationDTO.class, HttpStatus.NOT_FOUND);
                 assertThat(repositoryPath).as("a stale resume cannot touch the replacement repository").exists();
+
+                // Once cleanup releases admission, resume the replacement's inactive build plan without replacing its repository or identity.
+                var inactive = programmingExerciseStudentParticipationRepository.findByIdElseThrow(replacement.id());
+                inactive.setInitializationState(InitializationState.INACTIVE);
+                inactive.setBuildPlanId(null);
+                programmingExerciseStudentParticipationRepository.saveAndFlush(inactive);
+                var resumed = request.putWithResponseBody(
+                        "/api/exercise/exercises/" + exercise.getId() + "/participations/" + replacement.id() + "/resume-programming-participation", null,
+                        StudentParticipationDTO.class, HttpStatus.OK);
+                assertThat(resumed.id()).isEqualTo(replacement.id());
+                assertThat(resumed.repositoryUri()).isEqualTo(replacement.repositoryUri());
+                assertThat(resumed.initializationState()).isEqualTo(InitializationState.INITIALIZED);
+                assertThat(resumed.buildPlanId()).isNotBlank();
+                assertThat(repositoryPath).exists();
+                assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId())).singleElement()
+                        .extracting(existingParticipation -> existingParticipation.getId()).isEqualTo(replacement.id());
             }
             finally {
                 userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -383,8 +420,47 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(examUserRepository.findAllByExamId(examId)).singleElement().extracting(examUser -> examUser.getUser().getId()).isEqualTo(student1.getId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRetainedCompetencyCleanupAfterExerciseDeletionAdmitsPreparation() throws Exception {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        examRepository.save(exam);
+        long examId = exam.getId();
+        studentExamRepository.deleteAll(studentExamRepository.findByExamId(examId));
+        var studentExam = studentExamService.generateStudentExams(exam).getFirst();
+        var exercise = studentExam.getExercises().stream().filter(TextExercise.class::isInstance).findFirst().orElseThrow();
+        long exerciseId = exercise.getId();
+        var competency = competencyUtilService.createCompetencyWithExercise(course1, exercise);
+        var command = new ParticipationCleanupCommand(Operation.COMPETENCY_PROGRESS, 0, exerciseId, 0, null, null, null);
+
+        participationCleanupService.execute(command);
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(org.mockito.ArgumentMatchers.argThat(learningObject -> learningObject.getId().equals(exerciseId)));
+
+        // Cleanup intent may survive until an instructor deletes an exercise from the still-existing exam.
+        var cleanupMap = distributedDataProvider.<Long, List<ParticipationCleanupCommand>>getMap("exam-unfinished-resource-cleanup");
+        cleanupMap.put(examId, List.of(command));
+        try {
+            request.delete("/api/text/text-exercises/" + exerciseId, HttpStatus.OK);
+            assertThat(exerciseRepository.findById(exerciseId)).isEmpty();
+            assertThat(examRepository.findById(examId)).isPresent();
+            assertThat(studentExamRepository.findByIdWithExercisesElseThrow(studentExam.getId()).getExercises()).extracting(assignedExercise -> assignedExercise.getId())
+                    .doesNotContain(exerciseId);
+            verify(competencyProgressApi)
+                    .updateProgressByCompetencyAsync(org.mockito.ArgumentMatchers.argThat(linkedCompetency -> linkedCompetency.getId().equals(competency.getId())));
+
+            assertThat(examPreparationLockService.withPreparationLock(examId, () -> "admitted")).isEqualTo("admitted");
+            assertThat(cleanupMap.get(examId)).isNull();
+        }
+        finally {
+            cleanupMap.remove(examId);
+        }
+    }
+
     @ParameterizedTest
-    @ValueSource(strings = { "ci", "vc" })
+    @ValueSource(strings = { "ci", "vc", "ci-local" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testRegenerationRetainsFailedCleanupAndReplaysItBeforePreparingNewRepositories(String failedAdapter) throws Exception {
         Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
@@ -427,12 +503,16 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
             resultIds.add(result.getId());
         }
         var sharedFailure = new IllegalStateException("Injected cleanup failure");
-        if (failedAdapter.equals("ci")) {
+        var localFailure = new IllegalStateException("Injected local cleanup failure");
+        if (!failedAdapter.equals("vc")) {
             org.mockito.Mockito.doThrow(sharedFailure).when(continuousIntegrationService).deleteBuildPlan(org.mockito.ArgumentMatchers.eq(exercise.getProjectKey()),
                     org.mockito.ArgumentMatchers.anyString());
         }
         else {
             org.mockito.Mockito.doThrow(sharedFailure).when(versionControlService).deleteRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
+        }
+        if (failedAdapter.equals("ci-local")) {
+            org.mockito.Mockito.doThrow(localFailure).when(gitServiceSpy).deleteLocalRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
         }
 
         try {
@@ -459,12 +539,27 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
             }
             verify(continuousIntegrationService).deleteBuildPlan(exercise.getProjectKey(), participations.get(1).getBuildPlanId());
             long examId = exam.getId();
-            assertThatThrownBy(() -> studentExamService.startExercises(examId)).isInstanceOf(CannotAcquireLockException.class);
+            var cleanupMap = distributedDataProvider.<Long, List<ParticipationCleanupCommand>>getMap("exam-unfinished-resource-cleanup");
+            if (failedAdapter.equals("ci-local")) {
+                var retained = cleanupMap.get(examId);
+                assertThat(retained).hasSize(4);
+                for (var participation : participations) {
+                    assertThat(retained).filteredOn(command -> command.participationId() == participation.getId()).extracting(ParticipationCleanupCommand::operation)
+                            .containsExactlyInAnyOrder(Operation.BUILD_PLAN, Operation.LOCAL_REPOSITORY);
+                }
+            }
+            assertThatThrownBy(() -> studentExamService.startExercises(examId)).isInstanceOf(CannotAcquireLockException.class).satisfies(exception -> {
+                if (failedAdapter.equals("ci-local")) {
+                    assertThat(exception.getCause().getSuppressed()).containsExactlyInAnyOrder(sharedFailure, sharedFailure, localFailure, localFailure);
+                }
+            });
             assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId())).isEmpty();
             org.mockito.Mockito.doCallRealMethod().when(continuousIntegrationService).deleteBuildPlan(org.mockito.ArgumentMatchers.eq(exercise.getProjectKey()),
                     org.mockito.ArgumentMatchers.anyString());
             org.mockito.Mockito.doCallRealMethod().when(versionControlService).deleteRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
+            org.mockito.Mockito.doCallRealMethod().when(gitServiceSpy).deleteLocalRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
             studentExamService.startExercises(examId).join();
+            assertThat(cleanupMap.get(examId)).isNull();
             assertThat(studentExamRepository.findByExamId(exam.getId())).extracting(StudentExam::getId).containsExactlyInAnyOrderElementsOf(committedIds);
             assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(exercise.getId())).hasSize(2);
             for (var oldParticipation : participations) {
@@ -479,6 +574,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
             org.mockito.Mockito.doCallRealMethod().when(continuousIntegrationService).deleteBuildPlan(org.mockito.ArgumentMatchers.eq(exercise.getProjectKey()),
                     org.mockito.ArgumentMatchers.anyString());
             org.mockito.Mockito.doCallRealMethod().when(versionControlService).deleteRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
+            org.mockito.Mockito.doCallRealMethod().when(gitServiceSpy).deleteLocalRepository(org.mockito.ArgumentMatchers.any(LocalVCRepositoryUri.class));
             examPreparationLockService.withPreparationLock(exam.getId(), () -> null);
         }
     }

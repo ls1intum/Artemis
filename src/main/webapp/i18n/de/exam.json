@@ -675,7 +675,7 @@
                     "Submitted": "Eingereicht",
                     "DidNotAttend": "Nicht teilgenommen",
                     "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
-                    "AttendanceChecked": "Anwesenheitsprüfung bestanden"
+                    "AttendanceChecked": "Anwesenheit geprüft"
                 },
                 "menu": {
                     "manageStudents": "Studierende",
@@ -692,7 +692,7 @@
                 },
                 "statisticsFailed": "Die Prüfungsstatistik konnte nicht geladen werden. Lade sie vor der Anmeldung von Studierenden erneut.",
                 "registrationSavedPreparationPending": "Die Anmeldung wurde gespeichert. Die Vorbereitung steht noch aus. Versuche die Vorbereitung erneut, damit neu angemeldete Studierende die Prüfung starten können.",
-                "generationSavedPreparationPending": "Die neuen individuellen Prüfungen wurden generiert und gespeichert. Die Bereinigung steht noch aus. Versuche die Vorbereitung erneut, um die Bereinigung abzuschließen und diese Prüfungen vorzubereiten.",
+                "generationSavedPreparationPending": "Die neuen individuellen Prüfungen wurden generiert und gespeichert. Die Bereinigung oder Vorbereitung der Aufgaben ist noch nicht abgeschlossen. Versuche es erneut, um diese Prüfungen vollständig vorzubereiten.",
                 "retryPreparation": "Vorbereitung erneut versuchen",
                 "preparationRetryFailed": "Die Vorbereitung steht noch aus. Bitte versuche es erneut.",
                 "registrationClosed": "Die Anmeldung ist geschlossen, da die Prüfung beendet ist.",

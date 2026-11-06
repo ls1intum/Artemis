@@ -474,6 +474,9 @@ describe('ExamStudentsComponent', () => {
 
         it('keeps committed generation visible and retries preparation without regenerating attempts', () => {
             fixture.detectChanges();
+            vi.mocked(examManagementService.getExerciseStartStatus).mockReturnValue(
+                of(new HttpResponse({ body: { finished: 2, failed: 0, overall: 2 } as ExamExerciseStartPreparationStatus })),
+            );
             component.studentExamCount.set(0);
             component.isAllExercisesPrepared.set(true);
             const generate = vi.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(
@@ -499,6 +502,83 @@ describe('ExamStudentsComponent', () => {
             expect(component.studentExamCount()).toBe(2);
             expect(component.preparationPending()).toBeUndefined();
             expect(alertService.error).not.toHaveBeenCalled();
+        });
+
+        it.each(['retry', 'menu'])('retains generation preparation after worker failure and clears it only after a verified retry (%s)', (action) => {
+            fixture.detectChanges();
+            component.studentExamCount.set(0);
+            const generate = vi
+                .spyOn(examManagementService, 'generateStudentExams')
+                .mockReturnValue(of(new HttpResponse({ body: [{ id: 42, numberOfExamSessions: 0 }], headers: pendingHeaders })));
+            const start = vi.spyOn(examManagementService, 'startExercises').mockReturnValue(of(new HttpResponse<void>()));
+            vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
+            component.handleGenerateStudentExams();
+            vi.mocked(examManagementService.getExerciseStartStatus)
+                .mockReturnValueOnce(of(new HttpResponse({ body: { finished: 0, failed: 1, overall: 1 } as ExamExerciseStartPreparationStatus })))
+                .mockReturnValue(of(new HttpResponse({ body: { finished: 1, failed: 0, overall: 1 } as ExamExerciseStartPreparationStatus })));
+
+            if (action === 'retry') component.retryPendingPreparation();
+            else component.startExercises();
+            expect(component.preparationPending()?.kind).toBe('generation');
+            expect(component.preparationRetrying()).toBe(false);
+            expect(component.isAllExercisesPrepared()).toBe(false);
+            component.hasExamStarted.set(true);
+            component.retryPendingPreparation();
+            expect(start).toHaveBeenCalledTimes(2);
+            expect(generate).toHaveBeenCalledOnce();
+            expect(component.preparationPending()).toBeUndefined();
+        });
+
+        it.each(['incomplete', 'missing', 'failed status request'])('keeps normal preparation explicitly retryable when readiness is %s', (condition) => {
+            fixture.detectChanges();
+            vi.spyOn(examManagementService, 'startExercises').mockReturnValue(of(new HttpResponse<void>()));
+            vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
+            vi.mocked(examManagementService.getExerciseStartStatus).mockReturnValue(
+                condition === 'failed status request'
+                    ? throwError(() => new HttpErrorResponse({ status: 503 }))
+                    : of(new HttpResponse({ body: condition === 'missing' ? null : ({ finished: 1, failed: 0, overall: 2 } as ExamExerciseStartPreparationStatus) })),
+            );
+            component.startExercises();
+            expect(component.preparationPending()?.kind).toBe('generation');
+            expect(component.preparationRetrying()).toBe(false);
+            expect(component.isLoading()).toBe(false);
+            expect(component.isAllExercisesPrepared()).toBe(false);
+            expect(alertService.success).not.toHaveBeenCalledWith('artemisApp.studentExams.startExerciseSuccess');
+        });
+
+        it.each(['exam change', 'destroy'])('cancels an authoritative preparation status request on %s', (lifecycle) => {
+            fixture.detectChanges();
+            vi.spyOn(examManagementService, 'startExercises').mockReturnValue(of(new HttpResponse<void>()));
+            const status = new Subject<HttpResponse<ExamExerciseStartPreparationStatus>>();
+            vi.mocked(examManagementService.getExerciseStartStatus).mockReturnValue(status);
+            component.startExercises();
+            expect(status.observed).toBe(true);
+            if (lifecycle === 'exam change') {
+                component.exam.set({ ...examWithCourse, id: 999 });
+                fixture.detectChanges();
+            } else fixture.destroy();
+            expect(status.observed).toBe(false);
+            expect(component.preparationRetrying()).toBe(false);
+        });
+
+        it.each(['retry', 'menu'])('does not clear a newer saved registration while an older generation status request completes (%s)', (action) => {
+            fixture.detectChanges();
+            component.studentExamCount.set(0);
+            vi.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(of(new HttpResponse({ body: [{ id: 42, numberOfExamSessions: 0 }], headers: pendingHeaders })));
+            vi.spyOn(examManagementService, 'startExercises').mockReturnValue(of(new HttpResponse<void>()));
+            vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
+            component.handleGenerateStudentExams();
+            const status = new Subject<HttpResponse<ExamExerciseStartPreparationStatus>>();
+            vi.mocked(examManagementService.getExerciseStartStatus).mockReturnValue(status);
+            if (action === 'retry') component.retryPendingPreparation();
+            else component.startExercises();
+            component.onImportedRegistrationCompleted({ examId: examWithCourse.id!, preparationPending: true, students: [] });
+            const newerPending = component.preparationPending();
+            status.next(new HttpResponse({ body: { finished: 1, failed: 0, overall: 1 } as ExamExerciseStartPreparationStatus }));
+            status.complete();
+            expect(component.preparationPending()).toBe(newerPending);
+            expect(component.preparationPending()?.kind).toBe('registration');
+            expect(component.isAllExercisesPrepared()).toBe(false);
         });
 
         it('preserves saved individual registration and retries its original payload after the modal closes', () => {
@@ -606,6 +686,9 @@ describe('ExamStudentsComponent', () => {
 
         it('clears the generation warning when the normal preparation action succeeds', () => {
             fixture.detectChanges();
+            vi.mocked(examManagementService.getExerciseStartStatus).mockReturnValue(
+                of(new HttpResponse({ body: { finished: 1, failed: 0, overall: 1 } as ExamExerciseStartPreparationStatus })),
+            );
             component.studentExamCount.set(0);
             vi.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(of(new HttpResponse({ body: [{ id: 42, numberOfExamSessions: 0 }], headers: pendingHeaders })));
             vi.spyOn(examManagementService, 'startExercises').mockReturnValue(of(new HttpResponse<void>()));
@@ -797,6 +880,31 @@ describe('ExamStudentsComponent', () => {
             }
         });
 
+        it('stops a saved registration retry at the exact deadline while retaining its warning', () => {
+            vi.useFakeTimers();
+            try {
+                fixture.detectChanges();
+                component.exam.update((exam) => ({ ...exam, endDate: dayjs().add(1, 'second') }));
+                component['scheduleRegistrationDeadline']();
+                component.onImportedRegistrationCompleted({ examId: examWithCourse.id!, preparationPending: true, students: [] });
+                const pending = component.preparationPending();
+                const add = vi
+                    .spyOn(examManagementService, 'addStudentsToExam')
+                    .mockReturnValue(
+                        of(new HttpResponse({ body: { notFoundStudents: [], rejectedStaffUsers: [] }, headers: new HttpHeaders({ 'X-Artemis-Preparation-Pending': 'true' }) })),
+                    );
+                expect(component.hasExamEnded()).toBe(false);
+                vi.advanceTimersByTime(1000);
+                expect(component.hasExamEnded()).toBe(true);
+                component.retryPendingPreparation();
+                expect(add).not.toHaveBeenCalled();
+                expect(component.preparationPending()).toBe(pending);
+                expect(component.preparationRetrying()).toBe(false);
+            } finally {
+                vi.useRealTimers();
+            }
+        });
+
         it('should reject registration and disable its menu actions after exam end', () => {
             fixture.detectChanges();
             component.exam.update((exam) => ({ ...exam, endDate: dayjs().subtract(1, 'minute') }));
@@ -913,6 +1021,9 @@ describe('ExamStudentsComponent', () => {
     describe('startExercises', () => {
         it('should call startExercises, show success alert, and reset isLoading', () => {
             fixture.detectChanges();
+            vi.mocked(examManagementService.getExerciseStartStatus).mockReturnValue(
+                of(new HttpResponse({ body: { finished: 2, failed: 0, overall: 2 } as ExamExerciseStartPreparationStatus })),
+            );
             vi.spyOn(examManagementService, 'startExercises').mockReturnValue(of(new HttpResponse({ body: null })));
             const successSpy = vi.spyOn(alertService, 'success');
 
@@ -1202,6 +1313,54 @@ describe('ExamStudentsComponent accessible names', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         fixture?.destroy();
+    });
+
+    it('disables an ended exam registration retry without removing its saved warning', () => {
+        const component = fixture.componentInstance;
+        const service = TestBed.inject(ExamManagementService);
+        const add = vi
+            .spyOn(service, 'addStudentsToExam')
+            .mockReturnValue(
+                of(new HttpResponse({ body: { notFoundStudents: [], rejectedStaffUsers: [] }, headers: new HttpHeaders({ 'X-Artemis-Preparation-Pending': 'true' }) })),
+            );
+        component.onImportedRegistrationCompleted({ examId: exam.id!, preparationPending: true, students: [] });
+        const pending = component.preparationPending();
+        fixture.detectChanges();
+        expect(component.hasExamEnded()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-preparation-pending"]')).not.toBeNull();
+        const retry = fixture.nativeElement.querySelector('[data-testid="retry-pending-exam-preparation"]') as HTMLButtonElement;
+        expect(retry.disabled).toBe(true);
+        retry.click();
+        component.retryPendingPreparation();
+        expect(add).not.toHaveBeenCalled();
+        expect(component.preparationPending()).toBe(pending);
+    });
+
+    it('keeps the warning and enabled Retry after worker failures even when the exam has started', async () => {
+        const component = fixture.componentInstance;
+        expect(component.hasExamEnded()).toBe(true);
+        const service = TestBed.inject(ExamManagementService);
+        const start = vi.spyOn(service, 'startExercises').mockReturnValue(of(new HttpResponse<void>()));
+        const generate = vi.spyOn(service, 'generateStudentExams');
+        vi.spyOn(component, 'reloadStudentsView').mockImplementation(() => {});
+        vi.mocked(service.getExerciseStartStatus)
+            .mockReturnValueOnce(of(new HttpResponse({ body: { finished: 0, failed: 3, overall: 3 } as ExamExerciseStartPreparationStatus })))
+            .mockReturnValue(of(new HttpResponse({ body: { finished: 3, failed: 0, overall: 3 } as ExamExerciseStartPreparationStatus })));
+        component.startExercises();
+        component.hasExamStarted.set(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-preparation-pending"]')).not.toBeNull();
+        const retry = fixture.nativeElement.querySelector('[data-testid="retry-pending-exam-preparation"]') as HTMLButtonElement;
+        expect(retry.disabled).toBe(false);
+        retry.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(start).toHaveBeenCalledTimes(2);
+        expect(generate).not.toHaveBeenCalled();
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-preparation-pending"]')).toBeNull();
     });
 
     it('should name each attendance status icon for screen readers and hide the decorative icon', () => {

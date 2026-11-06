@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
@@ -62,8 +61,8 @@ public class ParticipationCleanupService {
             case LOCAL_REPOSITORY -> gitService.deleteLocalRepository(command.repositoryUri() != null ? new LocalVCRepositoryUri(command.repositoryUri()) : null);
             case QUEUED_JOBS -> localCISharedBuildJobQueueService.ifPresent(service -> service.cancelAllJobsForParticipation(command.participationId()));
             case BUILD_LOG_FILES -> buildLogEntryService.deleteBuildLogFiles(command.exerciseId(), command.submissionId());
-            case COMPETENCY_PROGRESS -> competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exerciseRepository
-                    .findByIdWithExerciseGroupExamAndCourse(command.exerciseId()).orElseThrow(() -> new EntityNotFoundException("Exercise", command.exerciseId()))));
+            case COMPETENCY_PROGRESS -> competencyProgressApi
+                    .ifPresent(api -> exerciseRepository.findByIdWithExerciseGroupExamAndCourse(command.exerciseId()).ifPresent(api::updateProgressByLearningObjectAsync));
         }
     }
 }

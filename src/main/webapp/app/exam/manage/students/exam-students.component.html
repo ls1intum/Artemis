@@ -45,7 +45,7 @@
                     type="button"
                     severity="secondary"
                     data-testid="retry-pending-exam-preparation"
-                    [disabled]="preparationRetrying()"
+                    [disabled]="preparationRetrying() || (pending.kind === 'registration' && hasExamEnded())"
                     (click)="retryPendingPreparation()"
                     jhiTranslate="artemisApp.examManagement.examStudents.retryPreparation"
                 ></button>

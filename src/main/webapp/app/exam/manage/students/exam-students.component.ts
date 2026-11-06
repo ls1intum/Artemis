@@ -194,6 +194,7 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly preparationPending = signal<PendingExamPreparation | undefined>(undefined);
     readonly preparationRetrying = signal(false);
     private preparationRetrySubscription?: Subscription;
+    private preparationRequestExamId?: number;
     readonly examPreparationsComplete = computed(() => !this.isMissingIndividualExams() && this.isAllExercisesPrepared());
 
     readonly hasExamStarted = signal(false);
@@ -418,8 +419,11 @@ export class ExamStudentsComponent implements OnDestroy {
             const examId = this.exam().id;
             untracked(() => {
                 const pending = this.preparationPending();
-                if (pending && pending.examId !== examId) {
+                if (this.preparationRequestExamId !== undefined && this.preparationRequestExamId !== examId) {
                     this.preparationRetrySubscription?.unsubscribe();
+                    this.isLoading.set(false);
+                }
+                if (pending && pending.examId !== examId) {
                     this.preparationPending.set(undefined);
                 }
             });
@@ -704,21 +708,51 @@ export class ExamStudentsComponent implements OnDestroy {
             this.preparationPending.set(undefined);
             return;
         }
+        if (pending.kind === 'registration' && this.hasExamEnded()) return;
         this.preparationRetrying.set(true);
-        this.preparationRetrySubscription = pending
-            .retry()
+        this.preparationRequestExamId = pending.examId;
+        const retry =
+            pending.kind === 'generation'
+                ? this.prepareAndVerifyExercises(pending.examId, pending.retry)
+                : pending.retry().pipe(map((response) => response.headers?.get(EXAM_PREPARATION_PENDING_HEADER) !== 'true'));
+        this.preparationRetrySubscription = retry
             .pipe(
                 takeUntilDestroyed(this.destroyRef),
-                finalize(() => this.preparationRetrying.set(false)),
+                finalize(() => {
+                    this.preparationRetrying.set(false);
+                    this.preparationRequestExamId = undefined;
+                }),
             )
             .subscribe({
-                next: (res) => {
+                next: (complete) => {
                     if (this.exam().id !== pending.examId || this.preparationPending() !== pending) return;
-                    this.capturePreparationStatus(res, pending.examId, pending.kind, pending.retry);
+                    if (complete) this.preparationPending.set(undefined);
+                    if (pending.kind === 'generation') this.isAllExercisesPrepared.set(complete);
                     this.reloadStudentsView();
                 },
-                error: () => this.alertService.error('artemisApp.examManagement.examStudents.preparationRetryFailed'),
+                error: () => {
+                    if (this.exam().id === pending.examId && this.preparationPending() === pending) {
+                        this.alertService.error('artemisApp.examManagement.examStudents.preparationRetryFailed');
+                    }
+                },
             });
+    }
+
+    /** A successful preparation POST can still contain failed workers; only its authoritative status confirms readiness. */
+    private prepareAndVerifyExercises(examId: number, request: PendingExamPreparation['retry']): Observable<boolean> {
+        const courseId = this.courseId();
+        return request().pipe(
+            switchMap((response) => {
+                if (response.headers?.get(EXAM_PREPARATION_PENDING_HEADER) === 'true') return of(false);
+                return this.examManagementService.getExerciseStartStatus(courseId, examId).pipe(
+                    map(({ body: status }) => status != null && status.failed === 0 && status.finished != null && status.overall != null && status.finished >= status.overall),
+                    catchError(() => {
+                        this.alertService.error('artemisApp.examManagement.examStudents.preparationRetryFailed');
+                        return of(false);
+                    }),
+                );
+            }),
+        );
     }
 
     private registrationRequest(courseId: number, examId: number, dtos: ExamUserDTO[]): () => Observable<HttpResponse<ExamRegistrationResultDTO>> {
@@ -862,26 +896,38 @@ export class ExamStudentsComponent implements OnDestroy {
      */
     startExercises() {
         const examId = this.exam().id;
-        if (!examId) {
+        if (!examId || this.preparationRetrying()) {
             return;
         }
-
+        const courseId = this.courseId();
+        const request = () => this.examManagementService.startExercises(courseId, examId);
         const pending = this.preparationPending();
         this.isLoading.set(true);
-        this.examManagementService
-            .startExercises(this.courseId(), examId)
-            .pipe(takeUntilDestroyed(this.destroyRef))
+        this.preparationRetrying.set(true);
+        this.preparationRequestExamId = examId;
+        this.preparationRetrySubscription = this.prepareAndVerifyExercises(examId, request)
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => {
+                    this.preparationRetrying.set(false);
+                    this.preparationRequestExamId = undefined;
+                }),
+            )
             .subscribe({
-                next: () => {
+                next: (complete) => {
                     if (this.exam().id !== examId) return;
-                    if (pending?.kind === 'generation' && this.preparationPending() === pending) {
-                        this.preparationPending.set(undefined);
-                        this.reloadStudentsView();
+                    if (complete) {
+                        if (pending?.kind === 'generation' && this.preparationPending() === pending) this.preparationPending.set(undefined);
+                        this.alertService.success('artemisApp.studentExams.startExerciseSuccess');
+                    } else if (this.preparationPending() === pending) {
+                        this.rememberPendingPreparation(examId, 'generation', request);
                     }
-                    this.alertService.success('artemisApp.studentExams.startExerciseSuccess');
+                    this.isAllExercisesPrepared.set(complete && !this.preparationPending());
+                    if (pending?.kind === 'generation' || !complete) this.reloadStudentsView();
                     this.isLoading.set(false);
                 },
                 error: (err: HttpErrorResponse) => {
+                    if (this.exam().id !== examId) return;
                     this.handleError('artemisApp.studentExams.startExerciseFailure', err);
                     this.isLoading.set(false);
                 },

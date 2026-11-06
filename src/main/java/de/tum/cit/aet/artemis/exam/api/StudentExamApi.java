@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.exam.service.ExamPreparationLockService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -28,23 +26,8 @@ public class StudentExamApi extends AbstractExamApi {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ExamPreparationLockService examPreparationLockService;
-
-    public StudentExamApi(StudentExamRepository studentExamRepository, ExamPreparationLockService examPreparationLockService) {
+    public StudentExamApi(StudentExamRepository studentExamRepository) {
         this.studentExamRepository = studentExamRepository;
-        this.examPreparationLockService = examPreparationLockService;
-    }
-
-    /**
-     * Coordinates the direct exercise-start fallback with exam regeneration's external cleanup.
-     *
-     * @param examId      the exam whose participation is being prepared
-     * @param preparation synchronous preparation work
-     * @param <T>         the result type
-     * @return the preparation result
-     */
-    public <T> T withParticipationPreparationLock(long examId, Supplier<T> preparation) {
-        return examPreparationLockService.withPreparationLock(examId, preparation);
     }
 
     public Optional<StudentExam> findByExerciseIdAndUserId(Long exerciseId, Long userId) {
