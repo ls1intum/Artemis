@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintsDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
@@ -40,27 +41,36 @@ class TutorLeaderboardServiceTest {
         var instructor = user(3L);
         var inactiveInstructor = user(4L);
         var student = user(5L);
+        var cancelledEditor = user(6L);
+        var negativeInstructor = user(7L);
         when(users.getTutors(course)).thenReturn(Set.of(tutor));
-        when(users.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR))).thenReturn(Set.of(editor, instructor, inactiveInstructor));
-        var assessments = List.of(assessment(editor, 10.0), assessment(instructor, 20.0), assessment(student, 30.0));
+        when(users.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR)))
+                .thenReturn(Set.of(editor, instructor, inactiveInstructor, cancelledEditor, negativeInstructor));
+        var assessments = List.of(assessment(editor, 10.0), assessment(instructor, 20.0), assessment(student, 30.0), assessment(cancelledEditor, 2.0));
+        var complaintPoints = List.of(new TutorLeaderboardComplaintsDTO(cancelledEditor.getId(), 1L, 1L, 1.0),
+                new TutorLeaderboardComplaintsDTO(negativeInstructor.getId(), 1L, 1L, 1.0));
         List<TutorLeaderboardDTO> leaderboard;
         switch (scope) {
             case "course" -> {
                 when(results.findTutorLeaderboardAssessmentByCourseId(Set.of(exercise.getId()))).thenReturn(assessments);
+                when(complaints.findTutorLeaderboardComplaintsByCourseId(Set.of(exercise.getId()))).thenReturn(complaintPoints);
                 leaderboard = service.getCourseLeaderboard(course, Set.of(exercise.getId()));
             }
             case "exercise" -> {
                 when(results.findTutorLeaderboardAssessmentByExerciseId(exercise.getId())).thenReturn(assessments);
+                when(complaints.findTutorLeaderboardComplaintsByExerciseId(exercise.getId())).thenReturn(complaintPoints);
                 leaderboard = service.getExerciseLeaderboard(exercise);
             }
             case "exam" -> {
                 when(results.findTutorLeaderboardAssessmentByExerciseIds(Set.of(exercise.getId()))).thenReturn(assessments);
+                when(complaints.findTutorLeaderboardComplaintsByExerciseIds(Set.of(exercise.getId()))).thenReturn(complaintPoints);
                 leaderboard = service.getExamLeaderboard(course, Set.of(exercise.getId()));
             }
             default -> throw new IllegalArgumentException(scope);
         }
-        assertThat(leaderboard).extracting(TutorLeaderboardDTO::userId).containsExactlyInAnyOrder(tutor.getId(), editor.getId(), instructor.getId());
+        assertThat(leaderboard).extracting(TutorLeaderboardDTO::userId).containsExactlyInAnyOrder(tutor.getId(), editor.getId(), instructor.getId(), negativeInstructor.getId());
         assertThat(leaderboard).filteredOn(entry -> entry.userId() == tutor.getId()).extracting(TutorLeaderboardDTO::points).containsExactly(0.0);
+        assertThat(leaderboard).filteredOn(entry -> entry.userId() == negativeInstructor.getId()).extracting(TutorLeaderboardDTO::points).containsExactly(-2.0);
     }
 
     private User user(long id) {

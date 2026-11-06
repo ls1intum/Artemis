@@ -49,15 +49,56 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
         expect(component.visible()).toBe(true);
     });
 
-    it('should load past announcements and refresh after sending', () => {
+    it('should replace history after sending and show the sent event only once', () => {
         const past = { id: 5, text: 'Earlier announcement' } as ExamWideAnnouncementEvent;
-        vi.mocked(mockExamManagementService.getAnnouncements).mockReturnValue(of([past]));
-        vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(of({ id: 6 } as ExamWideAnnouncementEvent));
+        const sent = { id: 6, text: 'New announcement' } as ExamWideAnnouncementEvent;
+        vi.mocked(mockExamManagementService.getAnnouncements)
+            .mockReturnValueOnce(of([past]))
+            .mockReturnValueOnce(of([sent, past]));
+        vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(of(sent));
         fixture.detectChanges();
-        expect(mockExamManagementService.getAnnouncements).toHaveBeenCalledWith(2, 1);
         expect(component.pastAnnouncements()).toEqual([past]);
         component.submitAnnouncement();
-        expect(mockExamManagementService.getAnnouncements).toHaveBeenCalledTimes(2);
+        fixture.detectChanges();
+        expect(component.pastAnnouncements()).toEqual([sent, past]);
+        expect(fixture.debugElement.queryAll(By.css('jhi-exam-live-event'))).toHaveLength(2);
+    });
+
+    it.each(['success', 'error'])('should ignore an outdated history %s after the refreshed history arrives', (outcome) => {
+        const initial = new Subject<ExamWideAnnouncementEvent[]>();
+        const refresh = new Subject<ExamWideAnnouncementEvent[]>();
+        const sent = { id: 6, text: 'Sent announcement' } as ExamWideAnnouncementEvent;
+        vi.mocked(mockExamManagementService.getAnnouncements).mockReturnValueOnce(initial).mockReturnValueOnce(refresh);
+        vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(of(sent));
+        fixture.detectChanges();
+        component.submitAnnouncement();
+        refresh.next([sent]);
+        if (outcome === 'success') {
+            initial.next([]);
+        } else {
+            initial.error(new Error('Old failure'));
+        }
+        expect(component.pastAnnouncements()).toEqual([sent]);
+        expect(component.historyLoadingFailed()).toBe(false);
+    });
+
+    it('should show an empty history message', () => {
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.examManagement.announcementCreate.historyEmpty"]'))).toBeTruthy();
+    });
+
+    it('should show a history error and retain the sent event when refreshing fails', () => {
+        const sent = { id: 6, text: 'Sent announcement' } as ExamWideAnnouncementEvent;
+        vi.mocked(mockExamManagementService.getAnnouncements)
+            .mockReturnValueOnce(of([]))
+            .mockReturnValueOnce(throwError(() => new Error('Refresh failed')));
+        vi.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(of(sent));
+        fixture.detectChanges();
+        component.submitAnnouncement();
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.examManagement.announcementCreate.historyFailed"]'))).toBeTruthy();
+        const event = fixture.debugElement.query(By.css('jhi-exam-live-event'));
+        expect(event.componentInstance.event()).toEqual(sent);
     });
 
     it('should update text content and announcement when textContentChanged() is called', () => {

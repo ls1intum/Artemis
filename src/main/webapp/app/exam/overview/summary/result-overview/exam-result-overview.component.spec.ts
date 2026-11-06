@@ -238,6 +238,61 @@ describe('ExamResultOverviewComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="exam-result-grade"] [jhiTranslate="artemisApp.exam.examSummary.theoreticalGrade"]')).not.toBeNull();
     });
 
+    it('preserves authoritative zero totals even when excluded exercises earned points', () => {
+        fixture.componentRef.setInput('studentExamWithGrade', {
+            ...studentExamWithGrade,
+            studentResult: { ...studentExamWithGrade.studentResult, overallPointsAchieved: 0, overallScoreAchieved: 0 },
+        });
+        fixture.componentRef.setInput('exerciseInfos', { 99: { achievedPercentage: 100 } });
+        fixture.detectChanges();
+        expect(component.overallAchievedPoints()).toBe(0);
+        expect(component.overallAchievedPercentageRoundedByCourseSettings()).toBe(0);
+    });
+
+    it('shows manual-only attempts as ungraded without an empty aggregate', () => {
+        fixture.componentRef.setInput('studentExamWithGrade', {
+            ...studentExamWithGrade,
+            maxPoints: 0,
+            maxBonusPoints: 0,
+            studentExam: { exercises: [textExercise], submitted: true, exam: { ...exam, testExam: true } },
+            studentResult: { ...studentExamWithGrade.studentResult, overallGrade: '', overallPointsAchieved: 0, overallScoreAchieved: 0 },
+        });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('tbody tr')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="test-exam-partial-result"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('tfoot')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-result-points-sentence"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-result-grade"]')).toBeNull();
+    });
+
+    it('shows pending automatic results without a premature aggregate or programming zero', () => {
+        fixture.componentRef.setInput('studentExamWithGrade', {
+            ...studentExamWithGrade,
+            pendingExerciseIds: [programmingExercise.id!],
+            studentExam: { exercises: [programmingExercise, quizExercise], submitted: true, exam: { ...exam, testExam: true } },
+        });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="test-exam-results-pending"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('tbody tr [data-testid="exercise-achieved-points"]').textContent.trim()).not.toBe('0');
+        expect(fixture.nativeElement.querySelector('tfoot')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="exam-result-grade"]')).toBeNull();
+    });
+
+    it('labels both bonus grades as theoretical in automatic-only test exams', () => {
+        fixture.componentRef.setInput('studentExamWithGrade', {
+            ...studentExamWithGrade,
+            studentExam: { exercises: [quizExercise], submitted: true, exam: { ...exam, testExam: true } },
+            studentResult: { ...studentExamWithGrade.studentResult, gradeWithBonus: { finalGrade: '1.0' } },
+        });
+        fixture.detectChanges();
+        expect(
+            fixture.nativeElement.querySelector('[data-testid="exam-result-grade-before-bonus"] [jhiTranslate="artemisApp.exam.examSummary.theoreticalGradeBeforeBonus"]'),
+        ).not.toBeNull();
+        expect(
+            fixture.nativeElement.querySelector('[data-testid="exam-result-grade-after-bonus"] [jhiTranslate="artemisApp.exam.examSummary.theoreticalGradeAfterBonus"]'),
+        ).not.toBeNull();
+    });
+
     it('should retrieve exam grade correctly', () => {
         fixture.detectChanges();
 
@@ -380,7 +435,7 @@ describe('ExamResultOverviewComponent', () => {
             expect(summedAchievedExerciseScorePercentageSpy).toHaveBeenCalledOnce();
         });
 
-        it('should be called when overallScoreAchieved is 0 (default value, might be set as initial value because not defined from server DTO)', () => {
+        it('should preserve a zero overallScoreAchieved returned by the server', () => {
             //@ts-ignore spying on private method
             const summedAchievedExerciseScorePercentageSpy = vi.spyOn(component, 'summedAchievedExerciseScorePercentage');
             component.studentExamWithGrade().studentResult.overallScoreAchieved = 0;
@@ -388,7 +443,7 @@ describe('ExamResultOverviewComponent', () => {
 
             component.ngOnInit();
 
-            expect(summedAchievedExerciseScorePercentageSpy).toHaveBeenCalledOnce();
+            expect(summedAchievedExerciseScorePercentageSpy).not.toHaveBeenCalled();
         });
 
         it('should calculate achieved percentage from exercise info properly', () => {

@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { ChangeDetectorRef } from '@angular/core';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -156,6 +157,33 @@ describe('FileUploadExamSubmissionComponent', () => {
             fixture.detectChanges();
             expect(comp.studentSubmission().isSynced).toBe(true);
             expect(fixture.nativeElement.querySelector('[data-testid="file-upload-preview"]').getAttribute('src')).toBe(addPublicFilePrefix('new/solution.PNG'));
+        });
+
+        it('automatically uploads a valid dropped file', () => {
+            const file = new File(['image'], 'solution.png');
+            const update = vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: { filePath: 'new/solution.png' } })));
+            const preventDefault = vi.fn();
+            comp.onDrop({ preventDefault, dataTransfer: { files: [file] } } as unknown as DragEvent);
+            expect(preventDefault).toHaveBeenCalledOnce();
+            expect(update).toHaveBeenCalledExactlyOnceWith(comp.studentSubmission(), mockExercise.id, file);
+            expect(comp.studentSubmission().isSynced).toBe(true);
+        });
+
+        it.each(['readonly', 'examTimeline', 'expired', 'result'])('rejects selection, drop, and retry in %s state', (state) => {
+            if (state === 'readonly' || state === 'examTimeline') {
+                fixture.componentRef.setInput(state, true);
+            } else if (state === 'expired') {
+                mockExercise.dueDate = dayjs().subtract(1, 'hour');
+            } else {
+                comp.result = { id: 1 };
+            }
+            const update = vi.spyOn(fileUploadSubmissionService, 'update');
+            const file = new File(['image'], 'solution.png');
+            comp.setFileSubmissionForExercise({ target: { files: [file] } } as unknown as Event);
+            comp.onDrop({ preventDefault: vi.fn(), dataTransfer: { files: [file] } } as unknown as DragEvent);
+            comp.submissionFile = file;
+            comp.saveUploadedFile();
+            expect(update).not.toHaveBeenCalled();
         });
 
         it('should keep an in-flight upload associated with its original submission', () => {

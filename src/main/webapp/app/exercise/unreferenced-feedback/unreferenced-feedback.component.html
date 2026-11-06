@@ -56,6 +56,7 @@
                     <jhi-unreferenced-feedback-detail
                         [feedback]="feedback"
                         [allFeedbacks]="scoringFeedbacks()"
+                        [capAutomaticTestSubtotal]="capAutomaticTestSubtotal()"
                         [resultId]="resultId()"
                         (onFeedbackChange)="updateFeedback($event)"
                         (onFeedbackDelete)="deleteFeedback(feedback)"

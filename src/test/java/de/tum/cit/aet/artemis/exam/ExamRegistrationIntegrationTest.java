@@ -11,12 +11,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -35,6 +42,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamRegistrationResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
@@ -117,6 +125,84 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void tearDown() {
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
         participantScoreScheduleService.shutdown();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "missing", "individual", "regenerate" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGenerationPathsWaitForConcurrentGenerationWithoutCreatingDuplicates(String generationPath) throws Exception {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        exam.setStartDate(ZonedDateTime.now().plusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(2));
+        exam.setExamMaxPoints(exam.getExerciseGroups().stream().mapToInt(group -> group.getExercises().iterator().next().getMaxPoints().intValue()).sum());
+        examRepository.save(exam);
+        long examId = exam.getId();
+        var firstEntered = new CountDownLatch(1);
+        var releaseFirst = new CountDownLatch(1);
+        var secondStarted = new CountDownLatch(1);
+        var securityContext = SecurityContextHolder.getContext();
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var first = executor.submit(() -> examRepository.withStudentExamGenerationLock(examId, () -> {
+                firstEntered.countDown();
+                try {
+                    assertThat(releaseFirst.await(10, TimeUnit.SECONDS)).isTrue();
+                }
+                catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(ex);
+                }
+                return studentExamService.generateMissingStudentExams(examRepository.findByIdElseThrow(examId));
+            }));
+            try {
+                assertThat(firstEntered.await(10, TimeUnit.SECONDS)).isTrue();
+                var second = executor.submit(() -> {
+                    SecurityContextHolder.setContext(securityContext);
+                    secondStarted.countDown();
+                    try {
+                        Exam current = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+                        switch (generationPath) {
+                            case "missing" -> studentExamService.generateMissingStudentExams(current);
+                            case "individual" -> studentExamService.generateIndividualStudentExam(current, student1);
+                            case "regenerate" -> request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + examId + "/generate-student-exams",
+                                    Optional.empty(), StudentExamDTO.class, HttpStatus.OK);
+                            default -> throw new IllegalArgumentException(generationPath);
+                        }
+                        return null;
+                    }
+                    finally {
+                        SecurityContextHolder.clearContext();
+                    }
+                });
+                assertThat(secondStarted.await(10, TimeUnit.SECONDS)).isTrue();
+                assertThatThrownBy(() -> second.get(250, TimeUnit.MILLISECONDS)).isInstanceOf(TimeoutException.class);
+                releaseFirst.countDown();
+                first.get(10, TimeUnit.SECONDS);
+                second.get(10, TimeUnit.SECONDS);
+                assertThat(studentExamRepository.findByExamId(examId)).singleElement()
+                        .satisfies(studentExam -> assertThat(studentExam.getUser().getId()).isEqualTo(student1.getId()));
+                assertThat(studentExamRepository.findWithExercisesByUserIdAndExamId(student1.getId(), examId, false)).isPresent();
+            }
+            finally {
+                releaseFirst.countDown();
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testIndividualGenerationReusesRealExamAndPreservesMultipleTestExamAttempts() {
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
+        exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
+        StudentExam first = studentExamService.generateIndividualStudentExam(exam, student1);
+        assertThat(studentExamService.generateIndividualStudentExam(exam, student1).getId()).isEqualTo(first.getId());
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(1);
+
+        exam.setTestExam(true);
+        examRepository.save(exam);
+        StudentExam attempt = studentExamService.generateIndividualStudentExam(exam, student1);
+        assertThat(attempt.getId()).isNotEqualTo(first.getId());
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(2);
     }
 
     @Test

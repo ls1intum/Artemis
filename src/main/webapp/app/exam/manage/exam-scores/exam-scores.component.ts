@@ -1,6 +1,6 @@
 import { TranslateService } from '@ngx-translate/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -45,6 +45,7 @@ import {
     EXAM_ACHIEVED_POINTS,
     EXAM_ACHIEVED_SCORE,
     EXAM_ASSIGNED_EXERCISE,
+    EXAM_MAX_POINTS_KEY,
     EXAM_OVERALL_POINTS_KEY,
     EXAM_OVERALL_SCORE_KEY,
     EXAM_PASSED,
@@ -158,6 +159,8 @@ export class ExamScoresComponent implements OnInit {
     readonly isLoading = signal(true);
     readonly filterForSubmittedExams = signal(false);
     readonly filterForNonEmptySubmissions = signal(false);
+
+    readonly hasPerAttemptMaxima = computed(() => this.studentResults()?.some((result) => result.maxPoints !== undefined) ?? false);
 
     readonly gradingScaleExists = signal(false);
     readonly gradingScale = signal<GradingScale | undefined>(undefined);
@@ -344,6 +347,9 @@ export class ExamScoresComponent implements OnInit {
 
         // Calculate the total points and number of participants when filters apply for each exercise group and exercise
         for (const studentResult of this.studentResults()) {
+            if (this.isUnscoredTestAttempt(studentResult)) {
+                continue;
+            }
             // Do not take un-submitted exams into account for the exercise statistics if the option was set
             if (!studentResult.submitted && this.filterForSubmittedExams()) {
                 continue;
@@ -415,6 +421,9 @@ export class ExamScoresComponent implements OnInit {
 
         // Collect student points independent of the filter settings
         for (const studentResult of this.studentResults()) {
+            if (this.isUnscoredTestAttempt(studentResult)) {
+                continue;
+            }
             studentPointsTotal.push(studentResult.overallPointsAchieved!);
             studentPointsTotalInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrection!);
             if (studentResult.submitted) {
@@ -481,6 +490,37 @@ export class ExamScoresComponent implements OnInit {
         this.updateValuesAccordingToFilter();
     }
 
+    private isUnscoredTestAttempt(result: StudentResult): boolean {
+        return result.maxPoints !== undefined && (result.maxPoints <= 0 || result.overallScoreAchieved == null);
+    }
+
+    /** Test attempts can have different automatic maxima, so percentages must be aggregated before converting them to statistics. */
+    private calculateScoreStatistic(
+        statistic: (scores: number[]) => number,
+        subset: 'all' | 'submitted' | 'passed' | 'nonEmpty' | 'submittedNonEmpty',
+        legacyValue: number,
+    ): number {
+        if (!this.hasPerAttemptMaxima()) {
+            return legacyValue;
+        }
+        const scores = this.studentResults()
+            .filter((result) => {
+                if (this.isUnscoredTestAttempt(result)) {
+                    return false;
+                }
+                const nonEmpty = Object.values(result.exerciseGroupIdToExerciseResult ?? {}).some((exercise) => exercise.hasNonEmptySubmission);
+                return (
+                    subset === 'all' ||
+                    (subset === 'submitted' && result.submitted) ||
+                    (subset === 'passed' && result.submitted && result.hasPassed) ||
+                    (subset === 'nonEmpty' && nonEmpty) ||
+                    (subset === 'submittedNonEmpty' && result.submitted && nonEmpty)
+                );
+            })
+            .map((result) => result.overallScoreAchieved ?? 0);
+        return scores.length > 0 ? statistic(scores) : 0;
+    }
+
     /**
      * Calculates statistics like mean, median and standard deviation specifically for passed exams
      */
@@ -497,8 +537,8 @@ export class ExamScoresComponent implements OnInit {
             examStatistics.standardDeviationPassed = standardDeviation(studentPointsPassed);
             examStatistics.noOfExamsFilteredForPassed = studentPointsPassed.length;
             if (this.examScoreDTO().maxPoints) {
-                examStatistics.meanPointsRelativePassed = (examStatistics.meanPointsPassed / this.examScoreDTO().maxPoints) * 100;
-                examStatistics.medianRelativePassed = (examStatistics.medianPassed / this.examScoreDTO().maxPoints) * 100;
+                examStatistics.meanPointsRelativePassed = this.calculateScoreStatistic(mean, 'passed', (examStatistics.meanPointsPassed / this.examScoreDTO().maxPoints) * 100);
+                examStatistics.medianRelativePassed = this.calculateScoreStatistic(median, 'passed', (examStatistics.medianPassed / this.examScoreDTO().maxPoints) * 100);
                 examStatistics.meanGradePassed = this.gradingService.findMatchingGradeStep(this.gradingScale()!.gradeSteps, examStatistics.meanPointsRelativePassed)!.gradeName;
                 examStatistics.medianGradePassed = this.gradingService.findMatchingGradeStep(this.gradingScale()!.gradeSteps, examStatistics.medianRelativePassed)!.gradeName;
                 examStatistics.standardGradeDeviationPassed = this.hasNumericGrades() ? standardDeviation(studentGradesPassed) : undefined;
@@ -544,8 +584,12 @@ export class ExamScoresComponent implements OnInit {
             examStatistics.standardDeviationSubmitted = standardDeviation(studentPointsSubmitted);
             examStatistics.noOfExamsSubmitted = studentPointsSubmitted.length;
             if (this.examScoreDTO().maxPoints) {
-                examStatistics.meanPointsRelativeSubmitted = (examStatistics.meanPointsSubmitted / this.examScoreDTO().maxPoints) * 100;
-                examStatistics.medianRelativeSubmitted = (examStatistics.medianSubmitted / this.examScoreDTO().maxPoints) * 100;
+                examStatistics.meanPointsRelativeSubmitted = this.calculateScoreStatistic(
+                    mean,
+                    'submitted',
+                    (examStatistics.meanPointsSubmitted / this.examScoreDTO().maxPoints) * 100,
+                );
+                examStatistics.medianRelativeSubmitted = this.calculateScoreStatistic(median, 'submitted', (examStatistics.medianSubmitted / this.examScoreDTO().maxPoints) * 100);
                 if (this.gradingScaleExists()) {
                     examStatistics.meanGradeSubmitted = this.gradingService.findMatchingGradeStep(
                         this.gradingScale()!.gradeSteps,
@@ -601,8 +645,8 @@ export class ExamScoresComponent implements OnInit {
             examStatistics.standardDeviationTotal = standardDeviation(studentPointsTotal);
             examStatistics.noOfRegisteredUsers = this.studentResults().length;
             if (this.examScoreDTO().maxPoints) {
-                examStatistics.meanPointsRelativeTotal = (examStatistics.meanPointsTotal / this.examScoreDTO().maxPoints) * 100;
-                examStatistics.medianRelativeTotal = (examStatistics.medianTotal / this.examScoreDTO().maxPoints) * 100;
+                examStatistics.meanPointsRelativeTotal = this.calculateScoreStatistic(mean, 'all', (examStatistics.meanPointsTotal / this.examScoreDTO().maxPoints) * 100);
+                examStatistics.medianRelativeTotal = this.calculateScoreStatistic(median, 'all', (examStatistics.medianTotal / this.examScoreDTO().maxPoints) * 100);
                 if (this.gradingScaleExists()) {
                     examStatistics.meanGradeTotal = this.gradingService.findMatchingGradeStep(this.gradingScale()!.gradeSteps, examStatistics.meanPointsRelativeTotal)!.gradeName;
                     examStatistics.medianGradeTotal = this.gradingService.findMatchingGradeStep(this.gradingScale()!.gradeSteps, examStatistics.medianRelativeTotal)!.gradeName;
@@ -720,6 +764,9 @@ export class ExamScoresComponent implements OnInit {
             headers.push(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`);
             headers.push(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`);
         });
+        if (this.hasPerAttemptMaxima()) {
+            headers.push(EXAM_MAX_POINTS_KEY);
+        }
         headers.push(EXAM_OVERALL_POINTS_KEY);
         headers.push(EXAM_OVERALL_SCORE_KEY);
         if (this.gradingScaleExists()) {
@@ -783,6 +830,9 @@ export class ExamScoresComponent implements OnInit {
             }
         });
 
+        if (studentResult.maxPoints !== undefined) {
+            rowData.setPoints(EXAM_MAX_POINTS_KEY, studentResult.maxPoints);
+        }
         rowData.setPoints(EXAM_OVERALL_POINTS_KEY, studentResult.overallPointsAchieved);
         rowData.setScore(EXAM_OVERALL_SCORE_KEY, studentResult.overallScoreAchieved);
         if (this.gradingScaleExists()) {
@@ -834,6 +884,9 @@ export class ExamScoresComponent implements OnInit {
             this.studentIdToExamScoreDTOs.set(examScoreDTO.studentId!, examScoreDTO);
         }
         for (const studentResult of this.studentResults()) {
+            if (this.isUnscoredTestAttempt(studentResult)) {
+                continue;
+            }
             const overAllPoints = roundValueSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course());
             const overallScore = roundValueSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course());
 
@@ -994,6 +1047,9 @@ export class ExamScoresComponent implements OnInit {
         let submittedAndNonEmptyGrades: number[] = [];
         let submittedAndNonEmptyGradesInFirstCorrection: number[] = [];
         this.studentResults().forEach((result) => {
+            if (this.isUnscoredTestAttempt(result)) {
+                return;
+            }
             if (result.exerciseGroupIdToExerciseResult) {
                 const hasAtLeastOneSubmission = Object.entries(result.exerciseGroupIdToExerciseResult).some(([, exerciseResult]) => exerciseResult.hasNonEmptySubmission);
                 if (result.submitted && hasAtLeastOneSubmission) {
@@ -1031,8 +1087,16 @@ export class ExamScoresComponent implements OnInit {
             this.aggregatedExamResults().meanPointsSubmittedAndNonEmpty = mean(overallPointsSubmittedAndNonEmpty);
             this.aggregatedExamResults().medianSubmittedAndNonEmpty = median(overallPointsSubmittedAndNonEmpty);
             if (this.examScoreDTO().maxPoints) {
-                this.aggregatedExamResults().meanScoreSubmittedAndNonEmpty = (this.aggregatedExamResults().meanPointsSubmittedAndNonEmpty / this.examScoreDTO().maxPoints) * 100;
-                this.aggregatedExamResults().medianScoreSubmittedAndNonEmpty = (this.aggregatedExamResults().medianSubmittedAndNonEmpty / this.examScoreDTO().maxPoints) * 100;
+                this.aggregatedExamResults().meanScoreSubmittedAndNonEmpty = this.calculateScoreStatistic(
+                    mean,
+                    'submittedNonEmpty',
+                    (this.aggregatedExamResults().meanPointsSubmittedAndNonEmpty / this.examScoreDTO().maxPoints) * 100,
+                );
+                this.aggregatedExamResults().medianScoreSubmittedAndNonEmpty = this.calculateScoreStatistic(
+                    median,
+                    'submittedNonEmpty',
+                    (this.aggregatedExamResults().medianSubmittedAndNonEmpty / this.examScoreDTO().maxPoints) * 100,
+                );
             }
             this.aggregatedExamResults().standardDeviationSubmittedAndNonEmpty = standardDeviation(overallPointsSubmittedAndNonEmpty);
         }
@@ -1100,6 +1164,9 @@ export class ExamScoresComponent implements OnInit {
         let nonEmptyGrades: number[] = [];
         let nonEmptyGradesInFirstCorrection: number[] = [];
         this.studentResults().forEach((result) => {
+            if (this.isUnscoredTestAttempt(result)) {
+                return;
+            }
             if (result.exerciseGroupIdToExerciseResult) {
                 const hasAtLeastOneSubmission = Object.entries(result.exerciseGroupIdToExerciseResult).some(([, exerciseResult]) => exerciseResult.hasNonEmptySubmission);
                 if (hasAtLeastOneSubmission) {
@@ -1136,8 +1203,16 @@ export class ExamScoresComponent implements OnInit {
             this.aggregatedExamResults().meanPointsNonEmpty = mean(overallPointsNonEmpty);
             this.aggregatedExamResults().medianNonEmpty = median(overallPointsNonEmpty);
             if (this.examScoreDTO().maxPoints) {
-                this.aggregatedExamResults().meanScoreNonEmpty = (this.aggregatedExamResults().meanPointsNonEmpty / this.examScoreDTO().maxPoints) * 100;
-                this.aggregatedExamResults().medianScoreNonEmpty = (this.aggregatedExamResults().medianNonEmpty / this.examScoreDTO().maxPoints) * 100;
+                this.aggregatedExamResults().meanScoreNonEmpty = this.calculateScoreStatistic(
+                    mean,
+                    'nonEmpty',
+                    (this.aggregatedExamResults().meanPointsNonEmpty / this.examScoreDTO().maxPoints) * 100,
+                );
+                this.aggregatedExamResults().medianScoreNonEmpty = this.calculateScoreStatistic(
+                    median,
+                    'nonEmpty',
+                    (this.aggregatedExamResults().medianNonEmpty / this.examScoreDTO().maxPoints) * 100,
+                );
             }
             this.aggregatedExamResults().standardDeviationNonEmpty = standardDeviation(overallPointsNonEmpty);
         }

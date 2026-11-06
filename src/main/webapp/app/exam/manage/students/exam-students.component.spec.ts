@@ -10,7 +10,7 @@ import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.co
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -470,6 +470,16 @@ describe('ExamStudentsComponent', () => {
     });
 
     describe('registerAllStudentsFromCourse', () => {
+        it('should report a failed bulk registration without refreshing the student list', () => {
+            fixture.detectChanges();
+            vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            const refresh = vi.spyOn(component, 'reloadStudentsView');
+            vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm').mockImplementation((options) => options.accept());
+            component.registerAllStudentsFromCourse();
+            expect(alertService.error).toHaveBeenCalled();
+            expect(refresh).not.toHaveBeenCalled();
+        });
+
         it('should call addAllStudentsOfCourseToExam and trigger reload on success', () => {
             fixture.detectChanges();
             const addSpy = vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(of(new HttpResponse<void>()));
@@ -484,6 +494,50 @@ describe('ExamStudentsComponent', () => {
     });
 
     describe('exam student registration', () => {
+        it('should prevent registration until statistics finish loading', () => {
+            const statistics = new Subject<ExamChecklist>();
+            vi.spyOn(TestBed.inject(ExamChecklistService), 'getExamStatistics').mockReturnValue(statistics);
+            fixture.detectChanges();
+            const open = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open } as never);
+            const importOpen = vi.fn();
+            vi.spyOn(component, 'usersImportDialog').mockReturnValue({ open: importOpen } as never);
+            const register = vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam');
+            for (const index of [0, 1, 3]) {
+                component.manageStudentsMenuActions()[index].command();
+            }
+            expect(open).not.toHaveBeenCalled();
+            expect(importOpen).not.toHaveBeenCalled();
+            expect(register).not.toHaveBeenCalled();
+            expect(component.manageStudentsMenuActions().filter((item) => item.disabled).length).toBe(3);
+            statistics.next({ ...mockChecklist, numberOfGeneratedStudentExams: 0 });
+            statistics.complete();
+            component.openAddStudentsDialog();
+            expect(open).toHaveBeenCalledOnce();
+        });
+
+        it('should keep failed statistics closed and allow a retry before registration', () => {
+            const statistics = vi
+                .spyOn(TestBed.inject(ExamChecklistService), 'getExamStatistics')
+                .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+                .mockReturnValue(of(mockChecklist));
+            fixture.detectChanges();
+            const open = vi.fn();
+            vi.spyOn(component, 'addStudentsModal').mockReturnValue({ open } as never);
+            const confirm = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
+            component.openAddStudentsDialog();
+            expect(open).not.toHaveBeenCalled();
+            expect(confirm).not.toHaveBeenCalled();
+            expect(component.statisticsLoadingFailed()).toBe(true);
+            component.retryExamStatistics();
+            component.openAddStudentsDialog();
+            expect(statistics).toHaveBeenCalledTimes(2);
+            expect(component.statisticsLoadingFailed()).toBe(false);
+            expect(confirm).toHaveBeenCalledOnce();
+            confirm.mock.calls[0][0].accept();
+            expect(open).toHaveBeenCalledOnce();
+        });
+
         it('should confirm registration when student exams already exist', () => {
             fixture.detectChanges();
             component.studentExamCount.set(2);

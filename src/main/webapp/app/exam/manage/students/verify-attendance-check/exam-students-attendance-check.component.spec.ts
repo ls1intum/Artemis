@@ -11,8 +11,8 @@ import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/v
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SortService } from 'app/foundation/service/sort.service';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { Observable, of, throwError } from 'rxjs';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -103,15 +103,79 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     });
 
     it('should save a manual absence after conduction and retain the signature', () => {
-        fixture.detectChanges();
-        component.hasExamEnded.set(true);
         const signed = { id: 5, login: 'student1', signingImagePath: 'signature.png', attendanceOverride: false } as ExamUserAttendanceCheckDTO;
         const save = vi.spyOn(examManagementService, 'updateAttendance').mockReturnValue(of(undefined));
         vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [signed] })));
+        fixture.detectChanges();
+        component.hasExamEnded.set(true);
         component.setAttendance(signed, 'false');
         expect(save).toHaveBeenCalledWith(course.id, examWithCourse.id, 5, false);
         expect(component.allExamUsersAttendanceCheck()[0].signingImagePath).toBe('signature.png');
         expect(component.savingAttendance()).toBeUndefined();
+    });
+
+    it('should identify signed students with incomplete identity checks', () => {
+        const users = [
+            { id: 5, login: 'incomplete', started: true, signingImagePath: 'signature.png', attendanceChecked: false },
+            { id: 6, login: 'complete', started: true, signingImagePath: 'signature.png', attendanceChecked: true },
+        ] as ExamUserAttendanceCheckDTO[];
+        vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: users })));
+        fixture.detectChanges();
+        const rows = fixture.nativeElement.querySelectorAll('[data-testid="attendance-check-row"]');
+        expect(rows[0].querySelector('[data-testid="attendance-check-status"]').getAttribute('data-checked')).toBe('false');
+        expect(rows[1].querySelector('[data-testid="attendance-check-status"]').getAttribute('data-checked')).toBe('true');
+        expect(rows[0].querySelectorAll('img')).toHaveLength(2);
+        expect(component.uncheckedCount()).toBe(1);
+    });
+
+    it('should block further edits after a failed refresh and recover through retry', async () => {
+        const original = { id: 5, login: 'student1', started: true, attendanceChecked: false } as ExamUserAttendanceCheckDTO;
+        const updated = { ...original, attendanceOverride: false, attendanceChecked: true };
+        vi.spyOn(examManagementService, 'verifyExamUserAttendance')
+            .mockReturnValueOnce(of(new HttpResponse({ body: [original] })))
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+            .mockReturnValueOnce(of(new HttpResponse({ body: [updated] })));
+        const save = vi.spyOn(examManagementService, 'updateAttendance').mockReturnValue(of(undefined));
+        fixture.detectChanges();
+        component.hasExamEnded.set(true);
+        component.setAttendance(original, 'false');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(fixture.nativeElement.querySelector('[data-testid="manual-attendance"]').disabled).toBe(true);
+        component.setAttendance(original, 'true');
+        expect(save).toHaveBeenCalledOnce();
+        const retry = fixture.nativeElement.querySelector('[data-testid="retry-attendance"]') as HTMLButtonElement;
+        expect(retry).toBeTruthy();
+        retry.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.allExamUsersAttendanceCheck()).toEqual([updated]);
+        expect(component.uncheckedCount()).toBe(0);
+        expect(fixture.nativeElement.querySelector('[data-testid="manual-attendance"]').disabled).toBe(false);
+    });
+
+    it('should restore the persisted selection after a failed save and permit retry', async () => {
+        const original = { id: 5, login: 'student1', started: true, signingImagePath: 'signature.png', attendanceChecked: false } as ExamUserAttendanceCheckDTO;
+        const reload = vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: [original] })));
+        const save = vi
+            .spyOn(examManagementService, 'updateAttendance')
+            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 500 })))
+            .mockReturnValue(of(undefined));
+        fixture.detectChanges();
+        component.hasExamEnded.set(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const select = fixture.nativeElement.querySelector('[data-testid="manual-attendance"]') as HTMLSelectElement;
+        select.value = 'true';
+        select.dispatchEvent(new Event('change'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(fixture.nativeElement.querySelector('[data-testid="manual-attendance"]').value).toBe('');
+        expect(component.allExamUsersAttendanceCheck()[0].signingImagePath).toBe('signature.png');
+        expect(component.savingAttendance()).toBeUndefined();
+        expect(reload).toHaveBeenCalledOnce();
+        component.setAttendance(original, 'false');
+        expect(save).toHaveBeenCalledTimes(2);
     });
 
     it('should not edit attendance during the exam', () => {

@@ -481,6 +481,7 @@ public class ExamResource {
      * @param examId   the exam whose announcement history is requested
      * @return all exam-wide announcements, including their original timestamps
      */
+    @FeatureUsage(UserFeature.EXAM_CONDUCTION_MANAGEMENT)
     @GetMapping("courses/{courseId}/exams/{examId}/announcements")
     @EnforceAtLeastStudent
     @ManualConfig
@@ -1161,10 +1162,11 @@ public class ExamResource {
         log.info("REST request to generate student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
-        // Reset existing student exams & participations in case they already exist
-        examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
-
-        List<StudentExam> studentExams = studentExamService.generateStudentExams(exam);
+        List<StudentExam> studentExams = examRepository.withStudentExamGenerationLock(examId, () -> {
+            // Keep deletion and replacement under the same lock as registration-triggered and individual generation.
+            examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(examId);
+            return studentExamService.generateStudentExams(exam);
+        });
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         // The client only counts the generated student exams; return the slim, exam-masked projection (no nested exam graph,
         // which is why the previous breakCyclesForSerialization is no longer needed).

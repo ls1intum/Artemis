@@ -1,6 +1,7 @@
-import { map, of } from 'rxjs';
+import { EMPTY, catchError, expand, map, of, switchMap, timer } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Component, OnInit, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -99,6 +100,7 @@ type StateBeforeResetting = {
 })
 export class ExamResultSummaryComponent implements OnInit {
     private route = inject(ActivatedRoute);
+    private destroyRef = inject(DestroyRef);
     private serverDateService = inject(ArtemisServerDateService);
     private themeService = inject(ThemeService);
     private examParticipationService = inject(ExamParticipationService);
@@ -136,7 +138,11 @@ export class ExamResultSummaryComponent implements OnInit {
             const se = this.studentExam();
             const gradeInfo = this.studentExamGradeInfoDTO();
             if (gradeInfo) {
-                gradeInfo.studentExam = se;
+                if (gradeInfo.studentExam?.id !== undefined && gradeInfo.studentExam.id !== se.id) {
+                    this.studentExamGradeInfoDTO.set(undefined);
+                } else {
+                    gradeInfo.studentExam = se;
+                }
             }
             this.tryLoadPlagiarismCaseInfosForStudent();
         });
@@ -216,11 +222,35 @@ export class ExamResultSummaryComponent implements OnInit {
                     ? of(suppliedGrades)
                     : this.studentExamService.find(this.courseId(), studentExam.exam.id, studentExam.id).pipe(map((response) => response.body!))
                 : this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam.id, studentExam.id);
-            grades.subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
-                studentExamWithGrade.studentExam = this.studentExam();
-                this.studentExamGradeInfoDTO.set(studentExamWithGrade);
-                this.exerciseInfos.set(this.getExerciseInfos(studentExamWithGrade));
-            });
+            grades
+                .pipe(
+                    expand((gradeInfo) => {
+                        if (!this.isTestExam || this.studentExam().id !== studentExam.id || !gradeInfo.pendingExerciseIds?.length) {
+                            return EMPTY;
+                        }
+                        return timer(2000).pipe(
+                            switchMap(() => {
+                                if (this.studentExam().id !== studentExam.id) {
+                                    return EMPTY;
+                                }
+                                return this.instructorView()
+                                    ? this.studentExamService.find(this.courseId(), studentExam.exam!.id!, studentExam.id!).pipe(map((response) => response.body!))
+                                    : this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam!.id!, studentExam.id!);
+                            }),
+                            // A transient refresh failure leaves the pending state visible and retries on the next interval.
+                            catchError(() => of(gradeInfo)),
+                        );
+                    }),
+                    takeUntilDestroyed(this.destroyRef),
+                )
+                .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
+                    if (this.studentExam().id !== studentExam.id) {
+                        return;
+                    }
+                    studentExamWithGrade.studentExam = this.studentExam();
+                    this.studentExamGradeInfoDTO.set(studentExamWithGrade);
+                    this.exerciseInfos.set(this.getExerciseInfos(studentExamWithGrade));
+                });
         }
 
         this.exampleSolutionPublished.set(!!studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(studentExam.exam.exampleSolutionPublicationDate));

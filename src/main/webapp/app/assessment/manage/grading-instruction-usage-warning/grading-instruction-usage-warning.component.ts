@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { Feedback, instructionCountsOf } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackType, instructionCountsOf } from 'app/assessment/shared/entities/feedback.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /** Explains the scoring cap on every feedback sharing an overused instruction, without blocking its use. */
@@ -21,10 +21,13 @@ export class GradingInstructionUsageWarningComponent {
     readonly feedback = input.required<Feedback>();
     readonly allFeedbacks = input<Feedback[]>([]);
     readonly readOnly = input(false);
+    readonly capAutomaticTestSubtotal = input(false);
 
     readonly usage = computed(() => {
         const instruction = this.feedback()?.gradingInstruction;
-        const feedbacks = this.allFeedbacks();
+        const feedbacks = this.capAutomaticTestSubtotal()
+            ? this.allFeedbacks().filter((feedback) => feedback.type !== FeedbackType.AUTOMATIC || Feedback.isStaticCodeAnalysisFeedback(feedback))
+            : this.allFeedbacks();
         const limit = instruction?.usageCount ?? 0;
         if (instruction?.id === undefined || limit <= 0) {
             return undefined;

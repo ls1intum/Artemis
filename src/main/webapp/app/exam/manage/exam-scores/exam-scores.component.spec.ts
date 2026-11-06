@@ -579,6 +579,65 @@ describe('ExamScoresComponent', () => {
         });
     });
 
+    it('computes score statistics from each scored attempt and excludes pending results', () => {
+        const dto = deepClone(examScoreDTO);
+        dto.hasSecondCorrectionAndStarted = false;
+        dto.studentResults[0].maxPoints = 10.5;
+        dto.studentResults[0].overallPointsAchieved = 8.4;
+        dto.studentResults[0].overallScoreAchieved = 80;
+        dto.studentResults[0].hasPassed = true;
+        dto.studentResults[1].maxPoints = 20;
+        dto.studentResults[1].overallPointsAchieved = 4;
+        dto.studentResults[1].overallScoreAchieved = 20;
+        dto.studentResults[2].maxPoints = 15;
+        dto.studentResults[2].overallPointsAchieved = undefined;
+        dto.studentResults[2].overallScoreAchieved = undefined;
+        dto.studentResults[2].submitted = true;
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        fixture.detectChanges();
+        expect(comp.aggregatedExamResults().meanPointsTotal).toBe(6.2);
+        expect(comp.aggregatedExamResults().meanPointsRelativeTotal).toBe(50);
+        expect(comp.aggregatedExamResults().medianRelativeTotal).toBe(50);
+        expect(comp.aggregatedExamResults().meanPointsRelativeSubmitted).toBe(50);
+        expect(comp.aggregatedExamResults().medianRelativeSubmitted).toBe(50);
+        expect(comp.aggregatedExamResults().meanPointsRelativePassed).toBe(80);
+        expect(comp.scores()).toEqual([80, 20]);
+        expect(Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('[data-testid="attempt-max-points"]')).map((cell) => cell.textContent?.trim())).toEqual([
+            '10.5',
+            '20',
+            '15',
+        ]);
+        expect(fixture.nativeElement.querySelector('[data-testid="configured-exam-max-points"]')).toBeNull();
+        comp.toggleFilterForNonEmptySubmission();
+        expect(comp.aggregatedExamResults().meanScoreNonEmpty).toBe(50);
+        expect(comp.aggregatedExamResults().medianScoreNonEmpty).toBe(50);
+        comp.toggleFilterForSubmittedExam();
+        expect(comp.aggregatedExamResults().meanScoreSubmittedAndNonEmpty).toBe(50);
+        expect(comp.aggregatedExamResults().medianScoreSubmittedAndNonEmpty).toBe(50);
+    });
+
+    it('exports the exact denominator of each test-exam attempt', () => {
+        const dto = deepClone(examScoreDTO);
+        dto.studentResults[0].maxPoints = 10.5;
+        dto.studentResults[0].overallPointsAchieved = 8.4;
+        dto.studentResults[0].overallScoreAchieved = 80;
+        dto.studentResults[1].maxPoints = 20;
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        fixture.detectChanges();
+        const exported = vi.spyOn(comp, 'exportAsCsv');
+        comp.exportExamResults({
+            fieldSeparator: CsvFieldSeparator.SEMICOLON,
+            quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+            quoteStrings: true,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
+        });
+        expect(exported.mock.calls[0][0]).toContain('Maximum Exam Points');
+        expect(exported.mock.calls[0][1][0]['Maximum Exam Points']).toBe('10.5');
+        expect(exported.mock.calls[0][1][1]['Maximum Exam Points']).toBe('20');
+        expect(exported.mock.calls[0][1][0]['Overall Exam Points']).toBe('8.4');
+        expect(exported.mock.calls[0][1][0]['Overall Exam Score']).toBe('80%');
+    });
+
     it('should generate csv correctly', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
         vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));

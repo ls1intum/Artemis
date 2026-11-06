@@ -883,8 +883,18 @@ public class StudentExamService {
      */
     public StudentExam generateIndividualStudentExam(Exam exam, User student) {
         long start = System.nanoTime();
-        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
-        StudentExam studentExam = studentExamRepository.createRandomStudentExams(examWithExercises, Set.of(student.getId())).getFirst();
+        StudentExam studentExam = examRepository.withStudentExamGenerationLock(exam.getId(), () -> {
+            Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+            // Real exams have one student exam per user. A registration or another start request may have generated
+            // it while this caller waited for the lock. Test exams deliberately permit multiple attempts.
+            if (!examWithExercises.isTestExam()) {
+                var existing = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), false);
+                if (existing.isPresent()) {
+                    return existing.get();
+                }
+            }
+            return studentExamRepository.createRandomStudentExams(examWithExercises, Set.of(student.getId())).getFirst();
+        });
         // The bulk paths never read the user back, so creation only writes the foreign key and leaves a stub behind.
         // This one hands its student exam to a caller that returns it to the client, so it gets the real user it
         // already holds. Safe to set here: the save ran in its own transaction, so this entity is detached and no
@@ -906,42 +916,29 @@ public class StudentExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam exam) {
-        // The caller has already deleted the existing student exams and invalidated the exercise start status, and
-        // hands over an exam that carries its exercise groups. Re-reading the exam graph here loaded it a second time
-        // and re-ran a delete that had nothing left to remove. Only the registered students are still missing, and
-        // those are read as ids: ExamUser holds an eager association to User, so assembling them from the graph cost
-        // one select per student.
-        Set<Long> registeredUserIds = examUserRepository.findUserIdsByExamId(exam.getId());
-
-        // StudentExams are saved in the called method
-        return studentExamRepository.createRandomStudentExams(exam, registeredUserIds);
+        return examRepository.withStudentExamGenerationLock(exam.getId(), () -> {
+            Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+            Set<Long> registeredUserIds = examUserRepository.findUserIdsByExamId(exam.getId());
+            return studentExamRepository.createRandomStudentExams(examWithExercises, registeredUserIds);
+        });
     }
 
     /**
      * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
      * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
-     * <p>
-     * <b>Not serialised against a concurrent generation.</b> The exam-row lock this and the other generation paths used
-     * to take is gone with the transaction that held it, so two simultaneous calls can both read the same user as
-     * missing and both create a student exam for them; there is no unique constraint on {@code (exam_id, user_id)} to
-     * catch it, and a portable one cannot be added because a test run is a second student exam for the same pair. The
-     * same removal also means the exercise groups are no longer re-read under a lock, so a concurrent exercise-group
-     * move can desync the selection. Restoring both means a repository-owned boundary that locks the exam row, which is
-     * recorded as a follow-up rather than reintroduced here.
+     * The owning exam row remains locked from reading the current configuration and missing users until the generated
+     * exams have been committed, sharing the same repository-owned boundary as individual and full generation.
      *
      * @param exam the exam to generate student exams for
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
         this.invalidateExerciseStartStatus(exam.getId());
-        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
-
-        // Both sides of this subtraction are only ever compared, so ids are enough. Reading them as users loaded one
-        // entity per registered student and one per student who already has an exam.
-        Set<Long> missingUserIds = new HashSet<>(examUserRepository.findUserIdsByExamId(examWithExercises.getId()));
-        missingUserIds.removeAll(studentExamRepository.findUserIdsWithStudentExamsForExam(examWithExercises.getId()));
-
-        // StudentExams are saved in the called method
-        return studentExamRepository.createRandomStudentExams(examWithExercises, missingUserIds);
+        return examRepository.withStudentExamGenerationLock(exam.getId(), () -> {
+            Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+            Set<Long> missingUserIds = new HashSet<>(examUserRepository.findUserIdsByExamId(exam.getId()));
+            missingUserIds.removeAll(studentExamRepository.findUserIdsWithStudentExamsForExam(exam.getId()));
+            return studentExamRepository.createRandomStudentExams(examWithExercises, missingUserIds);
+        });
     }
 }

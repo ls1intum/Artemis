@@ -120,12 +120,10 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
             FROM ExamUser examUser
             WHERE examUser.exam.id = :examId
                 AND examUser.user.login = :login
-                AND examUser.signingImagePath IS NOT NULL
-                AND examUser.signingImagePath != ''
-                AND examUser.didCheckImage = TRUE
-                AND examUser.didCheckLogin = TRUE
-                AND examUser.didCheckRegistrationNumber = TRUE
-                AND examUser.didCheckName = TRUE
+                AND (examUser.attendanceOverride IS NOT NULL OR
+                    (examUser.signingImagePath IS NOT NULL AND examUser.signingImagePath <> ''
+                    AND examUser.didCheckImage = TRUE AND examUser.didCheckLogin = TRUE
+                    AND examUser.didCheckRegistrationNumber = TRUE AND examUser.didCheckName = TRUE))
             """)
     boolean isAttendanceChecked(@Param("examId") long examId, @Param("login") String login);
 

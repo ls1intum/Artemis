@@ -20,6 +20,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -130,6 +132,51 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         });
         request.putWithoutResponseBody(path, new ExamAttendanceUpdateDTO(null), HttpStatus.NO_CONTENT);
         assertThat(examUserRepository.findByIdElseThrow(registered.getId()).getAttendanceOverride()).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testManualAttendanceDecisionCompletesStudentCheckAndResetRestoresAutomaticStatus(boolean attended) throws Exception {
+        ExamUser registered = examUserRepository.findAllByExamId(exam1.getId()).getFirst();
+        registered.setAttendanceOverride(attended);
+        examUserRepository.save(registered);
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance";
+        assertThat(request.get(path, HttpStatus.OK, Boolean.class)).isTrue();
+        registered.setAttendanceOverride(null);
+        examUserRepository.save(registered);
+        assertThat(request.get(path, HttpStatus.OK, Boolean.class)).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testManualAttendanceOverridesAreReflectedInPagedAttendanceAndFilters() throws Exception {
+        Exam exam = createPaginationTestExam();
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
+        examRepository.save(exam);
+        String base = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+        for (var registration : examUserRepository.findAllByExamId(exam.getId())) {
+            String login = registration.getUser().getLogin();
+            if (login.equals(TEST_PREFIX + "student2") || login.equals(TEST_PREFIX + "student3")) {
+                request.putWithoutResponseBody(base + "/exam-users/" + registration.getId() + "/attendance", new ExamAttendanceUpdateDTO(login.equals(TEST_PREFIX + "student3")),
+                        HttpStatus.NO_CONTENT);
+            }
+        }
+        var rows = request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, pageParams(""));
+        assertThat(rows).filteredOn(row -> row.login().equals(TEST_PREFIX + "student2")).singleElement().satisfies(row -> {
+            assertThat(row.started()).isTrue();
+            assertThat(row.didExamUserAttendExam()).isFalse();
+        });
+        assertThat(rows).filteredOn(row -> row.login().equals(TEST_PREFIX + "student3")).singleElement().satisfies(row -> {
+            assertThat(Boolean.TRUE.equals(row.started())).isFalse();
+            assertThat(row.didExamUserAttendExam()).isTrue();
+        });
+        assertThat(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, pageParams("DidNotAttend"))).extracting(ExamStudentDTO::login)
+                .containsExactlyInAnyOrder(TEST_PREFIX + "student2", TEST_PREFIX + "student4");
+        assertThat(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, pageParams("AttendanceChecked"))).extracting(ExamStudentDTO::login)
+                .containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2", TEST_PREFIX + "student3");
+        assertThat(request.getList(pagedUrl(exam), HttpStatus.OK, ExamStudentDTO.class, pageParams("AttendanceNotChecked"))).isEmpty();
+        assertThat(request.getList(base + "/verify-exam-users?includeAll=false", HttpStatus.OK, ExamUserAttendanceCheckDTO.class)).isEmpty();
     }
 
     @Test

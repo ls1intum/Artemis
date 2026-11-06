@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, input, model, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, input, model, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
 import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -37,6 +38,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 })
 export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
     private examManagementService = inject(ExamManagementService);
+    private destroyRef = inject(DestroyRef);
 
     actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new UnorderedListAction()];
 
@@ -54,6 +56,12 @@ export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
 
     readonly announcement = signal<ExamWideAnnouncementEvent | undefined>(undefined);
 
+    readonly sentAnnouncement = computed(() => {
+        const announcement = this.announcement();
+        return announcement && !this.pastAnnouncements().some((event) => event.id === announcement.id) ? announcement : undefined;
+    });
+    private historyRequestId = 0;
+
     // Icons
     faSpinner = faSpinner;
     faCheckCircle = faCheckCircle;
@@ -63,11 +71,23 @@ export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
     }
 
     private loadAnnouncements() {
+        const requestId = ++this.historyRequestId;
         this.historyLoadingFailed.set(false);
-        this.examManagementService.getAnnouncements(this.courseId(), this.examId()).subscribe({
-            next: (events) => this.pastAnnouncements.set(events),
-            error: () => this.historyLoadingFailed.set(true),
-        });
+        this.examManagementService
+            .getAnnouncements(this.courseId(), this.examId())
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (events) => {
+                    if (requestId === this.historyRequestId) {
+                        this.pastAnnouncements.set(events);
+                    }
+                },
+                error: () => {
+                    if (requestId === this.historyRequestId) {
+                        this.historyLoadingFailed.set(true);
+                    }
+                },
+            });
     }
 
     submitAnnouncement() {

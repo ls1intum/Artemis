@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GradingInstructionUsageWarningComponent } from './grading-instruction-usage-warning.component';
 
@@ -36,6 +36,19 @@ describe('GradingInstructionUsageWarningComponent', () => {
         fixture.componentRef.setInput('allFeedbacks', [feedback, { gradingInstruction: { id: 2 } } as Feedback, new Feedback()]);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[data-testid="grading-instruction-usage-warning"]')).toBeNull();
+    });
+
+    it('ignores automatic test feedback only in programming scoring context', () => {
+        const automatic = { ...otherFeedback, type: FeedbackType.AUTOMATIC };
+        fixture.componentRef.setInput('allFeedbacks', [feedback, automatic]);
+        fixture.detectChanges();
+        expect(fixture.componentInstance.usage()).toEqual({ count: 2, limit: 1 });
+        fixture.componentRef.setInput('capAutomaticTestSubtotal', true);
+        fixture.detectChanges();
+        expect(fixture.componentInstance.usage()).toBeUndefined();
+        fixture.componentRef.setInput('allFeedbacks', [feedback, { ...automatic, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + 'issue' }]);
+        fixture.detectChanges();
+        expect(fixture.componentInstance.usage()).toEqual({ count: 2, limit: 1 });
     });
 
     it('does not show assessor instructions in read-only student feedback', () => {

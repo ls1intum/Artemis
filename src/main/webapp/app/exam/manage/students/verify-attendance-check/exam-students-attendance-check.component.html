@@ -9,7 +9,19 @@
         </div>
     } @else {
         <div class="flex border-b border-(--border-color) pb-2">
-            @if (!hasExamStarted()) {
+            @if (attendanceReloadFailed()) {
+                <div class="flex items-center gap-2" role="alert">
+                    <span class="text-state-danger" jhiTranslate="artemisApp.examManagement.examStudents.manualAttendance.reloadFailed"></span>
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        severity="secondary"
+                        data-testid="retry-attendance"
+                        (click)="reloadAttendance()"
+                        jhiTranslate="entity.action.retry"
+                    ></button>
+                </div>
+            } @else if (!hasExamStarted()) {
                 <div data-testid="exam-not-started">
                     <tumaet-ui-tag severity="danger">
                         <span [jhiTranslate]="'artemisApp.examManagement.examStudents.examNotStarted'">Exam have not started yet!</span>
@@ -93,6 +105,17 @@
                                 </span>
                             </td>
                             <td>
+                                <span data-testid="attendance-check-status" [attr.data-checked]="!!examUser.attendanceChecked">
+                                    <tumaet-ui-tag [severity]="examUser.attendanceChecked ? 'success' : 'warn'">
+                                        <span
+                                            [jhiTranslate]="
+                                                examUser.attendanceChecked
+                                                    ? 'artemisApp.examManagement.examStudents.manualAttendance.checked'
+                                                    : 'artemisApp.examManagement.examStudents.manualAttendance.incomplete'
+                                            "
+                                        ></span>
+                                    </tumaet-ui-tag>
+                                </span>
                                 @if (examUser.signingImagePath) {
                                     <img
                                         class="max-w-full"
@@ -111,7 +134,7 @@
                                     class="rounded border border-(--border-color) bg-(--module-bg) p-2 text-(--body-color)"
                                     data-testid="manual-attendance"
                                     [attr.aria-label]="('artemisApp.examManagement.examStudents.manualAttendance.title' | artemisTranslate) + ': ' + examUser.login"
-                                    [disabled]="!hasExamEnded() || isTestExam() || savingAttendance() !== undefined"
+                                    [disabled]="!hasExamEnded() || isTestExam() || attendanceReloadFailed() || savingAttendance() !== undefined"
                                     [ngModel]="examUser.attendanceOverride === undefined ? '' : examUser.attendanceOverride ? 'true' : 'false'"
                                     (ngModelChange)="setAttendance(examUser, $event)"
                                 >

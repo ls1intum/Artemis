@@ -172,6 +172,9 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly totalExamStudents = signal(0);
     /** Number of generated student exams from the exam checklist. */
     readonly studentExamCount = signal(0);
+    readonly statisticsReady = signal(false);
+    readonly statisticsLoadingFailed = signal(false);
+    readonly registrationUnavailable = computed(() => this.hasExamEnded() || !this.statisticsReady());
 
     readonly hasRegisteredUsers = computed(() => this.totalExamStudents() > 0);
     readonly isMissingIndividualExams = computed(() => {
@@ -322,13 +325,23 @@ export class ExamStudentsComponent implements OnDestroy {
     });
 
     readonly manageStudentsMenuActions = computed<ExamStudentsMenuItem[]>(() => [
-        { label: 'artemisApp.examManagement.examStudents.menu.addStudents', icon: faUserPlus, disabled: this.hasExamEnded(), command: () => this.openAddStudentsDialog() },
-        { label: 'artemisApp.examManagement.examStudents.menu.importUsers', icon: faFileImport, disabled: this.hasExamEnded(), command: () => this.openImportUsersDialog() },
+        {
+            label: 'artemisApp.examManagement.examStudents.menu.addStudents',
+            icon: faUserPlus,
+            disabled: this.registrationUnavailable(),
+            command: () => this.openAddStudentsDialog(),
+        },
+        {
+            label: 'artemisApp.examManagement.examStudents.menu.importUsers',
+            icon: faFileImport,
+            disabled: this.registrationUnavailable(),
+            command: () => this.openImportUsersDialog(),
+        },
         { label: 'artemisApp.examManagement.examStudents.menu.exportUsers', icon: faFileExport, command: () => this.openExportUsersDialog() },
         {
             label: 'artemisApp.examManagement.examStudents.menu.registerCourseStudents',
             icon: faUserPlus,
-            disabled: this.hasExamEnded(),
+            disabled: this.registrationUnavailable(),
             command: () => this.registerAllStudentsFromCourse(),
         },
         {
@@ -396,6 +409,8 @@ export class ExamStudentsComponent implements OnDestroy {
             .pipe(
                 takeUntilDestroyed(),
                 tap((exam: Exam) => {
+                    this.statisticsReady.set(false);
+                    this.statisticsLoadingFailed.set(false);
                     this.exam.set(exam);
                     this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
                     this.scheduleRegistrationDeadline();
@@ -416,6 +431,7 @@ export class ExamStudentsComponent implements OnDestroy {
 
                     const examStats$ = this.examChecklistService.getExamStatistics(exam).pipe(
                         catchError((err: HttpErrorResponse) => {
+                            this.statisticsLoadingFailed.set(true);
                             onError(this.alertService, err);
                             return of(undefined);
                         }),
@@ -435,6 +451,7 @@ export class ExamStudentsComponent implements OnDestroy {
             .subscribe(({ examStats, exercisePreparationStatus }) => {
                 this.isAllExercisesPrepared.set(!!examStats?.allExamExercisesAllStudentsPrepared);
                 this.studentExamCount.set(examStats?.numberOfGeneratedStudentExams ?? 0);
+                this.statisticsReady.set(examStats !== undefined);
                 this.setExercisePreparationStatus(exercisePreparationStatus);
             });
 
@@ -650,10 +667,18 @@ export class ExamStudentsComponent implements OnDestroy {
         }
     }
 
+    /** Reloads the statistics required to decide whether registration needs confirmation. */
+    retryExamStatistics() {
+        this.fetchExamData();
+    }
+
     private confirmRegistration(action: () => void) {
         if (this.exam().endDate && !this.serverDateService.now().isBefore(this.exam().endDate)) {
             this.hasExamEnded.set(true);
             this.alertService.error('artemisApp.examManagement.examStudents.registrationClosed');
+            return;
+        }
+        if (!this.statisticsReady()) {
             return;
         }
         if (this.studentExamCount() > 0) {

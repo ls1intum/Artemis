@@ -30,7 +30,7 @@
                 <fa-icon [icon]="faCheckCircle" class="text-state-success" />
                 <span jhiTranslate="artemisApp.examManagement.announcementCreate.sent"></span>
             </h2>
-            @if (announcement(); as announcement) {
+            @if (sentAnnouncement(); as announcement) {
                 <jhi-exam-live-event [event]="announcement" />
             }
         }

@@ -17,7 +17,7 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumAetUiProgressSpinnerComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -33,6 +33,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         CourseTitleBarTitleDirective,
         TumAetUiProgressSpinnerComponent,
         TumAetUiTableDirective,
+        TumAetUiButtonDirective,
         TumAetUiTagComponent,
     ],
 })
@@ -53,6 +54,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     allExamUsersAttendanceCheck = signal<ExamUserAttendanceCheckDTO[]>([]);
     readonly uncheckedCount = computed(() => this.allExamUsersAttendanceCheck().filter((user) => user.started && !user.attendanceChecked).length);
     readonly savingAttendance = signal<number | undefined>(undefined);
+    readonly attendanceReloadFailed = signal(false);
     filteredUsersSize = 0;
     paramSub?: Subscription;
 
@@ -89,12 +91,24 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
             this.isLoading.set(false);
             return;
         }
+        this.reloadAttendance();
+    }
+
+    /** Refreshes server-derived attendance; edits remain blocked until the current records are recovered. */
+    reloadAttendance() {
+        this.isLoading.set(true);
         this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!, true).subscribe({
             next: (res: HttpResponse<ExamUserAttendanceCheckDTO[]>) => {
-                this.allExamUsersAttendanceCheck.set(res.body!);
+                this.allExamUsersAttendanceCheck.set(res.body ?? []);
+                this.attendanceReloadFailed.set(false);
+                this.savingAttendance.set(undefined);
                 this.isLoading.set(false);
             },
-            error: (error: HttpErrorResponse) => this.onError(error.message),
+            error: (error: HttpErrorResponse) => {
+                this.attendanceReloadFailed.set(true);
+                this.savingAttendance.set(undefined);
+                this.onError(error.message);
+            },
         });
     }
 
@@ -125,7 +139,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     }
 
     setAttendance(examUser: ExamUserAttendanceCheckDTO, value: string) {
-        if (!this.hasExamEnded() || this.isTestExam() || !examUser.id || this.savingAttendance() !== undefined) {
+        if (!this.hasExamEnded() || this.isTestExam() || !examUser.id || this.isLoading() || this.attendanceReloadFailed() || this.savingAttendance() !== undefined) {
             return;
         }
         const attended = value === '' ? undefined : value === 'true';
@@ -133,16 +147,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
         this.examManagementService.updateAttendance(this.courseId, this.exam.id!, examUser.id, attended).subscribe({
             next: () => {
                 // Reload the server-derived verification status as well, especially when restoring automatic attendance.
-                this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!, true).subscribe({
-                    next: (res) => {
-                        this.allExamUsersAttendanceCheck.set(res.body ?? []);
-                        this.savingAttendance.set(undefined);
-                    },
-                    error: (error: HttpErrorResponse) => {
-                        this.savingAttendance.set(undefined);
-                        this.onError(error.message);
-                    },
-                });
+                this.reloadAttendance();
             },
             error: (error: HttpErrorResponse) => {
                 this.savingAttendance.set(undefined);

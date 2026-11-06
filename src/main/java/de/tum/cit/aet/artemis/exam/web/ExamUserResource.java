@@ -189,6 +189,7 @@ public class ExamUserResource {
      * @param update     the attendance decision, or null to restore the automatic status
      * @return an empty response
      */
+    @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
     @PutMapping("courses/{courseId}/exams/{examId}/exam-users/{examUserId}/attendance")
     @EnforceAtLeastStudent
     @ManualConfig

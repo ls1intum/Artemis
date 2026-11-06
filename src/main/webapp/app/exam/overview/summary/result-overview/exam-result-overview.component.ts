@@ -51,8 +51,10 @@ export class ExamResultOverviewComponent implements OnInit {
 
     // Derived from the (async) studentExamWithGrade input — computed so the grading-key card renders under zoneless
     // once the grade DTO arrives (previously set only in ngOnInit via setExamGrade + a manual detectChanges).
-    readonly gradingScaleExists = computed(() => !!this.areResultsPublished() && !!this.studentExamWithGrade()?.studentResult?.overallGrade);
+    readonly gradingScaleExists = computed(() => this.hasAutomaticScore() && !!this.areResultsPublished() && !!this.studentExamWithGrade()?.studentResult?.overallGrade);
     readonly isTestExam = computed(() => !!this.studentExamWithGrade()?.studentExam?.exam?.testExam);
+    readonly pendingExerciseIds = computed(() => new Set(this.isTestExam() ? (this.studentExamWithGrade()?.pendingExerciseIds ?? []) : []));
+    readonly hasAutomaticScore = computed(() => !this.isTestExam() || (this.studentExamWithGrade()?.maxPoints > 0 && this.pendingExerciseIds().size === 0));
     readonly hasManuallyAssessedExercises = computed(
         () => this.studentExamWithGrade()?.studentExam?.exercises?.some((exercise) => this.isManuallyAssessedTestExercise(exercise)) ?? false,
     );
@@ -167,7 +169,7 @@ export class ExamResultOverviewComponent implements OnInit {
 
     private getOverallAchievedPoints() {
         const overallAchievedPoints = this.studentExamWithGrade()?.studentResult.overallPointsAchieved;
-        if (overallAchievedPoints === undefined || overallAchievedPoints === 0) {
+        if (overallAchievedPoints == null) {
             return this.sumExerciseScores();
         }
 
@@ -176,7 +178,7 @@ export class ExamResultOverviewComponent implements OnInit {
 
     private getOverallAchievedPercentageRoundedByCourseSettings() {
         let overallScoreAchieved = this.studentExamWithGrade().studentResult.overallScoreAchieved;
-        if (overallScoreAchieved === undefined || overallScoreAchieved === 0) {
+        if (overallScoreAchieved == null) {
             overallScoreAchieved = this.summedAchievedExerciseScorePercentage();
         }
 
