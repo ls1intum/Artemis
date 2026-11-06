@@ -1,13 +1,7 @@
-@let label = showConfirm() ? ('artemisApp.assessment.messages.removeAssessmentInstructionLink' | artemisTranslate) : setTooltip(feedback().gradingInstruction);
-<button
-    type="button"
-    class="grading-instruction-link-button"
-    [class.grading-instruction-link-icon-danger]="showConfirm()"
-    [attr.aria-label]="label"
-    [tumAetUiTooltip]="label"
-    (blur)="showConfirm.set(false)"
-    (mouseleave)="showConfirm() && toggle()"
-    (click)="showConfirm() ? removeLink() : toggle()"
->
-    <fa-icon [icon]="showConfirm() ? confirmIcon : linkIcon()" />
-</button>
+<jhi-confirm-icon
+    [initialIcon]="linkIcon()"
+    [confirmIcon]="confirmIcon"
+    [initialTooltip]="setTooltip(feedback().gradingInstruction)"
+    [confirmTooltip]="'artemisApp.assessment.messages.removeAssessmentInstructionLink' | artemisTranslate"
+    (confirmEvent)="removeLink()"
+/>

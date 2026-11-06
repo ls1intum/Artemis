@@ -67,12 +67,12 @@
                                             <fa-icon [icon]="faCrosshairs" />
                                         </button>
                                     }
-                                    @if (showUsageStepper(instruction)) {
-                                        <div class="sgi-item__stepper" role="group" [attr.aria-label]="'artemisApp.exercise.usageCountHint' | artemisTranslate">
+                                    @if (isMultiUse(instruction)) {
+                                        <fieldset class="sgi-item__stepper" [attr.aria-label]="'artemisApp.exercise.usageCountHint' | artemisTranslate">
                                             <button
                                                 type="button"
                                                 data-testid="decrease-instruction-usage"
-                                                [disabled]="!canDecrementApplication(instruction)"
+                                                [disabled]="!selectionService.isRemovable(instruction)"
                                                 [attr.aria-label]="'artemisApp.exercise.decreaseInstructionUsage' | artemisTranslate"
                                                 (click)="decrementApplication($event, instruction)"
                                             >
@@ -90,13 +90,13 @@
                                             <button
                                                 type="button"
                                                 data-testid="increase-instruction-usage"
-                                                [disabled]="!canIncrementApplication(instruction)"
+                                                [disabled]="!isDraggable(instruction)"
                                                 [attr.aria-label]="'artemisApp.exercise.increaseInstructionUsage' | artemisTranslate"
                                                 (click)="incrementApplication($event, instruction)"
                                             >
                                                 <fa-icon [icon]="faPlus" />
                                             </button>
-                                        </div>
+                                        </fieldset>
                                     }
 
                                     <span

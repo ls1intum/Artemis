@@ -1,9 +1,6 @@
 import { Component, OnInit, inject, input, model, output } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -11,12 +8,11 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-unreferenced-feedback-detail',
     templateUrl: './unreferenced-feedback-detail.component.html',
-    imports: [UnifiedFeedbackComponent, TumAetUiButtonDirective, TranslateDirective],
+    imports: [UnifiedFeedbackComponent],
 })
 export class UnreferencedFeedbackDetailComponent implements OnInit {
     structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private feedbackService = inject(FeedbackService);
-    protected readonly selectionService = inject(GradingInstructionSelectionService);
 
     public readonly feedback = model.required<Feedback>();
     readonly resultId = input.required<number>();

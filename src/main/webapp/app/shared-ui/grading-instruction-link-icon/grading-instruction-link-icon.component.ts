@@ -1,16 +1,14 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 
 @Component({
     selector: 'jhi-grading-instruction-link-icon',
     templateUrl: './grading-instruction-link-icon.component.html',
-    styleUrl: './grading-instruction-link-icon.component.scss',
-    imports: [FaIconComponent, TumAetUiTooltipDirective, ArtemisTranslatePipe],
+    imports: [ConfirmIconComponent, ArtemisTranslatePipe],
 })
 export class GradingInstructionLinkIconComponent {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -21,13 +19,11 @@ export class GradingInstructionLinkIconComponent {
     readonly linkRemoved = output<void>();
 
     confirmIcon = faTrash;
-    readonly showConfirm = signal(false);
 
     /**
      * remove grading instruction on click
      */
     removeLink(): void {
-        this.showConfirm.set(false);
         this.feedback().gradingInstruction = undefined;
         this.linkRemoved.emit();
     }
@@ -38,12 +34,5 @@ export class GradingInstructionLinkIconComponent {
      */
     setTooltip(instruction?: GradingInstruction) {
         return this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + (instruction?.instructionDescription ?? '');
-    }
-
-    /**
-     * toggle showConfirm
-     */
-    toggle(): void {
-        this.showConfirm.update((value) => !value);
     }
 }

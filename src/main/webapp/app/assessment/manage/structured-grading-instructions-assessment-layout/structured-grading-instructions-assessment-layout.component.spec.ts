@@ -193,14 +193,18 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             fixture.nativeElement.querySelector('[data-testid="increase-instruction-usage"]').click();
             expect(host.applyInstruction).toHaveBeenCalledExactlyOnceWith(instruction);
             comp.armInstruction(new Event('click'), instruction);
+            expect(TestBed.inject(GradingInstructionSelectionService).hasArmedInstruction()).toBe(false);
+        });
 
+        it('keeps the no-host instruction card keyboard-accessible after unregistering its host', () => {
+            fixture.componentRef.setInput('allowArming', true);
             TestBed.inject(GradingInstructionSelectionService).unregister(host);
             fixture.detectChanges();
             const card = fixture.nativeElement.querySelector('#criterion-0-instruction-0') as HTMLElement;
-            expect(card.getAttribute('role')).toBeNull();
-            expect(card.getAttribute('tabindex')).toBeNull();
+            expect(card.getAttribute('role')).toBe('button');
+            expect(card.getAttribute('tabindex')).toBe('0');
             card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-            expect(TestBed.inject(GradingInstructionSelectionService).hasArmedInstruction()).toBe(false);
+            expect(TestBed.inject(GradingInstructionSelectionService).hasArmedInstruction()).toBe(true);
         });
 
         it('supports arming, unarming and single-application stepper actions', () => {

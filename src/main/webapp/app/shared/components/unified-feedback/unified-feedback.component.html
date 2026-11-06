@@ -43,23 +43,14 @@
                             </div>
                         } @else {
                             <div class="unified-feedback-score-control" [class.unified-feedback-assessment-points]="assessmentLayout()">
-                                @if (assessmentLayout()) {
-                                    <button
-                                        type="button"
-                                        data-testid="decrease-feedback-points"
-                                        [disabled]="readOnly()"
-                                        [attr.aria-label]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
-                                        (mousedown)="$event.preventDefault()"
-                                        (click)="stepAssessmentCredits(-1)"
-                                    >
-                                        <span aria-hidden="true">−</span>
-                                    </button>
-                                }
                                 <jhi-points-input
                                     class="unified-feedback-points-input"
                                     data-testid="unified-feedback-points-input"
                                     fluid
-                                    [showButtons]="!assessmentLayout()"
+                                    showButtons
+                                    [horizontalButtons]="assessmentLayout()"
+                                    [incrementLabel]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
+                                    [decrementLabel]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
                                     snapToStep
                                     [step]="CREDITS_STEP"
                                     [ngModel]="feedbackCredits()"
@@ -69,18 +60,6 @@
                                     [ariaLabel]="pointsAriaLabel()"
                                     [disabled]="readOnly() || !!feedback()?.gradingInstruction"
                                 />
-                                @if (assessmentLayout()) {
-                                    <button
-                                        type="button"
-                                        data-testid="increase-feedback-points"
-                                        [disabled]="readOnly()"
-                                        [attr.aria-label]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
-                                        (mousedown)="$event.preventDefault()"
-                                        (click)="stepAssessmentCredits(1)"
-                                    >
-                                        <span aria-hidden="true">+</span>
-                                    </button>
-                                }
                             </div>
                         }
                     } @else if (showPoints()) {
@@ -96,19 +75,10 @@
                         <div class="unified-feedback-toolbar" (click)="$event.stopPropagation()" (keydown.enter)="stopToolbarEnterPropagation($event)">
                             <ng-content select="[unifiedFeedbackViewControls]" />
                             @if (editable() && !readOnly() && feedback()?.gradingInstruction) {
-                                <jhi-grading-instruction-link-icon [feedback]="feedback()!" (linkRemoved)="onInstructionUnlinked.emit()" />
+                                <jhi-grading-instruction-link-icon [feedback]="feedback()!" (linkRemoved)="instructionUnlinked.emit()" />
                             }
                             @if (!readOnly()) {
-                                @if (assessmentLayout()) {
-                                    <jhi-confirm-icon
-                                        data-testid="delete-feedback"
-                                        [initialIcon]="faTrashAlt"
-                                        [confirmIcon]="faTimes"
-                                        [initialTooltip]="dismissTooltip()"
-                                        [confirmTooltip]="dismissConfirmTooltip()"
-                                        (confirmEvent)="handleDeleteConfirmed()"
-                                    />
-                                } @else if (canDismissWithoutConfirm()) {
+                                @if (!assessmentLayout() && canDismissWithoutConfirm()) {
                                     <button
                                         type="button"
                                         id="dismiss-icon"
@@ -120,9 +90,10 @@
                                     </button>
                                 } @else {
                                     <jhi-confirm-icon
-                                        id="confirm-icon"
+                                        [attr.id]="assessmentLayout() ? null : 'confirm-icon'"
+                                        [attr.data-testid]="assessmentLayout() ? 'delete-feedback' : null"
                                         [initialIcon]="assessmentLayout() ? faTrashAlt : faTimes"
-                                        [confirmIcon]="faTrashAlt"
+                                        [confirmIcon]="assessmentLayout() ? faTimes : faTrashAlt"
                                         [initialTooltip]="dismissTooltip()"
                                         [confirmTooltip]="dismissConfirmTooltip()"
                                         (confirmEvent)="handleDeleteConfirmed()"
@@ -135,7 +106,19 @@
             </div>
 
             @if (editable()) {
-                <ng-content select="[unifiedFeedbackBeforeDetail]" />
+                @if (assessmentLayout() && !readOnly() && selectionService.hasArmedInstruction()) {
+                    <button
+                        class="assessment-apply-instruction"
+                        tumAetUiButton
+                        size="small"
+                        variant="outlined"
+                        severity="secondary"
+                        type="button"
+                        (click)="applyInstruction.emit()"
+                    >
+                        <span>{{ 'artemisApp.exercise.applyArmedInstruction' | artemisTranslate }}</span>
+                    </button>
+                }
                 @if (assessmentLayout() && feedback()?.gradingInstruction; as instruction) {
                     <div class="unified-feedback-assessment-criterion">
                         <span class="unified-feedback-section-label">{{ 'artemisApp.assessment.detail.instruction' | artemisTranslate }}</span>

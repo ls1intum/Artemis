@@ -2,6 +2,7 @@
 <jhi-unified-feedback
     class="unified-feedback-inline-editor"
     [assessmentLayout]="true"
+    (applyInstruction)="applyArmedInstruction()"
     [editable]="!viewOnly()"
     [readOnly]="readOnly()"
     [feedback]="feedback"
@@ -19,20 +20,13 @@
     (feedbackTitleChange)="onFieldChanged()"
     (feedbackDetailChange)="onFieldChanged()"
     (feedbackCreditsChange)="onFieldChanged()"
-    (onInstructionUnlinked)="onFieldChanged()"
+    (instructionUnlinked)="onFieldChanged()"
     (onDelete)="removeFeedback()"
     (drop)="updateFeedbackOnDrop($event)"
     (dragover)="$event.preventDefault()"
     (keydown)="handleKeydown($event)"
     (input)="inputEdited.set(true)"
 >
-    <ng-container ngProjectAs="[unifiedFeedbackBeforeDetail]">
-        @if (isKeyboardDropTarget()) {
-            <button class="assessment-apply-instruction" tumAetUiButton size="small" variant="outlined" severity="secondary" type="button" (click)="applyArmedInstruction()">
-                <span jhiTranslate="artemisApp.exercise.applyArmedInstruction"></span>
-            </button>
-        }
-    </ng-container>
     <ng-container ngProjectAs="[unifiedFeedbackViewControls]">
         @if (viewOnly() && !readOnly()) {
             <button tumAetUiButton size="small" variant="outlined" severity="secondary" type="button" data-testid="feedback-edit" (click)="editFeedback(codeLine())">

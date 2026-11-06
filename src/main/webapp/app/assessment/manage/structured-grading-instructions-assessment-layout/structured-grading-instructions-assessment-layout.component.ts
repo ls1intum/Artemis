@@ -107,11 +107,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         if (!this.allowDrop()) {
             return false;
         }
-        const usageLimit = instruction.usageCount ?? 0;
-        if (usageLimit <= 0) {
-            return true;
-        }
-        return this.selectionService.applicationCount(instruction) < usageLimit;
+        return this.selectionService.canApplyInstruction(instruction);
     }
 
     /**
@@ -141,7 +137,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     incrementApplication(event: Event, instruction: GradingInstruction): void {
         event.preventDefault();
         event.stopPropagation();
-        if (!this.canIncrementApplication(instruction)) {
+        if (!this.isDraggable(instruction)) {
             return;
         }
         this.selectionService.addApplication(instruction);
@@ -151,18 +147,10 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     decrementApplication(event: Event, instruction: GradingInstruction): void {
         event.preventDefault();
         event.stopPropagation();
-        if (!this.canDecrementApplication(instruction)) {
+        if (!this.selectionService.isRemovable(instruction)) {
             return;
         }
         this.selectionService.removeOneApplication(instruction);
-    }
-
-    canIncrementApplication(instruction: GradingInstruction): boolean {
-        return this.isDraggable(instruction);
-    }
-
-    canDecrementApplication(instruction: GradingInstruction): boolean {
-        return this.selectionService.isRemovable(instruction);
     }
 
     /**
@@ -171,11 +159,6 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      */
     isMultiUse(instruction: GradingInstruction): boolean {
         return (instruction.usageCount ?? 0) !== 1;
-    }
-
-    /** Multi-use instructions always expose the counter; single-use stays checkbox-only. */
-    showUsageStepper(instruction: GradingInstruction): boolean {
-        return this.isMultiUse(instruction);
     }
 
     setScore(nr: number) {

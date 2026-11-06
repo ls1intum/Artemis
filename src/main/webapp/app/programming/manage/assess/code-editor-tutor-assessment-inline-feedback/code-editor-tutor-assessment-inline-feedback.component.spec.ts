@@ -144,7 +144,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         await open(feedback);
         comp.currentFeedback().gradingInstruction = undefined;
         const shared = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent)).componentInstance as UnifiedFeedbackComponent;
-        shared.onInstructionUnlinked.emit();
+        shared.instructionUnlinked.emit();
         selection.addApplication(instruction);
         expect(applyElsewhere).not.toHaveBeenCalled();
         expect(selection.applicationCount(instruction)).toBe(1);
@@ -299,7 +299,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         input.value = '1.3';
         input.dispatchEvent(new Event('input'));
         await settle();
-        const increment = fixture.nativeElement.querySelector('[data-testid="increase-feedback-points"]') as HTMLButtonElement;
+        const increment = fixture.nativeElement.querySelector('[data-testid="input-number-increment"]') as HTMLButtonElement;
         const down = new MouseEvent('mousedown', { cancelable: true });
         increment.dispatchEvent(down);
         expect(down.defaultPrevented).toBe(true);

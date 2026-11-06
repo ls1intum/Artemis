@@ -1,3 +1,4 @@
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
@@ -36,6 +37,20 @@ describe('UnifiedFeedbackComponent', () => {
         fixture = TestBed.createComponent(UnifiedFeedbackComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
+    });
+
+    it('offers the shared instruction action only on editable assessment cards', () => {
+        fixture.componentRef.setInput('assessmentLayout', true);
+        fixture.componentRef.setInput('editable', true);
+        TestBed.inject(GradingInstructionSelectionService).toggleArmedInstruction({ id: 1, credits: 0, gradingScale: '', instructionDescription: '', feedback: '' });
+        fixture.detectChanges();
+        const applied = vi.fn();
+        component.applyInstruction.subscribe(applied);
+        (fixture.nativeElement.querySelector('.assessment-apply-instruction') as HTMLButtonElement).click();
+        expect(applied).toHaveBeenCalledOnce();
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.assessment-apply-instruction')).toBeNull();
     });
 
     it.each([false, true])('requires two clicks to delete an assessment card (linked: %s)', (linked) => {
@@ -93,14 +108,14 @@ describe('UnifiedFeedbackComponent', () => {
         await settle();
         typeIntoInputNumber(creditsInputElement(), '1.3', { leave: false });
         await settle();
-        const increase = fixture.nativeElement.querySelector('[data-testid="increase-feedback-points"]') as HTMLButtonElement;
+        const increase = fixture.nativeElement.querySelector('[data-testid="input-number-increment"]') as HTMLButtonElement;
         const down = new MouseEvent('mousedown', { cancelable: true });
         increase.dispatchEvent(down);
         expect(down.defaultPrevented).toBe(true);
         increase.click();
         await settle();
         expect(component.feedbackCredits()).toBe(1.5);
-        expect(fixture.nativeElement.querySelectorAll('.tumaet-ui-input-number-button')).toHaveLength(0);
+        expect(fixture.nativeElement.querySelector('.tumaet-ui-input-number-horizontal')).not.toBeNull();
         fixture.componentRef.setInput('assessmentLayout', false);
         await settle();
         expect(fixture.nativeElement.querySelectorAll('.tumaet-ui-input-number-button')).toHaveLength(2);
@@ -145,7 +160,7 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('feedbackTitle', feedback.text);
         fixture.componentRef.setInput('feedbackCredits', 2);
         const unlinked = vi.fn();
-        component.onInstructionUnlinked.subscribe(unlinked);
+        component.instructionUnlinked.subscribe(unlinked);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -342,13 +357,14 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredTitle()).toBe('Missing null check');
     });
 
-    it('should hide a linked feedback title while preserving the stored suggestion marker', () => {
+    it.each([true, false])('preserves the stored suggestion title and hides it only in assessment layout (%s)', (assessmentLayout) => {
         const feedback = { text: `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Old title`, gradingInstruction: { feedback: 'Criterion comment' } } as Feedback;
+        fixture.componentRef.setInput('assessmentLayout', assessmentLayout);
         fixture.componentRef.setInput('feedback', feedback);
         fixture.detectChanges();
 
-        expect(component.inferredTitle()).toBe('');
-        expect(fixture.nativeElement.querySelector('.unified-feedback-title')).toBeNull();
+        expect(component.inferredTitle()).toBe(assessmentLayout ? '' : 'Old title');
+        expect(fixture.nativeElement.querySelector('.unified-feedback-title')?.textContent ?? '').toBe(assessmentLayout ? '' : 'Old title');
         expect(feedback.text).toBe(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Old title`);
     });
 

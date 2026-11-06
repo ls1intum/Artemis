@@ -1,7 +1,8 @@
-import { Component, DestroyRef, ElementRef, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { Component, ElementRef, afterRenderEffect, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faExclamationTriangle, faMinus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -39,6 +40,7 @@ interface FeedbackTypeConfig {
         NgClass,
         FaIconComponent,
         TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
         FormsModule,
         ConfirmIconComponent,
         GradingInstructionLinkIconComponent,
@@ -49,13 +51,11 @@ interface FeedbackTypeConfig {
     ],
 })
 export class UnifiedFeedbackComponent {
+    protected readonly selectionService = inject(GradingInstructionSelectionService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private localeConversionService = inject(LocaleConversionService);
-    private destroyRef = inject(DestroyRef);
-    private textareaResizeObserver?: ResizeObserver;
 
     constructor() {
-        this.destroyRef.onDestroy(() => this.textareaResizeObserver?.disconnect());
         // afterRenderEffect (not effect): the textarea DOM read/write here must happen after the view -
         // and its viewChild query - is guaranteed to be resolved, which a plain effect() does not promise
         // on its first flush. A brand-new feedback item (e.g. an AI suggestion appended to the list) mounts
@@ -78,6 +78,8 @@ export class UnifiedFeedbackComponent {
             }
             let lastDetailWidth = detailTextarea?.clientWidth;
             let lastTitleWidth = titleTextarea?.clientWidth;
+            // Render-effect cleanup disconnects on both textarea replacement and component destruction.
+            // eslint-disable-next-line localRules/enforce-cleanup-on-destroy
             const resizeObserver = new ResizeObserver((entries) => {
                 for (const entry of entries) {
                     const width = entry.contentRect.width;
@@ -96,13 +98,7 @@ export class UnifiedFeedbackComponent {
             if (titleTextarea) {
                 resizeObserver.observe(titleTextarea);
             }
-            this.textareaResizeObserver = resizeObserver;
-            onCleanup(() => {
-                resizeObserver.disconnect();
-                if (this.textareaResizeObserver === resizeObserver) {
-                    this.textareaResizeObserver = undefined;
-                }
-            });
+            onCleanup(() => resizeObserver.disconnect());
         });
     }
 
@@ -136,7 +132,8 @@ export class UnifiedFeedbackComponent {
     feedbackCredits = model<number | undefined>(0);
 
     readonly onDelete = output<void>();
-    readonly onInstructionUnlinked = output<void>();
+    readonly applyInstruction = output<void>();
+    readonly instructionUnlinked = output<void>();
 
     private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
     private readonly titleTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('titleTextarea');
@@ -360,15 +357,6 @@ export class UnifiedFeedbackComponent {
         this.markAdaptedIfSuggestion();
     }
 
-    /** Steps to the next half-point boundary, using the raw value before the input loses focus. */
-    stepAssessmentCredits(direction: -1 | 1): void {
-        if (this.readOnly() || this.feedback()?.gradingInstruction) {
-            return;
-        }
-        const position = (this.feedbackCredits() ?? 0) / this.CREDITS_STEP;
-        this.onCreditsChange((direction > 0 ? Math.floor(position) + 1 : Math.ceil(position) - 1) * this.CREDITS_STEP);
-    }
-
     /**
      * Snaps the typed credits onto the half-point grid when the field is left or Enter is pressed. The points input
      * shows the snapped value again because {@link feedbackCredits} is bound to it with `[ngModel]`.
@@ -432,7 +420,7 @@ export class UnifiedFeedbackComponent {
     }
 
     private getReferencedFeedbackTitle(feedback: Feedback): string {
-        if (feedback.gradingInstruction) {
+        if (this.assessmentLayout() && feedback.gradingInstruction) {
             return '';
         }
         if (feedback.text) {

@@ -62,7 +62,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
         const feedback = this.currentFeedback();
         return !this.readOnly() && Number.isFinite(feedback.credits) && Feedback.hasContent(feedback);
     });
-    protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && !this.viewOnly() && this.selectionService.hasArmedInstruction());
 
     protected displayTitle(): string | undefined {
         const feedback = this.currentFeedback();
@@ -168,7 +167,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
     }
 
     applyArmedInstruction(): void {
-        if (this.isKeyboardDropTarget() && this.structuredGradingCriterionService.applyArmedInstructionToFeedback(this.currentFeedback())) {
+        if (!this.readOnly() && !this.viewOnly() && this.structuredGradingCriterionService.applyArmedInstructionToFeedback(this.currentFeedback())) {
             this.onInstructionLinked();
         }
     }

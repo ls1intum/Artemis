@@ -1,7 +1,8 @@
 <jhi-unified-feedback
     [assessmentLayout]="true"
+    (applyInstruction)="applyArmedInstruction()"
     [editable]="true"
-    (onInstructionUnlinked)="didChange()"
+    (instructionUnlinked)="didChange()"
     [readOnly]="readOnly()"
     [feedback]="feedback()"
     [showReference]="false"
@@ -18,13 +19,6 @@
     (dragover)="$event.preventDefault()"
     (focusin)="onFocus.emit()"
 >
-    <ng-container ngProjectAs="[unifiedFeedbackBeforeDetail]">
-        @if (!readOnly() && selectionService.hasArmedInstruction()) {
-            <button class="assessment-apply-instruction" tumAetUiButton size="small" type="button" variant="outlined" severity="secondary" (click)="applyArmedInstruction()">
-                <span jhiTranslate="artemisApp.exercise.applyArmedInstruction"></span>
-            </button>
-        }
-    </ng-container>
     <!-- The slot is claimed by the container: content projection cannot match an element nested in two @if blocks. -->
     <ng-container ngProjectAs="[unifiedFeedbackExtraControls]">
         @if (criteria(); as criteriaList) {
