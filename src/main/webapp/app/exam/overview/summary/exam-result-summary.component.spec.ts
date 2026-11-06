@@ -322,6 +322,21 @@ describe('ExamResultSummaryComponent', () => {
         vi.useRealTimers();
     });
 
+    it('backs off while automatic results stay pending', async () => {
+        vi.useFakeTimers();
+        fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
+        const pending = { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] };
+        const load = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockReturnValue(of(pending));
+        fixture.detectChanges();
+        await vi.advanceTimersByTimeAsync(6000);
+        expect(load).toHaveBeenCalledTimes(4);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(load).toHaveBeenCalledTimes(4);
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(load).toHaveBeenCalledTimes(5);
+        vi.useRealTimers();
+    });
+
     it('recovers from a failed pending-result refresh', async () => {
         vi.useFakeTimers();
         fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });

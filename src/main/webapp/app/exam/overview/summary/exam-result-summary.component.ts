@@ -222,13 +222,16 @@ export class ExamResultSummaryComponent implements OnInit {
                     ? of(suppliedGrades)
                     : this.studentExamService.find(this.courseId(), studentExam.exam.id, studentExam.id).pipe(map((response) => response.body!))
                 : this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam.id, studentExam.id);
+            // Poll quickly at first, then back off while results stay pending or refreshes keep failing.
+            let pollCount = 0;
             grades
                 .pipe(
                     expand((gradeInfo) => {
                         if (!this.isTestExam || this.studentExam().id !== studentExam.id || !gradeInfo.pendingExerciseIds?.length) {
                             return EMPTY;
                         }
-                        return timer(2000).pipe(
+                        const pollDelay = Math.min(2000 * 2 ** Math.max(0, pollCount++ - 2), 30000);
+                        return timer(pollDelay).pipe(
                             switchMap(() => {
                                 if (this.studentExam().id !== studentExam.id) {
                                     return EMPTY;
