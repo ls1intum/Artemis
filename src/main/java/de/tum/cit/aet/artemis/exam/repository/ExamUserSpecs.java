@@ -249,6 +249,9 @@ public final class ExamUserSpecs {
                     sub.select(se.get(StudentExam_.WORKING_TIME));
                     sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), user), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
                             builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN)))));
+                    // Students without an attempt sort last ascending and first descending on every database (MySQL treats NULL as smallest).
+                    Expression<Integer> missingAttempt = builder.<Integer>selectCase().when(builder.isNull(sub), 1).otherwise(0);
+                    orders.add(asc ? builder.asc(missingAttempt) : builder.desc(missingAttempt));
                     orders.add(asc ? builder.asc(sub) : builder.desc(sub));
                 }
                 case "numberOfExamSessions" -> {
