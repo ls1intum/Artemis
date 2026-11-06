@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -354,9 +355,19 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param exercise    the programming exercise for which the test cases should be extracted from the new result
      */
     public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise) {
-        if (mutationApi.filter(HyperionExerciseMutationApi::isCoordinationEnabled).isPresent() && buildResult instanceof BuildResult localResult
-                && (exercise.getReleaseDate() == null || exercise.getReleaseDate().isAfter(ZonedDateTime.now()))
-                && !programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exercise.getId())) {
+        extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise, true);
+    }
+
+    /**
+     * Same as {@link #extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification, ProgrammingExercise)}, but the
+     * caller decides whether test cases absent from this result are deactivated.
+     *
+     * @param buildResult               the build result to extract test cases from
+     * @param exercise                  the programming exercise the test cases belong to
+     * @param deactivateAbsentTestCases whether existing active test cases absent from this result are deactivated
+     */
+    public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise, boolean deactivateAbsentTestCases) {
+        if (buildResult instanceof BuildResult localResult && isDiscoveryCoordinated(exercise)) {
             if (StringUtils.isBlank(buildResult.assignmentRepoCommitHash()) || StringUtils.isBlank(buildResult.testsRepoCommitHash())) {
                 return;
             }
@@ -364,33 +375,60 @@ public class ProgrammingExerciseFeedbackCreationService {
                     && localResult.jobs().stream().anyMatch(job -> !job.successfulTests().isEmpty()) && localResult.jobs().stream().allMatch(job -> job.failedTests().isEmpty());
             boolean synchronizedCases = mutationApi.get().synchronizeTestCases(exercise.getId(), buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash(),
                     synchronizationBuildSuccessful, () -> {
-                        ProgrammingExercise current = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                        String configuredBranch = buildConfigs.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
-                        String branch = StringUtils.isBlank(configuredBranch) ? defaultBranch : configuredBranch;
-                        if (!buildResult.assignmentRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.SOLUTION), branch))
-                                || !buildResult.testsRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.TESTS), branch))) {
+                        ProgrammingExercise current = currentExerciseAt(exercise.getId(), buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash());
+                        if (current == null) {
                             return false;
                         }
-                        extractCurrentTestCases(buildResult, current);
-                        return true;
+                        extractCurrentTestCases(buildResult, current, deactivateAbsentTestCases);
+                        // The container of a multi-container build reports only its share of the test cases, so it does not
+                        // complete the synchronization; the build's finalization does, over the test cases of every container.
+                        return deactivateAbsentTestCases;
                     });
-            if (!synchronizedCases) {
+            if (!synchronizedCases && deactivateAbsentTestCases) {
                 log.info("Skipped canonical test discovery for exercise {}: the draft is being saved or the build revisions are superseded; the result is still graded",
                         exercise.getId());
             }
             return;
         }
-        extractCurrentTestCases(buildResult, exercise);
+        extractCurrentTestCases(buildResult, exercise, deactivateAbsentTestCases);
     }
 
-    private void extractCurrentTestCases(BuildResultNotification buildResult, ProgrammingExercise exercise) {
-        boolean haveTestCasesChanged = generateTestCasesFromBuildResult(buildResult, exercise);
-        if (haveTestCasesChanged) {
-            // Notify the client about the updated testCases
-            Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
-            Set<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
-            websocketMessagingService.sendMessage(TEST_CASES.at(exercise.getId()), testCaseDTOs);
+    /**
+     * Whether test discovery for the exercise is coordinated with Hyperion's exercise generation: it then runs only for
+     * a build of the current solution and test revisions, and while a generated draft is saved only for the build that
+     * the save expects.
+     */
+    private boolean isDiscoveryCoordinated(ProgrammingExercise exercise) {
+        return mutationApi.filter(HyperionExerciseMutationApi::isCoordinationEnabled).isPresent()
+                && (exercise.getReleaseDate() == null || exercise.getReleaseDate().isAfter(ZonedDateTime.now()))
+                && !programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exercise.getId());
+    }
+
+    /**
+     * @return the exercise, loaded again, if the given revisions are still the heads of its solution and test
+     *         repositories, otherwise null
+     */
+    private ProgrammingExercise currentExerciseAt(long exerciseId, String solutionCommitHash, String testsCommitHash) {
+        ProgrammingExercise current = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        String configuredBranch = buildConfigs.getProgrammingExerciseBuildConfigElseThrow(exerciseId).getBranch();
+        String branch = StringUtils.isBlank(configuredBranch) ? defaultBranch : configuredBranch;
+        if (!solutionCommitHash.equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.SOLUTION), branch))
+                || !testsCommitHash.equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.TESTS), branch))) {
+            return null;
         }
+        return current;
+    }
+
+    private void extractCurrentTestCases(BuildResultNotification buildResult, ProgrammingExercise exercise, boolean deactivateAbsentTestCases) {
+        if (generateTestCasesFromBuildResult(buildResult, exercise, deactivateAbsentTestCases)) {
+            broadcastTestCases(exercise);
+        }
+    }
+
+    private void broadcastTestCases(ProgrammingExercise exercise) {
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
+        Set<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
+        websocketMessagingService.sendMessage(TEST_CASES.at(exercise.getId()), testCaseDTOs);
     }
 
     /**
@@ -403,14 +441,39 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @return Returns true if the test cases have changed, false if they haven't.
      */
     public boolean generateTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise) {
-        Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
+        return generateTestCasesFromBuildResult(buildResult, exercise, true);
+    }
+
+    /**
+     * Same as {@link #generateTestCasesFromBuildResult(BuildResultNotification, ProgrammingExercise)}, but the caller
+     * decides whether test cases absent from this result are deactivated.
+     *
+     * @param buildResult               the build result to extract test cases from
+     * @param exercise                  the programming exercise the test cases belong to
+     * @param deactivateAbsentTestCases whether existing active test cases absent from this result are deactivated
+     * @return true if the test cases have changed, false otherwise
+     */
+    public boolean generateTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise, boolean deactivateAbsentTestCases) {
         // Do not generate test cases for static code analysis feedback
-        Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = getTestCasesFromBuildResult(buildResult, exercise);
+        return reconcileTestCases(getTestCasesFromBuildResult(buildResult, exercise), exercise, deactivateAbsentTestCases);
+    }
+
+    /**
+     * Registers the reported test cases that are new, reactivates the ones that reappear and, if requested, deactivates
+     * the active ones that are absent.
+     *
+     * @param testCasesFromFeedbacks    the test cases the build reported, identified by name
+     * @param exercise                  the programming exercise the test cases belong to
+     * @param deactivateAbsentTestCases whether existing active test cases absent from the reported ones are deactivated
+     * @return true if the test cases have changed, false otherwise
+     */
+    private boolean reconcileTestCases(Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks, ProgrammingExercise exercise, boolean deactivateAbsentTestCases) {
+        Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
         // Get test cases that are not already in database - those will be added as new entries.
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::isSameTestCase))
                 .collect(Collectors.toSet());
         // Get test cases where the activate state has changed (re-added or removed tests).
-        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks,
+        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks, deactivateAbsentTestCases,
                 exercise.getProgrammingLanguage());
 
         Set<ProgrammingExerciseTestCase> testCasesToSave = new HashSet<>();
@@ -436,12 +499,75 @@ public class ProgrammingExerciseFeedbackCreationService {
         return false;
     }
 
+    /**
+     * Reconciles the exercise's test cases with the ones every container of a multi-container solution build reported:
+     * deactivates the active ones that no container reported, and broadcasts the change. Where test discovery is
+     * coordinated with Hyperion (see {@link #extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification, ProgrammingExercise, boolean)}),
+     * it runs only for a build of the current revisions and completes the synchronization a save expects; a build whose
+     * revisions are unknown, as when the sweep finalizes it, then leaves the test cases as they are.
+     *
+     * @param presentTestCaseNames the names of the test cases the merged build result reported
+     * @param exercise             the solution's programming exercise
+     * @param run                  the revisions the build ran and whether every container ran clean, or null if unknown
+     * @param buildSuccessful      whether the build ran clean in every container and passed a test, which a save requires
+     */
+    public void reconcileTestCasesOfMergedSolutionBuild(Set<String> presentTestCaseNames, ProgrammingExercise exercise, @Nullable MergedBuildRun run, boolean buildSuccessful) {
+        if (!isDiscoveryCoordinated(exercise)) {
+            reconcileMergedTestCases(presentTestCaseNames, exercise);
+            return;
+        }
+        if (run == null || StringUtils.isBlank(run.solutionCommitHash()) || StringUtils.isBlank(run.testsCommitHash())) {
+            log.info("Skipped the test case reconciliation of exercise {}: the revisions of its multi-container solution build are unknown", exercise.getId());
+            return;
+        }
+        boolean synchronizedCases = mutationApi.get().synchronizeTestCases(exercise.getId(), run.solutionCommitHash(), run.testsCommitHash(), buildSuccessful, () -> {
+            ProgrammingExercise current = currentExerciseAt(exercise.getId(), run.solutionCommitHash(), run.testsCommitHash());
+            if (current == null) {
+                return false;
+            }
+            reconcileMergedTestCases(presentTestCaseNames, current);
+            return true;
+        });
+        if (!synchronizedCases) {
+            log.info("Skipped the test case reconciliation of exercise {}: the draft is being saved or the build revisions are superseded", exercise.getId());
+        }
+    }
+
+    private void reconcileMergedTestCases(Set<String> presentTestCaseNames, ProgrammingExercise exercise) {
+        // The merged result only names its test cases, and the original CI names are gone, so a test that reappears keeps
+        // the type stored for it.
+        Map<String, ProgrammingExerciseTestCaseType> storedTypes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        testCaseRepository.findByExerciseId(exercise.getId()).forEach(testCase -> storedTypes.put(testCase.getTestName(), testCase.getType()));
+        Set<ProgrammingExerciseTestCase> testCasesFromMergedResult = presentTestCaseNames.stream().map(name -> {
+            var testCase = new ProgrammingExerciseTestCase().testName(name).exercise(exercise).active(true);
+            testCase.setType(storedTypes.getOrDefault(name, ProgrammingExerciseTestCaseType.DEFAULT));
+            return testCase;
+        }).collect(Collectors.toSet());
+        if (reconcileTestCases(testCasesFromMergedResult, exercise, true)) {
+            broadcastTestCases(exercise);
+        }
+    }
+
+    /**
+     * How a multi-container build ran, as far as its test case synchronization needs it.
+     *
+     * @param solutionCommitHash     the commit of the solution (assignment) repository the build ran
+     * @param testsCommitHash        the commit of the test repository the build ran
+     * @param everyContainerRanClean whether the build script of every container exited cleanly and reported no failed
+     *                                   test, including failed tests the merged feedback dropped as unknown
+     */
+    public record MergedBuildRun(String solutionCommitHash, String testsCommitHash, boolean everyContainerRanClean) {
+    }
+
     private Set<ProgrammingExerciseTestCase> getTestCasesWithUpdatedActivation(Set<ProgrammingExerciseTestCase> existingTestCases,
-            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks, ProgrammingLanguage programmingLanguage) {
+            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks, boolean deactivateAbsentTestCases, ProgrammingLanguage programmingLanguage) {
         Map<String, ProgrammingExerciseTestCaseType> reportedTypes = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         testCasesFromFeedbacks.forEach(testCase -> reportedTypes.put(testCase.getTestName(), testCase.getType()));
         // Reuse the grading settings (weight, visibility, etc.) when an inactive test reappears.
-        return existingTestCases.stream().filter(existing -> reportedTypes.containsKey(existing.getTestName()) != existing.isActive()).map(existing -> {
+        return existingTestCases.stream().filter(existing -> {
+            boolean reported = reportedTypes.containsKey(existing.getTestName());
+            return reported ? !existing.isActive() : deactivateAbsentTestCases && existing.isActive();
+        }).map(existing -> {
             var updated = existing.clone().active(!existing.isActive());
             // clone() does not copy the type. A disappearing test keeps its type, and a reappearing one uses
             // the classification of its original CI name rather than the shortened database name.

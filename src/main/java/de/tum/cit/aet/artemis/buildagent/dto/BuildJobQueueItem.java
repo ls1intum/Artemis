@@ -20,10 +20,11 @@ import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNull BuildAgentDTO buildAgent, long participationId, long courseId, long exerciseId, int retryCount,
         int priority, @Nullable BuildStatus status, @NonNull RepositoryInfo repositoryInfo, @NonNull JobTimingInfo jobTimingInfo, @NonNull BuildConfig buildConfig,
-        @Nullable ResultDTO submissionResult, @JsonIgnore @Nullable String cloneToken) implements BuildJobDTO, Serializable, Comparable<BuildJobQueueItem> {
+        @Nullable ResultDTO submissionResult, @Nullable BuildGroupMembership buildGroup, @JsonIgnore @Nullable String cloneToken)
+        implements BuildJobDTO, Serializable, Comparable<BuildJobQueueItem> {
 
     @Serial
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 4L;
 
     /**
      * Constructor for a build job that carries no clone token.
@@ -35,7 +36,7 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
      */
     public BuildJobQueueItem(String id, String name, BuildAgentDTO buildAgent, long participationId, long courseId, long exerciseId, int retryCount, int priority,
             @Nullable BuildStatus status, RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, @Nullable ResultDTO submissionResult) {
-        this(id, name, buildAgent, participationId, courseId, exerciseId, retryCount, priority, status, repositoryInfo, jobTimingInfo, buildConfig, submissionResult, null);
+        this(id, name, buildAgent, participationId, courseId, exerciseId, retryCount, priority, status, repositoryInfo, jobTimingInfo, buildConfig, submissionResult, null, null);
     }
 
     /**
@@ -52,7 +53,7 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
                         queueItem.jobTimingInfo.estimatedCompletionDate(), queueItem.jobTimingInfo.estimatedDuration()),
                 // The job has finished, so it is about to leave the processing list and its token stops being accepted.
                 // Dropping it here keeps it out of every record of a completed build.
-                queueItem.buildConfig(), null, null);
+                queueItem.buildConfig(), null, queueItem.buildGroup(), null);
     }
 
     /**
@@ -67,12 +68,13 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
                 new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null, estimatedCompletionDate, queueItem.jobTimingInfo.estimatedDuration()),
                 // Must be carried over: this is the entry that lands in the processing list, and that is where a core
                 // node looks the token up when the agent clones.
-                queueItem.buildConfig(), null, queueItem.cloneToken());
+                queueItem.buildConfig(), null, queueItem.buildGroup(), queueItem.cloneToken());
     }
 
     public BuildJobQueueItem(BuildJobQueueItem queueItem, ResultDTO submissionResult) {
         this(queueItem.id(), queueItem.name(), queueItem.buildAgent(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
-                queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult, queueItem.cloneToken());
+                queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult, queueItem.buildGroup(),
+                queueItem.cloneToken());
     }
 
     public BuildJobQueueItem(BuildJobQueueItem queueItem, BuildAgentDTO buildAgent, int newRetryCount) {
@@ -80,7 +82,7 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
                 queueItem.repositoryInfo(),
                 new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null, null, queueItem.jobTimingInfo().estimatedDuration()),
                 // A retry keeps the same job id, so the same token stays valid once the job is claimed again.
-                queueItem.buildConfig(), null, queueItem.cloneToken());
+                queueItem.buildConfig(), null, queueItem.buildGroup(), queueItem.cloneToken());
     }
 
     @Override
@@ -107,5 +109,20 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
         return "BuildJobQueueItem[id=" + id + ", name=" + name + ", buildAgent=" + buildAgent + ", participationId=" + participationId + ", courseId=" + courseId + ", exerciseId="
                 + exerciseId + ", retryCount=" + retryCount + ", priority=" + priority + ", status=" + status + ", repositoryInfo=" + repositoryInfo + ", jobTimingInfo="
                 + jobTimingInfo + ", buildConfig=" + buildConfig + ", submissionResult=" + submissionResult + ", cloneToken=" + (cloneToken == null ? "null" : "***") + "]";
+    }
+
+    /**
+     * The membership of a container job in the build group its results are merged under; a job of a build with at most
+     * one container has none.
+     *
+     * @param buildGroupId           the id of the build group, shared by every job of the same build
+     * @param expectedContainerCount the number of jobs in the group, fixed at trigger time so an edit of the build plan
+     *                                   cannot change it for a running build
+     * @param containerName          the name of the container this job builds
+     */
+    public record BuildGroupMembership(@NonNull String buildGroupId, int expectedContainerCount, @NonNull String containerName) implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
     }
 }

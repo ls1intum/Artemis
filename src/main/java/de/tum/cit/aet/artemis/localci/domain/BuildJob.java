@@ -8,7 +8,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,6 +29,10 @@ public class BuildJob extends DomainObject {
     @Column(name = "build_job_id")
     private String buildJobId;
 
+    // Shared by the container jobs of one multi-container build; null for a job that builds a submission on its own.
+    @Column(name = "build_group_id")
+    private String buildGroupId;
+
     @Column(name = "name")
     private String name;
 
@@ -41,8 +45,9 @@ public class BuildJob extends DomainObject {
     @Column(name = "participation_id")
     private Long participationId;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(unique = true)
+    // Many-to-one: the container jobs of a multi-container build all link to the one result they merged into.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn
     private Result result;
 
     @Column(name = "build_agent_address")
@@ -84,10 +89,31 @@ public class BuildJob extends DomainObject {
     @Column(name = "docker_image")
     private String dockerImage;
 
+    /**
+     * Whether the build this job ran failed (e.g. no test results although tests were expected, or a compile-only script
+     * exited non-zero); the status only records how the job executed. Kept per job because overlapping builds of one
+     * commit share the submission, whose build-failed flag a build group derives from its jobs when it finalizes.
+     */
+    @Column(name = "build_failed")
+    private boolean buildFailed;
+
+    /**
+     * Whether the build script of this job exited cleanly and reported no failed test. Neither the status nor the merged
+     * feedback records it, since feedback of a test case the exercise does not know yet is dropped; a multi-container
+     * solution build completes a test case synchronization only if every job of its group ran clean.
+     */
+    @Column(name = "clean_run")
+    private boolean cleanRun;
+
     public BuildJob() {
     }
 
     public BuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
+        this(queueItem, buildStatus, result, false);
+    }
+
+    public BuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result, boolean buildFailed) {
+        this.buildFailed = buildFailed;
         this.buildJobId = queueItem.id();
         this.name = queueItem.name();
         this.exerciseId = queueItem.exerciseId();
@@ -106,14 +132,39 @@ public class BuildJob extends DomainObject {
         this.triggeredByPushTo = queueItem.repositoryInfo().triggeredByPushTo();
         this.buildStatus = buildStatus;
         this.dockerImage = queueItem.buildConfig().dockerImage();
+        this.buildGroupId = queueItem.buildGroup() != null ? queueItem.buildGroup().buildGroupId() : null;
     }
 
     public String getBuildJobId() {
         return buildJobId;
     }
 
+    public boolean isBuildFailed() {
+        return buildFailed;
+    }
+
+    public void setBuildFailed(boolean buildFailed) {
+        this.buildFailed = buildFailed;
+    }
+
+    public boolean isCleanRun() {
+        return cleanRun;
+    }
+
+    public void setCleanRun(boolean cleanRun) {
+        this.cleanRun = cleanRun;
+    }
+
     public void setBuildJobId(String buildJobId) {
         this.buildJobId = buildJobId;
+    }
+
+    public String getBuildGroupId() {
+        return buildGroupId;
+    }
+
+    public void setBuildGroupId(String buildGroupId) {
+        this.buildGroupId = buildGroupId;
     }
 
     public String getName() {

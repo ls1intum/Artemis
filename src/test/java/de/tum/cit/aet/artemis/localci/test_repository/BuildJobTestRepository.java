@@ -20,4 +20,13 @@ public interface BuildJobTestRepository extends BuildJobRepository {
     Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(Long participationId);
 
     Optional<BuildJob> findFirstByParticipationIdOrderByBuildJobIdDesc(Long participationId);
+
+    /**
+     * Counts the build jobs linked to the given result. The containers of a multi-container build link their jobs to the
+     * result they merged into, so this is how many containers contributed to it.
+     *
+     * @param resultId the id of the aggregated result
+     * @return the number of build jobs linked to the result
+     */
+    long countByResultId(long resultId);
 }

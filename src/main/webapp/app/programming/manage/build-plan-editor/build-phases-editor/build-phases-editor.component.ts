@@ -22,6 +22,8 @@ export class BuildPhasesEditorComponent {
     readonly phases = model.required<BuildPhase[]>();
     readonly readonly = input(false);
     readonly isExamMode = input(false);
+    /** Keeps the ids of the controls unique when several phase lists share a page, as the containers of a build plan do. */
+    readonly idPrefix = input('');
 
     readonly phaseCount = computed(() => this.phases().length);
     readonly phaseNames = computed(() => this.phases().map((phase) => phase.name));

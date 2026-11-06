@@ -265,7 +265,7 @@ class BuildJobExecutionServiceTest {
         var timing = new JobTimingInfo(completedAt.minusMinutes(1), null, null, null, 60);
         var config = new BuildConfig("echo test", "ubuntu:24.04", "commit", explicitCommits ? "assignment-commit" : null, explicitCommits ? "test-commit" : null, "main",
                 ProgrammingLanguage.JAVA, null, false, false, List.of("results/*.xml"), 60, "assignment", "tests", "solution", new DockerRunConfig(List.of(), null, 0, 0, 0));
-        return new BuildJobQueueItem("job", "job", new BuildAgentDTO(null, null, null), 1, 2, 3, 0, 1, null, repositories, timing, config, null, "job-clone-token");
+        return new BuildJobQueueItem("job", "job", new BuildAgentDTO(null, null, null), 1, 2, 3, 0, 1, null, repositories, timing, config, null, null, "job-clone-token");
     }
 
     private byte[] archive(Map<String, String> entries) throws IOException {

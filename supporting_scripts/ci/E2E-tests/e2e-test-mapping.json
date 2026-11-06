@@ -1132,6 +1132,7 @@
         "e2e/exercise/modeling/ModelingExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "modeling"],
         "e2e/exercise/modeling/ModelingExerciseParticipation.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "modeling"],
         "e2e/exercise/modeling/ModelingTeamCollaboration.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "modeling"],
+        "e2e/exercise/programming/BuildPlanEditor.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "programming"],
         "e2e/exercise/programming/CodeEditorResize.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "programming"],
         "e2e/exercise/programming/ProgrammingExerciseAssessment.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "programming"],
         "e2e/exercise/programming/ProgrammingExerciseManagement.spec.ts": ["assessment", "atlas", "communication", "course", "exam", "exercise", "iris", "programming"],

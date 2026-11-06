@@ -38,7 +38,7 @@ class BuildJobTest {
                 new RepositoryInfo("abc-student", RepositoryType.USER, RepositoryType.TESTS, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(SUBMITTED_AT, STARTED_AT, COMPLETED_AT, null, 150), new BuildConfig("script", "ghcr.io/example/image:1", "commit-to-build", "assignment-commit",
                         "test-commit", "main", null, null, false, false, List.of(), 0, null, null, null, null),
-                null, "clone-token");
+                null, null, "clone-token");
     }
 
     @Test

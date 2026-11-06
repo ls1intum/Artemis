@@ -26,6 +26,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
@@ -42,6 +43,187 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.submission", "result.submission.participation", "result.submission.participation.exercise" })
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
+
+    /**
+     * Finds the ids of the results the jobs of a build group link to; the first is the group's aggregated result.
+     *
+     * @param buildGroupId the id of the build group
+     * @param pageable     limits the query, typically to the first linked result
+     * @return the ids of the results linked to the group's jobs, ordered by job id
+     */
+    @Query("""
+            SELECT b.result.id
+            FROM BuildJob b
+            WHERE b.buildGroupId = :buildGroupId
+                AND b.result IS NOT NULL
+            ORDER BY b.id ASC
+            """)
+    List<Long> findResultIdsOfBuildGroup(@Param("buildGroupId") String buildGroupId, Pageable pageable);
+
+    /**
+     * Finds the candidates for closing a build group: its aggregated result is still in progress and none of its jobs is
+     * queued or building. A job may still be missing; whether it will be retried is decided when the group is closed, see
+     * LocalCIResultProcessingService#finalizeCompletedBuildGroups. Only automatic results count: once merged into a tutor's
+     * assessment, the jobs link to it, and a draft has no completion date either. The oldest groups come first: they have
+     * left the retry window, so groups still waiting for a retry do not keep them out of the page.
+     *
+     * @param finishedStatuses the statuses in which a job counts as finished
+     * @param submittedSince   only groups submitted at or after this date
+     * @param completedBefore  only groups with a linked job that finished before this date
+     * @param pageable         limits the number of groups
+     * @return the ids of the build groups, oldest first
+     */
+    @Query("""
+            SELECT b.buildGroupId
+            FROM BuildJob b
+            WHERE b.buildGroupId IS NOT NULL
+                AND b.result IS NOT NULL
+                AND b.result.completionDate IS NULL
+                AND b.result.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                AND b.buildSubmissionDate >= :submittedSince
+                AND b.buildCompletionDate < :completedBefore
+                AND NOT EXISTS (
+                    SELECT o
+                    FROM BuildJob o
+                    WHERE o.buildGroupId = b.buildGroupId
+                        AND o.buildStatus NOT IN :finishedStatuses
+                        AND o.buildStatus <> de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.MISSING)
+            GROUP BY b.buildGroupId
+            ORDER BY MIN(b.buildSubmissionDate) ASC
+            """)
+    List<String> findBuildGroupsWithResultInProgressAndNoRunningJob(@Param("finishedStatuses") Collection<BuildStatus> finishedStatuses,
+            @Param("submittedSince") ZonedDateTime submittedSince, @Param("completedBefore") ZonedDateTime completedBefore, Pageable pageable);
+
+    /**
+     * Finds the exercise of a build group, which all of its jobs share.
+     *
+     * @param buildGroupId the id of the build group
+     * @return the id of the exercise, or null if no job of the group names one
+     */
+    @Query("""
+            SELECT MIN(b.exerciseId)
+            FROM BuildJob b
+            WHERE b.buildGroupId = :buildGroupId
+            """)
+    @Nullable
+    Long findExerciseIdOfBuildGroup(@Param("buildGroupId") String buildGroupId);
+
+    /**
+     * Checks whether a job of the participation was submitted after the given date, in which case
+     * {@link #findMissingJobsToRetryInTimeRange} does not retry an older missing job any more.
+     *
+     * @param participationId the id of the participation
+     * @param submittedAfter  only jobs submitted after this date
+     * @return true if such a job exists
+     */
+    boolean existsByParticipationIdAndBuildSubmissionDateAfter(long participationId, ZonedDateTime submittedAfter);
+
+    /**
+     * Checks whether a job of the build group links to an automatic result that is still in progress, see
+     * {@link #findBuildGroupsWithResultInProgressAndNoRunningJob}.
+     *
+     * @param buildGroupId the id of the build group
+     * @return true if a job of the group links to an automatic result without a completion date
+     */
+    @Query("""
+            SELECT COUNT(b) > 0
+            FROM BuildJob b
+            WHERE b.buildGroupId = :buildGroupId
+                AND b.result IS NOT NULL
+                AND b.result.completionDate IS NULL
+                AND b.result.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+            """)
+    boolean existsResultInProgressOfBuildGroup(@Param("buildGroupId") String buildGroupId);
+
+    /**
+     * Checks whether a build of the aggregated result's submission that was triggered after the given date has already
+     * finalized: one of its jobs links to a completed result of the submission or to the assessment its feedback was
+     * merged into.
+     *
+     * @param aggregatedResultId the id of an aggregated result of the submission
+     * @param submittedAfter     only builds triggered after this date
+     * @return true if such a build has finalized
+     */
+    @Query("""
+            SELECT COUNT(b) > 0
+            FROM BuildJob b, Result aggregate
+            WHERE aggregate.id = :aggregatedResultId
+                AND b.result.submission = aggregate.submission
+                AND b.buildSubmissionDate > :submittedAfter
+                AND (b.result.completionDate IS NOT NULL OR b.result.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC)
+            """)
+    boolean existsFinalizedBuildOfSubmissionTriggeredAfter(@Param("aggregatedResultId") long aggregatedResultId, @Param("submittedAfter") ZonedDateTime submittedAfter);
+
+    /**
+     * Finds the completed automatic results of the aggregated result's submission that builds triggered before the given
+     * date produced, but that were created after the aggregated result and would therefore be taken for the latest result.
+     *
+     * @param aggregatedResultId the id of an aggregated result of the submission
+     * @param submittedBefore    only builds triggered before this date
+     * @return the ids of these results
+     */
+    @Query("""
+            SELECT DISTINCT b.result.id
+            FROM BuildJob b, Result aggregate
+            WHERE aggregate.id = :aggregatedResultId
+                AND b.result.submission = aggregate.submission
+                AND b.result.id > :aggregatedResultId
+                AND b.buildSubmissionDate < :submittedBefore
+                AND b.result.completionDate IS NOT NULL
+                AND b.result.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+            """)
+    List<Long> findLaterCreatedResultsOfSubmissionTriggeredBefore(@Param("aggregatedResultId") long aggregatedResultId, @Param("submittedBefore") ZonedDateTime submittedBefore);
+
+    /**
+     * Links the build jobs that link to one result to another result instead.
+     *
+     * @param resultId  the id of the result the jobs link to now
+     * @param newResult the result the jobs link to afterwards
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE BuildJob b
+            SET b.result = :newResult
+            WHERE b.result.id = :resultId
+            """)
+    void relinkJobsOfResult(@Param("resultId") long resultId, @Param("newResult") Result newResult);
+
+    /**
+     * Checks whether a job of the participation that builds the given commit was submitted after the given date. A null
+     * commit matches the jobs triggered without one, such as a solution build after a push to an auxiliary repository.
+     *
+     * @param participationId the id of the participation
+     * @param commitHash      the commit the job builds, or null
+     * @param submittedAfter  only jobs submitted after this date
+     * @return true if such a job exists
+     */
+    boolean existsByParticipationIdAndCommitHashAndBuildSubmissionDateAfter(long participationId, @Nullable String commitHash, ZonedDateTime submittedAfter);
+
+    /**
+     * Finds the jobs of a build group, one per container of a multi-container build.
+     *
+     * @param buildGroupId the id of the build group
+     * @return the group's jobs
+     */
+    List<BuildJob> findAllByBuildGroupId(String buildGroupId);
+
+    /**
+     * Checks whether a build job links to the given result.
+     *
+     * @param resultId the id of the result
+     * @return true if at least one build job links to the result
+     */
+    boolean existsByResultId(long resultId);
+
+    /**
+     * The jobs of a build group together with the result they link to and its submission, participation and exercise, as the build overview shows them.
+     *
+     * @param buildGroupId the id of the build group
+     * @return the group's jobs with all related data
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.submission", "result.submission.participation", "result.submission.participation.exercise" })
+    List<BuildJob> findWithDataByBuildGroupId(String buildGroupId);
 
     /**
      * Retrieves all build job ids that were submitted before the given date.
@@ -208,12 +390,26 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     BuildJobStatisticsDTO findBuildJobStatisticsByExerciseId(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Updates the status of a build job that has not finished yet. A finished job is left alone: callers act on a job they
+     * read earlier, and reopening one whose result was processed since would make its build group look incomplete.
+     *
+     * @param buildJobId the build job id
+     * @param newStatus  the new build status
+     */
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE BuildJob b
             SET b.buildStatus = :newStatus
             WHERE b.buildJobId = :buildJobId
+                AND b.buildStatus NOT IN (
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.FAILED,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.ERROR,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.CANCELLED,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.TIMEOUT
+                )
             """)
     void updateBuildJobStatus(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus);
 
@@ -221,6 +417,9 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * Update the build job status and set the build start date if it is not set yet. The buildStartDate is required to calculate the statistics and the correctly display in the
      * build overview.
      * This is used to update missing jobs that do not have a build start date yet.
+     * <p>
+     * A finished job is left alone, as in {@link #updateBuildJobStatus}: the processing-map event that marks a job as
+     * building is asynchronous and can arrive after the job's result was processed.
      *
      * @param buildJobId     the build job id
      * @param newStatus      the new build status
@@ -233,6 +432,13 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             SET b.buildStatus = :newStatus,
                 b.buildStartDate = CASE WHEN b.buildStartDate IS NULL THEN :buildStartDate ELSE b.buildStartDate END
             WHERE b.buildJobId = :buildJobId
+                AND b.buildStatus NOT IN (
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.FAILED,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.ERROR,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.CANCELLED,
+                    de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.TIMEOUT
+                )
             """)
     void updateBuildJobStatusWithBuildStartDate(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus,
             @Param("buildStartDate") ZonedDateTime buildStartDate);

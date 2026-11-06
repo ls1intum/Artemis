@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Whether the build script of a job exited cleanly and reported no failed test, which neither its status nor its
+         merged feedback records; a multi-container solution build may complete a test case synchronization only if
+         every job of its group ran clean. A job that never reported does not count as clean. -->
+    <changeSet id="20261019153131-01-add-clean-run-to-build-job" author="greinwald">
+        <addColumn tableName="build_job">
+            <column name="clean_run" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
