@@ -19,7 +19,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             tumAetUiButton
             size="small"
             [variant]="inDropdown() ? 'text' : 'solid'"
-            [severity]="inDropdown() ? 'secondary' : 'primary'"
+            severity="secondary"
             [class]="inDropdown() ? 'w-full justify-start!' : ''"
             [jhiFeatureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
             [forceDisabled]="!programmingExercises() || false"

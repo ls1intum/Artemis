@@ -4,7 +4,7 @@
         tumAetUiButton
         size="small"
         [variant]="inDropdown() ? 'text' : 'solid'"
-        [severity]="inDropdown() ? 'secondary' : 'info'"
+        severity="secondary"
         [class]="inDropdown() ? 'w-full justify-start!' : ''"
         id="export-results-dropdown"
         [tumAetUiMenuTrigger]="resultExportMenu"
@@ -49,7 +49,7 @@
         tumAetUiButton
         size="small"
         [variant]="inDropdown() ? 'text' : 'solid'"
-        [severity]="inDropdown() ? 'secondary' : 'info'"
+        severity="secondary"
         [class]="inDropdown() ? 'w-full justify-start!' : ''"
         (click)="exportResults(false, false)"
     >

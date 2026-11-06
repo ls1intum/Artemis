@@ -752,6 +752,7 @@ export default tseslint.config(
             'packages/tum-aet-ui/src/lib/**/*.html',
             'src/main/webapp/app/exercise/**/*.html',
             'src/main/webapp/app/programming/manage/detail/**/*.html',
+            'src/main/webapp/app/programming/manage/vcs-repository-access-log-view/**/*.html',
             'src/main/webapp/app/quiz/manage/detail/**/*.html',
             'src/main/webapp/app/quiz/manage/manage-buttons/**/*.html',
             'src/main/webapp/app/quiz/manage/lifecyle-buttons/**/*.html',

@@ -148,28 +148,12 @@ describe('ProgrammingRepositoryBuildOverviewComponent', () => {
         ]);
     });
 
-    it.each(['/course-management/3/programming-exercises/12', '/course-management/3/exams/4/exercise-groups/5/programming-exercises/12'])(
-        'preserves browser editing for both participations under %s',
-        async (base) => {
-            detail.data.editorBaseResource = base;
-            await render();
-            const codes = fixture.debugElement.queryAll(By.directive(CodeButtonComponent)).map((element) => element.componentInstance as CodeButtonComponent);
-            expect(codes.map((code) => code.repositoryEditorLink())).toEqual([
-                [base, 'code-editor', RepositoryType.TEMPLATE, 1],
-                [base, 'code-editor', RepositoryType.SOLUTION, 2],
-                undefined,
-                undefined,
-            ]);
-            expect(codes[0].repositoryViewLink()).toEqual(['.', 'repository', RepositoryType.TEMPLATE]);
-            expect(codes[1].repositoryViewLink()).toEqual(['.', 'repository', RepositoryType.SOLUTION]);
-        },
-    );
-
-    it('does not offer editor access to viewers even when a base resource is available', async () => {
-        detail.data.editorBaseResource = '/course-management/3/programming-exercises/12';
-        detail.data.exercise.isAtLeastEditor = false;
+    it('keeps repository panels read-only while editing is offered in the detail toolbar', async () => {
         await render();
-        expect(fixture.debugElement.queryAll(By.directive(CodeButtonComponent)).every((element) => !element.componentInstance.repositoryEditorLink())).toBe(true);
+        const codes = fixture.debugElement.queryAll(By.directive(CodeButtonComponent)).map((element) => element.componentInstance as CodeButtonComponent);
+        expect(codes[0].repositoryViewLink()).toEqual(['.', 'repository', RepositoryType.TEMPLATE]);
+        expect(codes[1].repositoryViewLink()).toEqual(['.', 'repository', RepositoryType.SOLUTION]);
+        expect(fixture.nativeElement.querySelector('[data-testid="edit-repository-button"]')).toBeNull();
     });
 
     it('uses configured paths and optional solution checkout independently for each build', async () => {

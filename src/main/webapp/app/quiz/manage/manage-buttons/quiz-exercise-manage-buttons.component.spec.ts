@@ -323,12 +323,12 @@ describe('QuizExercise Management Buttons Component evaluate button', () => {
         render(true, true);
         fixture.componentRef.setInput('detailPageSection', 'administration');
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('section [id="delete-quiz-456"]')).not.toBeNull();
-        expect(fixture.nativeElement.querySelectorAll('section [jhiDeleteButton]')).toHaveLength(2);
+        expect(fixture.nativeElement.querySelector('[id="delete-quiz-456"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('[jhiDeleteButton]')).toHaveLength(2);
         expect(fixture.nativeElement.querySelector('jhi-exercise-detail-actions')).toBeNull();
         fixture.componentRef.setInput('quizExercise', Object.assign(new QuizExercise({ id: 123 }, undefined), { id: 456, isAtLeastTutor: true }));
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('section')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[jhiDeleteButton]')).toBeNull();
     });
 
     it('preserves the edit lock while a quiz is running', () => {
