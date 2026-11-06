@@ -691,6 +691,10 @@
                     "verifyAttendance": "Verify attendance"
                 },
                 "statisticsFailed": "Exam statistics could not be loaded. Retry before registering students.",
+                "registrationSavedPreparationPending": "Registration was saved. Preparation is still pending. Retry preparation so newly registered students can start the exam.",
+                "generationSavedPreparationPending": "The new student exams were generated and saved. Cleanup is still pending. Retry preparation to finish cleanup and prepare these exams.",
+                "retryPreparation": "Retry preparation",
+                "preparationRetryFailed": "Preparation is still pending. Please try again. {{message}}",
                 "registrationClosed": "Registration is closed because the exam has ended.",
                 "registrationAfterGeneration": "Student exams have already been generated. Newly registered students will receive their own exam automatically. Exercises will also be prepared if preparation has already started. Continue?",
                 "manualAttendance": {

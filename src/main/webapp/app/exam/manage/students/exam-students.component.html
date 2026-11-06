@@ -29,6 +29,30 @@
         </div>
     }
 
+    @let pending = preparationPending();
+    @if (pending && pending.examId === exam().id) {
+        <tumaet-ui-message severity="warn" role="alert" data-testid="exam-preparation-pending">
+            <div class="flex flex-wrap items-center gap-2">
+                <span
+                    [jhiTranslate]="
+                        pending.kind === 'registration'
+                            ? 'artemisApp.examManagement.examStudents.registrationSavedPreparationPending'
+                            : 'artemisApp.examManagement.examStudents.generationSavedPreparationPending'
+                    "
+                ></span>
+                <button
+                    tumAetUiButton
+                    type="button"
+                    severity="secondary"
+                    data-testid="retry-pending-exam-preparation"
+                    [disabled]="preparationRetrying()"
+                    (click)="retryPendingPreparation()"
+                    jhiTranslate="artemisApp.examManagement.examStudents.retryPreparation"
+                ></button>
+            </div>
+        </tumaet-ui-message>
+    }
+
     <div class="flex min-h-0 flex-1 flex-col" data-testid="exam-students-table">
         <tumaet-ui-table
             [columns]="columns()"
@@ -357,7 +381,13 @@
 </ng-template>
 
 <jhi-students-room-distribution-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadStudentsView(); reseatingDialog.updateRoomsUsedInExam()" />
-<jhi-users-import-dialog [courseId]="courseId()" [exam]="exam()" [examUserMode]="true" (importCompleted)="reloadStudentsView()" />
+<jhi-users-import-dialog
+    [courseId]="courseId()"
+    [exam]="exam()"
+    [examUserMode]="true"
+    (importCompleted)="reloadStudentsView()"
+    (examRegistrationCompleted)="onImportedRegistrationCompleted($event)"
+/>
 <jhi-students-export-dialog [courseId]="courseId()" [exam]="exam()" />
 <jhi-student-upload-images-dialog [courseId]="courseId()" [exam]="exam()" (finished)="reloadStudentsView()" />
 <jhi-students-reseating-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadStudentsView(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />

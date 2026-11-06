@@ -38,6 +38,8 @@ import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model'
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
 
+export const EXAM_PREPARATION_PENDING_HEADER = 'X-Artemis-Preparation-Pending';
+
 @Service()
 export class ExamManagementService {
     private http = inject(HttpClient);
@@ -306,7 +308,7 @@ export class ExamManagementService {
      * @return studentDtos of students that were not found in the system
      */
     addAllStudentsOfCourseToExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
-        return this.http.post<HttpResponse<void>>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, { observe: 'response' });
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/register-course-students`, {}, { observe: 'response' });
     }
 
     /**
