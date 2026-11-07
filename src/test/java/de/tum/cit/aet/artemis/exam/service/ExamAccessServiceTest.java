@@ -380,6 +380,8 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGenerateIndividualStudentExam_ignoresStaleCallerExerciseGroups() {
+        // Exercise generation, rather than reusing the empty student exam installed by the common fixture.
+        studentExamRepository.delete(studentExam1);
         // Simulates a caller (ExamAccessService) that loaded the exam before a concurrent exercise-group move: the
         // in-memory exercise groups no longer match the database, which actually has exerciseGroup1 with a quiz.
         Exam staleExam = new Exam();
