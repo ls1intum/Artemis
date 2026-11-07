@@ -959,7 +959,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 (SELECT COUNT(a) FROM AnswerPost a JOIN a.post p WHERE p.conversation.id = c.id),
                 (SELECT COUNT(cl) FROM CompetencyExerciseLink cl WHERE cl.exercise.id = :exerciseId),
                 (SELECT COUNT(u) FROM ExerciseUnit u WHERE u.exercise.id = :exerciseId),
-                (SELECT COUNT(se) FROM StudentExam se JOIN se.exercises sex WHERE sex.id = :exerciseId AND se.testRun = FALSE)
+                (SELECT COUNT(se) FROM StudentExam se JOIN se.exercises sex WHERE sex.id = :exerciseId AND (se.testRun IS NULL OR se.testRun = FALSE))
             )
             FROM Exercise e
                 LEFT JOIN Channel c ON c.exercise.id = e.id

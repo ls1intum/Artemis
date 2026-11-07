@@ -35,11 +35,13 @@ import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
@@ -398,9 +400,18 @@ public class ExerciseResource {
      * @return the {@link ResponseEntity} with status {@code 200} and the progress, or {@code 204} if the exercise is not being deleted
      */
     @GetMapping("exercises/{exerciseId}/deletion-progress")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastStudent
+    @ManualConfig
     public ResponseEntity<EntityDeletionProgressDTO> getDeletionProgress(@PathVariable long exerciseId) {
         log.debug("REST request to get the deletion progress of exercise : {}", exerciseId);
+        if (exerciseRepository.existsById(exerciseId)) {
+            authCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.INSTRUCTOR, exerciseId);
+        }
+        else {
+            // The exercise is gone, so the course is taken from the deletion, which remembers it for as long as the progress can be read.
+            long courseId = exerciseDeletionService.findCourseIdOfDeletion(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+            authCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseId);
+        }
         return exerciseDeletionService.getDeletionProgress(exerciseId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
 

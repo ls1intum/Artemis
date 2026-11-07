@@ -548,8 +548,9 @@ describe('Course Management Exercises Component', () => {
             nextFixture.destroy();
         });
 
-        it('lets remaining deletes settle and surfaces the first error on partial failure', () => {
+        it('lets remaining deletes settle when one request is refused and still reloads', () => {
             programmingDelete.mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'boom', status: 500 })));
+            const reloadSpy = vi.spyOn(courseManagementService, 'findWithExercises');
             const errors: string[] = [];
             comp.selectedDeleteError$.subscribe((e) => errors.push(e));
             comp.toggleSelection(1);
@@ -558,8 +559,9 @@ describe('Course Management Exercises Component', () => {
             comp.deleteSelectedExercises();
 
             expect(textDelete).toHaveBeenCalled();
-            expect(errors).toHaveLength(1);
-            expect(errors[0]).not.toBe('');
+            // the refused request is reported by the global error handling, the confirmation dialog is simply ended
+            expect(errors).toEqual(['']);
+            expect(reloadSpy).toHaveBeenCalled();
         });
 
         it('does not open one progress dialog per exercise and announces the batch', () => {
@@ -575,7 +577,7 @@ describe('Course Management Exercises Component', () => {
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.deletionProgress.bulkStarted', { count: 2 });
         });
 
-        it('surfaces the error of a background deletion that failed and still reloads', () => {
+        it('ends the confirmation dialog and reloads when a background deletion failed, leaving the report of the failure to the service', () => {
             const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
             deletionService.status = EntityDeletionStatus.FAILED;
             deletionService.errorMessage = 'Repository is locked';
@@ -583,26 +585,12 @@ describe('Course Management Exercises Component', () => {
             const errors: string[] = [];
             comp.selectedDeleteError$.subscribe((e) => errors.push(e));
             comp.toggleSelection(1);
-
-            comp.deleteSelectedExercises();
-
-            expect(errors).toEqual([expect.stringMatching(/: Repository is locked$/)]);
-            expect(reloadSpy).toHaveBeenCalled();
-        });
-
-        it('reports every failed deletion of a bulk deletion, not just the first one', () => {
-            const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
-            deletionService.status = EntityDeletionStatus.FAILED;
-            deletionService.errorMessage = 'Repository is locked';
-            const errors: string[] = [];
-            comp.selectedDeleteError$.subscribe((e) => errors.push(e));
-            comp.toggleSelection(1);
             comp.toggleSelection(2);
 
             comp.deleteSelectedExercises();
 
-            expect(errors).toHaveLength(1);
-            expect(errors[0].split('\n')).toHaveLength(2);
+            expect(errors).toEqual(['']);
+            expect(reloadSpy).toHaveBeenCalled();
         });
 
         it('adds up the deletion summaries of all selected exercises', () => {

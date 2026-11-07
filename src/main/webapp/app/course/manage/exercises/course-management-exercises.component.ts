@@ -73,7 +73,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
-import { exerciseDeletionTarget, isDeletionCompleted } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { exerciseDeletionTarget } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { mergeSummaryCategories } from 'app/shared-ui/delete-dialog/entity-summary.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -476,13 +476,14 @@ export class CourseManagementExercisesComponent implements OnInit {
             this.selectedDeleteError.next('');
             return;
         }
-        // Every deletion runs in the background on the server; silent runs report on the whole batch below instead of opening one progress
-        // dialog per exercise. catchError turns a rejected or failed deletion into an emitted value, so forkJoin waits for the whole batch
-        // instead of unsubscribing the remaining deletions on the first failure.
+        // Every deletion runs in the background on the server and is silent: there is no progress dialog per exercise. The service itself
+        // raises an alert for each deletion that fails, and the global error handling reports a refused request, so the failures are reported
+        // even after the instructor left this page. This component only has to refresh the view once the whole batch ended. catchError turns a
+        // rejected request into an emitted value, so forkJoin waits for the whole batch instead of unsubscribing the remaining deletions.
         const deletionObservables = exercisesToDelete.map((exercise) =>
             this.entityDeletionService.delete(exerciseDeletionTarget(exercise), this.deleteObservableFor(exercise, event), { silent: true }).pipe(
-                map((progress) => (isDeletionCompleted(progress) ? undefined : new Error(progress.errorMessage))),
-                catchError((error: HttpErrorResponse) => of(error)),
+                map(() => undefined),
+                catchError(() => of(undefined)),
             ),
         );
         this.alertService.info('artemisApp.deletionProgress.bulkStarted', { count: exercisesToDelete.length });
@@ -490,15 +491,11 @@ export class CourseManagementExercisesComponent implements OnInit {
         forkJoin(deletionObservables)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (results) => {
+                next: () => {
+                    this.selectedDeleteError.next('');
                     if (this.courseContextVersion !== contextVersion) {
                         return;
                     }
-                    // Name every exercise that could not be deleted, so none of the failures is hidden behind the first one.
-                    const failures = results.flatMap((result, index) =>
-                        result === undefined ? [] : [result.message ? `${exercisesToDelete[index].title}: ${result.message}` : `${exercisesToDelete[index].title}`],
-                    );
-                    this.selectedDeleteError.next(failures.join('\n'));
                     // Some exercises may already be gone; reload so the view matches the server (even on a partial failure).
                     this.clearSelection();
                     this.loadCourseExercises(courseId);

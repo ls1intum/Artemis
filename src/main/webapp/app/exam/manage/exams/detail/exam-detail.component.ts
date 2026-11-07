@@ -191,7 +191,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         const courseId = exam.course!.id!;
         this.entityDeletionService.delete(examDeletionTarget(courseId, examId, exam.title), this.examManagementService.delete(courseId, examId)).subscribe({
             next: (progress) => {
-                this.onDeletionEnded(progress, courseId);
+                this.onDeletionEnded(progress, courseId, examId);
                 // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 // The subject is closed with the component, and the deletion can end after the user left the page.
                 if (this.isAlive()) {
@@ -207,13 +207,16 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      */
     private resumeRunningDeletion(exam: Exam): void {
         const courseId = exam.course!.id!;
-        this.entityDeletionService.resume(examDeletionTarget(courseId, exam.id!, exam.title)).subscribe((progress) => this.onDeletionEnded(progress, courseId));
+        this.entityDeletionService
+            .resume(examDeletionTarget(courseId, exam.id!, exam.title), this.destroyRef)
+            .subscribe((progress) => this.onDeletionEnded(progress, courseId, exam.id));
     }
 
-    private onDeletionEnded(progress: EntityDeletionProgress, courseId: number): void {
+    private onDeletionEnded(progress: EntityDeletionProgress, courseId: number, deletedExamId: number | undefined): void {
         if (isDeletionCompleted(progress)) {
             this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
-            if (this.isAlive()) {
+            // Only leave the page while it still shows the deleted exam.
+            if (this.isAlive() && this.exam().id === deletedExamId) {
                 void this.router.navigate(['/course-management', courseId, 'exams']);
             }
         }

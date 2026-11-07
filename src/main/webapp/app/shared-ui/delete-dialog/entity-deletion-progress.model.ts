@@ -37,7 +37,7 @@ export interface EntityDeletionProgress {
     /** Weighted progress (0-100) that accounts for the cost of the individual steps. */
     weightedProgressPercent: number;
     startedAt?: dayjs.Dayjs;
-    /** When the server last reported progress; a running deletion that was not updated for long is considered stale. Absent on older servers. */
+    /** When the server last reported progress. Informational only: the server itself ends a deletion that stopped reporting, as FAILED. */
     updatedAt?: dayjs.Dayjs;
     errorMessage?: string;
 }

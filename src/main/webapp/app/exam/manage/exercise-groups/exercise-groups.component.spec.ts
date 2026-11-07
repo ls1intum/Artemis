@@ -19,7 +19,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
+import { NEVER, Subject, of, throwError } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -182,12 +182,25 @@ describe('Exercise Groups Component', () => {
 
         vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
         vi.spyOn(eventManager, 'broadcast');
+        vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(NEVER);
 
         comp.deleteExerciseGroup(0, {});
         await Promise.resolve();
 
         expect(exerciseGroupService.delete).toHaveBeenCalledOnce();
         expect(comp.exerciseGroups()).toHaveLength(groups.length - 1);
+    });
+
+    it('reads the exercise groups from the server after a deletion ended, because the outcome may be unknown', () => {
+        comp.exerciseGroups.set(groups);
+        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const serverGroups = [{ id: 0, title: 'still there' } as ExerciseGroup];
+        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of(new HttpResponse<Exam>({ body: { exerciseGroups: serverGroups } as Exam })));
+
+        comp.deleteExerciseGroup(0, {});
+
+        expect(loadSpy).toHaveBeenCalledOnce();
+        expect(comp.exerciseGroups()).toEqual(serverGroups);
     });
 
     it('hands the exercise group to the background deletion with the title it has', () => {

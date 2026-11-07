@@ -130,9 +130,10 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
      * Starts the background deletion, shows its progress and leaves the page of the exercise once it is gone.
      */
     private runDeletion(request$: Observable<unknown>, eventName: string, eventContent: string) {
+        const exerciseId = this.exercise().id;
         this.entityDeletionService.delete(exerciseDeletionTarget(this.exercise()), request$).subscribe({
             next: (progress) => {
-                this.onDeletionEnded(progress, eventName, eventContent);
+                this.onDeletionEnded(progress, exerciseId, eventName, eventContent);
                 // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');
             },
@@ -146,16 +147,22 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     private resumeRunningDeletion() {
         const exercise = this.exercise();
         this.entityDeletionService
-            .resume(exerciseDeletionTarget(exercise))
+            .resume(exerciseDeletionTarget(exercise), this.destroyRef)
             .subscribe((progress) =>
-                this.onDeletionEnded(progress, `${exercise.type === ExerciseType.FILE_UPLOAD ? 'fileUpload' : exercise.type}ExerciseListModification`, 'Deleted an exercise'),
+                this.onDeletionEnded(
+                    progress,
+                    exercise.id,
+                    `${exercise.type === ExerciseType.FILE_UPLOAD ? 'fileUpload' : exercise.type}ExerciseListModification`,
+                    'Deleted an exercise',
+                ),
             );
     }
 
-    private onDeletionEnded(progress: EntityDeletionProgress, eventName: string, eventContent: string) {
+    private onDeletionEnded(progress: EntityDeletionProgress, deletedExerciseId: number | undefined, eventName: string, eventContent: string) {
         if (isDeletionCompleted(progress)) {
             this.eventManager.broadcast({ name: eventName, content: eventContent });
-            if (this.isAlive()) {
+            // This component is reused for other exercises, so the page must still show the deleted exercise before it navigates away from it.
+            if (this.isAlive() && this.exercise().id === deletedExerciseId) {
                 this.navigateToOverview();
             }
         }

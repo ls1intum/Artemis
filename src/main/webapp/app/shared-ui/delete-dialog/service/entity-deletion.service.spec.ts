@@ -1,3 +1,4 @@
+import { DestroyRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -7,7 +8,7 @@ import { MockProvider } from 'ng-mocks';
 import { BehaviorSubject, Subject, throwError } from 'rxjs';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DELETION_STATUS_POLL_INTERVAL_MS, EntityDeletionService, STALE_DELETION_PROGRESS_MS } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { DELETION_STATUS_POLL_INTERVAL_MS, EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
 import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -41,7 +42,11 @@ describe('EntityDeletionService', () => {
     let connection$: BehaviorSubject<ConnectionState>;
     let websocketSubscribe: ReturnType<typeof vi.fn>;
     let dialogOpen: ReturnType<typeof vi.fn>;
+    let dialogClose: ReturnType<typeof vi.fn>;
     let alertService: AlertService;
+    /** Lifetime of the caller of resume; the callbacks run when the caller is destroyed. */
+    let destroyCallbacks: (() => void)[];
+    let destroyRef: DestroyRef;
 
     const progress = (status: EntityDeletionStatus, overrides: Partial<EntityDeletionProgress> = {}): EntityDeletionProgress => ({
         entityType: EntityDeletionType.EXERCISE,
@@ -61,7 +66,15 @@ describe('EntityDeletionService', () => {
         topic$ = new Subject<EntityDeletionProgress>();
         connection$ = new BehaviorSubject<ConnectionState>(new ConnectionState(true, true));
         websocketSubscribe = vi.fn().mockReturnValue(topic$);
-        dialogOpen = vi.fn();
+        dialogClose = vi.fn();
+        dialogOpen = vi.fn().mockReturnValue({ close: dialogClose });
+        destroyCallbacks = [];
+        destroyRef = {
+            onDestroy: (callback: () => void) => {
+                destroyCallbacks.push(callback);
+                return () => undefined;
+            },
+        } as DestroyRef;
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
@@ -215,7 +228,7 @@ describe('EntityDeletionService', () => {
         expect(statusRequest.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
         statusRequest.flush(null, { status: 404, statusText: 'Not Found' });
 
-        service.resume(exerciseTarget).subscribe();
+        service.resume(exerciseTarget, destroyRef).subscribe();
         const resumeRequest = httpMock.expectOne('api/exercise/exercises/7/deletion-progress');
         expect(resumeRequest.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
         resumeRequest.flush(null, { status: 404, statusText: 'Not Found' });
@@ -322,6 +335,19 @@ describe('EntityDeletionService', () => {
         expect(results).toHaveLength(1);
     });
 
+    it('reports the failure of a silent deletion with an alert itself, because its caller may be gone by then', () => {
+        const results: EntityDeletionProgress[] = [];
+        service.delete(exerciseTarget, http.delete('api/text/text-exercises/7'), { silent: true }).subscribe((value) => results.push(value));
+        httpMock.expectOne('api/text/text-exercises/7').flush(null, { status: 202, statusText: 'Accepted' });
+        httpMock.expectOne('api/exercise/exercises/7/deletion-progress').flush(null, { status: 204, statusText: 'No Content' });
+
+        topic$.next(progress(EntityDeletionStatus.FAILED, { errorMessage: 'boom' }));
+
+        expect(alertService.error).toHaveBeenCalledOnce();
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.deletionProgress.failedInBackground', { title: 'Sorting', error: 'boom' });
+        expect(results).toHaveLength(1);
+    });
+
     describe('status fallback', () => {
         const startDeletion = (results: EntityDeletionProgress[]) => {
             service.delete(exerciseTarget, http.delete('api/text/text-exercises/7')).subscribe((value) => results.push(value));
@@ -387,17 +413,103 @@ describe('EntityDeletionService', () => {
             expect(results).toHaveLength(1);
         });
 
-        it('ends a running deletion whose status was not updated for a long time as failed', () => {
+        it('keeps following a running deletion however long ago it reported, until the server says it ended', () => {
             const results: EntityDeletionProgress[] = [];
             startDeletion(results);
 
             vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS);
             httpMock
                 .expectOne('api/exercise/exercises/7/deletion-progress')
-                .flush(progress(EntityDeletionStatus.IN_PROGRESS, { updatedAt: new Date(Date.now() - STALE_DELETION_PROGRESS_MS - 1000).toISOString() as any }));
+                .flush(progress(EntityDeletionStatus.IN_PROGRESS, { updatedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString() as any }));
+            expect(results).toHaveLength(0);
 
+            vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS);
+            httpMock.expectOne('api/exercise/exercises/7/deletion-progress').flush(progress(EntityDeletionStatus.FAILED, { errorMessage: 'interrupted' }));
             expect(results).toHaveLength(1);
             expect(results[0].status).toBe(EntityDeletionStatus.FAILED);
+        });
+
+        it.each([403, 404])('treats a %i of the polled status of an exam as completed, because the exam is gone', (status) => {
+            const results: EntityDeletionProgress[] = [];
+            service.delete(examTarget, http.delete('api/exam/courses/1/exams/3')).subscribe((value) => results.push(value));
+            httpMock.expectOne('api/exam/courses/1/exams/3').flush(null, { status: 202, statusText: 'Accepted' });
+            httpMock
+                .expectOne('api/exam/courses/1/exams/3/deletion-progress')
+                .flush(progress(EntityDeletionStatus.IN_PROGRESS, { entityType: EntityDeletionType.EXAM, entityId: 3 }));
+
+            vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS);
+            httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress').flush(null, { status, statusText: 'Gone' });
+
+            expect(results).toHaveLength(1);
+            expect(results[0].status).toBe(EntityDeletionStatus.COMPLETED);
+            expect(alertService.error).not.toHaveBeenCalled();
+        });
+
+        it('treats a 403 of the status endpoint as completed for an exercise, whose permission check needs the exercise that is gone', () => {
+            const results: EntityDeletionProgress[] = [];
+            service.delete(exerciseTarget, http.delete('api/text/text-exercises/7')).subscribe((value) => results.push(value));
+            httpMock.expectOne('api/text/text-exercises/7').flush(null, { status: 202, statusText: 'Accepted' });
+
+            httpMock.expectOne('api/exercise/exercises/7/deletion-progress').flush(null, { status: 403, statusText: 'Forbidden' });
+
+            expect(results).toHaveLength(1);
+            expect(results[0].status).toBe(EntityDeletionStatus.COMPLETED);
+            expect(topic$.observed).toBe(false);
+        });
+    });
+
+    describe('exercise group whose exam status was taken over by another operation', () => {
+        const startGroupDeletion = (results: EntityDeletionProgress[]) => {
+            service.delete(groupTarget, http.delete('api/exam/courses/1/exams/3/exercise-groups/9')).subscribe((value) => results.push(value));
+            httpMock.expectOne('api/exam/courses/1/exams/3/exercise-groups/9').flush(null, { status: 202, statusText: 'Accepted' });
+            httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress').flush(null, { status: 204, statusText: 'No Content' });
+        };
+
+        it.each([EntityDeletionStatus.IN_PROGRESS, EntityDeletionStatus.COMPLETED, EntityDeletionStatus.FAILED])(
+            'ends the run without polling forever when the exam status describes another group (%s)',
+            (otherStatus) => {
+                const results: EntityDeletionProgress[] = [];
+                startGroupDeletion(results);
+                topic$.next(progress(EntityDeletionStatus.IN_PROGRESS, { entityType: EntityDeletionType.EXERCISE_GROUP, entityId: 9 }));
+
+                vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS);
+                httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress').flush(progress(otherStatus, { entityType: EntityDeletionType.EXERCISE_GROUP, entityId: 10 }));
+
+                // The outcome is not known any more: the caller is told to refresh, and no success alert claims something that is unverified.
+                expect(results).toHaveLength(1);
+                expect(results[0].status).toBe(EntityDeletionStatus.COMPLETED);
+                expect(alertService.success).not.toHaveBeenCalled();
+                expect(alertService.error).not.toHaveBeenCalled();
+                expect(dialogClose).toHaveBeenCalledOnce();
+                expect(topic$.observed).toBe(false);
+                vi.advanceTimersByTime(3 * DELETION_STATUS_POLL_INTERVAL_MS);
+                httpMock.expectNone('api/exam/courses/1/exams/3/deletion-progress');
+            },
+        );
+
+        it('ends the run when the exam status describes the exam itself', () => {
+            const results: EntityDeletionProgress[] = [];
+            startGroupDeletion(results);
+
+            vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS);
+            httpMock
+                .expectOne('api/exam/courses/1/exams/3/deletion-progress')
+                .flush(progress(EntityDeletionStatus.IN_PROGRESS, { entityType: EntityDeletionType.EXAM, entityId: 3 }));
+
+            expect(results).toHaveLength(1);
+        });
+
+        it('still follows its own status while it is the one the exam reports', () => {
+            const results: EntityDeletionProgress[] = [];
+            startGroupDeletion(results);
+
+            vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS);
+            httpMock
+                .expectOne('api/exam/courses/1/exams/3/deletion-progress')
+                .flush(progress(EntityDeletionStatus.IN_PROGRESS, { entityType: EntityDeletionType.EXERCISE_GROUP, entityId: 9 }));
+
+            expect(results).toHaveLength(0);
+            expect(topic$.observed).toBe(true);
         });
     });
 
@@ -442,7 +554,7 @@ describe('EntityDeletionService', () => {
     describe('resume', () => {
         it('shows the dialog of a deletion that is still running and reports how it ends', () => {
             const results: EntityDeletionProgress[] = [];
-            service.resume(examTarget).subscribe((value) => results.push(value));
+            service.resume(examTarget, destroyRef).subscribe((value) => results.push(value));
 
             httpMock
                 .expectOne('api/exam/courses/1/exams/3/deletion-progress')
@@ -458,7 +570,7 @@ describe('EntityDeletionService', () => {
         it('does not open a dialog on the exam page for the deletion of one of its exercise groups', () => {
             let completed = false;
             const results: EntityDeletionProgress[] = [];
-            service.resume(examTarget).subscribe({ next: (value) => results.push(value), complete: () => (completed = true) });
+            service.resume(examTarget, destroyRef).subscribe({ next: (value) => results.push(value), complete: () => (completed = true) });
 
             httpMock
                 .expectOne('api/exam/courses/1/exams/3/deletion-progress')
@@ -474,7 +586,7 @@ describe('EntityDeletionService', () => {
         });
 
         it('does not open a dialog for another exercise group of the exam than the one that is asked about', () => {
-            service.resume(groupTarget).subscribe();
+            service.resume(groupTarget, destroyRef).subscribe();
 
             httpMock
                 .expectOne('api/exam/courses/1/exams/3/deletion-progress')
@@ -483,39 +595,92 @@ describe('EntityDeletionService', () => {
             expect(dialogOpen).not.toHaveBeenCalled();
         });
 
-        it('does not open a blocking dialog for a running deletion that stopped reporting', () => {
-            let completed = false;
-            service.resume(examTarget).subscribe({ complete: () => (completed = true) });
+        it('trusts the status of the server and shows a running deletion however long ago it reported', () => {
+            service.resume(examTarget, destroyRef).subscribe();
 
             httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress').flush(
                 progress(EntityDeletionStatus.IN_PROGRESS, {
                     entityType: EntityDeletionType.EXAM,
                     entityId: 3,
-                    updatedAt: new Date(Date.now() - STALE_DELETION_PROGRESS_MS - 1000).toISOString() as any,
-                }),
-            );
-
-            expect(dialogOpen).not.toHaveBeenCalled();
-            expect(completed).toBe(true);
-        });
-
-        it('opens the dialog for a running deletion that reported recently', () => {
-            service.resume(examTarget).subscribe();
-
-            httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress').flush(
-                progress(EntityDeletionStatus.IN_PROGRESS, {
-                    entityType: EntityDeletionType.EXAM,
-                    entityId: 3,
-                    updatedAt: new Date(Date.now() - 1000).toISOString() as any,
+                    updatedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString() as any,
                 }),
             );
 
             expect(dialogOpen).toHaveBeenCalledOnce();
         });
 
+        it('cancels the status request and opens no dialog when the caller is destroyed first', () => {
+            let completed = false;
+            service.resume(examTarget, destroyRef).subscribe({ complete: () => (completed = true) });
+            const request = httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress');
+
+            destroyCallbacks.forEach((callback) => callback());
+
+            expect(request.cancelled).toBe(true);
+            expect(dialogOpen).not.toHaveBeenCalled();
+            expect(websocketSubscribe).not.toHaveBeenCalled();
+            expect(completed).toBe(true);
+        });
+
+        it('reuses the run that already follows the entity instead of starting a second one', () => {
+            const first: EntityDeletionProgress[] = [];
+            const second: EntityDeletionProgress[] = [];
+            service.delete(exerciseTarget, http.delete('api/text/text-exercises/7')).subscribe((value) => first.push(value));
+            httpMock.expectOne('api/text/text-exercises/7').flush(null, { status: 202, statusText: 'Accepted' });
+            httpMock.expectOne('api/exercise/exercises/7/deletion-progress').flush(null, { status: 204, statusText: 'No Content' });
+            dialogOpen.mock.calls[0][1].data.continueInBackground();
+
+            service.resume(exerciseTarget, destroyRef).subscribe((value) => second.push(value));
+
+            // no status request and no second websocket subscription: the existing run is reattached and shows its dialog again
+            httpMock.expectNone('api/exercise/exercises/7/deletion-progress');
+            expect(websocketSubscribe).toHaveBeenCalledOnce();
+            expect(dialogOpen).toHaveBeenCalledTimes(2);
+
+            vi.advanceTimersByTime(DELETION_STATUS_POLL_INTERVAL_MS);
+            httpMock.expectOne('api/exercise/exercises/7/deletion-progress').flush(progress(EntityDeletionStatus.COMPLETED, { weightedProgressPercent: 100 }));
+
+            expect(first).toHaveLength(1);
+            expect(second).toHaveLength(1);
+            expect(alertService.success).toHaveBeenCalledOnce();
+        });
+
+        it('does not open a second dialog while the dialog of the run is still shown', () => {
+            service.delete(exerciseTarget, http.delete('api/text/text-exercises/7')).subscribe();
+            httpMock.expectOne('api/text/text-exercises/7').flush(null, { status: 202, statusText: 'Accepted' });
+            httpMock.expectOne('api/exercise/exercises/7/deletion-progress').flush(null, { status: 204, statusText: 'No Content' });
+
+            service.resume(exerciseTarget, destroyRef).subscribe();
+
+            expect(dialogOpen).toHaveBeenCalledOnce();
+        });
+
+        it('shows a failure in the reopened dialog instead of an alert', () => {
+            service.delete(exerciseTarget, http.delete('api/text/text-exercises/7')).subscribe();
+            httpMock.expectOne('api/text/text-exercises/7').flush(null, { status: 202, statusText: 'Accepted' });
+            httpMock.expectOne('api/exercise/exercises/7/deletion-progress').flush(null, { status: 204, statusText: 'No Content' });
+            dialogOpen.mock.calls[0][1].data.continueInBackground();
+            service.resume(exerciseTarget, destroyRef).subscribe();
+
+            topic$.next(progress(EntityDeletionStatus.FAILED, { errorMessage: 'boom' }));
+
+            expect(alertService.error).not.toHaveBeenCalled();
+        });
+
+        it('starts a new run once the earlier run for the entity ended', () => {
+            service.delete(exerciseTarget, http.delete('api/text/text-exercises/7')).subscribe();
+            httpMock.expectOne('api/text/text-exercises/7').flush(null, { status: 202, statusText: 'Accepted' });
+            httpMock.expectOne('api/exercise/exercises/7/deletion-progress').flush(null, { status: 204, statusText: 'No Content' });
+            topic$.next(progress(EntityDeletionStatus.FAILED, { errorMessage: 'boom' }));
+
+            service.resume(exerciseTarget, destroyRef).subscribe();
+
+            httpMock.expectOne('api/exercise/exercises/7/deletion-progress').flush(null, { status: 204, statusText: 'No Content' });
+        });
+
         it('polls the status of a resumed deletion until it ended', () => {
             const results: EntityDeletionProgress[] = [];
-            service.resume(examTarget).subscribe((value) => results.push(value));
+            service.resume(examTarget, destroyRef).subscribe((value) => results.push(value));
             httpMock
                 .expectOne('api/exam/courses/1/exams/3/deletion-progress')
                 .flush(progress(EntityDeletionStatus.IN_PROGRESS, { entityType: EntityDeletionType.EXAM, entityId: 3 }));
@@ -530,7 +695,7 @@ describe('EntityDeletionService', () => {
         it('does nothing when no deletion is running', () => {
             let completed = false;
             const results: EntityDeletionProgress[] = [];
-            service.resume(examTarget).subscribe({ next: (value) => results.push(value), complete: () => (completed = true) });
+            service.resume(examTarget, destroyRef).subscribe({ next: (value) => results.push(value), complete: () => (completed = true) });
 
             httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress').flush(null, { status: 204, statusText: 'No Content' });
 
@@ -542,7 +707,7 @@ describe('EntityDeletionService', () => {
 
         it('does not show the result of a deletion that already ended earlier', () => {
             let completed = false;
-            service.resume(examTarget).subscribe({ complete: () => (completed = true) });
+            service.resume(examTarget, destroyRef).subscribe({ complete: () => (completed = true) });
 
             httpMock.expectOne('api/exam/courses/1/exams/3/deletion-progress').flush(progress(EntityDeletionStatus.FAILED, { entityType: EntityDeletionType.EXAM, entityId: 3 }));
 
@@ -552,7 +717,7 @@ describe('EntityDeletionService', () => {
 
         it('stays quiet when the status cannot be read', () => {
             let completed = false;
-            service.resume(exerciseTarget).subscribe({ complete: () => (completed = true) });
+            service.resume(exerciseTarget, destroyRef).subscribe({ complete: () => (completed = true) });
 
             httpMock.expectOne('api/exercise/exercises/7/deletion-progress').flush(null, { status: 500, statusText: 'Server Error' });
 

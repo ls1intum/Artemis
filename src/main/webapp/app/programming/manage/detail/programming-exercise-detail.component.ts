@@ -803,7 +803,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         const request$ = this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
         this.entityDeletionService.delete(exerciseDeletionTarget(exercise), request$).subscribe({
             next: (progress) => {
-                this.onDeletionEnded(progress);
+                this.onDeletionEnded(progress, exercise.id);
                 // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 // The subject is closed with the component, and the deletion can end after the user left the page.
                 if (this.isAlive()) {
@@ -818,10 +818,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * Shows the progress of a deletion of this exercise that is already running, e.g. after the page was reloaded or another instructor started it.
      */
     private resumeRunningDeletion(): void {
-        this.entityDeletionService.resume(exerciseDeletionTarget(this.programmingExercise())).subscribe((progress) => this.onDeletionEnded(progress));
+        const exercise = this.programmingExercise();
+        this.entityDeletionService.resume(exerciseDeletionTarget(exercise), this.destroyRef).subscribe((progress) => this.onDeletionEnded(progress, exercise.id));
     }
 
-    private onDeletionEnded(progress: EntityDeletionProgress): void {
+    private onDeletionEnded(progress: EntityDeletionProgress, deletedExerciseId: number | undefined): void {
         if (!isDeletionCompleted(progress)) {
             return;
         }
@@ -829,7 +830,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             name: 'programmingExerciseListModification',
             content: 'Deleted a programming exercise',
         });
-        if (!this.isAlive()) {
+        // Only leave the page while it still shows the deleted exercise, not after the instructor moved on to something else.
+        if (!this.isAlive() || this.programmingExercise().id !== deletedExerciseId) {
             return;
         }
         if (!this.isExamExercise()) {

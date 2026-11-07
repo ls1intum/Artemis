@@ -2,7 +2,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { annotateRecovery, dayjsToString, generateUUID, titleLowercase } from '../utils';
-import { awaitDeletion } from '../deletion';
+import { awaitDeletion, awaitNoRunningExamDeletion } from '../deletion';
 import examTemplate from '../../fixtures/exam/template.json';
 import { APIRequestContext, APIResponse, Page, expect } from '@playwright/test';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -162,7 +162,8 @@ export class ExamAPIRequests {
         // exercise is being removed. The server now reports that as a failed background deletion (or a 5xx when it cannot even start one).
         // Such builds finish within seconds, so the delete is repeated for a bounded time; a retry is recorded in the report and anything
         // that still fails afterwards is a real failure.
-        const retryDeadline = Date.now() + 30_000;
+        let retryDeadline = Date.now() + 30_000;
+        let conflicts = 0;
         for (let attempt = 1; ; attempt++) {
             const response = await this.request.delete(`api/exam/courses/${courseId}/exams/${exam.id}`);
             const status = response.status();
@@ -170,11 +171,23 @@ export class ExamAPIRequests {
             if (status === 404) {
                 return;
             }
+            if (status === 409) {
+                // A deletion that holds the exam or one of its exercise groups is running, so this request was refused and its own progress will
+                // never show up. Wait for the conflicting job to end, then send the request again. The wait is not a retry caused by builds,
+                // so it does not use up the retry budget.
+                if (++conflicts > 5) {
+                    throw new Error(`Failed to delete exam ${exam.id}: it keeps conflicting with other deletions (${await response.text()})`);
+                }
+                const waited = await awaitNoRunningExamDeletion(this.request, courseId, exam.id);
+                retryDeadline += waited;
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                continue;
+            }
             let failure: string;
             if (status >= 500) {
                 failure = `${status} ${await response.text()}`;
-            } else if (response.ok() || status === 409) {
-                // 202: the deletion runs in the background. 409: a deletion of this exam is already running, which is awaited the same way.
+            } else if (response.ok()) {
+                // 202: the deletion runs in the background.
                 const outcome = await awaitDeletion(this.request, { entityType: 'EXAM', entityId: exam.id, courseId });
                 if (!outcome.failed) {
                     return;
@@ -243,19 +256,27 @@ export class ExamAPIRequests {
      */
     async deleteExerciseGroupForExam(exam: Exam, exerciseGroup: ExerciseGroup) {
         const courseId = exam.course!.id!;
-        const response = await this.request.delete(`api/exam/courses/${courseId}/exams/${exam.id}/exercise-groups/${exerciseGroup.id}`);
-        // A test may already have deleted the group through the UI.
-        if (response.status() === 404) {
+        for (let conflicts = 0; conflicts <= 5; conflicts++) {
+            const response = await this.request.delete(`api/exam/courses/${courseId}/exams/${exam.id}/exercise-groups/${exerciseGroup.id}`);
+            // A test may already have deleted the group through the UI.
+            if (response.status() === 404) {
+                return;
+            }
+            if (response.status() === 409) {
+                // A deletion that holds the exam or one of its groups is running, so this request was refused and its own progress will never
+                // show up. Wait for that job to end, then send the request again (the group is gone if that job deleted it, which is a 404).
+                await awaitNoRunningExamDeletion(this.request, courseId, exam.id!);
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                continue;
+            }
+            await this.expectOk(response, `delete exercise group ${exerciseGroup.id} of exam ${exam.id}`);
+            const outcome = await awaitDeletion(this.request, { entityType: 'EXERCISE_GROUP', entityId: exerciseGroup.id!, courseId, examId: exam.id! });
+            if (outcome.failed) {
+                throw new Error(`Failed to delete exercise group ${exerciseGroup.id} of exam ${exam.id}: ${outcome.errorMessage}`);
+            }
             return;
         }
-        // 409 means a deletion of this exam (or one of its groups) is already running; it is awaited the same way, as the group may be part of it.
-        if (response.status() !== 409) {
-            await this.expectOk(response, `delete exercise group ${exerciseGroup.id} of exam ${exam.id}`);
-        }
-        const outcome = await awaitDeletion(this.request, { entityType: 'EXERCISE_GROUP', entityId: exerciseGroup.id!, courseId, examId: exam.id! });
-        if (outcome.failed) {
-            throw new Error(`Failed to delete exercise group ${exerciseGroup.id} of exam ${exam.id}: ${outcome.errorMessage}`);
-        }
+        throw new Error(`Failed to delete exercise group ${exerciseGroup.id} of exam ${exam.id}: it keeps conflicting with other deletions`);
     }
 
     /**

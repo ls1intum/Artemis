@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
@@ -376,6 +377,30 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
         }
         // a student exam that does not contain the exercise does not count
         examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "instructor1");
+
+        var summary = request.get("/api/exercise/exercises/" + examExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
+
+        assertThat(summary.numberOfStudentExams()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetDeletionSummary_countsStudentExamsWithoutTestRunFlagAsRegularButNotTestRuns() throws Exception {
+        TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        Exam exam = examExercise.getExerciseGroup().getExam();
+        StudentExam withFlag = examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+        withFlag.setExercises(List.of(examExercise));
+        studentExamRepository.save(withFlag);
+        // the column is nullable, a student exam without the flag is a regular one
+        StudentExam withoutFlag = examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student2");
+        ReflectionTestUtils.setField(withoutFlag, "testRun", null);
+        withoutFlag.setExercises(List.of(examExercise));
+        studentExamRepository.save(withoutFlag);
+        // a test run of an instructor is no student exam of the real exam
+        StudentExam testRun = examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "instructor1");
+        testRun.setTestRun(true);
+        testRun.setExercises(List.of(examExercise));
+        studentExamRepository.save(testRun);
 
         var summary = request.get("/api/exercise/exercises/" + examExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
 

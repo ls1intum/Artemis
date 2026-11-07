@@ -1,6 +1,7 @@
 import { importFromFileNavigation } from 'app/exercise/import/import-from-file-navigation';
 import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -57,6 +58,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 })
 export class ExerciseGroupsComponent implements OnInit {
     private route = inject(ActivatedRoute);
+    private destroyRef = inject(DestroyRef);
     private exerciseGroupService = inject(ExerciseGroupService);
     private entityDeletionService = inject(EntityDeletionService);
     private examManagementService = inject(ExamManagementService);
@@ -226,6 +228,11 @@ export class ExerciseGroupsComponent implements OnInit {
                         content: 'Deleted an exercise group',
                     });
                     this.exerciseGroups.set(this.exerciseGroups()?.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
+                    // The exam only reports its latest operation. When another operation replaced ours before the end was seen, COMPLETED only
+                    // means that ours is over, so the groups are read from the server, which tells how it really ended.
+                    this.loadExerciseGroups()
+                        .pipe(takeUntilDestroyed(this.destroyRef))
+                        .subscribe({ next: (res) => this.exerciseGroups.set(res.body?.exerciseGroups) });
                 }
                 // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');

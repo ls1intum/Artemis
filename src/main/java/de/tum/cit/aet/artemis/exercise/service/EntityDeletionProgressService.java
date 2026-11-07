@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -53,6 +54,8 @@ public class EntityDeletionProgressService {
 
     private static final String ENTITY_DELETION_STATUSES = "entity-deletion-statuses";
 
+    private static final String ENTITY_DELETION_COURSES = "entity-deletion-courses";
+
     private static final Duration STATUS_TIME_TO_LIVE = Duration.ofHours(1);
 
     // The claim is renewed by the running deletion. A deletion that stopped without releasing its claim (for example because its node was shut down) frees the scope after this
@@ -73,17 +76,23 @@ public class EntityDeletionProgressService {
 
     private final DistributedMap<String, EntityDeletionProgressDTO> statuses;
 
+    private final DistributedMap<String, Long> courseIds;
+
     private final TaskScheduler taskScheduler;
 
     private final Executor deletionExecutor;
 
     private final Map<EntityDeletionClaim, ScheduledFuture<?>> claimRenewals = new ConcurrentHashMap<>();
 
+    // Scopes that a running deletion claimed after it started, for example the exercise of an exercise group that was added after the request, by the token of the owner.
+    private final Map<UUID, Set<String>> lateScopeKeys = new ConcurrentHashMap<>();
+
     public EntityDeletionProgressService(WebsocketMessagingService websocketMessagingService, DistributedDataProvider distributedDataProvider,
             @Qualifier("taskScheduler") TaskScheduler taskScheduler, @Qualifier("entityDeletionExecutor") Executor deletionExecutor) {
         this.websocketMessagingService = websocketMessagingService;
         this.claims = distributedDataProvider.getExpiringMap(ENTITY_DELETION_CLAIMS, CLAIM_TIME_TO_LIVE);
         this.statuses = distributedDataProvider.getExpiringMap(ENTITY_DELETION_STATUSES, STATUS_TIME_TO_LIVE);
+        this.courseIds = distributedDataProvider.getExpiringMap(ENTITY_DELETION_COURSES, STATUS_TIME_TO_LIVE);
         this.taskScheduler = taskScheduler;
         this.deletionExecutor = deletionExecutor;
     }
@@ -147,6 +156,27 @@ public class EntityDeletionProgressService {
     }
 
     /**
+     * Remembers the course of the entity that is deleted, for as long as its status is kept. Once the entity is gone, the instructors of the course are still allowed to read
+     * the status of its deletion, which cannot be derived from the deleted entity any more.
+     *
+     * @param scopeKey the scope of the deletion
+     * @param courseId the id of the course the entity belongs to
+     */
+    public void rememberCourse(String scopeKey, long courseId) {
+        courseIds.put(scopeKey, courseId);
+    }
+
+    /**
+     * Gets the course that was remembered for the deletion of the scope.
+     *
+     * @param scopeKey the scope of the deletion
+     * @return the id of the course, or empty if no deletion of the scope ran in the last hour
+     */
+    public Optional<Long> findCourseId(String scopeKey) {
+        return Optional.ofNullable(courseIds.get(scopeKey));
+    }
+
+    /**
      * Gets the latest known status of the deletion that holds or last held the scope.
      *
      * @param scopeKey the scope of the deletion
@@ -154,8 +184,19 @@ public class EntityDeletionProgressService {
      *         its node stopped, is reported as failed.
      */
     public Optional<EntityDeletionProgressDTO> getProgress(String scopeKey) {
-        EntityDeletionProgressDTO status = statuses.get(scopeKey);
-        if (status != null && status.status() == EntityDeletionStatus.IN_PROGRESS && claims.get(scopeKey) == null) {
+        EntityDeletionProgressDTO status;
+        String holder;
+        // finish() publishes the final status and releases the claim under this lock, so a poll that overlaps a successful completion cannot see the old running status
+        // without its claim and report it as interrupted.
+        claims.lock(scopeKey);
+        try {
+            status = statuses.get(scopeKey);
+            holder = claims.get(scopeKey);
+        }
+        finally {
+            claims.unlock(scopeKey);
+        }
+        if (status != null && status.status() == EntityDeletionStatus.IN_PROGRESS && holder == null) {
             return Optional.of(new EntityDeletionProgressDTO(status.entityType(), status.entityId(), EntityDeletionStatus.FAILED, status.currentStep(), status.stepsCompleted(),
                     status.totalSteps(), 0, 0, null, status.weightedProgressPercent(), status.startedAt(), status.updatedAt(), INTERRUPTED_ERROR_MESSAGE));
         }
@@ -245,9 +286,10 @@ public class EntityDeletionProgressService {
         });
     }
 
-    void updateProgress(EntityDeletionClaim claim, String currentStep, int stepsCompleted, int itemsProcessed, int totalItems, String currentItemTitle, double percent) {
-        // Renews the claim as well, and stops a worker that lost it, so a stale worker cannot go on deleting while another deletion runs.
-        verifyClaim(claim);
+    void updateProgress(EntityDeletionClaim claim, String currentStep, int stepsCompleted, int itemsProcessed, int totalItems, String currentItemTitle, double percent,
+            boolean verifyAllClaims) {
+        // Renews the claims as well, and stops a worker that lost one of them, so a stale worker cannot go on deleting while another deletion runs.
+        verifyClaims(claim, verifyAllClaims);
         sendAndStore(claim, newStatus(claim, EntityDeletionStatus.IN_PROGRESS, currentStep, stepsCompleted, itemsProcessed, totalItems, currentItemTitle, percent, null));
     }
 
@@ -279,28 +321,73 @@ public class EntityDeletionProgressService {
         }
     }
 
-    private void verifyClaim(EntityDeletionClaim claim) {
-        claims.lock(claim.scopeKey());
-        try {
-            if (!ownsClaim(claim)) {
-                throw new IllegalStateException("The claim for the deletion of " + claim.entityType() + " " + claim.entityId() + " was lost");
+    /**
+     * Checks that the worker still owns its claims and renews them. The claim of the scope of the status is always checked. The claims of the further scopes, for example of
+     * the exercises of an exam, are only checked if requested, which keeps frequent progress reports cheap.
+     */
+    private void verifyClaims(EntityDeletionClaim claim, boolean all) {
+        List<String> keys = all ? heldKeys(claim) : List.of(claim.scopeKey());
+        String token = claim.ownerToken().toString();
+        for (String key : keys) {
+            claims.lock(key);
+            try {
+                if (!token.equals(claims.get(key))) {
+                    throw new IllegalStateException("The claim " + key + " for the deletion of " + claim.entityType() + " " + claim.entityId() + " was lost");
+                }
+                claims.put(key, token);
             }
-            claims.put(claim.scopeKey(), claim.ownerToken().toString());
+            finally {
+                claims.unlock(key);
+            }
+        }
+    }
+
+    /**
+     * Claims the scope of one more entity for a running deletion, at the moment the deletion is about to delete it. The scopes known when the deletion was accepted are held
+     * already. An entity that joined the deleted exam or exercise group since then may be deleted on its own at the same time, in which case the deletion fails instead of
+     * deleting the same data twice.
+     *
+     * @param claim    the claim of the running deletion
+     * @param scopeKey the scope of the entity that is deleted next
+     * @throws ConflictException if another deletion holds the scope
+     */
+    void claimAdditionalScope(EntityDeletionClaim claim, String scopeKey) {
+        if (heldKeys(claim).contains(scopeKey)) {
+            return;
+        }
+        claims.lock(scopeKey);
+        try {
+            if (claims.putIfAbsent(scopeKey, claim.ownerToken().toString()) != null) {
+                throw new ConflictException("An exercise of this deletion is already being deleted by another request", claim.entityType().name(), "deletionInProgress");
+            }
+            lateScopeKeys.computeIfAbsent(claim.ownerToken(), token -> ConcurrentHashMap.newKeySet()).add(scopeKey);
         }
         finally {
-            claims.unlock(claim.scopeKey());
+            claims.unlock(scopeKey);
         }
+    }
+
+    private List<String> heldKeys(EntityDeletionClaim claim) {
+        List<String> keys = claim.allScopeKeys();
+        Set<String> late = lateScopeKeys.get(claim.ownerToken());
+        if (late != null) {
+            keys.addAll(late);
+        }
+        return keys;
     }
 
     private void renewClaims(EntityDeletionClaim claim) {
         String token = claim.ownerToken().toString();
         try {
             boolean ownershipLost = false;
-            for (String key : claim.allScopeKeys()) {
+            for (String key : heldKeys(claim)) {
                 claims.lock(key);
                 try {
                     if (token.equals(claims.get(key))) {
                         claims.put(key, token);
+                        if (key.equals(claim.scopeKey())) {
+                            refreshStatus(claim);
+                        }
                     }
                     else {
                         ownershipLost = true;
@@ -320,10 +407,26 @@ public class EntityDeletionProgressService {
     }
 
     /**
+     * Keeps the status of a running deletion alive and fresh while its claim is renewed, also if a step takes very long without a progress report. The caller holds the lock
+     * of the scope. Nothing is sent to the clients, they only see the newer time of the update when they read the status.
+     */
+    private void refreshStatus(EntityDeletionClaim claim) {
+        EntityDeletionProgressDTO status = statuses.get(claim.scopeKey());
+        if (status != null && status.status() == EntityDeletionStatus.IN_PROGRESS) {
+            statuses.put(claim.scopeKey(),
+                    new EntityDeletionProgressDTO(status.entityType(), status.entityId(), status.status(), status.currentStep(), status.stepsCompleted(), status.totalSteps(),
+                            status.itemsProcessed(), status.totalItems(), status.currentItemTitle(), status.weightedProgressPercent(), status.startedAt(), ZonedDateTime.now(),
+                            status.errorMessage()));
+        }
+    }
+
+    /**
      * Releases all claims of the deletion without publishing a status. A stale deletion cannot release the claims of a newer one.
      */
     private void releaseClaims(EntityDeletionClaim claim) {
-        removeClaims(claim, claim.allScopeKeys());
+        List<String> keys = heldKeys(claim);
+        lateScopeKeys.remove(claim.ownerToken());
+        removeClaims(claim, keys);
     }
 
     private void removeClaims(EntityDeletionClaim claim, List<String> keys) {

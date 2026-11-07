@@ -252,7 +252,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
                 JOIN se.exercises ex
             WHERE ex.id IN :exerciseIds
-                AND se.testRun = FALSE
+                AND (se.testRun IS NULL OR se.testRun = FALSE)
             """)
     long countRealStudentExamsContainingExercises(@Param("exerciseIds") Collection<Long> exerciseIds);
 

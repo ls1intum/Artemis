@@ -14,6 +14,16 @@ public interface DeletionProgressListener {
     }
 
     /**
+     * Called before a step starts that only follows the point of no return of the deletion, for example the cleanup of the search index. A failure to report it must not skip
+     * the work of the step, so implementations that can fail ignore the failure.
+     *
+     * @param stepKey the stable key of the step
+     */
+    default void stepStartedAfterDeletion(String stepKey) {
+        stepStarted(stepKey);
+    }
+
+    /**
      * Called whenever an item of the current step is done.
      *
      * @param processed the items that are done

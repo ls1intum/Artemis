@@ -151,7 +151,19 @@ public class ExamDeletionService {
      * @param examId the ID of the exam to be deleted
      */
     public void delete(long examId) {
-        deleteExam(examId, userRepository.getUser().getLogin(), DeletionStepReporter.none(), Map.of());
+        String userLogin = userRepository.getUser().getLogin();
+        auditDeletion(examId, userLogin);
+        deleteExam(examId, userLogin, DeletionStepReporter.none(), Map.of());
+    }
+
+    /**
+     * Records who requested the deletion of the exam. The background deletion does this when it accepts the request, so the audit trail is complete even if the server stops
+     * before the job runs.
+     */
+    private void auditDeletion(long examId, String userLogin) {
+        String examTitle = examRepository.findTitleById(examId);
+        log.info("User {} has requested to delete the exam {}", userLogin, examTitle);
+        auditEventRepository.add(new AuditEvent(userLogin, Constants.DELETE_EXAM, "exam=" + examTitle));
     }
 
     /**
@@ -170,13 +182,13 @@ public class ExamDeletionService {
                 exercisesWeight(exercises, participationCounts), examRepository.countStudentExamsByExamId(examId), examUserRepository.countByExamId(examId));
         // The exam also holds the scope of each of its exercises, so none of them can be deleted on its own meanwhile, and the request is refused if one of them is deleted now.
         entityDeletionProgressService.startAsync(EntityDeletionProgressService.examScopeKey(examId), exerciseScopeKeys(exercises), EntityDeletionType.EXAM, examId,
-                ExamWebsocketTopics.DELETION_PROGRESS.at(courseId, examId), stepWeights.size(), EntityDeletionWeights.total(stepWeights), () -> {
-                }, tracker -> {
+                ExamWebsocketTopics.DELETION_PROGRESS.at(courseId, examId), stepWeights.size(), EntityDeletionWeights.total(stepWeights), () -> auditDeletion(examId, userLogin),
+                tracker -> {
                     var reporter = new DeletionStepReporter(tracker, stepWeights);
                     // The registrations disappear with the exam, but their files do not, so they have to be known before the deletion.
                     List<ExamUser> examUsers = examUserRepository.findAllByExamId(examId);
                     deleteExam(examId, userLogin, reporter, participationCounts);
-                    reporter.stepStarted(EntityDeletionWeights.STEP_CLEANUP);
+                    reporter.stepStartedAfterDeletion(EntityDeletionWeights.STEP_CLEANUP);
                     deleteImagesOfExamUsers(examUsers, examId);
                     reporter.finishCurrentStep();
                 });
@@ -265,9 +277,7 @@ public class ExamDeletionService {
 
     private void deleteExam(long examId, String userLogin, DeletionStepReporter reporter, Map<Long, Long> participationCounts) {
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        log.info("User {} has requested to delete the exam {}", userLogin, exam.getTitle());
-        AuditEvent auditEvent = new AuditEvent(userLogin, Constants.DELETE_EXAM, "exam=" + exam.getTitle());
-        auditEventRepository.add(auditEvent);
+        log.info("Deleting the exam {} requested by {}", exam.getTitle(), userLogin);
 
         reporter.stepStarted(EntityDeletionWeights.STEP_TEST_RUNS);
         // The channel is already gone if an earlier deletion of this exam failed after this step, and the retry has to work as well.
@@ -312,6 +322,8 @@ public class ExamDeletionService {
         int deleted = 0;
         double completedWeight = 0;
         for (Exercise exercise : exercises) {
+            // An exercise that joined the exam or group after the deletion was accepted is not claimed yet.
+            reporter.claimExercise(exercise.getId());
             boolean programming = exercise instanceof ProgrammingExercise;
             long participations = participationCounts.getOrDefault(exercise.getId(), 0L);
             double participationsWeight = EntityDeletionWeights.participationsWeight(programming, participations);

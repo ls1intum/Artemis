@@ -1,12 +1,12 @@
-import { Service, inject, signal } from '@angular/core';
+import { DestroyRef, Service, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient, HttpContext, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, ReplaySubject, Subscription, filter, interval, skip, take } from 'rxjs';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import {
     EntityDeletionProgress,
@@ -21,16 +21,29 @@ import { EntityDeletionProgressDialogComponent } from 'app/shared-ui/delete-dial
 /** How often the status endpoint is read while a deletion runs, as a fallback for a websocket message that was missed. */
 export const DELETION_STATUS_POLL_INTERVAL_MS = 5000;
 
-/** A running deletion whose last update is older than this is treated as abandoned (e.g. its node restarted) and is not shown as a running deletion. */
-export const STALE_DELETION_PROGRESS_MS = 10 * 60 * 1000;
-
 /** Options of a deletion run. */
 export interface EntityDeletionOptions {
     /**
-     * Neither shows the progress dialog nor the success alert. For callers that delete many entities at once and report on the whole batch
-     * themselves; the result observable still tells how each deletion ended.
+     * Neither shows the progress dialog nor the success alert. For callers that delete many entities at once and refresh their view when the
+     * batch ended; the result observable still tells how each deletion ended. A deletion that fails is reported with an alert by this service
+     * itself, so the failure is not lost when the caller is gone by then.
      */
     silent?: boolean;
+}
+
+/** The part of a run that other runs of the same entity and the service need. */
+interface DeletionRun {
+    readonly result$: ReplaySubject<EntityDeletionProgress>;
+    listen(): void;
+    stop(): void;
+    startFallback(): void;
+    apply(message: EntityDeletionProgress): void;
+    readStatus(): void;
+    openDialog(): void;
+    /** Opens the dialog again if the instructor sent it to the background. */
+    reattach(): void;
+    /** Makes the run the one that follows its entity. */
+    register(): void;
 }
 
 /**
@@ -45,7 +58,13 @@ export interface EntityDeletionOptions {
  * <p>
  * The instructor can dismiss the dialog with "Continue in background" while the deletion runs. This only closes the dialog: the deletion
  * keeps running on the server and the run keeps following it, so the success alert is still shown and the result observable still emits
- * when it ended. Callers that react to the end by navigating must only do so while they are still on screen.
+ * when it ended. Callers that react to the end by navigating must only do so while they are still on screen and still show the deleted entity.
+ * <p>
+ * There is at most one run per entity: {@link resume} attaches to the run that is already following the entity and reopens its dialog,
+ * instead of starting a second one that would poll and alert on its own.
+ * <p>
+ * The service never judges a running deletion by the clock of the client. A deletion that stopped reporting is ended by the server, which
+ * then reports it as FAILED.
  */
 @Service()
 export class EntityDeletionService {
@@ -54,6 +73,9 @@ export class EntityDeletionService {
     private readonly dialogService = inject(TumAetUiDialogService);
     private readonly alertService = inject(AlertService);
     private readonly translateService = inject(TranslateService);
+
+    /** The runs that follow a deletion right now, one per entity. */
+    private readonly activeRuns = new Map<string, DeletionRun>();
 
     /**
      * Sends the delete request and follows the deletion until it ended.
@@ -73,6 +95,7 @@ export class EntityDeletionService {
         run.listen();
         request$.pipe(take(1)).subscribe({
             next: () => {
+                run.register();
                 if (!options.silent) {
                     run.openDialog();
                 }
@@ -89,32 +112,58 @@ export class EntityDeletionService {
 
     /**
      * Shows the progress dialog of a deletion that is already running, for example after the page was reloaded or another instructor
-     * started it. Does nothing when no deletion is running.
+     * started it. Does nothing when no deletion is running. When this client already follows the deletion, for example because the instructor
+     * sent it to the background and came back, that run is reused and its dialog is shown again.
      *
      * @param target the entity that may be deleted right now
+     * @param destroyRef lifetime of the caller: the status request is cancelled when the caller is destroyed first, and no dialog is opened for it afterwards
      * @return emits the final progress when the deletion that was found ended; completes without a value if none was running
      */
-    resume(target: EntityDeletionTarget): Observable<EntityDeletionProgress> {
+    resume(target: EntityDeletionTarget, destroyRef: DestroyRef): Observable<EntityDeletionProgress> {
+        const existing = this.activeRuns.get(this.runKey(target));
+        if (existing) {
+            existing.reattach();
+            return existing.result$.asObservable();
+        }
         const result$ = new ReplaySubject<EntityDeletionProgress>(1);
-        const run = this.createRun(target, result$, {});
-        this.http.get<EntityDeletionProgress>(this.statusUrl(target), { observe: 'response', context: this.silentContext() }).subscribe({
-            next: (response) => {
-                const progress = response.body;
-                if (response.status !== 200 || !progress || progress.status !== EntityDeletionStatus.IN_PROGRESS || this.isStale(progress)) {
-                    result$.complete();
-                } else if (progress.entityType !== target.entityType || progress.entityId !== target.entityId) {
-                    // The exam status is shared by the exam and its exercise groups: a deletion of something else must not block this page.
-                    this.alertService.info('artemisApp.deletionProgress.otherDeletionRunning');
-                    result$.complete();
-                } else {
+        let attached = false;
+        this.http
+            .get<EntityDeletionProgress>(this.statusUrl(target), { observe: 'response', context: this.silentContext() })
+            .pipe(takeUntilDestroyed(destroyRef))
+            .subscribe({
+                next: (response) => {
+                    const progress = response.body;
+                    if (response.status !== 200 || !progress || progress.status !== EntityDeletionStatus.IN_PROGRESS) {
+                        return;
+                    }
+                    if (progress.entityType !== target.entityType || progress.entityId !== target.entityId) {
+                        // The exam status is shared by the exam and its exercise groups: a deletion of something else must not block this page.
+                        this.alertService.info('artemisApp.deletionProgress.otherDeletionRunning');
+                        return;
+                    }
+                    attached = true;
+                    // Another resume may have started following the entity while the status was on its way.
+                    const meanwhile = this.activeRuns.get(this.runKey(target));
+                    if (meanwhile) {
+                        meanwhile.reattach();
+                        meanwhile.result$.subscribe(result$);
+                        return;
+                    }
+                    const run = this.createRun(target, result$, {});
+                    run.register();
                     run.listen();
                     run.openDialog();
                     run.apply(progress);
                     run.startFallback();
-                }
-            },
-            error: () => result$.complete(),
-        });
+                },
+                error: () => result$.complete(),
+                // The status is a single response, so without a running deletion to follow there is nothing left to wait for.
+                complete: () => {
+                    if (!attached) {
+                        result$.complete();
+                    }
+                },
+            });
         return result$.asObservable();
     }
 
@@ -144,25 +193,45 @@ export class EntityDeletionService {
         }
     }
 
-    private isStale(progress: EntityDeletionProgress): boolean {
-        return !!progress.updatedAt && dayjs().diff(dayjs(progress.updatedAt)) > STALE_DELETION_PROGRESS_MS;
+    private runKey(target: EntityDeletionTarget): string {
+        return `${target.entityType}:${target.entityId}`;
     }
 
-    /** A status read that fails, typically with 404 because the entity is already gone, must not pop up an error alert. */
+    /** A status read that fails, typically because the entity is already gone, must not pop up an error alert. */
     private silentContext(): HttpContext {
         return new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true);
     }
 
-    private createRun(target: EntityDeletionTarget, result$: ReplaySubject<EntityDeletionProgress>, options: EntityDeletionOptions) {
+    private createRun(target: EntityDeletionTarget, result$: ReplaySubject<EntityDeletionProgress>, options: EntityDeletionOptions): DeletionRun {
         const progress = signal<EntityDeletionProgress | undefined>(undefined);
         let subscription: Subscription | undefined;
         let fallback: Subscription | undefined;
+        let dialogRef: TumAetUiDialogRef | undefined;
+        let dialogOpen = false;
         let finished = false;
         let continuedInBackground = false;
 
         const matchesTarget = (message: EntityDeletionProgress) => message.entityType === target.entityType && message.entityId === target.entityId;
 
-        const run = {
+        const goneProgress = (): EntityDeletionProgress => {
+            const last = progress();
+            return {
+                entityType: target.entityType,
+                entityId: target.entityId,
+                status: EntityDeletionStatus.COMPLETED,
+                stepsCompleted: last?.totalSteps ?? 0,
+                totalSteps: last?.totalSteps ?? 0,
+                itemsProcessed: 0,
+                totalItems: 0,
+                weightedProgressPercent: 100,
+            };
+        };
+
+        const run: DeletionRun = {
+            result$,
+            register: () => {
+                this.activeRuns.set(this.runKey(target), run);
+            },
             listen: () => {
                 subscription = this.websocketService.subscribe<EntityDeletionProgress>(this.topic(target)).subscribe((message) => run.apply(message));
             },
@@ -171,6 +240,9 @@ export class EntityDeletionService {
                 subscription = undefined;
                 fallback?.unsubscribe();
                 fallback = undefined;
+                if (this.activeRuns.get(this.runKey(target)) === run) {
+                    this.activeRuns.delete(this.runKey(target));
+                }
             },
             /** Re-reads the status when the websocket reconnects and at an interval, in case the message that ended the deletion was missed. */
             startFallback: () => {
@@ -211,8 +283,8 @@ export class EntityDeletionService {
                 run.stop();
                 if (message.status === EntityDeletionStatus.COMPLETED && !options.silent) {
                     this.alertService.success(target.successAlertKey, { param: target.title });
-                } else if (message.status === EntityDeletionStatus.FAILED && continuedInBackground) {
-                    // The dialog that would have shown the failure is gone, so the failure must not pass unnoticed.
+                } else if (message.status === EntityDeletionStatus.FAILED && (continuedInBackground || options.silent)) {
+                    // The dialog that would have shown the failure is gone or was never shown, so the failure must not pass unnoticed.
                     this.alertService.error('artemisApp.deletionProgress.failedInBackground', { title: target.title, error: message.errorMessage ?? '' });
                 }
                 result$.next(message);
@@ -222,38 +294,33 @@ export class EntityDeletionService {
                 // Covers messages that were sent before the subscription was established.
                 this.http.get<EntityDeletionProgress>(this.statusUrl(target), { observe: 'response', context: this.silentContext() }).subscribe({
                     next: (response: HttpResponse<EntityDeletionProgress>) => {
-                        if (response.status === 200 && response.body) {
-                            const progress = response.body;
-                            // A deletion that stopped reporting (e.g. its node restarted) never sends a terminal message: end the run instead of polling forever.
-                            run.apply(
-                                progress.status === EntityDeletionStatus.IN_PROGRESS && this.isStale(progress)
-                                    ? cloneWith(progress, { status: EntityDeletionStatus.FAILED })
-                                    : progress,
-                            );
+                        const status = response.body;
+                        if (response.status !== 200 || !status || finished) {
+                            return;
                         }
+                        if (matchesTarget(status)) {
+                            run.apply(status);
+                            return;
+                        }
+                        // The exam status is shared by the exam and its exercise groups and only describes the latest operation. A status of another
+                        // entity means that ours is over, but how it ended is not known any more. The run ends without a success alert and reports
+                        // COMPLETED, so the caller refreshes its view from the server, which is the only reliable source for the outcome.
+                        finished = true;
+                        run.stop();
+                        dialogRef?.close();
+                        result$.next(goneProgress());
+                        result$.complete();
                     },
                     error: (error: unknown) => {
-                        // The status endpoint of an exercise or an exam answers 404 once the entity is gone, which after an accepted delete means the
-                        // deletion completed and the terminal message was missed. Any other failure must not disturb the running deletion: the
-                        // websocket stays the source of truth. (An exercise group's exam stays, so its status remains readable.)
-                        if (error instanceof HttpErrorResponse && error.status === 404 && target.entityType !== EntityDeletionType.EXERCISE_GROUP) {
-                            run.apply(run.goneProgress());
+                        // After an accepted delete, an exercise or an exam that cannot be read any more is gone: the status endpoint answers 404, or 403
+                        // when the permission is derived from the entity that no longer exists. The deletion completed and its terminal message was
+                        // missed. Any other failure must not disturb the running deletion, the websocket stays the source of truth. (The exam of
+                        // an exercise group stays, so its status remains readable.)
+                        if (error instanceof HttpErrorResponse && (error.status === 404 || error.status === 403) && target.entityType !== EntityDeletionType.EXERCISE_GROUP) {
+                            run.apply(goneProgress());
                         }
                     },
                 });
-            },
-            goneProgress: (): EntityDeletionProgress => {
-                const last = progress();
-                return {
-                    entityType: target.entityType,
-                    entityId: target.entityId,
-                    status: EntityDeletionStatus.COMPLETED,
-                    stepsCompleted: last?.totalSteps ?? 0,
-                    totalSteps: last?.totalSteps ?? 0,
-                    itemsProcessed: 0,
-                    totalItems: 0,
-                    weightedProgressPercent: 100,
-                };
             },
             openDialog: () => {
                 const data: EntityDeletionProgressDialogData = {
@@ -261,9 +328,11 @@ export class EntityDeletionService {
                     progress: progress.asReadonly(),
                     continueInBackground: () => {
                         continuedInBackground = true;
+                        dialogOpen = false;
                     },
                 };
-                this.dialogService.open<EntityDeletionProgressDialogComponent, unknown, EntityDeletionProgressDialogData>(EntityDeletionProgressDialogComponent, {
+                dialogOpen = true;
+                dialogRef = this.dialogService.open<EntityDeletionProgressDialogComponent, unknown, EntityDeletionProgressDialogData>(EntityDeletionProgressDialogComponent, {
                     ariaLabel: this.translateService.instant('artemisApp.deletionProgress.progressLabel'),
                     size: 'small',
                     closable: false,
@@ -272,6 +341,14 @@ export class EntityDeletionService {
                     showHeader: false,
                     data,
                 });
+            },
+            reattach: () => {
+                if (finished || dialogOpen || options.silent) {
+                    return;
+                }
+                // The dialog shows a failure itself again, so the alert for a deletion in the background is not needed any more.
+                continuedInBackground = false;
+                run.openDialog();
             },
         };
         return run;

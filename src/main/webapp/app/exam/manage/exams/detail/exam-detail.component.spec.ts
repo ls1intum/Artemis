@@ -416,6 +416,31 @@ describe('ExamDetailComponent', () => {
         expect(navigateSpy).not.toHaveBeenCalled();
     });
 
+    it('should refresh lists but not navigate when the deletion ends while the page shows another exam', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const ended$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(ended$);
+        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const broadcastSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast');
+
+        component.deleteExam(1);
+        component.exam.set({ ...exam, id: 2 } as Exam);
+        ended$.next({
+            entityType: EntityDeletionType.EXAM,
+            entityId: 1,
+            status: EntityDeletionStatus.COMPLETED,
+            stepsCompleted: 5,
+            totalSteps: 5,
+            itemsProcessed: 0,
+            totalItems: 0,
+            weightedProgressPercent: 100,
+        });
+
+        expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
     it('should not leave the page when the background deletion failed', () => {
         const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
         deletionService.status = EntityDeletionStatus.FAILED;
@@ -453,7 +478,7 @@ describe('ExamDetailComponent', () => {
 
         component.ngOnInit();
 
-        expect(deletionService.resume).toHaveBeenCalledWith(expect.objectContaining({ entityType: EntityDeletionType.EXAM, entityId: exam.id, courseId: 1 }));
+        expect(deletionService.resume).toHaveBeenCalledWith(expect.objectContaining({ entityType: EntityDeletionType.EXAM, entityId: exam.id, courseId: 1 }), expect.anything());
     });
 
     it('should not look for a running deletion when the user is no instructor', () => {

@@ -38,6 +38,42 @@ function entityUrl(target: DeletionTarget): string {
 }
 
 /**
+ * Waits until no deletion of the given exam or of one of its exercise groups is running, however it ends.
+ * <p>
+ * A delete request that was answered with 409 collided with such a deletion. Its own progress will never show up, because the exam status
+ * describes the deletion that holds the exam, so the caller has to wait for the conflicting job to end and then send its request again.
+ *
+ * @param request the API context of a user who may delete in the course
+ * @param courseId the course of the exam
+ * @param examId the exam whose deletions are awaited
+ * @param timeoutMs how long a conflicting deletion may stay in progress
+ * @return how long was waited, in milliseconds
+ */
+export async function awaitNoRunningExamDeletion(request: APIRequestContext, courseId: number, examId: number, timeoutMs = DELETION_COMPLETION_TIMEOUT): Promise<number> {
+    const start = Date.now();
+    const deadline = start + timeoutMs;
+    for (let attempt = 0; ; attempt++) {
+        const statusResponse = await request.get(statusUrl({ entityType: 'EXAM', entityId: examId, courseId }));
+        const status = statusResponse.status();
+        if (status === 200) {
+            const progress = (await statusResponse.json()) as DeletionProgressBody;
+            if (progress.status !== 'IN_PROGRESS') {
+                return Date.now() - start;
+            }
+        } else if (status === 204 || status === 404) {
+            // Nothing is known about a deletion (any more), or the exam itself is gone.
+            return Date.now() - start;
+        } else {
+            throw new Error(`Could not read the deletion progress of exam ${examId}: ${status} ${await statusResponse.text()}`);
+        }
+        if (Date.now() > deadline) {
+            throw new Error(`A deletion in exam ${examId} did not finish within ${timeoutMs} ms`);
+        }
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVALS_MS[Math.min(attempt, POLL_INTERVALS_MS.length - 1)]));
+    }
+}
+
+/**
  * Waits until an accepted (202) deletion finished in the background, by following the progress the server reports instead of sleeping.
  * <p>
  * The status endpoint of an exercise or an exam answers 404 once the entity is gone, which is the usual way a successful deletion ends here.

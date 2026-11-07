@@ -5,12 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -27,6 +29,7 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.EntityDeletionStatus;
@@ -35,7 +38,10 @@ import de.tum.cit.aet.artemis.exercise.dto.EntityDeletionProgressDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.DeletionJob;
+import de.tum.cit.aet.artemis.exercise.service.DeletionProgressListener;
+import de.tum.cit.aet.artemis.exercise.service.DeletionStepReporter;
 import de.tum.cit.aet.artemis.exercise.service.EntityDeletionProgressService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -67,6 +73,9 @@ class AsyncExerciseDeletionIntegrationTest extends AbstractSpringIntegrationInde
 
     @Autowired
     private EntityDeletionProgressService entityDeletionProgressService;
+
+    @Autowired
+    private ExerciseDeletionService exerciseDeletionService;
 
     @Autowired
     private DistributedDataProvider distributedDataProvider;
@@ -448,5 +457,182 @@ class AsyncExerciseDeletionIntegrationTest extends AbstractSpringIntegrationInde
         asyncDeletionTestUtilService.awaitExerciseDeletion(exercise.getId());
         await().atMost(Duration.ofSeconds(30))
                 .until(() -> entityDeletionProgressService.getProgress(scopeKey()).filter(p -> p.status() == EntityDeletionStatus.COMPLETED).isPresent());
+    }
+
+    private DistributedMap<String, String> claimMap() {
+        return distributedDataProvider.getExpiringMap("entity-deletion-claims", Duration.ofMinutes(10));
+    }
+
+    private void awaitCompleted(String scopeKey) {
+        await().atMost(Duration.ofSeconds(30))
+                .until(() -> entityDeletionProgressService.getProgress(scopeKey).filter(p -> p.status() == EntityDeletionStatus.COMPLETED).isPresent());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testLosingAnAdditionalClaimStopsTheDeletionAtTheNextStep() throws Exception {
+        String otherKey = EntityDeletionProgressService.exerciseScopeKey(987_654_321L);
+        var running = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        startHolding(scopeKey(), List.of(otherKey), 3, () -> {
+        }, tracker -> {
+            tracker.startStep("channel");
+            running.countDown();
+            release.await(30, TimeUnit.SECONDS);
+            tracker.startStep("participations");
+        });
+        assertThat(running.await(30, TimeUnit.SECONDS)).isTrue();
+
+        // the claim of one of the exercises of the deletion expired, so another deletion could take it and delete the same data
+        claimMap().remove(otherKey);
+        release.countDown();
+
+        EntityDeletionProgressDTO failed = asyncDeletionTestUtilService.awaitExerciseDeletionFailure(exercise.getId());
+        assertThat(failed.errorMessage()).contains("was lost");
+        assertThat(failed.currentStep()).as("the deletion stops when it starts its next step").isEqualTo("participations");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAnExerciseThatJoinedLaterIsClaimedWhenItIsDeletedAndReleasedAfterwards() throws Exception {
+        long lateExerciseId = 987_654_322L;
+        String lateKey = EntityDeletionProgressService.exerciseScopeKey(lateExerciseId);
+        AtomicBoolean refusedWhileClaimed = new AtomicBoolean();
+        start(1, tracker -> {
+            tracker.claimExercise(lateExerciseId);
+            // claiming it again is no conflict with the own claim
+            tracker.claimExercise(lateExerciseId);
+            try {
+                entityDeletionProgressService.startAsync(lateKey, List.of(), EntityDeletionType.EXERCISE, lateExerciseId,
+                        ExerciseWebsocketTopics.DELETION_PROGRESS.at(lateExerciseId), 1, 1.0, () -> {
+                        }, other -> {
+                        });
+            }
+            catch (ConflictException e) {
+                refusedWhileClaimed.set(true);
+            }
+        });
+        asyncDeletionTestUtilService.awaitExerciseDeletion(exercise.getId());
+        assertThat(refusedWhileClaimed).as("nobody can delete the exercise on its own while the deletion of its group or exam is about to delete it").isTrue();
+
+        // the claim is released with the others, so the exercise can be deleted on its own afterwards
+        var deletedOnItsOwn = new CountDownLatch(1);
+        entityDeletionProgressService.startAsync(lateKey, List.of(), EntityDeletionType.EXERCISE, lateExerciseId, ExerciseWebsocketTopics.DELETION_PROGRESS.at(lateExerciseId), 1,
+                1.0, () -> {
+                }, tracker -> deletedOnItsOwn.countDown());
+        assertThat(deletedOnItsOwn.await(30, TimeUnit.SECONDS)).isTrue();
+        awaitCompleted(lateKey);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testDeletionFailsInsteadOfDeletingAnExerciseThatIsDeletedOnItsOwnAtTheSameTime() throws Exception {
+        long lateExerciseId = 987_654_323L;
+        String lateKey = EntityDeletionProgressService.exerciseScopeKey(lateExerciseId);
+        CountDownLatch otherDeletion = startBlockedDeletion(lateKey, List.of(), "participations");
+        try {
+            start(1, tracker -> tracker.claimExercise(lateExerciseId));
+
+            EntityDeletionProgressDTO failed = asyncDeletionTestUtilService.awaitExerciseDeletionFailure(exercise.getId());
+            assertThat(failed.errorMessage()).contains("already being deleted");
+        }
+        finally {
+            otherDeletion.countDown();
+        }
+        awaitCompleted(lateKey);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testProgressOfADeletedExerciseIsOnlyReadableByTheInstructorsOfItsCourse() throws Exception {
+        request.delete(exerciseUrl(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(exercise.getId());
+        assertThat(exerciseRepository.findById(exercise.getId())).isEmpty();
+
+        var progress = request.get(progressUrl(), HttpStatus.OK, EntityDeletionProgressDTO.class);
+        assertThat(progress.status()).as("the instructor sees the outcome although the exercise is gone").isEqualTo(EntityDeletionStatus.COMPLETED);
+        assertThat(progress.entityId()).isEqualTo(exercise.getId());
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        request.get(progressUrl(), HttpStatus.FORBIDDEN, EntityDeletionProgressDTO.class);
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        request.get("/api/exercise/exercises/987654399/deletion-progress", HttpStatus.NOT_FOUND, EntityDeletionProgressDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testAcceptanceIsUndoneWhenTheDeletionFailsButNotWhenItIsRefused() throws Exception {
+        // the exercise does not exist, so the deletion fails as soon as it runs
+        TextExercise missing = new TextExercise();
+        missing.setId(987_654_324L);
+        missing.setCourse(exercise.getCourseViaExerciseGroupOrCourseMember());
+        AtomicBoolean accepted = new AtomicBoolean();
+        AtomicBoolean notDeleted = new AtomicBoolean();
+
+        exerciseDeletionService.startAsyncDeletion(missing, false, () -> accepted.set(true), () -> notDeleted.set(true));
+
+        asyncDeletionTestUtilService.awaitExerciseDeletionFailure(missing.getId());
+        await().atMost(Duration.ofSeconds(30)).untilTrue(notDeleted);
+        assertThat(accepted).isTrue();
+
+        // a request that is refused was never accepted, so there is nothing to undo
+        accepted.set(false);
+        notDeleted.set(false);
+        CountDownLatch release = startBlockedDeletion("channel");
+        try {
+            assertThatThrownBy(() -> exerciseDeletionService.startAsyncDeletion(exercise, false, () -> accepted.set(true), () -> notDeleted.set(true)))
+                    .isInstanceOf(ConflictException.class);
+            assertThat(accepted).isFalse();
+            assertThat(notDeleted).isFalse();
+        }
+        finally {
+            release.countDown();
+        }
+        asyncDeletionTestUtilService.awaitExerciseDeletion(exercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testQuizScheduleIsRestoredWhenTheAcceptanceFailsAfterItWasCancelled() throws Exception {
+        Course quizCourse = quizExerciseUtilService.addEnrolledCourseWithOneQuizExercise("Quiz", TEST_PREFIX);
+        QuizExercise quiz = ExerciseUtilService.getFirstExerciseWithType(quizCourse, QuizExercise.class);
+        doThrow(new IllegalStateException("cluster message failed")).when(instanceMessageSendService).sendQuizExerciseStartCancel(quiz.getId());
+
+        request.delete("/api/quiz/quiz-exercises/" + quiz.getId(), HttpStatus.INTERNAL_SERVER_ERROR);
+
+        assertThat(exerciseRepository.findById(quiz.getId())).as("the quiz was not deleted").isPresent();
+        verify(instanceMessageSendService).sendQuizExerciseStartSchedule(quiz.getId());
+        assertThat(claimMap().get(EntityDeletionProgressService.exerciseScopeKey(quiz.getId()))).as("the claim is released").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testCleanupAfterTheDeletionRunsEvenIfTheProgressCannotBeReportedAnyMore() throws Exception {
+        start(9, tracker -> {
+            var reporter = new DeletionStepReporter(tracker, Map.of());
+            exerciseDeletionService.delete(exercise.getId(), false, new DeletionProgressListener() {
+
+                @Override
+                public void stepStarted(String stepKey) {
+                    reporter.stepStarted(stepKey);
+                }
+
+                @Override
+                public void stepStartedAfterDeletion(String stepKey) {
+                    // the exercise is deleted now, and reporting the cleanup fails because the claim is gone
+                    claimMap().remove(scopeKey());
+                    reporter.stepStartedAfterDeletion(stepKey);
+                }
+
+                @Override
+                public void itemsProcessed(int processed, int total) {
+                    reporter.itemsProcessed(processed, total);
+                }
+            });
+        });
+
+        // before, the failing report ended the deletion before the cleanup ran
+        asyncDeletionTestUtilService.awaitExerciseDeletion(exercise.getId());
+        assertThat(exerciseRepository.findById(exercise.getId())).isEmpty();
     }
 }

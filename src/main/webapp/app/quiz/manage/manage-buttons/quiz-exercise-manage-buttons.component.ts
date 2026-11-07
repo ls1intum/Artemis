@@ -134,7 +134,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
                         name: 'quizExerciseListModification',
                         content: 'Deleted an quizExercise',
                     });
-                    if (this.isDetailPage() && this.isAlive()) {
+                    if (this.isDetailPage() && this.isAlive() && this.quizExercise().id === quizExercise.id) {
                         void this.router.navigate(['course-management', this.courseId, 'exercises']);
                     }
                 }

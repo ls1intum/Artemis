@@ -83,7 +83,7 @@ public class QuizExerciseDeletionResource {
             notifyAtlasML(quizExercise, OperationTypeDTO.DELETE, "quiz exercise deletion");
             exerciseService.logDeletion(quizExercise, course, user);
             quizExerciseService.cancelScheduledQuiz(quizExerciseId);
-        });
+        }, () -> quizExerciseService.rescheduleQuizAfterFailedDeletion(quizExerciseId));
 
         return ResponseEntity.accepted().build();
     }

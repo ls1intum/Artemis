@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,6 +137,16 @@ public class ExerciseDeletionService {
     }
 
     /**
+     * Finds the course of an exercise that was deleted in the background during the last hour, to authorize reading the progress of its deletion.
+     *
+     * @param exerciseId the id of the deleted exercise
+     * @return the id of the course, or empty if no deletion of the exercise ran in the last hour
+     */
+    public Optional<Long> findCourseIdOfDeletion(long exerciseId) {
+        return entityDeletionProgressService.findCourseId(EntityDeletionProgressService.exerciseScopeKey(exerciseId));
+    }
+
+    /**
      * Delete student build plans (except BASE/SOLUTION) and git repositories of all exercise student participations.
      *
      * @param exerciseId programming exercise for which build plans in respective student participations are deleted
@@ -207,16 +218,61 @@ public class ExerciseDeletionService {
      * @throws ConflictException if the exercise, or the exam or exercise group it belongs to, is already being deleted
      */
     public void startAsyncDeletion(Exercise exercise, boolean deleteBaseReposBuildPlans, Runnable onAccepted) {
+        startAsyncDeletion(exercise, deleteBaseReposBuildPlans, onAccepted, () -> {
+        });
+    }
+
+    /**
+     * Deletes the exercise in the background, like {@link #startAsyncDeletion(Exercise, boolean, Runnable)}, and undoes what the acceptance did if the exercise is not deleted.
+     *
+     * @param exercise                  the exercise to delete
+     * @param deleteBaseReposBuildPlans whether the template and solution repos and build plans should be deleted (only relevant for programming exercises)
+     * @param onAccepted                runs in the request once the deletion is accepted and before it starts, for example to cancel the schedule of a quiz
+     * @param onNotDeleted              runs if the deletion fails or cannot be scheduled after the acceptance started, for example to restore the schedule of a quiz. It does not
+     *                                      run if the request is refused because the exercise is already being deleted. It has to cope with an exercise that is gone.
+     * @throws ConflictException if the exercise, or the exam or exercise group it belongs to, is already being deleted
+     */
+    public void startAsyncDeletion(Exercise exercise, boolean deleteBaseReposBuildPlans, Runnable onAccepted, Runnable onNotDeleted) {
         long exerciseId = exercise.getId();
+        long courseId = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
         boolean examExercise = exerciseRepository.isExamExercise(exerciseId);
         Map<String, Double> stepWeights = EntityDeletionWeights.exerciseStepWeights(exercise, examExercise, participationRepository.countByExerciseId(exerciseId));
         // An exam or an exercise group that is deleted holds the scope of this exercise, so this request is refused with a conflict meanwhile.
-        entityDeletionProgressService.startAsync(EntityDeletionProgressService.exerciseScopeKey(exerciseId), List.of(), EntityDeletionType.EXERCISE, exerciseId,
-                ExerciseWebsocketTopics.DELETION_PROGRESS.at(exerciseId), stepWeights.size(), EntityDeletionWeights.total(stepWeights), onAccepted, tracker -> {
-                    var reporter = new DeletionStepReporter(tracker, stepWeights);
-                    delete(exerciseId, deleteBaseReposBuildPlans, reporter);
-                    reporter.finishCurrentStep();
-                });
+        // Set before the acceptance runs, so a failure in the middle of it is undone as well.
+        AtomicBoolean acceptanceStarted = new AtomicBoolean();
+        try {
+            entityDeletionProgressService.startAsync(EntityDeletionProgressService.exerciseScopeKey(exerciseId), List.of(), EntityDeletionType.EXERCISE, exerciseId,
+                    ExerciseWebsocketTopics.DELETION_PROGRESS.at(exerciseId), stepWeights.size(), EntityDeletionWeights.total(stepWeights), () -> {
+                        acceptanceStarted.set(true);
+                        entityDeletionProgressService.rememberCourse(EntityDeletionProgressService.exerciseScopeKey(exerciseId), courseId);
+                        onAccepted.run();
+                    }, tracker -> {
+                        try {
+                            var reporter = new DeletionStepReporter(tracker, stepWeights);
+                            delete(exerciseId, deleteBaseReposBuildPlans, reporter);
+                            reporter.finishCurrentStep();
+                        }
+                        catch (Exception | Error failure) {
+                            undoAcceptance(exerciseId, onNotDeleted);
+                            throw failure;
+                        }
+                    });
+        }
+        catch (RuntimeException | Error failure) {
+            if (acceptanceStarted.get()) {
+                undoAcceptance(exerciseId, onNotDeleted);
+            }
+            throw failure;
+        }
+    }
+
+    private void undoAcceptance(long exerciseId, Runnable onNotDeleted) {
+        try {
+            onNotDeleted.run();
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not undo the acceptance of the deletion of exercise {}", exerciseId, e);
+        }
     }
 
     private void deleteExercise(Exercise exercise, boolean deleteBaseReposBuildPlans, DeletionProgressListener progressListener) {
@@ -297,7 +353,8 @@ public class ExerciseDeletionService {
             FileUtil.deleteFiles(dragAndDropImagesToDelete);
         }
 
-        progressListener.stepStarted(EntityDeletionWeights.STEP_CLEANUP);
+        // The exercise is deleted at this point, so the cleanup below must run even if the progress cannot be reported.
+        progressListener.stepStartedAfterDeletion(EntityDeletionWeights.STEP_CLEANUP);
         competencyProgressApi.ifPresent(api -> competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync));
 
         searchableItemWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, exerciseId));

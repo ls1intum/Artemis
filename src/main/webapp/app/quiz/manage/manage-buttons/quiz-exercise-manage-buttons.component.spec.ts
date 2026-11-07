@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,7 +20,7 @@ import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create
 import { DialogService } from 'primeng/dynamicdialog';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
-import { EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
 import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
@@ -268,6 +268,34 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
 
         expect(quizExerciseDeletionApi.deleteQuizExercise).toHaveBeenCalledWith(456);
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', 123, 'exercises']);
+    });
+
+    it('should not navigate when the deletion ends while the reused component shows another quiz', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const ended$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(ended$);
+        const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
+        const router = TestBed.inject(Router);
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        fixture.componentRef.setInput('isDetailPage', true);
+        comp.ngOnInit();
+        comp.deleteQuizExercise();
+
+        fixture.componentRef.setInput('quizExercise', { ...quizExercise, id: 999 });
+        ended$.next({
+            entityType: EntityDeletionType.EXERCISE,
+            entityId: quizExercise.id!,
+            status: EntityDeletionStatus.COMPLETED,
+            stepsCompleted: 1,
+            totalSteps: 1,
+            itemsProcessed: 0,
+            totalItems: 0,
+            weightedProgressPercent: 100,
+        });
+
+        expect(navigateSpy).not.toHaveBeenCalled();
     });
 
     it('should stay on the detail page when the background deletion failed', () => {

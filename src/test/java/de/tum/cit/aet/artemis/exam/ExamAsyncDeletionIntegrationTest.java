@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -17,10 +18,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -58,6 +61,9 @@ class ExamAsyncDeletionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
+
+    @Autowired
+    private AuditEventRepository auditEventRepository;
 
     @Autowired
     private EntityDeletionProgressService entityDeletionProgressService;
@@ -174,6 +180,30 @@ class ExamAsyncDeletionIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(messages).as("every exercise is reported with its title").filteredOn(message -> message.currentItemTitle() != null).isNotEmpty();
         assertThat(messages).as("the last exercise is reported as deleted")
                 .anyMatch(message -> "exercises".equals(message.currentStep()) && message.totalItems() == 10 && message.itemsProcessed() == 10);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testRefusedExamDeletionIsNotAuditedAndAnAcceptedOneIsAuditedOnce() throws Exception {
+        Instant before = Instant.now();
+        CountDownLatch release = startBlockedExamDeletion();
+        try {
+            request.delete(examUrl(), HttpStatus.CONFLICT);
+            assertThat(deletionAuditEventsSince(before)).as("a refused request is not logged as a deletion").isZero();
+        }
+        finally {
+            release.countDown();
+        }
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+
+        request.delete(examUrl(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExamDeletion(exam.getId());
+        assertThat(deletionAuditEventsSince(before)).as("an accepted request is logged exactly once, by the request that was accepted").isEqualTo(1);
+    }
+
+    private long deletionAuditEventsSince(Instant since) {
+        return auditEventRepository.find(TEST_PREFIX + "instructor1", since, Constants.DELETE_EXAM).stream().filter(event -> exam.getTitle().equals(event.getData().get("exam")))
+                .count();
     }
 
     @Test

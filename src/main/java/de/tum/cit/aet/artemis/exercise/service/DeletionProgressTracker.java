@@ -8,6 +8,9 @@ public class DeletionProgressTracker {
 
     private static final long MIN_NANOS_BETWEEN_ITEM_REPORTS = 250_000_000L;
 
+    // Checking the claims of all exercises of an exam takes the distributed lock of each of them, so it is not done for every item report.
+    private static final long MIN_NANOS_BETWEEN_FULL_CLAIM_CHECKS = 5_000_000_000L;
+
     private final EntityDeletionProgressService progressService;
 
     private final EntityDeletionClaim claim;
@@ -21,6 +24,8 @@ public class DeletionProgressTracker {
     private String currentStep;
 
     private long lastItemReportNanos;
+
+    private long lastFullClaimCheckNanos;
 
     DeletionProgressTracker(EntityDeletionProgressService progressService, EntityDeletionClaim claim, double totalWeight) {
         this.progressService = progressService;
@@ -37,7 +42,8 @@ public class DeletionProgressTracker {
         currentStep = stepKey;
         int stepsCompleted = stepsStarted;
         stepsStarted++;
-        progressService.updateProgress(claim, stepKey, stepsCompleted, 0, 0, null, percentOf(0));
+        lastFullClaimCheckNanos = System.nanoTime();
+        progressService.updateProgress(claim, stepKey, stepsCompleted, 0, 0, null, percentOf(0), true);
     }
 
     /**
@@ -65,7 +71,21 @@ public class DeletionProgressTracker {
             return;
         }
         lastItemReportNanos = now;
-        progressService.updateProgress(claim, currentStep, Math.max(stepsStarted - 1, 0), itemsProcessed, totalItems, itemTitle, percentOf(partialWeight));
+        boolean verifyAllClaims = lastFullClaimCheckNanos == 0 || now - lastFullClaimCheckNanos >= MIN_NANOS_BETWEEN_FULL_CLAIM_CHECKS;
+        if (verifyAllClaims) {
+            lastFullClaimCheckNanos = now;
+        }
+        progressService.updateProgress(claim, currentStep, Math.max(stepsStarted - 1, 0), itemsProcessed, totalItems, itemTitle, percentOf(partialWeight), verifyAllClaims);
+    }
+
+    /**
+     * Claims the exercise that is deleted next. The exercises that belonged to the deleted exam or exercise group when the deletion was accepted are claimed already. An
+     * exercise that joined later is claimed here, and the deletion fails if somebody deletes it separately at the same time.
+     *
+     * @param exerciseId the id of the exercise that is deleted next
+     */
+    public void claimExercise(long exerciseId) {
+        progressService.claimAdditionalScope(claim, EntityDeletionProgressService.exerciseScopeKey(exerciseId));
     }
 
     int stepsCompleted() {
