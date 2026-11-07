@@ -1,6 +1,6 @@
 <span class="relative inline-block">
     <select
-        class="[&_option]:text-text [&_optgroup]:text-text appearance-none rounded-md border border-border bg-(--tumaet-ui-control-background) py-2 ps-3 pe-9 text-sm"
+        class="[&_option]:text-text [&_optgroup]:text-text h-10.5 appearance-none rounded-md border border-border bg-(--tumaet-ui-control-background) py-2 ps-3 pe-9 text-sm"
         [ngModel]="activeFilter()"
         (ngModelChange)="filterChange.emit($event ?? allValue())"
         [attr.aria-label]="filterLabelKey() | artemisTranslate"
