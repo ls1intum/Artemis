@@ -606,7 +606,8 @@ public class SandboxAgentTools implements SubmitVetoAware, AuthoringProgress {
      */
     @Nullable
     private String unreadableInCurrentStage(String path) {
-        if (currentStage != GenerationStage.SPEC || !path.startsWith("reference/") || path.equals("reference/style/student-tests.md")) {
+        if (currentStage != GenerationStage.SPEC || !path.startsWith("reference/") || path.equals("reference/style/student-tests.md")
+                || path.equals("reference/style/runtime-observation.md")) {
             return null;
         }
         return "REFUSED: '" + path + "' is not readable in the specification stage. The complete SPEC.md section and table contract is in your instructions, "

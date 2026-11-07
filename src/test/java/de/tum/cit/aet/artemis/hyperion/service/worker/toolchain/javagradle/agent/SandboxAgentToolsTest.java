@@ -68,7 +68,9 @@ class SandboxAgentToolsTest {
         // adaptation starts from.
         tools.readFile("problem-statement.md");
         tools.readFile("reference/style/student-tests.md");
-        assertThat(sandbox.copiedPaths()).containsExactly("/workspace/problem-statement.md", "/workspace/reference/style/student-tests.md");
+        tools.readFile("reference/style/runtime-observation.md");
+        assertThat(sandbox.copiedPaths()).containsExactly("/workspace/problem-statement.md", "/workspace/reference/style/student-tests.md",
+                "/workspace/reference/style/runtime-observation.md");
     }
 
     @Test

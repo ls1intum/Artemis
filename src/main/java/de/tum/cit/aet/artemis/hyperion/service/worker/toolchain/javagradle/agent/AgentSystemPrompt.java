@@ -223,6 +223,7 @@ public class AgentSystemPrompt {
               `NECESSARY_OPERATIONAL_CHOICE`, `INPUT_DOMAIN_ASSUMPTION`, or `PEDAGOGICAL_OBJECTIVE`. Labels do not authorize scope expansion. Surface assumptions callers need.
             No task bindings, test names, or PlantUML at specification time; Artemis decides from the Design table and Public API whether the statement needs a diagram.
 
+            For API-use sequences, consult reference/style/runtime-observation.md before choosing the assessment contract or hidden variants.
             If learners write JUnit tests, consult reference/style/student-tests.md for supported fault selection and instructor grading before freezing the contract.
             Do not replace learner-chosen cases or assertions with supplied scenarios to make assessment easier.
 

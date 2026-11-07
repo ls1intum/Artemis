@@ -240,3 +240,6 @@ A reflection wrapper or a changed Method object does not redirect direct static 
 extra JVM opens, or new sandbox permissions. If the approved design has no working selection seam, redesign the contract rather than inventing interception during artifact repair.
 Only an assertion failure from the learner test against an activated fault demonstrates detection. Failed fault activation, linkage, discovery, or instructor support is a grader defect,
 not a detected fault. First establish that the same learner suite passes with correct behavior, and keep selection and failure classification out of the learner's responsibilities.
+
+For operation sequences, `reference/style/runtime-observation.md` shows supplied automatic recording from one learner execution.
+A claimed input variant must change a declared stimulus that reaches learner work. Hidden tests may add compatible assertions on the same execution; they cannot require contradictory outputs from identical deterministic invocations.

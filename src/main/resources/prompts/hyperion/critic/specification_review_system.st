@@ -15,6 +15,13 @@ requirements do not eliminate implementation reasoning: choosing control flow, t
 work. Difficulty is relative to the objective and prerequisites, not counts of files, tests, formulas, or tasks. Do not demand an unrelated algorithm to make an
 abstraction exercise harder. In domainGrounding, explain why the counted reasoning fits an explicitly requested theme, or state that no qualitative theme was requested.
 
+For each transcript-based API-use assessment, first replace the graded entry point by printing the expected literals without creating or changing any objects.
+Name the declared runtime observation that rejects this exact replacement. Testing supplied collaborators separately does not reject it.
+For each claimed input variant, trace the changed test-controlled stimulus into the actual learner invocation and derive its expected result.
+Hidden tests may instead add compatible assertions on the same execution. Identical deterministic invocations cannot have contradictory expected outputs.
+A claim that different names will be tested is not an input mechanism. If a transcript variant requires different output without changing a reachable stimulus,
+set objectiveObservable false and diagnose the inconsistent assessment; do not demand input variation for a valid fixed-input runtime observation.
+
 In objectiveMechanism, construct a concrete counterexample to the proposed assessment: substitute a plausible implementation that bypasses the student's objective,
 then identify a declared setup and observable result that distinguish it. For an API-use task, fixed demonstration output is insufficient if printing literals passes
 without using the API. For collaboration, trace the learner-owned selection, injection, replacement, or delegation through to an observed result; testing supplied

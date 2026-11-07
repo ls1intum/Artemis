@@ -11,12 +11,15 @@ final class AuthoringProgressMonitor {
 
     private long lastChecks;
 
+    private long lastCheckedMutations;
+
     private int bestRemainingFailures;
 
     private int blocksWithoutProgress;
 
     AuthoringProgressMonitor(AuthoringProgress.Snapshot initial) {
         lastChecks = initial.checks();
+        lastCheckedMutations = initial.mutations();
         // A previous stage's pass is stale after changing stage or files; zero is not a baseline for the new work.
         bestRemainingFailures = initial.remainingFailures() == 0 && !initial.verified() ? Integer.MAX_VALUE : initial.remainingFailures();
     }
@@ -25,10 +28,14 @@ final class AuthoringProgressMonitor {
         if (current.verified()) {
             return Decision.VERIFIED;
         }
-        boolean improved = current.checks() > lastChecks && current.remainingFailures() < bestRemainingFailures;
+        boolean checked = current.checks() > lastChecks;
+        boolean improved = checked && current.mutations() > lastCheckedMutations && current.remainingFailures() < bestRemainingFailures;
+        if (checked) {
+            lastCheckedMutations = current.mutations();
+            bestRemainingFailures = Math.min(bestRemainingFailures, current.remainingFailures());
+        }
         lastChecks = current.checks();
         if (improved) {
-            bestRemainingFailures = current.remainingFailures();
             blocksWithoutProgress = 0;
         }
         else {
