@@ -72,7 +72,7 @@ public class LocalVCBuildAgentAuthenticationService {
 
     private final LocalVCRepositoryResolverService repositoryResolver;
 
-    // TODO As soon as only LocalVC is supported, this Optional can be removed
+    // Optional until LocalVC is the only supported version control, like the same field of LocalVCServletService
     private final Optional<VcsAccessLogService> vcsAccessLogService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
@@ -215,13 +215,7 @@ public class LocalVCBuildAgentAuthenticationService {
             }
 
             var tokenService = buildJobCloneTokenService.get();
-            BuildJobQueueItem matchingBuildJob = null;
-            for (BuildJobQueueItem buildJob : processingJobs) {
-                if (tokenService.tokenMatches(buildJob, presentedToken)) {
-                    matchingBuildJob = buildJob;
-                    break;
-                }
-            }
+            BuildJobQueueItem matchingBuildJob = processingJobs.stream().filter(buildJob -> tokenService.tokenMatches(buildJob, presentedToken)).findFirst().orElse(null);
             if (matchingBuildJob == null) {
                 // The one case that looks like credential guessing against a live agent, so it must not be the one case
                 // that leaves no trace.
@@ -351,7 +345,7 @@ public class LocalVCBuildAgentAuthenticationService {
             String commitHash = repositoryResolver.getCommitHash(localVCRepositoryUri);
             vcsAccessLogService.ifPresent(service -> service.saveBuildAgentAccessLog(participation, agentName, buildJobId, commitHash, ipAddress, mechanism));
         }
-        catch (EntityNotFoundException e) {
+        catch (EntityNotFoundException _) {
             // An auxiliary repository has no participation of its own, so there is nothing to attribute the access to.
             // Expected for those, and it happens on every build, so it must not be a warning.
             log.debug("No participation to record a build agent access against for {}", localVCRepositoryUri);
@@ -380,7 +374,7 @@ public class LocalVCBuildAgentAuthenticationService {
             String username = extractUsernameAndPassword(request.getHeader(HttpHeaders.AUTHORIZATION)).username();
             return BUILD_USER_NAME.equals(username) || (StringUtils.hasText(buildAgentGitUsername) && buildAgentGitUsername.equals(username));
         }
-        catch (LocalVCAuthException e) {
+        catch (LocalVCAuthException _) {
             return false;
         }
     }

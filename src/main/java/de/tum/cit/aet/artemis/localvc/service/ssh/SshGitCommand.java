@@ -136,7 +136,7 @@ public class SshGitCommand extends GitPackCommand {
                     }
                     case RemoteConfig.DEFAULT_RECEIVE_PACK -> {
                         var exercise = getServerSession().getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
-                        try (var ignored = pushProcessingService.claimProgrammingExerciseMutation(repository, exercise)) {
+                        try (var _ = pushProcessingService.claimProgrammingExerciseMutation(repository, exercise)) {
                             ReceivePack receivePack = new ReceivePack(repository);
 
                             receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));

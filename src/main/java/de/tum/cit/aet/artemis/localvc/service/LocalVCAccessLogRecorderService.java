@@ -47,7 +47,7 @@ public class LocalVCAccessLogRecorderService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCAccessLogRecorderService.class);
 
-    // TODO As soon as only LocalVC is supported, this Optional can be removed
+    // Optional until LocalVC is the only supported version control, like the same field of LocalVCServletService
     private final Optional<VcsAccessLogService> vcsAccessLogService;
 
     private final LocalVCRepositoryResolverService repositoryResolver;
@@ -115,14 +115,14 @@ public class LocalVCAccessLogRecorderService {
      */
     public AuthenticationMechanism resolveAuthenticationMechanismFromSessionOrRequest(AuthenticationContext context, User user, LocalVCRepositoryUri localVCRepositoryUri) {
         switch (context) {
-            case AuthenticationContext.Session ignored -> {
+            case AuthenticationContext.Session _ -> {
                 return AuthenticationMechanism.SSH;
             }
-            case AuthenticationContext.Request request -> {
+            case AuthenticationContext.Request(HttpServletRequest httpRequest) -> {
                 try {
-                    return resolveHTTPSAuthenticationMechanism(request.request().getHeader(HttpHeaders.AUTHORIZATION), user, localVCRepositoryUri);
+                    return resolveHTTPSAuthenticationMechanism(httpRequest.getHeader(HttpHeaders.AUTHORIZATION), user, localVCRepositoryUri);
                 }
-                catch (LocalVCAuthException ignored) {
+                catch (LocalVCAuthException _) {
                     return AuthenticationMechanism.AUTH_HEADER_MISSING;
                 }
             }
@@ -187,8 +187,7 @@ public class LocalVCAccessLogRecorderService {
                 serverSession.setAttribute(SshConstants.PARTICIPATION_KEY, participation);
             }
             catch (Exception e) {
-                log.warn("Failed to obtain commit hash or store access log for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(),
-                        e.getMessage());
+                log.warn("Failed to obtain commit hash or store access log for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath(), e.getMessage());
             }
         }
     }
@@ -292,7 +291,7 @@ public class LocalVCAccessLogRecorderService {
             var ipAddress = servletRequest.getRemoteAddr();
             vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation.get(), RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
         }
-        catch (LocalVCAuthException | EntityNotFoundException ignored) {
+        catch (LocalVCAuthException | EntityNotFoundException _) {
             // Caught when: 1) no user, or 2) no exercise or participation was found. In none of these cases does it make sense to write a log
         }
         catch (RuntimeException e) {

@@ -45,7 +45,7 @@ final class LocalVCCredentials {
         try {
             basicAuthCredentials = new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
         }
-        catch (IllegalArgumentException e) {
+        catch (IllegalArgumentException _) {
             throw new LocalVCAuthException("Invalid Base64 encoding in authorization header");
         }
 

@@ -28,17 +28,17 @@ import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 @Service
 public class ArtemisGitServletService extends GitServlet {
 
-    private final LocalVCServletService localVCServletService;
+    private final transient LocalVCServletService localVCServletService;
 
-    private final LocalVCRepositoryResolverService repositoryResolver;
+    private final transient LocalVCRepositoryResolverService repositoryResolver;
 
-    private final LocalVCAccessLogRecorderService accessLogRecorder;
+    private final transient LocalVCAccessLogRecorderService accessLogRecorder;
 
-    private final LocalVCPushProcessingService pushProcessingService;
+    private final transient LocalVCPushProcessingService pushProcessingService;
 
-    private final PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
+    private final transient PasswordAuthenticationNoticeService passwordAuthenticationNoticeService;
 
-    private final LocalVCUsageTrackingService usageTrackingService;
+    private final transient LocalVCUsageTrackingService usageTrackingService;
 
     /**
      * Constructor for ArtemisGitServlet.

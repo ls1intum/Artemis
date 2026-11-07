@@ -73,7 +73,7 @@ public class LocalVCPushProcessingService {
 
     private final Optional<HyperionExerciseMutationApi> hyperionMutationApi;
 
-    // TODO As soon as only LocalVC is supported, this Optional can be removed
+    // Optional until LocalVC is the only supported version control, like the same field of LocalVCServletService
     private final Optional<VcsAccessLogService> vcsAccessLogService;
 
     private final LocalVCRepositoryResolverService repositoryResolver;
@@ -191,17 +191,7 @@ public class LocalVCPushProcessingService {
         }
 
         try {
-            if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
-                Long triggeringAuxiliaryRepositoryId = repositoryType == RepositoryType.AUXILIARY
-                        ? auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise(repositoryTypeOrUserName, exercise).orElse(null)
-                        : null;
-                if (hyperionMutationApi.map(HyperionExerciseMutationApi::isCoordinationEnabled).orElse(false) && !exercise.isExamExercise()) {
-                    exerciseVersionService.createExerciseVersionSynchronously(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
-                }
-                else {
-                    exerciseVersionService.createExerciseVersion(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
-                }
-            }
+            createExerciseVersionIfVersionable(exercise, user, repositoryType, repositoryTypeOrUserName, triggeringCommitHash);
 
             if (repositoryType.equals(RepositoryType.TESTS)) {
                 processNewPushToTestOrAuxRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
@@ -224,16 +214,7 @@ public class LocalVCPushProcessingService {
             // trigger can reuse the hash this push already carries instead of reading it back off the repository.
             processNewPushToRepository(participation, commit, user, repositoryType);
 
-            // For push the correct commitHash is only available here, therefore the preliminary value is overwritten
-            String finalCommitHash = commitHash;
-            if (vcsAccessLog.isPresent()) {
-                vcsAccessLog.get().setCommitHash(finalCommitHash);
-                vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(vcsAccessLog.get()));
-            }
-            else {
-                var finalParticipation = participation;
-                vcsAccessLogService.ifPresent(service -> service.updateCommitHash(finalParticipation, finalCommitHash));
-            }
+            completeAccessLog(vcsAccessLog, participation, commitHash);
         }
         catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
@@ -242,8 +223,55 @@ public class LocalVCPushProcessingService {
                     "Could not process new push to repository " + localVCRepositoryUri.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
         }
 
-        log.debug("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUri.getURI(), commitHash,
-                TimeLogUtil.formatDurationFrom(timeNanoStart));
+        if (log.isDebugEnabled()) {
+            log.debug("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUri.getURI(), commitHash,
+                    TimeLogUtil.formatDurationFrom(timeNanoStart));
+        }
+    }
+
+    /**
+     * Creates the exercise version that a push to a versionable repository leads to.
+     * <p>
+     * An exercise whose changes are coordinated with Hyperion, and that is no exam exercise, is versioned synchronously, so that the version exists before the push is processed
+     * any further. Every other exercise is versioned asynchronously.
+     *
+     * @param exercise                 the exercise the repository belongs to
+     * @param user                     the user who pushed
+     * @param repositoryType           the type of the repository that was pushed to
+     * @param repositoryTypeOrUserName the repository type or the user name taken from the repository URI, to find an auxiliary repository
+     * @param triggeringCommitHash     the id of the commit this request created, or null when the caller does not know it
+     */
+    private void createExerciseVersionIfVersionable(ProgrammingExercise exercise, User user, RepositoryType repositoryType, String repositoryTypeOrUserName,
+            @Nullable String triggeringCommitHash) {
+        if (!exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
+            return;
+        }
+        Long triggeringAuxiliaryRepositoryId = repositoryType == RepositoryType.AUXILIARY
+                ? auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise(repositoryTypeOrUserName, exercise).orElse(null)
+                : null;
+        if (hyperionMutationApi.map(HyperionExerciseMutationApi::isCoordinationEnabled).orElse(false) && !exercise.isExamExercise()) {
+            exerciseVersionService.createExerciseVersionSynchronously(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
+        }
+        else {
+            exerciseVersionService.createExerciseVersion(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
+        }
+    }
+
+    /**
+     * Completes the access log of a push with the hash of the commit, which is only known once the push is processed.
+     *
+     * @param vcsAccessLog  the preliminary entry, if the transport kept one (ssh), otherwise the newest entry of the participation is updated
+     * @param participation the participation that was pushed to
+     * @param commitHash    the hash of the pushed commit
+     */
+    private void completeAccessLog(Optional<VcsAccessLog> vcsAccessLog, ProgrammingExerciseParticipation participation, String commitHash) {
+        if (vcsAccessLog.isPresent()) {
+            vcsAccessLog.get().setCommitHash(commitHash);
+            vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(vcsAccessLog.get()));
+        }
+        else {
+            vcsAccessLogService.ifPresent(service -> service.updateCommitHash(participation, commitHash));
+        }
     }
 
     private ProgrammingExerciseParticipation retrieveSolutionParticipation(ProgrammingExercise exercise) {
@@ -339,7 +367,7 @@ public class LocalVCPushProcessingService {
     }
 
     /**
-     * TODO: this could be done asynchronously to shorten the duration of the push operation
+     * Note: this could be done asynchronously to shorten the duration of the push operation.
      * Process a new push to a student's repository or to the template or solution repository of the exercise.
      *
      * @param participation the participation for which the push was made

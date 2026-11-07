@@ -108,7 +108,9 @@ public class LocalVCRepositoryResolverService {
             // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
             repository.getConfig().setBoolean("http", null, "receivepack", true);
 
-            log.debug("Resolving repository for repository {} took {}", sanitizedPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
+            if (log.isDebugEnabled()) {
+                log.debug("Resolving repository for repository {} took {}", sanitizedPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
+            }
             return repository;
         }
         catch (IOException e) {
@@ -153,7 +155,7 @@ public class LocalVCRepositoryResolverService {
             }
         }
         catch (GitAPIException | RepositoryNotFoundException e) {
-            log.warn("Failed to obtain commit hash for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
+            log.warn("Failed to obtain commit hash for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath(), e.getMessage());
         }
         return "";
     }
