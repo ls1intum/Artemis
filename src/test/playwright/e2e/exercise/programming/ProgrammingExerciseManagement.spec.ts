@@ -109,7 +109,8 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
         try {
             await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id}`);
             const editing = page.getByTestId('exercise-editing-actions');
-            const toolbar = editing.locator('..');
+            // The toolbar holds the navigation, editing and more actions, so it is looked up by its own test id
+            const toolbar = page.getByTestId('exercise-actions-toolbar');
             const controls = [
                 editing.getByRole('link', { name: 'Edit', exact: true }),
                 editing.getByTestId('edit-in-editor-action'),
