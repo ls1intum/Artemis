@@ -32,7 +32,10 @@ import org.springframework.test.context.TestPropertySource;
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc", "info.contact=test@localhost",
         "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken", "artemis.lti.enabled=true", "artemis.athena.enabled=true",
         "artemis.apollon.enabled=true", "artemis.athena.modules.text=module_text_test", "artemis.athena.modules.programming=module_programming_test",
-        "artemis.athena.modules.modeling=module_modeling_test" })
+        "artemis.athena.modules.modeling=module_modeling_test",
+        // Metis stays switched off here, as on a server that never enabled it; the Independent and LocalCI contexts switch it on.
+        // MetisModuleDisabledIntegrationTest checks that every programming exercise owns its Metis configuration all the same.
+        "artemis.metis.enabled=false" })
 public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrationJenkinsLocalVCTestBase {
 
     private static final int serverPort;

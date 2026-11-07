@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseDefaultConfigurationsRepository;
 import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
@@ -17,9 +18,11 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
  * Gives every newly stored exercise its permanent configuration rows.
  * <p>
  * An exercise owns exactly one team assignment configuration and one plagiarism detection configuration, whatever its type
- * and whether or not it is a team exercise. Both hold the key to the exercise, so they can only be inserted once the exercise
- * is stored, and every path that stores a new exercise (creation, every kind of import, copies) calls {@link #initialize}
- * right after it. Later changes only update the rows in place; nothing here is called when a setting changes.
+ * and whether or not it is a team exercise, and a programming exercise also owns one Metis configuration, whether or not the
+ * Metis module is enabled on this server. All of them hold the key to the exercise, so they can only be inserted once the
+ * exercise is stored, and every path that stores a new exercise (creation, every kind of import, copies) calls
+ * {@link #initialize} right after it. Later changes only update the rows in place; nothing here is called when a setting
+ * changes.
  * <p>
  * No transaction spans the calls: each is one simple repository statement, and the inserts are idempotent so that a path
  * which ran them already is not an error.
@@ -33,9 +36,13 @@ public class ExerciseConfigurationService {
 
     private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
 
-    public ExerciseConfigurationService(TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+    private final ExerciseDefaultConfigurationsRepository exerciseDefaultConfigurationsRepository;
+
+    public ExerciseConfigurationService(TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
+            ExerciseDefaultConfigurationsRepository exerciseDefaultConfigurationsRepository) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
+        this.exerciseDefaultConfigurationsRepository = exerciseDefaultConfigurationsRepository;
     }
 
     /**
@@ -49,7 +56,8 @@ public class ExerciseConfigurationService {
 
     /**
      * Creates the default configuration rows of a newly stored exercise, applies the settings the creating request carried to
-     * them in place, and leaves the stored rows on the exercise's slots.
+     * them in place, and leaves the stored rows on the exercise's slots. The Metis configuration of a programming exercise is
+     * created with its defaults; no request carries Metis settings, and the exercise has no slot for them.
      *
      * @param stored              the exercise that was just stored
      * @param requestedTeam       the team settings the request carried, or null for the defaults
@@ -58,6 +66,7 @@ public class ExerciseConfigurationService {
     public void initialize(Exercise stored, @Nullable TeamAssignmentConfig requestedTeam, @Nullable PlagiarismDetectionConfig requestedPlagiarism) {
         teamAssignmentConfigRepository.initializeFor(stored, requestedTeam);
         plagiarismDetectionConfigRepository.initializeFor(stored, requestedPlagiarism);
+        exerciseDefaultConfigurationsRepository.ensureDefaultConfigurations(stored);
     }
 
     /**
