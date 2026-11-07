@@ -329,7 +329,6 @@
                                                         [tumAetUiTooltip]="'artemisApp.assessmentDashboard.exerciseTeams' | artemisTranslate"
                                                         tumAetUiTooltipPlacement="top"
                                                         tumAetUiButton
-                                                        severity="secondary"
                                                         size="small"
                                                     >
                                                         <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
@@ -337,6 +336,7 @@
                                                     </a>
                                                     <a
                                                         data-testid="open-exercise-dashboard"
+                                                        severity="info"
                                                         [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
                                                         [attr.aria-label]="'entity.action.exerciseDashboard' | artemisTranslate"
                                                         [tumAetUiTooltip]="'entity.action.exerciseDashboard' | artemisTranslate"
