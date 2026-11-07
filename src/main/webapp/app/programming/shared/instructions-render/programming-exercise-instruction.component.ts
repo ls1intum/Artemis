@@ -18,6 +18,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
@@ -71,6 +72,7 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private appRef = inject(ApplicationRef);
     private injector = inject(EnvironmentInjector);
     private themeService = inject(ThemeService);
+    private translateService = inject(TranslateService);
 
     // Distinguishes this component from others that show the same exercise at the same time (e.g. exercise details and online editor sidebar).
     private readonly instanceId = ProgrammingExerciseInstructionComponent.nextInstanceId++;
@@ -487,6 +489,12 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
                 table.style.maxWidth = '100%';
                 table.style.overflowX = 'scroll';
                 table.style.display = 'block';
+                table.tabIndex = 0;
+                const hasAuthoredName =
+                    table.getAttribute('aria-label')?.trim() || table.getAttribute('aria-labelledby')?.trim() || table.caption?.textContent?.trim() || table.title.trim();
+                if (!hasAuthoredName) {
+                    table.setAttribute('aria-label', this.translateService.instant('artemisApp.programmingExercise.instructionTableLabel'));
+                }
             });
             return doc.body.innerHTML;
         }
