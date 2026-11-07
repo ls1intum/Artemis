@@ -29,7 +29,7 @@
 >
     <ng-container ngProjectAs="[unifiedFeedbackViewControls]">
         @if (viewOnly() && !readOnly()) {
-            <button tumAetUiButton size="small" variant="outlined" severity="secondary" type="button" data-testid="feedback-edit" (click)="editFeedback(codeLine())">
+            <button tumAetUiButton size="small" variant="text" severity="warn" type="button" data-testid="feedback-edit" (click)="editFeedback(codeLine())">
                 <fa-icon [icon]="faPencilAlt" /><span jhiTranslate="entity.action.edit"></span>
             </button>
         }

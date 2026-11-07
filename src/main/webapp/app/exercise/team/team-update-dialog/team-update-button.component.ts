@@ -12,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-team-update-button',
     template: `
-        <button tumAetUiButton size="small" severity="primary" (click)="openTeamCreateDialog($event)">
+        <button tumAetUiButton size="small" [severity]="team() ? 'warn' : 'primary'" (click)="openTeamCreateDialog($event)">
             <fa-icon [icon]="team() ? faPencil : faPlus" />
             <span>{{ (team() ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label') | artemisTranslate }}</span>
         </button>

@@ -283,7 +283,7 @@ describe('FileUploadExamSubmissionComponent', () => {
             expect(comp.submittedFileUrl()).toBe(expectedUrl);
             // the input submission is not modified, the url is derived state of the component
             expect(comp.studentSubmission().filePathUrl).toBeUndefined();
-            const downloadLink = fixture.nativeElement.querySelector('a[jhiTranslate="artemisApp.fileUploadSubmission.download"]') as HTMLElement;
+            const downloadLink = fixture.nativeElement.querySelector('button[jhiTranslate="artemisApp.fileUploadSubmission.download"]') as HTMLElement;
             expect(downloadLink).not.toBeNull();
             downloadLink.click();
             expect(downloadSpy).toHaveBeenCalledWith(expectedUrl);
@@ -294,7 +294,7 @@ describe('FileUploadExamSubmissionComponent', () => {
 
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('a[jhiTranslate="artemisApp.fileUploadSubmission.download"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('button[jhiTranslate="artemisApp.fileUploadSubmission.download"]')).toBeNull();
             expect(fixture.nativeElement.querySelector('h6[jhiTranslate="artemisApp.timeline.fileUploadNotSubmitted"]')).not.toBeNull();
         });
     });

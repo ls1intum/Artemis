@@ -278,7 +278,7 @@
                 <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
             </button>
             @if (importStrategy() !== ImportStrategy.PURGE_EXISTING) {
-                <button tumAetUiButton type="submit" class="" [disabled]="editForm.invalid || isSubmitDisabled">
+                <button severity="secondary" tumAetUiButton type="submit" class="" [disabled]="editForm.invalid || isSubmitDisabled">
                     <fa-icon [icon]="faUpload" class="me-2" />
                     <span jhiTranslate="entity.action.to-import"></span>
                     <fa-icon class="ms-1" [hidden]="!isImporting()" animation="spin" [icon]="faCircleNotch" />
@@ -286,9 +286,11 @@
             }
             @if (importStrategy() === ImportStrategy.PURGE_EXISTING) {
                 <button
+                    data-button-intent="destructive"
+                    data-button-intent-reason="Deletes the existing teams before importing replacements"
                     tumAetUiButton
                     type="button"
-                    severity="warn"
+                    severity="danger"
                     [disabled]="editForm.invalid || isSubmitDisabled"
                     jhiDeleteButton
                     [renderButtonText]="false"

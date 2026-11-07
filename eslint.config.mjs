@@ -8,6 +8,7 @@ import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
 import localRulesPlugin from './config/eslint/rules/index.mjs';
+import buttonInlineTemplates from './config/eslint/rules/button-inline-templates.mjs';
 
 // Builds `no-restricted-imports` patterns that block importing a sibling client layer
 // (e.g. `shared-ui` or `editor`) from another layer — covering both the absolute alias path
@@ -679,6 +680,18 @@ export default tseslint.config(
             '@angular-eslint/template/click-events-have-key-events': 'off',
             '@angular-eslint/template/interactive-supports-focus': 'off',
         },
+    },
+    {
+        // Product action semantics apply to external and extracted inline application templates.
+        files: ['src/main/webapp/app/**/*.html', 'src/main/webapp/app/**/*.button-intent'],
+        languageOptions: { parser: angularTemplateParser },
+        plugins: { localRules: localRulesPlugin },
+        rules: { 'localRules/enforce-button-intent': 'error' },
+    },
+    {
+        files: ['src/main/webapp/app/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        processor: buttonInlineTemplates,
     },
     {
         // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root

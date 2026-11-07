@@ -22,6 +22,7 @@
         @if (canDownload()) {
             <jhi-button
                 id="download-data-export-btn"
+                [btnType]="ButtonType.SECONDARY"
                 [btnSize]="ButtonSize.LARGE"
                 [disabled]="!canDownload()"
                 [tooltip]="'artemisApp.dataExport.download'"
