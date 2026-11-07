@@ -15,6 +15,7 @@ import noAsAnyCast from './no-as-any-cast.mjs';
 import noComponentRefSetInput from './no-component-ref-set-input.mjs';
 import preferDeepClone from './prefer-deep-clone.mjs';
 import noBindInTemplateBinding from './no-bind-in-template-binding.mjs';
+import enforceButtonIntent from './enforce-button-intent.mjs';
 
 export default {
     rules: {
@@ -35,5 +36,6 @@ export default {
         'no-component-ref-set-input': noComponentRefSetInput,
         'prefer-deep-clone': preferDeepClone,
         'no-bind-in-template-binding': noBindInTemplateBinding,
+        'enforce-button-intent': enforceButtonIntent,
     },
 };
