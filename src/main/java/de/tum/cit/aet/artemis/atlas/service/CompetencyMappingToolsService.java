@@ -248,13 +248,15 @@ public class CompetencyMappingToolsService {
             for (AtlasMLCompetencyRelationDTO atlasMLRelation : suggestionsResponse.relations()) {
                 RelationType relationType;
                 try {
+                    // AtlasML's REQUIRES ("the tail is a prerequisite of the head") is the converse of ASSUMES, so it is skipped
+                    // here instead of mapped; AtlasML always sends the mirrored EXTENDS for the same pair.
                     relationType = RelationType.valueOf(atlasMLRelation.relationType());
                 }
                 catch (IllegalArgumentException e) {
                     continue;
                 }
 
-                suggestedRelations.add(new CompetencyRelationDTO(null, atlasMLRelation.headId(), atlasMLRelation.tailId(), relationType));
+                suggestedRelations.add(new CompetencyRelationDTO(null, atlasMLRelation.tailId(), atlasMLRelation.headId(), relationType));
             }
 
             if (suggestedRelations.isEmpty()) {
