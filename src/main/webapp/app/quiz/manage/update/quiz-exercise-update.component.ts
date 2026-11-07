@@ -5,6 +5,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, V
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
+import { EXERCISE_FOR_IMPORT_FROM_FILE } from 'app/exercise/import/import-from-file-navigation';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -313,6 +314,13 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         }
 
         if (this.router.url.includes('/import')) {
+            this.isImport.set(true);
+        }
+        // A quiz read from a file arrives on the route of a new quiz and is then saved like an imported one.
+        const quizFromFile: QuizExercise | undefined = history.state?.[EXERCISE_FOR_IMPORT_FROM_FILE];
+        if (!quizId && quizFromFile) {
+            quizFromFile.quizQuestions ??= [];
+            this.quizExercise.set(quizFromFile);
             this.isImport.set(true);
         }
 

@@ -2,12 +2,19 @@
     <input
         [attr.aria-label]="'accessibility.importExercise' | artemisTranslate"
         type="file"
+        data-testid="import-from-file-input"
         accept="application/zip"
         (change)="setFileForExerciseImport($event)"
         style="margin-right: -10px; padding-right: -10px"
     />
-    <tumaet-ui-button severity="secondary" id="upload-exercise-btn" [disabled]="fileForImport() === undefined" [icon]="faUpload" (clicked)="uploadExercise()"
-        ><span jhiTranslate="artemisApp.programmingExercise.importFromFile.uploadForImport"></span
+    <tumaet-ui-button
+        severity="secondary"
+        id="upload-exercise-btn"
+        data-testid="upload-exercise-btn"
+        [disabled]="fileForImport() === undefined || isImporting()"
+        [icon]="faUpload"
+        (clicked)="uploadExercise()"
+        ><span jhiTranslate="artemisApp.exercise.importFromFile.uploadForImport"></span
     ></tumaet-ui-button>
-    <jhi-help-icon text="artemisApp.programmingExercise.importFromFile.description" style="margin-left: 15px" />
+    <jhi-help-icon text="artemisApp.exercise.importFromFile.description" style="margin-left: 15px" />
 </div>

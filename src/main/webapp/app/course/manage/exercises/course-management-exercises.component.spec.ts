@@ -684,24 +684,16 @@ describe('Course Management Exercises Component', () => {
             expect(comp.addModalVisible()).toBe(true);
         });
 
-        it('shows the quiz export dialog and returns to the add modal on back', () => {
-            comp.openQuizExportDialog();
-            expect(comp.showQuizExport()).toBe(true);
-
-            comp['onQuizExportBack']();
-            expect(comp.addModalMode()).toBe('create');
+        it('opens the add modal in export mode', () => {
+            comp.openExportModal();
+            expect(comp.addModalMode()).toBe('export');
             expect(comp.addModalVisible()).toBe(true);
         });
 
-        it('does not reopen the add modal when the export dialog closes without back', () => {
-            comp.openQuizExportDialog();
-            expect(comp.addModalVisible()).toBe(false);
-        });
-
-        it('does not show the export dialog without a course id', () => {
-            comp.course.set(undefined);
-            comp.openQuizExportDialog();
-            expect(comp.showQuizExport()).toBe(false);
+        it('allows the export to instructors only', () => {
+            expect(comp.canExport()).toBe(true);
+            comp.course.set({ ...course, isAtLeastInstructor: false });
+            expect(comp.canExport()).toBe(false);
         });
     });
 
