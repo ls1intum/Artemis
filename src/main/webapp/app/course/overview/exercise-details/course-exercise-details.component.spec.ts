@@ -1215,6 +1215,28 @@ describe('CourseExerciseDetailsComponent', () => {
             expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/courses', 1, 'exercises', 'text-exercises', 42, 'participate', 1, 'submission', 5]);
         });
 
+        it('should alert the Athena feedback even when a newer build result arrives with it', () => {
+            startWith([changed([athenaResult(undefined, undefined)], { exercise: { id: 42 } as Exercise })]);
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            comp.exercise!.dueDate = undefined;
+            // The build finished while the feedback was pending, so its result has a higher id than the Athena result.
+            const buildResult = { id: 99, assessmentType: AssessmentType.AUTOMATIC, successful: true, completionDate: dayjs() } as Result;
+
+            participationWebsocketBehaviorSubject.next(changed([athenaResult(true), buildResult], { exercise: { id: 42 } as Exercise }));
+
+            expect(successSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: 'Essay' });
+        });
+
+        it('should not alert an Athena result that was already loaded when the participation is emitted again', () => {
+            startWith([changed([athenaResult(true)], { exercise: { id: 42 } as Exercise })]);
+            const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
+            comp.exercise!.dueDate = undefined;
+
+            participationWebsocketBehaviorSubject.next(changed([athenaResult(true)], { exercise: { id: 42 } as Exercise }));
+
+            expect(successSpy).not.toHaveBeenCalled();
+        });
+
         it.each([ExerciseType.TEXT, ExerciseType.MODELING].flatMap((type) => [undefined, false].map((successful) => ({ type, successful }))))(
             'does not reopen prior Athena feedback for a $type pending or failed request (successful=$successful)',
             ({ type, successful }) => {
