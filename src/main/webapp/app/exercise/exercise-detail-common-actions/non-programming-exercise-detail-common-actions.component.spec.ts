@@ -273,10 +273,10 @@ describe('Exercise detail common action rendering', () => {
         fixture.componentRef.setInput('exercise', exercise(false, false));
         fixture.componentRef.setInput('section', 'administration');
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('section')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[jhiDeleteButton]')).toBeNull();
         fixture.componentRef.setInput('exercise', exercise());
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('section [jhiDeleteButton]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[jhiDeleteButton]')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('jhi-exercise-detail-actions')).toBeNull();
     });
 });

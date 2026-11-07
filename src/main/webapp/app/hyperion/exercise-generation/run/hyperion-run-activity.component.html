@@ -20,6 +20,8 @@
                 @if (promoteCancel()) {
                     <!-- The escape action moves to where the reader is already looking, rather than staying in the header. -->
                     <tumaet-ui-button
+                        data-button-intent="destructive"
+                        data-button-intent-reason="Stops the running generation job"
                         severity="danger"
                         variant="outlined"
                         size="small"
