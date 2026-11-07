@@ -64,7 +64,7 @@ class BuildJobCloneTokenAuthenticationTest {
 
     private static final String BUILD_JOB_ID = "job-1";
 
-    private LocalVCServletService localVCServletService;
+    private LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService;
 
     private DistributedDataAccessService distributedDataAccessService;
 
@@ -95,10 +95,8 @@ class BuildJobCloneTokenAuthenticationTest {
         rateLimitService = mock(RateLimitService.class);
         // The default for a caller with budget left; the tests that care set it to false explicitly
         when(rateLimitService.hasRemainingBudget(any(), any())).thenReturn(true);
-        localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, rateLimitService, null,
-                null, null, Optional.of(distributedDataAccessService), Optional.of(buildAgentAddressRegistryService), Optional.of(new BuildJobCloneTokenService()),
-                policyAllowingEverything(), null, null, null);
-        ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create(BASE_URI));
+        buildAgentAuthenticationService = new LocalVCBuildAgentAuthenticationService(Optional.of(distributedDataAccessService), Optional.of(buildAgentAddressRegistryService),
+                Optional.of(new BuildJobCloneTokenService()), policyAllowingEverything(), rateLimitService, repositoryResolver(), Optional.empty(), null, null);
 
         // Build the expected URIs the same way the production code derives them from the request path, rather than
         // hard-coding a format that LocalVCRepositoryUri could change
@@ -106,6 +104,12 @@ class BuildJobCloneTokenAuthenticationTest {
         unrelatedRepositoryUri = repositoryUriOf("/git/TESTEXERCISE/testexercise-student2.git");
 
         when(buildAgentAddressRegistryService.isRegisteredAddressOfAgent(AGENT_NAME, AGENT_ADDRESS)).thenReturn(true);
+    }
+
+    private static LocalVCRepositoryResolverService repositoryResolver() {
+        var repositoryResolver = new LocalVCRepositoryResolverService();
+        ReflectionTestUtils.setField(repositoryResolver, "localVCBaseUri", URI.create(BASE_URI));
+        return repositoryResolver;
     }
 
     private static BuildAgentNetworkPolicy policyAllowingEverything() {
@@ -143,8 +147,7 @@ class BuildJobCloneTokenAuthenticationTest {
     }
 
     private boolean authenticate(HttpServletRequest request) {
-        return Boolean.TRUE
-                .equals(ReflectionTestUtils.invokeMethod(localVCServletService, "authenticateBuildJobCloneToken", request, request.getHeader(HttpHeaders.AUTHORIZATION)));
+        return buildAgentAuthenticationService.authenticateBuildJobCloneToken(request, request.getHeader(HttpHeaders.AUTHORIZATION));
     }
 
     @Test
@@ -188,7 +191,7 @@ class BuildJobCloneTokenAuthenticationTest {
 
     @Test
     void shouldRejectAPeerOutsideTheConfiguredNetworks() {
-        ReflectionTestUtils.setField(localVCServletService, "buildAgentNetworkPolicy", policyAllowingOnly("10.0.0.0/8"));
+        ReflectionTestUtils.setField(buildAgentAuthenticationService, "buildAgentNetworkPolicy", policyAllowingOnly("10.0.0.0/8"));
         when(distributedDataAccessService.getProcessingJobsForAgentByName(AGENT_NAME)).thenReturn(List.of(buildJob(CLONE_TOKEN, assignmentRepositoryUri)));
 
         assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", "203.0.113.9"))).isFalse();
@@ -196,7 +199,7 @@ class BuildJobCloneTokenAuthenticationTest {
 
     @Test
     void shouldAcceptAPeerInsideTheConfiguredNetworks() {
-        ReflectionTestUtils.setField(localVCServletService, "buildAgentNetworkPolicy", policyAllowingOnly("10.0.0.0/8"));
+        ReflectionTestUtils.setField(buildAgentAuthenticationService, "buildAgentNetworkPolicy", policyAllowingOnly("10.0.0.0/8"));
         when(distributedDataAccessService.getProcessingJobsForAgentByName(AGENT_NAME)).thenReturn(List.of(buildJob(CLONE_TOKEN, assignmentRepositoryUri)));
 
         assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isTrue();
@@ -312,9 +315,8 @@ class BuildJobCloneTokenAuthenticationTest {
      */
     @Test
     void shouldDeclineWhenTheNodeHasNoLocalCi() {
-        localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, null, null, null, null,
-                Optional.empty(), Optional.empty(), Optional.empty(), policyAllowingEverything(), null, null, null);
-        ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create(BASE_URI));
+        buildAgentAuthenticationService = new LocalVCBuildAgentAuthenticationService(Optional.empty(), Optional.empty(), Optional.empty(), policyAllowingEverything(), null,
+                repositoryResolver(), Optional.empty(), null, null);
 
         assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
         verify(buildAgentAddressRegistryService, never()).isRegisteredAddressOfAgent(any(), any());

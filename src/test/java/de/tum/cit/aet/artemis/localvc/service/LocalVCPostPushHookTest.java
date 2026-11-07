@@ -19,31 +19,37 @@ class LocalVCPostPushHookTest {
 
     private final LocalVCServletService localVCServletService = mock(LocalVCServletService.class);
 
+    private final LocalVCPushProcessingService pushProcessingService = mock(LocalVCPushProcessingService.class);
+
+    private final PasswordAuthenticationNoticeService noticeService = mock(PasswordAuthenticationNoticeService.class);
+
     private final ReceivePack receivePack = mock(ReceivePack.class);
 
     @Test
     void aPushWithAPasswordPrintsTheNotice() {
-        when(localVCServletService.getPasswordAuthenticationPushNotice()).thenReturn("please switch");
+        when(noticeService.getPasswordAuthenticationPushNotice()).thenReturn("please switch");
 
         // A push that updates nothing returns early, and must still tell the user.
-        new LocalVCPostPushHook(localVCServletService, new User(), () -> AuthenticationMechanism.PASSWORD).onPostReceive(receivePack, List.of());
+        new LocalVCPostPushHook(localVCServletService, pushProcessingService, noticeService, new User(), () -> AuthenticationMechanism.PASSWORD).onPostReceive(receivePack,
+                List.of());
 
         verify(receivePack).sendMessage("please switch");
     }
 
     @Test
     void aPushWithATokenPrintsNothing() {
-        new LocalVCPostPushHook(localVCServletService, new User(), () -> AuthenticationMechanism.USER_VCS_ACCESS_TOKEN).onPostReceive(receivePack, List.of());
+        new LocalVCPostPushHook(localVCServletService, pushProcessingService, noticeService, new User(), () -> AuthenticationMechanism.USER_VCS_ACCESS_TOKEN)
+                .onPostReceive(receivePack, List.of());
 
         verify(receivePack, never()).sendMessage(anyString());
     }
 
     @Test
     void readsTheMechanismOnlyOnceTheRequestWasAuthorized() {
-        when(localVCServletService.getPasswordAuthenticationPushNotice()).thenReturn("please switch");
+        when(noticeService.getPasswordAuthenticationPushNotice()).thenReturn("please switch");
         AtomicReference<AuthenticationMechanism> mechanism = new AtomicReference<>();
         // JGit builds the hook before the push filter has recorded the mechanism on the request.
-        LocalVCPostPushHook hook = new LocalVCPostPushHook(localVCServletService, new User(), mechanism::get);
+        LocalVCPostPushHook hook = new LocalVCPostPushHook(localVCServletService, pushProcessingService, noticeService, new User(), mechanism::get);
         mechanism.set(AuthenticationMechanism.PASSWORD);
 
         hook.onPostReceive(receivePack, List.of());

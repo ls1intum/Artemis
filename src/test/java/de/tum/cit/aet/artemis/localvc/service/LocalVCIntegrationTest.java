@@ -663,9 +663,9 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testFetch_buildAgentCredentials_isRejectedWithLocalCi() throws Throwable {
         MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "buildjob_user", "buildjob_password");
 
-        ConfigUtil.testWithChangedConfig(localVCServletService, "useSshForBuildAgent", false,
-                () -> ConfigUtil.testWithChangedConfig(localVCServletService, "buildAgentGitUsername", "buildjob_user",
-                        () -> ConfigUtil.testWithChangedConfig(localVCServletService, "buildAgentGitPassword", "buildjob_password",
+        ConfigUtil.testWithChangedConfig(localVCBuildAgentAuthenticationService, "useSshForBuildAgent", false,
+                () -> ConfigUtil.testWithChangedConfig(localVCBuildAgentAuthenticationService, "buildAgentGitUsername", "buildjob_user",
+                        () -> ConfigUtil.testWithChangedConfig(localVCBuildAgentAuthenticationService, "buildAgentGitPassword", "buildjob_password",
                                 () -> assertThatExceptionOfType(LocalVCAuthException.class)
                                         .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ)))));
     }
@@ -695,7 +695,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // Enabled deliberately, so that the push is rejected by the READ restriction under test rather than because the
         // ssh configuration of the test context closes the shortcut for every action anyway.
         // Build agent bypass does NOT apply to WRITE — "buildjob_user" is not a real user, so auth fails
-        ConfigUtil.testWithChangedConfig(localVCServletService, "useSshForBuildAgent", false, () -> assertThatExceptionOfType(LocalVCAuthException.class)
+        ConfigUtil.testWithChangedConfig(localVCBuildAgentAuthenticationService, "useSshForBuildAgent", false, () -> assertThatExceptionOfType(LocalVCAuthException.class)
                 .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE)));
     }
 

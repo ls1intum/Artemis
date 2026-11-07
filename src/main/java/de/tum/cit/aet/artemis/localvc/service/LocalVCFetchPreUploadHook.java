@@ -9,12 +9,12 @@ import org.eclipse.jgit.transport.PreUploadHook;
 import org.eclipse.jgit.transport.UploadPack;
 import org.springframework.http.HttpHeaders;
 
-public record LocalVCFetchPreUploadHook(LocalVCServletService localVCServletService, HttpServletRequest request) implements PreUploadHook {
+public record LocalVCFetchPreUploadHook(LocalVCAccessLogRecorderService accessLogRecorder, HttpServletRequest request) implements PreUploadHook {
 
     @Override
     public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int clientOffered) {
         String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, authorizationHeader, clientOffered);
+        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, authorizationHeader, clientOffered);
     }
 
     @Override
