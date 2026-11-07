@@ -35,11 +35,11 @@ test.describe.serial('Exam reset and deletion summary', { tag: '@slow' }, () => 
         await login(instructor, `/course-management/${course.id}/exams/${exam.id}`);
         await page.getByTestId('exam-delete').click();
         const dialog = page.getByRole('dialog');
-        await expect(dialog).toContainText('Exam Summary');
-        await expect(dialog).toContainText(/Number of Exercise Groups\D*1\b/);
-        await expect(dialog).toContainText(/Number of Text Exercises\D*1\b/);
-        await expect(dialog).toContainText(/Number of Registered Students\D*1\b/);
-        await expect(dialog).toContainText(/Number of Exams \(submitted\)\D*1\b/);
+        await expect(dialog).toContainText('What will be deleted');
+        await expect(dialog).toContainText(/Exercise groups\D*1\b/);
+        await expect(dialog).toContainText(/Text exercises\D*1\b/);
+        await expect(dialog).toContainText(/Registered students\D*1\b/);
+        await expect(dialog).toContainText(/Student exams \(submitted\)\D*1\b/);
         await dialog.getByRole('button', { name: 'Cancel' }).click();
 
         // Cancelling changed nothing.

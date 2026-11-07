@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
@@ -61,7 +60,6 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -112,9 +110,6 @@ public class ModelingExerciseResource {
     private static final Logger log = LoggerFactory.getLogger(ModelingExerciseResource.class);
 
     private static final String ENTITY_NAME = "modelingExercise";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
@@ -473,10 +468,10 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * DELETE modeling-exercises/:id : delete the "id" modelingExercise.
+     * DELETE modeling-exercises/:id : delete the "id" modelingExercise in the background. The progress is sent over the websocket topic of the exercise.
      *
      * @param exerciseId the id of the modelingExercise to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 202 (Accepted), or 409 (Conflict) if the exercise is already being deleted
      */
     @DeleteMapping("modeling-exercises/{exerciseId}")
     @EnforceAtLeastInstructorInExercise
@@ -485,20 +480,23 @@ public class ModelingExerciseResource {
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
         User user = userRepository.getUserWithAuthorities();
-        // Notify AtlasML about the modeling exercise deletion before actual deletion
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(modelingExercise, OperationTypeDTO.DELETE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about modeling exercise deletion: {}", e.getMessage());
-            }
-        });
+        var course = modelingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         // note: we use the exercise service here, because this one makes sure to clean
         // up all lazy references correctly.
-        exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
-        exerciseDeletionService.delete(exerciseId, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
+        // AtlasML is notified and the request is audited only once the deletion is accepted, so a request that is refused because the exercise is already being deleted does
+        // neither. The notification still precedes the actual deletion.
+        exerciseDeletionService.startAsyncDeletion(modelingExercise, false, () -> {
+            atlasMLApi.ifPresent(api -> {
+                try {
+                    api.saveExerciseWithCompetencies(modelingExercise, OperationTypeDTO.DELETE);
+                }
+                catch (Exception e) {
+                    log.warn("Failed to notify AtlasML about modeling exercise deletion: {}", e.getMessage());
+                }
+            });
+            exerciseService.logDeletion(modelingExercise, course, user);
+        });
+        return ResponseEntity.accepted().build();
     }
 
     /**

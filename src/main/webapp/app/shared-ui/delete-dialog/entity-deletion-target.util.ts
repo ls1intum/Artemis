@@ -1,0 +1,53 @@
+import { DestroyRef } from '@angular/core';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionTarget, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+
+/** Success alert of each exercise type; the server used to send the same keys as an alert header with the synchronous delete. */
+const EXERCISE_DELETED_ALERT_KEYS: Record<ExerciseType, string> = {
+    [ExerciseType.PROGRAMMING]: 'artemisApp.programmingExercise.deleted',
+    [ExerciseType.QUIZ]: 'artemisApp.quizExercise.deleted',
+    [ExerciseType.TEXT]: 'artemisApp.textExercise.deleted',
+    [ExerciseType.MODELING]: 'artemisApp.modelingExercise.deleted',
+    [ExerciseType.FILE_UPLOAD]: 'artemisApp.fileUploadExercise.deleted',
+};
+
+/**
+ * Target for deleting the given exercise, no matter whether it belongs to a course or an exam.
+ */
+export function exerciseDeletionTarget(exercise: Pick<Exercise, 'id' | 'title' | 'type'>): EntityDeletionTarget {
+    return {
+        entityType: EntityDeletionType.EXERCISE,
+        entityId: exercise.id!,
+        title: exercise.title ?? '',
+        successAlertKey: EXERCISE_DELETED_ALERT_KEYS[exercise.type!],
+    };
+}
+
+/**
+ * Target for deleting an exam.
+ */
+export function examDeletionTarget(courseId: number, examId: number, title: string | undefined): EntityDeletionTarget {
+    return { entityType: EntityDeletionType.EXAM, entityId: examId, courseId, examId, title: title ?? '', successAlertKey: 'artemisApp.exam.deleted' };
+}
+
+/**
+ * Target for deleting an exercise group of an exam.
+ */
+export function exerciseGroupDeletionTarget(courseId: number, examId: number, exerciseGroupId: number, title: string | undefined): EntityDeletionTarget {
+    return { entityType: EntityDeletionType.EXERCISE_GROUP, entityId: exerciseGroupId, courseId, examId, title: title ?? '', successAlertKey: 'artemisApp.exerciseGroup.deleted' };
+}
+
+/**
+ * Tells whether the component that owns the given {@link DestroyRef} is still on screen. A deletion can end after the instructor chose
+ * "Continue in background" and left the page; the owner must then not navigate, because that would pull the instructor away from whatever they
+ * are doing now. Refreshing lists (broadcasting events) is still fine.
+ */
+export function trackAlive(destroyRef: DestroyRef): () => boolean {
+    let alive = true;
+    destroyRef.onDestroy(() => (alive = false));
+    return () => alive;
+}
+
+export function isDeletionCompleted(progress: EntityDeletionProgress): boolean {
+    return progress.status === EntityDeletionStatus.COMPLETED;
+}

@@ -2,10 +2,14 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -22,31 +26,39 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics;
+import de.tum.cit.aet.artemis.exercise.domain.EntityDeletionType;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.EntityDeletionProgressDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseParticipationCountDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.DeletionProgressListener;
+import de.tum.cit.aet.artemis.exercise.service.DeletionStepReporter;
+import de.tum.cit.aet.artemis.exercise.service.EntityDeletionProgressService;
+import de.tum.cit.aet.artemis.exercise.service.EntityDeletionWeights;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
-import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @Conditional(ExamEnabled.class)
 @Lazy
@@ -81,14 +93,6 @@ public class ExamDeletionService {
 
     private final ExamSessionRepository examSessionRepository;
 
-    private final BuildJobRepository buildJobRepository;
-
-    private final PostRepository postRepository;
-
-    private final AnswerPostRepository answerPostRepository;
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final ExamUserRepository examUserRepository;
 
     private final ExamUserService examUserService;
@@ -97,13 +101,18 @@ public class ExamDeletionService {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    private final ParticipationRepository participationRepository;
+
+    private final EntityDeletionProgressService entityDeletionProgressService;
+
+    private final ExerciseGroupRepository exerciseGroupRepository;
+
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationDeletionService participationDeletionService, CacheManager cacheManager,
             UserRepository userRepository, ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository,
             GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository,
-            ChannelService channelService, ExamLiveEventRepository examLiveEventRepository, ExamSessionRepository examSessionRepository, BuildJobRepository buildJobRepository,
-            PostRepository postRepository, AnswerPostRepository answerPostRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExamUserRepository examUserRepository, ExamUserService examUserService, final StudentExamService studentExamService,
-            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            ChannelService channelService, ExamLiveEventRepository examLiveEventRepository, ExamSessionRepository examSessionRepository, ExamUserRepository examUserRepository,
+            ExamUserService examUserService, final StudentExamService studentExamService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
+            ParticipationRepository participationRepository, EntityDeletionProgressService entityDeletionProgressService, ExerciseGroupRepository exerciseGroupRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationDeletionService = participationDeletionService;
         this.cacheManager = cacheManager;
@@ -117,14 +126,13 @@ public class ExamDeletionService {
         this.channelService = channelService;
         this.examLiveEventRepository = examLiveEventRepository;
         this.examSessionRepository = examSessionRepository;
-        this.buildJobRepository = buildJobRepository;
-        this.postRepository = postRepository;
-        this.answerPostRepository = answerPostRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.examUserRepository = examUserRepository;
         this.examUserService = examUserService;
         this.studentExamService = studentExamService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.participationRepository = participationRepository;
+        this.entityDeletionProgressService = entityDeletionProgressService;
+        this.exerciseGroupRepository = exerciseGroupRepository;
     }
 
     /**
@@ -143,14 +151,130 @@ public class ExamDeletionService {
      * @param examId the ID of the exam to be deleted
      */
     public void delete(long examId) {
-        User user = userRepository.getUser();
+        deleteExam(examId, userRepository.getUser().getLogin(), DeletionStepReporter.none(), Map.of());
+    }
+
+    /**
+     * Deletes the exam in the background and reports the progress on the websocket topic of the exam. Returns as soon as the deletion is scheduled. The caller checks the
+     * permissions first. Unlike {@link #delete(long)}, this also removes the signature and photo files of the registered students.
+     *
+     * @param courseId  the id of the course of the exam
+     * @param examId    the id of the exam to delete
+     * @param userLogin the login of the instructor who requested the deletion, for the audit log
+     * @throws ConflictException if the exam, or one of its exercise groups, is already being deleted
+     */
+    public void startAsyncDeletion(long courseId, long examId, String userLogin) {
+        List<ExerciseDeletionInfoDTO> exercises = exerciseGroupRepository.findExerciseDeletionInfoByExamId(examId);
+        Map<Long, Long> participationCounts = countParticipations(exercises);
+        Map<String, Double> stepWeights = EntityDeletionWeights.examStepWeights(studentExamRepository.countTestRunsByExamId(examId),
+                exercisesWeight(exercises, participationCounts), examRepository.countStudentExamsByExamId(examId), examUserRepository.countByExamId(examId));
+        // The exam also holds the scope of each of its exercises, so none of them can be deleted on its own meanwhile, and the request is refused if one of them is deleted now.
+        entityDeletionProgressService.startAsync(EntityDeletionProgressService.examScopeKey(examId), exerciseScopeKeys(exercises), EntityDeletionType.EXAM, examId,
+                ExamWebsocketTopics.DELETION_PROGRESS.at(courseId, examId), stepWeights.size(), EntityDeletionWeights.total(stepWeights), () -> {
+                }, tracker -> {
+                    var reporter = new DeletionStepReporter(tracker, stepWeights);
+                    // The registrations disappear with the exam, but their files do not, so they have to be known before the deletion.
+                    List<ExamUser> examUsers = examUserRepository.findAllByExamId(examId);
+                    deleteExam(examId, userLogin, reporter, participationCounts);
+                    reporter.stepStarted(EntityDeletionWeights.STEP_CLEANUP);
+                    deleteImagesOfExamUsers(examUsers, examId);
+                    reporter.finishCurrentStep();
+                });
+    }
+
+    /**
+     * Removes the signature and photo files of the registrations of a deleted exam. The exam is gone at this point, so a file that cannot be removed is logged and does not turn
+     * the deletion into a failed one.
+     */
+    private void deleteImagesOfExamUsers(List<ExamUser> examUsers, long examId) {
+        for (ExamUser examUser : examUsers) {
+            try {
+                examUserService.deleteAvailableExamUserImages(examUser);
+            }
+            catch (RuntimeException e) {
+                log.warn("Could not delete the image files of exam user {} of the deleted exam {}", examUser.getId(), examId, e);
+            }
+        }
+    }
+
+    /**
+     * Deletes an exercise group with all its exercises in the background and reports the progress on the websocket topic of the exam. Returns as soon as the deletion is
+     * scheduled. The caller checks the permissions first.
+     *
+     * @param courseId                  the id of the course of the exam
+     * @param examId                    the id of the exam of the exercise group
+     * @param exerciseGroupId           the id of the exercise group to delete
+     * @param deleteBaseReposBuildPlans whether the template and solution repos and build plans of programming exercises should be deleted as well
+     * @param onAccepted                runs in the request once the deletion is accepted and before it starts, for example to audit the request. It does not run if the exam, one
+     *                                      of its exercise groups or one of the exercises of this group is already being deleted.
+     * @throws ConflictException if the exam, or one of its exercise groups, or one of the exercises of this group is already being deleted
+     */
+    public void startAsyncExerciseGroupDeletion(long courseId, long examId, long exerciseGroupId, boolean deleteBaseReposBuildPlans, Runnable onAccepted) {
+        List<ExerciseDeletionInfoDTO> exercises = exerciseGroupRepository.findExerciseDeletionInfoByExerciseGroupId(exerciseGroupId);
+        Map<Long, Long> participationCounts = countParticipations(exercises);
+        Map<String, Double> stepWeights = EntityDeletionWeights.exerciseGroupStepWeights(exercisesWeight(exercises, participationCounts));
+        entityDeletionProgressService.startAsync(EntityDeletionProgressService.examScopeKey(examId), exerciseScopeKeys(exercises), EntityDeletionType.EXERCISE_GROUP,
+                exerciseGroupId, ExamWebsocketTopics.DELETION_PROGRESS.at(courseId, examId), stepWeights.size(), EntityDeletionWeights.total(stepWeights), onAccepted, tracker -> {
+                    var reporter = new DeletionStepReporter(tracker, stepWeights);
+                    ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdWithExercisesElseThrow(exerciseGroupId);
+                    deleteExercises(exerciseGroup.getExercises(), deleteBaseReposBuildPlans, reporter, participationCounts);
+
+                    reporter.stepStarted(EntityDeletionWeights.STEP_EXERCISE_GROUP);
+                    // Remove the exercise group by removing it from the list of exercise groups of the corresponding exam.
+                    // This is necessary as @OrderColumn (exercise_group_order) needs continuous values. Otherwise the client will
+                    // receive null values for the gaps in exam.getExerciseGroups().
+                    Exam exam = examRepository.findByIdWithExerciseGroupsElseThrow(examId);
+                    List<ExerciseGroup> filteredExerciseGroups = exam.getExerciseGroups();
+                    filteredExerciseGroups.removeIf(exGroup -> exGroup.getId().equals(exerciseGroupId));
+                    exam.setExerciseGroups(filteredExerciseGroups);
+                    examRepository.save(exam);
+                    reporter.finishCurrentStep();
+                });
+    }
+
+    /**
+     * Get the latest known progress of the background deletion of the exam or of one of its exercise groups.
+     *
+     * @param examId the id of the exam
+     * @return the progress, or empty if neither the exam nor one of its exercise groups was deleted in the background during the last hour
+     */
+    public Optional<EntityDeletionProgressDTO> getDeletionProgress(long examId) {
+        return entityDeletionProgressService.getProgress(EntityDeletionProgressService.examScopeKey(examId));
+    }
+
+    private List<String> exerciseScopeKeys(List<ExerciseDeletionInfoDTO> exercises) {
+        return exercises.stream().map(exercise -> EntityDeletionProgressService.exerciseScopeKey(exercise.id())).toList();
+    }
+
+    /**
+     * Counts the participations of all exercises with one query. An exercise without participations is not part of the result.
+     */
+    private Map<Long, Long> countParticipations(List<ExerciseDeletionInfoDTO> exercises) {
+        if (exercises.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> exerciseIds = exercises.stream().map(ExerciseDeletionInfoDTO::id).toList();
+        return participationRepository.countByExerciseIdsGroupedByExercise(exerciseIds).stream()
+                .collect(Collectors.toMap(ExerciseParticipationCountDTO::exerciseId, ExerciseParticipationCountDTO::count));
+    }
+
+    private double exercisesWeight(List<ExerciseDeletionInfoDTO> exercises, Map<Long, Long> participationCounts) {
+        return exercises.stream()
+                .mapToDouble(exercise -> EntityDeletionWeights.exerciseWeight(exercise.isProgrammingExercise(), participationCounts.getOrDefault(exercise.id(), 0L))).sum();
+    }
+
+    private void deleteExam(long examId, String userLogin, DeletionStepReporter reporter, Map<Long, Long> participationCounts) {
         Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
-        log.info("User {} has requested to delete the exam {}", user.getLogin(), exam.getTitle());
-        AuditEvent auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_EXAM, "exam=" + exam.getTitle());
+        log.info("User {} has requested to delete the exam {}", userLogin, exam.getTitle());
+        AuditEvent auditEvent = new AuditEvent(userLogin, Constants.DELETE_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
 
+        reporter.stepStarted(EntityDeletionWeights.STEP_TEST_RUNS);
+        // The channel is already gone if an earlier deletion of this exam failed after this step, and the retry has to work as well.
         Channel examChannel = channelRepository.findChannelByExamId(examId);
-        channelService.deleteChannel(examChannel);
+        if (examChannel != null) {
+            channelService.deleteChannel(examChannel);
+        }
 
         // first delete test runs to avoid issues later
         List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);
@@ -159,21 +283,54 @@ public class ExamDeletionService {
         // fetch the exam again to allow Hibernate to delete the exercises properly
         exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
 
+        List<Exercise> exercises = new ArrayList<>();
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup != null) {
-                for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseDeletionService.delete(exercise.getId(), true);
-                }
+                exercises.addAll(exerciseGroup.getExercises());
             }
         }
+        deleteExercises(exercises, true, reporter, participationCounts);
 
+        reporter.stepStarted(EntityDeletionWeights.STEP_GRADING_SCALE);
         deleteGradingScaleOfExam(exam);
 
+        reporter.stepStarted(EntityDeletionWeights.STEP_EXAM);
         searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXAM, examId));
 
         // fetch the exam again to allow Hibernate to delete it properly
         exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         examRepository.delete(exam);
+        reporter.finishCurrentStep();
+    }
+
+    /**
+     * Deletes the exercises one after the other and reports how many are done, with the title of the one that is deleted now.
+     */
+    private void deleteExercises(Collection<Exercise> exercises, boolean deleteBaseReposBuildPlans, DeletionStepReporter reporter, Map<Long, Long> participationCounts) {
+        reporter.stepStarted(EntityDeletionWeights.STEP_EXERCISES);
+        int total = exercises.size();
+        int deleted = 0;
+        double completedWeight = 0;
+        for (Exercise exercise : exercises) {
+            boolean programming = exercise instanceof ProgrammingExercise;
+            long participations = participationCounts.getOrDefault(exercise.getId(), 0L);
+            double participationsWeight = EntityDeletionWeights.participationsWeight(programming, participations);
+            int deletedBefore = deleted;
+            double completedBefore = completedWeight;
+            String title = exercise.getTitle();
+            reporter.exercisesProcessed(deletedBefore, total, title, completedBefore);
+            exerciseDeletionService.delete(exercise.getId(), deleteBaseReposBuildPlans, new DeletionProgressListener() {
+
+                @Override
+                public void itemsProcessed(int processed, int totalParticipations) {
+                    reporter.exercisesProcessed(deletedBefore, total, title, completedBefore + participationsWeight * processed / totalParticipations);
+                }
+            });
+            deleted++;
+            completedWeight += EntityDeletionWeights.exerciseWeight(programming, participations);
+            reporter.exercisesProcessed(deleted, total, null, completedWeight);
+        }
+        reporter.finishCurrentStep();
     }
 
     private void deleteGradingScaleOfExam(Exam exam) {
@@ -323,30 +480,6 @@ public class ExamDeletionService {
         // Delete the test run student exam
         log.info("Request to delete Test Run {}", testRunId);
         studentExamRepository.deleteById(testRunId);
-    }
-
-    /**
-     * Get the exam deletion summary for the given exam.
-     *
-     * @param examId the ID of the exam for which the deletion summary should be fetched
-     * @return the exam deletion summary
-     */
-    public ExamDeletionSummaryDTO getExamDeletionSummary(long examId) {
-        Set<Long> programmingExerciseIds = programmingExerciseRepository.findProgrammingExerciseIdsByExamId(examId);
-        long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(programmingExerciseIds);
-
-        Channel channel = channelRepository.findChannelByExamId(examId);
-        long conversationId = channel.getId();
-
-        long numberOfCommunicationPosts = postRepository.countByConversationId(conversationId);
-        long numberOfAnswerPosts = answerPostRepository.countByConversationId(conversationId);
-
-        long numberRegisteredStudents = examUserRepository.countByExamId(examId);
-        long notStartedExams = studentExamRepository.countStudentExamsNotStartedByExamIdIgnoreTestRuns(examId);
-        long startedExams = studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(examId);
-        long submittedExams = studentExamRepository.countStudentExamsSubmittedByExamIdIgnoreTestRuns(examId);
-
-        return new ExamDeletionSummaryDTO(numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts, numberRegisteredStudents, notStartedExams, startedExams, submittedExams);
     }
 
     public void deleteByCourseId(long courseId) {

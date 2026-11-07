@@ -10,7 +10,9 @@ import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/lifecyle-
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -52,6 +54,7 @@ export class ExerciseActionsComponent {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly modelingExerciseService = inject(ModelingExerciseService);
     private readonly exerciseService = inject(ExerciseService);
+    private readonly entityDeletionService = inject(EntityDeletionService);
     private readonly eventManager = inject(EventManager);
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
@@ -114,7 +117,7 @@ export class ExerciseActionsComponent {
         return showVisible || showStart || showBatches || showEnd;
     });
 
-    readonly deletionSummary = computed<Observable<EntitySummary>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
+    readonly deletionSummary = computed<Observable<EntitySummaryCategory[]>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
 
     /**
      * Cleanup checkboxes for the delete dialog: on external CI, programming exercises offer an opt-out for deleting
@@ -287,7 +290,7 @@ export class ExerciseActionsComponent {
                 delete: {
                     entityTitle: ex.title ?? '',
                     entitySummaryTitle: 'artemisApp.exercise.delete.summary.title',
-                    fetchEntitySummary: this.deletionSummary(),
+                    fetchCategorizedEntitySummary: this.deletionSummary(),
                     deleteQuestion: 'artemisApp.exercise.delete.question',
                     deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
                     translateValues: this.deleteTranslateValues(),
@@ -369,12 +372,15 @@ export class ExerciseActionsComponent {
             return;
         }
         const finish = (obs: Observable<unknown>, evtName: string) =>
-            obs.subscribe({
-                next: () => {
-                    this.eventManager.broadcast({ name: evtName, content: 'Deleted an exercise' });
+            this.entityDeletionService.delete(exerciseDeletionTarget(exercise), obs).subscribe({
+                next: (progress) => {
+                    if (isDeletionCompleted(progress)) {
+                        this.eventManager.broadcast({ name: evtName, content: 'Deleted an exercise' });
+                        // Notify the parent so the deleted exercise is removed from the view without a page refresh.
+                        this.exerciseDeleted.emit(exercise);
+                    }
+                    // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                     this.dialogErrorSource.next('');
-                    // Notify the parent so the deleted exercise is removed from the view without a page refresh.
-                    this.exerciseDeleted.emit(exercise);
                 },
                 error: (e: HttpErrorResponse) => this.dialogErrorSource.next(e.message),
             });

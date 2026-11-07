@@ -7,13 +7,15 @@ import {
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { ExerciseDetailActionsComponent } from 'app/exercise/detail/exercise-detail-actions.component';
-import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -56,8 +58,11 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
     private exerciseService = inject(ExerciseService);
+    private entityDeletionService = inject(EntityDeletionService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
+    private destroyRef = inject(DestroyRef);
+    private readonly isAlive = trackAlive(this.destroyRef);
 
     protected readonly ActionType = ActionType;
     readonly faEllipsis = faEllipsis;
@@ -121,16 +126,20 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
      * Deletes quiz exercise
      */
     deleteQuizExercise() {
-        this.quizExerciseDeletionApi.deleteQuizExercise(this.quizExercise().id!).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'quizExerciseListModification',
-                    content: 'Deleted an quizExercise',
-                });
-                this.dialogErrorSource.next('');
-                if (this.isDetailPage()) {
-                    void this.router.navigate(['course-management', this.courseId, 'exercises']);
+        const quizExercise = this.quizExercise();
+        this.entityDeletionService.delete(exerciseDeletionTarget(quizExercise), this.quizExerciseDeletionApi.deleteQuizExercise(quizExercise.id!)).subscribe({
+            next: (progress) => {
+                if (isDeletionCompleted(progress)) {
+                    this.eventManager.broadcast({
+                        name: 'quizExerciseListModification',
+                        content: 'Deleted an quizExercise',
+                    });
+                    if (this.isDetailPage() && this.isAlive()) {
+                        void this.router.navigate(['course-management', this.courseId, 'exercises']);
+                    }
                 }
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
+                this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -175,7 +184,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
         });
     }
 
-    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+    fetchExerciseDeletionSummary(): Observable<EntitySummaryCategory[]> {
         return this.exerciseService.getDeletionSummary(this.quizExercise());
     }
 }

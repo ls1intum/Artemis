@@ -10,7 +10,9 @@ import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -24,6 +26,7 @@ export class TextExerciseRowButtonsComponent {
     private eventManager = inject(EventManager);
     private textExerciseService = inject(TextExerciseService);
     private exerciseService = inject(ExerciseService);
+    private entityDeletionService = inject(EntityDeletionService);
 
     courseId = input.required<number>();
     course = input.required<Course>();
@@ -39,19 +42,23 @@ export class TextExerciseRowButtonsComponent {
     farListAlt = faListAlt;
 
     deleteExercise() {
-        this.textExerciseService.delete(this.exercise().id!).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'textExerciseListModification',
-                    content: 'Deleted a textExercise',
-                });
+        const exercise = this.exercise();
+        this.entityDeletionService.delete(exerciseDeletionTarget(exercise), this.textExerciseService.delete(exercise.id!)).subscribe({
+            next: (progress) => {
+                if (isDeletionCompleted(progress)) {
+                    this.eventManager.broadcast({
+                        name: 'textExerciseListModification',
+                        content: 'Deleted a textExercise',
+                    });
+                }
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
-    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+    fetchExerciseDeletionSummary(): Observable<EntitySummaryCategory[]> {
         return this.exerciseService.getDeletionSummary(this.exercise());
     }
 }

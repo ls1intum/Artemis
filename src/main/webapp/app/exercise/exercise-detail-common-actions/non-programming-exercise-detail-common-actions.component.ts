@@ -1,6 +1,6 @@
 import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
-import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Observable, Subject } from 'rxjs';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
@@ -20,7 +20,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseDetailActionsComponent } from 'app/exercise/detail/exercise-detail-actions.component';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionProgress } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 @Component({
@@ -45,9 +48,12 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     private fileUploadExerciseService = inject(FileUploadExerciseService);
     private modelingExerciseService = inject(ModelingExerciseService);
     private exerciseService = inject(ExerciseService);
+    private entityDeletionService = inject(EntityDeletionService);
     private profileService = inject(ProfileService);
     private eventManager = inject(EventManager);
     private router = inject(Router);
+    private destroyRef = inject(DestroyRef);
+    private readonly isAlive = trackAlive(this.destroyRef);
 
     readonly section = input<'actions' | 'configuration' | 'administration'>('actions');
     exercise = input.required<Exercise>();
@@ -99,51 +105,59 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     ngOnInit(): void {
         this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
+        if (this.exercise().isAtLeastInstructor) {
+            this.resumeRunningDeletion();
+        }
     }
 
     deleteExercise() {
         const exercise = this.exercise();
         switch (exercise.type) {
             case ExerciseType.TEXT:
-                this.textExerciseService.delete(exercise.id!).subscribe({
-                    next: () => {
-                        this.eventManager.broadcast({
-                            name: 'textExerciseListModification',
-                            content: 'Deleted a textExercise',
-                        });
-                        this.dialogErrorSource.next('');
-                        this.navigateToOverview();
-                    },
-                    error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-                });
+                this.runDeletion(this.textExerciseService.delete(exercise.id!), 'textExerciseListModification', 'Deleted a textExercise');
                 break;
             case ExerciseType.FILE_UPLOAD:
-                this.fileUploadExerciseService.delete(exercise.id!).subscribe({
-                    next: () => {
-                        this.eventManager.broadcast({
-                            name: 'fileUploadExerciseListModification',
-                            content: 'Deleted an fileUploadExercise',
-                        });
-                        this.dialogErrorSource.next('');
-                        this.navigateToOverview();
-                    },
-                    error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-                });
+                this.runDeletion(this.fileUploadExerciseService.delete(exercise.id!), 'fileUploadExerciseListModification', 'Deleted an fileUploadExercise');
                 break;
             case ExerciseType.MODELING:
-                this.modelingExerciseService.delete(exercise.id!).subscribe({
-                    next: () => {
-                        this.eventManager.broadcast({
-                            name: 'modelingExerciseListModification',
-                            content: 'Deleted an modelingExercise',
-                        });
-                        this.dialogErrorSource.next('');
-                        this.navigateToOverview();
-                    },
-                    error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-                });
+                this.runDeletion(this.modelingExerciseService.delete(exercise.id!), 'modelingExerciseListModification', 'Deleted an modelingExercise');
                 break;
             default:
+        }
+    }
+
+    /**
+     * Starts the background deletion, shows its progress and leaves the page of the exercise once it is gone.
+     */
+    private runDeletion(request$: Observable<unknown>, eventName: string, eventContent: string) {
+        this.entityDeletionService.delete(exerciseDeletionTarget(this.exercise()), request$).subscribe({
+            next: (progress) => {
+                this.onDeletionEnded(progress, eventName, eventContent);
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    /**
+     * Shows the progress of a deletion of this exercise that is already running, e.g. after the page was reloaded or another instructor started it.
+     */
+    private resumeRunningDeletion() {
+        const exercise = this.exercise();
+        this.entityDeletionService
+            .resume(exerciseDeletionTarget(exercise))
+            .subscribe((progress) =>
+                this.onDeletionEnded(progress, `${exercise.type === ExerciseType.FILE_UPLOAD ? 'fileUpload' : exercise.type}ExerciseListModification`, 'Deleted an exercise'),
+            );
+    }
+
+    private onDeletionEnded(progress: EntityDeletionProgress, eventName: string, eventContent: string) {
+        if (isDeletionCompleted(progress)) {
+            this.eventManager.broadcast({ name: eventName, content: eventContent });
+            if (this.isAlive()) {
+                this.navigateToOverview();
+            }
         }
     }
 
@@ -160,7 +174,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
         }
     }
 
-    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+    fetchExerciseDeletionSummary(): Observable<EntitySummaryCategory[]> {
         return this.exerciseService.getDeletionSummary(this.exercise());
     }
 }

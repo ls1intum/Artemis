@@ -241,6 +241,21 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     long countTestRunsByExamId(@Param("examId") Long examId);
 
+    /**
+     * Counts the student exams of real exams (no test runs) that contain at least one of the given exercises.
+     *
+     * @param exerciseIds the ids of the exercises
+     * @return the number of student exams
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT se)
+            FROM StudentExam se
+                JOIN se.exercises ex
+            WHERE ex.id IN :exerciseIds
+                AND se.testRun = FALSE
+            """)
+    long countRealStudentExamsContainingExercises(@Param("exerciseIds") Collection<Long> exerciseIds);
+
     @Query("""
             SELECT COUNT(se)
             FROM StudentExam se

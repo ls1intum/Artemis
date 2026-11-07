@@ -1,0 +1,40 @@
+{
+    "artemisApp": {
+        "deletionProgress": {
+            "title": {
+                "inProgress": "{{ title }} wird gelöscht",
+                "completed": "{{ title }} wurde gelöscht",
+                "failed": "Löschen von {{ title }} fehlgeschlagen"
+            },
+            "preparing": "Das Löschen wird vorbereitet…",
+            "progressLabel": "Fortschritt des Löschens",
+            "steps": "Schritt {{ current }} von {{ total }}",
+            "remaining": "Noch etwa {{ time }}",
+            "items": "{{ processed }} von {{ total }} erledigt",
+            "currentItem": "Wird gerade gelöscht: {{ title }}",
+            "backgroundHint": "Der Server löscht im Hintergrund und macht weiter, wenn du dieses Fenster oder den Browser-Tab schließt.",
+            "continueInBackground": "Im Hintergrund fortsetzen",
+            "failedHint": "Das Löschen wurde abgebrochen. Teile davon sind möglicherweise bereits gelöscht. Bitte prüfe, was noch übrig ist, bevor du es erneut versuchst.",
+            "dismiss": "Schließen",
+            "bulkStarted": "{{ count }} Aufgaben werden im Hintergrund gelöscht. Die Liste aktualisiert sich, sobald sie entfernt sind.",
+            "step": {
+                "channel": "Kommunikationskanal wird entfernt",
+                "plagiarism": "Plagiatsergebnisse werden entfernt",
+                "participations": "Teilnahmen, Abgaben und Ergebnisse von Studierenden werden gelöscht",
+                "exampleSubmissions": "Beispielabgaben werden gelöscht",
+                "studentExams": "Aufgabe wird aus den Klausuren der Studierenden entfernt",
+                "irisSessions": "Iris-Chatsitzungen werden gelöscht",
+                "programmingArtifacts": "Repositories und Build-Pläne werden gelöscht",
+                "exercise": "Aufgabe wird gelöscht",
+                "cleanup": "Aufräumen",
+                "testRuns": "Testläufe werden gelöscht",
+                "exercises": "Aufgaben werden gelöscht",
+                "gradingScale": "Notenschlüssel wird gelöscht",
+                "exam": "Klausur wird gelöscht",
+                "exerciseGroup": "Aufgabengruppe wird gelöscht"
+            },
+            "otherDeletionRunning": "Eine Aufgabengruppe dieser Klausur wird gerade im Hintergrund gelöscht.",
+            "failedInBackground": "Das Löschen von {{ title }} ist fehlgeschlagen. Teile davon sind möglicherweise schon gelöscht. {{ error }}"
+        }
+    }
+}

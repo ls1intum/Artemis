@@ -5,6 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseGroupDeletionTarget, isDeletionCompleted } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -56,6 +58,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 export class ExerciseGroupsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private exerciseGroupService = inject(ExerciseGroupService);
+    private entityDeletionService = inject(EntityDeletionService);
     private examManagementService = inject(ExamManagementService);
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
@@ -99,6 +102,11 @@ export class ExerciseGroupsComponent implements OnInit {
     private readonly exerciseImportGroup = signal<ExerciseGroup | undefined>(undefined);
 
     protected readonly deleteGroupVisible = signal(false);
+    /** One observable per dialog opening, so that the delete dialog does not get a new input on every change detection pass. */
+    protected readonly deleteGroupSummary = computed(() => {
+        const exerciseGroup = this.groupToDelete();
+        return exerciseGroup?.id === undefined ? undefined : this.exerciseGroupService.getDeletionSummary(this.courseId(), this.examId(), exerciseGroup.id);
+    });
     protected readonly groupToDelete = signal<ExerciseGroup | undefined>(undefined);
     protected readonly deleteGroupQuestion = computed(() =>
         this.groupToDelete() && this.containsProgrammingExercise(this.groupToDelete()!)
@@ -206,14 +214,21 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
-        this.exerciseGroupService.delete(this.courseId(), this.examId(), exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'exerciseGroupOverviewModification',
-                    content: 'Deleted an exercise group',
-                });
+        const courseId = this.courseId();
+        const examId = this.examId();
+        const title = this.exerciseGroups()?.find((exerciseGroup) => exerciseGroup.id === exerciseGroupId)?.title;
+        const request$ = this.exerciseGroupService.delete(courseId, examId, exerciseGroupId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
+        this.entityDeletionService.delete(exerciseGroupDeletionTarget(courseId, examId, exerciseGroupId, title), request$).subscribe({
+            next: (progress) => {
+                if (isDeletionCompleted(progress)) {
+                    this.eventManager.broadcast({
+                        name: 'exerciseGroupOverviewModification',
+                        content: 'Deleted an exercise group',
+                    });
+                    this.exerciseGroups.set(this.exerciseGroups()?.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
+                }
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');
-                this.exerciseGroups.set(this.exerciseGroups()!.filter((exerciseGroup) => exerciseGroup.id !== exerciseGroupId));
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

@@ -22,6 +22,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 describe('Exercise detail common actions Component', () => {
     let comp: NonProgrammingExerciseDetailCommonActionsComponent;
@@ -33,6 +36,7 @@ describe('Exercise detail common actions Component', () => {
         await TestBed.configureTestingModule({
             imports: [NonProgrammingExerciseDetailCommonActionsComponent],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 MockProvider(TextExerciseService),
                 { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                 MockProvider(ModelingExerciseService),
@@ -196,6 +200,48 @@ describe('Exercise detail common actions Component', () => {
         comp.deleteExercise();
         expect(deleteModelingExerciseService).toHaveBeenCalledOnce();
     });
+
+    it('should leave the page of the exercise only when the background deletion completed', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+        vi.spyOn(TestBed.inject(TextExerciseService), 'delete').mockReturnValue(of({} as HttpResponse<any>));
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', new TextExercise({ id: 123 }, undefined));
+
+        deletionService.status = EntityDeletionStatus.FAILED;
+        comp.deleteExercise();
+        expect(navigateSpy).not.toHaveBeenCalled();
+
+        deletionService.status = EntityDeletionStatus.COMPLETED;
+        comp.deleteExercise();
+        expect(navigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should show the progress of a deletion that is already running when an instructor opens the page', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const exercise = new TextExercise({ id: 123 }, undefined);
+        exercise.id = 5;
+        exercise.isAtLeastInstructor = true;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', exercise);
+
+        comp.ngOnInit();
+
+        expect(deletionService.resume).toHaveBeenCalledWith(expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: 5 }));
+    });
+
+    it('should not look for a running deletion when the user is no instructor', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const exercise = new TextExercise({ id: 123 }, undefined);
+        exercise.isAtLeastInstructor = false;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', exercise);
+
+        comp.ngOnInit();
+
+        expect(deletionService.resume).not.toHaveBeenCalled();
+    });
 });
 
 describe('Exercise detail common action rendering', () => {
@@ -204,6 +250,7 @@ describe('Exercise detail common action rendering', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 provideHttpClient(),
                 provideRouter([]),
                 MockProvider(TextExerciseService),

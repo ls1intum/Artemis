@@ -35,6 +35,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ExamExerciseTableComponent } from 'app/exam/manage/exercise-groups/exercise-table/exam-exercise-table.component';
 import { ExamExerciseGroupEditModalComponent } from 'app/exam/manage/exercise-groups/group-edit-modal/exam-exercise-group-edit-modal.component';
 import { ExamExerciseTypePickerComponent } from 'app/exam/manage/exercise-groups/exercise-type-picker/exam-exercise-type-picker.component';
+import { EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -78,6 +82,7 @@ describe('Exercise Groups Component', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
@@ -183,6 +188,57 @@ describe('Exercise Groups Component', () => {
 
         expect(exerciseGroupService.delete).toHaveBeenCalledOnce();
         expect(comp.exerciseGroups()).toHaveLength(groups.length - 1);
+    });
+
+    it('hands the exercise group to the background deletion with the title it has', () => {
+        comp.exerciseGroups.set([{ id: 5, title: 'Group A' } as ExerciseGroup]);
+        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+
+        comp.deleteExerciseGroup(5, { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
+
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        expect(deletionService.delete).toHaveBeenCalledWith(
+            expect.objectContaining({ entityType: EntityDeletionType.EXERCISE_GROUP, entityId: 5, title: 'Group A', successAlertKey: 'artemisApp.exerciseGroup.deleted' }),
+            expect.anything(),
+        );
+    });
+
+    it('keeps the exercise group when the background deletion failed', () => {
+        (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+        comp.exerciseGroups.set(groups);
+        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+
+        comp.deleteExerciseGroup(0, {});
+
+        expect(comp.exerciseGroups()).toHaveLength(groups.length);
+        expect(broadcastSpy).not.toHaveBeenCalled();
+    });
+
+    it('reports a refused deletion to the confirmation dialog', () => {
+        comp.exerciseGroups.set(groups);
+        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, statusText: 'Conflict' })));
+        const errors: string[] = [];
+        comp.dialogError.subscribe((message) => errors.push(message));
+
+        comp.deleteExerciseGroup(0, {});
+
+        expect(errors).toHaveLength(1);
+        expect(errors[0]).not.toBe('');
+        expect(comp.exerciseGroups()).toHaveLength(groups.length);
+    });
+
+    it('fetches the deletion summary of the exercise group that is about to be deleted', () => {
+        const categories: EntitySummaryCategory[] = [{ titleKey: 'category', items: [{ labelKey: 'label', value: 3 }] }];
+        const summarySpy = vi.spyOn(exerciseGroupService, 'getDeletionSummary').mockReturnValue(of(categories));
+        expect(comp['deleteGroupSummary']()).toBeUndefined();
+
+        comp['confirmDeleteGroup']({ id: 8, title: 'Group B' } as ExerciseGroup);
+        let received: EntitySummaryCategory[] | undefined;
+        comp['deleteGroupSummary']()!.subscribe((value) => (received = value));
+
+        expect(summarySpy).toHaveBeenCalledWith(comp.courseId(), comp.examId(), 8);
+        expect(received).toEqual(categories);
     });
 
     it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(

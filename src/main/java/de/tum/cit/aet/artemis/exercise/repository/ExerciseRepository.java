@@ -934,7 +934,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO(
                 (SELECT COUNT(p) FROM StudentParticipation p WHERE p.exercise.id = :exerciseId),
-                (SELECT COUNT(b) FROM BuildJob b WHERE b.exerciseId = :exerciseId),
+                (SELECT COUNT(t) FROM Team t WHERE t.exercise.id = :exerciseId),
+                (SELECT COUNT(s) FROM Submission s WHERE s.participation.exercise.id = :exerciseId),
+                (SELECT COUNT(r) FROM Result r WHERE r.exerciseId = :exerciseId),
                 (
                     SELECT COUNT(DISTINCT sp)
                     FROM StudentParticipation sp
@@ -949,8 +951,15 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                         AND r.completionDate IS NOT NULL
                         AND (ex.dueDate IS NULL OR s.submissionDate <= ex.dueDate)
                 ),
+                (SELECT COUNT(cm) FROM Complaint cm WHERE cm.exerciseId = :exerciseId),
+                (SELECT COUNT(pc) FROM PlagiarismComparison pc WHERE pc.plagiarismResult.exercise.id = :exerciseId),
+                (SELECT COUNT(es) FROM ExampleSubmission es WHERE es.exercise.id = :exerciseId),
+                (SELECT COUNT(b) FROM BuildJob b WHERE b.exerciseId = :exerciseId),
                 (SELECT COUNT(post) FROM Post post WHERE post.conversation.id = c.id),
-                (SELECT COUNT(a) FROM AnswerPost a JOIN a.post p WHERE p.conversation.id = c.id)
+                (SELECT COUNT(a) FROM AnswerPost a JOIN a.post p WHERE p.conversation.id = c.id),
+                (SELECT COUNT(cl) FROM CompetencyExerciseLink cl WHERE cl.exercise.id = :exerciseId),
+                (SELECT COUNT(u) FROM ExerciseUnit u WHERE u.exercise.id = :exerciseId),
+                (SELECT COUNT(se) FROM StudentExam se JOIN se.exercises sex WHERE sex.id = :exerciseId AND se.testRun = FALSE)
             )
             FROM Exercise e
                 LEFT JOIN Channel c ON c.exercise.id = e.id

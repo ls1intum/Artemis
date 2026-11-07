@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -21,19 +25,29 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -87,6 +101,27 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
 
     @Autowired
     private ResultTestRepository resultRepository;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private ComplaintUtilService complaintUtilService;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private StudentExamTestRepository studentExamRepository;
+
+    @Autowired
+    private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     @BeforeEach
     void setup() {
@@ -190,6 +225,16 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
         assertThat(summary.numberOfAssessments()).isEqualTo(1);
         assertThat(summary.numberOfCommunicationPosts()).isEqualTo(0);
         assertThat(summary.numberOfAnswerPosts()).isEqualTo(0);
+        // everything else that the deletion removes along with the exercise is counted, too
+        assertThat(summary.numberOfSubmissions()).isEqualTo(2);
+        assertThat(summary.numberOfResults()).isEqualTo(2);
+        assertThat(summary.numberOfTeams()).isZero();
+        assertThat(summary.numberOfComplaints()).isZero();
+        assertThat(summary.numberOfPlagiarismComparisons()).isZero();
+        assertThat(summary.numberOfExampleSubmissions()).isZero();
+        assertThat(summary.numberOfCompetencyLinks()).isZero();
+        assertThat(summary.numberOfLectureUnitLinks()).isZero();
+        assertThat(summary.numberOfStudentExams()).isZero();
     }
 
     @Test
@@ -262,6 +307,79 @@ class ExerciseDeletionSummaryIntegrationTest extends AbstractSpringIntegrationIn
         assertThat(summary.numberOfStudentParticipations()).isEqualTo(1);
         assertThat(summary.numberOfAssessments()).isEqualTo(0);
         assertThat(summary.numberOfBuilds()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetDeletionSummary_countsEverythingTheDeletionRemoves() throws Exception {
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
+        TextExercise textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+        // two teams
+        teamUtilService.addTeamsForExercise(textExercise, 2, instructor);
+
+        // two submissions with a result each, and a complaint about each of the results
+        var submission1 = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        var submission2 = textExerciseUtilService.createTextSubmissionWithResultAndAssessor(textExercise, TEST_PREFIX + "student2", TEST_PREFIX + "tutor1");
+        complaintUtilService.addComplaintToSubmission(submission1, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaintToSubmission(submission2, TEST_PREFIX + "student2", ComplaintType.MORE_FEEDBACK);
+
+        // one plagiarism comparison
+        var plagiarismResult = textExerciseUtilService.createPlagiarismResultForExercise(textExercise);
+        var comparison = new PlagiarismComparison();
+        comparison.setPlagiarismResult(plagiarismResult);
+        comparison.setStatus(PlagiarismStatus.NONE);
+        var submissionA = new PlagiarismSubmission();
+        submissionA.setStudentLogin(TEST_PREFIX + "student1");
+        submissionA.setSubmissionId(submission1.getId());
+        var submissionB = new PlagiarismSubmission();
+        submissionB.setStudentLogin(TEST_PREFIX + "student2");
+        submissionB.setSubmissionId(submission2.getId());
+        comparison.setSubmissionA(submissionA);
+        comparison.setSubmissionB(submissionB);
+        plagiarismComparisonRepository.save(comparison);
+
+        // two example submissions
+        participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("first example", textExercise, true));
+        participationUtilService.addExampleSubmission(participationUtilService.generateExampleSubmission("second example", textExercise, true));
+
+        // one competency link and two lecture units that link to the exercise
+        competencyUtilService.linkExerciseToCompetency(competencyUtilService.createCompetency(course), textExercise);
+        var lecture = lectureUtilService.createLecture(course);
+        lectureUtilService.createExerciseUnit(textExercise, lecture);
+        lectureUtilService.createExerciseUnit(textExercise, lecture);
+
+        var summary = request.get("/api/exercise/exercises/" + textExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
+
+        assertThat(summary.numberOfStudentParticipations()).isEqualTo(2);
+        assertThat(summary.numberOfSubmissions()).isEqualTo(2);
+        assertThat(summary.numberOfResults()).isEqualTo(2);
+        assertThat(summary.numberOfTeams()).isEqualTo(2);
+        assertThat(summary.numberOfComplaints()).isEqualTo(2);
+        assertThat(summary.numberOfPlagiarismComparisons()).isEqualTo(1);
+        assertThat(summary.numberOfExampleSubmissions()).isEqualTo(2);
+        assertThat(summary.numberOfCompetencyLinks()).isEqualTo(1);
+        assertThat(summary.numberOfLectureUnitLinks()).isEqualTo(2);
+        assertThat(summary.numberOfStudentExams()).as("a course exercise is in no student exam").isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetDeletionSummary_countsTheStudentExamsOfAnExamExercise() throws Exception {
+        TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        Exam exam = examExercise.getExerciseGroup().getExam();
+        for (String login : List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2")) {
+            StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, login);
+            studentExam.setExercises(List.of(examExercise));
+            studentExamRepository.save(studentExam);
+        }
+        // a student exam that does not contain the exercise does not count
+        examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "instructor1");
+
+        var summary = request.get("/api/exercise/exercises/" + examExercise.getId() + "/deletion-summary", HttpStatus.OK, ExerciseDeletionSummaryDTO.class);
+
+        assertThat(summary.numberOfStudentExams()).isEqualTo(2);
     }
 
     @Test

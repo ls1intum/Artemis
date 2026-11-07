@@ -23,7 +23,7 @@ import { CourseExamArchiveButtonComponent } from 'app/shared-ui/components/butto
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -42,12 +42,12 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { ExamDeletionSummaryDTO } from 'app/exam/shared/entities/exam-deletion-summary.model';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 @Component({
     template: '',
@@ -92,6 +92,7 @@ describe('ExamDetailComponent', () => {
                 MockDirective(ExerciseDetailDirective),
             ],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 {
@@ -367,63 +368,63 @@ describe('ExamDetailComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 1, 'exams']);
     });
 
-    it('should combine the exam contents and the server numbers in the deletion summary', () => {
-        exam.testExam = true;
-        exam.course!.testCourse = false;
-        exam.exerciseGroups = [
-            {
-                id: 1,
-                exercises: [
-                    { id: 1, type: ExerciseType.PROGRAMMING, numberOfParticipations: 4 },
-                    { id: 2, type: ExerciseType.PROGRAMMING, numberOfParticipations: 2 },
-                    { id: 3, type: ExerciseType.TEXT },
-                ],
-            },
-            { id: 2, exercises: [{ id: 4, type: ExerciseType.QUIZ }, { id: 5 }] },
-        ] as ExerciseGroup[];
-        component.exam.set(exam);
-        const dto: ExamDeletionSummaryDTO = {
-            numberOfBuilds: 11,
-            numberOfCommunicationPosts: 12,
-            numberOfAnswerPosts: 13,
-            numberRegisteredStudents: 14,
-            numberNotStartedExams: 15,
-            numberStartedExams: 16,
-            numberSubmittedExams: 17,
-        };
-        vi.spyOn(service, 'getDeletionSummary').mockReturnValue(of({ body: dto } as HttpResponse<ExamDeletionSummaryDTO>));
-        let summary: EntitySummary | undefined;
+    it('should hand the categories of the deletion summary of the exam to the dialog', () => {
+        const categories: EntitySummaryCategory[] = [{ titleKey: 'artemisApp.examManagement.delete.summary.category.structure', items: [{ labelKey: 'label', value: 2 }] }];
+        vi.spyOn(service, 'getDeletionSummary').mockReturnValue(of(categories));
+        let summary: EntitySummaryCategory[] | undefined;
 
         component.examDeletionSummary().subscribe((value) => (summary = value));
 
         expect(service.getDeletionSummary).toHaveBeenCalledWith(1, 1);
-        expect(summary).toEqual({
-            'artemisApp.examManagement.delete.summary.numberExerciseGroups': 2,
-            'artemisApp.examManagement.delete.summary.numberProgrammingExercises': 2,
-            'artemisApp.examManagement.delete.summary.numberModelingExercises': undefined,
-            'artemisApp.examManagement.delete.summary.numberTextExercises': 1,
-            'artemisApp.examManagement.delete.summary.numberFileUploadExercises': undefined,
-            'artemisApp.examManagement.delete.summary.numberQuizExercises': 1,
-            'artemisApp.examManagement.delete.summary.numberRepositories': 6,
-            'artemisApp.examManagement.delete.summary.isTestExam': true,
-            'artemisApp.examManagement.delete.summary.isTestCourse': false,
-            'artemisApp.examManagement.delete.summary.numberBuilds': 11,
-            'artemisApp.examManagement.delete.summary.numberRegisteredStudents': 14,
-            'artemisApp.examManagement.delete.summary.numberNotStartedExams': 15,
-            'artemisApp.examManagement.delete.summary.numberStartedExams': 16,
-            'artemisApp.examManagement.delete.summary.numberSubmittedExams': 17,
-            'artemisApp.examManagement.delete.summary.numberCommunicationPosts': 12,
-            'artemisApp.examManagement.delete.summary.numberAnswerPosts': 13,
-        });
+        expect(summary).toEqual(categories);
     });
 
-    it('should return an empty deletion summary when the server sends no summary', () => {
-        vi.spyOn(service, 'getDeletionSummary').mockReturnValue(of({ body: null } as HttpResponse<ExamDeletionSummaryDTO>));
-        let summary: EntitySummary | undefined;
+    it('should start the background deletion with the target of the exam', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
 
-        component.examDeletionSummary().subscribe((value) => (summary = value));
+        component.deleteExam(1);
 
-        expect(summary).toEqual({});
+        expect(deletionService.delete).toHaveBeenCalledWith(
+            expect.objectContaining({ entityType: EntityDeletionType.EXAM, entityId: 1, courseId: 1, examId: 1 }),
+            expect.anything(),
+        );
+    });
+
+    it('should refresh lists but not navigate when the deletion ends after the user left the page', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const ended$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(ended$);
+        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const broadcastSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast');
+
+        component.deleteExam(1);
+        fixture.destroy();
+        ended$.next({
+            entityType: EntityDeletionType.EXAM,
+            entityId: 1,
+            status: EntityDeletionStatus.COMPLETED,
+            stepsCompleted: 5,
+            totalSteps: 5,
+            itemsProcessed: 0,
+            totalItems: 0,
+            weightedProgressPercent: 100,
+        });
+
+        expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not leave the page when the background deletion failed', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        deletionService.status = EntityDeletionStatus.FAILED;
+        vi.spyOn(service, 'delete').mockReturnValue(of(new HttpResponse<void>({ status: 202 })));
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+        component.deleteExam(1);
+
+        expect(navigateSpy).not.toHaveBeenCalled();
     });
 
     it('should describe the general information of the exam in the detail sections', () => {
@@ -443,6 +444,25 @@ describe('ExamDetailComponent', () => {
         expect(byTitle('artemisApp.examManagement.examStudents.registeredStudents')['text']).toBe(3);
         expect(byTitle('artemisApp.exam.course')['routerLink']).toEqual(['/course-management', 1]);
         expect(byTitle('artemisApp.examManagement.startText')['innerHtml']).toBe(exampleHTML);
+    });
+
+    it('should show the progress of an exam deletion that is already running when an instructor opens the page', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        exam.course!.isAtLeastInstructor = true;
+        component.exam.set(exam);
+
+        component.ngOnInit();
+
+        expect(deletionService.resume).toHaveBeenCalledWith(expect.objectContaining({ entityType: EntityDeletionType.EXAM, entityId: exam.id, courseId: 1 }));
+    });
+
+    it('should not look for a running deletion when the user is no instructor', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        exam.course!.isAtLeastInstructor = false;
+
+        component.ngOnInit();
+
+        expect(deletionService.resume).not.toHaveBeenCalled();
     });
 
     it('should call scrollToTopOfPage on component initialization', () => {

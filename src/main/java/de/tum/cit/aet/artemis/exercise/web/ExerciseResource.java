@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.EntityDeletionProgressDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsExerciseDTO;
@@ -388,6 +389,19 @@ public class ExerciseResource {
     public ResponseEntity<ExerciseDeletionSummaryDTO> getDeletionSummary(@PathVariable long exerciseId) {
         log.debug("REST request to get deletion summary for exercise : {}", exerciseId);
         return ResponseEntity.ok(exerciseDeletionService.getDeletionSummary(exerciseId));
+    }
+
+    /**
+     * GET /exercises/:exerciseId/deletion-progress : Get the latest progress of the background deletion of an exercise, for a client that opens the page while the deletion runs.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200} and the progress, or {@code 204} if the exercise is not being deleted
+     */
+    @GetMapping("exercises/{exerciseId}/deletion-progress")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<EntityDeletionProgressDTO> getDeletionProgress(@PathVariable long exerciseId) {
+        log.debug("REST request to get the deletion progress of exercise : {}", exerciseId);
+        return exerciseDeletionService.getDeletionProgress(exerciseId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     /**

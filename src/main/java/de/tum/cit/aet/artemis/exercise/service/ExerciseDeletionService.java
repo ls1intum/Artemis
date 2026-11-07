@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -21,15 +22,20 @@ import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exercise.domain.EntityDeletionType;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.EntityDeletionProgressDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.web.ExerciseWebsocketTopics;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.IrisChatSessionApi;
@@ -81,12 +87,16 @@ public class ExerciseDeletionService {
 
     private final Optional<IrisChatSessionApi> irisChatSessionApi;
 
+    private final EntityDeletionProgressService entityDeletionProgressService;
+
+    private final ParticipationRepository participationRepository;
+
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
             Optional<CompetencyProgressApi> competencyProgressApi, Optional<SearchableEntityWeaviateService> searchableItemWeaviateService,
-            Optional<IrisChatSessionApi> irisChatSessionApi) {
+            Optional<IrisChatSessionApi> irisChatSessionApi, EntityDeletionProgressService entityDeletionProgressService, ParticipationRepository participationRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -101,6 +111,8 @@ public class ExerciseDeletionService {
         this.competencyProgressApi = competencyProgressApi;
         this.searchableItemWeaviateService = searchableItemWeaviateService;
         this.irisChatSessionApi = irisChatSessionApi;
+        this.entityDeletionProgressService = entityDeletionProgressService;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -111,6 +123,16 @@ public class ExerciseDeletionService {
      */
     public ExerciseDeletionSummaryDTO getDeletionSummary(long exerciseId) {
         return exerciseRepository.findDeletionSummaryByExerciseId(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+    }
+
+    /**
+     * Get the latest known progress of the background deletion of an exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the progress, or empty if the exercise was not deleted in the background during the last hour
+     */
+    public Optional<EntityDeletionProgressDTO> getDeletionProgress(long exerciseId) {
+        return entityDeletionProgressService.getProgress(EntityDeletionProgressService.exerciseScopeKey(exerciseId));
     }
 
     /**
@@ -150,24 +172,60 @@ public class ExerciseDeletionService {
      *                                      all other exercise types)
      */
     public void delete(long exerciseId, boolean deleteBaseReposBuildPlans) {
+        delete(exerciseId, deleteBaseReposBuildPlans, DeletionProgressListener.none());
+    }
+
+    /**
+     * Delete the exercise by id and all its participations and report the progress.
+     *
+     * @param exerciseId                the exercise to be deleted
+     * @param deleteBaseReposBuildPlans whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for
+     *                                      all other exercise types)
+     * @param progressListener          told which step runs and how many participations are deleted
+     */
+    public void delete(long exerciseId, boolean deleteBaseReposBuildPlans, DeletionProgressListener progressListener) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
         if (!(exercise instanceof ProgrammingExercise)) {
-            deleteExercise(exercise, deleteBaseReposBuildPlans);
+            deleteExercise(exercise, deleteBaseReposBuildPlans, progressListener);
             return;
         }
         // Include student participation cleanup as well as the final template/solution cleanup and exercise removal.
         // A processor admitted before the marker must finish its writes before any of these deletion steps can run.
         try (var permit = programmingExerciseDeletionService.beginDeletionAndAwaitResults(exerciseId)) {
-            deleteExercise(exercise, deleteBaseReposBuildPlans);
+            deleteExercise(exercise, deleteBaseReposBuildPlans, progressListener);
         }
     }
 
-    private void deleteExercise(Exercise exercise, boolean deleteBaseReposBuildPlans) {
+    /**
+     * Deletes the exercise in the background and reports the progress on the websocket topic of the exercise. Returns as soon as the deletion is scheduled. The caller checks the
+     * permissions first.
+     *
+     * @param exercise                  the exercise to delete
+     * @param deleteBaseReposBuildPlans whether the template and solution repos and build plans should be deleted (only relevant for programming exercises)
+     * @param onAccepted                runs in the request once the deletion is accepted and before it starts, for example to audit the request, to notify AtlasML or to cancel
+     *                                      the schedule of a quiz. It does not run if the exercise, or the exam or exercise group it belongs to, is already being deleted.
+     * @throws ConflictException if the exercise, or the exam or exercise group it belongs to, is already being deleted
+     */
+    public void startAsyncDeletion(Exercise exercise, boolean deleteBaseReposBuildPlans, Runnable onAccepted) {
+        long exerciseId = exercise.getId();
+        boolean examExercise = exerciseRepository.isExamExercise(exerciseId);
+        Map<String, Double> stepWeights = EntityDeletionWeights.exerciseStepWeights(exercise, examExercise, participationRepository.countByExerciseId(exerciseId));
+        // An exam or an exercise group that is deleted holds the scope of this exercise, so this request is refused with a conflict meanwhile.
+        entityDeletionProgressService.startAsync(EntityDeletionProgressService.exerciseScopeKey(exerciseId), List.of(), EntityDeletionType.EXERCISE, exerciseId,
+                ExerciseWebsocketTopics.DELETION_PROGRESS.at(exerciseId), stepWeights.size(), EntityDeletionWeights.total(stepWeights), onAccepted, tracker -> {
+                    var reporter = new DeletionStepReporter(tracker, stepWeights);
+                    delete(exerciseId, deleteBaseReposBuildPlans, reporter);
+                    reporter.finishCurrentStep();
+                });
+    }
+
+    private void deleteExercise(Exercise exercise, boolean deleteBaseReposBuildPlans, DeletionProgressListener progressListener) {
         long exerciseId = exercise.getId();
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         long start = System.nanoTime();
+        progressListener.stepStarted(EntityDeletionWeights.STEP_CHANNEL);
         channelService.deleteChannelForExerciseId(exerciseId);
         log.debug("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
 
@@ -176,6 +234,7 @@ public class ExerciseDeletionService {
             textApi.ifPresent(api -> api.cancelScheduledOperations(exerciseId));
         }
 
+        progressListener.stepStarted(EntityDeletionWeights.STEP_PLAGIARISM);
         // delete all exercise units linking to the exercise
         lectureUnitApi.ifPresent(api -> api.removeLectureUnitFromExercise(exerciseId));
 
@@ -183,9 +242,11 @@ public class ExerciseDeletionService {
         plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exerciseId));
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
-        participationDeletionService.deleteAllByExercise(exercise, false);
+        progressListener.stepStarted(EntityDeletionWeights.STEP_PARTICIPATIONS);
+        participationDeletionService.deleteAllByExercise(exercise, false, progressListener);
 
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
+        progressListener.stepStarted(EntityDeletionWeights.STEP_EXAMPLE_SUBMISSIONS);
         exercise = exerciseRepository.findByIdWithEagerExampleSubmissionsElseThrow(exerciseId);
         exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmissionService.deleteById(exampleSubmission.getId()));
         exercise.setExampleSubmissions(new HashSet<>());
@@ -194,6 +255,7 @@ public class ExerciseDeletionService {
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
         if (exercise.isExamExercise()) {
+            progressListener.stepStarted(EntityDeletionWeights.STEP_STUDENT_EXAMS);
             StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
             Set<StudentExam> studentExams = api.findAllWithExercisesByExamId(exercise.getExerciseGroup().getExam().getId());
             for (StudentExam studentExam : studentExams) {
@@ -208,17 +270,21 @@ public class ExerciseDeletionService {
         // Remove any Iris chat sessions referencing this exercise. Since the unified iris_session
         // schema uses a plain entity_id column (no FK), cleanup must happen explicitly here.
         if (exercise instanceof ProgrammingExercise) {
+            progressListener.stepStarted(EntityDeletionWeights.STEP_IRIS_SESSIONS);
             irisChatSessionApi.ifPresent(api -> api.deleteAllForProgrammingExercise(exerciseId));
         }
         else if (exercise instanceof TextExercise) {
+            progressListener.stepStarted(EntityDeletionWeights.STEP_IRIS_SESSIONS);
             irisChatSessionApi.ifPresent(api -> api.deleteAllForTextExercise(exerciseId));
         }
 
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
+            progressListener.stepStarted(EntityDeletionWeights.STEP_PROGRAMMING_ARTIFACTS);
             programmingExerciseDeletionService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
+            progressListener.stepStarted(EntityDeletionWeights.STEP_EXERCISE);
             // Quiz drag-and-drop image files were formerly removed by @PostRemove callbacks on the (now JSON-backed) drag items and questions. Since these are no longer JPA
             // entities, every quiz deletion entry point must trigger the file cleanup explicitly; doing it here in the shared deletion path covers course, exam, and
             // exercise-group deletions, not only the direct REST deletion in QuizExerciseDeletionResource.
@@ -231,6 +297,7 @@ public class ExerciseDeletionService {
             FileUtil.deleteFiles(dragAndDropImagesToDelete);
         }
 
+        progressListener.stepStarted(EntityDeletionWeights.STEP_CLEANUP);
         competencyProgressApi.ifPresent(api -> competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync));
 
         searchableItemWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, exerciseId));

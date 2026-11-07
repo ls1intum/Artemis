@@ -97,6 +97,8 @@
                                     jhiDeleteButton
                                     [renderButtonStyle]="false"
                                     deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                                    entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                                    [fetchCategorizedEntitySummary]="fetchSelectedExercisesDeletionSummary()"
                                     [translateValues]="{
                                         courseTitle: course()?.title,
                                         courseType: course()?.testCourse

@@ -239,6 +239,32 @@ class WebsocketTopicAuthorizationTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
+    void testDeletionProgressTopics() {
+        // the progress of deleting an exercise is for the instructors of its course, which also covers exam exercises
+        String exerciseDeletion = "/topic/exercises/" + courseExercise.getId() + "/deletion-progress";
+        assertThat(decide("instructor1", Role.INSTRUCTOR, exerciseDeletion)).isEqualTo(ALLOWED);
+        assertThat(decide("admin", Role.ADMIN, exerciseDeletion)).isEqualTo(ALLOWED);
+        assertThat(decide("editor1", Role.EDITOR, exerciseDeletion)).isEqualTo(DENIED);
+        assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, exerciseDeletion)).isEqualTo(DENIED);
+        assertThat(decide("student1", Role.STUDENT, exerciseDeletion)).isEqualTo(DENIED);
+        assertThat(decide("outsider1", Role.STUDENT, exerciseDeletion)).isEqualTo(DENIED);
+
+        // the progress of deleting an exam or an exercise group is for the instructors of the course of the exam
+        Exam exam = examUtilService.addExam(course);
+        String examDeletion = "/topic/courses/" + course.getId() + "/exams/" + exam.getId() + "/deletion-progress";
+        assertThat(decide("instructor1", Role.INSTRUCTOR, examDeletion)).isEqualTo(ALLOWED);
+        assertThat(decide("admin", Role.ADMIN, examDeletion)).isEqualTo(ALLOWED);
+        assertThat(decide("editor1", Role.EDITOR, examDeletion)).isEqualTo(DENIED);
+        assertThat(decide("tutor1", Role.TEACHING_ASSISTANT, examDeletion)).isEqualTo(DENIED);
+        assertThat(decide("student1", Role.STUDENT, examDeletion)).isEqualTo(DENIED);
+        assertThat(decide("outsider1", Role.STUDENT, examDeletion)).isEqualTo(DENIED);
+
+        // an exam that does not belong to the course in the destination must not be reachable through the course of an instructor
+        String foreignExam = "/topic/courses/" + (course.getId() + 1000) + "/exams/" + exam.getId() + "/deletion-progress";
+        assertThat(decide("instructor1", Role.INSTRUCTOR, foreignExam)).isEqualTo(DENIED);
+    }
+
+    @Test
     void testQuizBatchTopic() {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1),
                 QuizMode.BATCHED);

@@ -1,6 +1,6 @@
 import { HyperionRunLinkComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-link.component';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -44,7 +44,10 @@ import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programmin
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionProgress } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
@@ -109,6 +112,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private exerciseService = inject(ExerciseService);
+    private entityDeletionService = inject(EntityDeletionService);
     private deimosService = inject(DeimosService);
 
     private artemisMarkdown = inject(ArtemisMarkdownService);
@@ -123,6 +127,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private consistencyCheckService = inject(ConsistencyCheckService);
     private sharingService = inject(ProgrammingExerciseSharingService);
     private featureToggleService = inject(FeatureToggleService);
+    private destroyRef = inject(DestroyRef);
+    private readonly isAlive = trackAlive(this.destroyRef);
 
     protected readonly deimosModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_DEIMOS);
 
@@ -235,6 +241,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         const programmingExercise = this.activatedRoute.snapshot.data?.programmingExercise;
         if (programmingExercise) {
             this.handleRouteData(programmingExercise);
+            if (this.programmingExercise().isAtLeastInstructor) {
+                this.resumeRunningDeletion();
+            }
         }
 
         this.subscribeToSharingStatus();
@@ -790,22 +799,44 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     deleteProgrammingExercise(event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.programmingExercise().id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'programmingExerciseListModification',
-                    content: 'Deleted a programming exercise',
-                });
-                this.dialogErrorSource.next('');
-
-                if (!this.isExamExercise()) {
-                    void this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
-                } else {
-                    void this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/exercise-groups`);
+        const exercise = this.programmingExercise();
+        const request$ = this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
+        this.entityDeletionService.delete(exerciseDeletionTarget(exercise), request$).subscribe({
+            next: (progress) => {
+                this.onDeletionEnded(progress);
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
+                // The subject is closed with the component, and the deletion can end after the user left the page.
+                if (this.isAlive()) {
+                    this.dialogErrorSource.next('');
                 }
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
+    }
+
+    /**
+     * Shows the progress of a deletion of this exercise that is already running, e.g. after the page was reloaded or another instructor started it.
+     */
+    private resumeRunningDeletion(): void {
+        this.entityDeletionService.resume(exerciseDeletionTarget(this.programmingExercise())).subscribe((progress) => this.onDeletionEnded(progress));
+    }
+
+    private onDeletionEnded(progress: EntityDeletionProgress): void {
+        if (!isDeletionCompleted(progress)) {
+            return;
+        }
+        this.eventManager.broadcast({
+            name: 'programmingExerciseListModification',
+            content: 'Deleted a programming exercise',
+        });
+        if (!this.isAlive()) {
+            return;
+        }
+        if (!this.isExamExercise()) {
+            void this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
+        } else {
+            void this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/exercise-groups`);
+        }
     }
 
     /**
@@ -831,7 +862,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+    fetchExerciseDeletionSummary(): Observable<EntitySummaryCategory[]> {
         return this.exerciseService.getDeletionSummary(this.programmingExercise());
     }
 

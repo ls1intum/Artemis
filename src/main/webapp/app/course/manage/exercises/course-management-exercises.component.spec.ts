@@ -35,6 +35,10 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExerciseTableComponent } from 'app/course/manage/exercises/exercise-row/exercise-table.component';
+import { EntityDeletionStatus } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -64,6 +68,7 @@ describe('Course Management Exercises Component', () => {
         await TestBed.configureTestingModule({
             imports: [CourseManagementExercisesComponent],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
@@ -555,6 +560,71 @@ describe('Course Management Exercises Component', () => {
             expect(textDelete).toHaveBeenCalled();
             expect(errors).toHaveLength(1);
             expect(errors[0]).not.toBe('');
+        });
+
+        it('does not open one progress dialog per exercise and announces the batch', () => {
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'info');
+            comp.toggleSelection(1);
+            comp.toggleSelection(2);
+
+            comp.deleteSelectedExercises();
+
+            const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+            expect(deletionService.delete).toHaveBeenCalledTimes(2);
+            expect(deletionService.delete).toHaveBeenCalledWith(expect.objectContaining({ entityId: 1 }), expect.anything(), { silent: true });
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.deletionProgress.bulkStarted', { count: 2 });
+        });
+
+        it('surfaces the error of a background deletion that failed and still reloads', () => {
+            const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+            deletionService.status = EntityDeletionStatus.FAILED;
+            deletionService.errorMessage = 'Repository is locked';
+            const reloadSpy = vi.spyOn(courseManagementService, 'findWithExercises');
+            const errors: string[] = [];
+            comp.selectedDeleteError$.subscribe((e) => errors.push(e));
+            comp.toggleSelection(1);
+
+            comp.deleteSelectedExercises();
+
+            expect(errors).toEqual([expect.stringMatching(/: Repository is locked$/)]);
+            expect(reloadSpy).toHaveBeenCalled();
+        });
+
+        it('reports every failed deletion of a bulk deletion, not just the first one', () => {
+            const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+            deletionService.status = EntityDeletionStatus.FAILED;
+            deletionService.errorMessage = 'Repository is locked';
+            const errors: string[] = [];
+            comp.selectedDeleteError$.subscribe((e) => errors.push(e));
+            comp.toggleSelection(1);
+            comp.toggleSelection(2);
+
+            comp.deleteSelectedExercises();
+
+            expect(errors).toHaveLength(1);
+            expect(errors[0].split('\n')).toHaveLength(2);
+        });
+
+        it('adds up the deletion summaries of all selected exercises', () => {
+            const summarySpy = vi
+                .spyOn(TestBed.inject(ExerciseService), 'getDeletionSummary')
+                .mockReturnValue(of([{ titleKey: 'work', items: [{ labelKey: 'participations', value: 300 }] }]));
+            comp.toggleSelection(1);
+            comp.toggleSelection(2);
+            let merged: EntitySummaryCategory[] | undefined;
+
+            comp.fetchSelectedExercisesDeletionSummary().subscribe((value) => (merged = value));
+
+            expect(summarySpy).toHaveBeenCalledTimes(2);
+            expect(merged).toEqual([{ titleKey: 'work', items: [{ labelKey: 'participations', value: 600, highlight: true }] }]);
+        });
+
+        it('has no summary when nothing is selected', () => {
+            let merged: EntitySummaryCategory[] | undefined;
+
+            comp.fetchSelectedExercisesDeletionSummary().subscribe((value) => (merged = value));
+
+            expect(merged).toEqual([]);
         });
 
         it('forwards the delete dialog cleanup flags to each selected programming exercise deletion', () => {

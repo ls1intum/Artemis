@@ -76,6 +76,9 @@ import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/d
 import { DialogService } from 'primeng/dynamicdialog';
 import * as downloadUtil from 'app/foundation/util/download.util';
 import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
+import { EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
 
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -160,6 +163,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
         TestBed.configureTestingModule({
             imports: [],
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 MockProvider(AlertService),
                 MockProvider(DialogService),
                 MockProvider(ProgrammingLanguageFeatureService),
@@ -578,6 +582,40 @@ describe('ProgrammingExerciseDetailComponent', () => {
         comp.isExamExercise.set(true);
         comp.deleteProgrammingExercise({});
         expect(routerNavigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should stay on the page when the background deletion of the programming exercise failed', () => {
+        (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+        const routerNavigateSpy = vi.spyOn(router, 'navigateByUrl');
+        vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+
+        comp.deleteProgrammingExercise({});
+
+        expect(routerNavigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should hand the programming exercise to the background deletion with the cleanup choices', () => {
+        const deleteSpy = vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise.set(mockProgrammingExercise);
+
+        comp.deleteProgrammingExercise({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
+
+        expect(deleteSpy).toHaveBeenCalledWith(mockProgrammingExercise.id, true, false);
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        expect(deletionService.delete).toHaveBeenCalledWith(
+            expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: mockProgrammingExercise.id }),
+            expect.anything(),
+        );
+    });
+
+    it('should show the progress of a deletion that is already running when an instructor opens the page', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        comp.programmingExercise.set({ ...mockProgrammingExercise, isAtLeastInstructor: true } as ProgrammingExercise);
+
+        comp['resumeRunningDeletion']();
+
+        expect(deletionService.resume).toHaveBeenCalledWith(expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: mockProgrammingExercise.id }));
     });
 
     it('should generate structure oracle', async () => {
