@@ -277,9 +277,13 @@ public abstract class AssessmentResource {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
+        boolean isTeamDraft = exercise.isTeamMode() && studentParticipation.getTeam().isPresent() && resultForAuthorization.getCompletionDate() == null;
+        if (isTeamDraft) {
+            authCheckService.checkTeamAssessmentAccessElseThrow(submission);
+        }
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         boolean isAssessorOfResult = resultForAuthorization.getAssessor() != null && user.getId().equals(resultForAuthorization.getAssessor().getId());
-        if (!(isAtLeastInstructor || isAssessorOfResult)) {
+        if (!(isAtLeastInstructor || isTeamDraft || isAssessorOfResult)) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
             throw new AccessForbiddenException();
         }

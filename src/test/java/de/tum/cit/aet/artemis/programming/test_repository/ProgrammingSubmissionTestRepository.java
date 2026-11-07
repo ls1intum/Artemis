@@ -60,9 +60,6 @@ public interface ProgrammingSubmissionTestRepository extends ProgrammingSubmissi
     @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })
     Optional<ProgrammingSubmission> findWithEagerBuildLogEntriesById(Long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor" })
-    Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksAssessorById(long submissionId);
-
     /**
      * Get the programming submission with the given id from the database. The submission is loaded together with exercise it belongs to, its result, the feedback of the result and
      * the assessor of the result. Throws an EntityNotFoundException if no submission could be found for the given id.

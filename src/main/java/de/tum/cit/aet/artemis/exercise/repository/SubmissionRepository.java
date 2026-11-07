@@ -158,8 +158,9 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * Get the number of currently locked submissions for a specific user in the given course. These are all submissions for which the user started, but has not yet finished the
      * assessment.
      *
-     * @param userId   the id of the user
-     * @param courseId the id of the course
+     * @param userId      the id of the user
+     * @param courseId    the id of the course
+     * @param adminAccess whether the caller has active administrator access
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
@@ -169,8 +170,11 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE r.assessor.id = :userId
                 AND r.completionDate IS NULL
                 AND s.participation.exercise.course.id = :courseId
+                AND (:adminAccess = TRUE OR EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId
+                    AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR) OR s.participation.exercise.mode <> de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM
+                    OR EXISTS (SELECT p.id FROM StudentParticipation p WHERE p.id = s.participation.id AND p.team.owner.id = :userId))
             """)
-    long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    long countLockedSubmissionsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("adminAccess") boolean adminAccess);
 
     /**
      * Get the number of currently locked submissions for a specific user in the given exam. These are all submissions for which the user started, but has not yet finished the
@@ -231,8 +235,9 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * Get currently locked submissions for a specific user in the given course.
      * These are all submissions for which the user started, but has not yet finished the assessment.
      *
-     * @param userId   the id of the user
-     * @param courseId the id of the course
+     * @param userId      the id of the user
+     * @param courseId    the id of the course
+     * @param adminAccess whether the caller has active administrator access
      * @return currently locked submissions for a specific user in the given course
      */
     @Query("""
@@ -242,8 +247,11 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE r.assessor.id = :userId
                 AND r.completionDate IS NULL
                 AND submission.participation.exercise.course.id = :courseId
+                AND (:adminAccess = TRUE OR EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId
+                    AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR) OR submission.participation.exercise.mode <> de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM
+                    OR EXISTS (SELECT p.id FROM StudentParticipation p WHERE p.id = submission.participation.id AND p.team.owner.id = :userId))
             """)
-    List<Submission> getLockedSubmissionsAndResultsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    List<Submission> getLockedSubmissionsAndResultsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("adminAccess") boolean adminAccess);
 
     /**
      * Get all currently locked submissions across the given exercises (used for an exam).
@@ -414,25 +422,32 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     List<ExerciseMapEntryDTO> countByExerciseIdsSubmittedAfterDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
-     * Returns submissions for an exercise. Returns only a submission that has a result with a matching assessor. Since the results list may also contain
-     * automatic results but those results do not have an assessor, hibernate simply sets null values for them. Make sure to use a different query if you need
-     * your submission to have all its results set.
+     * Returns non-test-run submissions assessed by the caller, plus unfinished assessments of teams currently owned by the caller.
+     * For team exercises, a former team tutor's assessments are excluded unless the caller is an instructor. The instructor flag preserves
+     * the caller's own assessments regardless of team ownership; it does not return every instructor-accessible assessment.
+     * The fetched results are restricted by the query's assessor and ownership conditions and must not be treated as the submission's complete result history.
      *
-     * @param exerciseId the exercise id we are interested in
-     * @param assessor   the assessor we are interested in
+     * @param exerciseId the exercise whose submissions we are interested in
+     * @param assessor   the caller whose assessments and current teams we are interested in
+     * @param instructor whether the caller has at least instructor access to the exercise
      * @param <T>        the type of the submission
-     * @return the submissions belonging to the exercise id, which have been assessed by the given assessor
+     * @return submissions matching the caller's assessor or current-team ownership conditions
      */
     @Query("""
             SELECT DISTINCT submission
             FROM Submission submission
                 LEFT JOIN FETCH submission.results r
-                LEFT JOIN FETCH r.assessor a
+                LEFT JOIN FETCH r.assessor
+                LEFT JOIN StudentParticipation participation ON participation.id = submission.participation.id
+                LEFT JOIN participation.team team
             WHERE submission.participation.exercise.id = :exerciseId
-                AND :assessor = a
                 AND submission.participation.testRun = FALSE
+                AND ((r.assessor = :assessor AND (submission.participation.exercise.mode <> de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM OR team.id IS NULL OR team.owner = :assessor OR :instructor = TRUE))
+                    OR (r.assessor IS NOT NULL AND submission.participation.exercise.mode = de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM AND team.owner = :assessor
+                        AND r.completionDate IS NULL))
             """)
-    <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
+    <T extends Submission> List<T> findAllByParticipationExerciseIdAndAssessorOrCurrentTeamOwnerIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
+            @Param("assessor") User assessor, @Param("instructor") boolean instructor);
 
     @Query("""
             SELECT DISTINCT submission

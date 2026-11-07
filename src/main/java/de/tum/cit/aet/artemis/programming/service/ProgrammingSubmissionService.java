@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -371,24 +372,25 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Here hibernate sets all automatic results to null, therefore we must filter all those out. This way the client can access the submissions'
      * single result.
      *
-     * @param exerciseId      - the id of the exercise we are looking for
+     * @param exercise        - the exercise we are looking for
      * @param correctionRound - the correctionRound for which the submissions should be fetched for
      * @param tutor           - the tutor we are interested in
      * @param examMode        - flag should be set to ignore the test run submissions
      * @return an unmodifiable list of programming submissions
      */
-    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(long exerciseId, User tutor, boolean examMode,
+    public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(Exercise exercise, User tutor, boolean examMode,
             int correctionRound) {
         List<Submission> submissions;
         if (examMode) {
-            var participations = studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
+            var participations = studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exercise.getId(), tutor);
             // Latest submission might be illegal
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get)
                     // filter out the submissions that don't have a result (but a null value) for the correctionRound
                     .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).toList();
         }
         else {
-            submissions = submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            submissions = submissionRepository.findAllByParticipationExerciseIdAndAssessorOrCurrentTeamOwnerIgnoreTestRuns(exercise.getId(), tutor,
+                    exercise.isTeamMode() && authCheckService.isAtLeastInstructorForExercise(exercise, tutor));
             // automatic results are null in the received results list. We need to filter them out for the client to display the dashboard correctly
             submissions.forEach(Submission::removeNullResults);
         }
@@ -479,6 +481,27 @@ public class ProgrammingSubmissionService extends SubmissionService {
         return (ProgrammingSubmission) manualResult.getSubmission();
     }
 
+    /**
+     * Reuses an existing team result and assigns unfinished drafts to the current authorized assessor.
+     *
+     * @param submission      the submission whose result may be reused
+     * @param correctionRound the requested correction round
+     * @return the reusable result, or empty when a new result is needed
+     */
+    private Optional<Result> reuseTeamAssessmentResult(Submission submission, int correctionRound) {
+        var assignedResult = submission.getResultForCorrectionRound(correctionRound);
+        if (submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
+                && participation.getTeam().isPresent() && assignedResult != null
+                && (assignedResult.getAssessor() != null || assignedResult.isManual() && assignedResult.getCompletionDate() == null)) {
+            if (assignedResult.getCompletionDate() == null) {
+                assignedResult.setAssessor(userRepository.getUser());
+                resultRepository.save(assignedResult);
+            }
+            return Optional.of(assignedResult);
+        }
+        return Optional.empty();
+    }
+
     // TODO SE: explain in what context this method is even called
 
     /**
@@ -493,6 +516,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
     public Result lockSubmission(Submission submission, int correctionRound) {
         SubmissionService.checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
+        authCheckService.checkTeamAssessmentAccessElseThrow(submission);
+        var assignedResult = reuseTeamAssessmentResult(submission, correctionRound);
+        if (assignedResult.isPresent()) {
+            return assignedResult.get();
+        }
         Optional<Result> optionalExistingResult;
         if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
             optionalExistingResult = Optional.of(submission.getLatestResult());
@@ -511,6 +539,12 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // Create a new manual result and try to reuse the existing submission with the latest commit hash
         ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
+        // Resolving the latest commit can select a different submission whose assessment is already assigned.
+        authCheckService.checkTeamAssessmentAccessElseThrow(existingSubmission);
+        assignedResult = reuseTeamAssessmentResult(existingSubmission, correctionRound);
+        if (assignedResult.isPresent()) {
+            return assignedResult.get();
+        }
         Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);

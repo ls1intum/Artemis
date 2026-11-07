@@ -334,6 +334,19 @@
                                                         <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
                                                         <span class="hidden xl:inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams"></span>
                                                     </a>
+                                                    <a
+                                                        data-testid="open-exercise-dashboard"
+                                                        severity="info"
+                                                        [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
+                                                        [attr.aria-label]="'entity.action.exerciseDashboard' | artemisTranslate"
+                                                        [tumAetUiTooltip]="'entity.action.exerciseDashboard' | artemisTranslate"
+                                                        tumAetUiTooltipPlacement="top"
+                                                        tumAetUiButton
+                                                        size="small"
+                                                    >
+                                                        <fa-icon [icon]="faArrowUpRightFromSquare" aria-hidden="true" />
+                                                        <span class="hidden xl:inline" jhiTranslate="entity.action.exerciseDashboard"></span>
+                                                    </a>
                                                 }
                                             </div>
                                         </td>

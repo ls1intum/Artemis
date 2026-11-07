@@ -400,7 +400,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * GET text-submissions/:submissionId/for-assessment
      * Given a submissionId, the method retrieves from the database all the data needed by the tutor to assess the submission. If the tutor has already started
      * assessing the submission, then we also return all the results the tutor has already inserted. If another tutor has already started working on this submission, the system
-     * returns an error
+     * returns an error unless the caller currently owns the team.
      * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
      * In case neither resultId nor correctionRound are set, the first correctionRound is used.
      *
@@ -421,6 +421,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final User user = userRepository.getUserWithAuthorities();
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        final boolean hasTeam = participation instanceof StudentParticipation studentParticipation && studentParticipation.getTeam().isPresent();
 
         // return forbidden if caller is not allowed to assess
         authCheckService.checkIsAllowedToAssessExerciseElseThrow(exercise, user, resultId);
@@ -440,10 +441,11 @@ public class TextAssessmentResource extends AssessmentResource {
         }
         else {
             // in case no resultId is set we get result by correctionRound
+            authCheckService.checkTeamAssessmentAccessElseThrow(textSubmission);
             result = textSubmission.getResultForCorrectionRound(correctionRound);
 
-            if (result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null && !result.getAssessor().getLogin().equals(user.getLogin())
-                    && result.getCompletionDate() == null) {
+            if ((!exercise.isTeamMode() || !hasTeam) && result != null && !isAtLeastInstructorForExercise && result.getAssessor() != null
+                    && !result.getAssessor().getLogin().equals(user.getLogin()) && result.getCompletionDate() == null) {
                 // If we already have a result, we need to check if it is locked.
                 return ResponseEntity.status(HttpStatus.LOCKED)
                         .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "alreadyAssessed", "This submission is being assessed by another tutor"))

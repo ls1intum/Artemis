@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_NUMBER_OF_LOCKED_
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,7 +67,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-// TODO: this class has too many dependencies to other services. We should reduce this
 public class SubmissionService {
 
     private static final Logger log = LoggerFactory.getLogger(SubmissionService.class);
@@ -130,8 +130,7 @@ public class SubmissionService {
      * @param currentUser the current user with groups and authorities
      */
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
-        // The exercise was loaded from the database by the caller, so its course is a persisted entity and not something
-        // the client could have tampered with. Re-reading it by id would only repeat a row we are already holding.
+        // The caller loaded this exercise from the database; its persisted course does not need reloading.
         final var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             throw new AccessForbiddenException();
@@ -155,13 +154,13 @@ public class SubmissionService {
     }
 
     /**
-     * Check if the limit of simultaneously locked submissions (i.e. unfinished assessments) has been reached for the current user in the given course. Throws a
-     * BadRequestAlertException if the limit has been reached.
+     * Reject a new assessment when the current user has reached the course lock limit.
      *
      * @param courseId the id of the course
      */
     public void checkSubmissionLockLimit(long courseId) {
-        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId);
+        long numberOfLockedSubmissions = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId,
+                authCheckService.isCurrentUserAdminAccessEnabled());
         if (numberOfLockedSubmissions >= MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR) {
             throw new BadRequestAlertException("The limit of locked submissions has been reached", "submission", "lockedSubmissionsLimitReached");
         }
@@ -174,59 +173,60 @@ public class SubmissionService {
      * @return the locked submissions for the current user in the given course
      */
     public List<Submission> getLockedSubmissions(long courseId) {
-        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId);
+        return submissionRepository.getLockedSubmissionsAndResultsByUserIdAndCourseId(userRepository.getUserWithAuthorities().getId(), courseId,
+                authCheckService.isCurrentUserAdminAccessEnabled());
     }
 
     /**
-     * Given an exercise id and a tutor id, it returns all the submissions where the tutor has a result associated.
+     * Returns existing assessments visible to the tutor for the exercise.
      *
-     * @param exerciseId      - the id of the exercise we are looking for
+     * @param exercise        - the exercise we are looking for
      * @param correctionRound - the correction round we want our submission to have results for
      * @param tutor           - the tutor we are interested in
      * @param examMode        - flag should be set to ignore the test run submissions
      * @param <T>             the submission type
      * @return list of submissions
      */
-    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(Long exerciseId, User tutor, boolean examMode,
+    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(Exercise exercise, User tutor, boolean examMode,
             int correctionRound) {
         List<T> submissions;
         if (examMode) {
-            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
+            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exercise.getId(), tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
                     .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(Collectors.toCollection(ArrayList::new));
         }
         else {
-            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndAssessorOrCurrentTeamOwnerIgnoreTestRuns(exercise.getId(), tutor,
+                    exercise.isTeamMode() && authCheckService.isAtLeastInstructorForExercise(exercise, tutor));
         }
 
         submissions.forEach(submission -> submission.getLatestResult().setSubmission(null));
         return submissions;
     }
 
-    protected List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
-        // TODO: it really does not make sense to fetch these submissions with all related data from the database just to select one submission afterwards
-        // it would be better to fetch them with minimal related data (so we can select one) and then afterwards fetch the selected one with all related data
-
+    /**
+     * Returns eligible assessment candidates, restricting team exercises to the current tutor's teams unless they are an instructor.
+     *
+     * @param exercise        the exercise to assess
+     * @param examMode        whether to use exam candidate selection
+     * @param correctionRound the requested correction round
+     * @return eligible submissions excluding test runs
+     */
+    public List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
+        final Long teamOwnerId = exercise.isTeamMode() && !authCheckService.isAtLeastInstructorForExercise(exercise, null) ? userRepository.getUser().getId() : null;
         final List<StudentParticipation> participations;
         if (examMode) {
-            // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
-            // No manual result means that no tutor has started an assessment for the corresponding submission yet.
-            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(),
-                    correctionRound);
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(exercise.getId(), correctionRound,
+                    teamOwnerId);
         }
         else {
-            // Get all participations of submissions that are submitted and do not already have a manual result.
-            // No manual result means that no user has started an assessment for the corresponding submission yet.
-            // Does not fetch participations for which the due date has not yet passed.
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(exercise.getId(),
-                    ZonedDateTime.now());
+                    ZonedDateTime.now(ZoneOffset.UTC), teamOwnerId);
         }
 
         var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
 
         if (correctionRound > 0) {
-            // remove submission if user already assessed first correction round
-            // if disabled, please switch tutorAssessUnique within the tests
             // TODO: we could move this check into the database call of the if clause above (examMode == true) to avoid fetching all results and assessors
             final var user = userRepository.getUser();
             submissionsWithoutResult = submissionsWithoutResult.stream().filter(submission -> {
@@ -677,6 +677,7 @@ public class SubmissionService {
      */
     protected Result lockSubmission(Submission submission, int correctionRound) {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
+        authCheckService.checkTeamAssessmentAccessElseThrow(submission);
         Result result = submission.getResultForCorrectionRound(correctionRound);
         if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round
@@ -686,19 +687,19 @@ public class SubmissionService {
             result = saveNewEmptyResult(submission);
         }
 
-        if (result.getAssessor() == null) {
-            result.setAssessor(userRepository.getUser());
+        if (result.getAssessor() == null || submission.getParticipation().getExercise().isTeamMode() && submission.getParticipation() instanceof StudentParticipation participation
+                && participation.getTeam().isPresent() && result.getCompletionDate() == null) {
+            var user = userRepository.getUser();
+            if (result.getAssessor() != null && !result.getAssessor().getId().equals(user.getId())) {
+                checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
+            }
+            result.setAssessor(user);
         }
 
-        // The round this result belongs to is stored on the result itself. This is the one place where a manual result
-        // for a correction round is created or claimed, and the round the tutor asked for takes precedence over the one
-        // Submission.addResult would derive.
+        // The requested correction round takes precedence over the one Submission.addResult would derive.
         result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
-        // Deliberately keep (and return) the object the submission's result set already holds instead of the
-        // merge result: the set ignores re-adding an equal copy, so a caller that adds the returned result back
-        // would keep the stale instance. Returning the original also avoids the assessor (and every other
-        // association) turning into an uninitialized proxy, which the merge result does.
+        // Return the original: the result set ignores equal merge copies, whose associations may also become lazy proxies.
         resultRepository.save(result);
         return result;
     }
@@ -818,11 +819,8 @@ public class SubmissionService {
      * Checks that manual assessment of the given exam exercise is already possible, i.e. that the exam is over for every
      * student and, for programming exercises, that the tests have run once more on the final submissions.
      * <p>
-     * This is the shared gate every endpoint that opens an assessment goes through, for all exercise types: without it
-     * tutors can start grading while students are still working, and would grade a submission the student then replaces
-     * (see issue #13358). It is a no-op for course exercises (they are covered by
-     * {@link #checkIfExerciseDueDateIsReached}) and for instructor test runs, which happen before the exam starts and
-     * must stay assessable.
+     * Prevents assessment while students can still replace submissions (see issue #13358).
+     * Course exercises use {@link #checkIfExerciseDueDateIsReached}; instructor test runs bypass this gate.
      * <p>
      * NOTE: the check is exam-wide, i.e. based on the latest individual end date of all student exams, not on the
      * individual student behind the given participation. Granting one student more working time therefore postpones

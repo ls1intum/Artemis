@@ -41,6 +41,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             FROM ProgrammingSubmission s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH r.assessmentNote
                 LEFT JOIN FETCH s.participation p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
@@ -268,7 +269,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.longFeedbackText", "buildLogEntries", "participation.exercise" })
     Optional<ProgrammingSubmission> findWithEagerResultsAndFeedbacksAndBuildLogsById(long submissionId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote" })
     Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksAssessorById(long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "buildLogEntries" })

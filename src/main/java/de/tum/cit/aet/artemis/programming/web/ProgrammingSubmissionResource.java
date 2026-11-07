@@ -368,7 +368,7 @@ public class ProgrammingSubmissionResource {
         List<ProgrammingSubmission> programmingSubmissions;
         if (assessedByTutor) {
             User user = userRepository.getUserWithAuthorities();
-            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode,
+            programmingSubmissions = programmingSubmissionService.getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exercise, user, examMode,
                     correctionRound);
         }
         else {
@@ -425,6 +425,8 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
 
+        authCheckService.checkTeamAssessmentAccessElseThrow(programmingSubmission);
+
         long numberOfManualResults = programmingSubmission.getResults().stream().filter(Result::isManual).count();
 
         // this makes sure that new results are only created if it is really necessary.
@@ -440,6 +442,15 @@ public class ProgrammingSubmissionResource {
                 // if the participation does not have a result we want to create a new result for the submission of the participation.
                 // If there isn't a submission either, we should not create any result.
                 programmingSubmission = programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false).orElseThrow();
+            }
+            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
+        }
+        else if (programmingExercise.isTeamMode() && participation instanceof ProgrammingExerciseStudentParticipation studentParticipation
+                && studentParticipation.getTeam().isPresent() && programmingSubmission.getResultForCorrectionRound(correctionRound) != null
+                && programmingSubmission.getResultForCorrectionRound(correctionRound).getCompletionDate() == null) {
+            var draft = programmingSubmission.getResultForCorrectionRound(correctionRound);
+            if (draft.getAssessor() == null || !draft.getAssessor().getId().equals(user.getId())) {
+                programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             }
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
