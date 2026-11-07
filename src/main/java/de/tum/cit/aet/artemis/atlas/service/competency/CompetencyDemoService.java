@@ -105,9 +105,8 @@ public class CompetencyDemoService {
 
     public CompetencyDemoService(CourseRepository courseRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository,
             CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CompetencyRelationRepository competencyRelationRepository,
-            CompetencyValidationService competencyValidationService, CourseCompetencyService courseCompetencyService,
-            CompetencyRelationService competencyRelationService, LearningPathService learningPathService,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyValidationService competencyValidationService, CourseCompetencyService courseCompetencyService, CompetencyRelationService competencyRelationService,
+            LearningPathService learningPathService, CompetencyProgressService competencyProgressService) {
         this.courseRepository = courseRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
         this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;

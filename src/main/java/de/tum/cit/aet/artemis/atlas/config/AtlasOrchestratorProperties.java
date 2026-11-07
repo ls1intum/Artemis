@@ -27,5 +27,6 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "artemis.atlas.orchestrator", ignoreUnknownFields = false)
 public record AtlasOrchestratorProperties(@DefaultValue("gpt-5.6-luna") String model, @DefaultValue("1.0") double temperature, @DefaultValue("xhigh") String reasoningEffort,
         @DefaultValue("gpt-5.6-luna") String workerModel, @DefaultValue("high") String workerReasoningEffort, @DefaultValue("true") boolean responsesApiEnabled,
-        @DefaultValue("1800") @Positive int debounceWindowSeconds, @DefaultValue("10") @Positive int maxDailyOrchestrations, @DefaultValue("30000") @Positive long schedulerRateMs) {
+        @DefaultValue("1800") @Positive int debounceWindowSeconds, @DefaultValue("10") @Positive int maxDailyOrchestrations,
+        @DefaultValue("30000") @Positive long schedulerRateMs) {
 }

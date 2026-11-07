@@ -537,8 +537,7 @@ public class CompetencyOrchestrationService {
             // Map.of key order is irrelevant: the prompt template references the placeholders by
             // name, and the fence sanitization in OrchestratorPromptRenderer guarantees no
             // user-supplied string can break out and reposition another.
-            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH,
-                    Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
+            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator preparation failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
@@ -633,8 +632,7 @@ public class CompetencyOrchestrationService {
             String renderedIndex = OrchestratorPromptRenderer.renderCompetencyIndex(competencyIndex);
             String renderedChanges = OrchestratorPromptRenderer.renderChangeBatch(exerciseChanges, lectureUnitChanges);
 
-            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH,
-                    Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
+            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator (batch) preparation failed for course {}: {}", courseId, ex.getMessage(), ex);

@@ -182,7 +182,8 @@ public class CompetencyResource {
         return createCompetency(courseId, competencyRequest, true);
     }
 
-    private ResponseEntity<CourseCompetencyResponseDTO> createCompetency(long courseId, CourseCompetencyRequestDTO competencyRequest, boolean generatedByAi) throws URISyntaxException {
+    private ResponseEntity<CourseCompetencyResponseDTO> createCompetency(long courseId, CourseCompetencyRequestDTO competencyRequest, boolean generatedByAi)
+            throws URISyntaxException {
         log.debug("REST request to create Competency : {}", competencyRequest);
         Competency competency = CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
         competency.setGeneratedByAi(generatedByAi);
@@ -230,7 +231,8 @@ public class CompetencyResource {
         return createCompetencies(courseId, competencies, true);
     }
 
-    private ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(Long courseId, List<CourseCompetencyRequestDTO> competencies, boolean generatedByAi) throws URISyntaxException {
+    private ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(Long courseId, List<CourseCompetencyRequestDTO> competencies, boolean generatedByAi)
+            throws URISyntaxException {
         log.debug("REST request to create Competencies : {}", competencies);
         var competencyEntities = competencies.stream().map(request -> CourseCompetencyRequestDTO.toEntity(request, Competency::new)).toList();
         for (Competency competency : competencyEntities) {

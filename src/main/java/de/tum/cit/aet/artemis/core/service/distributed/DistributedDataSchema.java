@@ -107,8 +107,8 @@ public final class DistributedDataSchema {
      */
     public static final List<CarriedOverStructure> V1_TO_V2_WIRE_COMPATIBLE_STRUCTURES = List.of(new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
             new CarriedOverStructure("processingJobs", StructureKind.MAP), new CarriedOverStructure("buildResultQueue", StructureKind.QUEUE),
-            new CarriedOverStructure("deferredBuildResultQueue", StructureKind.QUEUE),
-            new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP), new CarriedOverStructure("pyris-job-map-v2", StructureKind.EXPIRING_MAP));
+            new CarriedOverStructure("deferredBuildResultQueue", StructureKind.QUEUE), new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP),
+            new CarriedOverStructure("pyris-job-map-v2", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
     }

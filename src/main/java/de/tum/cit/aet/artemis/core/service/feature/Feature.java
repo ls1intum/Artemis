@@ -4,6 +4,6 @@ package de.tum.cit.aet.artemis.core.service.feature;
 // Append new constants only: Redis map keys use Kryo's ordinal-based enum encoding.
 // Memiris is retired and kept only for its position; see FeatureToggleService#RETIRED_FEATURES.
 public enum Feature {
-    ProgrammingExercises, PlagiarismChecks, Exports, LearningPaths, Science, StandardizedCompetencies, TutorSuggestions, AtlasAgent, Memiris, LectureContentProcessing,
-    RateLimit, GlobalSearch, AutonomousTutor, Deimos, IrisProactiveStruggle, GlobalSearchReconcile, GlobalSearchReconcileOrphan, PresentationAssessments
+    ProgrammingExercises, PlagiarismChecks, Exports, LearningPaths, Science, StandardizedCompetencies, TutorSuggestions, AtlasAgent, Memiris, LectureContentProcessing, RateLimit,
+    GlobalSearch, AutonomousTutor, Deimos, IrisProactiveStruggle, GlobalSearchReconcile, GlobalSearchReconcileOrphan, PresentationAssessments
 }

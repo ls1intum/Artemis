@@ -121,9 +121,8 @@ public class FeatureToggleService {
         // system starts up
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && !RETIRED_FEATURES.contains(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions
-                    && feature != Feature.AtlasAgent && feature != Feature.RateLimit && feature != Feature.GlobalSearch
-                    && feature != Feature.AutonomousTutor && feature != Feature.Deimos && feature != Feature.GlobalSearchReconcile
-                    && feature != Feature.GlobalSearchReconcileOrphan) {
+                    && feature != Feature.AtlasAgent && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor
+                    && feature != Feature.Deimos && feature != Feature.GlobalSearchReconcile && feature != Feature.GlobalSearchReconcileOrphan) {
                 features.put(feature, true);
             }
         }

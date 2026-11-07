@@ -81,8 +81,7 @@ public class EditorToolsService {
      * @param competencyRelationRepository counts the relations removed together with a deleted competency
      */
     public EditorToolsService(JsonMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService,
-            CompetencyValidationService competencyValidator,
-            CompetencyRelationRepository competencyRelationRepository) {
+            CompetencyValidationService competencyValidator, CompetencyRelationRepository competencyRelationRepository) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;

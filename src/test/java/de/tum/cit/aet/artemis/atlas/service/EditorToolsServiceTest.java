@@ -68,8 +68,7 @@ class EditorToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new EditorToolsService(new JsonMapper(), courseCompetencyRepository, courseCompetencyService, competencyValidator,
-                competencyRelationRepository);
+        service = new EditorToolsService(new JsonMapper(), courseCompetencyRepository, courseCompetencyService, competencyValidator, competencyRelationRepository);
         appliedActions = Collections.synchronizedList(new ArrayList<>());
         appliedActionsBuffer = new AppliedActionsBuffer(appliedActions);
         Map<String, Object> ctx = new HashMap<>();
