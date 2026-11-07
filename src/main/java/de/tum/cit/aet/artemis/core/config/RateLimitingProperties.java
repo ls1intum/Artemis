@@ -149,11 +149,11 @@ public class RateLimitingProperties {
         this.loginOptionsRequestsPerMinute = loginOptionsRequestsPerMinute;
     }
 
-    public Integer getOIDCAuthorizationRequestsPerMinute() {
+    public Integer getOidcAuthorizationRequestsPerMinute() {
         return oidcAuthorizationRequestsPerMinute;
     }
 
-    public void setOIDCAuthorizationRequestsPerMinute(Integer oidcAuthorizationRequestsPerMinute) {
+    public void setOidcAuthorizationRequestsPerMinute(Integer oidcAuthorizationRequestsPerMinute) {
         this.oidcAuthorizationRequestsPerMinute = oidcAuthorizationRequestsPerMinute;
     }
 
