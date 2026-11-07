@@ -4,6 +4,7 @@ export { TumAetUiButtonComponent } from './lib/button/tumaet-ui-button.component
 export { TumAetUiButtonDirective } from './lib/button/tumaet-ui-button.directive';
 export type { TumAetUiButtonSeverity, TumAetUiButtonSize, TumAetUiButtonVariant } from './lib/button/tumaet-ui-button.variants';
 export { TumAetUiCardComponent } from './lib/card/tumaet-ui-card.component';
+export type { TumAetUiCardVariant } from './lib/card/tumaet-ui-card.variants';
 export { TumAetUiBarChartComponent } from './lib/chart/tumaet-ui-bar-chart.component';
 export { TumAetUiDoughnutChartComponent } from './lib/chart/tumaet-ui-doughnut-chart.component';
 export { TumAetUiLineChartComponent } from './lib/chart/tumaet-ui-line-chart.component';
