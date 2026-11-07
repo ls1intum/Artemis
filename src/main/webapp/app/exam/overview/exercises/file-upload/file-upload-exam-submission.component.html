@@ -61,7 +61,7 @@
                 <div class="mt-3! rounded-lg border border-(--border-color) p-3!" data-testid="file-upload-confirmation" role="status">
                     @if (isImage()) {
                         <img
-                            [src]="submittedFileUrl()"
+                            [src]="previewUrl()"
                             [alt]="submittedFileName()!"
                             class="mb-3! max-h-64 max-w-full rounded object-contain"
                             data-testid="file-upload-preview"

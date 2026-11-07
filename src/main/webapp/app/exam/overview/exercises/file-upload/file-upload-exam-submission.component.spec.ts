@@ -156,7 +156,20 @@ describe('FileUploadExamSubmissionComponent', () => {
             pending.complete();
             fixture.detectChanges();
             expect(comp.studentSubmission().isSynced).toBe(true);
-            expect(fixture.nativeElement.querySelector('[data-testid="file-upload-preview"]').getAttribute('src')).toBe(addPublicFilePrefix('new/solution.PNG'));
+            expect(fixture.nativeElement.querySelector('[data-testid="file-upload-preview"]').getAttribute('src')).toContain(addPublicFilePrefix('new/solution.PNG'));
+        });
+
+        it('should refresh the preview when a file with the same name replaces the previous one', () => {
+            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: { filePath: 'new/solution.png' } })));
+            const previewSrc = () => fixture.nativeElement.querySelector('[data-testid="file-upload-preview"]').getAttribute('src');
+            comp.setFileSubmissionForExercise({ target: { files: [new File(['one'], 'solution.png')] } } as unknown as Event);
+            fixture.detectChanges();
+            const first = previewSrc();
+            comp.setFileSubmissionForExercise({ target: { files: [new File(['two'], 'solution.png')] } } as unknown as Event);
+            fixture.detectChanges();
+            expect(previewSrc()).not.toBe(first);
+            expect(comp.submittedFileUrl()).toBe(addPublicFilePrefix('new/solution.png'));
+            expect(comp.studentSubmission().filePathUrl).toBe(addPublicFilePrefix('new/solution.png'));
         });
 
         it('automatically uploads a valid dropped file', () => {

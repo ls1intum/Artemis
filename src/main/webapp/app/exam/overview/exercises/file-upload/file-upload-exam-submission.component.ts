@@ -72,6 +72,13 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     readonly submittedFileName = signal<string | undefined>(undefined);
     readonly submittedFileExtension = signal<string | undefined>(undefined);
     readonly submittedFileUrl = signal<string | undefined>(undefined);
+    /** Bumped after every successful upload, because a replacement with the same filename keeps the same submission URL. */
+    private readonly previewRevision = signal(0);
+    readonly previewUrl = computed(() => {
+        const url = this.submittedFileUrl();
+        const revision = this.previewRevision();
+        return url && revision > 0 ? `${url}${url.includes('?') ? '&' : '?'}rev=${revision}` : url;
+    });
     participation?: StudentParticipation;
     result?: Result;
     submissionFile?: File;
@@ -213,6 +220,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
                     submission.submitted = true;
                     this.examParticipationService.notifySubmissionSyncStateChanged();
                     this.submissionFile = undefined;
+                    this.previewRevision.update((revision) => revision + 1);
                     if (this.studentSubmission() === submission) {
                         this.updateViewFromSubmission();
                     }
