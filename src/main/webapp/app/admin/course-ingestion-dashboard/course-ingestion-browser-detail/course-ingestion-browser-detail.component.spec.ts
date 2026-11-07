@@ -24,7 +24,7 @@ describe('CourseIngestionBrowserDetailComponent', () => {
             { type: 'lecture', entityId: 20, title: 'Week 1', expected: true, ingestedAt: '2026-08-26T09:00:00Z' },
             { type: 'lecture_unit', entityId: 11, title: 'Intro slides', lectureId: 20, expected: true, ingestedAt: '2026-08-26T09:00:00Z' },
         ],
-        contentPresence: [{ key: 'slides', unitIds: [11] }],
+        contentPresence: [{ key: 'slides', unitIds: [11], orphanedUnitIds: [] }],
         missingEntities: [{ type: 'exercise', entityId: 5, title: 'Sorting' }],
         contentGaps: [{ lectureUnitId: 11, title: 'Intro slides', kind: 'transcript' as const }],
         typeCounts: [{ type: 'exercise', expected: 3, indexed: 2, missing: 1, orphaned: 0 }],
@@ -169,7 +169,7 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         // Lecture 99 has no row in `entities` (it is not indexed), only a `missingEntities` row carrying the title the
         // server already resolved from the database. The heading must use it instead of falling back to the generic
         // "untitled" key, which would hide which lecture the pane is even showing.
-        fixture.componentRef.setInput('data', { ...data, missingEntities: [...(data.missingEntities ?? []), { type: 'lecture', entityId: 99, title: 'Week 2 (draft)' }] });
+        fixture.componentRef.setInput('data', { ...data, missingEntities: [...data.missingEntities, { type: 'lecture', entityId: 99, title: 'Week 2 (draft)' }] });
         component.selection.set({ kind: 'lecture', lectureId: 99 });
         await settle();
 
@@ -300,7 +300,7 @@ describe('CourseIngestionBrowserDetailComponent', () => {
                 { type: 'lecture', entityId: 30, expected: true },
                 { type: 'lecture_unit', entityId: 12, lectureId: 30, expected: true },
             ],
-            contentPresence: [{ key: 'slides', unitIds: [12] }],
+            contentPresence: [{ key: 'slides', unitIds: [12], orphanedUnitIds: [] }],
             missingEntities: [],
             contentGaps: [],
             typeCounts: [],
@@ -430,8 +430,8 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         // open link and the breadcrumb somewhere less useful than the unit the pane is actually showing.
         fixture.componentRef.setInput('data', {
             ...data,
-            missingEntities: [...(data.missingEntities ?? []), { type: 'lecture_unit', entityId: 40, title: 'Late slides', lectureId: 20 }],
-            contentPresence: [...(data.contentPresence ?? []), { key: 'slides', unitIds: [40] }],
+            missingEntities: [...data.missingEntities, { type: 'lecture_unit', entityId: 40, title: 'Late slides', lectureId: 20 }],
+            contentPresence: [...data.contentPresence, { key: 'slides', unitIds: [40], orphanedUnitIds: [] }],
         });
 
         component.selection.set({ kind: 'unit', unitId: 40 });
@@ -457,7 +457,7 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         const sparse: CourseBrowserData = {
             entities: [{ type: 'lecture_unit', entityId: 11, expected: false, lectureId: null, title: null }],
             missingEntities: [{ type: 'lecture', entityId: 99, title: 'Missing lecture', lectureId: null }],
-            contentPresence: [{ key: 'slides' }],
+            contentPresence: [{ key: 'slides', unitIds: [], orphanedUnitIds: [] }],
             contentGaps: [],
             typeCounts: [],
         };

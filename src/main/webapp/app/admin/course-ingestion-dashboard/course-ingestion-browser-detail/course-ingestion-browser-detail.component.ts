@@ -113,7 +113,7 @@ export class CourseIngestionBrowserDetailComponent {
     /** The entities of the selected type that the index does not hold, so the pane can name them. */
     readonly missingOfType = computed(() => {
         const current = this.selection();
-        return current?.kind === 'type' ? (this.data().missingEntities ?? []).filter((entity) => entity.type === current.type) : [];
+        return current?.kind === 'type' ? this.data().missingEntities.filter((entity) => entity.type === current.type) : [];
     });
 
     /** The stored record of the selected lecture or unit, once its type's records have been read. */
@@ -132,7 +132,11 @@ export class CourseIngestionBrowserDetailComponent {
     readonly unitContentKeys = computed<string[]>(() => {
         const current = this.selection();
         const unitId = current?.kind === 'unit' ? current.unitId : undefined;
-        return unitId === undefined ? [] : (this.data().contentPresence ?? []).filter((presence) => (presence.unitIds ?? []).includes(unitId)).map((presence) => presence.key);
+        return unitId === undefined
+            ? []
+            : this.data()
+                  .contentPresence.filter((presence) => presence.unitIds.includes(unitId))
+                  .map((presence) => presence.key);
     });
 
     /**
@@ -165,7 +169,7 @@ export class CourseIngestionBrowserDetailComponent {
     readonly missingContentOfUnit = computed<MissingContent[]>(() => {
         const current = this.selection();
         const unitId = current?.kind === 'unit' ? current.unitId : undefined;
-        return unitId === undefined ? [] : (this.data().contentGaps ?? []).filter((gap) => gap.lectureUnitId === unitId);
+        return unitId === undefined ? [] : this.data().contentGaps.filter((gap) => gap.lectureUnitId === unitId);
     });
 
     /**
@@ -203,11 +207,11 @@ export class CourseIngestionBrowserDetailComponent {
      * about.
      */
     private entityOf(type: string, entityId: number): IndexedEntity | MissingEntity | undefined {
-        const indexed = (this.data().entities ?? []).find((entity) => entity.type === type && entity.entityId === entityId);
+        const indexed = this.data().entities.find((entity) => entity.type === type && entity.entityId === entityId);
         if (indexed) {
             return indexed;
         }
-        const missing = (this.data().missingEntities ?? []).find((entity) => entity.type === type && entity.entityId === entityId);
+        const missing = this.data().missingEntities.find((entity) => entity.type === type && entity.entityId === entityId);
         // The parent lecture comes across for lecture units and is what the open link and the breadcrumb are built
         // from, so dropping it here would leave a unit that the tree draws under its lecture navigating to the course.
         return missing;

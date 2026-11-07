@@ -165,8 +165,8 @@ export class CourseIngestionBrowserTreeComponent {
         const entities = this.entities();
         const unitIdsByContentKey = this.contentPresence().map((presence) => ({
             key: presence.key,
-            unitIds: new Set(presence.unitIds ?? []),
-            orphanedUnitIds: new Set(presence.orphanedUnitIds ?? []),
+            unitIds: new Set(presence.unitIds),
+            orphanedUnitIds: new Set(presence.orphanedUnitIds),
         }));
         const unitsWithGaps = new Set([...this.contentGaps().map((gap) => gap.lectureUnitId), ...unitIdsByContentKey.flatMap((content) => [...content.orphanedUnitIds])]);
 
@@ -296,7 +296,7 @@ export class CourseIngestionBrowserTreeComponent {
                 .filter((missing) => missing.type === 'lecture_unit')
                 .map((missing) => missing.entityId),
         ]);
-        const orphanedUnitIds = [...new Set(presence.flatMap((entry) => entry.unitIds ?? []))].filter((unitId) => !knownUnitIds.has(unitId)).sort((a, b) => a - b);
+        const orphanedUnitIds = [...new Set(presence.flatMap((entry) => entry.unitIds))].filter((unitId) => !knownUnitIds.has(unitId)).sort((a, b) => a - b);
 
         return orphanedUnitIds.map((unitId) => {
             const selection: BrowserSelection = { kind: 'unit', unitId };
@@ -305,7 +305,7 @@ export class CourseIngestionBrowserTreeComponent {
                 selection,
                 unitId,
                 content: presence
-                    .filter((entry) => (entry.unitIds ?? []).includes(unitId))
+                    .filter((entry) => entry.unitIds.includes(unitId))
                     .map((entry) => {
                         const contentSelection: BrowserSelection = { kind: 'collection', unitId, key: entry.key };
                         return { key: selectionKey(contentSelection), selection: contentSelection, contentKey: entry.key, orphaned: true };

@@ -79,6 +79,7 @@ public class IngestionCoverageResource {
             IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION, IngestionCoverageWeaviateReadService.LECTURE_UNIT_SEGMENTS_COLLECTION,
             IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION);
 
+    // Optional only so OpenAPI docs generation can start without the indicator; at runtime both share WeaviateEnabled, so it is always present.
     private final Optional<WeaviateHealthIndicator> weaviateHealthIndicator;
 
     private final IngestionCoverageWeaviateReadService weaviateReadService;

@@ -56,7 +56,7 @@ describe('course ingestion browser tree selection behaviour', () => {
             { type: 'lecture', entityId: 20, title: 'Existing lecture', expected: true },
             { type: 'lecture_unit', entityId: 10, title: 'Deleted unit still indexed', lectureId: 20, expected: false },
         ]);
-        fixture.componentRef.setInput('contentPresence', [{ key: 'slides', unitIds: [10] }]);
+        fixture.componentRef.setInput('contentPresence', [{ key: 'slides', unitIds: [10], orphanedUnitIds: [] }]);
         fixture.detectChanges();
         expect(query('tree-node-unit:10')).toBeTruthy();
 

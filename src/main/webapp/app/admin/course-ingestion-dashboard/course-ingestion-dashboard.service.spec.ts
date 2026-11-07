@@ -45,7 +45,7 @@ describe('CourseIngestionDashboardService', () => {
 
     const mockBrowserData: CourseBrowserData = {
         entities: [{ type: 'lecture_unit', entityId: 21, title: 'Unit', lectureId: 20, expected: true }],
-        contentPresence: [{ key: 'slides', unitIds: [21] }],
+        contentPresence: [{ key: 'slides', unitIds: [21], orphanedUnitIds: [] }],
         missingEntities: [],
         contentGaps: [],
         typeCounts: [{ type: 'lecture_unit', expected: 1, indexed: 1, missing: 0, orphaned: 0 }],
@@ -397,7 +397,7 @@ describe('CourseIngestionDashboardService', () => {
             path: '/api/global-search/admin/courses/7/browser',
             query: '',
             load: () => service.getCourseBrowserData(7),
-            body: { entities: [{ entityId: 0, expected: false }], contentPresence: [], missingEntities: [], contentGaps: [], typeCounts: [] },
+            body: { entities: [{ type: 'lecture_unit', entityId: 0, expected: false }], contentPresence: [], missingEntities: [], contentGaps: [], typeCounts: [] },
         },
         {
             path: '/api/global-search/admin/courses/7/entities',

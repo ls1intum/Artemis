@@ -58,7 +58,7 @@ export class CourseIngestionBrowserComponent {
      */
     readonly typeCounts = computed(() => {
         const loaded = this.data();
-        return loaded === undefined ? (this.course().typeCounts ?? []) : (loaded.typeCounts ?? []);
+        return loaded === undefined ? (this.course().typeCounts ?? []) : loaded.typeCounts;
     });
 
     /** How many measured types are not fully indexed, shown as the header chip. */
@@ -77,11 +77,7 @@ export class CourseIngestionBrowserComponent {
     readonly isEmpty = computed(() => {
         const loaded = this.data();
         return (
-            loaded !== undefined &&
-            (loaded.entities ?? []).length === 0 &&
-            (loaded.contentPresence ?? []).length === 0 &&
-            (loaded.missingEntities ?? []).length === 0 &&
-            (loaded.contentGaps ?? []).length === 0
+            loaded !== undefined && loaded.entities.length === 0 && loaded.contentPresence.length === 0 && loaded.missingEntities.length === 0 && loaded.contentGaps.length === 0
         );
     });
 

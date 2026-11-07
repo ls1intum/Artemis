@@ -1858,6 +1858,21 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/StudentQuizParticipation'}
+  /api/quiz/quiz-exercises/{exerciseId}/export:
+    get:
+      tags: [quiz-exercise]
+      operationId: exportExercise
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: string, format: binary}
   /api/quiz/exams/{examId}/quiz-exercises:
     get:
       tags: [quiz-exercise-retrieval]
@@ -4431,7 +4446,7 @@ components:
           type: array
           items: {type: integer, format: int64}
           uniqueItems: true
-      required: [key]
+      required: [key, orphanedUnitIds, unitIds]
     DragAndDropQuizQuestionWithSolution:
       required: [type]
       type: object
@@ -5584,7 +5599,7 @@ components:
           type: [string, 'null']
           format: date-time
         expected: {type: boolean}
-      required: [entityId, expected]
+      required: [entityId, expected, type]
     ShortAnswerSubmittedText:
       type: object
       properties:

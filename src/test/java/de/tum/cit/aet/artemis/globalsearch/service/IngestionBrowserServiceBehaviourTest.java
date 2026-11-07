@@ -94,13 +94,13 @@ class IngestionBrowserServiceBehaviourTest {
     }
 
     @Test
-    void serializesOrphanedContentIdsOnlyWhenTheCollectionHasAny() throws Exception {
+    void serializesOrphanedContentIdsEvenWhenTheCollectionHasNone() throws Exception {
         var mapper = JsonObjectMapper.get();
 
         assertThat(mapper.writeValueAsString(new IndexedContentPresenceDTO(IngestionBrowserWeaviateReadService.KEY_SLIDES, Set.of(7L), Set.of(7L))))
                 .contains("\"orphanedUnitIds\":[7]");
         assertThat(mapper.writeValueAsString(new IndexedContentPresenceDTO(IngestionBrowserWeaviateReadService.KEY_SLIDES, Set.of(7L), Set.of())))
-                .doesNotContain("orphanedUnitIds");
+                .contains("\"orphanedUnitIds\":[]");
     }
 
     @Test
@@ -131,11 +131,10 @@ class IngestionBrowserServiceBehaviourTest {
         assertThat(json.get("typeCounts")).isEmpty();
         assertThat(json.get("contentPresence").get(0).get("unitIds").isArray()).isTrue();
         assertThat(json.get("contentPresence").get(0).get("unitIds").get(0).longValue()).isZero();
-        assertThat(json.get("contentPresence").get(0).has("orphanedUnitIds")).isFalse();
+        assertThat(json.get("contentPresence").get(0).get("orphanedUnitIds").isArray()).isTrue();
+        assertThat(json.get("contentPresence").get(0).get("orphanedUnitIds")).isEmpty();
         assertThat(json.get("missingEntities").get(0).propertyNames()).containsExactlyInAnyOrder("type", "entityId");
         assertThat(json.get("contentGaps").get(0).get("kind").stringValue()).isEqualTo("transcript");
-        var blankIdentityType = mapper.readTree(mapper.writeValueAsString(new IndexedEntityDTO("", 1, null, null, null, false)));
-        assertThat(blankIdentityType.has("type")).isFalse();
     }
 
     @Test
