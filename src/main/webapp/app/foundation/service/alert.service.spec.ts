@@ -204,7 +204,7 @@ describe('Alert Service Test', () => {
     });
 
     it('should show the translation of the server not being reachable once the translations are loaded', () => {
-        TestBed.inject(TranslateService).setTranslation('en', { 'error.server.not.reachable': 'Der Server ist nicht erreichbar' }, true);
+        TestBed.inject(TranslateService).setTranslation('en', { 'global.generic.serverNotReachable': 'Der Server ist nicht erreichbar' }, true);
 
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
 

@@ -76,7 +76,6 @@
         "incorrectPassword": "The current password is incorrect.",
         "invalidActivationKey": "The activation key is invalid. Please use the registration form to sign up.",
         "internalServerError": "Internal server error",
-        "server.not.reachable": "Server not reachable",
         "url.not.found": "Not found",
         "Email": "Field {{ fieldName }} must be a valid email address!",
         "NotBlank": "Field {{ fieldName }} cannot be blank!",

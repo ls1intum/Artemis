@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { ClientErrorHandler } from 'app/core/error-reporting/client-error.handler';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -110,6 +111,18 @@ describe('ClientErrorHandler', () => {
                 },
             );
 
+            it('should not report the notice of the browser when it comes as a plain message', () => {
+                handler.handleError('ResizeObserver loop completed with undelivered notifications.');
+
+                expect(captureException).not.toHaveBeenCalled();
+            });
+
+            it('should report a plain message that only mentions the resize observer', () => {
+                handler.handleError('The ResizeObserver loop of the chart failed');
+
+                expect(captureException).toHaveBeenCalledExactlyOnceWith('The ResizeObserver loop of the chart failed');
+            });
+
             it('should report an error whose message only mentions the resize observer', () => {
                 const error = new Error('Could not set up the ResizeObserver loop of the chart');
 
@@ -165,12 +178,30 @@ describe('ClientErrorHandler', () => {
                 expect(captureException).toHaveBeenCalledExactlyOnceWith(error);
             });
 
-            it('should report an address that matches no route as information only', () => {
+            it('should report an address that matches no route as information only while the application starts', () => {
                 const error = new Error("NG04002: 'courses/588/excercises'");
 
                 handler.handleError(error);
 
                 expect(captureException).toHaveBeenCalledExactlyOnceWith(error, { severity: 'INFO' });
+            });
+
+            it('should report an address that matches no route as an error once the application has navigated, because a link of the application is broken then', () => {
+                TestBed.inject(Router).navigated = true;
+                const error = new Error("NG04002: 'courses/588/exercises/nowhere'");
+
+                handler.handleError(error);
+
+                expect(captureException).toHaveBeenCalledExactlyOnceWith(error);
+            });
+
+            it('should not fail on an error whose stack is no text', () => {
+                const error = new Error('odd');
+                (error as { stack: unknown }).stack = 42;
+
+                expect(() => handler.handleError(error)).not.toThrow();
+
+                expect(captureException).toHaveBeenCalledExactlyOnceWith(error);
             });
         });
     });

@@ -227,7 +227,9 @@ describe('GlobalSearchModalComponent', () => {
             // an event of another type than KeyboardEvent has no key at all, a KeyboardEvent without one has an empty key
             const withoutKey = new Event('keydown') as KeyboardEvent;
             const withEmptyKey = new KeyboardEvent('keydown', { metaKey: true });
+            const withNumericKey = Object.assign(new Event('keydown'), { key: 7 }) as unknown as KeyboardEvent;
 
+            expect(() => component.handleKeyboardEvent(withNumericKey)).not.toThrow();
             expect(() => component.handleKeyboardEvent(withoutKey)).not.toThrow();
             expect(() => component.handleKeyboardEvent(withEmptyKey)).not.toThrow();
 

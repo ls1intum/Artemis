@@ -144,18 +144,17 @@ const SEVERITY_ORDER: readonly ErrorSeverity[] = ['INFO', 'WARN', 'ERROR', 'CRIT
 
 /**
  * The severity of a report, which is the requested one unless the error is a failed request that is no error of the application:
- * - A request that never got an answer (status 0, for example offline, blocked or aborted) and one that the server rejected (status 400 to 499, including the 499 of the
- *   proxy for a client that gave up) are `INFO`: nobody can fix them on the server, and the user is told where they happen.
+ * - A request that never got an answer (status 0, for example offline, blocked or aborted) and one that the proxy answered with 499 because the client gave up are
+ *   `INFO`: nobody can fix them on the server.
  * - A gateway that did not get an answer in time (status 502, 503 and 504) is `WARN`, because it points at an overloaded or restarting node, not at a defect of the code.
+ * Other statuses keep the requested severity, also a status of 400 to 499: it can be a defect of the client, such as a request to a path that no longer exists, and the
+ * client that cannot start because of it must stay visible.
  * An error that failed because of such a request, which is its cause, is classified like the request. An error never gets a higher severity than requested.
  */
 function severityOf(exception: unknown, requested: ErrorSeverity): ErrorSeverity {
     const status = statusOfFailedRequest(exception);
-    if (status === undefined) {
-        return requested;
-    }
     let cap: ErrorSeverity = 'CRITICAL';
-    if (status === 0 || (status >= 400 && status < 500)) {
+    if (status === 0 || status === 499) {
         cap = 'INFO';
     } else if (status === 502 || status === 503 || status === 504) {
         cap = 'WARN';

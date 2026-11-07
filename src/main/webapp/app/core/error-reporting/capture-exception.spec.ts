@@ -88,7 +88,8 @@ describe('ClientErrorReporter', () => {
         it.each([
             { status: 0, requested: 'ERROR', expected: 'INFO' },
             { status: 0, requested: 'CRITICAL', expected: 'INFO' },
-            { status: 403, requested: 'CRITICAL', expected: 'INFO' },
+            { status: 403, requested: 'CRITICAL', expected: 'CRITICAL' },
+            { status: 404, requested: 'ERROR', expected: 'ERROR' },
             { status: 499, requested: 'ERROR', expected: 'INFO' },
             { status: 502, requested: 'ERROR', expected: 'WARN' },
             { status: 503, requested: 'CRITICAL', expected: 'WARN' },
@@ -109,6 +110,17 @@ describe('ClientErrorReporter', () => {
             reporter.report(new Error('Passkey autocomplete error', { cause: new Error('not a request') }));
 
             expect(send.mock.calls.map(([report]) => report.severity)).toEqual(['WARN', 'INFO', 'ERROR', 'ERROR']);
+        });
+
+        it('should find a failed request that is the third cause, but not the fourth', () => {
+            const request = new HttpErrorResponse({ status: 504 });
+            const third = new Error('outer', { cause: new Error('1', { cause: new Error('2', { cause: request }) }) });
+            const fourth = new Error('outer', { cause: new Error('1', { cause: new Error('2', { cause: new Error('3', { cause: request }) }) }) });
+
+            reporter.report(third);
+            reporter.report(fourth);
+
+            expect(send.mock.calls.map(([report]) => report.severity)).toEqual(['WARN', 'ERROR']);
         });
 
         it('should look at the first causes only', () => {

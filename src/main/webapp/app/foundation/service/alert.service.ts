@@ -89,9 +89,13 @@ export class AlertService {
             switch (httpErrorResponse.status) {
                 // connection refused, server not reachable
                 case 0:
-                    // The translations come from the same server, so they may be missing as well: the landing page loads only a part of them, and the rest can no longer
-                    // be loaded. That is no mistake of the key, so the English text is the fallback and a missing translation is not reported.
-                    this.addAlert({ type: AlertType.DANGER, message: this.translateIfKnown('error.server.not.reachable') ?? 'Server not reachable', disableTranslation: true });
+                    // The translations come from the same server, so they may be missing as well. The key is in the part that the landing page loads, so only a client that
+                    // could not load any translation falls back to English. That is no mistake of the key, so a missing translation is not reported.
+                    this.addAlert({
+                        type: AlertType.DANGER,
+                        message: this.translateIfKnown('global.generic.serverNotReachable') ?? 'Server not reachable',
+                        disableTranslation: true,
+                    });
                     break;
 
                 case 400:
