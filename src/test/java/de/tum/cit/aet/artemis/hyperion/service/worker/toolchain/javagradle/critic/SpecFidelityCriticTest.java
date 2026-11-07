@@ -2211,7 +2211,7 @@ class SpecFidelityCriticTest {
     @Test
     void producedArtifactCannotAuthorizeItsOwnContractContradiction() {
         ScriptedCritic scripted = criticScripted(jsonResponse(
-                "{\"contradictions\":[{\"requirement\":\"Graphemes must be absent\",\"sourceQuote\":\"class Graphemes\",\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"the template supplies this type\"}]}"),
+                "{\"contradictions\":[{\"requirement\":\"Graphemes must be absent\",\"sourceQuote\":\"class Graphemes\",\"contradicted\":true,\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"the template supplies this type\"}]}"),
                 rawResponse("""
                         {"mutantChecks":[{"mutant":"return UTF-16 length","killed":true,"reason":"the assertion kills it"}],
                          "uncovered":[],"weakOracle":[]}
@@ -2470,7 +2470,7 @@ class SpecFidelityCriticTest {
 
         for (int i = 0; i < 12; ++i) {
             contradictions.append(i == 0 ? "" : ",").append("{\"requirement\":\"contract ").append(i).append(
-                    "\",\"sourceQuote\":\"user-perceived characters\",\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"statement and test disagree; align both\"}");
+                    "\",\"sourceQuote\":\"user-perceived characters\",\"contradicted\":true,\"evidenceArtifact\":\"TEMPLATE: src/Graphemes.java\",\"evidenceQuote\":\"return 0;\",\"reason\":\"statement and test disagree; align both\"}");
         }
 
         ScriptedCritic scripted = criticScripted(rawResponse("""
