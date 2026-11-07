@@ -15,7 +15,7 @@
             <table class="table table-striped">
                 <thead>
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
-                        <th jhiSortBy="title" class="whitespace-nowrap">
+                        <th jhiSortBy="title" class="w-1/4 whitespace-nowrap">
                             <span jhiTranslate="artemisApp.studentDashboard.course"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
@@ -23,7 +23,7 @@
                             <span jhiTranslate="artemisApp.course.semester"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                        <th class="w-full">
+                        <th>
                             <span jhiTranslate="artemisApp.course.description"></span>
                         </th>
                     </tr>
