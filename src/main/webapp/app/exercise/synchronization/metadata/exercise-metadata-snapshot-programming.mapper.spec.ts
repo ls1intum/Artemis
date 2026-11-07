@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -102,6 +103,31 @@ describe('ExerciseMetadataSnapshotProgrammingMapper', () => {
         expect(config?.checkoutSolutionRepository).toBe(false);
         expect(config?.allowBranching).toBe(false);
         expect(config?.branchRegex).toBe('.*');
+    });
+
+    it('maps the build time window of the advanced settings to dayjs objects', () => {
+        const snapshot: ProgrammingExerciseBuildConfigSnapshotDTO = {
+            advancedSettings: { buildTimeWindow: { start: '2026-10-01T10:00:00Z', end: '2026-10-01T12:00:00Z' } },
+        };
+
+        const window = toBuildConfig(snapshot)?.advancedSettings?.buildTimeWindow;
+
+        expect(dayjs.isDayjs(window?.start)).toBe(true);
+        expect(window?.start?.isSame(dayjs('2026-10-01T10:00:00Z'))).toBe(true);
+        expect(window?.end?.isSame(dayjs('2026-10-01T12:00:00Z'))).toBe(true);
+    });
+
+    it('maps a build time window with only one bound', () => {
+        const window = toBuildConfig({ advancedSettings: { buildTimeWindow: { end: '2026-10-01T12:00:00Z' } } })?.advancedSettings?.buildTimeWindow;
+
+        expect(window?.start).toBeUndefined();
+        expect(window?.end?.isSame(dayjs('2026-10-01T12:00:00Z'))).toBe(true);
+    });
+
+    it('maps missing or empty advanced settings to no settings', () => {
+        expect(toBuildConfig({})?.advancedSettings).toBeUndefined();
+        expect(toBuildConfig({ advancedSettings: {} })?.advancedSettings).toBeUndefined();
+        expect(toBuildConfig({ advancedSettings: { buildTimeWindow: {} } })?.advancedSettings).toBeUndefined();
     });
 
     it('returns undefined when participations are missing', () => {

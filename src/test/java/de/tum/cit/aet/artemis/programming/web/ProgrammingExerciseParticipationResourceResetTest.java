@@ -3,12 +3,16 @@ package de.tum.cit.aet.artemis.programming.web;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,11 +35,13 @@ import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestReposito
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
@@ -100,6 +106,9 @@ class ProgrammingExerciseParticipationResourceResetTest {
     @Mock
     private ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
 
+    @Mock
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private ProgrammingExerciseParticipationResource resource;
 
     private ProgrammingExercise exercise;
@@ -111,7 +120,7 @@ class ProgrammingExerciseParticipationResourceResetTest {
         resource = new ProgrammingExerciseParticipationResource(programmingExerciseParticipationService, resultRepository, participationRepository,
                 programmingExerciseStudentParticipationRepository, submissionService, programmingExerciseRepository, authCheckService, resultService, participationAuthCheckService,
                 repositoryService, Optional.of(vcsAccessLogRepository), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService),
-                Optional.of(continuousIntegrationTriggerService));
+                Optional.of(continuousIntegrationTriggerService), programmingExerciseBuildConfigRepository);
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
         exercise.setTemplateParticipation(new TemplateProgrammingExerciseParticipation());
@@ -140,6 +149,19 @@ class ProgrammingExerciseParticipationResourceResetTest {
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
         verify(programmingExerciseParticipationService).resetRepository(participation.getVcsRepositoryUri(), exercise.getVcsTemplateRepositoryUri());
         verify(continuousIntegrationTriggerService).triggerBuild(participation, true);
+    }
+
+    @Test
+    void resettingOutsideTheSharedBuildWindowKeepsTheResetWithoutStartingABuild() throws Exception {
+        withAResettableParticipation();
+        var start = ZonedDateTime.of(2026, 11, 2, 12, 0, 0, 0, ZoneOffset.UTC);
+        when(submissionService.findBuildTimeWindowExcluding(eq(participation), any(ZonedDateTime.class))).thenReturn(Optional.of(new BuildTimeWindow(start, start.plusDays(7))));
+
+        var response = resource.resetRepository(PARTICIPATION_ID, null);
+
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        verify(programmingExerciseParticipationService).resetRepository(participation.getVcsRepositoryUri(), exercise.getVcsTemplateRepositoryUri());
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyBoolean());
     }
 
     @Test
@@ -221,7 +243,8 @@ class ProgrammingExerciseParticipationResourceResetTest {
         // Nothing would ever build the reset repository, so the student would be left without any result at all.
         var resourceWithoutCi = new ProgrammingExerciseParticipationResource(programmingExerciseParticipationService, resultRepository, participationRepository,
                 programmingExerciseStudentParticipationRepository, submissionService, programmingExerciseRepository, authCheckService, resultService, participationAuthCheckService,
-                repositoryService, Optional.of(vcsAccessLogRepository), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService), Optional.empty());
+                repositoryService, Optional.of(vcsAccessLogRepository), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService), Optional.empty(),
+                programmingExerciseBuildConfigRepository);
         withAResettableParticipation();
 
         assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> resourceWithoutCi.resetRepository(PARTICIPATION_ID, null));
@@ -284,8 +307,8 @@ class ProgrammingExerciseParticipationResourceResetTest {
         // Without LocalVC there is no access log at all, and an empty list would look like nobody ever accessed the repository.
         var resourceWithoutLog = new ProgrammingExerciseParticipationResource(programmingExerciseParticipationService, resultRepository, participationRepository,
                 programmingExerciseStudentParticipationRepository, submissionService, programmingExerciseRepository, authCheckService, resultService, participationAuthCheckService,
-                repositoryService, Optional.empty(), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService), Optional.of(continuousIntegrationTriggerService));
-
+                repositoryService, Optional.empty(), auxiliaryRepositoryRepository, Optional.of(sharedQueueManagementService), Optional.of(continuousIntegrationTriggerService),
+                programmingExerciseBuildConfigRepository);
         assertThat(resourceWithoutLog.getVcsAccessLogForParticipationRepo(PARTICIPATION_ID).getStatusCode().is4xxClientError()).isTrue();
     }
 

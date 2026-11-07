@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIA
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PACKAGE_NAME_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -155,6 +157,7 @@ public class ProgrammingExerciseValidationService {
         validateBuildConfigSize(buildConfig);
         validateBuildPhaseNames(buildConfig);
         validateDockerFlags(buildConfig);
+        validateBuildTimeWindow(programmingExercise, buildConfig);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -265,6 +268,32 @@ public class ProgrammingExerciseValidationService {
                 || !Objects.equals(originalBuildConfig.getSolutionCheckoutPath(), updatedBuildConfig.getSolutionCheckoutPath())
                 || !Objects.equals(originalBuildConfig.getTestCheckoutPath(), updatedBuildConfig.getTestCheckoutPath())) {
             throw new BadRequestAlertException("The custom checkout paths cannot be changed!", "programmingExercise", "checkoutDirectoriesChanged");
+        }
+    }
+
+    /**
+     * Validates the optional build time window of a programming exercise. The window must be well-formed, must lie within the period in which students can work on the
+     * exercise (from its start date or, without one, its release date until its due date, as far as these dates are set) and is not available for exam exercises.
+     *
+     * @param exercise    the exercise whose dates the window is checked against
+     * @param buildConfig the build configuration holding the window
+     * @throws BadRequestAlertException if the window is invalid
+     */
+    public void validateBuildTimeWindow(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig) {
+        BuildTimeWindow window = buildConfig.getBuildTimeWindow();
+        if (window == null) {
+            return;
+        }
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("The build time window is not available for exam exercises", "Exercise", "buildTimeWindowNotSupportedForExams");
+        }
+        if (window.start() != null && window.end() != null && !window.start().isBefore(window.end())) {
+            throw new BadRequestAlertException("The build time window must end after it starts", "Exercise", "buildTimeWindowEndBeforeStart");
+        }
+        ZonedDateTime earliest = exercise.getStartDate() != null ? exercise.getStartDate() : exercise.getReleaseDate();
+        if (!window.isWithin(earliest, exercise.getDueDate())) {
+            throw new BadRequestAlertException("The build time window must lie between the start (or release) date and the due date of the exercise", "Exercise",
+                    "buildTimeWindowOutsideExerciseDates");
         }
     }
 

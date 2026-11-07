@@ -251,7 +251,7 @@ describe('ExerciseMetadataConflictModalComponent', () => {
             onlineIdeExperienceLevel: OnlineIdeExperienceLevel.EXPERT,
         });
 
-        expect(entries).toHaveLength(13);
+        expect(entries).toHaveLength(15);
         expect(entries.find((entry) => entry.labelKey.endsWith('sequentialTestRuns'))).toEqual(expect.objectContaining({ value: true }));
         expect(entries.find((entry) => entry.labelKey.endsWith('timeoutSeconds'))).toEqual(expect.objectContaining({ value: 30 }));
         expect(entries.find((entry) => entry.labelKey.endsWith('branchRegex'))).toEqual(expect.objectContaining({ value: 'feature/.*' }));
@@ -261,8 +261,26 @@ describe('ExerciseMetadataConflictModalComponent', () => {
     it('returns undefined values for missing build config', () => {
         const entries = component.getBuildConfigValues(undefined);
 
-        expect(entries).toHaveLength(13);
+        expect(entries).toHaveLength(15);
         expect(entries.every((entry) => entry.value === undefined)).toBe(true);
+    });
+
+    it('maps the build time window of a build config', () => {
+        const start = dayjs('2026-10-01T10:00:00Z');
+        const end = dayjs('2026-10-01T12:00:00Z');
+
+        const entries = component.getBuildConfigValues({ advancedSettings: { buildTimeWindow: { start, end } } });
+
+        expect(entries.find((entry) => entry.labelKey.endsWith('buildTimeWindowStart'))?.value).toBe(start);
+        expect(entries.find((entry) => entry.labelKey.endsWith('buildTimeWindowEnd'))?.value).toBe(end);
+        expect(component.formatValue(start)).toBe(start.format('YYYY-MM-DD HH:mm'));
+    });
+
+    it('leaves the build time window empty when the build config has none', () => {
+        const entries = component.getBuildConfigValues({ sequentialTestRuns: true });
+
+        expect(entries.find((entry) => entry.labelKey.endsWith('buildTimeWindowStart'))?.value).toBeUndefined();
+        expect(entries.find((entry) => entry.labelKey.endsWith('buildTimeWindowEnd'))?.value).toBeUndefined();
     });
 
     it('normalizes categories from arrays, strings and objects', () => {

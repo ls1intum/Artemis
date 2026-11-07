@@ -2,11 +2,14 @@ package de.tum.cit.aet.artemis.programming;
 
 import static de.tum.cit.aet.artemis.core.util.RequestUtilService.deleteProgrammingExerciseParamsFalse;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,8 +29,10 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 
 class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
@@ -213,6 +218,115 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         // Check that assessment type was stored correctly
         ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow();
         assertThat(fromDb.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+    }
+
+    private ProgrammingExercise exerciseWithPlansMocked() throws Exception {
+        jenkinsRequestMockProvider.enableMockingOfRequests();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExerciseId).orElseThrow();
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
+        jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
+        return programmingExercise;
+    }
+
+    /**
+     * A window from a quarter to three quarters of the way between the release and the due date of the exercise, which are the dates the fixture chose.
+     */
+    private static BuildTimeWindow windowInsideTheDatesOf(ProgrammingExercise exercise) {
+        Duration period = Duration.between(exercise.getReleaseDate(), exercise.getDueDate());
+        return new BuildTimeWindow(exercise.getReleaseDate().plus(period.dividedBy(4)), exercise.getReleaseDate().plus(period.multipliedBy(3).dividedBy(4)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExerciseStoresTheBuildTimeWindowAndKeepsBranching() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var window = windowInsideTheDatesOf(programmingExercise);
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBranchRegex("^feature-.*$");
+        buildConfig.setBuildTimeWindow(window);
+
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.OK);
+
+        var stored = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(stored.getBuildTimeWindow()).isEqualTo(window);
+        assertThat(stored.isAllowBranching()).isTrue();
+        assertThat(stored.getBranchRegex()).isEqualTo("^feature-.*$");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExerciseCanRemoveTheBuildTimeWindowAndKeepsBranching() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setAllowBranching(true);
+        buildConfig.setBuildTimeWindow(windowInsideTheDatesOf(programmingExercise));
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+
+        var withoutWindow = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        withoutWindow.setBuildTimeWindow(null);
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, withoutWindow), HttpStatus.OK);
+
+        var stored = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(stored.getBuildTimeWindow()).isNull();
+        assertThat(stored.isAllowBranching()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExerciseRejectsABuildTimeWindowOutsideTheExerciseDates() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildTimeWindow(new BuildTimeWindow(programmingExercise.getDueDate().minusDays(1), programmingExercise.getDueDate().plusDays(1)));
+
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+
+        // an invalid update must not leave a window behind
+        var stored = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(stored.getBuildTimeWindow()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateProgrammingExerciseRejectsABuildTimeWindowThatEndsBeforeItStarts() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var window = windowInsideTheDatesOf(programmingExercise);
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildTimeWindow(new BuildTimeWindow(window.end(), window.start()));
+
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testReEvaluateRejectsABuildTimeWindowOutsideTheExerciseDates() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildTimeWindow(new BuildTimeWindow(programmingExercise.getDueDate().minusDays(1), programmingExercise.getDueDate().plusDays(1)));
+
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false",
+                UpdateProgrammingExerciseDTO.of(programmingExercise, buildConfig), HttpStatus.BAD_REQUEST);
+
+        var stored = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(stored.getBuildTimeWindow()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testUpdateTimelineRejectsADueDateBeforeTheEndOfTheBuildTimeWindow() throws Exception {
+        ProgrammingExercise programmingExercise = exerciseWithPlansMocked();
+        var window = windowInsideTheDatesOf(programmingExercise);
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        buildConfig.setBuildTimeWindow(window);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+
+        // the due date moves to before the end of the window, so builds would stop after the exercise ended
+        var timeline = new ProgrammingExerciseTimelineUpdateDTO(programmingExercise.getId(), programmingExercise.getReleaseDate(), programmingExercise.getStartDate(),
+                window.end().minusMinutes(1), programmingExercise.getAssessmentType(), null, null, null);
+        request.put("/api/programming/programming-exercises/timeline", timeline, HttpStatus.BAD_REQUEST);
+
+        var stored = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(stored.getDueDate()).isCloseTo(programmingExercise.getDueDate(), within(1, ChronoUnit.SECONDS));
     }
 
     @Test

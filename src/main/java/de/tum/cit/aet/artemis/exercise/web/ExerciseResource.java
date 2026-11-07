@@ -71,7 +71,9 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -123,12 +125,15 @@ public class ExerciseResource {
 
     private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository,
             QuizBatchService quizBatchService, ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService,
             Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, CourseAthenaConfigRepository courseAthenaConfigRepository,
-            TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.exerciseService = exerciseService;
@@ -477,7 +482,10 @@ public class ExerciseResource {
 
         PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseApi.flatMap(api -> api.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId())).orElse(null);
 
-        return ResponseEntity.ok(new ExerciseDetailsDTO(ExerciseDetailsExerciseDTO.of(exercise), plagiarismCaseInfo));
+        // students are told why a push is not built, which needs the build time window of the exercise
+        BuildTimeWindow buildTimeWindow = exercise instanceof ProgrammingExercise ? programmingExerciseBuildConfigRepository.getBuildTimeWindowByProgrammingExerciseId(exerciseId)
+                : null;
+        return ResponseEntity.ok(new ExerciseDetailsDTO(ExerciseDetailsExerciseDTO.of(exercise, buildTimeWindow), plagiarismCaseInfo));
     }
 
     /**
