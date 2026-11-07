@@ -355,7 +355,7 @@ public class TeamResource {
         try {
             submissionService.checkIfExerciseDueDateIsReached(exercise);
         }
-        catch (AccessForbiddenException exception) {
+        catch (AccessForbiddenException _) {
             // Existing assessments remain visible while new assessments are blocked by their due date.
             canStartAssessment = false;
         }

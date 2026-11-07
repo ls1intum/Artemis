@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_NUMBER_OF_LOCKED_
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -220,7 +221,7 @@ public class SubmissionService {
         }
         else {
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(exercise.getId(),
-                    ZonedDateTime.now(), teamOwnerId);
+                    ZonedDateTime.now(ZoneOffset.UTC), teamOwnerId);
         }
 
         var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();

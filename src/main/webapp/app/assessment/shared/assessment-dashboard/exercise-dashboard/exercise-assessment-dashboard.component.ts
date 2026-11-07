@@ -643,6 +643,35 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             }
             return;
         }
+
+        this.getTutorAssessedSubmissionsForCorrectionRound(correctionRound)
+            .pipe(
+                map((res) => res.body),
+                filter((body): body is Submission[] => body != undefined),
+                map(this.reconnectEntities),
+            )
+            .subscribe((submissions: Submission[]) => {
+                // Set the received submissions. As the result component depends on the submission we nest it into the participation.
+                const sub = submissions
+                    .filter((submission) => {
+                        return !!getSubmissionResultByCorrectionRound(submission, correctionRound);
+                    })
+                    .map((submission) => {
+                        submission.participation!.submissions = [submission];
+                        setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
+                        return submission;
+                    });
+
+                this.assessedSubmissionsByRound.update((rounds) => {
+                    const next = [...rounds];
+                    next[correctionRound] = sub;
+                    return next;
+                });
+                this.sortSubmissionRows(correctionRound);
+            });
+    }
+
+    private getTutorAssessedSubmissionsForCorrectionRound(correctionRound: number): Observable<HttpResponse<Submission[]>> {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
         if (this.isTestRun()) {
             submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId());
@@ -670,31 +699,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             }
         }
 
-        submissionsObservable
-            .pipe(
-                map((res) => res.body),
-                filter((body): body is Submission[] => body != undefined),
-                map(this.reconnectEntities),
-            )
-            .subscribe((submissions: Submission[]) => {
-                // Set the received submissions. As the result component depends on the submission we nest it into the participation.
-                const sub = submissions
-                    .filter((submission) => {
-                        return !!getSubmissionResultByCorrectionRound(submission, correctionRound);
-                    })
-                    .map((submission) => {
-                        submission.participation!.submissions = [submission];
-                        setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                        return submission;
-                    });
-
-                this.assessedSubmissionsByRound.update((rounds) => {
-                    const next = [...rounds];
-                    next[correctionRound] = sub;
-                    return next;
-                });
-                this.sortSubmissionRows(correctionRound);
-            });
+        return submissionsObservable;
     }
 
     /**
