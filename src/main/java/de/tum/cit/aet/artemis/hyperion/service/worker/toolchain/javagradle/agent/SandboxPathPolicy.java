@@ -37,6 +37,8 @@ final class SandboxPathPolicy {
 
     private static final Pattern STDERR_DISCARD = Pattern.compile("(?<!\\S)2\\s*+>\\s*+/dev/null(?=\\s|[;&|]|$)");
 
+    private static final Pattern DEFERRED_SHELL = Pattern.compile("(?:^|[\\s;&|])(?:bash|sh|dash|zsh|ksh|eval|source)(?=\\s)");
+
     private static final String WORKSPACE = "/workspace";
 
     private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
@@ -95,8 +97,32 @@ final class SandboxPathPolicy {
             return false;
         }
         String withoutStderrDiscard = STDERR_DISCARD.matcher(lower).replaceAll("");
-        return withoutStderrDiscard.contains(">") || lower.contains("sed -i") || lower.contains("perl -pi") || lower.contains(" tee ") || lower.startsWith("tee ")
+        return hasOutputRedirection(withoutStderrDiscard) || lower.contains("sed -i") || lower.contains("perl -pi") || lower.contains(" tee ") || lower.startsWith("tee ")
                 || lower.contains(" rm ") || lower.startsWith("rm ") || lower.contains(" mv ") || lower.startsWith("mv ") || lower.contains(" cp ") || lower.startsWith("cp ");
+    }
+
+    private static boolean hasOutputRedirection(String command) {
+        // Nested shell evaluation can execute quoted operators; keep the conservative steering for those commands.
+        if (command.contains("$(") || command.indexOf('`') >= 0 || DEFERRED_SHELL.matcher(command).find()) {
+            return command.contains(">");
+        }
+        char quote = 0;
+        for (int index = 0; index < command.length(); index++) {
+            char current = command.charAt(index);
+            if (current == '\\' && quote != '\'') {
+                index++;
+            }
+            else if (quote == 0 && (current == '\'' || current == '"')) {
+                quote = current;
+            }
+            else if (current == quote) {
+                quote = 0;
+            }
+            else if (current == '>' && quote == 0) {
+                return true;
+            }
+        }
+        return quote != 0 && command.contains(">");
     }
 
     /** Whether a repository root is followed by a seeded build file, or anywhere later by a Cabal file. */

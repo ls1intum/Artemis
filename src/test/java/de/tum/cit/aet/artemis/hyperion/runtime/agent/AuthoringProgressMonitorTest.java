@@ -7,6 +7,14 @@ import org.junit.jupiter.api.Test;
 class AuthoringProgressMonitorTest {
 
     @Test
+    void anInvalidatedPassCannotBecomeTheBaselineWithinAnActiveSession() {
+        var monitor = new AuthoringProgressMonitor(new AuthoringProgress.Snapshot(0, 0, Integer.MAX_VALUE, false));
+        assertThat(monitor.assess(new AuthoringProgress.Snapshot(2, 1, 0, false))).isEqualTo(AuthoringProgressMonitor.Decision.CONTINUE);
+        assertThat(monitor.assess(new AuthoringProgress.Snapshot(3, 2, 5, false))).isEqualTo(AuthoringProgressMonitor.Decision.CONTINUE);
+        assertThat(monitor.assess(new AuthoringProgress.Snapshot(4, 3, 1, false))).isEqualTo(AuthoringProgressMonitor.Decision.CONTINUE);
+    }
+
+    @Test
     void measuringAnUnchangedWorkspaceCannotExtendAuthoring() {
         var monitor = new AuthoringProgressMonitor(new AuthoringProgress.Snapshot(1, 0, Integer.MAX_VALUE, false));
         assertThat(monitor.assess(new AuthoringProgress.Snapshot(1, 0, Integer.MAX_VALUE, false))).isEqualTo(AuthoringProgressMonitor.Decision.CONTINUE);

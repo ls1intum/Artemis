@@ -881,6 +881,18 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void quotedSearchOperatorsAreNotHarnessRedirections() {
+        for (String command : List.of("grep -rn 'reports|xml|Test>' /workspace/tests/build.gradle", "grep -n \"Test>\" tests/build.gradle; echo \"exit=$?\"",
+                "grep '>' tests/build.gradle", "grep \"a\\\">b\" tests/build.gradle", "grep 'Test>' tests/build.gradle 2>/dev/null")) {
+            assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure(command)).as(command).isFalse();
+        }
+        for (String command : List.of("grep '>' tests/build.gradle > tests/build.gradle", "sh -c 'cat > tests/build.gradle'", "echo \"$(cat > tests/build.gradle)\"",
+                "echo `cat > tests/build.gradle`")) {
+            assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure(command)).as(command).isTrue();
+        }
+    }
+
+    @Test
     void harnessReadsMayDiscardStderrWithoutBeingTreatedAsWrites() {
         for (String command : List.of(
                 "ls /opt/aiworker/trusted-structural 2>/dev/null && find /opt/aiworker/trusted-structural -type f | head -50; echo ---; cat /workspace/tests/build.gradle | sed -n '40,200p'",

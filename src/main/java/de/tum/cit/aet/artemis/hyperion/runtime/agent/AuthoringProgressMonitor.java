@@ -28,7 +28,7 @@ final class AuthoringProgressMonitor {
         if (current.verified()) {
             return Decision.VERIFIED;
         }
-        boolean checked = current.checks() > lastChecks;
+        boolean checked = current.checks() > lastChecks && current.remainingFailures() > 0;
         boolean improved = checked && current.mutations() > lastCheckedMutations && current.remainingFailures() < bestRemainingFailures;
         if (checked) {
             lastCheckedMutations = current.mutations();
