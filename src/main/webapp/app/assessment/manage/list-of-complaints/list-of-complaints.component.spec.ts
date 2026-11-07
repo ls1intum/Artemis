@@ -1,6 +1,7 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component } from '@angular/core';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -23,7 +24,6 @@ import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -31,6 +31,9 @@ import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/serv
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+
+@Component({ template: '' })
+class AssessmentStubComponent {}
 
 describe('ListOfComplaintsComponent', () => {
     let fixture: ComponentFixture<ListOfComplaintsComponent>;
@@ -77,7 +80,7 @@ describe('ListOfComplaintsComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(SortService),
                 { provide: ComplaintService, useClass: MockComplaintService },
-                { provide: Router, useClass: MockRouter },
+                provideRouter([{ path: 'course-management/:courseId/:exerciseType/:exerciseId/submissions/:submissionId/assessment', component: AssessmentStubComponent }]),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -275,42 +278,87 @@ describe('ListOfComplaintsComponent', () => {
         });
     });
 
-    it('navigate for openAssessmentEditor', () => {
-        testOpenAssessmentEditor(ComplaintType.MORE_FEEDBACK, false, 0);
-    });
-
-    it('uses correct correction round for accepted complaints', () => {
-        testOpenAssessmentEditor(ComplaintType.COMPLAINT, true, 1);
-    });
-
-    it('uses correct correction round for rejected complaints', () => {
-        testOpenAssessmentEditor(ComplaintType.COMPLAINT, false, 0);
-    });
-
-    it('uses correct correction round for accepted more feedback requests', () => {
-        testOpenAssessmentEditor(ComplaintType.MORE_FEEDBACK, true, 0);
-    });
-
-    function testOpenAssessmentEditor(type: ComplaintType, accepted: boolean, expectedCorrectionRound: number) {
-        const submissionId = 13;
-        const participationId = 69;
-        const exerciseId = 1337;
+    describe('show complaint link', () => {
         const courseId = 77;
-        const complaint = createComplaintWithSubmissionAndResult(submissionId, participationId, exerciseId, courseId, type);
-        activatedRoute.data = of({ complaintType: type });
-        complaint.accepted = accepted;
-        vi.spyOn(router, 'navigate');
-        activatedRoute.setParameters({ courseId });
+        const exerciseId = 1337;
+        const assessmentPath = `/course-management/${courseId}/text-exercises/${exerciseId}/submissions/13/assessment`;
 
-        comp.ngOnInit();
-        comp.openAssessmentEditor(complaint);
-
-        expect(comp.correctionRound).toBe(expectedCorrectionRound);
-        expect(router.navigate).toHaveBeenCalledTimes(1);
-        expect(router.navigate).toHaveBeenCalledWith(['/course-management', `${courseId}`, 'text-exercises', `${exerciseId}`, 'submissions', `${submissionId}`, 'assessment'], {
-            queryParams: { 'correction-round': expectedCorrectionRound },
+        beforeEach(() => {
+            // The mock service has no row helpers; rows render the response time and its highlight.
+            Object.assign(comp.complaintService, { getResponseTimeInSeconds: vi.fn().mockReturnValue(0), shouldHighlightComplaint: vi.fn().mockReturnValue(false) });
         });
-    }
+
+        function showLinks(type: ComplaintType, complaints: Complaint[], correctionRound?: number): HTMLAnchorElement[] {
+            activatedRoute.setParameters({ courseId, complaintType: type, ...(correctionRound !== undefined && { correctionRound }) });
+            fixture.detectChanges();
+            comp.complaintsToShow.set(complaints);
+            fixture.detectChanges();
+            return Array.from(fixture.nativeElement.querySelectorAll('[data-testid="show-complaint"]'));
+        }
+
+        function complaintWithAssessment(type: ComplaintType, accepted: boolean | undefined, id = 42): Complaint {
+            const complaint = createComplaintWithSubmissionAndResult(13, 69, exerciseId, courseId, type);
+            complaint.id = id;
+            complaint.accepted = accepted;
+            return complaint;
+        }
+
+        it('links a rejected complaint to its assessment in the current correction round, so it can be opened in a new tab', () => {
+            const [link] = showLinks(ComplaintType.COMPLAINT, [complaintWithAssessment(ComplaintType.COMPLAINT, false)]);
+
+            expect(link.tagName).toBe('A');
+            expect(link.getAttribute('href')).toBe(`${assessmentPath}?correction-round=0`);
+        });
+
+        it('links an accepted complaint to the next correction round', () => {
+            const [link] = showLinks(ComplaintType.COMPLAINT, [complaintWithAssessment(ComplaintType.COMPLAINT, true)]);
+
+            expect(link.getAttribute('href')).toBe(`${assessmentPath}?correction-round=1`);
+        });
+
+        it('keeps the correction round for an accepted more feedback request and labels it as such', () => {
+            const [link] = showLinks(ComplaintType.MORE_FEEDBACK, [complaintWithAssessment(ComplaintType.MORE_FEEDBACK, true)]);
+
+            expect(link.getAttribute('href')).toBe(`${assessmentPath}?correction-round=0`);
+            expect(link.querySelector('[jhiTranslate="artemisApp.exerciseAssessmentDashboard.showMoreFeedbackRequests"]')).not.toBeNull();
+            expect(link.querySelector('[jhiTranslate="artemisApp.exerciseAssessmentDashboard.showComplaint"]')).toBeNull();
+        });
+
+        it('does not add up the correction round across accepted complaints', () => {
+            const links = showLinks(
+                ComplaintType.COMPLAINT,
+                [complaintWithAssessment(ComplaintType.COMPLAINT, true, 1), complaintWithAssessment(ComplaintType.COMPLAINT, true, 2)],
+                1,
+            );
+
+            expect(links.map((link) => link.getAttribute('href'))).toEqual([`${assessmentPath}?correction-round=2`, `${assessmentPath}?correction-round=2`]);
+        });
+
+        it('shows no link for a complaint whose assessment cannot be opened', () => {
+            const withoutSubmission = complaintWithAssessment(ComplaintType.COMPLAINT, false, 1);
+            withoutSubmission.result!.submission = undefined;
+            const withoutExerciseId = complaintWithAssessment(ComplaintType.COMPLAINT, false, 2);
+            withoutExerciseId.result!.submission!.participation!.exercise!.id = undefined;
+
+            const links = showLinks(ComplaintType.COMPLAINT, [withoutSubmission, withoutExerciseId, complaintWithAssessment(ComplaintType.COMPLAINT, false, 3)]);
+
+            const rows: HTMLTableRowElement[] = Array.from(fixture.nativeElement.querySelectorAll('tbody tr'));
+            expect(rows).toHaveLength(3);
+            expect(rows[0].querySelector('[data-testid="show-complaint"]')).toBeNull();
+            expect(rows[1].querySelector('[data-testid="show-complaint"]')).toBeNull();
+            expect(links).toHaveLength(1);
+            expect(rows[2].contains(links[0])).toBe(true);
+        });
+
+        it('navigates within the application on a plain click', async () => {
+            const [link] = showLinks(ComplaintType.COMPLAINT, [complaintWithAssessment(ComplaintType.COMPLAINT, true)]);
+
+            link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 }));
+            await fixture.whenStable();
+
+            expect(router.url).toBe(`${assessmentPath}?correction-round=1`);
+        });
+    });
 
     function createComplaintWithSubmissionAndResult(submissionId: number, participationId: number, exerciseId: number, courseId: number, type?: ComplaintType): Complaint {
         const course = new Course();
