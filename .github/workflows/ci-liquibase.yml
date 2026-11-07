@@ -43,6 +43,8 @@ jobs:
           python-version: '3.14'
       - name: Changelog layout check
         run: python3 supporting_scripts/liquibase/verify_schema.py --check layout
+      - name: Unbounded-text guard unit tests
+        run: python3 supporting_scripts/liquibase/test_unbounded_text_guard.py
 
   schema:
     name: Schema (${{ matrix.database }})
