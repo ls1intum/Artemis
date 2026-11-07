@@ -32,7 +32,6 @@ export interface ExamStudentDTO {
     didCheckRegistrationNumber?: boolean;
     signingImagePath?: string;
     didExamUserAttendExam?: boolean;
-    attendanceOverride?: boolean;
     // StudentExam fields (undefined when no student exam has been generated)
     studentExamId?: number;
     workingTime?: number;

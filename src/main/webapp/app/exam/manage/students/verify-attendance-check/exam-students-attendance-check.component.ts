@@ -140,15 +140,26 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
         }
     }
 
+    attendanceSelection(examUser: ExamUserAttendanceCheckDTO): string {
+        const checks = [examUser.didCheckImage, examUser.didCheckName, examUser.didCheckLogin, examUser.didCheckRegistrationNumber];
+        if (checks.every(Boolean)) {
+            return 'true';
+        }
+        return checks.some(Boolean) ? '' : 'false';
+    }
+
     setAttendance(examUser: ExamUserAttendanceCheckDTO, value: string) {
         if (!this.hasExamEnded() || this.isTestExam() || !examUser.id || this.isLoading() || this.attendanceReloadFailed() || this.savingAttendance() !== undefined) {
             return;
         }
-        const attended = value === '' ? undefined : value === 'true';
+        if (value !== 'true' && value !== 'false') {
+            return;
+        }
+        const attended = value === 'true';
         this.savingAttendance.set(examUser.id);
         this.examManagementService.updateAttendance(this.courseId, this.exam.id!, examUser.id, attended).subscribe({
             next: () => {
-                // Reload the server-derived verification status as well, especially when restoring automatic attendance.
+                // Reload the confirmed identity checks and server-derived verification status.
                 this.reloadAttendance();
             },
             error: (error: HttpErrorResponse) => {

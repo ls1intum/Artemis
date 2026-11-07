@@ -3,7 +3,10 @@ package de.tum.cit.aet.artemis.exam.web;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import jakarta.validation.Valid;
@@ -12,6 +15,8 @@ import jakarta.validation.constraints.Min;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -33,6 +38,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -82,13 +88,16 @@ public class ExamUserResource {
 
     private final ExamUserService examUserService;
 
+    private final AuditEventRepository auditEventRepository;
+
     public ExamUserResource(ExamUserService examUserService, UserRepository userRepository, FileService fileService, ExamAccessService examAccessService,
-            ExamUserRepository examUserRepository) {
+            ExamUserRepository examUserRepository, AuditEventRepository auditEventRepository) {
         this.userRepository = userRepository;
         this.fileService = fileService;
         this.examUserRepository = examUserRepository;
         this.examAccessService = examAccessService;
         this.examUserService = examUserService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -114,6 +123,7 @@ public class ExamUserResource {
 
         ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, student.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Exam user with login: \"" + examUserDTO.login() + "\" does not exist"));
+        Map<String, Object> auditData = attendanceAuditData(examUser, courseId);
 
         if (signatureFile != null) {
             String oldPathString = examUser.getSigningImagePath();
@@ -135,6 +145,7 @@ public class ExamUserResource {
         examUser.setActualSeat(examUserDTO.seat());
         examUser.setActualRoom(examUserDTO.room());
         examUser = examUserRepository.save(examUser);
+        auditAttendanceUpdate(examUser, auditData, signatureFile != null);
 
         ExamUserDTO.ExamUserDetailsDTO examUserDetails = ExamUserDTO.ExamUserDetailsDTO.fromUser(examUser.getUser());
 
@@ -182,12 +193,12 @@ public class ExamUserResource {
     }
 
     /**
-     * Corrects attendance after conduction without changing signatures or the original identity checks.
+     * Confirms or clears the identity checks after conduction without requiring or changing a signature.
      *
      * @param courseId   the course containing the exam
      * @param examId     the exam containing the registration
      * @param examUserId the registration to update
-     * @param update     the attendance decision, or null to restore the automatic status
+     * @param update     whether to confirm or clear the identity checks
      * @return an empty response
      */
     @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
@@ -195,7 +206,7 @@ public class ExamUserResource {
     @EnforceAtLeastStudent
     @ManualConfig
     public ResponseEntity<Void> updateAttendance(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long examUserId,
-            @RequestBody ExamAttendanceUpdateDTO update) {
+            @Valid @RequestBody ExamAttendanceUpdateDTO update) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).filter(registration -> registration.getExam().getId().equals(examId))
                 .orElseThrow(() -> new EntityNotFoundException("Exam user not found in the requested exam"));
@@ -203,9 +214,41 @@ public class ExamUserResource {
         if (exam.isTestExam() || ZonedDateTime.now(ZoneOffset.UTC).isBefore(exam.getEndDate())) {
             throw new BadRequestAlertException("Attendance can only be corrected after a real exam has ended", "exam", "attendanceCorrectionNotAllowed");
         }
-        examUser.setAttendanceOverride(update.attended());
-        examUserRepository.save(examUser);
+        Map<String, Object> auditData = attendanceAuditData(examUser, courseId);
+        examUser.setDidCheckImage(update.attended());
+        examUser.setDidCheckName(update.attended());
+        examUser.setDidCheckLogin(update.attended());
+        examUser.setDidCheckRegistrationNumber(update.attended());
+        examUser = examUserRepository.save(examUser);
+        auditAttendanceUpdate(examUser, auditData, false);
         return ResponseEntity.noContent().build();
+    }
+
+    private Map<String, Object> attendanceAuditData(ExamUser examUser, long courseId) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("courseId", courseId);
+        data.put("examId", examUser.getExam().getId());
+        data.put("examUserId", examUser.getId());
+        data.put("studentId", examUser.getUser().getId());
+        data.put("studentLogin", examUser.getUser().getLogin());
+        addAttendanceCheckAuditValues(data, "old", examUser);
+        return data;
+    }
+
+    private void auditAttendanceUpdate(ExamUser examUser, Map<String, Object> data, boolean signatureChanged) {
+        addAttendanceCheckAuditValues(data, "new", examUser);
+        data.put("signatureChanged", signatureChanged);
+        String actor = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new EntityNotFoundException("No current user login found"));
+        auditEventRepository.add(new AuditEvent(actor, Constants.UPDATE_EXAM_ATTENDANCE, data));
+    }
+
+    private void addAttendanceCheckAuditValues(Map<String, Object> data, String prefix, ExamUser examUser) {
+        data.put(prefix + "DidCheckImage", examUser.getDidCheckImage());
+        data.put(prefix + "DidCheckName", examUser.getDidCheckName());
+        data.put(prefix + "DidCheckLogin", examUser.getDidCheckLogin());
+        data.put(prefix + "DidCheckRegistrationNumber", examUser.getDidCheckRegistrationNumber());
+        data.put(prefix + "Room", Objects.toString(examUser.getActualRoom(), ""));
+        data.put(prefix + "Seat", Objects.toString(examUser.getActualSeat(), ""));
     }
 
     /**

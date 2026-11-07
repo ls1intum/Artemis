@@ -790,25 +790,21 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     attendanceCheckFailed(examUser: ExamStudentDTO | undefined) {
-        return (
-            examUser?.didExamUserAttendExam &&
-            this.hasExamEnded() &&
-            examUser.attendanceOverride === undefined &&
-            (!examUser.didCheckLogin || !examUser.didCheckImage || !examUser.didCheckName || !examUser.didCheckRegistrationNumber || !examUser.signingImagePath)
-        );
+        const checks = this.attendanceChecks(examUser);
+        return this.hasExamEnded() && !!examUser?.started && checks.some(Boolean) && !checks.every(Boolean);
     }
 
     attendanceCheckPassed(examUser: ExamStudentDTO | undefined) {
-        return (
-            examUser?.didExamUserAttendExam &&
-            (examUser.attendanceOverride === true ||
-                (examUser.didCheckLogin && examUser.didCheckImage && examUser.didCheckName && examUser.didCheckRegistrationNumber && examUser.signingImagePath)) &&
-            this.hasExamEnded()
-        );
+        // Instructors can confirm all identity checks after the exam without collecting a signature.
+        return this.hasExamEnded() && this.attendanceChecks(examUser).every(Boolean);
     }
 
     didNotAttendExam(examUser: ExamStudentDTO | undefined) {
-        return examUser?.didExamUserAttendExam === false && this.hasExamEnded();
+        return this.hasExamEnded() && this.attendanceChecks(examUser).every((checked) => checked === false);
+    }
+
+    private attendanceChecks(examUser: ExamStudentDTO | undefined) {
+        return [examUser?.didCheckImage, examUser?.didCheckName, examUser?.didCheckLogin, examUser?.didCheckRegistrationNumber];
     }
 
     /** Builds a minimal StudentExam from the DTO so working-time sub-components can compute % extension. */

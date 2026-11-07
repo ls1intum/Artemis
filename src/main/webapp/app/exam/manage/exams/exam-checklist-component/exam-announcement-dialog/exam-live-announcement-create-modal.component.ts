@@ -37,8 +37,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     ],
 })
 export class ExamLiveAnnouncementCreateModalComponent implements OnInit {
-    private examManagementService = inject(ExamManagementService);
-    private destroyRef = inject(DestroyRef);
+    private readonly examManagementService = inject(ExamManagementService);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new UnorderedListAction()];
 

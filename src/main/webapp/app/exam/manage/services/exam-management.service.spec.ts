@@ -968,10 +968,10 @@ describe('Exam Management Service Tests', () => {
         req.flush([]);
     });
 
-    it('saves an explicit absence separately from signed attendance data', () => {
-        service.updateAttendance(1, 2, 3, false).subscribe();
+    it.each([true, false])('saves the explicit attendance confirmation %s', (attended) => {
+        service.updateAttendance(1, 2, 3, attended).subscribe();
         const req = httpMock.expectOne({ method: 'PUT', url: 'api/exam/courses/1/exams/2/exam-users/3/attendance' });
-        expect(req.request.body).toEqual({ attended: false });
+        expect(req.request.body).toEqual({ attended });
         req.flush(null, { status: 204, statusText: 'No Content' });
     });
 

@@ -694,9 +694,8 @@
                     "incomplete": "Check incomplete",
                     "reloadFailed": "Attendance could not be refreshed. Reload the current records before making further changes.",
                     "title": "Attendance decision",
-                    "automatic": "Automatic (exam activity)",
-                    "present": "Present (manual)",
-                    "absent": "Absent (manual)"
+                    "present": "Present (all identity checks confirmed)",
+                    "absent": "Absent (all identity checks cleared)"
                 },
                 "addDialog": {
                     "title": "Add Students",

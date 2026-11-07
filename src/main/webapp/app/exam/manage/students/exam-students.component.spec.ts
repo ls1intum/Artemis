@@ -850,7 +850,7 @@ describe('ExamStudentsComponent', () => {
             component.hasExamEnded.set(true);
         });
 
-        it('attendanceCheckPassed should be true when attended and all checks completed', () => {
+        it('attendanceCheckPassed accepts all confirmed checks without a signature after the exam', () => {
             const dto: ExamStudentDTO = {
                 id: 1,
                 didExamUserAttendExam: true,
@@ -858,15 +858,15 @@ describe('ExamStudentsComponent', () => {
                 didCheckImage: true,
                 didCheckName: true,
                 didCheckRegistrationNumber: true,
-                signingImagePath: '/path/to/image',
             };
             expect(component.attendanceCheckPassed(dto)).toBeTruthy();
         });
 
-        it('attendanceCheckFailed should be true when attended but a check is incomplete', () => {
+        it('attendanceCheckFailed warns for a started exam with partial checks', () => {
             const dto: ExamStudentDTO = {
                 id: 1,
-                didExamUserAttendExam: true,
+                didExamUserAttendExam: false,
+                started: true,
                 didCheckLogin: false,
                 didCheckImage: true,
                 didCheckName: true,
@@ -876,8 +876,23 @@ describe('ExamStudentsComponent', () => {
             expect(component.attendanceCheckFailed(dto)).toBeTruthy();
         });
 
+        it('does not label partial checks as absent or show a warning for an unstarted attempt', () => {
+            const dto: ExamStudentDTO = { id: 1, didExamUserAttendExam: false, didCheckLogin: true };
+            expect(component.didNotAttendExam(dto)).toBeFalsy();
+            expect(component.attendanceCheckFailed(dto)).toBeFalsy();
+            expect(component.attendanceCheckPassed(dto)).toBeFalsy();
+        });
+
         it('didNotAttendExam should be true when student did not attend', () => {
-            const dto: ExamStudentDTO = { id: 1, didExamUserAttendExam: false };
+            const dto: ExamStudentDTO = {
+                id: 1,
+                didExamUserAttendExam: false,
+                didCheckImage: false,
+                didCheckName: false,
+                didCheckLogin: false,
+                didCheckRegistrationNumber: false,
+                signingImagePath: '/retained-signature',
+            };
             expect(component.didNotAttendExam(dto)).toBeTruthy();
         });
 
@@ -929,7 +944,7 @@ describe('ExamStudentsComponent accessible names', () => {
     } as any as ActivatedRoute;
 
     const baseDto: ExamStudentDTO = { id: 1, userId: 1, login: 'student1', name: 'Student One', studentExamId: 123, progress: 'submitted' };
-    const failedDto: ExamStudentDTO = { ...baseDto, id: 1, login: 'failed', didExamUserAttendExam: true, didCheckLogin: false };
+    const failedDto: ExamStudentDTO = { ...baseDto, id: 1, login: 'failed', started: true, didExamUserAttendExam: false, didCheckLogin: true, didCheckImage: false };
     const passedDto: ExamStudentDTO = {
         ...baseDto,
         id: 2,
@@ -941,7 +956,17 @@ describe('ExamStudentsComponent accessible names', () => {
         didCheckRegistrationNumber: true,
         signingImagePath: '/path/to/image',
     };
-    const absentDto: ExamStudentDTO = { ...baseDto, id: 3, login: 'absent', studentExamId: undefined, didExamUserAttendExam: false };
+    const absentDto: ExamStudentDTO = {
+        ...baseDto,
+        id: 3,
+        login: 'absent',
+        studentExamId: undefined,
+        didExamUserAttendExam: false,
+        didCheckImage: false,
+        didCheckName: false,
+        didCheckLogin: false,
+        didCheckRegistrationNumber: false,
+    };
 
     let fixture: ComponentFixture<ExamStudentsComponent>;
 

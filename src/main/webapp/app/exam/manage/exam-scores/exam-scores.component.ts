@@ -781,18 +781,14 @@ export class ExamScoresComponent implements OnInit {
     private generateExportColumnNames(): Array<string> {
         const headers = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
         this.exerciseGroups().forEach((exerciseGroup) => {
-            headers.push(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`);
-            headers.push(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`);
-            headers.push(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`);
+            headers.push(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`, `${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`, `${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`);
         });
         if (this.hasPerAttemptMaxima()) {
             headers.push(EXAM_MAX_POINTS_KEY);
         }
-        headers.push(EXAM_OVERALL_POINTS_KEY);
-        headers.push(EXAM_OVERALL_SCORE_KEY);
+        headers.push(EXAM_OVERALL_POINTS_KEY, EXAM_OVERALL_SCORE_KEY);
         if (this.gradingScaleExists()) {
-            headers.push(this.isBonus() ? BONUS_KEY : GRADE_KEY);
-            headers.push(...this.bonusExportColumnNames());
+            headers.push(this.isBonus() ? BONUS_KEY : GRADE_KEY, ...this.bonusExportColumnNames());
         }
         headers.push(EXAM_SUBMITTED);
         if (this.gradingScaleExists() && !this.isBonus()) {

@@ -389,16 +389,17 @@ export class ExamManagementService {
     }
 
     /**
-     * Returns exam users who started the exam but have not yet submitted a signed attendance record.
+     * Returns exam users who started the exam and whose attendance checks are incomplete.
      * @param courseId The course id.
      * @param examId The exam id.
-     * @returns Exam users with incomplete attendance check data.
+     * @param includeAll Include all registered exam users for attendance correction.
+     * @returns Exam users with incomplete attendance check data, or all registered users when requested.
      */
     verifyExamUserAttendance(courseId: number, examId: number, includeAll = false): Observable<HttpResponse<ExamUserAttendanceCheckDTO[]>> {
         return this.http.get<ExamUserAttendanceCheckDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/verify-exam-users`, { observe: 'response', params: { includeAll } });
     }
 
-    updateAttendance(courseId: number, examId: number, examUserId: number, attended: boolean | undefined): Observable<void> {
+    updateAttendance(courseId: number, examId: number, examUserId: number, attended: boolean): Observable<void> {
         return this.http.put<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/exam-users/${examUserId}/attendance`, { attended });
     }
 

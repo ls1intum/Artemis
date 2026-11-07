@@ -53,10 +53,6 @@ public class ExamUser extends AbstractAuditingEntity {
     @Transient
     private ExamSeatDTO actualSeatTransient;
 
-    /** Explicit instructor decision; null retains the attendance derived from the student exam. */
-    @Column(name = "attendance_override")
-    private Boolean attendanceOverride;
-
     @Column(name = "did_check_image")
     private boolean didCheckImage = false;
 
@@ -85,14 +81,6 @@ public class ExamUser extends AbstractAuditingEntity {
     @ManyToOne
     @JoinColumn(name = "student_id")
     private User user;
-
-    public Boolean getAttendanceOverride() {
-        return attendanceOverride;
-    }
-
-    public void setAttendanceOverride(Boolean attendanceOverride) {
-        this.attendanceOverride = attendanceOverride;
-    }
 
     public String getActualRoom() {
         return actualRoom;

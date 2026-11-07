@@ -91,11 +91,14 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
                 examUser.signingImagePath,
                 studentExams.started,
                 studentExams.submitted,
-                examUser.attendanceOverride,
-                CASE WHEN examUser.attendanceOverride IS NOT NULL OR
-                    (examUser.signingImagePath IS NOT NULL AND examUser.signingImagePath <> ''
-                    AND examUser.didCheckImage = TRUE AND examUser.didCheckLogin = TRUE
-                    AND examUser.didCheckRegistrationNumber = TRUE AND examUser.didCheckName = TRUE)
+                examUser.didCheckImage,
+                examUser.didCheckName,
+                examUser.didCheckLogin,
+                examUser.didCheckRegistrationNumber,
+                CASE WHEN examUser.didCheckImage = TRUE AND examUser.didCheckLogin = TRUE
+                    AND examUser.didCheckRegistrationNumber = TRUE AND examUser.didCheckName = TRUE
+                    AND ((examUser.signingImagePath IS NOT NULL AND examUser.signingImagePath <> '')
+                        OR exam.endDate <= CURRENT_TIMESTAMP)
                     THEN TRUE ELSE FALSE END
             )
             FROM ExamUser examUser
@@ -104,14 +107,10 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
                     AND (studentExams.testRun IS NULL OR studentExams.testRun = FALSE)
             WHERE exam.id = :examId
                 AND (:includeAll = TRUE OR (studentExams.started = TRUE
-                AND examUser.attendanceOverride IS NULL
-                AND (examUser.signingImagePath IS NULL
-                    OR examUser.signingImagePath = ''
-                    OR examUser.didCheckImage = FALSE
-                    OR examUser.didCheckLogin = FALSE
-                    OR examUser.didCheckRegistrationNumber = FALSE
-                    OR examUser.didCheckName = FALSE
-                )))
+                    AND NOT (examUser.didCheckImage = TRUE AND examUser.didCheckLogin = TRUE
+                        AND examUser.didCheckRegistrationNumber = TRUE AND examUser.didCheckName = TRUE
+                        AND ((examUser.signingImagePath IS NOT NULL AND examUser.signingImagePath <> '')
+                            OR exam.endDate <= CURRENT_TIMESTAMP))))
             """)
     Set<ExamUserAttendanceCheckDTO> findForAttendanceCheck(@Param("examId") long examId, @Param("includeAll") boolean includeAll);
 
@@ -120,10 +119,10 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
             FROM ExamUser examUser
             WHERE examUser.exam.id = :examId
                 AND examUser.user.login = :login
-                AND (examUser.attendanceOverride IS NOT NULL OR
-                    (examUser.signingImagePath IS NOT NULL AND examUser.signingImagePath <> ''
-                    AND examUser.didCheckImage = TRUE AND examUser.didCheckLogin = TRUE
-                    AND examUser.didCheckRegistrationNumber = TRUE AND examUser.didCheckName = TRUE))
+                AND examUser.didCheckImage = TRUE AND examUser.didCheckLogin = TRUE
+                AND examUser.didCheckRegistrationNumber = TRUE AND examUser.didCheckName = TRUE
+                AND ((examUser.signingImagePath IS NOT NULL AND examUser.signingImagePath <> '')
+                    OR examUser.exam.endDate <= CURRENT_TIMESTAMP)
             """)
     boolean isAttendanceChecked(@Param("examId") long examId, @Param("login") String login);
 

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession_;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser_;
+import de.tum.cit.aet.artemis.exam.domain.Exam_;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam_;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
@@ -123,13 +125,21 @@ public final class ExamUserSpecs {
         };
     }
 
-    /** Matches exam users who have a signing image and all attendance checks completed. */
+    /** Matches exam users with all attendance checks completed and a signature, or completed checks after the exam ended. */
     @NonNull
     private static Specification<ExamUser> isAttendanceChecked() {
-        return (root, query, builder) -> builder.or(builder.isNotNull(root.get(ExamUser_.ATTENDANCE_OVERRIDE)),
-                builder.and(builder.isNotNull(root.get(ExamUser_.SIGNING_IMAGE_PATH)), builder.notEqual(root.get(ExamUser_.SIGNING_IMAGE_PATH), ""),
-                        builder.isTrue(root.get(ExamUser_.DID_CHECK_IMAGE)), builder.isTrue(root.get(ExamUser_.DID_CHECK_NAME)),
-                        builder.isTrue(root.get(ExamUser_.DID_CHECK_LOGIN)), builder.isTrue(root.get(ExamUser_.DID_CHECK_REGISTRATION_NUMBER))));
+        return (root, query, builder) -> attendanceChecked(root, builder);
+    }
+
+    private static Predicate attendanceChecked(Root<ExamUser> root, CriteriaBuilder builder) {
+        Predicate hasSignature = builder.and(builder.isNotNull(root.get(ExamUser_.SIGNING_IMAGE_PATH)), builder.notEqual(root.get(ExamUser_.SIGNING_IMAGE_PATH), ""));
+        Predicate examEnded = builder.lessThanOrEqualTo(root.get(ExamUser_.EXAM).get(Exam_.END_DATE), builder.currentTimestamp());
+        return builder.and(allAttendanceChecksCompleted(root, builder), builder.or(hasSignature, examEnded));
+    }
+
+    private static Predicate allAttendanceChecksCompleted(Root<ExamUser> root, CriteriaBuilder builder) {
+        return builder.and(builder.isTrue(root.get(ExamUser_.DID_CHECK_IMAGE)), builder.isTrue(root.get(ExamUser_.DID_CHECK_NAME)),
+                builder.isTrue(root.get(ExamUser_.DID_CHECK_LOGIN)), builder.isTrue(root.get(ExamUser_.DID_CHECK_REGISTRATION_NUMBER)));
     }
 
     /** Matches exam users whose non-test-run StudentExam was started but attendance checks are incomplete. */
@@ -142,18 +152,14 @@ public final class ExamUserSpecs {
             sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), root.get(ExamUser_.USER)), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
                     builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN))), builder.isTrue(se.get(StudentExam_.STARTED))));
             Predicate hasStarted = builder.exists(sub);
-            Predicate checkIncomplete = builder.or(builder.isNull(root.get(ExamUser_.SIGNING_IMAGE_PATH)), builder.equal(root.get(ExamUser_.SIGNING_IMAGE_PATH), ""),
-                    builder.isFalse(root.get(ExamUser_.DID_CHECK_IMAGE)), builder.isFalse(root.get(ExamUser_.DID_CHECK_NAME)), builder.isFalse(root.get(ExamUser_.DID_CHECK_LOGIN)),
-                    builder.isFalse(root.get(ExamUser_.DID_CHECK_REGISTRATION_NUMBER)));
-            return builder.and(hasStarted, builder.isNull(root.get(ExamUser_.ATTENDANCE_OVERRIDE)), checkIncomplete);
+            return builder.and(hasStarted, builder.not(attendanceChecked(root, builder)));
         };
     }
 
-    /** Matches exam users who never started the exam: either no student exam was generated (ExamMissing) or the student exam was not started (NotStarted). */
+    /** Matches exam users whose attendance has not been confirmed by all four checks. */
     @NonNull
     private static Specification<ExamUser> isDidNotAttend() {
-        return (root, query, builder) -> builder.or(builder.isFalse(root.get(ExamUser_.ATTENDANCE_OVERRIDE)),
-                builder.and(builder.isNull(root.get(ExamUser_.ATTENDANCE_OVERRIDE)), Specification.where(isExamMissing()).or(isNotStarted()).toPredicate(root, query, builder)));
+        return (root, query, builder) -> builder.not(allAttendanceChecksCompleted(root, builder));
     }
 
     /**

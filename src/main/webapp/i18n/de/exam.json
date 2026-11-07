@@ -694,9 +694,8 @@
                     "incomplete": "Überprüfung unvollständig",
                     "reloadFailed": "Die Anwesenheit konnte nicht aktualisiert werden. Lade die aktuellen Einträge vor weiteren Änderungen erneut.",
                     "title": "Anwesenheitsentscheidung",
-                    "automatic": "Automatisch (Prüfungsaktivität)",
-                    "present": "Anwesend (manuell)",
-                    "absent": "Abwesend (manuell)"
+                    "present": "Anwesend (alle Identitätsprüfungen bestätigt)",
+                    "absent": "Abwesend (alle Identitätsprüfungen zurückgesetzt)"
                 },
                 "addDialog": {
                     "title": "Studierende hinzufügen",
