@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentDemoService;
 import de.tum.cit.aet.artemis.core.api.AbstractApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 /**
  * Lets the demo seeding create the demo content of the assessment module. Only delegates to {@link AssessmentDemoService}, which holds the seeding logic.
@@ -38,5 +39,14 @@ public class AssessmentDemoApi implements AbstractApi {
      */
     public void createDemoGradingScale(Course course) {
         assessmentDemoService.createDemoGradingScale(course);
+    }
+
+    /**
+     * Creates the grading scale of the demo exam if the exam does not have one yet.
+     *
+     * @param exam the demo exam.
+     */
+    public void createDemoExamGradingScale(Exam exam) {
+        assessmentDemoService.createDemoExamGradingScale(exam);
     }
 }

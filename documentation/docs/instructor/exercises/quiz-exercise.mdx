@@ -2,7 +2,7 @@
 id: quiz-exercise
 title: Quiz Exercise
 sidebar_label: Quiz Exercise
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-06
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -13,6 +13,7 @@ import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 import manageExercisesDialog from './assets/general/manage-exercises-dialog.png';
 import createAQuizForm from './assets/quiz/create-a-quiz-form.png';
 import exerciseInList from './assets/quiz/course-dashboard-exercise-quiz.png';
+import exerciseDetailsQuiz from './assets/quiz/exercise-details-quiz.png';
 import multipleChoiceQuestion from './assets/quiz/multiple-choice-question.png';
 import dragAndDropQuestion from './assets/quiz/drag-and-drop-question.png';
 import apollonDiagrams from './assets/quiz/apollon-diagrams.png';
@@ -22,7 +23,6 @@ import shortAnswerQuestion from './assets/quiz/short-answer-question.png';
 import existingQuestion from './assets/quiz/existing-question.png';
 import footer from './assets/quiz/footer.png';
 import importListQuizzes from './assets/quiz/import-list-quizzes.png';
-import exportQuizzesList from './assets/quiz/export-quizzes-list.png';
 import aiGenerationModal from './assets/quiz/ai-generation-modal.png';
 import aiRefinementPanel from './assets/quiz/ai-refinement-panel.png';
 import aiBulkRefinement from './assets/quiz/ai-bulk-refinement.png';
@@ -75,7 +75,7 @@ its **Categories**, alongside three choices:
 
 This kind of question is composed of a problem statement with multiple options.
 
-<Image src={multipleChoiceQuestion} alt="Multiple Choice Question" size={ImageSize.large} caption="Multiple-Choice Question Editor" />
+<Image src={multipleChoiceQuestion} alt="Editor of a multiple-choice question with its scoring type, the markdown input and the options" size={ImageSize.large} caption="Multiple-Choice Question Editor" />
 
 - **Short question title**: Provide a short title (mandatory)
 - **Points**: Assign the value points for this question
@@ -138,7 +138,7 @@ Generated questions appear in a preview list and may include Markdown formatting
 
 This kind of question is composed of a problem statement, a background image, and drag and drop options.
 
-<Image src={dragAndDropQuestion} alt="Drag and Drop Question" size={ImageSize.large} caption="Drag-and-Drop Question Editor" />
+<Image src={dragAndDropQuestion} alt="Editor of a drag and drop question with the background picture, the drop locations and the drag items" size={ImageSize.large} caption="Drag-and-Drop Question Editor" />
 
 - **Short question title**: Provide a short title
 - **Points**: Assign the value points for this question
@@ -191,7 +191,7 @@ diagram type offers.
 
 This kind of question is composed of a statement and spots to fill them out by typing the answers.
 
-<Image src={shortAnswerQuestion} alt="Short Answer Question" size={ImageSize.large} caption="Short-Answer Question Editor" />
+<Image src={shortAnswerQuestion} alt="Editor of a short-answer question" size={ImageSize.large} caption="Short-Answer Question Editor" />
 
 - **Short question title**: Provide a short title
 - **Points**: Assign the value points for this question
@@ -230,7 +230,7 @@ Existing Multiple-Choice questions (including AI-generated and manually created 
 
 This option allows to import existing questions from other quiz exercises, courses, exams and files.
 
-<Image src={existingQuestion} alt="Existing Question" size={ImageSize.large} caption="Import Existing Questions" />
+<Image src={existingQuestion} alt="Dialog to add questions of an existing quiz, with the course chosen and the list of its questions" size={ImageSize.large} caption="Import Existing Questions" />
 
 **Add Selected Questions**, at the end of the list, brings every question you ticked into the quiz.
 
@@ -255,14 +255,14 @@ The **Import** tab of the **Manage Exercises** dialog, with **Quiz** picked, lis
 The eye button next to **Import** replaces the list with a preview of the quiz, showing its total points, its duration and all of its questions, so you can compare versions from different years or courses first.
 The preview has its own **Import** button, which does the same as **Import** in the list. **Back to list**, or the Escape key, returns to the list with your search and page unchanged. The title and both buttons stay in view while you scroll through the questions.
 
-### Export Questions
+### Export a Quiz
 
-The **Export** tab of the same dialog lists every quiz question in the course.
+The **Export** tab of the same dialog downloads a whole quiz, with its settings, questions and drag-and-drop images,
+as a ZIP file. **From file** on the **Import** tab reads it back, on this or another Artemis instance; see
+[Moving an Exercise Between Courses](/instructor/exercises/intro#moving-an-exercise-between-courses).
 
-<Image src={exportQuizzesList} alt="Dialog listing the course's quiz questions with a checkbox each" size={ImageSize.medium} caption="Choosing questions to export" />
-
-**Export** writes the questions you ticked to a JSON file, which the **From a file** tab of **Add Existing
-Questions** reads back — that is how a question travels between Artemis instances.
+To reuse single questions instead, **Export** on the quiz's detail page writes its questions to a JSON file, which the
+**From a file** tab of **Add Existing Questions** reads back.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -277,6 +277,23 @@ lifecycle button — **Start** while the quiz is waiting, **End** while it is ru
 **Statistics**, **Preview** and **Solution**. **Re-evaluate** appears there once the quiz has ended.
 
 <Image src={exerciseInList} alt="Course exercise list with the actions available on a quiz" size={ImageSize.large} caption="The quiz on the course's exercise list" />
+
+Select the quiz title to open its details. The header shows the saved title and exercise type, while **General**
+contains the **Exercise ID**. Section links scroll through the saved settings on the same page, keeping all
+sections available to browser search.
+
+The detail action bar groups **Participations**, **Statistics**, **Preview** and **Solution** separately from the
+editing actions. **Edit** is available before the quiz ends and is disabled while editing is unsafe. After the quiz
+ends, instructors see **Re-evaluate**, and **Evaluate quiz** appears when evaluation is available. **Create Variant**
+appears alongside these actions for supported quizzes when Hyperion is enabled and you have Editor access.
+Editors export all questions through **More actions → Export**. Course quizzes retain their lifecycle controls
+below the action bar; instructors find **Reset** and **Delete** in **Exercise administration** at the bottom,
+with their confirmations.
+
+<Image src={exerciseDetailsQuiz} alt="Quiz details with navigation, re-evaluation, variant creation and section links" size={ImageSize.large} caption="The quiz's details" />
+
+See [Exercise Details for Course Staff](/instructor/exercises/intro#exercise-details-for-course-staff) for shared
+navigation and compact-screen behavior.
 
 ## What Students See
 

@@ -1,36 +1,42 @@
-<div class="row justify-content-center">
-    <div class="col-md-8">
+<div class="mx-auto w-full max-w-7xl px-2 sm:px-4!">
+    <div class="min-w-0">
         @if (fileUploadExercise(); as exercise) {
             <div>
-                <div class="d-flex align-items-center">
-                    <h2><span jhiTranslate="artemisApp.fileUploadExercise.detail.title"></span> {{ exercise.id }}</h2>
-                    <jhi-documentation-button [type]="documentationType" />
-                </div>
-                <hr />
-                <div class="text-start">
-                    @if (course(); as courseValue) {
-                        <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise()" [course]="courseValue" [exercise]="exercise">
-                            @if (exercise.isAtLeastInstructor && !isExamExercise()) {
-                                <jhi-atlas-orchestration-trigger [exercise]="exercise" />
-                            }
-                        </jhi-non-programming-exercise-detail-common-actions>
-                    }
-                </div>
+                <jhi-exercise-detail-header [exercise]="exercise" [documentationType]="documentationType" />
+                @if (course(); as courseValue) {
+                    <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise()" [course]="courseValue" [exercise]="exercise" />
+                }
                 @if (!exercise.releaseDate || dayjs(exercise.releaseDate).isBefore(dayjs())) {
-                    <div class="mt-3">
+                    <div class="mt-6!">
                         @if (doughnutStats(); as stats) {
-                            <jhi-exercise-detail-statistics
-                                [exercise]="exercise"
-                                [doughnutStats]="stats"
-                                [exerciseType]="ExerciseType.FILE_UPLOAD"
-                                class="d-flex justify-content-around"
-                            />
+                            <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="stats" [exerciseType]="ExerciseType.FILE_UPLOAD" class="flex justify-around" />
                         }
                     </div>
                 }
                 @if (exerciseDetailSections()) {
-                    <jhi-detail-overview-list [sections]="exerciseDetailSections()" />
+                    <ng-template #competencyActions>
+                        @if (exercise.isAtLeastInstructor && !isExamExercise()) {
+                            <jhi-atlas-orchestration-trigger [exercise]="exercise" [showLabel]="true" />
+                        }
+                    </ng-template>
+                    <jhi-detail-overview-list
+                        [footerSection]="
+                            course() && exercise.isAtLeastInstructor ? { headline: 'artemisApp.exerciseDetail.administration', content: administrationActions } : undefined
+                        "
+                        [sections]="exerciseDetailSections()"
+                        [sectionActions]="{ 'artemisApp.exercise.sections.problem': competencyActions }"
+                    />
                 }
+                <ng-template #administrationActions>
+                    @if (course(); as courseValue) {
+                        <jhi-non-programming-exercise-detail-common-actions
+                            section="administration"
+                            [isExamExercise]="isExamExercise()"
+                            [course]="courseValue"
+                            [exercise]="exercise"
+                        />
+                    }
+                </ng-template>
             </div>
         }
     </div>

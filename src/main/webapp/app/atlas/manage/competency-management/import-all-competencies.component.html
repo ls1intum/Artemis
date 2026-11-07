@@ -58,6 +58,7 @@
                             }
                             <td class="col-1">
                                 <jhi-button
+                                    [btnType]="ButtonType.SECONDARY"
                                     (onClick)="selectImport(course)"
                                     [disabled]="disabledIds.includes(course.id!)"
                                     [title]="'artemisApp.competency.importAll.table.doImport'"

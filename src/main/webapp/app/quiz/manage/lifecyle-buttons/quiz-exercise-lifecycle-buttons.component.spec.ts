@@ -318,3 +318,57 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         });
     });
 });
+
+describe('Quiz lifecycle rendered controls', () => {
+    let fixture: ComponentFixture<QuizExerciseLifecycleButtonsComponent>;
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AlertService, useClass: MockAlertService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        });
+        fixture = TestBed.createComponent(QuizExerciseLifecycleButtonsComponent);
+    });
+    const mount = (overrides: Partial<QuizExercise>) => {
+        fixture.componentRef.setInput('quizExercise', Object.assign(new QuizExercise({ id: 123 }, undefined), { id: 456 }, overrides));
+        fixture.detectChanges();
+    };
+    it('starts a synchronized quiz through its visible lifecycle control', () => {
+        const perform = vi.spyOn(TestBed.inject(QuizExerciseApi), 'performActionForQuizExercise').mockReturnValue(of({}));
+        mount({ quizMode: QuizMode.SYNCHRONIZED, status: QuizStatus.INVISIBLE, isAtLeastEditor: true });
+        const start = fixture.nativeElement.querySelector('#instructor-quiz-start-456') as HTMLButtonElement;
+        expect(start.hidden).toBe(false);
+        start.click();
+        expect(perform).toHaveBeenCalledWith(456, 'start-now');
+    });
+    it('keeps grouped visibility and end actions disabled', () => {
+        mount({ quizMode: QuizMode.BATCHED, status: QuizStatus.INVISIBLE, isAtLeastEditor: true, exerciseVariantGroup: { id: 7 } });
+        expect(fixture.nativeElement.querySelector('#quiz-set-visible-456').disabled).toBe(true);
+        mount({ quizMode: QuizMode.BATCHED, status: QuizStatus.ACTIVE, isAtLeastInstructor: true, exerciseVariantGroup: { id: 7 } });
+        expect(fixture.nativeElement.querySelector('#quiz-set-end-456').disabled).toBe(true);
+    });
+    it('opens the batch controls with the saved status and starts the selected batch', async () => {
+        const startBatch = vi.spyOn(TestBed.inject(QuizExerciseBatchApi), 'startBatch').mockReturnValue(of({ id: 1 }));
+        mount({
+            quizMode: QuizMode.BATCHED,
+            status: QuizStatus.ACTIVE,
+            quizBatches: [
+                { id: 1, password: 'secret' },
+                { id: 2, started: true },
+                { id: 3, ended: true },
+            ],
+        });
+        fixture.nativeElement.querySelector('#instructor-quiz-batches-456').click();
+        await fixture.whenStable();
+        const popover = document.querySelector('[role="dialog"]');
+        expect(popover?.textContent).toContain('artemisApp.exerciseManagement.batch.running');
+        expect(popover?.textContent).toContain('artemisApp.exerciseManagement.batch.done');
+        expect(popover?.querySelector('#instructor-quiz-start-456-2')).toBeNull();
+        expect(popover?.querySelector('#instructor-quiz-start-456-3')).toBeNull();
+        (popover?.querySelector('#instructor-quiz-start-456-1') as HTMLButtonElement).click();
+        expect(startBatch).toHaveBeenCalledWith(1);
+    });
+});

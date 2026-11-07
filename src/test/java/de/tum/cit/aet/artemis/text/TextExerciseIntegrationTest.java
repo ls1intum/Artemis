@@ -20,6 +20,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -32,6 +34,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,6 +74,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -92,6 +96,7 @@ import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepos
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ImportedExerciseAssertions;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
@@ -2475,4 +2480,58 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.get(courseUrl, HttpStatus.OK, TextExerciseResponseDTO.class);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportExercise() throws Exception {
+        String embeddedFileName = "Markdown_" + UUID.randomUUID() + ".png";
+        String secondEmbeddedFileName = "Markdown_" + UUID.randomUUID() + ".png";
+        Path embeddedFile = FilePathConverter.getMarkdownFilePath().resolve(embeddedFileName);
+        Path secondEmbeddedFile = FilePathConverter.getMarkdownFilePath().resolve(secondEmbeddedFileName);
+        FileUtils.writeByteArrayToFile(embeddedFile.toFile(), new byte[] { 1, 2, 3 });
+        FileUtils.writeByteArrayToFile(secondEmbeddedFile.toFile(), new byte[] { 4, 5, 6 });
+        // Both images on one line, one in Markdown and one in HTML syntax, and a link with a path that must not be followed.
+        textExercise.setProblemStatement("Look at ![image](/api/core/files/markdown/" + embeddedFileName + ") and <img src=\"/api/core/files/markdown/" + secondEmbeddedFileName
+                + "\" width=\"100\"> but not ![x](/api/core/files/markdown/../../config/application.yml)");
+        textExercise.setCategories(Set.of("{\"category\":\"export\"}"));
+        textExerciseRepository.save(textExercise);
+        gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(textExercise));
+
+        try {
+            var export = exerciseUtilService.readExerciseExport(request.getFile("/api/text/text-exercises/" + textExercise.getId() + "/export", HttpStatus.OK));
+
+            assertThat(export.details()).containsEntry("type", "text").containsKey("categories");
+            ExerciseUtilService.assertExportedGradingCriteriaWithoutIds(export.details());
+            assertThat(export.entries().keySet()).anyMatch(name -> name.startsWith("Problem-Statement-")).contains("files/" + embeddedFileName, "files/" + secondEmbeddedFileName);
+            assertThat(export.entries().keySet()).filteredOn(name -> name.startsWith("files/")).hasSize(2);
+        }
+        finally {
+            Files.deleteIfExists(embeddedFile);
+            Files.deleteIfExists(secondEmbeddedFile);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportExercise_missingEmbeddedFile_failsInsteadOfExportingAnIncompleteFile() throws Exception {
+        textExercise.setProblemStatement("Look at ![image](/api/core/files/markdown/Markdown_" + UUID.randomUUID() + ".png)");
+        textExerciseRepository.save(textExercise);
+
+        request.getFile("/api/text/text-exercises/" + textExercise.getId() + "/export", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void exportExercise_examExercise() throws Exception {
+        TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise("exportExercise_examExercise", TEST_PREFIX);
+
+        var export = exerciseUtilService.readExerciseExport(request.getFile("/api/text/text-exercises/" + examExercise.getId() + "/export", HttpStatus.OK));
+
+        assertThat(export.details()).containsEntry("type", "text");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void exportExercise_asTutor_forbidden() throws Exception {
+        request.getFile("/api/text/text-exercises/" + textExercise.getId() + "/export", HttpStatus.FORBIDDEN);
+    }
 }

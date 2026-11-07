@@ -76,7 +76,7 @@ artemis:
                     maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:25"
                 kotlin:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java25-3"
+                    default: "ghcr.io/ls1intum/artemis-kotlin-docker:v1.0.0"
                 empty:
                     default: "ubuntu:24.04"
                 python:
@@ -111,7 +111,7 @@ artemis:
                 typescript:
                     default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.2.0"
                 go:
-                    default: "ghcr.io/ls1intum/artemis-go-docker:v1.0.0"
+                    default: "ghcr.io/ls1intum/artemis-go-docker:v1.1.0"
                 matlab:
                     default: "mathworks/matlab:r2024b"
                 ruby:
