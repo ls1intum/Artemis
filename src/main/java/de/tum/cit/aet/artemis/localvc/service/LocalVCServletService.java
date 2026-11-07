@@ -174,7 +174,7 @@ public class LocalVCServletService {
         // A CI system cloning with the credential that the whole installation shares. The shortcut grants repository-wide
         // read ahead of the rate limit, the authorization checks and the access log, which is why it is closed wherever
         // local CI or ssh can do the job.
-        if (repositoryAction == RepositoryActionType.READ && buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(authorizationHeader)) {
+        if (repositoryAction == RepositoryActionType.READ && buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(request, authorizationHeader)) {
             return;
         }
 

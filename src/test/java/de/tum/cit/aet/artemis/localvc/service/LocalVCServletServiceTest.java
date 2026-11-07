@@ -236,7 +236,7 @@ class LocalVCServletServiceTest {
     @Test
     void authenticateAndAuthorizeGitRequest_withTheSharedBuildAgentCredential_skipsTheRateLimitAndTheAuthorization() throws Exception {
         HttpServletRequest request = gitFetchRequest(basicAuth("build-agent", "a-long-shared-secret"));
-        when(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(request.getHeader(HttpHeaders.AUTHORIZATION))).thenReturn(true);
+        when(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(request, request.getHeader(HttpHeaders.AUTHORIZATION))).thenReturn(true);
 
         assertThatCode(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ)).doesNotThrowAnyException();
 

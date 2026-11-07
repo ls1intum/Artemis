@@ -301,11 +301,15 @@ public class LocalVCBuildAgentAuthenticationService {
      * <p>
      * The other is ssh: build agents that authenticate with a key never present this pair.
      *
-     * @param authorizationHeader the Basic authorization header of a fetch request
+     * An accepted request is marked as a build agent clone, like one that authenticated with a build job token. Without the mark, the hook that completes the access log of
+     * a fetch would take the Jenkins fetch for one of a student whenever the shared user name is not {@value #BUILD_USER_NAME}, and relabel the newest entry of the repository.
+     *
+     * @param request             the fetch request
+     * @param authorizationHeader the Basic authorization header of that request
      * @return whether the request presents the shared build agent credential and may be served without any further check
      * @throws LocalVCAuthException if the shortcut is open and the header cannot be read
      */
-    public boolean authenticateSharedBuildAgentCredential(String authorizationHeader) throws LocalVCAuthException {
+    public boolean authenticateSharedBuildAgentCredential(HttpServletRequest request, String authorizationHeader) throws LocalVCAuthException {
         if (useSshForBuildAgent || distributedDataAccessService.isPresent()) {
             return false;
         }
@@ -316,8 +320,12 @@ public class LocalVCBuildAgentAuthenticationService {
         // rejects that configuration under prod, but this path also runs where that validation does not.
         // The hasText guard is not made redundant by the constant-time comparison below: a blank configured
         // password would still match an equally blank provided one.
-        return StringUtils.hasText(buildAgentGitUsername) && StringUtils.hasText(buildAgentGitPassword) && Objects.equals(usernameAndPassword.username(), buildAgentGitUsername)
-                && secretMatches(buildAgentGitPassword, usernameAndPassword.password());
+        boolean accepted = StringUtils.hasText(buildAgentGitUsername) && StringUtils.hasText(buildAgentGitPassword)
+                && Objects.equals(usernameAndPassword.username(), buildAgentGitUsername) && secretMatches(buildAgentGitPassword, usernameAndPassword.password());
+        if (accepted) {
+            request.setAttribute(BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE, usernameAndPassword.username());
+        }
+        return accepted;
     }
 
     /**

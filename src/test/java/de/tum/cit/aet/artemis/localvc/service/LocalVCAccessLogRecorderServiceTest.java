@@ -25,6 +25,7 @@ import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -280,6 +281,35 @@ class LocalVCAccessLogRecorderServiceTest {
         assertThatCode(() -> accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, "not-a-basic-header", 0)).doesNotThrowAnyException();
 
         verifyNoInteractions(vcsAccessLogService);
+    }
+
+    @Test
+    void aStudentFetchWithoutOfferedObjects_isCompletedAsAClone() {
+        HttpServletRequest request = studentFetchRequest();
+
+        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, basicAuth("testuser", "pw"), 0);
+
+        ArgumentCaptor<LocalVCRepositoryUri> repositoryUri = ArgumentCaptor.forClass(LocalVCRepositoryUri.class);
+        verify(vcsAccessLogService).updateRepositoryActionType(repositoryUri.capture(), eq(RepositoryActionType.CLONE));
+        assertThat(repositoryUri.getValue().getProjectKey()).isEqualTo("TEST");
+    }
+
+    @Test
+    void aStudentFetchWithOfferedObjects_isCompletedAsAPull() {
+        HttpServletRequest request = studentFetchRequest();
+
+        accessLogRecorder.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, basicAuth("testuser", "pw"), 3);
+
+        ArgumentCaptor<LocalVCRepositoryUri> repositoryUri = ArgumentCaptor.forClass(LocalVCRepositoryUri.class);
+        verify(vcsAccessLogService).updateRepositoryActionType(repositoryUri.capture(), eq(RepositoryActionType.PULL));
+        assertThat(repositoryUri.getValue().getProjectKey()).isEqualTo("TEST");
+    }
+
+    private HttpServletRequest studentFetchRequest() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/git-upload-pack");
+        return request;
     }
 
     private ServerSession sessionOf(User user, VcsAccessLog accessLog) {

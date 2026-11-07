@@ -153,8 +153,12 @@ class BuildJobCloneTokenAuthenticationTest {
     @Test
     void shouldAcceptTheTokenOfARunningJobForItsOwnRepository() {
         when(distributedDataAccessService.getProcessingJobsForAgentByName(AGENT_NAME)).thenReturn(List.of(buildJob(CLONE_TOKEN, assignmentRepositoryUri)));
+        HttpServletRequest request = request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS);
 
-        assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isTrue();
+        assertThat(authenticate(request)).isTrue();
+
+        // marked, so that the hook completing the access log of a fetch leaves the entry of the clone alone
+        verify(request).setAttribute(LocalVCBuildAgentAuthenticationService.BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE, AGENT_NAME);
     }
 
     /**

@@ -2,8 +2,11 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
@@ -21,6 +24,8 @@ import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 
 class LocalVCBuildAgentAuthenticationServiceTest {
+
+    private final HttpServletRequest request = mock(HttpServletRequest.class);
 
     private LocalVCBuildAgentAuthenticationService buildAgentAuthenticationService;
 
@@ -46,21 +51,26 @@ class LocalVCBuildAgentAuthenticationServiceTest {
     void authenticateSharedBuildAgentCredential_withTheSharedCredential_isAccepted() throws Exception {
         configureNodeWithoutLocalCI("build-agent", "a-long-shared-secret", false);
 
-        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(basicAuth("build-agent", "a-long-shared-secret"))).isTrue();
+        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(request, basicAuth("build-agent", "a-long-shared-secret"))).isTrue();
+
+        // marked, so that the hook completing the access log of a fetch does not take it for the fetch of a student
+        verify(request).setAttribute(LocalVCBuildAgentAuthenticationService.BUILD_AGENT_CLONE_REQUEST_ATTRIBUTE, "build-agent");
     }
 
     @Test
     void authenticateSharedBuildAgentCredential_withAWrongPassword_isDeclined() throws Exception {
         configureNodeWithoutLocalCI("build-agent", "a-long-shared-secret", false);
 
-        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(basicAuth("build-agent", "another-secret"))).isFalse();
+        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(request, basicAuth("build-agent", "another-secret"))).isFalse();
+
+        verify(request, never()).setAttribute(any(), any());
     }
 
     @Test
     void authenticateSharedBuildAgentCredential_withAnotherUserName_isDeclined() throws Exception {
         configureNodeWithoutLocalCI("build-agent", "a-long-shared-secret", false);
 
-        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(basicAuth("student", "a-long-shared-secret"))).isFalse();
+        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(request, basicAuth("student", "a-long-shared-secret"))).isFalse();
     }
 
     @Test
@@ -68,14 +78,14 @@ class LocalVCBuildAgentAuthenticationServiceTest {
         configureNodeWithoutLocalCI("build-agent", "", false);
 
         // a blank configured password would otherwise match the equally blank password of anyone who knows the user name
-        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(basicAuth("build-agent", ""))).isFalse();
+        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(request, basicAuth("build-agent", ""))).isFalse();
     }
 
     @Test
     void authenticateSharedBuildAgentCredential_whenBuildAgentsUseSsh_doesNotAcceptTheSharedCredential() throws Exception {
         configureNodeWithoutLocalCI("build-agent", "a-long-shared-secret", true);
 
-        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(basicAuth("build-agent", "a-long-shared-secret"))).isFalse();
+        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(request, basicAuth("build-agent", "a-long-shared-secret"))).isFalse();
     }
 
     @Test
@@ -84,14 +94,15 @@ class LocalVCBuildAgentAuthenticationServiceTest {
         ReflectionTestUtils.setField(buildAgentAuthenticationService, "distributedDataAccessService", Optional.of(mock(DistributedDataAccessService.class)));
 
         // every build job there carries its own token, so the shared credential opens nothing
-        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(basicAuth("build-agent", "a-long-shared-secret"))).isFalse();
+        assertThat(buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(request, basicAuth("build-agent", "a-long-shared-secret"))).isFalse();
     }
 
     @Test
     void authenticateSharedBuildAgentCredential_withAMalformedHeader_failsLikeAnyOtherCredentialCheck() {
         configureNodeWithoutLocalCI("build-agent", "a-long-shared-secret", false);
 
-        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> buildAgentAuthenticationService.authenticateSharedBuildAgentCredential("not-a-basic-header"));
+        assertThatExceptionOfType(LocalVCAuthException.class)
+                .isThrownBy(() -> buildAgentAuthenticationService.authenticateSharedBuildAgentCredential(request, "not-a-basic-header"));
     }
 
     private HttpServletRequest requestOf(String authorizationHeader) {
