@@ -391,6 +391,18 @@ export const checkSubsequentFeedbackInAssessment = (feedbacks: Feedback[]) => {
     }
 };
 
+/** Count all applications of each persisted grading instruction across an assessment. */
+export function instructionCountsOf(feedbacks: Feedback[]): ReadonlyMap<number, number> {
+    const counts = new Map<number, number>();
+    for (const feedback of feedbacks) {
+        const instructionId = feedback.gradingInstruction?.id;
+        if (instructionId !== undefined) {
+            counts.set(instructionId, (counts.get(instructionId) ?? 0) + 1);
+        }
+    }
+    return counts;
+}
+
 /**
  * DTO representing feedback returned by the server.
  */
