@@ -3,7 +3,6 @@ import { HttpResponse } from '@angular/common/http';
 export interface PageableResult<T> {
     content: T[];
     totalElements: number;
-    totalPages?: number;
 }
 
 /**

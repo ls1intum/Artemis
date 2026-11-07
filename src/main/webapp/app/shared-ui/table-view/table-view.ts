@@ -137,6 +137,14 @@ export interface TableViewOptions extends Partial<TableConfig> {
     hidePageSizeOptions?: boolean;
 }
 
+/** Options for {@link TableViewComponent.reload}. */
+export interface TableReloadOptions {
+    /** 0-based page to load. Default: the current page. */
+    page?: number;
+    /** Number of rows removed since the last load, subtracted from the known total before the page is clamped. Default: 0. */
+    rowsRemoved?: number;
+}
+
 const DEFAULT_TABLE_CONFIG: TableConfig = {
     lazy: true,
     paginated: true,
@@ -571,40 +579,36 @@ export class TableViewComponent<T> {
     }
 
     /**
-     * Clears the search field and all pagination state, then fires an immediate lazy load at page 0.
-     * Use this when the underlying data has changed and you want a clean slate (e.g. after registering a student).
-     * No-op in non-lazy mode.
+     * Restores the table to its initial state: clears the search and filters, restores the initial sort and the
+     * configured page size, then fires an immediate lazy load at page 0. Use this when the table switches to a
+     * different dataset. No-op in non-lazy mode.
      */
     reset(): void {
         if (!this.resolvedOptions().lazy) return;
         this.currentFirst.set(0);
         this.currentPageSizeOverride.set(undefined);
+        // resetSearchValue() synchronously emits newSearchEvent('') → onGlobalSearch('') → queues a debounce.
+        // We cancel that debounce immediately so only the load below fires.
         this.searchFilter()?.resetSearchValue();
         clearTimeout(this.debounceTimer);
-        this.query.update((query) => cloneWith(query, { search: '' }));
+        // A query without a sort field falls back to the initial sort.
+        this.query.set({ order: 1, search: '' });
         this.columnFilters.set({});
         this.emitQuery();
     }
 
-    /** Reload a page in place while preserving the user's page size, sort and filters. */
-    reload(page = this.currentPageNumber()): void {
-        if (!this.resolvedOptions().lazy) return;
-        this.currentFirst.set(page * this.effectivePageSize());
-        this.emitQuery();
-    }
-
     /**
-     * Reload after removing `removedCount` rows from the dataset, staying on the current page unless that page
-     * is no longer valid (e.g. the removed row was the last one on the last page), in which case it steps back
-     * to the last valid page. Uses only the table's own last-known total, so it always resolves in a single
-     * request — unlike {@link reload}, it never needs to fetch a page first to discover it came back empty.
+     * Fires an immediate lazy load, preserving the current search term, sort, filters and page size. Loads the current
+     * page unless `page` is given, and clamps it to the last page that still has rows, using the last-known total minus
+     * `rowsRemoved`. So a removal that empties the last page steps back in a single request.
      * No-op in non-lazy mode.
      */
-    reloadAfterRemoval(removedCount = 1): void {
+    reload({ page = this.currentPageNumber(), rowsRemoved = 0 }: TableReloadOptions = {}): void {
         if (!this.resolvedOptions().lazy) return;
-        const newTotal = Math.max(0, this.effectiveTotalRows() - removedCount);
-        const lastValidPage = Math.max(0, Math.ceil(newTotal / this.effectivePageSize()) - 1);
-        this.reload(Math.min(this.currentPageNumber(), lastValidPage));
+        const remainingRows = Math.max(0, this.effectiveTotalRows() - rowsRemoved);
+        const lastValidPage = Math.max(0, Math.ceil(remainingRows / this.effectivePageSize()) - 1);
+        this.currentFirst.set(Math.min(page, lastValidPage) * this.effectivePageSize());
+        this.emitQuery();
     }
 
     private currentPageNumber(): number {

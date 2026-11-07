@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecip
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
@@ -677,7 +677,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
 
     /**
-     * Searches for users by login (prefix), full name (contains), email (contains), or registration number (contains).
+     * Searches for users whose login, full name, email or registration number contains the search term.
      * Used for the generic user-registration modal to find users that can be added to an entity (e.g. exam).
      * Escapes LIKE wildcard characters ({@code %}, {@code _}, {@code \}) in {@code searchTerm} before querying.
      *
@@ -703,8 +703,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.deleted = FALSE
                 AND (
-                    LOWER(user.login) LIKE :#{#searchTerm}% ESCAPE '\\'
-                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    LOWER(user.login) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(CONCAT(COALESCE(user.firstName, ''), ' ', COALESCE(user.lastName, ''))) LIKE %:#{#searchTerm}% ESCAPE '\\'
                     OR LOWER(user.email) LIKE %:#{#searchTerm}% ESCAPE '\\'
                     OR LOWER(user.registrationNumber) LIKE %:#{#searchTerm}% ESCAPE '\\'
                 )
@@ -712,8 +712,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Page<User> findAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm);
 
     /**
-     * Searches for users by login (prefix), full name (contains), email (contains), or registration number (contains),
-     * excluding users who hold a staff role (teaching assistant, editor, instructor) in the given course or have
+     * Searches for users whose login, full name, email or registration number contains the search term, excluding users
+     * who hold a staff role (teaching assistant, editor, instructor) in the given course or have
      * admin/super-admin authority.
      * Escapes LIKE wildcard characters ({@code %}, {@code _}, {@code \}) in {@code searchTerm} before querying.
      *
@@ -736,8 +736,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.deleted = FALSE
                 AND (
-                    LOWER(user.login) LIKE :#{#searchTerm}% ESCAPE '\\'
-                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    LOWER(user.login) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(CONCAT(COALESCE(user.firstName, ''), ' ', COALESCE(user.lastName, ''))) LIKE %:#{#searchTerm}% ESCAPE '\\'
                     OR LOWER(user.email) LIKE %:#{#searchTerm}% ESCAPE '\\'
                     OR LOWER(user.registrationNumber) LIKE %:#{#searchTerm}% ESCAPE '\\'
                 )
@@ -1760,7 +1760,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param role     the {@link CourseRole} to filter by
      * @return page of matching {@link User} entities
      */
-    default Page<User> searchUsersInCourseRole(Pageable pageable, CourseRoleMembersSearchDTO search, long courseId, CourseRole role) {
+    default Page<User> searchUsersInCourseRole(Pageable pageable, PagedSearchDTO search, long courseId, CourseRole role) {
         // orderByColumn() applies the sort as a query.orderBy() side effect, so the Pageable itself stays unsorted.
         Specification<User> spec = notSoftDeleted().and(inCourseWithRole(courseId, role)).and(searchByLoginNameEmailOrRegistrationNumber(search.searchTerm()))
                 .and(orderByColumn(search.sortedColumn(), search.sortingOrder()));

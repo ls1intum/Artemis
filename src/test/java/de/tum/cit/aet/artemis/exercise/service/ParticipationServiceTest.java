@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultResource;
 import de.tum.cit.aet.artemis.buildagent.util.BuildJobUtilService;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -53,7 +54,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
@@ -467,7 +467,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
 
-        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
+        var page = participationService.findParticipationsForExercise(programmingExercise, new PagedSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL"), null, null);
 
         assertThat(page.getContent()).as("the participation is listed").hasSize(1);
         var dto = page.getContent().getFirst();
@@ -492,7 +492,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         Result latestResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, FIXED_EXERCISE_DUE_DATE.minusMinutes(1), submission, true, true, 85.0);
         User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
 
-        var page = participationService.findParticipationsForExercise(programmingExercise, new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
+        var page = participationService.findParticipationsForExercise(programmingExercise, new PagedSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL"), null, null);
 
         assertThat(page.getContent()).as("the participation is listed").hasSize(1);
         var dto = page.getContent().getFirst();
@@ -521,8 +521,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         var participation = participationUtilService.addTeamParticipationForExercise(teamExercise, team.getId());
         participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
-        var managementPage = participationService.findParticipationsForExercise(teamExercise,
-                new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL", null, null));
+        var managementPage = participationService.findParticipationsForExercise(teamExercise, new PagedSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "ALL"), null, null);
 
         assertThat(managementPage.getContent()).as("the team participation is listed").hasSize(1);
         var managementDto = managementPage.getContent().getFirst();

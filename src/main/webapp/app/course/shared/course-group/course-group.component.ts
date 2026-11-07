@@ -204,7 +204,7 @@ export class CourseGroupComponent {
             this.removeUserFromGroup()(member.login).subscribe({
                 next: () => {
                     this.dialogErrorSource.next('');
-                    this.tableViewRef()?.reloadAfterRemoval();
+                    this.tableViewRef()?.reload({ rowsRemoved: 1 });
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });

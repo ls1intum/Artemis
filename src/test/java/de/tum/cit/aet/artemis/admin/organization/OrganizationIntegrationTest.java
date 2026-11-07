@@ -581,6 +581,47 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     }
 
     /**
+     * Test that the member search matches the full name "First Last", which neither name column contains on its own.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetOrganizationUsersPaginated_filterByFullName() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+        User matchingMember = userUtilService.createAndSaveUser(TEST_PREFIX + "fullNameMember");
+        matchingMember.setFirstName("Orgfirstname");
+        matchingMember.setLastName("Orglastname");
+        userTestRepository.save(matchingMember);
+        User nonMatchingMember = userUtilService.createAndSaveUser(TEST_PREFIX + "fullNameOther");
+        userTestRepository.addOrganizationToUser(matchingMember.getId(), organization);
+        userTestRepository.addOrganizationToUser(nonMatchingMember.getId(), organization);
+
+        List<OrganizationMemberDTO> result = request.getList("/api/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+                pageableSearchUtilService.searchMapping(buildSearch("orgfirstname orglastname")));
+
+        assertThat(result).extracting(OrganizationMemberDTO::id).containsExactly(matchingMember.getId());
+    }
+
+    /**
+     * Test that the member search matches the registration number.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetOrganizationUsersPaginated_filterByRegistrationNumber() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+        User matchingMember = userUtilService.createAndSaveUser(TEST_PREFIX + "regNumberMember");
+        userUtilService.setRegistrationNumberOfUserAndSave(matchingMember, "ORG13922REG");
+        User nonMatchingMember = userUtilService.createAndSaveUser(TEST_PREFIX + "regNumberOther");
+        userTestRepository.addOrganizationToUser(matchingMember.getId(), organization);
+        userTestRepository.addOrganizationToUser(nonMatchingMember.getId(), organization);
+
+        List<OrganizationMemberDTO> result = request.getList("/api/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK, OrganizationMemberDTO.class,
+                pageableSearchUtilService.searchMapping(buildSearch("org13922reg")));
+
+        assertThat(result).extracting(OrganizationMemberDTO::id).containsExactly(matchingMember.getId());
+        assertThat(result.getFirst().visibleRegistrationNumber()).isEqualTo("ORG13922REG");
+    }
+
+    /**
      * Test pagination of courses within an organization: page 0 of size 2 returns the first 2 courses,
      * page 1 returns the third.
      */
@@ -769,6 +810,31 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         UserForRegistrationDTO nonMemberDTO = result.stream().filter(u -> u.id().equals(nonMember.getId())).findFirst().orElseThrow();
         assertThat(memberDTO.isRegistered()).isTrue();
         assertThat(nonMemberDTO.isRegistered()).isFalse();
+    }
+
+    /**
+     * Test that searchUsersForOrganizationRegistration matches a part of the login that is not its start.
+     * Name and email are set so that they do not contain the login and cannot produce the match instead.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testSearchUsersForOrganizationRegistration_matchesLoginInfix() throws Exception {
+        Organization organization = organizationUtilService.createOrganization();
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "orginfixlogin");
+        user.setFirstName("Unrelated");
+        user.setLastName("Person");
+        user.setEmail("unrelated.person.org@test.de");
+        userTestRepository.save(user);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("loginOrName", "orginfixlogin");
+        params.add("pageIndex", "0");
+        params.add("pageSize", "10");
+
+        List<UserForRegistrationDTO> result = request.getList("/api/admin/organizations/" + organization.getId() + "/users/search", HttpStatus.OK, UserForRegistrationDTO.class,
+                params);
+
+        assertThat(result).extracting(UserForRegistrationDTO::id).containsExactly(user.getId());
     }
 
     /**

@@ -3,7 +3,7 @@
     [closable]="true"
     [dismissableMask]="true"
     [visible]="isOpen()"
-    (visibleChange)="isOpen.set($event)"
+    (visibleChange)="onVisibleChange($event)"
     [style]="{ width: '50rem', maxWidth: '95vw', height: '45rem', maxHeight: '95vh' }"
     [draggable]="false"
     appendTo="body"

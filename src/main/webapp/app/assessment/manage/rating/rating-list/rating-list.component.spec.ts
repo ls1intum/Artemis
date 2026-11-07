@@ -66,7 +66,6 @@ describe('RatingListComponent', () => {
     const mockPageableResult: PageableResult<RatingListItem> = {
         content: mockRatings,
         totalElements: 3,
-        totalPages: 1,
     };
 
     const parentRoute = { params: of({ courseId: 123 }) } as any as ActivatedRoute;

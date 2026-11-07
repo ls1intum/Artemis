@@ -2,7 +2,7 @@ import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
-import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, toPageableResult } from 'app/foundation/pagination/pageable-table';
 import {
     CourseBrowserData,
     IndexOverview,
@@ -62,9 +62,7 @@ export class CourseIngestionDashboardService {
         if (request.active !== undefined) {
             params = params.set('active', request.active);
         }
-        return this.http
-            .get<IngestionCoverage[]>(`${this.baseUrl}/coverage`, { params, observe: 'response' })
-            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+        return this.http.get<IngestionCoverage[]>(`${this.baseUrl}/coverage`, { params, observe: 'response' }).pipe(map(toPageableResult));
     }
 
     /**
@@ -73,9 +71,7 @@ export class CourseIngestionDashboardService {
      */
     getLiveCoveragePage(request: LiveCoverageRequest = {}): Observable<PageableResult<IngestionCoverage>> {
         const params = this.searchParam(this.paginationParams(request), request.search);
-        return this.http
-            .get<IngestionCoverage[]>(`${this.baseUrl}/coverage/page`, { params, observe: 'response' })
-            .pipe(map((res) => ({ content: res.body ?? [], totalElements: Number(res.headers.get('X-Total-Count') ?? 0) })));
+        return this.http.get<IngestionCoverage[]>(`${this.baseUrl}/coverage/page`, { params, observe: 'response' }).pipe(map(toPageableResult));
     }
 
     /**
