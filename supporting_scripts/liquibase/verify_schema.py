@@ -84,7 +84,8 @@ CHANGESET_TAG = f"{NAMESPACE}changeSet"
 #   * scan_text_introductions (layout phase, no database) asserts that no changelog under changelog/
 #     introduces an unbounded-text column that is not in ALLOWED_TEXT_INTRODUCTIONS, and that every
 #     changeset the scanner cannot fully read and that might introduce unbounded text (<sqlFile>, a
-#     custom change, or a raw <sql> block mentioning a text type) is in UNVERIFIABLE_CHANGESETS.
+#     custom change, a raw <sql> block mentioning a text type, or an unresolved ${property}) is in
+#     UNVERIFIABLE_CHANGESETS.
 # The grandfather list is keyed by (table, column) and is deliberately decoupled from the baseline, so a
 # baseline re-cut cannot grow it -- only a reviewed edit here can. Introductions are keyed by their full
 # historical identity so that dropping a grandfathered column and re-adding it under the same name in a
@@ -168,7 +169,8 @@ ALLOWED_TEXT_INTRODUCTIONS: dict[tuple[str, str, str, str, str], str] = {
 }
 
 # (changelog_file, changeset_id, author) -> (reason, introduces). A changeset under changelog/ the scanner
-# cannot fully read -- <sqlFile>, a custom change class, a raw <sql> block mentioning a text type, or a
+# cannot fully read -- <sqlFile>, a custom change class, a raw <sql> block mentioning a text type or an
+# unresolved ${property}, or a
 # column whose type is an unresolved ${property} -- is hard-failed unless listed here. `introduces` is the
 # tuple of (table, column) pairs the changeset is attested to add or re-add as unbounded text, or () when it
 # adds none. Each declared pair must also be in ALLOWED_TEXT_INTRODUCTIONS (keyed by this changeset), so
@@ -760,13 +762,14 @@ def unbounded_text_introductions(changeset) -> set[tuple[str, str]]:
 def needs_manual_review(changeset) -> bool:
     """
     True when a changeset (outside its <rollback>) carries something the scanner cannot read for certain: a
-    <sqlFile> or custom change class, a raw <sql> block mentioning a text type, or a column whose type is an
-    unresolved ${property}. Such a changeset must be attested in UNVERIFIABLE_CHANGESETS.
+    <sqlFile> or custom change class, a raw <sql> block mentioning a text type or an unresolved ${property}
+    expression (which could substitute a text type), or a column whose type is an unresolved ${property}.
+    Such a changeset must be attested in UNVERIFIABLE_CHANGESETS.
     """
     for element in iter_forward_elements(changeset):
         if element.tag in HARD_OPAQUE_TAGS or element.get("class"):
             return True
-        if element.tag == SQL_TAG and element.text and TEXT_TYPE_TOKEN.search(element.text):
+        if element.tag == SQL_TAG and element.text and (TEXT_TYPE_TOKEN.search(element.text) or "${" in element.text):
             return True
         if element.tag == COLUMN_TAG and "${" in (element.get("type") or ""):
             return True
@@ -803,10 +806,10 @@ def scan_text_introductions(files: list[tuple[str, Path]], allowed_introductions
                 entry = unverifiable_changesets.get(key)
                 if entry is None:
                     failures.append(
-                        f"{relative}: changeset {identifier} ({author}) carries a raw <sql>/<sqlFile>/custom change or a "
-                        f"${{property}}-typed column the guard cannot read and that may introduce unbounded text. Review it, "
-                        f'then add ("{relative}", "{identifier}", "{author}"): ("<reason>", (<(table, column) pairs it '
-                        f"introduces, or empty>)) to UNVERIFIABLE_CHANGESETS."
+                        f"{relative}: changeset {identifier} ({author}) carries a raw <sql>/<sqlFile>/custom change or an "
+                        f"unresolved ${{property}} (in a column type or raw SQL) the guard cannot read and that may introduce "
+                        f'unbounded text. Review it, then add ("{relative}", "{identifier}", "{author}"): ("<reason>", '
+                        f"(<(table, column) pairs it introduces, or empty>)) to UNVERIFIABLE_CHANGESETS."
                     )
                 else:
                     _reason, introduces = entry

@@ -135,6 +135,19 @@ class ScanTextIntroductionsTest(unittest.TestCase):
         body = '<changeSet id="cs1" author="x"><sql>UPDATE foo SET bar = 1 WHERE baz IS NULL</sql></changeSet>'
         self.assertEqual(self.run_scan(body), [])
 
+    def test_raw_sql_with_property_substitution_needs_review(self):
+        # A ${property} in raw SQL could resolve to a text type, so it must require attestation. Otherwise a
+        # grandfathered column could be dropped and re-added via `ADD COLUMN description ${payloadType}`
+        # unnoticed (the literal-token scan would miss it and the final-schema check accepts the old name).
+        body = '<changeSet id="cs1" author="x"><sql>ALTER TABLE course ADD COLUMN description ${payloadType}</sql></changeSet>'
+        failures = self.run_scan(body)
+        self.assertEqual(len(failures), 1)
+        self.assertIn("UNVERIFIABLE_CHANGESETS", failures[0])
+        # With a changeset-scoped attestation of what it introduces plus the matching approval, it passes.
+        exempt = {(FILE, "cs1", "x"): ("reviewed: re-adds course.description", (("course", "description"),))}
+        allowed = {(FILE, "cs1", "x", "course", "description"): "re-add"}
+        self.assertEqual(self.run_scan(body, allowed=allowed, unverifiable=exempt), [])
+
     def test_attested_opaque_introduction_requires_introduction_pairing(self):
         # Regression: a raw-SQL re-add attested as introducing a column must still carry the changeset-scoped
         # ALLOWED_TEXT_INTRODUCTIONS entry. Without it, it fails; with it, it passes. The final-schema list is
