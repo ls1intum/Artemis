@@ -45,6 +45,11 @@ describe('ExerciseCategoriesComponent', () => {
     it('should use white text on a dark category color and black text on a light one', () => {
         expect(component.categoryTextColor('#8b0000')).toBe('white');
         expect(component.categoryTextColor('#ffff00')).toBe('black');
+        // White on pure red only reaches about 4:1, black reaches about 5:1
+        expect(component.categoryTextColor('#ff0000')).toBe('black');
+        // Values the browser may not apply as a background keep the inherited text color
+        expect(component.categoryTextColor('000000')).toBeUndefined();
+        expect(component.categoryTextColor('#00000000')).toBeUndefined();
         expect(component.categoryTextColor(undefined)).toBeUndefined();
     });
 

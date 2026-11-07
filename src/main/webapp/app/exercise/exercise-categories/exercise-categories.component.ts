@@ -8,7 +8,7 @@ import { IncludedInScoreBadgeComponent } from '../exercise-headers/included-in-s
 import { DifficultyBadgeComponent } from '../exercise-headers/difficulty-badge/difficulty-badge.component';
 import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
 import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
-import { getContrastingTextColor } from 'app/foundation/util/color.utils';
+import { getReadableTextColor } from 'app/foundation/util/color.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 interface ShowTagsConfig {
@@ -39,9 +39,9 @@ export class ExerciseCategoriesComponent {
         includedInScore: false,
     });
 
-    /** Picks black or white text so the category name stays readable on dark and light category colors. */
+    /** Picks black or white text so the category name stays readable on dark and light category colors; undefined keeps the inherited color. */
     categoryTextColor(color: string | undefined): string | undefined {
-        return color ? getContrastingTextColor(color) : undefined;
+        return getReadableTextColor(color);
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {
