@@ -4,6 +4,8 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Which lecture units actually hold content in one Iris collection for a course, for the admin content browser's tree.
  * <p>
@@ -17,5 +19,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param orphanedUnitIds ids that still hold content in this collection but are no longer expected for its indexing rule
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IndexedContentPresenceDTO(String key, Set<Long> unitIds, Set<Long> orphanedUnitIds) {
+public record IndexedContentPresenceDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) String key, Set<Long> unitIds, Set<Long> orphanedUnitIds) {
 }

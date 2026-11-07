@@ -18,15 +18,12 @@ import {
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import {
-    BrowserSelection,
-    IndexedContentPresence,
-    IndexedEntity,
-    IngestionTypeCount,
-    MissingContent,
-    MissingEntity,
-    selectionKey,
-} from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { BrowserSelection, selectionKey } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { IngestionTypeCount } from 'app/openapi/model/ingestion-type-count';
+import { IndexedEntity } from 'app/openapi/model/indexed-entity';
+import { IndexedContentPresence } from 'app/openapi/model/indexed-content-presence';
+import { MissingEntity } from 'app/openapi/model/missing-entity';
+import { MissingContent } from 'app/openapi/model/missing-content';
 
 /** The metadata types listed in the scoreboard, in a fixed order so the list does not reshuffle between courses. */
 const SCOREBOARD_TYPES = ['exercise', 'lecture', 'lecture_unit', 'exam', 'faq', 'channel', 'course'] as const;
@@ -168,7 +165,7 @@ export class CourseIngestionBrowserTreeComponent {
         const entities = this.entities();
         const unitIdsByContentKey = this.contentPresence().map((presence) => ({
             key: presence.key,
-            unitIds: new Set(presence.unitIds),
+            unitIds: new Set(presence.unitIds ?? []),
             orphanedUnitIds: new Set(presence.orphanedUnitIds ?? []),
         }));
         const unitsWithGaps = new Set([...this.contentGaps().map((gap) => gap.lectureUnitId), ...unitIdsByContentKey.flatMap((content) => [...content.orphanedUnitIds])]);
@@ -227,10 +224,11 @@ export class CourseIngestionBrowserTreeComponent {
         const addUnit = (lectureId: number, unit: UnitNode) => unitsByLecture.set(lectureId, [...(unitsByLecture.get(lectureId) ?? []), unit]);
 
         for (const entity of entities) {
-            if (entity.type !== 'lecture_unit' || entity.lectureId === undefined) {
+            const lectureId = entity.lectureId ?? undefined;
+            if (entity.type !== 'lecture_unit' || lectureId === undefined) {
                 continue;
             }
-            addUnit(entity.lectureId, unitNode(entity.entityId, entity.title ?? '', true, entity.expected === true));
+            addUnit(lectureId, unitNode(entity.entityId, entity.title ?? '', true, entity.expected === true));
         }
 
         // A unit the database still has but the index does not belongs under its lecture like any other: only its
@@ -241,14 +239,15 @@ export class CourseIngestionBrowserTreeComponent {
         const unitIdsFromTheIndex = new Set(entities.filter((entity) => entity.type === 'lecture_unit').map((entity) => entity.entityId));
         const lecturesWithOmittedGaps = new Set<number>();
         for (const missing of this.missingEntities()) {
-            if (missing.type !== 'lecture_unit' || missing.lectureId === undefined || unitIdsFromTheIndex.has(missing.entityId)) {
+            const lectureId = missing.lectureId ?? undefined;
+            if (missing.type !== 'lecture_unit' || lectureId === undefined || unitIdsFromTheIndex.has(missing.entityId)) {
                 continue;
             }
             const unit = unitNode(missing.entityId, missing.title ?? '', false, true);
             if (unit.content.length > 0) {
-                addUnit(missing.lectureId, unit);
+                addUnit(lectureId, unit);
             } else {
-                lecturesWithOmittedGaps.add(missing.lectureId);
+                lecturesWithOmittedGaps.add(lectureId);
             }
         }
 
@@ -297,7 +296,7 @@ export class CourseIngestionBrowserTreeComponent {
                 .filter((missing) => missing.type === 'lecture_unit')
                 .map((missing) => missing.entityId),
         ]);
-        const orphanedUnitIds = [...new Set(presence.flatMap((entry) => entry.unitIds))].filter((unitId) => !knownUnitIds.has(unitId)).sort((a, b) => a - b);
+        const orphanedUnitIds = [...new Set(presence.flatMap((entry) => entry.unitIds ?? []))].filter((unitId) => !knownUnitIds.has(unitId)).sort((a, b) => a - b);
 
         return orphanedUnitIds.map((unitId) => {
             const selection: BrowserSelection = { kind: 'unit', unitId };
@@ -306,7 +305,7 @@ export class CourseIngestionBrowserTreeComponent {
                 selection,
                 unitId,
                 content: presence
-                    .filter((entry) => entry.unitIds.includes(unitId))
+                    .filter((entry) => (entry.unitIds ?? []).includes(unitId))
                     .map((entry) => {
                         const contentSelection: BrowserSelection = { kind: 'collection', unitId, key: entry.key };
                         return { key: selectionKey(contentSelection), selection: contentSelection, contentKey: entry.key, orphaned: true };

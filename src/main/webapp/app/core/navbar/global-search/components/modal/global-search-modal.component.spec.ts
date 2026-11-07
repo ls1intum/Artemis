@@ -17,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
+import { CourseForSearchFilter } from 'app/openapi/model/course-for-search-filter';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -101,6 +102,7 @@ describe('GlobalSearchModalComponent', () => {
 
     const mockSearchService = {
         globalSearch: vi.fn(() => of<GlobalSearchResult[]>([])),
+        getCourseFilterOptions: vi.fn(() => of<CourseForSearchFilter[]>([])),
     };
 
     const courses = [{ id: 1, title: 'Deep Learning' } as Course, { id: 2, title: 'Computer Vision' } as Course];
@@ -115,6 +117,7 @@ describe('GlobalSearchModalComponent', () => {
         // test would otherwise leak into every later one and make results order-dependent.
         mockCourseStorageService.getCourse.mockImplementation((id) => courses.find((course) => course.id === id));
         mockSearchService.globalSearch.mockReturnValue(of<GlobalSearchResult[]>([]));
+        mockSearchService.getCourseFilterOptions.mockReturnValue(of<CourseForSearchFilter[]>([]));
         TestBed.configureTestingModule({
             imports: [GlobalSearchModalComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
