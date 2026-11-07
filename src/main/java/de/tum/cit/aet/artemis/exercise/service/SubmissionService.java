@@ -819,11 +819,8 @@ public class SubmissionService {
      * Checks that manual assessment of the given exam exercise is already possible, i.e. that the exam is over for every
      * student and, for programming exercises, that the tests have run once more on the final submissions.
      * <p>
-     * This is the shared gate every endpoint that opens an assessment goes through, for all exercise types: without it
-     * tutors can start grading while students are still working, and would grade a submission the student then replaces
-     * (see issue #13358). It is a no-op for course exercises (they are covered by
-     * {@link #checkIfExerciseDueDateIsReached}) and for instructor test runs, which happen before the exam starts and
-     * must stay assessable.
+     * Prevents assessment while students can still replace submissions (see issue #13358).
+     * Course exercises use {@link #checkIfExerciseDueDateIsReached}; instructor test runs bypass this gate.
      * <p>
      * NOTE: the check is exam-wide, i.e. based on the latest individual end date of all student exams, not on the
      * individual student behind the given participation. Granting one student more working time therefore postpones
