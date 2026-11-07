@@ -952,6 +952,13 @@
                 },
                 "outdated": "Veraltet",
                 "reanalyze": "Erneut analysieren"
+            },
+            "buildNotifications": {
+                "enable": "Browser-Benachrichtigungen für Build-Ergebnisse aktivieren",
+                "disable": "Browser-Benachrichtigungen für Build-Ergebnisse deaktivieren",
+                "blocked": "Benachrichtigungen sind blockiert. Erlaube sie in deinen Browser-Einstellungen.",
+                "error": "Browser-Benachrichtigungen sind nicht verfügbar. Das Tab-Symbol zeigt weiterhin Build-Ergebnisse an.",
+                "resultReceived": "Build-Ergebnis erhalten"
             }
         },
         "checklistAnalysisRequest": {
