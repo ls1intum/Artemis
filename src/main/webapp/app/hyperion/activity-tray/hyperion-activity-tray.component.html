@@ -37,6 +37,7 @@
                         tumAetUiButton
                         variant="text"
                         size="small"
+                        [severity]="showHistory() ? 'primary' : 'secondary'"
                         [attr.aria-pressed]="showHistory()"
                         data-testid="ai-activity-history"
                         (click)="showHistory.set(!showHistory())"
@@ -49,7 +50,9 @@
             @if (loadFailed()) {
                 <tumaet-ui-message severity="error" data-testid="ai-activity-load-error">
                     {{ 'artemisApp.hyperion.jobs.loadFailed' | artemisTranslate }}
-                    <button type="button" tumAetUiButton variant="text" size="small" (click)="refresh(true)">{{ 'artemisApp.hyperion.jobs.retry' | artemisTranslate }}</button>
+                    <button type="button" tumAetUiButton variant="text" severity="secondary" size="small" (click)="refresh(true)">
+                        {{ 'artemisApp.hyperion.jobs.retry' | artemisTranslate }}
+                    </button>
                 </tumaet-ui-message>
             }
             <ul
@@ -141,6 +144,8 @@
                         }
                         @if (row.canCancel) {
                             <button
+                                data-button-intent="destructive"
+                                data-button-intent-reason="Stops the running generation job"
                                 type="button"
                                 tumAetUiButton
                                 variant="outlined"

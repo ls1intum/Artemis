@@ -36,7 +36,7 @@
         }
     </form>
     <ng-template #footer>
-        <button tumAetUiButton type="button" [severity]="status() === 'submitted' ? 'primary' : 'secondary'" (click)="clear()" jhiTranslate="entity.action.close"></button>
+        <button tumAetUiButton type="button" severity="secondary" (click)="clear()" jhiTranslate="entity.action.close"></button>
         @if (status() !== 'submitted') {
             <button
                 tumAetUiButton

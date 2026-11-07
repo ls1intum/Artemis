@@ -1,99 +1,69 @@
-<div class="btn-group {{ isDetailPage() ? 'flex-wrap' : 'flex-btn-group-container' }}">
-    @if (quizExercise().isAtLeastTutor) {
-        <div class="{{ isDetailPage() ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
-            <a [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 'participations']" class="btn btn-primary btn-sm me-1 mb-1">
-                <fa-icon [icon]="faListAlt" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
-            </a>
-        </div>
-        <div class="{{ isDetailPage() ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
-            <a [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 'quiz-point-statistic']" class="btn btn-info btn-sm me-1 mb-1">
-                <span>
-                    <fa-icon [icon]="faSignal" />
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.statistics"></span>
-                </span>
-            </a>
-        </div>
-        <div class="{{ isDetailPage() ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
-            <a data-testid="preview-quiz" [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 'preview']" class="btn btn-success btn-sm me-1 mb-1">
-                <fa-icon [icon]="faEye" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview"></span>
-            </a>
-        </div>
-        <div class="{{ isDetailPage() ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
-            <a [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 'solution']" class="btn btn-success btn-sm me-1 mb-1">
-                <fa-icon [icon]="faEye" />
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution"></span>
-            </a>
-        </div>
+@if (isDetailPage()) {
+    @if (detailPageSection() === 'actions') {
+        <jhi-exercise-detail-actions>
+            <ng-container detailNavigationActions>
+                <ng-container [ngTemplateOutlet]="navigationActions" />
+            </ng-container>
+            <ng-container detailEditingActions>
+                <ng-container [ngTemplateOutlet]="editingActions" />
+
+                @if (quizExercise().isAtLeastInstructor && quizExercise().quizEnded && quizExercise().canBeEvaluated) {
+                    <tumaet-ui-button
+                        data-testid="quiz-evaluate-button"
+                        severity="warn"
+                        size="small"
+                        [icon]="faClipboardCheck"
+                        [loading]="isEvaluatingQuizExercise()"
+                        [ariaLabel]="'artemisApp.quizExercise.evaluateQuizExercise' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.quizExercise.evaluateQuizExercise' | artemisTranslate"
+                        (clicked)="evaluateQuizExercise()"
+                        ><span class="hidden @sm:inline" jhiTranslate="artemisApp.quizExercise.evaluateQuizExercise"></span
+                    ></tumaet-ui-button>
+                }
+                @if (quizExercise().isAtLeastEditor) {
+                    <jhi-create-variant-with-ai-button [exercise]="quizExercise()" styleClass="min-w-0 flex-1 @7xl:flex-none [&>tumaet-ui-button]:w-full" />
+                }
+            </ng-container>
+            <ng-container detailMoreActions>
+                @if (quizExercise().isAtLeastEditor) {
+                    <button
+                        tumAetUiButton
+                        type="button"
+                        severity="secondary"
+                        size="small"
+                        [tumAetUiMenuTrigger]="moreActions"
+                        [attr.aria-label]="'artemisApp.exerciseDetail.moreActions' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.exerciseDetail.moreActions' | artemisTranslate"
+                        data-testid="exercise-more-actions"
+                    >
+                        <fa-icon [icon]="faEllipsis" /><span class="hidden sm:inline" jhiTranslate="artemisApp.exerciseDetail.moreActions"></span>
+                    </button>
+                    <ng-template #moreActions
+                        ><tumaet-ui-menu
+                            ><button tumAetUiMenuItem type="button" (triggered)="exportQuizExercise(true)" data-testid="quiz-export">
+                                <fa-icon [icon]="faFileExport" /><span jhiTranslate="entity.action.export"></span></button></tumaet-ui-menu
+                    ></ng-template>
+                }
+            </ng-container>
+        </jhi-exercise-detail-actions>
+        @if (evaluationError(); as error) {
+            <p class="mt-2! text-state-danger" role="alert">{{ error }}</p>
+        }
     }
-    <div class="{{ isDetailPage() ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
-        @if (quizExercise().isAtLeastEditor && isDetailPage()) {
-            <button type="submit" (click)="exportQuizExercise(true)" class="btn btn-warning btn-sm me-1 mb-1">
-                <fa-icon [icon]="faFileExport" />
-                <span class="d-none d-md-inline" jhiTranslate="entity.action.export"></span>
+    @if (detailPageSection() === 'administration' && quizExercise().isAtLeastInstructor) {
+        <div class="flex flex-wrap items-center gap-2">
+            <button
+                type="button"
+                jhiDeleteButton
+                [entityTitle]="quizExercise().title || ''"
+                [actionType]="ActionType.Reset"
+                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                (delete)="resetQuizExercise()"
+                [dialogError]="dialogError$"
+                deleteQuestion="artemisApp.quizExercise.reset.question"
+            >
+                <fa-icon [icon]="faUndo" />
             </button>
-            <!-- Detail page only: exercise rows already carry a "Create Variant with AI" action of their own. -->
-            <jhi-create-variant-with-ai-button [exercise]="quizExercise()" styleClass="me-1 mb-1" />
-        }
-        @if (quizExercise().isAtLeastEditor && !quizExercise().quizEnded) {
-            <span [ngbTooltip]="!quizExercise().isEditable ? ('artemisApp.quizExercise.editNotPossibleDuringQuiz' | artemisTranslate) : ''">
-                <a
-                    [routerLink]="quizExercise().isEditable ? [baseUrl(), 'quiz-exercises', quizExercise().id, 'edit'] : null"
-                    class="btn btn-warning btn-sm me-1 mb-1"
-                    [class.disabled]="!quizExercise().isEditable"
-                    [attr.aria-disabled]="!quizExercise().isEditable"
-                    [attr.tabindex]="!quizExercise().isEditable ? -1 : null"
-                >
-                    <fa-icon [icon]="faWrench" />
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-                </a>
-            </span>
-        }
-        @if (quizExercise().isAtLeastInstructor && quizExercise().quizEnded) {
-            <a [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 're-evaluate']" class="btn btn-warning btn-sm me-1 mb-1">
-                <fa-icon [icon]="faWrench" />
-                <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate"></span>
-            </a>
-            @if (isDetailPage() && quizExercise().canBeEvaluated) {
-                <jhi-button
-                    data-testid="quiz-evaluate-button"
-                    [btnType]="ButtonType.WARNING"
-                    [btnSize]="ButtonSize.SMALL"
-                    [title]="'artemisApp.quizExercise.evaluateQuizExercise'"
-                    [icon]="faClipboardCheck"
-                    [isLoading]="isEvaluatingQuizExercise()"
-                    (onClick)="evaluateQuizExercise()"
-                    class="me-1 mb-1"
-                />
-            }
-        }
-    </div>
-    @if (quizExercise().isAtLeastInstructor) {
-        @if (isDetailPage()) {
-            <div class="d-flex">
-                <button
-                    type="button"
-                    jhiDeleteButton
-                    [entityTitle]="quizExercise().title || ''"
-                    [actionType]="ActionType.Reset"
-                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                    (delete)="resetQuizExercise()"
-                    [dialogError]="dialogError$"
-                    deleteQuestion="artemisApp.quizExercise.reset.question"
-                    class="mb-1"
-                >
-                    <fa-icon [icon]="faUndo" />
-                </button>
-            </div>
-        }
-
-        <!-- Slot for extra host-provided actions (e.g. the Atlas "Suggest competencies" trigger).
-             Placed before Delete so it groups inline with the other actions; Delete stays the
-             terminal (destructive) button, matching the non-programming common-actions bar. -->
-        <ng-content />
-
-        <div class="{{ isDetailPage() ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
             <button
                 type="button"
                 jhiDeleteButton
@@ -109,10 +79,116 @@
                 (delete)="deleteQuizExercise()"
                 [dialogError]="dialogError$"
                 id="delete-quiz-{{ quizExercise().id }}"
-                class="mb-1"
             >
                 <fa-icon [icon]="faTrash" />
             </button>
         </div>
     }
-</div>
+} @else {
+    <div class="flex gap-2">
+        <div class="flex flex-col gap-1">
+            <ng-container [ngTemplateOutlet]="navigationActions" />
+        </div>
+        <div class="flex flex-col gap-1">
+            <ng-container [ngTemplateOutlet]="editingActions" />
+        </div>
+        @if (quizExercise().isAtLeastInstructor) {
+            <ng-content />
+            <div class="flex flex-col gap-1">
+                <button
+                    type="button"
+                    jhiDeleteButton
+                    [entityTitle]="quizExercise().title || ''"
+                    deleteQuestion="artemisApp.exercise.delete.question"
+                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                    entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                    [fetchEntitySummary]="fetchExerciseDeletionSummary()"
+                    [translateValues]="{
+                        courseTitle: course()?.title,
+                        courseType: course()?.testCourse
+                            ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                            : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                    }"
+                    (delete)="deleteQuizExercise()"
+                    [dialogError]="dialogError$"
+                    id="delete-quiz-{{ quizExercise().id }}"
+                >
+                    <fa-icon [icon]="faTrash" />
+                </button>
+            </div>
+        }
+    </div>
+}
+
+<ng-template #navigationActions>
+    @if (quizExercise().isAtLeastTutor) {
+        <a
+            tumAetUiButton
+            size="small"
+            severity="primary"
+            [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 'participations']"
+            [attr.aria-label]="'artemisApp.exercise.participations' | artemisTranslate"
+            [tumAetUiTooltip]="'artemisApp.exercise.participations' | artemisTranslate"
+            ><fa-icon [icon]="faListAlt" /><span class="hidden sm:inline" jhiTranslate="artemisApp.exercise.participations"></span
+        ></a>
+        <a
+            tumAetUiButton
+            size="small"
+            severity="info"
+            [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 'quiz-point-statistic']"
+            [attr.aria-label]="'artemisApp.quizExercise.statistics' | artemisTranslate"
+            [tumAetUiTooltip]="'artemisApp.quizExercise.statistics' | artemisTranslate"
+            ><fa-icon [icon]="faSignal" /><span class="hidden sm:inline" jhiTranslate="artemisApp.quizExercise.statistics"></span
+        ></a>
+        <a
+            tumAetUiButton
+            size="small"
+            severity="success"
+            [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 'preview']"
+            [attr.aria-label]="'artemisApp.quizExercise.preview' | artemisTranslate"
+            [tumAetUiTooltip]="'artemisApp.quizExercise.preview' | artemisTranslate"
+            data-testid="preview-quiz"
+            ><fa-icon [icon]="faEye" /><span class="hidden sm:inline" jhiTranslate="artemisApp.quizExercise.preview"></span
+        ></a>
+        <a
+            tumAetUiButton
+            size="small"
+            severity="success"
+            [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 'solution']"
+            [attr.aria-label]="'artemisApp.quizExercise.solution' | artemisTranslate"
+            [tumAetUiTooltip]="'artemisApp.quizExercise.solution' | artemisTranslate"
+            ><fa-icon [icon]="faEye" /><span class="hidden sm:inline" jhiTranslate="artemisApp.quizExercise.solution"></span
+        ></a>
+    }
+</ng-template>
+
+<ng-template #editingActions>
+    @if (quizExercise().isAtLeastEditor && !quizExercise().quizEnded) {
+        <span class="flex min-w-0" [tumAetUiTooltip]="!quizExercise().isEditable ? ('artemisApp.quizExercise.editNotPossibleDuringQuiz' | artemisTranslate) : ''">
+            <a
+                tumAetUiButton
+                size="small"
+                severity="warn"
+                [routerLink]="quizExercise().isEditable ? [baseUrl(), 'quiz-exercises', quizExercise().id, 'edit'] : undefined"
+                [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                [tumAetUiTooltip]="'entity.action.edit' | artemisTranslate"
+                [class.opacity-60]="!quizExercise().isEditable"
+                [class.pointer-events-none]="!quizExercise().isEditable"
+                [attr.aria-disabled]="!quizExercise().isEditable"
+                [attr.tabindex]="!quizExercise().isEditable ? -1 : null"
+                ><fa-icon [icon]="faWrench" /><span jhiTranslate="entity.action.edit"></span
+            ></a>
+        </span>
+    }
+    @if (quizExercise().isAtLeastInstructor && quizExercise().quizEnded) {
+        <a
+            tumAetUiButton
+            size="small"
+            severity="warn"
+            [routerLink]="[baseUrl(), 'quiz-exercises', quizExercise().id, 're-evaluate']"
+            [attr.aria-label]="'entity.action.re-evaluate' | artemisTranslate"
+            [tumAetUiTooltip]="'entity.action.re-evaluate' | artemisTranslate"
+            ><fa-icon [icon]="faWrench" /><span jhiTranslate="entity.action.re-evaluate"></span
+        ></a>
+    }
+</ng-template>

@@ -114,6 +114,12 @@ describe('CodeButtonPopoverContentComponent', () => {
         expect(repositoryUrlElement().textContent.trim()).toBe(repositoryUrl);
     }
 
+    it('retains read-only repository access by default without offering browser editing', () => {
+        renderComponent([tokenAuthenticationMethodData]);
+        expect(fixture.nativeElement.querySelector('[data-testid="open-repository-button"]')?.getAttribute('href')).toBe('/courses/1/exercises/2/repository');
+        expect(fixture.nativeElement.querySelector('[data-testid="edit-repository-button"]')).toBeNull();
+    });
+
     describe('authentication method rendering and selection', () => {
         it('should render every authentication method and select one from the menu', async () => {
             renderComponent([passwordAuthenticationMethodData, tokenAuthenticationMethodData, sshAuthenticationMethodData]);

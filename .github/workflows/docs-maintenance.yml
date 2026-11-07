@@ -64,6 +64,52 @@ jobs:
             gh issue create --title "$TITLE" --body-file "${RUNNER_TEMP}/body.md"
           fi
 
+  stale-screenshots:
+    name: Screenshots whose component changed after the image
+    if: github.repository == 'ls1intum/Artemis'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      # The check compares the dates of the last commits of an image and of its component, so it needs the whole history. It renders
+      # nothing and needs no running application: the images are rendered on demand, as described in the documentation guideline.
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      - name: List the stale screenshots
+        run: python supporting_scripts/check_docs_screenshots.py --stale > "${RUNNER_TEMP}/stale-screenshots.md"
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TITLE: 'Documentation: screenshots whose component changed after the image'
+        run: |
+          set -Eeuo pipefail
+          existing=$(gh issue list --state open --search "\"${TITLE}\" in:title" --json number,title --jq "[.[] | select(.title == \"${TITLE}\")][0].number // empty")
+          if grep -q '^0 screenshot' "${RUNNER_TEMP}/stale-screenshots.md"; then
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --comment "No screenshot is older than the component that it shows."
+            fi
+            exit 0
+          fi
+          {
+            cat "${RUNNER_TEMP}/stale-screenshots.md"
+            echo
+            echo "A listed image may still be correct: look at the page first. To render the images again, run \`./supporting_scripts/e2e/render-docs-screenshots.sh\`, check what differs, and add \`--update\` to replace the images, as described in \"Generated screenshots\" in the documentation guideline."
+            echo "This issue is kept up to date by \`.github/workflows/docs-maintenance.yml\`."
+          } > "${RUNNER_TEMP}/body.md"
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body-file "${RUNNER_TEMP}/body.md"
+          else
+            gh issue create --title "$TITLE" --body-file "${RUNNER_TEMP}/body.md"
+          fi
+
   external-links:
     name: External links that no longer work
     if: github.repository == 'ls1intum/Artemis'
