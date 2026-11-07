@@ -20,7 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
             [jhiFeatureToggle]="FeatureToggle.Exports"
             [disabled]="!exerciseId()"
             [variant]="inDropdown() ? 'text' : 'solid'"
-            [severity]="inDropdown() ? 'secondary' : 'info'"
+            severity="secondary"
             [class]="inDropdown() ? 'w-full justify-start!' : ''"
             [attr.aria-label]="'artemisApp.instructorDashboard.exportSubmissions.title' | artemisTranslate"
             size="small"

@@ -162,7 +162,7 @@
                     } @else if (materialsFailed()) {
                         <tumaet-ui-message severity="warn"
                             ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.materialError"></span
-                            ><tumaet-ui-button variant="text" size="small" (clicked)="loadLearningStatistics()"
+                            ><tumaet-ui-button severity="secondary" variant="text" size="small" (clicked)="loadLearningStatistics()"
                                 ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.retry"></span></tumaet-ui-button
                         ></tumaet-ui-message>
                     } @else {
@@ -197,7 +197,7 @@
                 } @else if (competenciesFailed()) {
                     <tumaet-ui-message severity="warn" class="m-5!"
                         ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.competencyError"></span
-                        ><tumaet-ui-button variant="text" size="small" (clicked)="loadLearningStatistics()"
+                        ><tumaet-ui-button severity="secondary" variant="text" size="small" (clicked)="loadLearningStatistics()"
                             ><span jhiTranslate="artemisApp.courseOverview.statistics.redesign.retry"></span></tumaet-ui-button
                     ></tumaet-ui-message>
                 } @else {

@@ -3,7 +3,7 @@
         type="button"
         tumAetUiButton
         [size]="btnSize() === ButtonSize.SMALL ? 'small' : btnSize() === ButtonSize.LARGE ? 'large' : 'default'"
-        [severity]="participationHasLatestSubmissionWithoutResult() ? 'danger' : 'primary'"
+        [severity]="!personalParticipation && !participationHasLatestSubmissionWithoutResult() && lastResultIsManual() ? 'danger' : 'primary'"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [forceDisabled]="isRetrievingBuildStatus() || isBuilding()"
         [attr.aria-label]="title() || 'artemisApp.programmingExercise.resubmit' | artemisTranslate"

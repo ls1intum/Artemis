@@ -59,7 +59,7 @@
                     </div>
                 </tumaet-ui-popover>
             }
-            <button type="button" tumAetUiButton size="small" (click)="refresh()" [attr.aria-label]="'artemisApp.exercise.refresh' | artemisTranslate">
+            <button type="button" tumAetUiButton size="small" severity="secondary" (click)="refresh()" [attr.aria-label]="'artemisApp.exercise.refresh' | artemisTranslate">
                 <fa-icon [icon]="faSync" />
                 <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.refresh"></span>
             </button>
@@ -73,7 +73,7 @@
                     <strong class="text-(--tumaet-ui-primary-color)"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
                     <span class="ms-1" jhiTranslate="artemisApp.exercise.showingOnlyInRange" [translateValues]="{ range: rangeFilter()!.toString() }"></span>
                 </span>
-                <button type="button" tumAetUiButton (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter"></button>
+                <button type="button" tumAetUiButton severity="secondary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter"></button>
             </h4>
         }
         <jhi-participation-access-notice [exercise]="exercise()!" />
@@ -125,6 +125,7 @@
             <a
                 [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
                 tumAetUiButton
+                severity="warn"
                 size="small"
                 [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                 [attr.aria-label]="'artemisApp.participation.onlineEditor' | artemisTranslate"
@@ -149,6 +150,7 @@
                 type="button"
                 (click)="addBasicPresentation(dto)"
                 tumAetUiButton
+                severity="primary"
                 size="small"
                 [attr.aria-label]="'artemisApp.participation.addPresentation.label' | artemisTranslate"
             >
@@ -163,6 +165,7 @@
                 [attr.aria-label]="'artemisApp.participation.savePresentation.label' | artemisTranslate"
                 (click)="addGradedPresentation(dto)"
                 tumAetUiButton
+                severity="primary"
                 size="small"
             >
                 <fa-icon [icon]="faFilePowerpoint" />
@@ -328,7 +331,7 @@
                     type="button"
                     tumAetUiButton
                     size="small"
-                    severity="success"
+                    severity="primary"
                     variant="outlined"
                     [disabled]="isSaving() || isPendingDueDateInvalid(cell.data.participationId)"
                     (click)="saveIndividualDueDate(cell.data)"
@@ -340,7 +343,7 @@
                     type="button"
                     tumAetUiButton
                     size="small"
-                    severity="danger"
+                    severity="secondary"
                     variant="outlined"
                     [disabled]="isSaving()"
                     (click)="cancelEditDueDate(cell.data)"
@@ -366,6 +369,7 @@
                 <button
                     type="button"
                     tumAetUiButton
+                    severity="warn"
                     size="small"
                     variant="text"
                     (click)="startEditDueDate(cell.data)"
