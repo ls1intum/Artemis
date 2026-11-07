@@ -20,6 +20,13 @@ class VerificationResultTest {
     }
 
     @Test
+    void onlyAFailedResultOpeningAReasonWithTheServerDefectPrefixIsAServerDefect() {
+        assertThat(new VerificationResult(false, false, true, 3, List.of(VerificationResult.SERVER_DEFECT_PREFIX + " seeded checks fail")).serverDefect()).isTrue();
+        assertThat(new VerificationResult(false, false, true, 3, List.of("Compile error: " + VerificationResult.SERVER_DEFECT_PREFIX)).serverDefect()).isFalse();
+        assertThat(new VerificationResult(true, true, true, 3, List.of()).serverDefect()).isFalse();
+    }
+
+    @Test
     void bindsAVerifiedResultToTheExactCandidate() {
         WorkspaceSnapshot candidate = new WorkspaceSnapshot(List.of(new WorkspaceFile("solution/A.java", new byte[] { 1 }, false)));
         var verification = new VerificationResult(true, true, true, 3, List.of());

@@ -16,6 +16,83 @@ import org.junit.jupiter.params.provider.ValueSource;
 class JavaSourceInspectorTest {
 
     @Test
+    void emptyJUnitBodiesPreserveDeclarationsAndHelpersAndHandleNestedSyntax() {
+        String source = """
+                import org.junit.jupiter.api.Test;
+                class LearnerTest {
+                    @Test public void checksValues() throws Exception {
+                        String braces = "} { @Test";
+                        if (braces.length() > 0) { assertEquals(3, helper()); }
+                    }
+                    @org.junit.jupiter.api.Test void checksMore() { assertTrue(true); }
+                    int helper() { return 3; }
+                }
+                """;
+        String variant = JavaSourceInspector.studentTestVariants(source, "").getFirst().empty();
+        assertThat(variant).contains("@Test public void checksValues() throws Exception {}", "@org.junit.jupiter.api.Test void checksMore() { assertTrue(true); }",
+                "int helper() { return 3; }").doesNotContain("braces", "assertEquals");
+    }
+
+    @Test
+    void suppressingAssertionFailuresPreservesExecutedTestActionsAndHelpers() {
+        String source = """
+                class Learner {
+                    @org.junit.jupiter.api.Test void checks() {
+                        Support.observe();
+                        org.junit.jupiter.api.Assertions.assertEquals(2, Support.value());
+                    }
+                    int helper() { return 2; }
+                }
+                """;
+        assertThat(JavaSourceInspector.studentTestVariants(source, "").getFirst().nonFailing()).contains("try {", "Support.observe();",
+                "org.junit.jupiter.api.Assertions.assertEquals(2, Support.value());", "catch (java.lang.AssertionError", "int helper() { return 2; }");
+    }
+
+    @Test
+    void learnerMethodsAreRewrittenSeparatelyAndSuppliedExamplesArePreserved() {
+        String template = """
+                class Learner {
+                    @org.junit.jupiter.api.BeforeEach void setup() {}
+                    @org.junit.jupiter.api.Test void supplied() { assertTrue(true); }
+                    @org.junit.jupiter.api.Test void strong() {}
+                    @org.junit.jupiter.api.Test void weak() {}
+                }
+                """;
+        String solution = template.replace("void strong() {}", "void strong() { assertEquals(5, API.sum(2, 3)); }").replace("void weak() {}",
+                "void weak() { API.observe(); assertTrue(true); }");
+        var variants = JavaSourceInspector.studentTestVariants(solution, template);
+        assertThat(variants).extracting(JavaSourceInspector.JUnitTestVariant::method).containsExactly("strong", "weak");
+        assertThat(variants.get(1).nonFailing()).contains("void strong() { assertEquals(5, API.sum(2, 3)); }", "void supplied() { assertTrue(true); }",
+                "void weak() {try { API.observe(); assertTrue(true); } catch (java.lang.AssertionError");
+        assertThat(variants.get(1).empty()).contains("void weak() {}", "void strong() { assertEquals(5, API.sum(2, 3)); }");
+    }
+
+    @Test
+    void emptyLifecycleHooksDoNotDisableAssertionAssessment() {
+        String source = """
+                class Learner {
+                    @org.junit.jupiter.api.BeforeEach void setup() { /* no setup required */ }
+                    @org.junit.jupiter.api.AfterAll static void cleanup() {}
+                    @org.junit.jupiter.api.Test void checks() { assertEquals(5, Toolbox.sum(2, 3)); }
+                }
+                """;
+        assertThat(JavaSourceInspector.studentTestVariants(source, "").getFirst().empty()).contains("void setup() { /* no setup required */ }", "static void cleanup() {}",
+                "void checks() {}");
+        assertThat(JavaSourceInspector.studentTestVariants(source, "").getFirst().nonFailing()).contains("void setup() { /* no setup required */ }", "static void cleanup() {}",
+                "catch (java.lang.AssertionError");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "class T { @org.junit.jupiter.api.BeforeEach void setup() { assertTrue(true); } @org.junit.jupiter.api.Test void t() {} }",
+            "class T { @org.junit.jupiter.api.BeforeEach void setup(org.junit.jupiter.api.TestInfo info) { assertTrue(true); } @org.junit.jupiter.api.Test void t() {} }",
+            "class T { static { assertTrue(true); } @org.junit.jupiter.api.Test void t() {} }", "class T { T() { assertTrue(true); } @org.junit.jupiter.api.Test void t() {} }",
+            "class T { { assertTrue(true); } @org.junit.jupiter.api.Test void t() {} }", "class T { int field = check(); @org.junit.jupiter.api.Test void t() {} }",
+            "class T extends BaseTest { @org.junit.jupiter.api.Test void t() {} }", "class T { void helper() {} }" })
+    void emptyJUnitProbeSkipsWorkOutsideTestBodiesOrSourcesWithoutTests(String source) {
+        assertThat(JavaSourceInspector.studentTestVariants(source, "")).isEmpty();
+    }
+
+    @Test
     void declaresPackageMatchingPath_handlesLongQualifiedPackagesAndRejectsMalformedOnes() {
         String packageName = "segment.".repeat(10_000) + "last";
         String path = "src/" + packageName.replace('.', '/') + "/Example.java";

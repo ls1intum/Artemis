@@ -7,7 +7,7 @@ ARG MAVEN_SHA512=831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0ca
 
 # Pinned Apache Maven 3.9.16 distribution: ADD verifies the SHA-256, the RUN verifies Apache's published SHA-512.
 ADD --checksum=sha256:80ffca22aed9e8b9713a232f3394fd81d7f20322df75efdb2b047dbd3e3a23bb \
-    https://archive.apache.org/dist/maven/maven-3/3.9.16/binaries/apache-maven-3.9.16-bin.tar.gz /tmp/maven.tar.gz
+    https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.16/apache-maven-3.9.16-bin.tar.gz /tmp/maven.tar.gz
 RUN echo "${MAVEN_SHA512}  /tmp/maven.tar.gz" | sha512sum -c - \
     && mkdir -p /opt/maven \
     && tar -xzf /tmp/maven.tar.gz -C /opt/maven --strip-components=1 \

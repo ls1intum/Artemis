@@ -92,12 +92,9 @@ public class GenerationWorkspace {
 
     private static final int MAX_STYLE_GUIDE_TOTAL_BYTES = 96_000;
 
-    private final SandboxBuildCommands sandboxBuildCommandService;
-
     private final GenerationResources resourceLoaderService;
 
-    public GenerationWorkspace(SandboxBuildCommands sandboxBuildCommandService, GenerationResources resourceLoaderService) {
-        this.sandboxBuildCommandService = sandboxBuildCommandService;
+    public GenerationWorkspace(GenerationResources resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
     }
 
@@ -401,8 +398,7 @@ public class GenerationWorkspace {
      * @param filesByRepository     the canonical repository text files
      * @param repositoryMetadata    seeded file metadata used to preserve executable modes
      * @param repositoryBinaryFiles the canonical repository binary files, written back verbatim alongside the text files
-     * @param exercise              the exercise whose workspace-root bootstrap files ({@code verify.sh}, and for GENERATE the {@code reference/} sample and style guides) are
-     *                                  re-seeded
+     * @param exercise              the exercise whose GENERATE reference sample and style guides are re-seeded
      * @param mode                  the generation mode the workspace was originally seeded for
      * @param problemStatement      the canonical problem statement to re-seed at the workspace root, or {@code null} to leave it untouched
      * @param testPlanJson          the TESTS stage's {@code test-plan.json} to re-seed at the workspace root, or {@code null} to leave it untouched
@@ -413,10 +409,6 @@ public class GenerationWorkspace {
             Map<RepositoryRole, Map<String, BinarySeedFile>> repositoryBinaryFiles, @Nullable String problemStatement, @Nullable String specDocument,
             @Nullable String testPlanJson) {
         Map<String, String> workspaceFiles = new LinkedHashMap<>();
-        String verifyScript = sandboxBuildCommandService.verifyScriptContent(exercise);
-        if (verifyScript != null) {
-            workspaceFiles.put(SandboxBuildCommands.VERIFY_SCRIPT_NAME, verifyScript);
-        }
         if (mode == Mode.GENERATE) {
             workspaceFiles.putAll(readReferenceSample(exercise));
             workspaceFiles.putAll(readStyleGuides());

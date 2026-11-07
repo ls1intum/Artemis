@@ -258,7 +258,7 @@
                     "DEADLINE_EXCEEDED": "The run hit its time limit.",
                     "TOKEN_BUDGET_EXHAUSTED": "The run hit its budget limit.",
                     "AGENT_ERROR": "The AI model failed while working on the exercise.",
-                    "ENVIRONMENT_UNAVAILABLE": "The build environment was not available.",
+                    "ENVIRONMENT_UNAVAILABLE": "The build environment could not host or verify the run. This is a server-side problem that no repair attempt can fix.",
                     "ACCOUNTING_INCOMPLETE": "AI usage could not be verified. Further AI requests were stopped to protect the run budget. Try again later or contact an administrator.",
                     "RUN_FAILED": "The run failed unexpectedly.",
                     "NOT_STARTED": "The run never started."

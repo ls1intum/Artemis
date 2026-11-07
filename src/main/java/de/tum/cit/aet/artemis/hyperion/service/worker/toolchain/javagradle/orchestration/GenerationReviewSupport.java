@@ -1,13 +1,18 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome;
@@ -30,6 +35,24 @@ final class GenerationReviewSupport {
         combined = new ArrayList<>(classified.findings());
         combined.addAll(techniqueRules);
         return new SpecFidelityReport(combined);
+    }
+
+    /**
+     * Keeps every source and path while replacing unchanged build-wrapper launchers with an explicit baseline manifest.
+     * Changed or unrecognized files retain their complete contents. Mechanical verification still uses the original maps.
+     */
+    static Map<RepositoryRole, Map<String, String>> reviewArtifacts(Map<RepositoryRole, Map<String, String>> current, Map<RepositoryRole, Map<String, String>> baseline) {
+        Set<String> launchers = Set.of("gradlew", "gradlew.bat", "mvnw", "mvnw.cmd");
+        Map<RepositoryRole, Map<String, String>> projected = new EnumMap<>(RepositoryRole.class);
+        current.forEach((role, files) -> {
+            Map<String, String> rendered = new LinkedHashMap<>();
+            files.forEach((path, content) -> rendered.put(path,
+                    launchers.contains(path) && content != null && content.equals(baseline.getOrDefault(role, Map.of()).get(path))
+                            ? "[Unchanged build-wrapper launcher: exact content matches the verified baseline; " + content.length() + " characters.]"
+                            : content));
+            projected.put(role, rendered);
+        });
+        return projected;
     }
 
     static String reviewSummary(SpecFidelityReport report) {
@@ -95,23 +118,59 @@ final class GenerationReviewSupport {
                         + "proposed it for this plausible wrong behavior, which the environment did not execute: " + witness.wrongBehavior() + "\nWitness:\n" + witness.code());
     }
 
-    static SpecFidelityReport.Finding semanticMutantFinding(SemanticMutant mutant, boolean specificationApproved) {
-        return new SpecFidelityReport.Finding(
-                specificationApproved ? SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE : SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL,
+    static SpecFidelityReport.Finding semanticMutantFinding(SemanticMutant mutant) {
+        if (mutant.printsTranscriptOnly()) {
+            return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
+                    "The graded tests accept a " + mutant.ruleId() + " that only prints the expected output",
+                    "The environment ran the reference " + mutant.ruleId() + " without arguments or input, then replaced only the body of that method in " + mutant.solutionPath()
+                            + " with statements printing the captured output, leaving every other member unchanged. The graded suite still passed, so "
+                            + "a graded test compares only the printed transcript, and a student passes it by hard-coding that output without using the program's objects. "
+                            + AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE + " A pure transcript check may stay only ungraded: as a zero-weight PRESERVATION entry in "
+                            + "test-plan.json when it also passes on the template, otherwise remove it. Testing other members through the public API cannot resolve this, "
+                            + "because they are unchanged in the print-only version; the finding clears once no graded test compares the transcript alone.",
+                    changedSolutionLines(mutant));
+        }
+        return new SpecFidelityReport.Finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE,
                 "Rule " + mutant.ruleId() + " has an environment-proven surviving semantic mutant",
                 "The existing graded suite passed this complete replacement for " + mutant.solutionPath() + ", while the counterexample below executed and passed on the "
                         + "pristine solution and executed and failed on the mutant. Execution proves the suite does not distinguish these complete implementations; the frozen "
-                        + "rule and independent review explain why that difference matters. "
-                        + (specificationApproved
-                                ? "Add or adapt a discriminating test for the counterexample; the environment will accept any executed test that kills the mutant, so preserve "
-                                        + "stronger or more idiomatic coverage rather than copying a method mechanically. "
-                                : "Do not autonomously strengthen grading while the specification still has an unresolved pre-freeze review finding; retain this executed evidence "
-                                        + "for instructor adjudication. ")
-                        + "Plausible misconception: " + mutant.counterexample().wrongBehavior() + "\n" + mutant.counterexample().code());
+                        + "rule and independent review explain why that difference matters. Add or adapt a discriminating test for the counterexample; the environment will "
+                        + "accept any executed test that kills the mutant, so preserve stronger or more idiomatic coverage rather than copying a method mechanically. "
+                        + "Plausible misconception: " + mutant.counterexample().wrongBehavior() + "\n" + mutant.counterexample().code(),
+                changedSolutionLines(mutant));
+    }
+
+    /** The reference lines the mutant replaces: execution proved the graded suite does not distinguish this code from the mutant's version of it. */
+    static SpecFidelityReport.Location changedSolutionLines(SemanticMutant mutant) {
+        List<String> original = mutant.originalSolutionSource().lines().toList();
+        List<String> replacement = mutant.mutantSource().lines().toList();
+        int prefix = 0;
+        while (prefix < original.size() && prefix < replacement.size() && original.get(prefix).equals(replacement.get(prefix))) {
+            prefix++;
+        }
+        int suffix = 0;
+        while (suffix < original.size() - prefix && suffix < replacement.size() - prefix
+                && original.get(original.size() - 1 - suffix).equals(replacement.get(replacement.size() - 1 - suffix))) {
+            suffix++;
+        }
+        // A pure insertion replaces no original line; anchor it at the original line after the insertion point, clamped to the file.
+        int lastLine = Math.max(1, original.size());
+        int start = Math.min(prefix + 1, lastLine);
+        int end = Math.clamp((long) original.size() - suffix, start, lastLine);
+        return new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, mutant.solutionPath(), start, end);
     }
 
     static List<SpecFidelityReport.Finding> withPriorSemanticMutants(List<SpecFidelityReport.Finding> findings, List<SemanticMutant> mutants) {
-        return java.util.stream.Stream.concat(mutants.stream().map(mutant -> semanticMutantFinding(mutant, false)), findings.stream()).toList();
+        return java.util.stream.Stream.concat(mutants.stream().map(GenerationReviewSupport::semanticMutantFinding), findings.stream()).toList();
+    }
+
+    /** The report as the repair-progress comparison must see it: prior survivors without a fresh verdict still count as executed blockers. */
+    static SpecFidelityReport withUndrainedSurvivors(SpecFidelityReport report, List<SemanticMutant> survivorsWithoutVerdict) {
+        if (survivorsWithoutVerdict.isEmpty()) {
+            return report;
+        }
+        return new SpecFidelityReport(
+                java.util.stream.Stream.concat(report.findings().stream(), survivorsWithoutVerdict.stream().map(GenerationReviewSupport::semanticMutantFinding)).toList());
     }
 
     static List<SemanticMutant.Exclusion> rememberExecutedMutants(List<SemanticMutant.Exclusion> history, List<SemanticMutantOutcome> freshOutcomes, int limit) {
@@ -133,6 +192,10 @@ final class GenerationReviewSupport {
                 return "The environment could not conclusively recheck the previously proven semantic mutant for rule " + mutant.ruleId()
                         + "; no kill is inferred from a timeout, compilation failure, or missing executed-test report.";
             }
+            if (mutant.printsTranscriptOnly()) {
+                return "The graded suite still passes a " + mutant.ruleId() + " that only prints the expected output. " + AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE
+                        + " A pure transcript check may stay only ungraded (zero-weight PRESERVATION when it passes on the template) or must go.";
+            }
             return "The graded suite still passes the environment-proven semantic mutant for rule " + mutant.ruleId() + " (" + mutant.counterexample().wrongBehavior()
                     + "). Add a focused assertion that kills this plausible wrong implementation; keep the verified solution unchanged.";
         }).toList();
@@ -140,14 +203,28 @@ final class GenerationReviewSupport {
     }
 
     static SpecFidelityReport.Finding semanticMutantRecheckUnavailable(SemanticMutant mutant) {
+        if (mutant.printsTranscriptOnly()) {
+            return SpecFidelityReport
+                    .executableEvidenceUnavailable("The environment could not conclusively recheck whether the graded suite still accepts a " + mutant.ruleId() + " in "
+                            + mutant.solutionPath() + " that only prints the expected output. It remains unresolved until an executed graded test fails on it.")
+                    .findings().getFirst();
+        }
         return SpecFidelityReport.executableEvidenceUnavailable("The environment could not conclusively recheck the previously proven semantic mutant for rule " + mutant.ruleId()
                 + " at " + mutant.solutionPath() + " (counterexample " + mutant.counterexample().testName() + ", misconception: " + mutant.counterexample().wrongBehavior()
                 + "). It remains unresolved until an executed graded test kills it.").findings().getFirst();
     }
 
+    /** An earlier repair's kill that this candidate's verification did not conclusively recheck, so a later change may have let the mutant survive again. */
+    static SpecFidelityReport.Finding regressionRecheckUnavailable(SemanticMutant mutant) {
+        return SpecFidelityReport
+                .executableEvidenceUnavailable("The semantic mutant for rule " + mutant.ruleId() + " at " + mutant.solutionPath() + " (counterexample "
+                        + mutant.counterexample().testName() + ", misconception: " + mutant.counterexample().wrongBehavior() + ") that an earlier repair's tests killed was not "
+                        + "conclusively rechecked against this candidate, so a later change may have let it survive again. The next verified repair rechecks it first.")
+                .findings().getFirst();
+    }
+
     /** A text-only or interrupted review cannot discharge executable mutant state; retain exact provenance without asserting a fresh survival result. */
-    static SpecFidelityReport preserveSemanticMutantState(SpecFidelityReport report, List<SemanticMutant> pendingRepair, List<SemanticMutant> awaitingRecheck) {
-        List<SemanticMutant> unresolved = java.util.stream.Stream.concat(pendingRepair.stream(), awaitingRecheck.stream()).distinct().toList();
+    static SpecFidelityReport preserveSemanticMutantState(SpecFidelityReport report, List<SemanticMutant> unresolved) {
         if (unresolved.isEmpty()) {
             return report;
         }
@@ -183,31 +260,6 @@ final class GenerationReviewSupport {
                         "The independent pre-freeze review did not approve this compiled specification. The exact finding is retained so the saved exercise remains NEEDS_REVIEW "
                                 + "rather than silently treating the contract as approved."))
                 .filter(finding -> !findings.contains(finding)).forEach(findings::add);
-        return new SpecFidelityReport(List.copyOf(findings));
-    }
-
-    static SpecFidelityReport preservePendingSpecApprovalMutants(SpecFidelityReport report, List<SemanticMutant> mutants) {
-        if (mutants.isEmpty()) {
-            return report;
-        }
-        List<SpecFidelityReport.Finding> findings = new java.util.ArrayList<>(report.findings());
-        var grouped = mutants.stream().map(mutant -> semanticMutantFinding(mutant, false))
-                .collect(Collectors.groupingBy(finding -> finding.kind() + "\n" + finding.requirement(), java.util.LinkedHashMap::new, Collectors.toCollection(ArrayList::new)));
-        grouped.forEach((key, variants) -> {
-            int existingIndex = java.util.stream.IntStream.range(0, findings.size())
-                    .filter(index -> key.equals(findings.get(index).kind() + "\n" + findings.get(index).requirement())).findFirst().orElse(-1);
-            var details = java.util.stream.Stream.concat(existingIndex < 0 ? java.util.stream.Stream.empty() : java.util.stream.Stream.of(findings.get(existingIndex).detail()),
-                    variants.stream().map(SpecFidelityReport.Finding::detail)).distinct().toList();
-            SpecFidelityReport.Finding representative = existingIndex < 0 ? variants.getFirst() : findings.get(existingIndex);
-            SpecFidelityReport.Finding groupedFinding = new SpecFidelityReport.Finding(representative.kind(), representative.requirement(),
-                    String.join("\n\n--- additional environment-proven variant ---\n", details));
-            if (existingIndex < 0) {
-                findings.add(groupedFinding);
-            }
-            else {
-                findings.set(existingIndex, groupedFinding);
-            }
-        });
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
@@ -265,6 +317,31 @@ final class GenerationReviewSupport {
         return new SpecFidelityReport(List.copyOf(findings));
     }
 
+    /** A content digest of the repositories and grading plan an executed probe depends on, independent of map ordering. */
+    static String probeInputDigest(Map<RepositoryRole, Map<String, String>> candidateFiles, @Nullable String testPlanJson) {
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            candidateFiles.entrySet().stream().sorted(Map.Entry.comparingByKey())
+                    .forEach(repository -> repository.getValue().entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(file -> {
+                        update(digest, repository.getKey().name());
+                        update(digest, file.getKey());
+                        update(digest, java.util.Objects.requireNonNullElse(file.getValue(), ""));
+                    }));
+            update(digest, java.util.Objects.requireNonNullElse(testPlanJson, ""));
+            return java.util.HexFormat.of().formatHex(digest.digest());
+        }
+        catch (java.security.NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
+        }
+    }
+
+    /** Length-prefixed, so adjacent values cannot run together into the same digest input. */
+    private static void update(java.security.MessageDigest digest, String value) {
+        byte[] bytes = value.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        digest.update(java.nio.ByteBuffer.allocate(Integer.BYTES).putInt(bytes.length).array());
+        digest.update(bytes);
+    }
+
     static String renderArtifactSources(Map<String, String> files) {
         return files.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> "// " + entry.getKey() + "\n" + entry.getValue()).collect(Collectors.joining("\n\n"));
     }
@@ -279,9 +356,8 @@ final class GenerationReviewSupport {
             return report;
         }
         List<SpecFidelityReport.Finding> reclassified = report.findings().stream()
-                .map(finding -> demandsUngradeableTechnique(finding)
-                        ? new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, finding.requirement(),
-                                "No assertion through the public API can observe this, so it cannot be repaired by strengthening the tests: " + finding.detail())
+                .map(finding -> demandsUngradeableTechnique(finding) ? new SpecFidelityReport.Finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, finding.requirement(),
+                        "No assertion through the public API can observe this, so it cannot be repaired by strengthening the tests: " + finding.detail(), finding.location())
                         : finding)
                 .toList();
         return new SpecFidelityReport(reclassified);

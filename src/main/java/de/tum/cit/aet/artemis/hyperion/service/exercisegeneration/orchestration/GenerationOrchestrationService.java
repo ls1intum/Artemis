@@ -191,7 +191,7 @@ public class GenerationOrchestrationService {
         return new GenerationParameters(settings.name(), settings.maxTurns(), settings.maxTokensPerJob(), settings.maxJobDuration(), settings.contextWindowTokens(),
                 options == null ? null : options.getModel(), options == null ? null : options.getReasoningEffort(), options == null ? null : options.getTemperature(),
                 options == null ? null : options.getTopP(), options == null ? null : options.getMaxCompletionTokens(), settings.stagedGeneration(), settings.stagedContext(),
-                options == null ? null : options.getVerbosity(), properties.getCachedInputTokenWeight());
+                options == null ? null : options.getVerbosity(), properties.getCachedInputTokenWeight(), settings.repairModel());
     }
 
     private boolean matchesAccount(GenerationOutput output, User user, ProgrammingExercise exercise) {

@@ -55,7 +55,7 @@ class DockerGradleBuildTest {
 
     private final SandboxBuildCommands commands = new SandboxBuildCommands(resources);
 
-    private final GenerationWorkspace workspace = new GenerationWorkspace(commands, resources);
+    private final GenerationWorkspace workspace = new GenerationWorkspace(resources);
 
     private final GenerationInput exercise = new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
 
@@ -230,7 +230,7 @@ class DockerGradleBuildTest {
     @Test
     void specificationDerivedEnumGraderAcceptsImplicitGenericSuperclassButRejectsErasedMember() throws IOException {
         String session = sandbox.createSession();
-        workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        var workspaceSeed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
         sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
                 WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
         ApprovedSpecRegistry specifications = new ApprovedSpecRegistry();
@@ -244,7 +244,10 @@ class DockerGradleBuildTest {
                 public enum RoastProfile { LIGHT; public java.util.List<String> labels(); }
                 ```
                 """);
-        SeededStructuralTests seeded = new StructuralOracleSeeder(workspace, specifications).seedIfStructuralDiff(sandbox, session, exercise);
+        // As the orchestrator does: the seeded policy is the baseline the server writes its test-class list into.
+        StructuralOracleSeeder seeder = new StructuralOracleSeeder(workspace, specifications);
+        seeder.captureBaseline(session, workspaceSeed.testsSeedSnapshot());
+        SeededStructuralTests seeded = seeder.seedIfStructuralDiff(sandbox, session, exercise);
         assertThat(seeded.testNames()).contains("testClass[GenericApi:RoastProfile]");
         String path = "solution/src/de/tum/cit/aet/reference/RoastProfile.java";
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
@@ -271,6 +274,54 @@ class DockerGradleBuildTest {
         assertThat(erased.testFailedNames()).doesNotContain("testMethods[RoastProfile]");
     }
 
+    /** Student-owned JUnit classes compile in the assignment source set, and Ares enforces their approved annotations. */
+    @Test
+    void specificationDerivedMethodGraderAcceptsTheApprovedAnnotationsAndRejectsTheirAbsence() throws IOException {
+        String session = sandbox.createSession();
+        var workspaceSeed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+        ApprovedSpecRegistry specifications = new ApprovedSpecRegistry();
+        specifications.approve(session, """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | ScoreChecks | Checks students write | student-creates |
+                ## Public API
+                ```java
+                public class ScoreChecks {
+                    @java.lang.annotation.Native public static final int LIMIT = 3;
+                    @org.junit.jupiter.api.Test public void checkNullInput();
+                    @Override public String toString();
+                }
+                ```
+                """);
+        StructuralOracleSeeder seeder = new StructuralOracleSeeder(workspace, specifications);
+        seeder.captureBaseline(session, workspaceSeed.testsSeedSnapshot());
+        SeededStructuralTests seeded = seeder.seedIfStructuralDiff(sandbox, session, exercise);
+        assertThat(seeded.testNames()).contains("testMethods[ScoreChecks]", "testAttributes[ScoreChecks]");
+        String path = "solution/src/de/tum/cit/aet/reference/ScoreChecks.java";
+        // @Native has source retention, so reflection never sees it and the oracle must not expect it.
+        String annotated = """
+                package de.tum.cit.aet.reference;
+                public class ScoreChecks {
+                    @java.lang.annotation.Native public static final int LIMIT = 3;
+                    @org.junit.jupiter.api.Test public void checkNullInput() { org.junit.jupiter.api.Assertions.assertTrue(true); }
+                    @Override public String toString() { return "checks"; }
+                }
+                """;
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, annotated), Map.of()));
+        seeder.seedIfStructuralDiff(sandbox, session, exercise);
+        var correct = build(session, "solution");
+        assertThat(correct.exitCode()).as(correct.buildDiagnostic()).isZero();
+        assertThat(correct.testNames()).contains("testMethods[ScoreChecks]", "testAttributes[ScoreChecks]");
+
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, annotated.replace("@org.junit.jupiter.api.Test ", "")), Map.of()));
+        var unannotated = build(session, "solution");
+        assertThat(unannotated.exitCode()).isNotZero();
+        assertThat(unannotated.testFailedNames()).contains("testMethods[ScoreChecks]");
+    }
+
     // Both build tools must report the seeded dynamic check by its display name; surefire names flat dynamic tests genericApi()[n].
     @ParameterizedTest
     @EnumSource(GenerationBuildTool.class)
@@ -278,7 +329,7 @@ class DockerGradleBuildTest {
         boolean maven = buildTool == GenerationBuildTool.MAVEN;
         var input = maven ? new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of(), Set.of(), buildTool) : exercise;
         String session = sandbox.createSession();
-        workspace.seedWorkspace(sandbox, session, input, Mode.ADAPT, maven ? mavenSnapshot("java/test/maven/projectTemplate/pom.xml") : snapshot(), true);
+        var workspaceSeed = workspace.seedWorkspace(sandbox, session, input, Mode.ADAPT, maven ? mavenSnapshot("java/test/maven/projectTemplate/pom.xml") : snapshot(), true);
         sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
                 WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(input)), Map.of()));
         ApprovedSpecRegistry specifications = new ApprovedSpecRegistry();
@@ -296,7 +347,9 @@ class DockerGradleBuildTest {
                 }
                 ```
                 """);
-        SeededStructuralTests seeded = new StructuralOracleSeeder(workspace, specifications).seedIfStructuralDiff(sandbox, session, input);
+        StructuralOracleSeeder seeder = new StructuralOracleSeeder(workspace, specifications);
+        seeder.captureBaseline(session, workspaceSeed.testsSeedSnapshot());
+        SeededStructuralTests seeded = seeder.seedIfStructuralDiff(sandbox, session, input);
         assertThat(seeded.testNames()).contains("testClass[GenericApi:Box]");
         String path = "solution/src/de/tum/cit/aet/reference/Box.java";
         sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, """
@@ -444,6 +497,302 @@ class DockerGradleBuildTest {
             assertThat(processes.timedOut()).isFalse();
             assertThat(processes.combinedOutput()).isBlank();
         });
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 1, 2 })
+    void studentWrittenTestsMustRejectFaultyBehaviorRatherThanOnlyRunOnTheCorrectLibrary(int assessment) throws IOException {
+        checkStudentTestAssessment(assessment);
+    }
+
+    @Test
+    void aStronglyGradedMethodCannotMaskAnotherMethodsIneffectiveAssertions() throws IOException {
+        checkStudentTestAssessment(3);
+    }
+
+    private void checkStudentTestAssessment(int assessment) throws IOException {
+        boolean gradeFaults = assessment == 1 || assessment == 3;
+        var verifier = new DifferentialVerifier(commands);
+        String learner = """
+                package de.tum.cit.aet.reference;
+                public class LearnerCheck {
+                    @org.junit.jupiter.api.BeforeEach
+                    public void setUp() { /* supplied empty setup */ }
+
+                    @org.junit.jupiter.api.Test
+                    public void verifiesSum() {
+                        Toolbox.observations++;
+                        org.junit.jupiter.api.Assertions.assertEquals(5, Toolbox.sum(2, 3));
+                    }
+                }
+                """;
+        String support = """
+                package de.tum.cit.aet.reference;
+                public class Toolbox {
+                    private static boolean faulty;
+                    public static int observations;
+                    public static int sum(int a, int b) { return faulty ? 0 : a + b; }
+                }
+                """;
+        String instructor = """
+                package de.tum.cit.aet.reference;
+                import static org.junit.jupiter.api.Assertions.*;
+                import org.junit.jupiter.api.Test;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+                @Public @Policy("SecurityPolicy.yaml")
+                @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)
+                class ScoreCalculatorTest {
+                    @Test @StrictTimeout(5) void testLearnerAssertions() throws Exception {
+                        var faulty = Toolbox.class.getDeclaredField("faulty");
+                        faulty.setAccessible(true);
+                        faulty.setBoolean(null, false);
+                        Toolbox.observations = 0;
+                        assertDoesNotThrow(() -> new LearnerCheck().verifiesSum());
+                        %s
+                    }
+                }
+                """.formatted(gradeFaults
+                ? "faulty.setBoolean(null, true); try { assertThrows(AssertionError.class, () -> new LearnerCheck().verifiesSum()); } finally { faulty.setBoolean(null, false); }"
+                : assessment == 2 ? "assertEquals(1, Toolbox.observations);" : "");
+        if (assessment == 3) {
+            learner = learner.replace("public class LearnerCheck {", """
+                    public class LearnerCheck {
+                        @org.junit.jupiter.api.Test public void checksAnotherCase() {
+                            Toolbox.observations++;
+                            org.junit.jupiter.api.Assertions.assertEquals(1, Toolbox.sum(1, 0));
+                        }
+                    """);
+            instructor = instructor.replace("class ScoreCalculatorTest {", """
+                    class ScoreCalculatorTest {
+                        @Test @StrictTimeout(5) void testOtherLearnerAssertions() {
+                            Toolbox.observations = 0;
+                            assertDoesNotThrow(() -> new LearnerCheck().checksAnotherCase());
+                            assertEquals(1, Toolbox.observations);
+                        }
+                    """);
+        }
+        List<WorkspaceFile> files = new ArrayList<>(
+                snapshot().files().stream().filter(file -> !file.path().equals("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java")).toList());
+        files.add(new WorkspaceFile("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", instructor.getBytes(StandardCharsets.UTF_8), false));
+        String path = "src/de/tum/cit/aet/reference/LearnerCheck.java";
+        files.add(new WorkspaceFile("solution/" + path, learner.getBytes(StandardCharsets.UTF_8), false));
+        files.add(new WorkspaceFile("template/" + path,
+                learner.replace("org.junit.jupiter.api.Assertions.assertEquals(5, Toolbox.sum(2, 3));", "throw new UnsupportedOperationException();")
+                        .replace("org.junit.jupiter.api.Assertions.assertEquals(1, Toolbox.sum(1, 0));", "throw new UnsupportedOperationException();")
+                        .getBytes(StandardCharsets.UTF_8),
+                false));
+        for (String lane : List.of("template", "solution")) {
+            files.add(new WorkspaceFile(lane + "/src/de/tum/cit/aet/reference/Toolbox.java", support.getBytes(StandardCharsets.UTF_8), false));
+        }
+        String session = sandbox.createSession();
+        var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, new WorkspaceSnapshot(files), true);
+        var specifications = new ApprovedSpecRegistry();
+        specifications.approve(session, """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | LearnerCheck | Tests the learner writes | stubbed |
+                ## Public API
+                ```java
+                public class LearnerCheck {
+                    @org.junit.jupiter.api.Test public void verifiesSum();
+                }
+                ```
+                """);
+        var seeder = new StructuralOracleSeeder(workspace, specifications);
+        seeder.captureBaseline(session, seed.testsSeedSnapshot());
+        var structural = seeder.seedIfStructuralDiff(sandbox, session, exercise);
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+        assertThat(build(session, "solution").exitCode()).isZero();
+        assertThat(build(session, "template").testFailedNames()).contains("testLearnerAssertions");
+        String plan = "{\"tests\":[{\"name\":\"testLearnerAssertions\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+        if (assessment == 3) {
+            plan = plan.replace("}]}", "},{\"name\":\"testOtherLearnerAssertions\",\"seam\":\"S2\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}");
+        }
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of("test-plan.json", plan), Map.of()));
+
+        if (assessment == 2 || assessment == 3) {
+            var sources = JavaSourceSnapshot.capture(sandbox, session);
+            var outcomes = verifier.probeStudentTestAssertions(sandbox, session, exercise, sources.templateFiles(), sources.solutionFiles(), plan, structural,
+                    () -> sources.restore(sandbox, session), _ -> {
+                    });
+            assertThat(outcomes).anySatisfy(outcome -> {
+                assertThat(outcome.mutant().evidence()).isEqualTo(SemanticMutant.Evidence.EMPTY_STUDENT_TESTS);
+                assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE);
+            }).anySatisfy(outcome -> {
+                assertThat(outcome.mutant().evidence()).isEqualTo(SemanticMutant.Evidence.NON_FAILING_STUDENT_TESTS);
+                assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+            });
+        }
+        assertThat(sandbox.exec(session, java.time.Duration.ofSeconds(5), "sh", "-c", "test ! -e /workspace/verify.sh").isSuccess())
+                .as("source-destructive verification is available only through server-managed tools").isTrue();
+        var outcomes = assessmentOutcomes(verifier, session, structural);
+
+        if (assessment == 1) {
+            assertThat(outcomes).isNotEmpty().allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.KILLED_BY_GRADED_SUITE));
+        }
+        else {
+            assertThat(outcomes).anySatisfy(outcome -> {
+                assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+                assertThat(outcome.mutant().solutionPath()).contains("LearnerCheck.java");
+            });
+        }
+        assertThat(JavaSourceSnapshot.capture(sandbox, session).solutionFiles()).containsEntry(path, learner);
+        if (assessment != 1) {
+            var before = JavaSourceSnapshot.capture(sandbox, session);
+            sandbox.copyIn(session, "/workspace/template", WorkspaceArchive.buildWorkspaceTarStream(Map.of(path, learner), Map.of()));
+            try {
+                assertThat(assessmentOutcomes(verifier, session, structural)).anySatisfy(unresolved -> {
+                    assertThat(unresolved.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE);
+                    assertThat(unresolved.diagnostic()).contains("previously confirmed", "Preserve the assigned learner work");
+                });
+            }
+            finally {
+                before.restore(sandbox, session);
+            }
+        }
+        if (gradeFaults) {
+            var before = JavaSourceSnapshot.capture(sandbox, session);
+            var tools = new SandboxAgentTools(sandbox, session, verifier, exercise);
+            tools.configureStructuralOracleRefresh(() -> structural);
+            tools.verify();
+            var after = JavaSourceSnapshot.capture(sandbox, session);
+            assertThat(after.solutionFiles()).isEqualTo(before.solutionFiles());
+            assertThat(after.templateFiles()).isEqualTo(before.templateFiles());
+            assertThat(after.testsFiles()).isEqualTo(before.testsFiles());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 1, 2 })
+    void executedAssessmentDistinguishesTranscriptGradingFromSuppliedRuntimeObservation(int assessment) throws IOException {
+        boolean observeInteraction = assessment == 1;
+        String sourcePath = "src/de/tum/cit/aet/reference/ScoreCalculator.java";
+        String reference = """
+                package de.tum.cit.aet.reference;
+                public class ScoreCalculator {
+                    public static void main(String[] args) {
+                        Counter counter = new Counter();
+                        counter.increment();
+                        counter.reset();
+                        System.out.println(counter.value());
+                    }
+                }
+                """;
+        if (assessment == 2) {
+            reference = reference.replace("public static void main",
+                    "public static Counter runScenario() { Counter c = new Counter(); c.increment(); c.reset(); return c; } public static void main");
+        }
+        String supplied = """
+                package de.tum.cit.aet.reference;
+                public class Counter {
+                    private static Counter observed;
+                    private int value;
+                    private final int[] observedValues = new int[2];
+                    private int observedChanges;
+                    public Counter() { observed = this; }
+                    public void increment() { value++; observedValues[observedChanges++] = value; }
+                    public void reset() { value = 0; observedValues[observedChanges++] = value; }
+                    public int observedChanges() { return observedChanges; }
+                    public int valueAfterChange(int index) { return observedValues[index]; }
+                    public int value() { return value; }
+                    public static Counter lastCreated() { return observed; }
+                }
+                """;
+        String testSource = """
+                package de.tum.cit.aet.reference;
+                import static org.junit.jupiter.api.Assertions.*;
+                import java.io.ByteArrayOutputStream;
+                import java.io.PrintStream;
+                import org.junit.jupiter.api.Test;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+                @Public @Policy("SecurityPolicy.yaml")
+                @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)
+                class ScoreCalculatorTest {
+                    @Test @StrictTimeout(5)
+                    void testDemo() {
+                        PrintStream previous = System.out;
+                        ByteArrayOutputStream output = new ByteArrayOutputStream();
+                        try {
+                            System.setOut(new PrintStream(output));
+                            ScoreCalculator.main(new String[0]);
+                        } finally { System.setOut(previous); }
+                        assertEquals("0", output.toString().strip());
+                        %s
+                    }
+                }
+                """.formatted(
+                observeInteraction
+                        ? "assertNotNull(Counter.lastCreated()); assertEquals(0, Counter.lastCreated().value()); "
+                                + "assertEquals(2, Counter.lastCreated().observedChanges()); assertEquals(1, Counter.lastCreated().valueAfterChange(0)); "
+                                + "assertEquals(0, Counter.lastCreated().valueAfterChange(1));"
+                        : "");
+        if (assessment == 2) {
+            testSource = testSource.replace("assertEquals(\"0\", output.toString().strip());",
+                    "assertEquals(\"0\", output.toString().strip()); assertEquals(0, ScoreCalculator.runScenario().value());");
+        }
+        List<WorkspaceFile> files = new ArrayList<>();
+        snapshot().files().stream().filter(file -> file.path().startsWith("tests/") && !file.path().endsWith(".java")).forEach(files::add);
+        files.add(new WorkspaceFile("solution/" + sourcePath, reference.getBytes(StandardCharsets.UTF_8), false));
+        files.add(new WorkspaceFile("template/" + sourcePath, reference.replace("Counter counter = new Counter();", "").replace("counter.increment();", "")
+                .replace("counter.reset();", "").replace("System.out.println(counter.value());", "").getBytes(StandardCharsets.UTF_8), false));
+        for (String lane : List.of("solution", "template")) {
+            files.add(new WorkspaceFile(lane + "/src/de/tum/cit/aet/reference/Counter.java", supplied.getBytes(StandardCharsets.UTF_8), false));
+        }
+        files.add(new WorkspaceFile("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java", testSource.getBytes(StandardCharsets.UTF_8), false));
+        String plan = "{\"tests\":[{\"name\":\"testDemo\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+        files.add(new WorkspaceFile("test-plan.json", plan.getBytes(StandardCharsets.UTF_8), false));
+        String session = sandbox.createSession();
+        workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, new WorkspaceSnapshot(files), true);
+        sandbox.copyIn(session, SandboxBuildCommands.PRISTINE_VERIFY_DIR,
+                WorkspaceArchive.buildWorkspaceTarStream(Map.of("verify.sh", commands.verifyScriptContent(exercise)), Map.of()));
+        assertThat(build(session, "solution").failures()).isZero();
+        assertThat(build(session, "template").testFailedNames()).contains("testDemo");
+
+        // Reset leaves the final value unchanged even when the earlier increment is missing.
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of("solution/" + sourcePath, reference.replace("counter.increment();", "")), Map.of()));
+        var missingEarlierOperation = build(session, "solution");
+        if (observeInteraction) {
+            assertThat(missingEarlierOperation.testFailedNames()).contains("testDemo");
+        }
+        else {
+            assertThat(missingEarlierOperation.failures()).isZero();
+        }
+        sandbox.copyIn(session, "/workspace", WorkspaceArchive.buildWorkspaceTarStream(Map.of("solution/" + sourcePath, reference), Map.of()));
+
+        var outcomes = assessmentOutcomes(new DifferentialVerifier(commands), session, SeededStructuralTests.EMPTY);
+
+        if (observeInteraction) {
+            assertThat(outcomes).noneMatch(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE
+                    || outcome.disposition() == SemanticMutantOutcome.Disposition.INCONCLUSIVE);
+        }
+        else {
+            assertThat(outcomes).anyMatch(outcome -> outcome.disposition() == SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+        }
+        assertThat(sandbox.exec(session, Duration.ofSeconds(10), "cat", "/workspace/solution/" + sourcePath).stdout()).isEqualTo(reference);
+    }
+
+    private List<SemanticMutantOutcome> assessmentOutcomes(DifferentialVerifier verifier, String session, SeededStructuralTests structural) {
+        var sources = JavaSourceSnapshot.capture(sandbox, session);
+        String plan = GenerationWorkspace.readRootArtifact(sandbox, session, "test-plan.json");
+        List<SemanticMutantOutcome> outcomes = new ArrayList<>();
+        try {
+            outcomes.addAll(verifier.probeOutputOnlyMains(sandbox, session, exercise, sources.testsFiles(), sources.templateFiles(), sources.solutionFiles(), plan, structural,
+                    Set.of(), () -> sources.restore(sandbox, session), _ -> {
+                    }));
+            outcomes.addAll(verifier.probeStudentTestAssertions(sandbox, session, exercise, sources.templateFiles(), sources.solutionFiles(), plan, structural,
+                    () -> sources.restore(sandbox, session), _ -> {
+                    }));
+        }
+        finally {
+            sources.restore(sandbox, session);
+        }
+        return outcomes;
     }
 
     @Test

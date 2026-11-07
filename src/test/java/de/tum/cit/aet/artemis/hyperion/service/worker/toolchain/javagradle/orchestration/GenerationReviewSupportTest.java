@@ -3,10 +3,13 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orch
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome;
@@ -15,17 +18,59 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verif
 class GenerationReviewSupportTest {
 
     @Test
-    void pendingSpecificationEvidenceIsGroupedByRuleRatherThanMutationText() {
-        SemanticMutant first = mutant("hardCodedThresholds", "uses fixed thresholds");
-        SemanticMutant second = mutant("roundedThresholds", "rounds fractional thresholds");
+    void reviewProjectionRetainsAllExerciseCodeAndChangedLaunchersWithoutRepeatingBaselineLaunchers() {
+        String launcher = "shell launch support\n".repeat(2_000);
+        var baseline = Map.of(RepositoryRole.SOLUTION, Map.of("gradlew", launcher, "src/Given.java", "class Given {}"), RepositoryRole.TESTS, Map.of("gradlew", launcher));
+        var current = Map.of(RepositoryRole.SOLUTION, Map.of("gradlew", launcher, "src/Given.java", "class Given {}", "src/Student.java", "class Student {}"), RepositoryRole.TESTS,
+                Map.of("gradlew", launcher + "changed", "test/Check.java", "class Check {}"));
 
-        SpecFidelityReport report = GenerationReviewSupport.preservePendingSpecApprovalMutants(SpecFidelityReport.empty(), List.of(first, second));
+        var result = GenerationReviewSupport.reviewArtifacts(current, baseline);
 
-        assertThat(report.findings()).singleElement().satisfies(finding -> {
-            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL);
-            assertThat(finding.requirement()).contains("Rule R3");
-            assertThat(finding.detail()).contains("uses fixed thresholds", "rounds fractional thresholds", "additional environment-proven variant");
-        });
+        assertThat(result.get(RepositoryRole.SOLUTION)).containsEntry("src/Given.java", "class Given {}").containsEntry("src/Student.java", "class Student {}");
+        assertThat(result.get(RepositoryRole.SOLUTION).get("gradlew")).contains("matches the verified baseline").hasSizeLessThan(200);
+        assertThat(result.get(RepositoryRole.TESTS)).containsEntry("gradlew", launcher + "changed").containsEntry("test/Check.java", "class Check {}");
+        assertThat(current.get(RepositoryRole.SOLUTION).get("gradlew")).isEqualTo(launcher);
+    }
+
+    @Test
+    void anExecutedSurvivorIsBlockingOracleEvidenceThatAsksForADiscriminatingTest() {
+        SpecFidelityReport.Finding finding = GenerationReviewSupport.semanticMutantFinding(mutant("hardCodedThresholds", "uses fixed thresholds"));
+
+        assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        assertThat(finding.isBlocking()).isTrue();
+        assertThat(SemanticRepairBatch.surfaceFor(finding.kind())).isEqualTo(RepairSurface.ORACLE);
+        assertThat(finding.detail()).contains("Add or adapt a discriminating test", "uses fixed thresholds").doesNotContain("instructor adjudication");
+    }
+
+    @Test
+    void anExecutedSurvivorIsLocatedAtTheReferenceLinesItReplaces() {
+        ContractWitness witness = new ContractWitness("R1", "boundary", "@Test void boundary() {}", "off by one");
+        String original = "class Grader {\n  int grade(int score) {\n    return score >= 50 ? 1 : 0;\n  }\n}\n";
+        SemanticMutant changed = new SemanticMutant("R1", "src/Grader.java", original, original.replace("score >= 50", "score > 50"), witness);
+        SemanticMutant inserted = new SemanticMutant("R1", "src/Grader.java", original, original.replace("  }\n}", "  }\n  int extra;\n}"), witness);
+
+        assertThat(GenerationReviewSupport.semanticMutantFinding(changed).location())
+                .isEqualTo(new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, "src/Grader.java", 3, 3));
+        assertThat(GenerationReviewSupport.changedSolutionLines(inserted))
+                .isEqualTo(new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, "src/Grader.java", 5, 5));
+    }
+
+    @Test
+    void aSurvivingPrintOnlyMainGivesTheSharedTestableStudentCodeRule() {
+        String original = "class Library {\n  public static void main(String[] args) {\n    new Library();\n    System.out.println(\"1\");\n  }\n}\n";
+        String variant = "class Library {\n  public static void main(String[] args) { System.out.print(\"1\\n\"); System.out.flush(); }\n}\n";
+        SemanticMutant printOnly = SemanticMutant.printedTranscript("src/Library.java", original, variant, "Library");
+
+        SpecFidelityReport.Finding finding = GenerationReviewSupport.semanticMutantFinding(printOnly);
+
+        assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
+        assertThat(finding.isBlocking()).isTrue();
+        assertThat(SemanticRepairBatch.surfaceFor(finding.kind())).isEqualTo(RepairSurface.ORACLE);
+        assertThat(finding.requirement()).contains("Library.main", "only prints the expected output");
+        assertThat(finding.detail()).contains(AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE, "ungraded", "cannot resolve this").doesNotContain("counterexample");
+        assertThat(finding.location()).isEqualTo(new SpecFidelityReport.Location(SpecFidelityReport.Location.Repository.SOLUTION, "src/Library.java", 2, 5));
+        assertThat(GenerationReviewSupport.semanticMutantRecheck(List.of(new SemanticMutantOutcome(printOnly, Disposition.SURVIVED_GRADED_SUITE))).failureReasons()).singleElement()
+                .asString().contains("only prints the expected output", AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE, "may stay only ungraded");
     }
 
     @Test
@@ -36,7 +81,7 @@ class GenerationReviewSupportTest {
         List<SpecFidelityReport.Finding> targets = GenerationReviewSupport.withPriorSemanticMutants(List.of(staticRisk), List.of(executed));
 
         assertThat(targets).hasSize(2);
-        assertThat(targets.getFirst().kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL);
+        assertThat(targets.getFirst().kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
         assertThat(targets.getFirst().detail()).contains("uses fixed thresholds");
         assertThat(targets.get(1)).isEqualTo(staticRisk);
     }
@@ -48,7 +93,7 @@ class GenerationReviewSupportTest {
 
         List<SpecFidelityReport.Finding> targets = GenerationReviewSupport.withPriorSemanticMutants(staticRisks, List.of(mutant("hardCodedThresholds", "uses fixed thresholds")));
 
-        assertThat(targets.getFirst().kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL);
+        assertThat(targets.getFirst().kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
         assertThat(targets.subList(0, 4)).extracting(SpecFidelityReport.Finding::requirement).contains("Rule R3 has an environment-proven surviving semantic mutant");
     }
 

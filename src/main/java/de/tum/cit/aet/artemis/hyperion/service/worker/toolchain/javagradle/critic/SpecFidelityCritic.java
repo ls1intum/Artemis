@@ -525,6 +525,12 @@ public class SpecFidelityCritic {
                 + planEvidence + "\n\n" + evidence.text();
         String repairableDownstreamSource = (problemStatement == null || problemStatement.isBlank() ? "" : problemStatement.strip() + "\n\n") + evidence.text() + planEvidence;
         Map<String, String> downstreamEvidenceByArtifact = downstreamEvidenceByArtifact(problemStatement, testPlanJson, artifacts);
+        if (userPrompt.length() > MAX_REVIEW_INPUT_CHARS && repairDelta != null && !repairDelta.isBlank()) {
+            // The full current candidate and prior findings carry the evidence; a duplicate diff is a navigation aid, not required authority.
+            userPrompt = renderUserPrompt(effectiveBrief, specificationContract, problemStatement, testNames, evidence.text(), adaptationChanges, previousReport,
+                    "[Full repair diff omitted to fit the review bound. Complete current artifacts and previous findings remain below; omission does not mean unchanged or resolved.]",
+                    testPlanJson, templateFailureEvidence);
+        }
         if (userPrompt.length() > MAX_REVIEW_INPUT_CHARS) {
             return reviewUnavailable(adaptationChanges, "The complete review input exceeded its bounded size.");
         }
@@ -916,9 +922,6 @@ public class SpecFidelityCritic {
                     .append(" Change the test setup and assertion first; keep the verified solution unchanged unless the new witness proves it wrong. For delegation, inject a "
                             + "test-controlled fake or recording collaborator that returns one unique sentinel and records the exact input, then assert return propagation and forwarding. "
                             + "Never compare results from two independent production calls or add production caching/state to satisfy such a comparison.");
-            case EXECUTABLE_ORACLE_PENDING_SPEC_APPROVAL -> builder.append(
-                    "\n- Preserve this executed grading-gap evidence for instructor review until the frozen specification is approved; do not autonomously add grading for it: \"")
-                    .append(finding.requirement()).append("\". ").append(finding.detail());
             case CONTRACT_WITNESS_AVAILABLE ->
                 builder.append("\n- Optional environment-validated contract witness: \"").append(finding.requirement()).append("\". ").append(finding.detail());
             case CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE ->

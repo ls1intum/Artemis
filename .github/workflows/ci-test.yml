@@ -71,7 +71,9 @@ jobs:
     name: AI Worker Sandbox Tests
     if: inputs.run_sandbox_tests
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # The budget includes image provisioning, server test compilation and real offline builds.
+    # The previous 25-minute deadline cancelled a run after all test/report steps passed.
+    timeout-minutes: 35
     permissions:
       contents: read
       checks: write

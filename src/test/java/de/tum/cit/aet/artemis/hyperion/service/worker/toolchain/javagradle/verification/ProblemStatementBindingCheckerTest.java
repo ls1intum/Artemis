@@ -18,6 +18,37 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.Gener
 
 class ProblemStatementBindingCheckerTest {
 
+    @Test
+    void taskInstructionsCanPrecedeTheirCheckboxInANumberedTaskBlock() {
+        String statement = """
+                ## Your tasks
+                1. Create a price enum with a private constructor.
+                   Expose each constant's base price through an accessor.
+
+                [task][Price enum](prices)
+
+                2. Compute the total with a conditional chain.
+                   Include the size surcharge.
+
+                [task][Conditional pricing](conditionalPrices)
+
+                ## Examples
+                """;
+        assertThat(ProblemStatementBindingChecker.tasksWithoutInstruction(statement)).isEmpty();
+    }
+
+    @Test
+    void aNumberedInstructionCannotBeBorrowedAcrossAnotherCheckboxOrHeading() {
+        String statement = """
+                1. Implement the price enum.
+                [task][Price enum](prices)
+                [task][Missing instruction](missing)
+                ## Another section
+                [task][Also missing](alsoMissing)
+                """;
+        assertThat(ProblemStatementBindingChecker.tasksWithoutInstruction(statement)).containsExactly("[task][Missing instruction](missing)", "[task][Also missing](alsoMissing)");
+    }
+
     @ParameterizedTest
     @CsvSource({ "testSort, [task][Sort](testSortAscending)", "testSort, [task][Sort](testSortDescending)", "testSort, prefix_testSort", "testSort, testSort$Suffix",
             "test$Sort, [task][Sort](test$SortAscending)", "testSort, ätestSort", "testSort, testSorté" })

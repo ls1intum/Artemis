@@ -67,7 +67,10 @@ class SandboxAgentToolsTest {
         // Everything the stage legitimately consults stays readable, including the prior statement an
         // adaptation starts from.
         tools.readFile("problem-statement.md");
-        assertThat(sandbox.copiedPaths()).hasSize(1);
+        tools.readFile("reference/style/student-tests.md");
+        tools.readFile("reference/style/runtime-observation.md");
+        assertThat(sandbox.copiedPaths()).containsExactly("/workspace/problem-statement.md", "/workspace/reference/style/student-tests.md",
+                "/workspace/reference/style/runtime-observation.md");
     }
 
     @Test
@@ -161,6 +164,34 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void stageTransitionsAndRepairScopesStartWithAnUnknownVerificationBaseline() {
+        var sandbox = new FakeInteractiveSandbox();
+        var exercise = new GenerationInput(0, "", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
+        var checks = mock(StageChecks.class);
+        when(checks.check(any(), eq(sandbox), eq("s"), eq(exercise), eq(Map.of()), any(), any(SeededStructuralTests.class))).thenReturn(StageCheckResult.passed("passed"));
+        var tools = stagedTools(sandbox, exercise, checks);
+        tools.enterStage(GenerationStage.SPEC);
+        tools.verify();
+        assertThat(tools.authoringProgress().verified()).isTrue();
+        assertThat(tools.authoringProgress().remainingFailures()).isZero();
+
+        tools.enterStage(GenerationStage.TESTS);
+        assertThat(tools.authoringProgress().verified()).isFalse();
+        assertThat(tools.authoringProgress().remainingFailures()).isEqualTo(Integer.MAX_VALUE);
+        tools.verify();
+        assertThat(tools.authoringProgress().verified()).isTrue();
+        tools.enterRepairScope(Set.of("tests"));
+        assertThat(tools.authoringProgress().verified()).isFalse();
+        assertThat(tools.authoringProgress().remainingFailures()).isEqualTo(Integer.MAX_VALUE);
+        tools.enterStage(GenerationStage.STATEMENT);
+        tools.verify();
+        tools.exitStagedGeneration();
+        assertThat(tools.authoringProgress().verified()).isFalse();
+        assertThat(tools.authoringProgress().remainingFailures()).isEqualTo(Integer.MAX_VALUE);
+        assertThat(tools.authoringProgress().checks()).isEqualTo(3);
+    }
+
+    @Test
     void search_returnsMatchingLinesWithoutDirtyingTheWorkspace() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(0,
                 "/workspace/problem-statement.md:2:Elevator list is empty\n/workspace/problem-statement.md:3:last Elevator list is empty\n", "", false));
@@ -172,10 +203,18 @@ class SandboxAgentToolsTest {
         tools.enterStage(GenerationStage.TESTS);
         tools.verify();
         assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).isPresent();
+        assertThat(tools.authoringProgress().verified()).isTrue();
+        assertThat(tools.authoringProgress().checks()).isEqualTo(1);
 
         assertThat(tools.search("problem-statement.md", "Elevator list is empty"))
                 .isEqualTo("problem-statement.md:2:Elevator list is empty\nproblem-statement.md:3:last Elevator list is empty");
         assertThat(tools.reuseCachedPassingCheck(GenerationStage.TESTS)).contains(StageCheckResult.passed("clean"));
+        assertThat(tools.authoringProgress().verified()).isTrue();
+        assertThat(tools.claimRepairModelHandoff()).isTrue();
+        assertThat(tools.claimRepairModelHandoff()).isFalse();
+        assertThat(tools.writeFile("solution/src/Example.java", "class Example {} ")).startsWith("Wrote");
+        assertThat(tools.authoringProgress().verified()).isFalse();
+        assertThat(tools.authoringProgress().mutations()).isEqualTo(1);
     }
 
     @Test
@@ -393,6 +432,39 @@ class SandboxAgentToolsTest {
 
         assertThat(result).startsWith("ERROR: do not modify tests/pom.xml");
         assertThat(sandbox.execCount()).isZero();
+    }
+
+    /** An authored test class with a structural provider's name makes the seeder treat the whole structural bundle as a foreign harness and stop the run. */
+    @Test
+    void writeFile_rejectsFileNamesReservedForSeededStructuralTests() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.writeFile("tests/test/de/tum/cit/aet/exgen/exercise/AttributeTest.java", "class AttributeTest {}"))
+                .startsWith("ERROR: do not write tests/test/de/tum/cit/aet/exgen/exercise/AttributeTest.java").contains("different, descriptive name");
+        assertThat(tools.writeFile("tests/test/de/tum/cit/aet/exgen/exercise/test.json", "[]")).startsWith("ERROR: do not write");
+        assertThat(tools.writeFile("tests/test/de/tum/cit/aet/exgen/exercise/RadiusRuleTest.java", "class RadiusRuleTest {}")).doesNotStartWith("ERROR");
+        assertThat(tools.writeFile("solution/src/de/tum/cit/aet/exgen/exercise/ClassTest.java", "class ClassTest {}")).doesNotStartWith("ERROR");
+        assertThat(sandbox.files()).doesNotContainKey("/workspace/tests/test/de/tum/cit/aet/exgen/exercise/AttributeTest.java");
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat > tests/test/de/tum/cit/aet/exgen/exercise/AttributeTest.java <<'EOF'")).isTrue();
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat tests/test/de/tum/cit/aet/exgen/exercise/AttributeTest.java")).isFalse();
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat > tests/test/de/tum/cit/aet/exgen/exercise/RadiusRuleTest.java <<'EOF'")).isFalse();
+    }
+
+    /** Artemis writes the Ares policy itself before every build, so neither a structured edit nor a shell write may touch it. */
+    @Test
+    void theServerOwnedSecurityPolicyIsNotWritable() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        assertThat(tools.writeFile("tests/SecurityPolicy.yaml", "theFollowingClassesAreTestClasses: []")).startsWith("ERROR: do not modify tests/SecurityPolicy.yaml");
+        assertThat(tools.deleteFile("tests/SecurityPolicy.yaml")).startsWith("ERROR: do not modify tests/SecurityPolicy.yaml");
+        assertThat(sandbox.execCount()).isZero();
+        sandbox.files().put("/workspace/tests/SecurityPolicy.yaml", "regardingPackageImports: [ ]\n");
+        assertThat(tools.editFile("tests/SecurityPolicy.yaml", "[ ]", "[ x ]")).startsWith("ERROR: do not modify tests/SecurityPolicy.yaml");
+        assertThat(sandbox.files()).containsEntry("/workspace/tests/SecurityPolicy.yaml", "regardingPackageImports: [ ]\n");
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("sed -i 's/a/b/' tests/SecurityPolicy.yaml")).isTrue();
+        assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure("cat tests/SecurityPolicy.yaml")).isFalse();
     }
 
     @Test
@@ -630,7 +702,7 @@ class SandboxAgentToolsTest {
     void bash_withNoCommand_returnsHelpfulErrorWithoutTouchingTheSandbox() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "unused"));
         String out = new SandboxAgentTools(sandbox, "s").bash(null);
-        assertThat(out).contains("No command provided").contains("\"command\"");
+        assertThat(out).startsWith("ERROR: no command provided").contains("\"command\"");
         assertThat(sandbox.lastScript()).isNull();
     }
 
@@ -638,7 +710,7 @@ class SandboxAgentToolsTest {
     void bash_mangledJsonArrayCommand_isRejectedLoudlyWithoutTouchingTheSandbox() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "should not run"));
         String out = new SandboxAgentTools(sandbox, "s").bash("[bash, -lc, ls -R]");
-        assertThat(out).startsWith("exit=2\n").contains("must be a single shell string").contains("JSON array");
+        assertThat(out).startsWith("ERROR: the command was not run. ").contains("must be a single shell string").contains("JSON array");
         assertThat(sandbox.lastScript()).isNull();
     }
 
@@ -646,7 +718,7 @@ class SandboxAgentToolsTest {
     void bash_dependencyCacheInspection_isRefusedWithTheHarnessContractWithoutTouchingTheSandbox() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "should not run"));
         String out = new SandboxAgentTools(sandbox, "s").bash("cd /tmp/aresjar && javap -c de/tum/in/test/api/security/ArtemisSecurityManager.class | head -60");
-        assertThat(out).startsWith("exit=2\n").contains("not inspectable").contains("ReflectionTestUtils").contains("reference/style/tests.md");
+        assertThat(out).startsWith("ERROR: the command was not run. ").contains("not inspectable").contains("ReflectionTestUtils").contains("reference/style/tests.md");
         assertThat(sandbox.lastScript()).isNull();
     }
 
@@ -729,7 +801,8 @@ class SandboxAgentToolsTest {
     void bash_applyPatchCommand_shortCircuitsLoudlyWithoutTouchingTheSandbox() {
         FakeInteractiveSandbox sandbox = FakeInteractiveSandbox.returning(bashStdout(0, "should not run"));
         String out = new SandboxAgentTools(sandbox, "s").bash("apply_patch");
-        assertThat(out).isEqualTo("exit=2\napply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.");
+        assertThat(out)
+                .isEqualTo("ERROR: the command was not run. apply_patch is NOT available. Use write_file (new file / full rewrite) or edit_file (exact unique snippet) instead.");
         assertThat(sandbox.lastScript()).isNull();
     }
 
@@ -739,7 +812,7 @@ class SandboxAgentToolsTest {
 
         String out = new SandboxAgentTools(sandbox, "s").bash("cat > tests/pom.xml <<'EOF'\n<project/>\nEOF");
 
-        assertThat(out).startsWith("exit=2\n").contains("Do not modify tests-repository build/harness files");
+        assertThat(out).startsWith("ERROR: the command was not run. ").contains("Do not modify tests-repository build/harness files");
         assertThat(sandbox.lastScript()).isNull();
     }
 
@@ -760,7 +833,7 @@ class SandboxAgentToolsTest {
 
         String out = new SandboxAgentTools(sandbox, "s").bash("cat 2>/dev/null > tests/build.gradle");
 
-        assertThat(out).startsWith("exit=2\n").contains("Do not modify tests-repository build/harness files");
+        assertThat(out).startsWith("ERROR: the command was not run. ").contains("Do not modify tests-repository build/harness files");
         assertThat(sandbox.lastScript()).isNull();
     }
 
@@ -808,6 +881,18 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void quotedSearchOperatorsAreNotHarnessRedirections() {
+        for (String command : List.of("grep -rn 'reports|xml|Test>' /workspace/tests/build.gradle", "grep -n \"Test>\" tests/build.gradle; echo \"exit=$?\"",
+                "grep '>' tests/build.gradle", "grep \"a\\\">b\" tests/build.gradle", "grep 'Test>' tests/build.gradle 2>/dev/null")) {
+            assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure(command)).as(command).isFalse();
+        }
+        for (String command : List.of("grep '>' tests/build.gradle > tests/build.gradle", "sh -c 'cat > tests/build.gradle'", "echo \"$(cat > tests/build.gradle)\"",
+                "echo `cat > tests/build.gradle`")) {
+            assertThat(SandboxAgentTools.mutatesManagedBuildInfrastructure(command)).as(command).isTrue();
+        }
+    }
+
+    @Test
     void harnessReadsMayDiscardStderrWithoutBeingTreatedAsWrites() {
         for (String command : List.of(
                 "ls /opt/aiworker/trusted-structural 2>/dev/null && find /opt/aiworker/trusted-structural -type f | head -50; echo ---; cat /workspace/tests/build.gradle | sed -n '40,200p'",
@@ -842,10 +927,9 @@ class SandboxAgentToolsTest {
     }
 
     @Test
-    void verify_whenVerifierUnavailable_returnsAnActionableFallback() {
-        // No verifier (two-arg ctor): the tool must point at the bash fallback rather than NPE.
+    void verify_whenVerifierUnavailable_failsWithoutOfferingDestructiveShellVerification() {
         String out = new SandboxAgentTools(new FakeInteractiveSandbox(), "s").verify();
-        assertThat(out).startsWith("ERROR: the verify tool is unavailable").contains("sh verify.sh solution");
+        assertThat(out).startsWith("ERROR: the verify tool is unavailable").doesNotContain("sh verify.sh").contains("configuration failure");
     }
 
     // Stage-aware verify()/submit(): a staged session delegates to the wired StageChecks for the CURRENT stage, while an unstaged session runs the full differential

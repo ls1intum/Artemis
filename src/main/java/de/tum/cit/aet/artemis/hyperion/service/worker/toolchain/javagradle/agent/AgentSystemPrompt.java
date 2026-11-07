@@ -109,13 +109,14 @@ public class AgentSystemPrompt {
     private static final String TEMPLATE_AS_TEACHING_SCAFFOLD = """
             TEMPLATE AS TEACHING SCAFFOLD
             The template is the student's guided starting point: work from it alone, using the statement only as reference. Every stubbed member carries complete Javadoc (or the
-            language's doc idiom) stating its contract — purpose, parameters, return, errors. Anchor each stubbed seam with its Testing Strategy ID and wording:
-            `// TODO S<n>: <task wording>`
-            Put it INSIDE the member at the assigned change; above its throw for a new unfinished body. If an absent type makes the seam undeclarable, keep an empty owner class with its own seam TODO. Do not restore the
-            type, use `Object`, edit SPEC.md, or reuse its seam.
+            language's doc idiom) stating its contract — purpose, parameters, return, errors. Anchor each stubbed seam with an imperative TODO that mirrors its task wording:
+            `// TODO: <task wording>`
+            Never put the seam ID in the comment: students see the TODO, but the statement never defines seam IDs; the Testing Strategy already links each seam to its owner.
+            Put it INSIDE the member at the assigned change; above its throw for a new unfinished body. If an absent type makes the seam undeclarable, keep an empty owner class with its own TODO. Do not restore the
+            type, use `Object`, edit SPEC.md, or anchor its work elsewhere.
             A TODO marks unfinished student work only: never leave one on code that is already complete, and never leave authoring or design notes in any repository file.
             Omit student-created types, keep the starter compiling, and grade them with the reference's structural/reflection pattern. Tasks and tests anchor them; never put their
-            seam IDs on unrelated collaborator code. Imitate the reference's FORM, not its content.
+            TODOs on unrelated collaborator code. Imitate the reference's FORM, not its content.
 
             """;
 
@@ -178,6 +179,17 @@ public class AgentSystemPrompt {
 
             """;
 
+    /** Supported runtime assessment mechanisms, shared by the specification guidance, style references and executed-bypass finding. */
+    public static final String TESTABLE_STUDENT_CODE_RULE = "Grade the learner-owned operation through runtime evidence that distinguishes a plausible bypass from the required work. Choose the observation mechanism together with its Public API, before the specification freezes. Vary inputs when behavior depends on them; observe state or interactions when the objective is API use. Supplied runtime observation may expose operations on objects a beginner creates locally without making them write new abstractions. Tests of the supplied API alone do not grade the student's integration. When students write tests, checks of the supplied implementation are preservation checks with zero student credit. A weighted seam must observe the learner-written tests and distinguish effective assertions from wrong or ineffective ones. Do not assign learner credit to a teacher test that never executes learner work. Hidden variants need a declared way to observe that learner work; changing inputs to supplied code alone does not qualify. For an operation sequence, execute the learner scenario once per test and obtain all related observations from that same execution. Reset supplied observation state before that execution, not inside each accessor. Record immutable values at each required transition, not references to mutable objects that later actions change. A final snapshot cannot establish an earlier state erased by a later operation. Observation support must record student actions, not perform them. Keep the student's prerequisites and responsibilities intact. Do not invent normative call counts, allocation counts or syntax restrictions merely to help a test. Source and bytecode inspection are not supported grading mechanisms.";
+
+    /**
+     * When the final statement must contain a class diagram and what it shows. Artemis derives the requirement from the approved design, so the specification author no longer
+     * decides it; shared verbatim by the statement stage prompt, its handoff, the final-statement style guide, and the diagram gate.
+     */
+    public static final String DIAGRAM_REQUIREMENT_RULE = "A diagram is required when the exercise's own types extend or implement one another or at least two of them are "
+            + "student-owned; then the statement contains one PlantUML class diagram (@startuml ... @enduml), placed after the tasks it illustrates, that shows the exercise "
+            + "types and their relations.";
+
     private static final String STAGE_SPEC_INSTRUCTIONS = """
             STAGE — SPECIFICATION
             Write `/workspace/SPEC.md` from the instructor brief and selected concept. The brief is authoritative; the concept is a design proposal. Choose the smallest coherent
@@ -192,10 +204,13 @@ public class AgentSystemPrompt {
             - `## Design`: table `| Type | Role | Template status |`. Status is exactly `given`, `stubbed`, or `student-creates`, without formatting. Describe what each owner
               supplies and what the learner changes in Role. Given types stay complete and identical across repositories. Student-created types are absent from the starter.
               State who owns mutable state and whether it survives replacement. Supplied declarations must not depend on an absent type; omit only student-owned dependent
-              members, marked `/** @studentCreates */` in Public API, with their own owner seam when independently actionable.
+              members, marked `/** @studentCreates */` in Public API, with their own owner seam when independently actionable. A `given` type's whole source, bodies and
+              imports included, ships unchanged in the starter, so a type whose code constructs, calls, or imports a student-created type is `stubbed`, never `given`.
             - `## Public API`: one `### TypeName` subsection per type, each with a fenced `java` block containing the completed solution's type declaration and exact
               contract-visible signatures, including all final enum constants. This is the final graded contract, not an intermediate starter or an earlier task's API.
               Use `{ ... }` for constructor bodies and semicolons for method signatures. List fields only when deliberately public and graded. Private state is not a reflective API.
+              Write every annotation the code must carry into its declaration, such as `@Test` on each method of a test class students write; structural checks compare
+              annotations exactly.
             - `## Testing Strategy`: table `| Seam | Owner type | Observable responsibility | Weight | Hidden variant |`. S1, S2, ... identify independently actionable units
               of student work, not individual tests. Owner type is one exact, bare Design type that is stubbed or student-created. Describe the test-controlled setup and observed
               result. Independent tasks must be diagnosable without first completing another task; group genuinely cumulative work. Weight is 3 core, 2 supporting, or 1 edge
@@ -206,11 +221,16 @@ public class AgentSystemPrompt {
               Checks solely preserving supplied behavior are separate zero-credit checks, not student-work partitions.
             - `## Decision Ledger`: table `| Decision | Provenance | Why necessary | Observable |` for consequential choices only. Provenance is exactly `EXPLICIT_BRIEF`,
               `NECESSARY_OPERATIONAL_CHOICE`, `INPUT_DOMAIN_ASSUMPTION`, or `PEDAGOGICAL_OBJECTIVE`. Labels do not authorize scope expansion. Surface assumptions callers need.
-            - `## Diagram`: yes/no and a short design-grounded reason. No task bindings, test names, or PlantUML at specification time.
+            No task bindings, test names, or PlantUML at specification time; Artemis decides from the Design table and Public API whether the statement needs a diagram.
+
+            For API-use sequences, consult reference/style/runtime-observation.md before choosing the assessment contract or hidden variants.
+            If learners write JUnit tests, consult reference/style/student-tests.md for supported fault selection and instructor grading before freezing the contract.
+            Do not replace learner-chosen cases or assertions with supplied scenarios to make assessment easier.
 
             Judge the learner path before freezing: what is given, what changes, what reasoning remains, and what evidence demonstrates each explicit objective? A specification's
             claim that a skill is practiced is insufficient when its own ownership or API supplies that work. Make examples, signatures, and ownership mutually consistent.
-            """;
+            """
+            + TESTABLE_STUDENT_CODE_RULE + "\n";
 
     private static final String STAGE_3_TESTS_INSTRUCTIONS = """
             EXECUTABLE BUILD
@@ -224,6 +244,8 @@ public class AgentSystemPrompt {
             fakes. For omitted types and members, the reflection and Ares conventions are in `reference/style/tests.md`; do not modify the harness to make them compile.
             Do not inspect assignment source or bytecode to grade an unobservable technique. Assertion messages explain the failed behavior without inventing new obligations.
 
+            For learner-written JUnit tests, reference/style/student-tests.md shows how the same assertions can run against correct and faulty supplied behavior.
+
             Before verification, write `/workspace/test-plan.json`. Assessment entries have this shape:
             {"tests":[{"name":"<exact test name>","seam":"S1","riskPartitions":["S1.P1"],"seamWeightTier":<1..3>,"visibility":"ALWAYS"|"AFTER_DUE_DATE"}]}.
             Purpose defaults to ASSESSMENT. Every student-work risk ID needs executable assessment evidence; every seam has visible tests. Hidden variants use fresh witnesses
@@ -235,11 +257,13 @@ public class AgentSystemPrompt {
 
     private static final String STAGE_4_STATEMENT_INSTRUCTIONS = """
             FINAL STATEMENT: REWRITE the specification into student-facing form without adding graded behaviour. Use one `[task]` per seam and only its accepted visible
-            bare test names; never bind or reveal AFTER_DUE_DATE names. Present the API once. Include a testsColor PlantUML diagram only when `## Diagram` says yes, and validate
-            every arrow against actual Java declarations and collaboration. Preserve every boundary, example, and seam responsibility exactly; never repeat headings.
-            Create the artifact with `write_file("problem-statement.md", ...)`—chat Markdown creates no file. Replay the examples, run `verify`, and submit only after
-            `MECHANICAL PRECHECK: PASS`; final verification decides save eligibility.
-            """;
+            bare test names; never bind or reveal AFTER_DUE_DATE names. Present the API once. The handoff states whether this exercise requires a diagram.
+            """ + DIAGRAM_REQUIREMENT_RULE + "\n"
+            + """
+                    Validate every diagram arrow against actual Java declarations and collaboration. Preserve every boundary, example, and seam responsibility exactly; never repeat headings.
+                    Create the artifact with `write_file("problem-statement.md", ...)`—chat Markdown creates no file. Replay the examples, run `verify`, and submit only after
+                    `MECHANICAL PRECHECK: PASS`; final verification decides save eligibility.
+                    """;
 
     private static final String GENERATE_GROUNDED_WORKFLOW = STAGED_WORKFLOW_INTRO + STAGE_3_TESTS_INSTRUCTIONS + STAGE_4_STATEMENT_INSTRUCTIONS;
 
@@ -454,13 +478,14 @@ public class AgentSystemPrompt {
                 - solution/: reference implementation — Java sources go in solution/src/<package-path>/
                 - template/: student starting point — Java sources go in template/src/<package-path>/
                 - tests/: instructor tests and immutable build harness — test sources go in tests/test/<package-path>/
-                - verify.sh: grader-equivalent build recipe
+                - Verification: use the structured `verify` tool. Internal verifier scripts remove source files for isolation and require server-managed restoration; never invoke them through the shell.
                 NEVER create an assignment/ directory in these repos — "assignment/" is only the grader's ephemeral CI checkout.
                 %s
 
                 Programming language: %s%s
 
-                """.formatted(problemStatementGuidance, referenceGuidance, languageName, buildContextSection(exercise));
+                """
+                .formatted(problemStatementGuidance, referenceGuidance, languageName, buildContextSection(exercise));
     }
 
     /**
@@ -558,9 +583,8 @@ public class AgentSystemPrompt {
             tests/src/test/java/.
             The test project uses Java 25, JUnit Jupiter and Ares 2 (de.tum.cit.ase:ares). Import de.tum.cit.ase.ares.api.jupiter.Public,
             de.tum.cit.ase.ares.api.Policy, and de.tum.cit.ase.ares.api.StrictTimeout. Every test class MUST carry @Public and
-            @Policy(value = "SecurityPolicy.yaml"); every @Test MUST carry @StrictTimeout(1). Update ONLY theFollowingClassesAreTestClasses
-            in tests/SecurityPolicy.yaml to list every top-level instructor Java test source class, including the seeded structural classes.
-            Keep the supervised package, resource permissions and all other policy fields unchanged. Never use the default policy or activated=false.
+            @Policy(value = "SecurityPolicy.yaml"); every @Test MUST carry @StrictTimeout(1). tests/SecurityPolicy.yaml is managed by Artemis: it registers
+            every instructor test source class there before each build, so never edit it. Never use the default policy or activated=false.
             Never implement framework packages (`de.tum.cit.ase.ares`, `de.tum.in.test.api`, `org.junit`); dependencies provide them.
             Also annotate every test class with @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class),
             so Gradle reports plain method names instead of names ending in (). The [task] binding uses the test METHOD name exactly as reported.
@@ -576,8 +600,8 @@ public class AgentSystemPrompt {
             `invokeMethod(instance, getMethod(instance, "sin"))`. These return Object; cast the result to the declared return type.
             For exception assertions, use `invokeMethodRethrowing(instance, getMethod(instance, "withdraw", double.class), amount)` or
             `newInstanceRethrowing(getConstructor(getClazz(ownerName), int.class), value)` so assertThrows sees the student's exception, not a helper assertion failure.
-            Reflection belongs only in instructor tests. Never import JUnit or Ares into solution/ or template/ and never add reflective class/member lookup there to make
-            references to absent student-created types compile. Keep given starter code independent of those absent types; a learner-owned method can have a TODO body.
+            Reflection belongs only in instructor tests. Never import Ares into solution/ or template/; import JUnit there only in test classes the exercise asks students
+            to write, declared `student-creates` or `stubbed` in the approved Design table (Artemis then permits that import). Never add reflective class/member lookup there to make references to absent student-created types compile. Keep given starter code independent of those absent types; a learner-owned method can have a TODO body.
             Prefer identical solution/template signatures and deliberately incomplete method bodies when structural testing does not serve the learning objective.
             """;
 }

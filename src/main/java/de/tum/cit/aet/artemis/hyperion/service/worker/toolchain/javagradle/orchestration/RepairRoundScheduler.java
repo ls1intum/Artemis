@@ -120,6 +120,18 @@ class RepairRoundScheduler {
                 + round.fresh() + " new.";
     }
 
+    /**
+     * Inconclusive mutant probes prove neither a gap nor its absence, so they never become findings; the round event still says how many there were, so a run whose executable
+     * review mostly failed to execute cannot read as a clean one.
+     */
+    static String inconclusiveProbeNote(int inconclusiveMutantProbes) {
+        if (inconclusiveMutantProbes == 0) {
+            return "";
+        }
+        String probes = inconclusiveMutantProbes == 1 ? " mutant probe was" : " mutant probes were";
+        return " " + inconclusiveMutantProbes + probes + " inconclusive and proved nothing either way.";
+    }
+
     /** Distinguishes unavailable review evidence, convergence, and missing surface coverage. */
     static TerminationReason reasonForUnschedulableReport(SpecFidelityReport report) {
         if (hasInstrumentUnavailableFinding(report)) {
@@ -158,19 +170,40 @@ class RepairRoundScheduler {
         return finding.kind().name() + '\n' + normalizeRequirement(finding.requirement());
     }
 
-    static boolean repairImproved(SpecFidelityReport previous, SpecFidelityReport current) {
-        Set<String> previousBlockers = candidateBlockingFindingIdentities(previous);
-        Set<String> currentBlockers = candidateBlockingFindingIdentities(current);
+    /**
+     * Whether a semantic repair made progress. Executed evidence decides first; a repair whose suite lets a previously killed mutant survive again never reaches this
+     * comparison, because verification rejects it. A repair that killed a previously surviving mutant improved, even if a freshly authored mutant now survives: that survivor is
+     * new evidence, not a loss, and becomes the next oracle
+     * target within the round budget, while text-only blockers raised beside the kill stay on the repaired candidate, because a re-review re-rolls text verdicts. Fewer
+     * executed blockers is progress too; a prior survivor without a fresh verdict must be in {@code current} so that losing its evidence never reads as draining it. Otherwise the
+     * reviewed blockers must strictly shrink, because text identity is then the only evidence there is. A blocker no repair
+     * surface can address and that is unchanged on both sides (a contested specification or concept, for example) is ignored there: no repair could have drained it, so it
+     * must not turn a round that drained nothing else, such as a witness adoption, into a regression.
+     *
+     * @param killedSurvivingMutant whether the repaired suite killed at least one mutant the previous candidate's suite let survive
+     */
+    static boolean repairImproved(SpecFidelityReport previous, SpecFidelityReport current, boolean killedSurvivingMutant) {
+        if (killedSurvivingMutant || candidateBlockingFindingIdentities(current, true).size() < candidateBlockingFindingIdentities(previous, true).size()) {
+            return true;
+        }
+        Set<String> previousBlockers = candidateBlockingFindingIdentities(previous, false);
+        Set<String> currentBlockers = candidateBlockingFindingIdentities(current, false);
+        Set<String> persistentUnrepairable = previous.findings().stream().filter(SpecFidelityReport.Finding::isBlocking)
+                .filter(finding -> SemanticRepairBatch.surfaceFor(finding.kind()) == null).map(RepairRoundScheduler::findingIdentity).filter(currentBlockers::contains)
+                .collect(Collectors.toSet());
+        previousBlockers.removeAll(persistentUnrepairable);
+        currentBlockers.removeAll(persistentUnrepairable);
         if (previousBlockers.isEmpty()) {
             return currentBlockers.isEmpty();
         }
         return currentBlockers.size() < previousBlockers.size() && previousBlockers.containsAll(currentBlockers);
     }
 
-    private static Set<String> candidateBlockingFindingIdentities(SpecFidelityReport report) {
+    private static Set<String> candidateBlockingFindingIdentities(SpecFidelityReport report, boolean executedOnly) {
         return report.findings().stream().filter(SpecFidelityReport.Finding::isBlocking).filter(finding -> switch (finding.kind()) {
             case QUALITY_REVIEW_UNAVAILABLE, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, EXECUTABLE_EVIDENCE_UNAVAILABLE, CONTRACT_WITNESS_ADJUDICATION_UNAVAILABLE -> false;
-            default -> true;
+            case EXECUTABLE_WEAK_TEST_ORACLE -> true;
+            default -> !executedOnly;
         }).map(RepairRoundScheduler::findingIdentity).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 

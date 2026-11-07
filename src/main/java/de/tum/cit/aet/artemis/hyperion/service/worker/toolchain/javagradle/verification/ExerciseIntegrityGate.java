@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ import org.jspecify.annotations.Nullable;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.AresTestHarness;
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 
 /**
@@ -30,14 +32,15 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.works
  * passes. Shared interfaces/headers and git config legitimately identical in both repositories are not flagged; a graded-path copy makes the template pass and is left to the
  * differential oracle.</li>
  * <li><b>Specification contract loss.</b> The differential proves the tests distinguish solution from template, not that students still perform the work the approved
- * specification assigned them, so the final candidate maps are checked against the immutable approved ownership decisions before persistence.</li>
+ * specification assigned them, so the final candidate maps are checked against the immutable approved ownership decisions before persistence. Those checks live in
+ * {@link ApprovedOwnershipGate}.</li>
  * </ul>
  * Static and side-effect-free, so the gates are unit-testable without Docker and the residue strip can be reused by {@link GenerationWorkspace} on read-back. Everything
  * here states a policy; the lexical machinery those policies need lives in {@link JavaSourceInspector}.
  */
 public final class ExerciseIntegrityGate {
 
-    private static final Pattern JAVA_IDENTIFIER = Pattern.compile("[A-Za-z_$][A-Za-z0-9_$]*");
+    private static final String JAVA_SUFFIX = ".java";
 
     private static final Pattern SEAM_ID = Pattern.compile("S[1-9][0-9]*");
 
@@ -46,8 +49,6 @@ public final class ExerciseIntegrityGate {
     private static final Pattern NEGATION_PREFIX = Pattern.compile("(?is).*\\b(?:(?:does?|did|is|are|was|were|must)\\s+)?not\\s+$");
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
-
-    private static final Pattern TODO_SEAM = Pattern.compile("\\bTODO\\s+(S[1-9][0-9]*)\\s*:");
 
     /**
      * The sibling repositories CI lays out next to each other, never legitimate top-level source folders. A file whose first path component is one of these duplicates the CI
@@ -69,8 +70,6 @@ public final class ExerciseIntegrityGate {
 
     /** Randomness constructs whose only purpose is to make one run differ from the next; a seeded generator ({@code new Random(42)}) is not one of them. */
     private static final List<String> NONDETERMINISM_SOURCES = List.of("Collections.shuffle", "Math.random()", "new Random()", "ThreadLocalRandom", "UUID.randomUUID()");
-
-    private static final Set<String> NON_SOURCE_TYPE_FILE_SUFFIXES = Set.of(".class", ".md", ".orig", ".txt");
 
     private ExerciseIntegrityGate() {
     }
@@ -166,8 +165,8 @@ public final class ExerciseIntegrityGate {
                 reasons.add("you deleted the seeded harness file " + repository + "/" + path + "; restore it unchanged.");
                 continue;
             }
-            if (repository.equals("tests") && path.equals(AresSecurityPolicy.PATH) && AresSecurityPolicy.onlyTestClassesChanged(seed.getValue(), produced)) {
-                continue;
+            if (repository.equals("tests") && path.equals(AresSecurityPolicy.PATH)) {
+                continue; // Server-owned: securityPolicyReasons requires exactly the policy the server derives from this seed.
             }
             List<String> seedNormalized = normalizedLines(seed.getValue());
             List<String> producedNormalized = normalizedLines(produced);
@@ -223,109 +222,6 @@ public final class ExerciseIntegrityGate {
         return List.of("this adapt retained NONE of the exercise's " + baseline.size() + " previously-graded test(s) (e.g. " + sampleNames(baseline)
                 + "), so the graded coverage was wiped and rebuilt from scratch — that is a from-scratch regeneration masquerading as an adapt, not a refinement of the existing "
                 + "exercise. Keep and adjust the existing graded tests (retain at least the ones still relevant) instead of deleting them all and authoring a brand-new suite.");
-    }
-
-    /**
-     * Enforces the approved specification's student/template ownership decisions against the exact repository maps final verification hands to persistence. A differential build
-     * cannot detect this violation: tests pass against a fully stubbed template even when the approved exercise required students to create those types themselves.
-     */
-    static List<String> approvedSpecificationReasons(String approvedSpec, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles) {
-        if (approvedSpec == null || approvedSpec.isBlank()) {
-            return List.of();
-        }
-        List<StageChecks.DesignRow> designRows = StageChecks.designTableRows(approvedSpec);
-        List<String> studentCreatedTypes = StageChecks.specStudentCreatedTypes(approvedSpec);
-        List<String> reasons = new ArrayList<>();
-        if (approvedSpec.contains("## Public API")) {
-            Set<String> designTypes = designRows.stream().map(StageChecks.DesignRow::type).collect(Collectors.toSet());
-            ApprovedStructuralContract.ParseResult structuralContract = ApprovedStructuralContract.parse(approvedSpec, designTypes, Set.copyOf(studentCreatedTypes));
-            if (structuralContract.valid()) {
-                reasons.addAll(structuralContract.contract().solutionSurfaceReasons(producedSolutionFiles));
-                Set<String> templateTypes = designRows.stream().filter(row -> "given".equals(row.status()) || "stubbed".equals(row.status())).map(StageChecks.DesignRow::type)
-                        .collect(Collectors.toSet());
-                reasons.addAll(structuralContract.contract().templateSurfaceReasons(producedTemplateFiles, templateTypes));
-            }
-            else if (!designTypes.isEmpty()) {
-                reasons.add("the approved Java Public API structural contract is invalid: " + structuralContract.errors()
-                        + ". This frozen contract cannot be replaced by candidate code; repair or restart from a valid specification.");
-            }
-        }
-        List<String> missingFromSolution = studentCreatedTypes.stream().filter(type -> !repositoryDeclaresType(producedSolutionFiles, type)).toList();
-        if (!missingFromSolution.isEmpty()) {
-            reasons.add("the approved specification requires students to create these types, but the reference solution does not declare them: " + missingFromSolution
-                    + ". Implement every approved student-created type in the solution; changing SPEC.md after approval cannot remove the requirement.");
-        }
-        List<String> leakedIntoTemplate = studentCreatedTypes.stream().filter(type -> repositoryContainsTypeArtifact(producedTemplateFiles, type)).toList();
-        if (!leakedIntoTemplate.isEmpty()) {
-            reasons.add("the approved specification requires students to create these types, but the template already declares them: " + leakedIntoTemplate
-                    + ". Delete their template declarations and leave any necessary guidance in the problem statement or collaborating given types; changing SPEC.md after "
-                    + "approval cannot turn the required design work into prebuilt stubs.");
-        }
-        List<String> missingStubbedTypes = StageChecks.specStubbedTypes(approvedSpec).stream().filter(type -> !repositoryDeclaresType(producedTemplateFiles, type)).toList();
-        if (!missingStubbedTypes.isEmpty()) {
-            reasons.add("the approved specification marks these types 'stubbed', but the template does not declare them: " + missingStubbedTypes
-                    + ". A stubbed type ships in the template as the real signatures with TODO bodies, so the student has something to complete and the graded tests can name "
-                    + "it; restore them instead of deleting the tests that need them.");
-        }
-        List<String> divergentGivenTypes = designRows.stream().filter(row -> "given".equals(row.status())).map(StageChecks.DesignRow::type)
-                .filter(type -> !canonicalGivenFileMatches(type, producedTemplateFiles, producedSolutionFiles)).toList();
-        if (!divergentGivenTypes.isEmpty()) {
-            List<String> firstDifferences = divergentGivenTypes.stream().map(type -> canonicalGivenFileDifference(type, producedTemplateFiles, producedSolutionFiles)).toList();
-            reasons.add("the approved specification marks these as given types, but their canonical Java source is not byte-for-byte identical in the solution and template: "
-                    + divergentGivenTypes + ". First differences: " + firstDifferences
-                    + ". A given type is supplied rather than student work. The solution is the canonical complete implementation: repair its public documentation first when "
-                    + "needed, then copy the whole canonical file to the template. Never delete solution documentation or weaken either copy merely to make the bytes match.");
-        }
-        return List.copyOf(reasons);
-    }
-
-    private static boolean canonicalGivenFileMatches(String type, Map<String, String> templateFiles, Map<String, String> solutionFiles) {
-        if (!JAVA_IDENTIFIER.matcher(type).matches()) {
-            return true;
-        }
-        String suffix = "/" + type + ".java";
-        List<Map.Entry<String, String>> templateMatches = canonicalJavaFiles(templateFiles, type, suffix);
-        List<Map.Entry<String, String>> solutionMatches = canonicalJavaFiles(solutionFiles, type, suffix);
-        return templateMatches.size() == 1 && solutionMatches.size() == 1 && templateMatches.getFirst().getKey().equals(solutionMatches.getFirst().getKey())
-                && templateMatches.getFirst().getValue().equals(solutionMatches.getFirst().getValue());
-    }
-
-    private static String canonicalGivenFileDifference(String type, Map<String, String> templateFiles, Map<String, String> solutionFiles) {
-        String suffix = "/" + type + ".java";
-        List<Map.Entry<String, String>> templateMatches = canonicalJavaFiles(templateFiles, type, suffix);
-        List<Map.Entry<String, String>> solutionMatches = canonicalJavaFiles(solutionFiles, type, suffix);
-        if (templateMatches.size() != 1 || solutionMatches.size() != 1) {
-            return type + " (expected one canonical file in each repository; found solution=" + solutionMatches.size() + ", template=" + templateMatches.size() + ")";
-        }
-        Map.Entry<String, String> solution = solutionMatches.getFirst();
-        Map.Entry<String, String> template = templateMatches.getFirst();
-        if (!solution.getKey().equals(template.getKey())) {
-            return type + " (path: solution " + solution.getKey() + ", template " + template.getKey() + ")";
-        }
-        List<String> solutionLines = solution.getValue().lines().toList();
-        List<String> templateLines = template.getValue().lines().toList();
-        int shared = Math.min(solutionLines.size(), templateLines.size());
-        for (int index = 0; index < shared; index++) {
-            if (!solutionLines.get(index).equals(templateLines.get(index))) {
-                return type + " (line " + (index + 1) + ": solution `" + boundedLine(solutionLines.get(index)) + "`, template `" + boundedLine(templateLines.get(index)) + "`)";
-            }
-        }
-        return type + " (line " + (shared + 1) + ": solution has " + solutionLines.size() + " lines, template has " + templateLines.size() + ")";
-    }
-
-    private static String boundedLine(String line) {
-        String stripped = line.strip();
-        return stripped.length() <= 120 ? stripped : stripped.substring(0, 117) + "...";
-    }
-
-    private static List<Map.Entry<String, String>> canonicalJavaFiles(Map<String, String> files, String type, String suffix) {
-        if (files == null) {
-            return List.of();
-        }
-        return files.entrySet().stream().filter(entry -> {
-            String path = entry.getKey().replace('\\', '/');
-            return (path.equals(type + ".java") || path.endsWith(suffix)) && JavaSourceInspector.sourceDeclaresType(entry.getValue(), type);
-        }).toList();
     }
 
     static List<String> approvedTestPlanReasons(String approvedSpec, String testPlanJson, List<String> verifiedTestNames) {
@@ -479,106 +375,15 @@ public final class ExerciseIntegrityGate {
         }
     }
 
-    /** Every Artemis task needs an actual instruction before the next task or section; a checkbox-only statement is not usable teaching material. */
+    /** Every Artemis task needs an adjacent instruction block; a checkbox-only statement is not usable teaching material. */
     static List<String> statementTaskInstructionReasons(String problemStatement) {
         if (problemStatement == null || problemStatement.isBlank()) {
             return List.of();
         }
         List<String> bareTasks = ProblemStatementBindingChecker.tasksWithoutInstruction(problemStatement);
         return bareTasks.isEmpty() ? List.of()
-                : List.of("the final statement has task binding(s) with no student-facing instruction before the next task or heading: " + bareTasks
-                        + ". Follow each task with concise prose naming the work to perform; the binding alone is grading metadata, not an exercise instruction.");
-    }
-
-    /**
-     * Verifies the specification's seam-to-owner links against the template: a stubbed owner carries its seam TODO in the source declaring it, while an omitted student-created
-     * owner has no truthful template location and so must not have a breadcrumb fabricated in an unrelated collaborator.
-     */
-    static List<String> templateTodoSeamReasons(String specification, Map<String, String> templateFiles) {
-        List<StageChecks.TestingStrategyRow> rows = StageChecks.testingStrategyRows(specification == null ? "" : specification);
-        if (rows.isEmpty()) {
-            return List.of();
-        }
-        Map<String, String> statusByType = StageChecks.designTableRows(specification).stream().filter(row -> row.status() != null)
-                .collect(Collectors.toMap(StageChecks.DesignRow::type, StageChecks.DesignRow::status, (first, ignored) -> first, LinkedHashMap::new));
-        Map<String, Set<String>> seamFiles = new LinkedHashMap<>();
-        Map<String, String> javaFiles = templateFiles == null ? Map.of()
-                : templateFiles.entrySet().stream().filter(entry -> JavaSourceInspector.isJavaSource(entry.getKey()) && entry.getValue() != null)
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, ignored) -> first, LinkedHashMap::new));
-        javaFiles.forEach((path, content) -> TODO_SEAM.matcher(content).results().map(match -> match.group(1))
-                .forEach(seam -> seamFiles.computeIfAbsent(seam, ignored -> new LinkedHashSet<>()).add(path)));
-
-        Set<String> declared = rows.stream().map(StageChecks.TestingStrategyRow::seamId).collect(Collectors.toCollection(LinkedHashSet::new));
-        List<String> reasons = new ArrayList<>();
-        List<String> unknown = seamFiles.keySet().stream().filter(id -> !declared.contains(id)).toList();
-        if (!unknown.isEmpty()) {
-            reasons.add("the template uses TODO seam IDs the approved Testing Strategy does not declare: " + unknown + ". Replace these stale or invented IDs with one of "
-                    + declared + ".");
-        }
-        for (StageChecks.TestingStrategyRow row : rows) {
-            Set<String> actualFiles = seamFiles.getOrDefault(row.seamId(), Set.of());
-            String status = statusByType.get(row.ownerType());
-            if ("student-creates".equals(status) && !actualFiles.isEmpty()) {
-                reasons.add("the template uses " + row.seamId() + " TODO breadcrumb(s) in " + actualFiles + " even though its owner " + row.ownerType()
-                        + " is student-created and absent. Remove the misleading breadcrumb; the statement task and reflective tests guide this seam.");
-                continue;
-            }
-            if (!"stubbed".equals(status)) {
-                continue; // malformed owner/status is rejected by the specification gate
-            }
-            Set<String> ownerFiles = javaFiles.entrySet().stream().filter(entry -> JavaSourceInspector.sourceDeclaresType(entry.getValue(), row.ownerType())).map(Map.Entry::getKey)
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
-            Set<String> correctlyPlaced = actualFiles.stream().filter(ownerFiles::contains).collect(Collectors.toCollection(LinkedHashSet::new));
-            if (correctlyPlaced.isEmpty()) {
-                reasons.add("the stubbed owner " + row.ownerType() + " has no '// TODO " + row.seamId() + ": ...' breadcrumb in its declaring source. Put the marker at the "
-                        + "unfinished student work inside that source. If its student-owned members cannot be declared without an omitted student-created type, keep a compile-safe "
-                        + "empty owner class and put this owner's own seam TODO once in the class body where those members will be added; do not restore the absent type or change SPEC.md.");
-            }
-            Set<String> misplaced = actualFiles.stream().filter(path -> !ownerFiles.contains(path)).collect(Collectors.toCollection(LinkedHashSet::new));
-            if (!misplaced.isEmpty()) {
-                reasons.add("the template places TODO " + row.seamId() + " outside its approved owner " + row.ownerType() + ": " + misplaced
-                        + ". Move or relabel those breadcrumbs so the seam ID points at the work it actually grades.");
-            }
-        }
-        return List.copyOf(reasons);
-    }
-
-    private static boolean repositoryDeclaresType(Map<String, String> files, String type) {
-        if (files == null || files.isEmpty()) {
-            return false;
-        }
-        for (Map.Entry<String, String> file : files.entrySet()) {
-            String lowerPath = file.getKey().toLowerCase(Locale.ROOT);
-            if (lowerPath.startsWith("target/") || lowerPath.startsWith("build/") || NON_SOURCE_TYPE_FILE_SUFFIXES.stream().anyMatch(lowerPath::endsWith)) {
-                continue;
-            }
-            if (JavaSourceInspector.sourceDeclaresType(file.getValue(), type)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** A student-owned type must leave behind neither a declaration nor a source file named after it. */
-    private static boolean repositoryContainsTypeArtifact(Map<String, String> files, String type) {
-        if (files == null || files.isEmpty()) {
-            return false;
-        }
-        return files.entrySet().stream().anyMatch(file -> {
-            String normalizedPath = file.getKey().replace('\\', '/');
-            String lowerPath = normalizedPath.toLowerCase(Locale.ROOT);
-            if (lowerPath.startsWith("target/") || lowerPath.startsWith("build/") || NON_SOURCE_TYPE_FILE_SUFFIXES.stream().anyMatch(lowerPath::endsWith)) {
-                return false;
-            }
-            return pathOrContentRepresentsType(normalizedPath, file.getValue(), type);
-        });
-    }
-
-    /** Shared by the prospective-write guard and final repository verification, so a write rejected in-loop is also rejected at acceptance. */
-    static boolean pathOrContentRepresentsType(String path, String content, String type) {
-        String normalizedPath = path.replace('\\', '/');
-        String fileName = normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
-        return fileName.startsWith(type + ".") || JavaSourceInspector.sourceDeclaresType(content, type);
+                : List.of("the final statement has task binding(s) with no student-facing instruction following the binding or in its preceding numbered task block: " + bareTasks
+                        + ". Add concise prose naming the work to perform after the binding or in its preceding numbered task block; the binding alone is grading metadata, not an exercise instruction.");
     }
 
     /** Sorted and capped, so a large offending set never floods the rejection text and the message stays deterministic. */
@@ -608,6 +413,25 @@ public final class ExerciseIntegrityGate {
      */
     static List<String> javaAresConventionReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, boolean preserveUnchangedTests) {
         return AresConventions.reasons(seedTestsFiles, producedTestsFiles, preserveUnchangedTests);
+    }
+
+    /**
+     * Requires the tests repository's Ares policy to be exactly the one the server derives from the seeded policy and the produced instructor test sources, so any other change
+     * to it is rejected. A missing policy is reported by {@link #javaAresConventionReasons}.
+     *
+     * @param seedTestsFiles        the tests repository before authoring
+     * @param producedTestsFiles    the produced tests repository
+     * @param producedSolutionFiles the produced reference solution, whose student-written JUnit tests need their import permitted
+     * @param approvedSpec          the approved specification, which must assign those test classes to students, or {@code null} when none was approved
+     * @return rejection reasons, empty when there is no policy to check or it is exactly the derived one
+     */
+    static List<String> securityPolicyReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, Map<String, String> producedSolutionFiles,
+            @Nullable String approvedSpec) {
+        if (producedTestsFiles == null || !producedTestsFiles.containsKey(AresSecurityPolicy.PATH)) {
+            return List.of();
+        }
+        return AresSecurityPolicy.reasons(seedTestsFiles == null ? Map.of() : seedTestsFiles, producedTestsFiles, producedSolutionFiles == null ? Map.of() : producedSolutionFiles,
+                approvedSpec);
     }
 
     /**
@@ -652,7 +476,7 @@ public final class ExerciseIntegrityGate {
      * @return the canonical rejection reason, or {@code null} when this is not a Java repository source or the write is valid
      */
     public static @Nullable String javaGeneratedSourceWriteReason(String packageName, String path, String content) {
-        if (path == null || !path.endsWith(".java")) {
+        if (path == null || !path.endsWith(JAVA_SUFFIX)) {
             return null;
         }
         List<String> reasons;
@@ -679,11 +503,11 @@ public final class ExerciseIntegrityGate {
         paths.addAll(safeProduced.keySet());
         paths.stream().filter(path -> !Objects.equals(safeSeed.get(path), safeProduced.get(path))).filter(path -> {
             if (repository.equals("tests/") && path.equals(AresSecurityPolicy.PATH)) {
-                return false; // Its sole mutable field is checked against the produced test sources by AresConventions.
+                return false; // Server-owned; securityPolicyReasons checks it against the derived policy.
             }
             boolean inSourceRoot = allowedPrefixes.stream().anyMatch(path::startsWith);
-            boolean allowedFile = path.endsWith(".java") || allowStructuralOracle && path.endsWith("/test.json");
-            boolean packageMatchesPath = !path.endsWith(".java") || !safeProduced.containsKey(path)
+            boolean allowedFile = path.endsWith(JAVA_SUFFIX) || allowStructuralOracle && path.endsWith("/test.json");
+            boolean packageMatchesPath = !path.endsWith(JAVA_SUFFIX) || !safeProduced.containsKey(path)
                     || JavaSourceInspector.declaresPackageMatchingPath(path, safeProduced.get(path), sourceRoots);
             return !inSourceRoot || !allowedFile || !packageMatchesPath;
         }).map(repository::concat).forEach(target::add);
@@ -694,7 +518,7 @@ public final class ExerciseIntegrityGate {
     }
 
     private static boolean isJavaTestSourcePath(String path) {
-        return path.endsWith(".java") && (path.startsWith("test/") || path.startsWith("structural/test/") || path.startsWith("behavior/test/"));
+        return path.endsWith(JAVA_SUFFIX) && (path.startsWith("test/") || path.startsWith("structural/test/") || path.startsWith("behavior/test/"));
     }
 
     /** Minimum normalized length for a body to count as a meaningful source file, so an empty .gitkeep or a one-line marker is never called a leak. */
@@ -724,6 +548,149 @@ public final class ExerciseIntegrityGate {
             }
         }
         return List.copyOf(reasons);
+    }
+
+    /** File and resource reads a test could aim at a source file; matched on comment- and literal-masked code. */
+    private static final Pattern FILE_READ = Pattern
+            .compile("\\bFiles\\s*\\.\\s*(?:readString|readAllLines|readAllBytes|lines|newBufferedReader|newInputStream|newByteChannel)\\s*\\("
+                    + "|\\bnew\\s+(?:java\\s*\\.\\s*io\\s*\\.\\s*)?(?:FileReader|FileInputStream|RandomAccessFile)\\s*\\("
+                    + "|\\bnew\\s+(?:java\\s*\\.\\s*util\\s*\\.\\s*)?Scanner\\s*\\(\\s*(?:new\\s+(?:java\\s*\\.\\s*io\\s*\\.\\s*)?File\\b|(?:java\\s*\\.\\s*nio\\s*\\.\\s*file\\s*\\.\\s*)?(?:Path\\s*\\.\\s*of|Paths\\s*\\.\\s*get)\\b)"
+                    + "|\\bgetResource(?:AsStream)?\\s*\\(|\\bFileUtils\\s*\\.\\s*read\\w*\\s*\\(");
+
+    /** A double-quoted literal on one line; the possessive repetition keeps a long literal from overflowing the stack. */
+    private static final Pattern STRING_LITERAL = Pattern.compile("\"((?:[^\"\\\\\\n]|\\\\.)*+)\"");
+
+    /**
+     * A string naming the student source tree or a source or class file: a {@code .java} or {@code .class} name, a {@code src} or {@code assignment} path segment, or the CI
+     * placeholder.
+     */
+    private static final Pattern SOURCE_PATH_LITERAL = Pattern.compile("(?i)\\.(?:java|class)$|studentWorkingDirectory|(?:^|[/\\\\])(?:src|assignment)(?:[/\\\\]|$)");
+
+    /** Whitespace inside a literal: a path or path segment of a source tree has none, while an assertion message such as "Implement Parser.java" is prose. */
+    private static final Pattern INNER_WHITESPACE = Pattern.compile("\\s");
+
+    private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_$][\\w$]*");
+
+    /** An assignment or initialization of a named variable or field, on masked code; its value runs to the next semicolon. */
+    private static final Pattern ASSIGNMENT = Pattern.compile("(?<![\\w$.])([A-Za-z_$][\\w$]*)\\s*=(?!=)");
+
+    /**
+     * Rejects graded tests that read a source or class file of the exercise. The grading sandbox forbids the file access, the build layout does not place the sources where a
+     * test could find them, and source shape is not graded behavior. A file counts when it reads a file or resource and a string literal naming a source path appears in the
+     * arguments of a path expression or in the value of a variable those arguments use, which catches a path built in one statement and read in another without flagging tests
+     * that read their own data files or compare a file name. A literal with whitespace is a message, not a path.
+     */
+    static List<String> sourceReadingTestReasons(Map<String, String> producedTestsFiles) {
+        if (producedTestsFiles == null || producedTestsFiles.isEmpty()) {
+            return List.of();
+        }
+        List<String> offending = new ArrayList<>();
+        for (Map.Entry<String, String> file : producedTestsFiles.entrySet()) {
+            if (!JavaSourceInspector.isJavaSource(file.getKey()) || isHarnessFile(file.getKey()) || file.getValue() == null
+                    || !FILE_READ.matcher(JavaSourceInspector.maskCommentsAndLiterals(file.getValue())).find()) {
+                continue;
+            }
+            List<PathExpression> pathRanges = pathExpressionRanges(JavaSourceInspector.maskCommentsAndLiterals(file.getValue()));
+            List<String> sourcePaths = STRING_LITERAL.matcher(JavaSourceInspector.stripJavaComments(file.getValue())).results()
+                    .filter(literal -> pathRanges.stream().anyMatch(range -> range.start() <= literal.start() && literal.end() <= range.end())).map(literal -> literal.group(1))
+                    .map(String::strip).filter(literal -> !INNER_WHITESPACE.matcher(literal).find() && SOURCE_PATH_LITERAL.matcher(literal).find()).distinct().toList();
+            if (!sourcePaths.isEmpty()) {
+                offending.add(file.getKey() + " (reads " + sourcePaths + ")");
+            }
+        }
+        if (offending.isEmpty()) {
+            return List.of();
+        }
+        return List.of("these graded test files read source files: " + offending + ". Tests must not read source files: the grading sandbox forbids it and source shape is "
+                + "not graded behavior. Make the graded code take the objects or inputs it works on so tests can vary them. " + AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE);
+    }
+
+    /**
+     * The source ranges that can contribute to a path a test reads: the arguments of actual file/resource reads, and the value of every variable or field named in such a range
+     * and in scope there, followed until no further variable is named. Local values follow the latest preceding assignment in the closest enclosing scope; assignments
+     * after the read and overwritten values cannot supply its path. Fields remain conservative because declaration order does not determine their value at a method call.
+     *
+     * @param masked comment- and literal-masked source, so parentheses inside literals are not counted
+     * @return the ranges, each from its start to its exclusive end
+     */
+    private static List<PathExpression> pathExpressionRanges(String masked) {
+        List<PathExpression> ranges = new ArrayList<>();
+        Matcher call = FILE_READ.matcher(masked);
+        while (call.find()) {
+            int open = masked.indexOf('(', call.start());
+            ranges.add(new PathExpression(open, closingParenthesis(masked, open), call.start()));
+        }
+        List<SourceRange> blocks = braceBlocks(masked);
+        Set<Integer> followedAssignments = new HashSet<>();
+        for (int index = 0; index < ranges.size(); index++) {
+            PathExpression range = ranges.get(index);
+            Set<String> named = IDENTIFIER.matcher(masked.substring(range.start(), range.end())).results().map(MatchResult::group).collect(Collectors.toSet());
+            if (named.isEmpty()) {
+                continue;
+            }
+            for (String name : named) {
+                List<MatchResult> assignments = ASSIGNMENT.matcher(masked).results()
+                        .filter(assignment -> name.equals(assignment.group(1)) && visibleAt(blocks, assignment.start(), range.valueAt()))
+                        .filter(assignment -> blockDepth(blocks, assignment.start()) < 2 || assignment.start() < range.valueAt()).toList();
+                int closestScope = assignments.stream().mapToInt(assignment -> blockDepth(blocks, assignment.start())).max().orElse(-1);
+                int latest = assignments.stream().filter(assignment -> blockDepth(blocks, assignment.start()) == closestScope).mapToInt(MatchResult::start).max().orElse(-1);
+                for (MatchResult assignment : assignments) {
+                    if (blockDepth(blocks, assignment.start()) != closestScope || closestScope >= 2 && assignment.start() != latest
+                            || !followedAssignments.add(assignment.start())) {
+                        continue;
+                    }
+                    int end = masked.indexOf(';', assignment.end());
+                    ranges.add(new PathExpression(assignment.end(), end < 0 ? masked.length() : end, assignment.start()));
+                }
+            }
+        }
+        return ranges;
+    }
+
+    private record PathExpression(int start, int end, int valueAt) {
+    }
+
+    private static int blockDepth(List<SourceRange> blocks, int position) {
+        return (int) blocks.stream().filter(block -> block.start() < position && position < block.end()).count();
+    }
+
+    /** Every brace-delimited block of the masked source, from its opening to its closing brace. */
+    private static List<SourceRange> braceBlocks(String masked) {
+        List<SourceRange> blocks = new ArrayList<>();
+        java.util.Deque<Integer> open = new java.util.ArrayDeque<>();
+        for (int index = 0; index < masked.length(); index++) {
+            char current = masked.charAt(index);
+            if (current == '{') {
+                open.push(index);
+            }
+            else if (current == '}' && !open.isEmpty()) {
+                blocks.add(new SourceRange(open.pop(), index));
+            }
+        }
+        open.forEach(start -> blocks.add(new SourceRange(start, masked.length())));
+        return blocks;
+    }
+
+    private static boolean visibleAt(List<SourceRange> blocks, int declaration, int use) {
+        return blocks.stream().filter(block -> block.start() < declaration && declaration < block.end()).allMatch(block -> block.start() < use && use < block.end());
+    }
+
+    private record SourceRange(int start, int end) {
+    }
+
+    /** The index after the parenthesis closing the one at {@code open}, or the end of the source when it is never closed. */
+    private static int closingParenthesis(String masked, int open) {
+        int depth = 0;
+        for (int index = open; index < masked.length(); index++) {
+            char current = masked.charAt(index);
+            if (current == '(') {
+                depth++;
+            }
+            else if (current == ')' && --depth == 0) {
+                return index + 1;
+            }
+        }
+        return masked.length();
     }
 
     /**

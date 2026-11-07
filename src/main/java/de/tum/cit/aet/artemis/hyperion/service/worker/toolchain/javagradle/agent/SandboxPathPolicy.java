@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ExerciseIntegrityGate;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleSeeder;
 
 /**
  * Model steering for the sandbox tools' path arguments. <strong>Not a security boundary.</strong>
@@ -24,13 +25,19 @@ final class SandboxPathPolicy {
 
     private static final Pattern SAFE_RELATIVE_PATH = Pattern.compile("[a-zA-Z0-9_./-]+");
 
+    /** A seeded structural test or oracle anywhere in the tests repository, lowercased like the command line it is matched against. */
+    private static final Pattern RESERVED_STRUCTURAL_FILE = Pattern
+            .compile("tests/(?:[^\\s'\"]*/)?(?:classtest\\.java|methodtest\\.java|attributetest\\.java|constructortest\\.java|generictypetest\\.java|test\\.json)");
+
     private static final Pattern MANAGED_BUILD_ROOT = Pattern.compile("(?:tests|solution|template)/");
 
     private static final Pattern MANAGED_BUILD_FILE = Pattern
-            .compile("(?:tests|solution|template)/(?:buildsrc/|gradle/|pom\\.xml|build\\.gradle|settings\\.gradle|gradle\\.properties|"
+            .compile("(?:tests|solution|template)/(?:buildsrc/|gradle/|pom\\.xml|build\\.gradle|settings\\.gradle|gradle\\.properties|securitypolicy\\.yaml|"
                     + "package\\.json|package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|tsconfig\\.json|cargo\\.toml|cargo\\.lock)");
 
     private static final Pattern STDERR_DISCARD = Pattern.compile("(?<!\\S)2\\s*+>\\s*+/dev/null(?=\\s|[;&|]|$)");
+
+    private static final Pattern DEFERRED_SHELL = Pattern.compile("(?:^|[\\s;&|])(?:bash|sh|dash|zsh|ksh|eval|source)(?=\\s)");
 
     private static final String WORKSPACE = "/workspace";
 
@@ -42,18 +49,19 @@ final class SandboxPathPolicy {
      */
     private static final Pattern INSPECTS_DEPENDENCY_ARTIFACTS = Pattern.compile("(?:^|[\\s/~'\"=])\\.(?:gradle|m2)(?=[/\\s'\"]|$)|\\bjavap\\b|\\.jar\\b");
 
+    private static final String TESTS_ROOT = "tests/";
+
     private SandboxPathPolicy() {
     }
 
     static boolean isManagedBuildInfrastructurePath(String path) {
-        for (String repository : List.of("solution/", "template/", "tests/")) {
+        for (String repository : List.of("solution/", "template/", TESTS_ROOT)) {
             if (path.startsWith(repository)) {
+                // Includes tests/SecurityPolicy.yaml: Artemis writes its test-class list itself before every build.
                 String repositoryPath = path.substring(repository.length());
-                if (path.equals("tests/SecurityPolicy.yaml")) {
-                    return false; // Only the instructor test-class list may change; final verification checks the rest against the seed.
-                }
                 return repositoryPath.startsWith("buildSrc/") || repositoryPath.startsWith("gradle/") || repositoryPath.startsWith(".mvn/") || repositoryPath.startsWith(".m2/")
-                        || repositoryPath.startsWith("target/") || repositoryPath.startsWith("build/") || ExerciseIntegrityGate.isHarnessFile(repositoryPath);
+                        || repositoryPath.startsWith("target/") || repositoryPath.startsWith("build/") || ExerciseIntegrityGate.isHarnessFile(repositoryPath)
+                        || (repository.equals(TESTS_ROOT) && isReservedStructuralTestPath(repositoryPath));
             }
         }
         return false;
@@ -61,10 +69,18 @@ final class SandboxPathPolicy {
 
     static boolean isWritableGenerationPath(String path) {
         return path.equals("SPEC.md") || path.equals("test-plan.json") || path.equals("problem-statement.md") || path.startsWith("solution/") || path.startsWith("template/")
-                || path.startsWith("tests/");
+                || path.startsWith(TESTS_ROOT);
+    }
+
+    private static boolean isReservedStructuralTestPath(String repositoryPath) {
+        return StructuralOracleSeeder.isReservedStructuralFileName(repositoryPath.substring(repositoryPath.lastIndexOf('/') + 1));
     }
 
     static String immutableHarnessError(String path) {
+        if (path.startsWith(TESTS_ROOT) && isReservedStructuralTestPath(path.substring(TESTS_ROOT.length()))) {
+            return "ERROR: do not write " + path + ". Artemis seeds the structural tests (ClassTest, MethodTest, AttributeTest, ConstructorTest, GenericTypeTest, test.json) "
+                    + "itself, so these file names are reserved. Put behavioral tests in a test class with a different, descriptive name.";
+        }
         return "ERROR: do not modify " + path + ". Repository build infrastructure is seeded and managed by Artemis; edit only the problem statement and exercise source files.";
     }
 
@@ -81,13 +97,37 @@ final class SandboxPathPolicy {
             return false;
         }
         String withoutStderrDiscard = STDERR_DISCARD.matcher(lower).replaceAll("");
-        return withoutStderrDiscard.contains(">") || lower.contains("sed -i") || lower.contains("perl -pi") || lower.contains(" tee ") || lower.startsWith("tee ")
+        return hasOutputRedirection(withoutStderrDiscard) || lower.contains("sed -i") || lower.contains("perl -pi") || lower.contains(" tee ") || lower.startsWith("tee ")
                 || lower.contains(" rm ") || lower.startsWith("rm ") || lower.contains(" mv ") || lower.startsWith("mv ") || lower.contains(" cp ") || lower.startsWith("cp ");
+    }
+
+    private static boolean hasOutputRedirection(String command) {
+        // Nested shell evaluation can execute quoted operators; keep the conservative steering for those commands.
+        if (command.contains("$(") || command.indexOf('`') >= 0 || DEFERRED_SHELL.matcher(command).find()) {
+            return command.contains(">");
+        }
+        char quote = 0;
+        for (int index = 0; index < command.length(); index++) {
+            char current = command.charAt(index);
+            if (current == '\\' && quote != '\'') {
+                index++;
+            }
+            else if (quote == 0 && (current == '\'' || current == '"')) {
+                quote = current;
+            }
+            else if (current == quote) {
+                quote = 0;
+            }
+            else if (current == '>' && quote == 0) {
+                return true;
+            }
+        }
+        return quote != 0 && command.contains(">");
     }
 
     /** Whether a repository root is followed by a seeded build file, or anywhere later by a Cabal file. */
     private static boolean namesManagedBuildPath(String lower) {
-        if (MANAGED_BUILD_FILE.matcher(lower).find()) {
+        if (MANAGED_BUILD_FILE.matcher(lower).find() || RESERVED_STRUCTURAL_FILE.matcher(lower).find()) {
             return true;
         }
         Matcher root = MANAGED_BUILD_ROOT.matcher(lower);
@@ -107,9 +147,20 @@ final class SandboxPathPolicy {
     }
 
     static String dependencyArtifactsError() {
-        return "exit=2\nThe dependency cache and dependency JARs are not inspectable: the build is offline and the test harness is immutable, so nothing in there is actionable. "
-                + "The Ares and JUnit API to use (@Public, @Policy, @StrictTimeout, ReflectionTestUtils) is stated in your instructions and shown in "
-                + "reference/style/tests.md. Write the tests against that contract instead.";
+        return deniedCommand("The dependency cache and dependency JARs are not inspectable: the build is offline and the test harness is immutable, so nothing in there is "
+                + "actionable. The Ares and JUnit API to use (@Public, @Policy, @StrictTimeout, ReflectionTestUtils) is stated in your instructions and shown in "
+                + "reference/style/tests.md. Write the tests against that contract instead.");
+    }
+
+    /**
+     * The observation for a shell command refused before it ran. It starts with {@code ERROR:} like every other rejected tool call, so the agent loop counts it as a rejection
+     * and escalates when the same refused command is repeated.
+     *
+     * @param explanation why the command was refused and what to do instead
+     * @return the rejection observation
+     */
+    static String deniedCommand(String explanation) {
+        return "ERROR: the command was not run. " + explanation;
     }
 
     static String invalidPathError(String path) {

@@ -43,9 +43,6 @@ final class AresConventions {
         GenerationBuildTool buildTool = producedTestsFiles.containsKey("pom.xml") && !producedTestsFiles.containsKey("build.gradle") ? GenerationBuildTool.MAVEN
                 : GenerationBuildTool.GRADLE;
         reasons.addAll(AresTestHarness.reasons(buildTool, producedTestsFiles));
-        if (producedTestsFiles.containsKey(AresSecurityPolicy.PATH)) {
-            reasons.addAll(AresSecurityPolicy.reasons(seed, producedTestsFiles));
-        }
 
         List<String> missingClassAnnotations = new ArrayList<>();
         List<String> missingTimeouts = new ArrayList<>();

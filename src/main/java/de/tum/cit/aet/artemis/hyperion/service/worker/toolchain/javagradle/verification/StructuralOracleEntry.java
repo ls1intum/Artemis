@@ -35,10 +35,16 @@ record StructuralOracleEntry(@JsonProperty("class") OracleClass classProperties,
      * @param isAbstract  whether the type is an abstract class
      * @param superclass  the simple name of the superclass, absent when it is {@code Object}
      * @param interfaces  the sorted simple names of the implemented interfaces, absent when there are none
+     * @param annotations the sorted simple names of the runtime-visible class annotations, absent when there are none, which makes Ares skip the class annotation check
      */
-    @JsonPropertyOrder({ "name", "package", "modifiers", "isInterface", "isEnum", "isAbstract", "superclass", "interfaces" })
+    @JsonPropertyOrder({ "name", "package", "modifiers", "isInterface", "isEnum", "isAbstract", "superclass", "interfaces", "annotations" })
     record OracleClass(String name, @JsonProperty("package") String packageName, @Nullable List<String> modifiers, @JsonProperty("isInterface") boolean isInterface,
-            @JsonProperty("isEnum") boolean isEnum, @JsonProperty("isAbstract") boolean isAbstract, @Nullable String superclass, @Nullable List<String> interfaces) {
+            @JsonProperty("isEnum") boolean isEnum, @JsonProperty("isAbstract") boolean isAbstract, @Nullable String superclass, @Nullable List<String> interfaces,
+            @Nullable List<String> annotations) {
+
+        OracleClass withoutAnnotations() {
+            return new OracleClass(name, packageName, modifiers, isInterface, isEnum, isAbstract, superclass, interfaces, null);
+        }
     }
 
     /**
@@ -55,33 +61,36 @@ record StructuralOracleEntry(@JsonProperty("class") OracleClass classProperties,
     /**
      * A contract-visible method.
      *
-     * @param name       the name of the method
-     * @param modifiers  the effective modifiers of the method
-     * @param parameters the erased simple type names of the parameters, absent when there are none
-     * @param returnType the erased simple type name of the return value
+     * @param name        the name of the method
+     * @param modifiers   the effective modifiers of the method
+     * @param annotations the sorted simple names of the runtime-visible annotations, absent when there are none, which Ares reads as none
+     * @param parameters  the erased simple type names of the parameters, absent when there are none
+     * @param returnType  the erased simple type name of the return value
      */
-    @JsonPropertyOrder({ "name", "modifiers", "parameters", "returnType" })
-    record OracleMethod(String name, List<String> modifiers, @Nullable List<String> parameters, String returnType) {
+    @JsonPropertyOrder({ "name", "modifiers", "annotations", "parameters", "returnType" })
+    record OracleMethod(String name, List<String> modifiers, @Nullable List<String> annotations, @Nullable List<String> parameters, String returnType) {
     }
 
     /**
      * A contract-visible attribute.
      *
-     * @param name      the name of the attribute
-     * @param modifiers the effective modifiers of the attribute
-     * @param type      the erased simple type name of the attribute
+     * @param name        the name of the attribute
+     * @param modifiers   the effective modifiers of the attribute
+     * @param annotations the sorted simple names of the runtime-visible annotations, absent when there are none, which Ares reads as none
+     * @param type        the erased simple type name of the attribute
      */
-    @JsonPropertyOrder({ "name", "modifiers", "type" })
-    record OracleAttribute(String name, List<String> modifiers, String type) {
+    @JsonPropertyOrder({ "name", "modifiers", "annotations", "type" })
+    record OracleAttribute(String name, List<String> modifiers, @Nullable List<String> annotations, String type) {
     }
 
     /**
      * A contract-visible constructor.
      *
-     * @param modifiers  the modifiers of the constructor
-     * @param parameters the erased simple type names of the parameters, absent when there are none
+     * @param modifiers   the modifiers of the constructor
+     * @param parameters  the erased simple type names of the parameters, absent when there are none
+     * @param annotations the sorted simple names of the runtime-visible annotations, absent when there are none, which Ares reads as none
      */
-    @JsonPropertyOrder({ "modifiers", "parameters" })
-    record OracleConstructor(List<String> modifiers, @Nullable List<String> parameters) {
+    @JsonPropertyOrder({ "modifiers", "parameters", "annotations" })
+    record OracleConstructor(List<String> modifiers, @Nullable List<String> parameters, @Nullable List<String> annotations) {
     }
 }

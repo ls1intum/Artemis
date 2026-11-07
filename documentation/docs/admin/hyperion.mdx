@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-06
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -223,16 +223,16 @@ Hyperion can pre-generate a pool of multiple-choice questions per course, compet
 
 ```yaml
 artemis:
-  hyperion:
-    quiz-pool:
-      generator-model: # model (Azure: deployment name) that generates pool questions; blank uses the default chat model
-      judge-model: # model (Azure: deployment name) that judges generated questions; blank uses the default chat model
-      question-types: single-choice,multiple-choice # cells of the pool per competency, lecture unit and difficulty
-      difficulties: easy,medium,hard
-      generation-batch-size: 8 # questions requested per generation call
-      stale-claim-minutes: 30 # a claim older than this counts as abandoned by a dead node and is released at the next build
-      max-material-characters: 60000 # characters of a lecture unit's text that a generation prompt receives at most
-      build-lease-minutes: 10 # a build that stops renewing its lease for this long counts as dead and frees the course for the next build; keep it longer than the longest model call
+    hyperion:
+        quiz-pool:
+            generator-model: # model (Azure: deployment name) that generates pool questions; blank uses the default chat model
+            judge-model: # model (Azure: deployment name) that judges generated questions; blank uses the default chat model
+            question-types: single-choice,multiple-choice # cells of the pool per competency, lecture unit and difficulty
+            difficulties: easy,medium,hard
+            generation-batch-size: 8 # questions requested per generation call
+            stale-claim-minutes: 30 # a claim older than this counts as abandoned by a dead node and is released at the next build
+            max-material-characters: 60000 # characters of a lecture unit's text that a generation prompt receives at most
+            build-lease-minutes: 10 # a build that stops renewing its lease for this long counts as dead and frees the course for the next build; keep it longer than the longest model call
 ```
 
 Both models must be reachable through the configured Spring AI endpoint. On Azure OpenAI / Microsoft Foundry a model name is the deployment name. Every generation and filter call is recorded in the LLM token usage tracking, so add the two models to `artemis.llm.model-costs` if you want their cost reported.
@@ -283,12 +283,132 @@ Java 25 / Ares 2 Gradle and Maven harnesses and their dependencies. Ares 1 harne
 exercise to the current Artemis harness separately; Hyperion does not rewrite its build files.
 Rebuild and qualify `deployment/docker/hyperion/gradle-sandbox.Dockerfile` when its
 canonical toolchain or dependencies change; an older Java 17 sandbox cannot grade
-this harness. Keep `SecurityPolicy.yaml` explicit. Generation may update only its
-instructor-test class list, not its supervised package or resource permissions.
+this harness. Keep `SecurityPolicy.yaml` explicit. The worker writes its instructor-test
+class list from the test sources before every build; the agent cannot edit the file. The
+only permission generation adds is the `org.junit.jupiter` package import, when the
+approved specification assigns test classes to students. The supervised package and
+all other resource permissions stay as seeded.
 The pre-provider readiness build rejects incompatible exercise harnesses before
 model authoring starts. The worker receives a frozen, bounded repository snapshot, not credentials or repository paths. Core validates returned artifacts
 against that snapshot before persisting them, and checks repository heads and
 exercise metadata again before writing.
+
+Whole-exercise generation separates a usable draft from study qualification. Mandatory
+verification still requires the solution to pass, the starter to fail the intended
+student-work tests, valid task bindings, and unchanged server-owned harness assets.
+A candidate that fails those checks is retained for inspection rather than saved as
+a working exercise. Authorization, sandbox isolation and persistence checks remain
+mandatory.
+
+Executable assessment probes check whether a print-only entry point or ineffective
+learner-written tests can still pass the grading suite. A mechanically valid draft
+with a confirmed grading defect is checkpointed with the executed finding and saved
+as **Needs review** if bounded repair cannot improve it. An incomplete assessment
+also remains an explicit review finding. Neither a model review nor a later failed
+repair can silently clear that evidence. The saved draft requires instructor review
+and independent qualification before use in a study or release to students.
+
+If every student-work test passes on the unchanged starter, the staged controller
+can reopen the exact specification once. This candidate has not passed mandatory
+differential verification. Redesign uses the remaining shared budget and the original
+deadline. A confirmed bypass found after mechanical verification can also request
+that single redesign, while retaining the existing draft and its findings. A failed
+redesign returns the earlier draft. It does not turn that draft into a qualified result.
+
+The configured `artemis.hyperion.agent.max-turns` is a **job-wide authoring limit**,
+shared by concept selection, stages, continuations and repair attempts. There is no
+hidden 83-turn staged cap and a retry does not receive a new full allocation.
+The single contract-redesign allowance is separate from scoped repair: after it is
+spent, the verified draft receives its full quality review and may use remaining
+repair rounds within the frozen contract. An exhausted redesign allowance alone
+does not mean that no test repair is possible.
+Optional assessment probes run on the complete candidate after statement authoring,
+where their evidence is bound to the verified draft. The TESTS-stage gate still
+checks compilation, reference/starter grading and the grading plan; it does not
+repeat the optional probes before a complete draft can be checkpointed.
+Each completed assessment result is added to the matching immutable checkpoint
+before the next probe starts. A later build or sandbox failure keeps the completed
+findings; unfinished checks remain unverified.
+Verification and review still use the job's token and wall-clock guards. Every twenty
+authoring turns, the agent receives a work checkpoint. A current passing tool check
+returns control to the authoritative gate; two blocks without a verified reduction
+in failures stop that session and return its artifacts for verification. Writes alone
+do not establish progress. A new stage starts its own progress assessment.
+
+Verification checks the job's stop signal before each build and transcript capture.
+An in-flight bounded build can finish, but no further build starts after the signal.
+Unexecuted checks do not establish a pass. A previously verified draft can still be
+saved with its unresolved findings and any incomplete assessment evidence.
+
+Administrators can configure `artemis.hyperion.agent.repair-model`, or a profile's
+`repair-model`, to use one different model on the existing provider for a stalled
+repair. The handoff continues from current files and diagnostics for at most twenty
+turns, within the remaining authoring, token and time limits. It is available only
+once per job. Confirm that the configured route is supported and actually resolves
+to the intended model; an alias is not evidence that a stronger model was used.
+An unset repair model stops stalled work without a model handoff. Deploy matching
+core and worker versions together: these resolved settings use worker protocol 6.
+
+A development pilot can set `max-turns: 180`, `max-tokens-per-job: 6000000` and
+`max-job-duration: PT2H` in its selected effort profile. These are experimental limits,
+not new deployment defaults or a quality guarantee. Keep the stale-job timeout above
+the selected duration, record the effective settings, and compare all outcomes,
+including failures and drafts that need review.
+
+Supplied APIs must record learner operations automatically. Grading must not depend on
+learner calls to undeclared recorders or callbacks; a mechanically passing reference
+solution alone cannot establish that the student-facing task is sufficient.
+
+Authoring uses the structured `verify` tool. The server isolates sources during testing
+and restores the captured candidate afterward. Its internal build script is not seeded
+into the authoring workspace: invoking source-isolated verification directly through a
+shell can remove work without the required restoration. A missing verifier is a
+configuration error; generation must not substitute an unmanaged shell build.
+
+For exercises where students write JUnit tests, the assessment check tries two variants
+of each changed method in simple student-owned test classes: an empty body, and
+the original body with assertion failures suppressed. Other methods stay unchanged;
+a strongly graded method cannot mask an ineffective assertion in another method.
+Unchanged supplied examples are excluded. The weighted grading tests must reject both variants.
+Keeping calls or recorded values while ignoring assertion failures does not establish
+that the learner has written effective tests. Running the learner's tests only against
+the correct supplied implementation does not establish whether they detect faults.
+
+The specification must declare ordinary Java support that routes the learner's actual
+calls through correct and faulty behavior. Private JDK instrumentation is unavailable;
+a failed grader setup cannot count as a learner assertion detecting a fault. Non-empty lifecycle
+hooks, inheritance, constructors and initializers make this simple probe inapplicable;
+provably empty lifecycle hooks are preserved and do not disable it.
+Unsupported classes still need quality review. An inconclusive execution cannot authorize a
+contract change or establish that the assessment passed.
+A semantic repair that returns identical artifacts stops further repair and retains the
+previous verified candidate with its existing review findings. It does not repeat
+unchanged work or rerun the reviewer to obtain a different verdict.
+
+Once a learner-test counterexample is confirmed, its source file, method and probe kind remain
+part of the job's assessment obligations. A later candidate that removes, renames or
+supplies that learner test surface cannot silently retire the evidence: a missing
+applicable probe is inconclusive and keeps the draft under review. A successful check
+resolves the current candidate but keeps the obligation for later repairs. Retained
+artifacts remain available when the replacement cannot be verified.
+
+The specification and executable stages can consult a small, non-persisted reference
+for grading learner-written tests against correct and faulty supplied behavior. It
+keeps fault selection in instructor support while leaving case selection and assertions
+to the learner. Supplying those learner decisions changes the task and does not repair
+its grader.
+
+The full-artifact quality review keeps the complete exercise source. Unchanged
+build-wrapper launchers are identified against their baseline instead of repeated in
+full. If a repair diff would exceed the review bound, the reviewer gets the complete
+current candidate and prior findings with an explicit notice that the duplicate diff
+was omitted. Required evidence that still exceeds the bound leaves the review unavailable.
+
+When executed evidence causes redesign, the specification reviewer receives the
+counterexample and must adjudicate it against the replacement contract. That evidence
+is kept across a paused continuation. If no verified replacement can be produced,
+unsaved artifacts remain read-only and inspectable. A proven assessment bypass cannot
+replace a previously verified checkpoint.
 
 Configure exactly one AI Worker identity for generation. Use the same distributed-data
 provider on generation-capable core nodes and that worker. Core reserves one job
@@ -424,8 +544,8 @@ JVM: a single-host installation can run a separate isolated worker, while a
 multi-host installation uses the same selected provider. The worker requires
 neither database access nor Hazelcast cluster membership; it connects as a client.
 Deploy matching core and worker protocol versions together after draining runs.
-Protocol version 4 uses the shared AI Worker envelope and explicit workload schema/profile;
-core and worker must be upgraded together after draining.
+Protocol version 6 uses the shared AI Worker envelope and explicit workload schema/profile, and
+review findings that carry a location; core and worker must be upgraded together after draining.
 
 ### Toolchains and deployment placement
 

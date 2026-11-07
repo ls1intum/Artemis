@@ -111,7 +111,7 @@ public class GenerationOrchestrator {
         this.stageCheckService = stageCheckService;
         this.approvedSpecs = approvedSpecs;
         int maxGenerationAttempts = GenerationAttemptLoop.MAX_MECHANICAL_ATTEMPTS + maxSemanticRepairs + 1;
-        this.attemptLoopDependencies = new GenerationAttemptLoop.Dependencies(workspace, agentLoopRunner, verifier, structuralOracleSeeder, specFidelityCritic,
+        this.attemptLoopDependencies = new GenerationAttemptLoop.Dependencies(workspace, agentLoopRunner, verifier, structuralOracleSeeder, stageCheckService, specFidelityCritic,
                 stagedGenerationRunner, transcriptWriter, stagedGenerationEnabled, maxTurns, maxGenerationAttempts, maxSemanticRepairs);
     }
 
@@ -216,12 +216,8 @@ public class GenerationOrchestrator {
                 return decidedInLoop.withTermination(attemptLoop.terminationReason());
             }
 
-            // A semantic repair can accidentally break a candidate that already built and graded correctly. Never discard that more useful checkpoint in favour of a later
-            // mechanically broken tree; return the last buildable candidate and its unresolved review findings.
-            boolean currentCandidateRejected = attemptLoop.verification() == null || !attemptLoop.verification().mechanicallyVerified()
-                    || attemptLoop.terminationReason() == TerminationReason.REVIEW_UNAVAILABLE
-                            && RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(attemptLoop.specFidelityReport());
-            if (currentCandidateRejected && attemptLoop.lastMechanicallyVerifiedCandidate() != null) {
+            // The selected immutable checkpoint owns its files, contract and findings together. A stopped redesign may leave a different contract in the mutable workspace.
+            if (attemptLoop.lastMechanicallyVerifiedCandidate() != null) {
                 return preserveCandidate(attemptLoop.lastMechanicallyVerifiedCandidate(), sandbox, sessionId, workspaceSeed).withTermination(attemptLoop.terminationReason());
             }
             return new GenerationOutcome(attemptLoop.loopResult(), attemptLoop.verification(), attemptLoop.producedFilesByType(), attemptLoop.producedProblemStatement(),

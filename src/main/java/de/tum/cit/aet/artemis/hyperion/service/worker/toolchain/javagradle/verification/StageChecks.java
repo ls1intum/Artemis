@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
 import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.WorkspaceArchive;
@@ -53,8 +55,10 @@ public class StageChecks {
 
     private static final Logger log = LoggerFactory.getLogger(StageChecks.class);
 
+    private static final String CONTRACT_RISK_INVENTORY_HEADING = "## Contract Risk Inventory";
+
     private static final List<String> REQUIRED_SPEC_HEADINGS = List.of("## Rules", "## Worked Examples", "## Design", "## Public API", "## Testing Strategy",
-            "## Contract Risk Inventory", "## Diagram");
+            CONTRACT_RISK_INVENTORY_HEADING);
 
     /** The only template-status tokens a SPEC.md '## Design' data row may carry; 'student-creates' additionally arms the template omit-gate. */
     private static final Set<String> TEMPLATE_STATUS_TOKENS = Set.of("given", "stubbed", "student-creates");
@@ -98,13 +102,13 @@ public class StageChecks {
         if (!path.startsWith("template/")) {
             return Optional.empty();
         }
-        List<String> restoredTypes = specStudentCreatedTypes(approved.get()).stream().filter(type -> ExerciseIntegrityGate.pathOrContentRepresentsType(path, content, type))
+        List<String> restoredTypes = specStudentCreatedTypes(approved.get()).stream().filter(type -> ApprovedOwnershipGate.pathOrContentRepresentsType(path, content, type))
                 .toList();
         if (restoredTypes.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of("ERROR: the approved specification assigns these types to students to create: " + restoredTypes
-                + ". Do not restore or pre-create their declarations in the template, and do not put their seam IDs on unrelated collaborators. Test the student-created types "
+                + ". Do not restore or pre-create their declarations in the template, and do not put TODOs for them on unrelated collaborators. Test the student-created types "
                 + "through Class.forName/reflection (and a dynamic proxy where the context needs an interface instance), as shown by the seeded test utilities.");
     }
 
@@ -193,8 +197,7 @@ public class StageChecks {
         String spec = Objects.requireNonNullElse(GenerationWorkspace.readRootArtifact(sandbox, sessionId, "SPEC.md"), "");
         if (spec.isBlank()) {
             return StageCheckResult.failed("SPEC.md is missing or empty. Write /workspace/SPEC.md with '## Rules' (numbered R1..Rn), a '## Worked Examples' "
-                    + "table, a '## Design' table, a compact '## Public API' contract, a '## Testing Strategy', a '## Contract Risk Inventory', and a '## Diagram' decision "
-                    + "before continuing.");
+                    + "table, a '## Design' table, a compact '## Public API' contract, a '## Testing Strategy', and a '## Contract Risk Inventory' before " + "continuing.");
         }
         Set<String> exactSpecLines = spec.lines().map(String::strip).collect(Collectors.toSet());
         List<String> missingSpecSections = REQUIRED_SPEC_HEADINGS.stream().filter(heading -> !exactSpecLines.contains(heading)).toList();
@@ -293,7 +296,7 @@ public class StageChecks {
         if (!malformedOwners.isEmpty()) {
             return StageCheckResult.failed("These Testing Strategy rows have no enforceable Owner type: " + malformedOwners
                     + ". Add an Owner type column and put one bare type name from the Design table in every row. This exact link determines whether and where the template "
-                    + "may carry that seam's TODO breadcrumb.");
+                    + "must carry that seam's TODO.");
         }
         List<String> missingResponsibilities = testingRows.stream().filter(row -> row.observableResponsibility().isBlank()).map(TestingStrategyRow::seamId).toList();
         if (!missingResponsibilities.isEmpty()) {
@@ -377,7 +380,7 @@ public class StageChecks {
                         + "that updates the same counter passes — and it forces machinery into the student's contract that the exercise does not need. Reading the student's "
                         + "source file is rejected outright. State the rule in terms of the result the student must produce, and put the technique in the prose.";
         return StageCheckResult.passed("Specification accepted. Parsed template plan the later gates will enforce: " + echo + ". Parsed work ownership: " + seamEcho
-                + ". A student-creates type is absent from the template and therefore has no template TODO; a stubbed owner carries its own seam TODO." + reflectionConsequence
+                + ". A student-creates type is absent from the template and therefore has no template TODO; a stubbed owner carries its own TODO." + reflectionConsequence
                 + techniqueAdvice);
     }
 
@@ -578,14 +581,14 @@ public class StageChecks {
 
     /** Invalid and incomplete rows are retained so the SPEC gate can reject them with their exact seam ID. */
     static List<RiskInventoryRow> riskInventoryRows(String spec) {
-        int start = spec.indexOf("## Contract Risk Inventory");
+        int start = spec.indexOf(CONTRACT_RISK_INVENTORY_HEADING);
         if (start < 0) {
             return List.of();
         }
         List<RiskInventoryRow> rows = new ArrayList<>();
         boolean pastHeader = false;
         for (String line : spec.substring(start).lines().map(String::strip).toList()) {
-            if (line.startsWith("## ") && !line.startsWith("## Contract Risk Inventory")) {
+            if (line.startsWith("## ") && !line.startsWith(CONTRACT_RISK_INVENTORY_HEADING)) {
                 break;
             }
             if (!line.startsWith("|")) {
@@ -617,14 +620,40 @@ public class StageChecks {
             return List.of();
         }
         List<String> ids = new ArrayList<>();
-        for (String partition : row.admittedPartitions().split(";")) {
-            java.util.regex.Matcher matcher = RISK_PARTITION.matcher(partition.strip());
+        for (String partition : splitRiskPartitions(row.admittedPartitions())) {
+            java.util.regex.Matcher matcher = RISK_PARTITION.matcher(normalizeTestingCell(partition.replace("`", "")));
             if (!matcher.matches() || !matcher.group(1).startsWith(row.seamId() + ".")) {
                 return List.of();
             }
             ids.add(matcher.group(1));
         }
         return List.copyOf(ids);
+    }
+
+    private static List<String> splitRiskPartitions(String cell) {
+        List<String> partitions = new ArrayList<>();
+        int depth = 0;
+        int start = 0;
+        for (int index = 0; index < cell.length(); index++) {
+            char character = cell.charAt(index);
+            if (character == '(') {
+                depth++;
+            }
+            else if (character == ')') {
+                if (--depth < 0) {
+                    return List.of("");
+                }
+            }
+            else if (character == ';' && depth == 0) {
+                partitions.add(cell.substring(start, index));
+                start = index + 1;
+            }
+        }
+        if (depth != 0) {
+            return List.of("");
+        }
+        partitions.add(cell.substring(start));
+        return partitions;
     }
 
     private static String section(String document, String heading) {
@@ -668,6 +697,93 @@ public class StageChecks {
         String byDeclaration = execRead(sandbox, sessionId, "grep", "-rlE", declarationPattern, root, "--exclude-dir=target", "--exclude-dir=build", "--exclude=*.md",
                 "--exclude=*.txt");
         return Stream.of(byName, byDeclaration).flatMap(String::lines).map(String::strip).filter(line -> !line.isBlank()).distinct().collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * Demotes approved {@code given} types whose code uses a student-created type to {@code stubbed}. Such an ownership is objectively unsatisfiable, not a judgement: a given
+     * type ships byte-identical in the template, where the student-created type does not exist, so no template can compile, and the ownership guard rightly rejects every
+     * placeholder for the absent type. {@code stubbed} keeps the type's approved public API in the template and lets the solution keep the complete code, and the
+     * specification gate accepts it for exactly the types it accepted as given, so the correction changes nothing else. The registry, the workspace SPEC.md, and the run's
+     * events record it.
+     * <p>
+     * The correction cannot be undone, so only complete candidates trigger it: the TESTS stage gate evaluated when a stage attempt ends, and each submitted candidate before its
+     * authoritative verification. An in-loop {@code verify} on a half-written solution never does.
+     *
+     * @param sandbox   active generation sandbox
+     * @param sessionId sandbox session whose approved specification is authoritative
+     * @return the agent-facing notice, or empty when no correction was needed or it could not be recorded
+     */
+    public Optional<String> correctGivenOwnership(InteractiveSandbox sandbox, String sessionId) {
+        Optional<String> approvedSpec = approvedSpecs.approved(sessionId);
+        if (approvedSpec.isEmpty()) {
+            return Optional.empty();
+        }
+        String approved = approvedSpec.get();
+        List<String> studentCreatedTypes = specStudentCreatedTypes(approved);
+        if (studentCreatedTypes.isEmpty()) {
+            return Optional.empty();
+        }
+        JavaSourceSnapshot sources;
+        try {
+            sources = JavaSourceSnapshot.capture(sandbox, sessionId);
+        }
+        catch (RuntimeException e) {
+            // Fails open: without a source snapshot nothing is corrected, and the approved-specification gate still reports the dependency.
+            log.warn("Could not read the repositories to check given-type ownership for session {} ({})", sessionId, e.getClass().getSimpleName());
+            return Optional.empty();
+        }
+        List<String> dependencies = ApprovedOwnershipGate.givenTypeStudentCreatedDependencies(designTableRows(approved), studentCreatedTypes, sources.templateFiles(),
+                sources.solutionFiles());
+        if (dependencies.isEmpty()) {
+            return Optional.empty();
+        }
+        Set<String> demoted = dependencies.stream().map(dependency -> dependency.substring(0, dependency.indexOf("->"))).collect(Collectors.toCollection(LinkedHashSet::new));
+        String amended = demoteGivenTypes(approved, demoted);
+        if (amended.equals(approved) || !approvedSpecs.amend(sessionId, approved, amended)) {
+            return Optional.empty();
+        }
+        sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(Map.of("SPEC.md", amended), Map.of()));
+        log.info("Corrected the approved specification for session {}: demoted given type(s) {} to stubbed because their code uses student-created types {}", sessionId, demoted,
+                dependencies);
+        return Optional.of("OWNERSHIP CORRECTED: the approved specification marked " + demoted + " as 'given', but their code uses student-created types " + dependencies
+                + ". A given type ships byte-identical in the template, where those types do not exist, so the template could never compile. Artemis changed only these rows "
+                + "to 'stubbed' in SPEC.md. Keep the complete code in the solution. In the template, keep each type's approved public API and replace only the code that needs a "
+                + "student-created type with compilable stub bodies (for example a TODO that throws UnsupportedOperationException). Still do not add student-created types or "
+                + "placeholders for them to the template.");
+    }
+
+    /**
+     * Rewrites the final cell of the named types' '## Design' rows from {@code given} to {@code stubbed}, leaving every other byte of the specification unchanged. Rows are
+     * found exactly as {@link #designTableRows} finds them.
+     */
+    static String demoteGivenTypes(String spec, Set<String> types) {
+        String[] lines = spec.split("\n", -1);
+        boolean inDesign = false;
+        boolean pastHeader = false;
+        for (int index = 0; index < lines.length; index++) {
+            String line = lines[index];
+            String stripped = line.strip();
+            if (stripped.startsWith("## ")) {
+                inDesign = stripped.startsWith("## Design");
+                pastHeader = false;
+                continue;
+            }
+            if (!inDesign || !stripped.startsWith("|")) {
+                continue;
+            }
+            if (!pastHeader) {
+                pastHeader = stripped.chars().allMatch(c -> c == '|' || c == '-' || c == ':' || c == ' ');
+                continue;
+            }
+            boolean closingPipe = stripped.endsWith("|") && stripped.length() > 1;
+            String[] cells = stripped.substring(1, closingPipe ? stripped.length() - 1 : stripped.length()).split("\\|", -1);
+            if (!types.contains(cells[0].replace("`", "").strip()) || !"given".equals(normalizeTemplateStatus(cells[cells.length - 1]))) {
+                continue;
+            }
+            cells[cells.length - 1] = " stubbed ";
+            lines[index] = line.substring(0, line.indexOf('|')) + "|" + String.join("|", cells) + (closingPipe ? "|" : "") + (line.endsWith("\r") ? "\r" : "");
+        }
+        return String.join("\n", lines);
     }
 
     private StageCheckResult checkTests(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Map<String, String> seedTestsFiles,
@@ -807,10 +923,8 @@ public class StageChecks {
                     + "frame the goal as \"we\" and the work as \"you\" with imperative tasks ('Define ...', 'Implement ...').");
         }
         String authoritativeSpec = authoritativeSpec(sandbox, sessionId);
-        boolean diagramPromised = ProblemStatementBindingChecker.specPromisesDiagram(authoritativeSpec);
-        if (diagramPromised && !statement.contains("@startuml")) {
-            return StageCheckResult.failed("SPEC.md's '## Diagram' section says yes, but the statement contains no @startuml diagram. Add the PlantUML class diagram after "
-                    + "the tasks it illustrates (with testsColor links). The accepted diagram decision cannot be revoked after the specification gate.");
+        if (ApprovedOwnershipGate.diagramRequired(authoritativeSpec) && !statement.contains("@startuml")) {
+            return StageCheckResult.failed("The statement contains no @startuml class diagram, but this exercise requires one. " + AgentSystemPrompt.DIAGRAM_REQUIREMENT_RULE);
         }
         List<String> duplicateHeadings = ProblemStatementBindingChecker.duplicateHeadings(statement);
         if (!duplicateHeadings.isEmpty()) {
@@ -823,8 +937,8 @@ public class StageChecks {
         }
         List<String> bareTasks = ProblemStatementBindingChecker.tasksWithoutInstruction(statement);
         if (!bareTasks.isEmpty()) {
-            return StageCheckResult.failed("These [task] bindings have no student-facing instruction before the next task or heading: " + bareTasks
-                    + ". Follow each task with concise imperative prose naming the types or members the student must implement; a checkbox alone is not an exercise instruction.");
+            return StageCheckResult.failed("These [task] bindings have no student-facing instruction following the binding or in its preceding numbered task block: " + bareTasks
+                    + ". Add concise imperative prose naming the types or members the student must implement after the binding or in its preceding numbered task block; a checkbox alone is not an exercise instruction.");
         }
         return StageCheckResult.passed("");
     }

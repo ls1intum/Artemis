@@ -20,6 +20,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.model.ChatModel;
@@ -61,6 +62,95 @@ class AgentLoopRunnerTest {
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.turns()).isEqualTo(toolTurns + 1);
         assertThat(tools.actions).hasSize(toolTurns * callsPerTurn).containsOnly("write");
+    }
+
+    @Test
+    void stalledWorkGetsOnlyOneTwentyTurnRepairModelBlockWithinTheSharedLimit() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        List<String> models = new ArrayList<>();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            Prompt prompt = invocation.getArgument(0);
+            models.add(prompt.getOptions().getModel());
+            return calls("edit-" + turn.incrementAndGet(), "write");
+        });
+        var settings = new HyperionGenerationSettings("pilot", "Pilot", 180, Duration.ofHours(2), 6_000_000, true, "CONTINUOUS", 200_000,
+                org.springframework.ai.openai.OpenAiChatOptions.builder().model("primary").temperature(0.3).build(), false, true, "repair");
+        ProgressTools tools = new ProgressTools();
+        var configured = runner(model).forSettings(settings);
+
+        var first = configured.run("system", "brief", tools, 180, () -> false, null, null);
+        assertThat(first.status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
+        assertThat(first.turns()).isEqualTo(60);
+        assertThat(models.subList(0, 40)).containsOnly("primary");
+        assertThat(models.subList(40, 60)).containsOnly("repair");
+        var second = configured.run("system", "repair current files", tools, 120, () -> false, null, null);
+        assertThat(second.turns()).isEqualTo(40);
+        assertThat(models.subList(60, 100)).containsOnly("primary");
+    }
+
+    @Test
+    void aMissingRepairModelDoesNotCoolDownTheHealthyPrimaryModel() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        AtomicBoolean repairFailed = new AtomicBoolean();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            Prompt prompt = invocation.getArgument(0);
+            if ("repair".equals(prompt.getOptions().getModel())) {
+                repairFailed.set(true);
+                throw new IllegalStateException("model_not_found", com.openai.errors.NotFoundException.builder().headers(com.openai.core.http.Headers.builder().build()).build());
+            }
+            return repairFailed.get() ? text("finished") : calls("edit-" + turn.incrementAndGet(), "write");
+        });
+        var cooldown = new TestProviderFailureCooldown();
+        var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "FRESH", 200_000,
+                org.springframework.ai.openai.OpenAiChatOptions.builder().model("primary").build(), false, true, "repair");
+        var configured = new AgentLoopRunner(List.of(model), 200_000, Duration.ofMinutes(5), cooldown).forSettings(settings);
+
+        var failedRepair = configured.run("system", "brief", new ProgressTools(), 180, () -> false, null, null);
+        assertThat(failedRepair.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(repairFailed).isTrue();
+        assertThat(cooldown.cooldownUntil("repair")).isAfter(java.time.Instant.now());
+        assertThat(cooldown.cooldownUntil("primary")).isNull();
+        var primary = configured.run("system", "another brief", new RecordingTools(), 2, () -> false, null, null);
+        assertThat(primary.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+    }
+
+    @Test
+    void repairModelCannotCreateTurnsBeyondTheRemainingBudget() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> calls("edit-" + turn.incrementAndGet(), "write"));
+        var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "FRESH", 200_000,
+                org.springframework.ai.openai.OpenAiChatOptions.builder().model("primary").build(), false, true, "repair");
+        var result = runner(model).forSettings(settings).run("system", "brief", new ProgressTools(), 45, () -> false, null, null);
+        assertThat(result.turns()).isEqualTo(45);
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
+    }
+
+    static class ProgressTools extends RecordingTools implements AuthoringProgress {
+
+        boolean handedOff;
+
+        @Override
+        @Tool(description = "Record an edit")
+        public String write() {
+            return super.write();
+        }
+
+        @Override
+        public Snapshot authoringProgress() {
+            return new Snapshot(actions.size(), 0, Integer.MAX_VALUE, false);
+        }
+
+        @Override
+        public boolean claimRepairModelHandoff() {
+            if (handedOff) {
+                return false;
+            }
+            handedOff = true;
+            return true;
+        }
     }
 
     @Test
@@ -207,6 +297,38 @@ class AgentLoopRunnerTest {
         verify(model).call(any(Prompt.class));
     }
 
+    /** Runaway text that fills the output limit ended whole generation runs; its call completed, so the loop drops the text and asks once for a short, acting reply. */
+    @Test
+    void aTextReplyCutOffAtTheLimitIsDiscardedAndTheAgentIsAskedOnceToAct() {
+        ChatModel model = mock(ChatModel.class);
+        var truncated = new ChatResponse(List.of(new Generation(new AssistantMessage("runaway text"), ChatGenerationMetadata.builder().finishReason("length").build())));
+        when(model.call(any(Prompt.class))).thenReturn(truncated, calls("1", "write"), text("finished"));
+        RecordingTools tools = new RecordingTools();
+
+        var result = runner(model).run("system", "brief", tools, 6, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(tools.actions).containsExactly("write");
+        ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
+        org.mockito.Mockito.verify(model, org.mockito.Mockito.times(3)).call(prompts.capture());
+        List<Message> secondPrompt = prompts.getAllValues().get(1).getInstructions();
+        assertThat(secondPrompt).noneMatch(message -> message instanceof AssistantMessage assistant && "runaway text".equals(assistant.getText()));
+        assertThat(secondPrompt.getLast().getText()).contains("cut off at the output token limit", "act through a tool call");
+    }
+
+    @Test
+    void twoConsecutiveTextRepliesCutOffAtTheLimitEndTheSession() {
+        ChatModel model = mock(ChatModel.class);
+        var truncated = new ChatResponse(List.of(new Generation(new AssistantMessage("runaway text"), ChatGenerationMetadata.builder().finishReason("length").build())));
+        when(model.call(any(Prompt.class))).thenReturn(truncated, truncated, text("finished"));
+
+        var session = runner(model).runSession("system", null, "brief", new RecordingTools(), 6, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(session.result().stopCause()).contains("cut off at the output token limit on turn 2");
+        verify(model, org.mockito.Mockito.times(2)).call(any(Prompt.class));
+    }
+
     @Test
     void unavailableToolNameIsNotSentToInstructorProgress() {
         ChatModel model = mock(ChatModel.class);
@@ -340,6 +462,251 @@ class AgentLoopRunnerTest {
         }
     }
 
+    /**
+     * A refused command interleaved with successful calls never reaches the consecutive-failure limit, so one session repeated the same refused command dozens of times. The
+     * third identical rejection is answered explicitly, and every repeat from then on counts toward ending the session.
+     */
+    @Test
+    void anIdenticalRejectedCallRepeatedBetweenSuccessfulCallsIsEscalatedAndEndsTheSession() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            String name = current % 2 == 1 ? "shell" : "write";
+            String arguments = current % 2 == 1 ? "{\"command\":\"ls -la /root/.gradle\"}" : "{\"path\":\"A" + current + ".java\"}";
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", name, arguments);
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
+        });
+        RefusingTools tools = new RefusingTools();
+
+        var session = runner(model).runSession("system", null, "brief", tools, 60, () -> false, null, null);
+
+        int lastAllowedRepeat = AgentToolBatch.REPEATED_REJECTION_ESCALATION - 1 + 5;
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(tools.refusals).isEqualTo(lastAllowedRepeat);
+        assertThat(session.result().turns()).isEqualTo(2 * lastAllowedRepeat - 1);
+        List<String> shellResults = session.conversation().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
+                .flatMap(message -> message.getResponses().stream()).filter(response -> response.name().equals("shell")).map(ToolResponseMessage.ToolResponse::responseData)
+                .toList();
+        assertThat(shellResults).hasSize(lastAllowedRepeat);
+        assertThat(shellResults.subList(0, 2)).allSatisfy(result -> assertThat(result).contains("the command was not run").doesNotContain("this exact shell call"));
+        assertThat(shellResults.get(2)).contains("this exact shell call has now been rejected 3 times", "Repeating it unchanged will not help", "the command was not run");
+        assertThat(session.result().stopCause()).startsWith("The agent session stopped: The agent repeated identical rejected tool calls 5 times")
+                .contains("shell: ERROR: this exact shell call");
+    }
+
+    /**
+     * A command whose result never changes cannot make progress: one staged session ran the same {@code git status} 31 times. From the third identical call with an identical
+     * result, the result is replaced by a note. The note is not a rejection, so it never ends the session on its own; the turn budget bounds the repeats.
+     */
+    @Test
+    void anIdenticalSuccessfulCallWithAnUnchangedResultIsAnsweredWithANoteButDoesNotEndTheSession() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            if (current > 12) {
+                return text("finished");
+            }
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", "status", "{}");
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
+        });
+
+        var session = runner(model).runSession("system", null, "brief", new UnchangingTools(), 60, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        List<String> statusResults = session.conversation().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
+                .flatMap(message -> message.getResponses().stream()).filter(response -> response.name().equals("status")).map(ToolResponseMessage.ToolResponse::responseData)
+                .toList();
+        assertThat(statusResults).hasSize(12);
+        assertThat(statusResults.subList(0, 2)).allSatisfy(result -> assertThat(result).contains("not a git repository").doesNotContain("this exact"));
+        assertThat(statusResults.subList(2, 12))
+                .allSatisfy(result -> assertThat(result).startsWith("NOTE: this exact status call has now returned the same result").contains("not a git repository"));
+    }
+
+    /** A model that sends one rejected call several times in a single response must read the escalation before the repeats can end the session. */
+    @Test
+    void identicalRejectedCallsInOneResponseCountOnceTowardEndingTheSession() {
+        ChatModel model = mock(ChatModel.class);
+        List<AssistantMessage.ToolCall> repeated = IntStream.range(0, 7)
+                .mapToObj(index -> new AssistantMessage.ToolCall("call-" + index, "function", "shell", "{\"command\":\"ls -la /root/.gradle\"}")).toList();
+        when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(repeated).build()))),
+                text("finished"));
+
+        var session = runner(model).runSession("system", null, "brief", new RefusingTools(), 10, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+    }
+
+    /** A discarded cut-off reply must not come back as the final message, which the specification stage would otherwise write to SPEC.md. */
+    @Test
+    void aDiscardedCutOffReplyIsNotTheFinalMessage() {
+        ChatModel model = mock(ChatModel.class);
+        var truncated = new ChatResponse(
+                List.of(new Generation(new AssistantMessage("# SPEC.md\n## Rules\n| R1 | cut o"), ChatGenerationMetadata.builder().finishReason("length").build())));
+        when(model.call(any(Prompt.class))).thenReturn(truncated, calls("1", "write"));
+
+        var result = runner(model).run("system", "brief", new RecordingTools(), 2, () -> false, null, null);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
+        assertThat(result.finalMessage()).doesNotContain("# SPEC.md");
+    }
+
+    /** One session rewrote the same file after other edits had changed it; a write's result does not show that, so identical writes must never end the session. */
+    @Test
+    void identicalSuccessfulWritesAreNotTreatedAsRepeats() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            if (current > 8) {
+                return text("finished");
+            }
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", "write_file", "{\"path\":\"A.java\"}");
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
+        });
+
+        var session = runner(model).runSession("system", null, "brief", new FileTools(), 60, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(session.conversation().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
+                .flatMap(message -> message.getResponses().stream())).noneMatch(response -> response.responseData().contains("this exact"));
+    }
+
+    static class FileTools implements SubmitVetoAware {
+
+        @Tool(name = "write_file", description = "Write a file")
+        public String writeFile(@org.springframework.ai.tool.annotation.ToolParam(description = "the path") String path) {
+            return "Wrote 793 characters to " + path;
+        }
+
+        @Override
+        public boolean consumeSubmitVeto() {
+            return false;
+        }
+
+        @Override
+        public boolean isSandboxSessionTerminated() {
+            return false;
+        }
+    }
+
+    @Test
+    void anIdenticalCallWhoseResultChangesIsNotARepeat() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            if (current > 8) {
+                return text("finished");
+            }
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", "read", "{}");
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
+        });
+
+        var session = runner(model).runSession("system", null, "brief", new UnchangingTools(), 60, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(session.conversation().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
+                .flatMap(message -> message.getResponses().stream())).noneMatch(response -> response.responseData().contains("this exact"));
+    }
+
+    static class UnchangingTools implements SubmitVetoAware {
+
+        int reads;
+
+        @Tool(description = "Show the version control status")
+        public String status() {
+            return "fatal: not a git repository (or any of the parent directories): .git";
+        }
+
+        @Tool(description = "Read a file that changes between reads")
+        public String read() {
+            return "revision " + ++reads;
+        }
+
+        @Tool(description = "Record an edit")
+        public String write(@org.springframework.ai.tool.annotation.ToolParam(description = "the path") String path) {
+            return "written " + path;
+        }
+
+        @Override
+        public boolean consumeSubmitVeto() {
+            return false;
+        }
+
+        @Override
+        public boolean isSandboxSessionTerminated() {
+            return false;
+        }
+    }
+
+    @Test
+    void consecutiveRefusedCommandsEndTheSessionWithTheirCause() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", "shell", "{\"command\":\"ls /root/.gradle/" + current + "\"}");
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
+        });
+
+        var session = runner(model).runSession("system", null, "brief", new RefusingTools(), 60, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(session.result().turns()).isEqualTo(5);
+        assertThat(session.result().stopCause()).isEqualTo("The agent session stopped: 5 consecutive tool calls were rejected. Last rejection: shell: "
+                + "\"ERROR: the command was not run. The dependency cache is not inspectable.\"");
+    }
+
+    @Test
+    void differentRejectedCallsAreNotTreatedAsRepeats() {
+        ChatModel model = mock(ChatModel.class);
+        AtomicInteger turn = new AtomicInteger();
+        when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
+            int current = turn.incrementAndGet();
+            if (current > 8) {
+                return text("finished");
+            }
+            String name = current % 2 == 1 ? "shell" : "write";
+            String arguments = current % 2 == 1 ? "{\"command\":\"ls /root/.gradle/" + current + "\"}" : "{\"path\":\"A" + current + ".java\"}";
+            var call = new AssistantMessage.ToolCall("call-" + current, "function", name, arguments);
+            return new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())));
+        });
+
+        var session = runner(model).runSession("system", null, "brief", new RefusingTools(), 60, () -> false, null, null);
+
+        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(session.conversation().stream().filter(ToolResponseMessage.class::isInstance).map(ToolResponseMessage.class::cast)
+                .flatMap(message -> message.getResponses().stream())).noneMatch(response -> response.responseData().contains("this exact"));
+    }
+
+    static class RefusingTools implements SubmitVetoAware {
+
+        int refusals;
+
+        @Tool(description = "Run a shell command")
+        public String shell(@org.springframework.ai.tool.annotation.ToolParam(description = "the command") String command) {
+            refusals++;
+            return "ERROR: the command was not run. The dependency cache is not inspectable.";
+        }
+
+        @Tool(description = "Record an edit")
+        public String write(@org.springframework.ai.tool.annotation.ToolParam(description = "the path") String path) {
+            return "written " + path;
+        }
+
+        @Override
+        public boolean consumeSubmitVeto() {
+            return false;
+        }
+
+        @Override
+        public boolean isSandboxSessionTerminated() {
+            return false;
+        }
+    }
+
     private static AgentLoopRunner runner(ChatModel model) {
         return new AgentLoopRunner(List.of(model), 128_000, Duration.ZERO, ProviderFailureCooldown.disabled());
     }
@@ -366,10 +733,11 @@ class AgentLoopRunnerTest {
 
         boolean throwSubmit;
 
+        /** Each recorded edit changes the workspace, so its result differs from the previous one, as a real write's does. */
         @Tool(description = "Record an edit")
         public String write() {
             actions.add("write");
-            return "written";
+            return "written " + actions.size();
         }
 
         @Tool(description = "Submit the current workspace")

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -129,9 +130,9 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
             appendBuildDiagnostic(builder, "Solution", solutionBuildDiagnostic);
         }
         else {
+            // The blocking reason for failing solution tests already carries their evidence (see renderFailureEvidence), so it is not repeated here.
             builder.append("Solution FAILS: ").append(renderNames(solutionFailedNames)).append(" — your reference solution must pass every test.\n");
         }
-        appendFailureEvidence(builder, "Solution", solutionFailureEvidence);
         appendReflectionConstructorGuidance(builder, solutionFailureEvidence);
 
         if (!templateCompiled) {
@@ -148,7 +149,7 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         else {
             builder.append("Template: all required gradable tests fail; supplied-behavior preservation checks pass.\n");
         }
-        appendFailureEvidence(builder, "Template", templateFailureEvidence);
+        builder.append(renderFailureEvidence("Template", templateFailureEvidence));
 
         Set<String> excludedBindings = java.util.stream.Stream.concat(hiddenTestNames.stream(), preservationTestNames.stream())
                 .map(ProblemStatementBindingChecker::normalizeTestName).collect(java.util.stream.Collectors.toSet());
@@ -202,23 +203,33 @@ public record AgentVerifyReport(int solutionTests, boolean solutionPassed, List<
         return builder.toString();
     }
 
-    private static void appendFailureEvidence(StringBuilder builder, String assignment, List<TestFailureEvidence> evidence) {
+    /**
+     * Renders failing tests with the first useful line of each failure message, ordered by test name so the same build always yields the same text, and bounded in count and
+     * length. Shared by the in-loop observation and the authoritative verification reasons, which become the next repair attempt's prompt.
+     *
+     * @param assignment the assignment label ({@code Solution} or {@code Template})
+     * @param evidence   the sanitized evidence of one build
+     * @return the rendered block ending in a newline, or an empty string when there is no evidence
+     */
+    public static String renderFailureEvidence(String assignment, List<TestFailureEvidence> evidence) {
         if (evidence.isEmpty()) {
-            return;
+            return "";
         }
-        builder.append(assignment).append(" failure evidence (sanitized, untrusted excerpts):\n");
-        int rendered = Math.min(evidence.size(), MAX_RENDERED_FAILURES);
+        List<TestFailureEvidence> ordered = evidence.stream().sorted(Comparator.comparing(TestFailureEvidence::testName).thenComparing(TestFailureEvidence::message)).toList();
+        StringBuilder builder = new StringBuilder(assignment).append(" failure evidence (sanitized, untrusted excerpts):\n");
+        int rendered = Math.min(ordered.size(), MAX_RENDERED_FAILURES);
         for (int i = 0; i < rendered; i++) {
-            TestFailureEvidence item = evidence.get(i);
+            TestFailureEvidence item = ordered.get(i);
             builder.append("- ").append(item.testName());
             if (!item.message().isEmpty()) {
                 builder.append(": ").append(item.message());
             }
             builder.append('\n');
         }
-        if (evidence.size() > rendered) {
-            builder.append("(+").append(evidence.size() - rendered).append(" more failures)\n");
+        if (ordered.size() > rendered) {
+            builder.append("(+").append(ordered.size() - rendered).append(" more failures)\n");
         }
+        return builder.toString();
     }
 
     private static void appendReflectionConstructorGuidance(StringBuilder builder, List<TestFailureEvidence> evidence) {

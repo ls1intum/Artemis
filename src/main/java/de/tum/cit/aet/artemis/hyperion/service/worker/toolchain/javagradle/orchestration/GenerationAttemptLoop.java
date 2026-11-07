@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradl
 import static de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration.GenerationAttemptSupport.copyProducedFiles;
 import static de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration.GenerationAttemptSupport.hasProducedChanges;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashSet;
@@ -40,17 +41,14 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.SubmitVetoAware;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentTranscriptWriter;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
-import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
-import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration.GenerationProgressSink.Phase;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport.TestFailureEvidence;
-import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SeededStructuralTests;
-import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome;
-import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome.Disposition;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleSeeder;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.VerificationRequest;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
@@ -65,11 +63,9 @@ class GenerationAttemptLoop {
     /** Initial candidate plus at most three mechanical repairs. */
     static final int MAX_MECHANICAL_ATTEMPTS = 4;
 
-    private static final int MAX_TRACKED_SEMANTIC_MUTANTS = 6;
-
     record Dependencies(GenerationWorkspace workspace, AgentLoopRunner agentLoopRunner, DifferentialVerifier verifier, StructuralOracleSeeder structuralOracleSeeder,
-            SpecFidelityCritic specFidelityCritic, StagedGenerationRunner stagedGenerationRunner, AgentTranscriptWriter transcriptWriter, boolean stagedGenerationEnabled,
-            int maxTurns, int maxGenerationAttempts, int maxSemanticRepairs) {
+            StageChecks stageChecks, SpecFidelityCritic specFidelityCritic, StagedGenerationRunner stagedGenerationRunner, AgentTranscriptWriter transcriptWriter,
+            boolean stagedGenerationEnabled, int maxTurns, int maxGenerationAttempts, int maxSemanticRepairs) {
 
         /** Returns dependencies pinned to the run's model, context, and turn settings. */
         Dependencies forSettings(@Nullable HyperionGenerationSettings settings) {
@@ -79,8 +75,8 @@ class GenerationAttemptLoop {
             AgentLoopRunner profileRunner = agentLoopRunner.forSettings(settings);
             SpecFidelityCritic profileCritic = specFidelityCritic.forSettings(settings);
             StagedGenerationRunner profileStagedRunner = stagedGenerationRunner.forSettings(settings, profileRunner, profileCritic);
-            return new Dependencies(workspace, profileRunner, verifier, structuralOracleSeeder, profileCritic, profileStagedRunner, transcriptWriter, settings.stagedGeneration(),
-                    settings.maxTurns(), maxGenerationAttempts, maxSemanticRepairs);
+            return new Dependencies(workspace, profileRunner, verifier, structuralOracleSeeder, stageChecks, profileCritic, profileStagedRunner, transcriptWriter,
+                    settings.stagedGeneration(), settings.maxTurns(), maxGenerationAttempts, maxSemanticRepairs);
         }
     }
 
@@ -120,6 +116,8 @@ class GenerationAttemptLoop {
 
     private final StructuralOracleSeeder structuralOracleSeeder;
 
+    private final StageChecks stageChecks;
+
     private final SpecFidelityCritic specFidelityCritic;
 
     private final RepairPromptComposer repairPrompts;
@@ -128,7 +126,7 @@ class GenerationAttemptLoop {
 
     private final AgentTranscriptWriter transcriptWriter;
 
-    private final int maxTurns;
+    private int remainingAuthoringTurns;
 
     private final int maxGenerationAttempts;
 
@@ -197,6 +195,11 @@ class GenerationAttemptLoop {
     private TerminationReason stagedTerminationReason;
 
     @Nullable
+    private StagedAssessmentContinuation stagedContinuation;
+
+    private final Instant stagedAuthoringStartedAt = Instant.now();
+
+    @Nullable
     private List<Message> carriedConversation;
 
     private int totalAgentTurns;
@@ -214,36 +217,20 @@ class GenerationAttemptLoop {
 
     /**
      * Objections the concept review raised against the concept this run proceeded with anyway. Kept apart from {@link #unresolvedSpecificationFindings} because the two say
-     * different things to an instructor — a contested exercise idea versus a contested contract for an agreed idea — while gating identically: neither may authorize
-     * autonomously strengthening the graded suite.
+     * different things to an instructor — a contested exercise idea versus a contested contract for an agreed idea. Both stay blocking review notes and both withhold the
+     * adoption of reviewer-proposed witnesses; neither switches off executed mutant evidence or witness adjudication, which are grounded in the environment.
      */
     private List<String> unresolvedConceptFindings = List.of();
 
-    private List<SemanticMutant> semanticMutantsAwaitingKill = List.of();
-
-    private List<SemanticMutant> semanticMutantsPendingRepair = List.of();
-
-    private List<SemanticMutant> semanticMutantsAwaitingRecheck = List.of();
-
-    private List<SemanticMutant> semanticMutantsPendingSpecApproval = List.of();
-
-    private List<SemanticMutant.Exclusion> semanticMutantHistory = List.of();
-
     private SeededStructuralTests seededStructuralTests = SeededStructuralTests.EMPTY;
-
-    private List<ContractWitness> referenceWitnessesAwaitingPass = List.of();
-
-    private List<ContractWitness> referenceWitnessesAwaitingAdjudication = List.of();
-
-    private List<ContractWitness> positiveWitnessesAwaitingAdjudication = List.of();
-
-    // Independently approved reference-pass/starter-fail witnesses remain available across unrelated repair surfaces. A full-artifact re-review must not erase their evidence.
-    private List<ContractWitness> contractWitnessesPendingAdoption = List.of();
 
     @Nullable
     private VerificationRequest lastRejectedVerificationRequest;
 
     private final RepairRoundScheduler repairScheduler;
+
+    /** The executed mutant and witness evidence this run carries across its repair rounds. */
+    private final ExecutableEvidenceLedger executableEvidence;
 
     private int mechanicalCorrectionsAfterRepairRemaining = 1;
 
@@ -273,10 +260,11 @@ class GenerationAttemptLoop {
         this.agentLoopRunner = dependencies.agentLoopRunner();
         this.verifier = dependencies.verifier();
         this.structuralOracleSeeder = dependencies.structuralOracleSeeder();
+        this.stageChecks = dependencies.stageChecks();
         this.specFidelityCritic = dependencies.specFidelityCritic();
         this.stagedGenerationRunner = dependencies.stagedGenerationRunner();
         this.transcriptWriter = dependencies.transcriptWriter();
-        this.maxTurns = dependencies.maxTurns();
+        this.remainingAuthoringTurns = dependencies.maxTurns();
         this.maxGenerationAttempts = dependencies.maxGenerationAttempts();
         this.specObserver = context.specObserver();
         this.checkpointObserver = context.checkpointObserver();
@@ -307,13 +295,25 @@ class GenerationAttemptLoop {
         this.currentPrompt = context.firstPrompt();
         // An adaptation gets a single semantic round whatever the configured generation budget is: its scope is one requested change, not an open authoring task.
         this.repairScheduler = new RepairRoundScheduler(context.mode() == Mode.GENERATE ? dependencies.maxSemanticRepairs() : 1);
+        this.executableEvidence = new ExecutableEvidenceLedger(verifier, specFidelityCritic, sandbox, sessionId, exercise, usageSink, cancelled, this::emit);
     }
 
     /** Runs bounded authoring, verification, review, and repair attempts. */
     @Nullable
     GenerationOutcome run() {
         for (int attempt = 1; attempt <= maxGenerationAttempts; attempt++) {
+            if (remainingAuthoringTurns <= 0) {
+                terminationReason = TerminationReason.REPAIR_BUDGET_EXHAUSTED;
+                emit("The shared authoring-turn budget ended; retaining the best available draft and its findings.");
+                break;
+            }
             runAttempt(attempt);
+            if (stagedContinuation != null) {
+                if (!canContinueAssessment(attempt)) {
+                    return outcomeIfAgentStopped();
+                }
+                continue;
+            }
             GenerationOutcome stoppedOutcome = outcomeIfAgentStopped();
             if (stoppedOutcome != null) {
                 return stoppedOutcome;
@@ -331,9 +331,10 @@ class GenerationAttemptLoop {
             if (cancelled.getAsBoolean()) {
                 return cancelledOutcome(cancelledResult(loopResult));
             }
-            if (adaptAttemptEndedWithoutAnyEdit(artifacts)) {
-                // The tree is still the seeded baseline: a differential build of it costs a full verification and can only say what the agent already knows. The attempt still
-                // counts, both against the run's attempt cap and the bounded mechanical phase, so an agent that never edits cannot keep the run alive.
+            boolean adaptUnedited = adaptAttemptEndedWithoutAnyEdit(artifacts);
+            if (adaptUnedited || repairAttemptEndedWithoutAnyEdit(artifacts)) {
+                // The tree is still the seeded baseline or the rejected candidate: a differential build of it costs a full verification and can only say what the agent already
+                // knows. The attempt still counts, both against the run's attempt cap and the bounded mechanical phase, so an agent that never edits cannot keep the run alive.
                 if (attempt == maxGenerationAttempts) {
                     emit("The step limit was reached before any change was made on the final attempt; stopping.");
                     terminationReason = TerminationReason.ATTEMPT_CAP_REACHED;
@@ -345,7 +346,8 @@ class GenerationAttemptLoop {
                     break;
                 }
                 emit("The step limit was reached before any change was made; asking the agent to edit first.");
-                currentPrompt = repairPrompts.editBeforeInspecting(attempt);
+                currentPrompt = adaptUnedited ? repairPrompts.editBeforeInspecting(attempt)
+                        : repairPrompts.editBeforeRepairing(attempt, specSnapshot.get(), verification.report(), specFidelityReport);
                 continue;
             }
             if (lastRejectedVerificationRequest != null && lastRejectedVerificationRequest.equals(artifacts.verificationRequest())) {
@@ -353,16 +355,53 @@ class GenerationAttemptLoop {
                 terminationReason = TerminationReason.UNCHANGED_CANDIDATE_RESUBMITTED;
                 break;
             }
+            // A submitted candidate is complete, so an unsatisfiable given ownership it exposes is corrected before its authoritative verification, which then judges it
+            // against the corrected contract. In-loop verify calls never correct; see StageChecks#correctGivenOwnership.
+            Optional<String> ownershipCorrection = stageChecks.correctGivenOwnership(sandbox, sessionId);
             // Snapshot the approved SPEC.md because each verification restore resets and must re-seed the tmpfs workspace.
             String specDocumentSnapshot = GenerationOrchestrator.readSpecDocument(sandbox, sessionId);
+            if (ownershipCorrection.isPresent()) {
+                publishOwnershipCorrection(specDocumentSnapshot);
+            }
             emitPhase(Phase.VERIFYING, "Building the solution and starter code against the generated tests");
-            verification = verifyCandidate(artifacts, specDocumentSnapshot);
+            var assessed = verifyCandidate(artifacts, specDocumentSnapshot);
+            verification = assessed.verification();
+            if (ownershipCorrection.isPresent() && !verification.mechanicallyVerified()) {
+                // The template still carries the given copy that cannot compile; the notice tells the next attempt what it may now stub.
+                List<String> reasons = new ArrayList<>(List.of(ownershipCorrection.get()));
+                reasons.addAll(verification.reasons());
+                verification = new VerificationResult(false, verification.solutionPassed(), verification.templateFailed(), verification.testCount(), reasons,
+                        verification.templateFailureEvidence());
+            }
             emit(verification.report());
+            if (!assessed.counterexamples().isEmpty()) {
+                checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot, verification);
+                if (cancelled.getAsBoolean()) {
+                    return cancelledOutcome(cancelledResult(loopResult));
+                }
+                stagedContinuation = attempt < maxGenerationAttempts && mechanicalAttemptsBeforeAnyRepair + 1 < MAX_MECHANICAL_ATTEMPTS
+                        ? stagedGenerationRunner.requestAssessmentRedesign(exercise, sessionId, stagedAuthoringStartedAt,
+                                specFidelityCritic.renderForRetryPrompt(executableEvidence.preserveAssessmentFindings(SpecFidelityReport.empty())), unresolvedConceptFindings)
+                        : null;
+                if (stagedContinuation != null) {
+                    if (!canContinueAssessment(attempt)) {
+                        return outcomeIfAgentStopped();
+                    }
+                    continue;
+                }
+                emit("Contract redesign is unavailable; reviewing the verified draft for scoped repair within the remaining shared budget.");
+            }
             if (!verification.mechanicallyVerified() && artifacts.extractionFailed().isEmpty()) {
                 lastRejectedVerificationRequest = artifacts.verificationRequest();
             }
-            if (verification.mechanicallyVerified()) {
-                checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot);
+            if (verification.mechanicallyVerified() && assessed.counterexamples().isEmpty()) {
+                checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot, verification);
+            }
+            if (verification.serverDefect()) {
+                // The diagnostic tells the agent to change nothing, so another attempt could only contradict it or repeat the same verdict.
+                emit("Verification failed on a server-side defect that no repair can fix; stopping and keeping the last verified candidate for the administrators.");
+                terminationReason = TerminationReason.ENVIRONMENT_UNAVAILABLE;
+                break;
             }
             if (cancelled.getAsBoolean()) {
                 return cancelledOutcome(cancelledResult(loopResult));
@@ -383,9 +422,9 @@ class GenerationAttemptLoop {
                 specFidelityReport = SpecFidelityReport.empty();
             }
 
-            // A GENERATE run may spend one otherwise-idle round offering advisory witnesses. An instructor-only blocker must not discard unrelated environment-proven coverage,
-            // but a failed or unapproved specification cannot authorize new grading.
-            boolean hasSchedulableRepair = repairScheduler.nextRepairBatch(specFidelityReport).isPresent();
+            // A GENERATE run may spend one otherwise-idle round offering advisory witnesses. An unrelated instructor-only blocker must not discard that coverage, but a contested
+            // specification or concept cannot authorize adopting reviewer-proposed tests.
+            boolean hasSchedulableRepair = repairScheduler.nextRepairBatch(schedulingReport()).isPresent();
             boolean adoptWitnesses = verification.mechanicallyVerified() && !hasSchedulableRepair && !RepairRoundScheduler.hasInstrumentUnavailableFinding(specFidelityReport)
                     && designAuthorityApproved() && attempt < maxGenerationAttempts && mode == Mode.GENERATE && repairScheduler.witnessAdoption(specFidelityReport).isPresent();
             if (verification.mechanicallyVerified() && !specFidelityReport.hasBlockingFindings() && !adoptWitnesses) {
@@ -429,6 +468,21 @@ class GenerationAttemptLoop {
         return null;
     }
 
+    private boolean canContinueAssessment(int attempt) {
+        if (cancelled.getAsBoolean()) {
+            loopResult = cancelledResult(loopResult);
+            return false;
+        }
+        if (attempt == maxGenerationAttempts || ++mechanicalAttemptsBeforeAnyRepair >= MAX_MECHANICAL_ATTEMPTS) {
+            stagedTerminationReason = attempt == maxGenerationAttempts ? TerminationReason.ATTEMPT_CAP_REACHED : TerminationReason.MECHANICAL_REPAIR_EXHAUSTED;
+            loopResult = new AgentLoopResult(AgentLoopResult.Status.ERROR, loopResult.turns(), loopResult.finalMessage(),
+                    "No existing authoring attempt remains to complete the redesigned executable assessment.");
+            return false;
+        }
+        emit("Continuing the assessment from its current workspace in the next existing authoring attempt.");
+        return true;
+    }
+
     /** Runs staged authoring for the first attempt and a scoped agent loop for later repairs. */
     private void runAttempt(int attempt) {
         // Pushed before any work: an attempt abandoned at a gate must still be counted, and a count derived from the returned outcome is missing exactly for the runs an
@@ -440,15 +494,26 @@ class GenerationAttemptLoop {
             activity.attempt(attempt);
             activity.step(null);
         }
-        boolean stagedAttempt = useStagedGeneration && attempt == 1;
+        boolean stagedAttempt = useStagedGeneration && (attempt == 1 || stagedContinuation != null);
         if (stagedAttempt) {
-            emitPhase(Phase.DESIGNING, "Designing the learning task and creating the specification, code, and tests");
-            StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot, sandbox,
-                    sessionId, cancelled, usageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies,
-                    conceptSelectionApplies, spec -> {
-                        specSnapshot.set(spec);
-                        specObserver.accept(spec);
-                    }, capture::recordStageBoundary);
+            emitPhase(stagedContinuation == null ? Phase.DESIGNING : Phase.REPAIRING,
+                    stagedContinuation == null ? "Designing the learning task and creating the specification, code, and tests"
+                            : stagedContinuation.stage() == GenerationStage.SPEC ? "Revising the assessment contract from executed evidence"
+                                    : "Completing the approved redesigned assessment from its current workspace");
+            Consumer<String> publishSpec = spec -> {
+                specSnapshot.set(spec);
+                specObserver.accept(spec);
+            };
+            StagedGenerationRunner boundedStages = stagedGenerationRunner.withTurnLimit(remainingAuthoringTurns);
+            StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedContinuation == null
+                    ? boundedStages.run(exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot, sandbox, sessionId, cancelled, usageSink, progress,
+                            () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies, conceptSelectionApplies, publishSpec,
+                            capture::recordStageBoundary)
+                    : boundedStages.resume(stagedContinuation, exercise, baseTools, tools, stagedContinuation.stage() == GenerationStage.SPEC ? reviewBrief : currentPrompt,
+                            reviewBrief, testsSeedSnapshot, sandbox, sessionId, cancelled, usageSink, progress,
+                            () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies, conceptSelectionApplies, publishSpec,
+                            capture::recordStageBoundary);
+            stagedContinuation = stagedOutcome.assessmentContinuation();
             loopResult = stagedOutcome.result();
             stagedTerminationReason = stagedOutcome.terminationReason();
             carriedConversation = stagedOutcome.conversation();
@@ -472,7 +537,8 @@ class GenerationAttemptLoop {
             }
             try {
                 // Repairs start from durable workspace/server state; replaying a failed trajectory buries current evidence and grows quadratically. Checkpoints keep the audit.
-                AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, null, currentPrompt, tools, maxTurns, cancelled, usageSink, progress);
+                AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runSession(systemPrompt, null, currentPrompt, tools, remainingAuthoringTurns, cancelled, usageSink,
+                        progress);
                 loopResult = session.result();
                 carriedConversation = session.conversation();
                 transcriptWriter.write(exercise.id(), "attempt-" + attempt + (attempt == 1 ? "-single-loop-" : "-repair-") + loopResult.status().name().toLowerCase(Locale.ROOT),
@@ -482,6 +548,7 @@ class GenerationAttemptLoop {
                 baseTools.exitRepairScope();
             }
         }
+        remainingAuthoringTurns = Math.max(0, remainingAuthoringTurns - loopResult.turns());
         totalAgentTurns += loopResult.turns();
         if (activity != null) {
             // Authoring is over; verification, review, and repair scheduling belong to no substep.
@@ -508,11 +575,11 @@ class GenerationAttemptLoop {
         }
         if (loopResult.status() == AgentLoopResult.Status.ERROR) {
             terminationReason = stagedTerminationReason == null ? TerminationReason.AGENT_ERROR : stagedTerminationReason;
-            if (terminationReason == TerminationReason.NO_ADMISSIBLE_CONCEPT) {
-                return GenerationOutcome.error(loopResult, "No generated exercise concept satisfied the instructor brief and learning-fit review.");
-            }
             if (lastMechanicallyVerifiedCandidate != null) {
                 return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
+            }
+            if (terminationReason == TerminationReason.NO_ADMISSIBLE_CONCEPT) {
+                return GenerationOutcome.error(loopResult, "No generated exercise concept satisfied the instructor brief and learning-fit review.");
             }
             GenerationOutcome partial = capture.partialOutcome(loopResult, "The agent stopped before verification; the partial candidate requires manual review.");
             if (partial != null) {
@@ -534,6 +601,15 @@ class GenerationAttemptLoop {
     private boolean adaptAttemptEndedWithoutAnyEdit(CandidateArtifacts artifacts) {
         return mode == Mode.ADAPT && loopResult.status() == AgentLoopResult.Status.BUDGET_EXHAUSTED && artifacts.extractionFailed().isEmpty()
                 && !hasProducedChanges(baselineRepositoryFiles, producedFilesByType, baselineProblemStatement, producedProblemStatement);
+    }
+
+    /**
+     * A mechanical repair attempt that ran out of steps without changing the candidate the verifier just rejected. A fresh session that loses its whole budget to inspection
+     * would otherwise end the run as an unchanged resubmission, although it never chose to resubmit; a session that stopped on its own still does.
+     */
+    private boolean repairAttemptEndedWithoutAnyEdit(CandidateArtifacts artifacts) {
+        return loopResult.status() == AgentLoopResult.Status.BUDGET_EXHAUSTED && artifacts.extractionFailed().isEmpty() && repairScheduler.roundsStarted() == 0
+                && verification != null && lastRejectedVerificationRequest != null && lastRejectedVerificationRequest.equals(artifacts.verificationRequest());
     }
 
     /** Reads all candidate artifacts back and preserves extraction failures so verification can distinguish them from empty repositories. */
@@ -558,7 +634,7 @@ class GenerationAttemptLoop {
     }
 
     /** Runs the authoritative differential build from fresh directories, restoring the candidate after every sandbox reset. */
-    private VerificationResult verifyCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
+    private ExecutableEvidenceLedger.AssessmentVerdict verifyCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         Map<RepositoryRole, Map<String, String>> candidateFiles = artifacts.candidateFiles();
         String candidateProblemStatement = producedProblemStatement;
         String testPlanSnapshot = artifacts.testPlanJson();
@@ -568,31 +644,17 @@ class GenerationAttemptLoop {
                     candidateProblemStatement, specDocumentSnapshot, testPlanSnapshot);
         };
         VerificationResult result = verifyWithInfrastructureRetry(artifacts.verificationRequest(), restoreCandidate);
-        if (!result.mechanicallyVerified() || semanticMutantsAwaitingKill.isEmpty()) {
-            return result;
+        if (result.mechanicallyVerified() && lastMechanicallyVerifiedCandidate == null) {
+            checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot, result);
         }
-        Map<String, String> currentSolution = candidateFiles.getOrDefault(RepositoryRole.SOLUTION, Map.of());
-        List<SemanticMutant> applicableMutants = semanticMutantsAwaitingKill.stream()
-                .filter(mutant -> mutant.originalSolutionSource().equals(currentSolution.get(mutant.solutionPath()))).toList();
-        int staleMutants = semanticMutantsAwaitingKill.size() - applicableMutants.size();
-        if (staleMutants > 0) {
-            emit("Retired " + staleMutants
-                    + " semantic mutant acceptance check(s) because a separate repair changed their reference source; the executable review will author fresh mutants against the current solution.");
+        if (result.mechanicallyVerified()) {
+            result = executableEvidence.recheckAfterVerification(result, candidateFiles, testPlanSnapshot, candidateBeforeCurrentRepair != null, seededStructuralTests,
+                    restoreCandidate);
         }
-        if (applicableMutants.isEmpty()) {
-            semanticMutantsAwaitingKill = List.of();
-            return result;
-        }
-        List<SemanticMutantOutcome> outcomes = verifier.checkSemanticMutants(sandbox, sessionId, exercise, currentSolution, seededStructuralTests, applicableMutants,
-                restoreCandidate);
-        GenerationReviewSupport.SemanticMutantRecheck recheck = GenerationReviewSupport.semanticMutantRecheck(outcomes);
-        semanticMutantsAwaitingKill = recheck.unresolvedMutants();
-        if (semanticMutantsAwaitingKill.isEmpty()) {
-            return result;
-        }
-        List<String> reasons = new ArrayList<>(result.reasons());
-        reasons.addAll(recheck.failureReasons());
-        return new VerificationResult(false, result.solutionPassed(), result.templateFailed(), result.testCount(), List.copyOf(reasons), result.templateFailureEvidence());
+        return useStagedGeneration && result.mechanicallyVerified()
+                ? executableEvidence.assessBeforeCheckpoint(result, candidateFiles, testPlanSnapshot, seededStructuralTests, restoreCandidate,
+                        verified -> checkpointMechanicallyVerifiedCandidate(artifacts, specDocumentSnapshot, verified))
+                : new ExecutableEvidenceLedger.AssessmentVerdict(result, List.of());
     }
 
     private VerificationResult verifyWithInfrastructureRetry(VerificationRequest request, Runnable restoreCandidate) {
@@ -610,10 +672,11 @@ class GenerationAttemptLoop {
         }
     }
 
-    /** Checkpoints the first verified candidate; later semantic repairs are promoted only after their review completes. */
-    private void checkpointMechanicallyVerifiedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
-        CandidateSnapshot mechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verification, copyProducedFiles(producedFilesByType), producedProblemStatement,
-                SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the mechanically verified candidate received its full-artifact review."),
+    /** Checkpoints the first verified candidate; a later semantic repair is promoted only once its review has run, see {@link #promoteReviewedCandidate}. */
+    private void checkpointMechanicallyVerifiedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot, VerificationResult verified) {
+        CandidateSnapshot mechanicallyVerifiedCandidate = new CandidateSnapshot(loopResult, verified, copyProducedFiles(producedFilesByType), producedProblemStatement,
+                executableEvidence.preserveExecutableEvidenceState(
+                        SpecFidelityReport.qualityReviewUnavailable("This mechanically verified draft still requires full quality review before study qualification.")),
                 specDocumentSnapshot, artifacts.testPlanJson());
         if (candidateBeforeCurrentRepair == null) {
             lastMechanicallyVerifiedCandidate = mechanicallyVerifiedCandidate;
@@ -631,8 +694,9 @@ class GenerationAttemptLoop {
             specFidelityReport = candidateBeforeCurrentRepair.reviewReport();
             lastMechanicallyVerifiedCandidate = candidateBeforeCurrentRepair;
             candidateBeforeCurrentRepair = null;
-            emit("The semantic repair made no artifact changes; retaining the previous environment evidence and review instead of re-rolling a verdict on the same candidate.");
-            return null;
+            terminationReason = TerminationReason.REPAIR_DID_NOT_IMPROVE;
+            emit("The semantic repair made no artifact changes; retaining the previous environment evidence and review and stopping further identical repairs.");
+            return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
         }
         @Nullable
         String adaptationChanges = mode == Mode.ADAPT
@@ -650,14 +714,20 @@ class GenerationAttemptLoop {
         specFidelityReport = preserveDesignAuthorityState(specFidelityReport);
         specFidelityReport = adoptExecutableCounterexamples(specFidelityReport, artifacts, specDocumentSnapshot);
         recordReviewRound(attempt);
-        if (candidateBeforeCurrentRepair != null && !RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport)
-                && !RepairRoundScheduler.repairImproved(candidateBeforeCurrentRepair.reviewReport(), specFidelityReport)) {
+        boolean killedSurvivingMutant = candidateBeforeCurrentRepair != null && executableEvidence.mutantsKilledByCurrentRepair() > 0;
+        if (candidateBeforeCurrentRepair != null && (executableEvidence.hasRegressions()
+                || !RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport) && !RepairRoundScheduler.repairImproved(candidateBeforeCurrentRepair.reviewReport(),
+                        GenerationReviewSupport.withUndrainedSurvivors(specFidelityReport, executableEvidence.survivorsWithoutVerdict()), killedSurvivingMutant))) {
             CandidateSnapshot retained = candidateBeforeCurrentRepair;
             candidateBeforeCurrentRepair = null;
             lastMechanicallyVerifiedCandidate = retained;
             terminationReason = TerminationReason.REPAIR_DID_NOT_IMPROVE;
             emit("The repair did not reduce the reviewed blockers without introducing another one; retaining the previous reviewed checkpoint.");
             return service.preserveCandidate(retained, sandbox, sessionId, workspaceSeed);
+        }
+        if (killedSurvivingMutant) {
+            emit("The repair killed " + executableEvidence.mutantsKilledByCurrentRepair()
+                    + " environment-proven mutant(s); keeping the repaired candidate and carrying any new review findings " + "forward on it.");
         }
         promoteReviewedCandidate(artifacts, specDocumentSnapshot);
         if (cancelled.getAsBoolean()) {
@@ -668,26 +738,50 @@ class GenerationAttemptLoop {
     }
 
     /**
-     * Whether both design authorities this run depends on — the concept it builds and the contract it froze — came through their reviews unopposed. Gates every autonomous
-     * strengthening of the graded suite: adopting an execution-proven counterexample under a contested concept or specification would deepen a design choice the reviewer
-     * objected to.
+     * Whether both design authorities this run depends on, the concept it builds and the contract it froze, came through their reviews unopposed. Gates only the adoption of
+     * reviewer-proposed contract witnesses: adopting a proposed test under a contested concept or specification would deepen a design choice the reviewer objected to.
+     * Executed mutant evidence and witness adjudication do not depend on it.
      */
     private boolean designAuthorityApproved() {
         return unresolvedSpecificationFindings.isEmpty() && unresolvedConceptFindings.isEmpty();
     }
 
+    /** The review as repair scheduling sees it: under a contested design authority, adoptable witnesses do not ride along with an oracle repair either. */
+    private SpecFidelityReport schedulingReport() {
+        if (designAuthorityApproved()) {
+            return specFidelityReport;
+        }
+        return new SpecFidelityReport(specFidelityReport.findings().stream().filter(finding -> finding.kind() != SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE).toList());
+    }
+
+    /** Publishes a server-corrected approved specification the way the staged runner publishes its approval: to the critic grounding and the instructor-visible SPEC.md. */
+    private void publishOwnershipCorrection(@Nullable String correctedSpecification) {
+        if (correctedSpecification == null || correctedSpecification.isBlank()) {
+            return;
+        }
+        specSnapshot.set(correctedSpecification);
+        specObserver.accept(correctedSpecification);
+        log.info("Exercise {}: published the server-corrected approved specification before verifying the submitted candidate", exercise.id());
+        emit("Artemis changed a type the specification marked 'given' to 'stubbed', because its code needs a type students create and an identical starter copy could never "
+                + "compile.");
+    }
+
     /** Re-attaches both contested-authority states after a fresh review, which only ever reports on artifacts and cannot discharge either. */
     private SpecFidelityReport preserveDesignAuthorityState(SpecFidelityReport report) {
-        return GenerationReviewSupport.preserveConceptAdmissionState(GenerationReviewSupport.preserveSpecificationReviewState(report, unresolvedSpecificationFindings),
-                unresolvedConceptFindings);
+        return executableEvidence.preserveAssessmentFindings(GenerationReviewSupport
+                .preserveConceptAdmissionState(GenerationReviewSupport.preserveSpecificationReviewState(report, unresolvedSpecificationFindings), unresolvedConceptFindings));
     }
 
     /**
-     * Promotes the candidate only after its review and executable probes have completed. Clearing the repair predecessor here is part of the invariant: a later deadline must
-     * preserve the candidate that was just verified and reviewed, while {@link #applySemanticRepair} records it again if another repair actually starts.
+     * Promotes the candidate once its review and executable probes have run. A repair whose primary review did not return a verdict is promoted only if it killed a surviving
+     * mutant, because the older checkpoint provably grades less; such a candidate is mechanically verified, not fully reviewed, and carries the unavailable review as a
+     * finding. Clearing the repair predecessor here is part of the invariant: a later deadline must preserve the candidate that was just verified and reviewed, while
+     * {@link #applySemanticRepair} records it again if another repair actually starts.
      */
     private void promoteReviewedCandidate(CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
-        if (candidateBeforeCurrentRepair != null && RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport)) {
+        // A repair that killed a surviving mutant is promoted even without a primary verdict: the older checkpoint provably grades less.
+        if (candidateBeforeCurrentRepair != null && executableEvidence.mutantsKilledByCurrentRepair() == 0
+                && RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport)) {
             emit("The repaired candidate passed mechanical verification, but its primary quality review did not complete; retaining the previously reviewed checkpoint ("
                     + candidateBeforeCurrentRepair.verification().testCount() + " tests).");
             return;
@@ -705,9 +799,10 @@ class GenerationAttemptLoop {
     /** Hands this review to the round accounting and puts the resulting counts on the round's progress event. */
     private void recordReviewRound(int attempt) {
         RepairRound round = repairScheduler.recordReviewRound(specFidelityReport, attempt);
-        log.info("Exercise {} quality review round {} (attempt {}): {} blocking, {} advisory; {} carried over, {} drained, {} fresh", exercise.id(), round.round(), attempt,
-                round.blocking(), round.advisory(), round.carriedOver(), round.drained(), round.fresh());
-        emitRound(RepairRoundScheduler.roundMessage(round), round);
+        int inconclusiveMutantProbes = executableEvidence.takeInconclusiveMutantProbes();
+        log.info("Exercise {} quality review round {} (attempt {}): {} blocking, {} advisory; {} carried over, {} drained, {} fresh; {} inconclusive mutant probe(s)",
+                exercise.id(), round.round(), attempt, round.blocking(), round.advisory(), round.carriedOver(), round.drained(), round.fresh(), inconclusiveMutantProbes);
+        emitRound(RepairRoundScheduler.roundMessage(round) + RepairRoundScheduler.inconclusiveProbeNote(inconclusiveMutantProbes), round);
     }
 
     /**
@@ -723,12 +818,12 @@ class GenerationAttemptLoop {
             return LoopStep.STOP;
         }
         boolean reviewUnavailable = RepairRoundScheduler.hasPrimaryReviewUnavailableFinding(specFidelityReport);
-        Optional<SemanticRepairBatch> repairBatch = adoptWitnesses ? repairScheduler.witnessAdoption(specFidelityReport) : repairScheduler.nextRepairBatch(specFidelityReport);
+        Optional<SemanticRepairBatch> repairBatch = adoptWitnesses ? repairScheduler.witnessAdoption(specFidelityReport) : repairScheduler.nextRepairBatch(schedulingReport());
         if (adoptWitnesses) {
             repairScheduler.markWitnessAdoptionAttempted();
         }
-        if (reviewUnavailable && repairBatch.isEmpty() && !semanticMutantsAwaitingRecheck.isEmpty()) {
-            emit("Executable semantic evidence remains inconclusive; keeping the last fully reviewed candidate for instructor review.");
+        if (reviewUnavailable && repairBatch.isEmpty() && executableEvidence.hasMutantsAwaitingRecheck()) {
+            emit("Executable semantic evidence remains inconclusive; keeping the latest mechanically verified candidate for instructor review.");
             terminationReason = TerminationReason.REVIEW_UNAVAILABLE;
             return LoopStep.STOP;
         }
@@ -743,10 +838,10 @@ class GenerationAttemptLoop {
                 // No previous report is carried in: the point of the retry is a clean verdict on this candidate, not a continuation of the failed one.
                 specFidelityReport = runSpecFidelityCritic(producedProblemStatement, retryAdaptationChanges, null, null,
                         GenerationReviewSupport.effectiveSpecReviewContext(specSnapshot.get(), specDocumentSnapshot), artifacts.testPlanJson());
-                specFidelityReport = preserveExecutableEvidenceState(preserveDesignAuthorityState(specFidelityReport));
+                specFidelityReport = executableEvidence.preserveExecutableEvidenceState(preserveDesignAuthorityState(specFidelityReport));
                 promoteReviewedCandidate(artifacts, specDocumentSnapshot);
                 recordReviewRound(attempt);
-                repairBatch = repairScheduler.nextRepairBatch(specFidelityReport);
+                repairBatch = repairScheduler.nextRepairBatch(schedulingReport());
             }
             if (repairBatch.isEmpty()) {
                 terminationReason = RepairRoundScheduler.reasonForUnschedulableReport(specFidelityReport);
@@ -763,12 +858,8 @@ class GenerationAttemptLoop {
         }
         candidateBeforeCurrentRepair = lastMechanicallyVerifiedCandidate;
         pendingSemanticRepair = repairBatch.get();
-        boolean repairsExecutableOracle = pendingSemanticRepair.report().findings().stream()
-                .anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE);
-        if (repairsExecutableOracle) {
-            semanticMutantsAwaitingKill = semanticMutantsPendingRepair;
-            semanticMutantsPendingRepair = List.of();
-        }
+        executableEvidence
+                .beginRepair(pendingSemanticRepair.report().findings().stream().anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE));
         if (adoptWitnesses) {
             repairScheduler.recordAdoptionRound();
         }
@@ -791,10 +882,9 @@ class GenerationAttemptLoop {
     private SpecFidelityReport adoptExecutableCounterexamples(SpecFidelityReport report, CandidateArtifacts artifacts, @Nullable String specDocumentSnapshot) {
         Map<String, String> testsFiles = producedFilesByType.getOrDefault(RepositoryRole.TESTS, Map.of());
         if (specDocumentSnapshot == null || specDocumentSnapshot.isBlank() || testsFiles.isEmpty() || cancelled.getAsBoolean()) {
-            return preserveExecutableEvidenceState(report);
+            return executableEvidence.withoutExecutableReview(report);
         }
         try {
-            Map<String, String> solutionFiles = producedFilesByType.getOrDefault(RepositoryRole.SOLUTION, Map.of());
             Map<RepositoryRole, Map<String, String>> candidateFiles = copyProducedFiles(producedFilesByType);
             String candidateProblemStatement = producedProblemStatement;
             Runnable restoreCandidate = () -> {
@@ -802,85 +892,7 @@ class GenerationAttemptLoop {
                 workspace.materializeRepositoryFiles(sandbox, sessionId, exercise, mode, candidateFiles, workspaceSeed.repositoryMetadata(), workspaceSeed.repositoryBinaryFiles(),
                         candidateProblemStatement, specDocumentSnapshot, artifacts.testPlanJson());
             };
-            List<SemanticMutant> priorUnresolvedMutants = java.util.stream.Stream
-                    .of(semanticMutantsPendingRepair, semanticMutantsAwaitingRecheck, semanticMutantsPendingSpecApproval).flatMap(List::stream).distinct()
-                    .limit(MAX_TRACKED_SEMANTIC_MUTANTS).toList();
-            List<SemanticMutant> applicablePendingMutants = priorUnresolvedMutants.stream()
-                    .filter(mutant -> mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath()))).toList();
-            int stalePendingMutants = priorUnresolvedMutants.size() - applicablePendingMutants.size();
-            if (stalePendingMutants > 0) {
-                emit("Retired " + stalePendingMutants
-                        + " pending semantic mutant(s) because the reference source changed; the executable reviewer will propose replacements against the current solution.");
-            }
-            List<SemanticMutantOutcome> pendingMutantOutcomes = applicablePendingMutants.isEmpty() ? List.of()
-                    : verifier.checkSemanticMutants(sandbox, sessionId, exercise, solutionFiles, seededStructuralTests, applicablePendingMutants, restoreCandidate);
-            int freshCapacity = MAX_TRACKED_SEMANTIC_MUTANTS
-                    - (int) pendingMutantOutcomes.stream().filter(outcome -> outcome.disposition() != Disposition.KILLED_BY_GRADED_SUITE).count();
-            List<SemanticMutant> freshMutantCandidates = freshCapacity == 0 ? List.of()
-                    : specFidelityCritic
-                            .authorSemanticMutants(specDocumentSnapshot, solutionFiles,
-                                    GenerationReviewSupport.withPriorSemanticMutants(report.findings(), applicablePendingMutants), semanticMutantHistory, usageSink, cancelled)
-                            .stream().filter(candidate -> !applicablePendingMutants.contains(candidate)).limit(freshCapacity).toList();
-            List<SemanticMutantOutcome> freshMutantOutcomes = freshMutantCandidates.isEmpty() ? List.of()
-                    : verifier.evaluateSemanticMutants(sandbox, sessionId, exercise, testsFiles, solutionFiles, seededStructuralTests, freshMutantCandidates, restoreCandidate);
-            semanticMutantHistory = GenerationReviewSupport.rememberExecutedMutants(semanticMutantHistory, freshMutantOutcomes);
-            List<SemanticMutantOutcome> mutantOutcomes = java.util.stream.Stream.concat(pendingMutantOutcomes.stream(), freshMutantOutcomes.stream()).toList();
-            List<SemanticMutant> validatedMutants = mutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.SURVIVED_GRADED_SUITE)
-                    .map(SemanticMutantOutcome::mutant).distinct().toList();
-            List<SemanticMutant> inconclusivePendingMutants = pendingMutantOutcomes.stream().filter(outcome -> outcome.disposition() == Disposition.INCONCLUSIVE)
-                    .map(SemanticMutantOutcome::mutant).toList();
-            boolean specificationApproved = designAuthorityApproved();
-            semanticMutantsPendingRepair = specificationApproved ? validatedMutants : List.of();
-            // Preserve inconclusive rechecks as historical unavailable evidence; never upgrade them to current survivors while specification approval is pending.
-            semanticMutantsAwaitingRecheck = inconclusivePendingMutants;
-            semanticMutantsPendingSpecApproval = specificationApproved ? List.of() : validatedMutants;
-
-            Set<String> pendingWitnessNames = referenceWitnessesAwaitingPass.stream().map(ContractWitness::testName).collect(Collectors.toSet());
-            Set<String> pendingReferenceAdjudicationNames = referenceWitnessesAwaitingAdjudication.stream().map(ContractWitness::testName).collect(Collectors.toSet());
-            Set<String> pendingAdoptionAdjudicationNames = positiveWitnessesAwaitingAdjudication.stream().map(ContractWitness::testName).collect(Collectors.toSet());
-            Set<String> approvedAdoptionNames = contractWitnessesPendingAdoption.stream().map(ContractWitness::testName).collect(Collectors.toSet());
-            List<ContractWitness> candidates = ReferenceWitnessEvidence.candidates(referenceWitnessesAwaitingPass, referenceWitnessesAwaitingAdjudication,
-                    positiveWitnessesAwaitingAdjudication, contractWitnessesPendingAdoption, specFidelityCritic.authorContractWitnesses(specDocumentSnapshot,
-                            GenerationReviewSupport.renderArtifactSources(testsFiles), GenerationReviewSupport.renderArtifactSources(solutionFiles), usageSink, cancelled));
-            Set<String> mutatedRules = validatedMutants.stream().map(SemanticMutant::ruleId).collect(Collectors.toUnmodifiableSet());
-            List<ContractWitnessOutcome> witnessOutcomes = verifier.evaluateContractWitnesses(sandbox, sessionId, exercise, testsFiles, seededStructuralTests, candidates,
-                    restoreCandidate);
-            List<ContractWitnessOutcome> proposedAdjudications = ReferenceWitnessEvidence.adjudicationCandidates(freshMutantOutcomes, witnessOutcomes, pendingWitnessNames,
-                    approvedAdoptionNames, mutatedRules);
-            List<ContractWitnessOutcome> adjudicationCandidates = specificationApproved ? proposedAdjudications : List.of();
-            SpecFidelityCritic.ReferenceWitnessReview referenceReview = adjudicationCandidates
-                    .isEmpty()
-                            ? SpecFidelityCritic.ReferenceWitnessReview.empty()
-                            : Optional.ofNullable(specFidelityCritic.adjudicateReferenceWitnesses(specDocumentSnapshot,
-                                    GenerationReviewSupport.renderArtifactSources(solutionFiles), adjudicationCandidates, usageSink, cancelled))
-                                    .orElseGet(SpecFidelityCritic.ReferenceWitnessReview::empty);
-            Set<String> alreadySourceApproved = java.util.stream.Stream.concat(pendingWitnessNames.stream(), approvedAdoptionNames.stream())
-                    .collect(Collectors.toUnmodifiableSet());
-            contractWitnessesPendingAdoption = java.util.stream.Stream
-                    .concat(ReferenceWitnessEvidence.approvedForAdoption(witnessOutcomes, alreadySourceApproved).stream(), referenceReview.adoptableWitnesses().stream()).distinct()
-                    .toList();
-            ReferenceWitnessEvidence.State witnessState = ReferenceWitnessEvidence.reconcile(proposedAdjudications, witnessOutcomes, pendingWitnessNames,
-                    pendingReferenceAdjudicationNames, pendingAdoptionAdjudicationNames, referenceReview);
-            referenceWitnessesAwaitingPass = witnessState.awaitingPass();
-            referenceWitnessesAwaitingAdjudication = witnessState.awaitingReferenceAdjudication();
-            positiveWitnessesAwaitingAdjudication = witnessState.awaitingAdoptionAdjudication();
-            emit(new GenerationReviewSupport.ExecutableProbeSummary(mutantOutcomes, witnessOutcomes, contractWitnessesPendingAdoption.size(), referenceWitnessesAwaitingPass.size(),
-                    referenceWitnessesAwaitingAdjudication.size(), positiveWitnessesAwaitingAdjudication.size()).render());
-            List<SpecFidelityReport.Finding> combined = new ArrayList<>(SemanticEvidenceReconciler.reconcile(report, mutantOutcomes));
-            combined.addAll(referenceReview.findings());
-            contractWitnessesPendingAdoption.stream()
-                    .filter(witness -> combined.stream()
-                            .noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE
-                                    && (finding.requirement() + "\n" + finding.detail()).contains(witness.testName())))
-                    .map(GenerationReviewSupport::approvedContractWitnessAvailable).forEach(combined::add);
-            GenerationReviewSupport.addReferenceUnavailability(combined, witnessState.omittedReferenceAdjudication().size(), witnessState.pendingPassInconclusive().size(),
-                    witnessState.referenceAdjudicationInconclusive().size());
-            inconclusivePendingMutants.forEach(mutant -> combined.add(GenerationReviewSupport.semanticMutantRecheckUnavailable(mutant)));
-            witnessState.stillFailing().forEach(witness -> combined.add(GenerationReviewSupport.referenceDefectStillFailing(witness)));
-            validatedMutants.forEach(mutant -> combined.add(GenerationReviewSupport.semanticMutantFinding(mutant, specificationApproved)));
-            positiveWitnessesAwaitingAdjudication.stream().map(GenerationReviewSupport::positiveWitnessAdjudicationUnavailable).filter(finding -> !combined.contains(finding))
-                    .forEach(combined::add);
-            return preserveReferenceWitnessState(new SpecFidelityReport(List.copyOf(combined)));
+            return executableEvidence.review(report, producedFilesByType, candidateFiles, artifacts.testPlanJson(), specDocumentSnapshot, seededStructuralTests, restoreCandidate);
         }
         catch (DifferentialVerifier.VerificationInfrastructureException exception) {
             throw exception;
@@ -891,30 +903,20 @@ class GenerationAttemptLoop {
             terminationReason = TerminationReason.REVIEW_UNAVAILABLE;
             List<SpecFidelityReport.Finding> findings = new ArrayList<>(report.findings());
             findings.addAll(SpecFidelityReport.executableEvidenceUnavailable("Executable probe authoring or evaluation did not complete.").findings());
-            return preserveExecutableEvidenceState(new SpecFidelityReport(findings));
+            return executableEvidence.preserveExecutableEvidenceState(new SpecFidelityReport(findings));
         }
-    }
-
-    private SpecFidelityReport preserveExecutableEvidenceState(SpecFidelityReport report) {
-        SpecFidelityReport preserved = GenerationReviewSupport.preserveSemanticMutantState(preserveReferenceWitnessState(report), semanticMutantsPendingRepair,
-                semanticMutantsAwaitingRecheck);
-        return GenerationReviewSupport.preservePendingSpecApprovalMutants(preserved, semanticMutantsPendingSpecApproval);
-    }
-
-    private SpecFidelityReport preserveReferenceWitnessState(SpecFidelityReport report) {
-        SpecFidelityReport preserved = GenerationReviewSupport.preserveReferenceWitnessState(report, referenceWitnessesAwaitingPass, referenceWitnessesAwaitingAdjudication);
-        return GenerationReviewSupport.preservePositiveWitnessState(preserved, positiveWitnessesAwaitingAdjudication);
     }
 
     private SpecFidelityReport runSpecFidelityCritic(String problemStatement, @Nullable String adaptationChanges, @Nullable String repairDelta,
             @Nullable SpecFidelityReport previousReport, @Nullable String specSnapshotForReview, @Nullable String testPlanSnapshot) {
         try {
             List<String> testNames = GenerationOrchestrator.extractTaskBoundTestNames(problemStatement);
+            Map<RepositoryRole, Map<String, String>> reviewArtifacts = GenerationReviewSupport.reviewArtifacts(producedFilesByType, baselineRepositoryFiles);
             SpecFidelityReport report = adaptationChanges == null
-                    ? specFidelityCritic.critique(reviewBrief, problemStatement, testNames, producedFilesByType, usageSink, cancelled, previousReport, specSnapshotForReview,
+                    ? specFidelityCritic.critique(reviewBrief, problemStatement, testNames, reviewArtifacts, usageSink, cancelled, previousReport, specSnapshotForReview,
                             repairDelta, testPlanSnapshot,
                             verification.templateFailureEvidence().stream().map(evidence -> new TestFailureEvidence(evidence.testName(), evidence.message())).toList())
-                    : specFidelityCritic.critiqueAdaptation(reviewBrief, problemStatement, testNames, adaptationChanges, producedFilesByType, usageSink, cancelled, previousReport);
+                    : specFidelityCritic.critiqueAdaptation(reviewBrief, problemStatement, testNames, adaptationChanges, reviewArtifacts, usageSink, cancelled, previousReport);
             report = GenerationReviewSupport.completeReview(report, adaptationChanges != null && adaptationChanges.contains(GenerationOrchestrator.CHANGE_SUMMARY_TRUNCATED),
                     specFidelityCritic.detectMessagelessAssertions(producedFilesByType.getOrDefault(RepositoryRole.TESTS, Map.of())),
                     specFidelityCritic.detectUnenforceableTechniqueRules(specSnapshotForReview), specSnapshotForReview);

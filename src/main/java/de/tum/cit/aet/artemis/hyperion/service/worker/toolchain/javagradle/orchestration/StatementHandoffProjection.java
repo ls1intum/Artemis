@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 
 /**
  * Projects the accepted grading plan and the server-authored structural oracle into the only facts statement authoring needs. Raw build output and executable-build instructions
@@ -67,6 +68,19 @@ final class StatementHandoffProjection {
             log.warn("Could not project the accepted test plan into the statement handoff: {}", e.getMessage());
             return "";
         }
+    }
+
+    /**
+     * Tells the statement stage up front whether Artemis requires a class diagram for this exercise, so it does not learn it from a failed gate.
+     *
+     * @param required whether the approved design requires a diagram
+     * @return the diagram block appended to the statement stage's user prompt
+     */
+    static String diagramDirective(boolean required) {
+        return "=== DIAGRAM ===\n"
+                + (required ? "This exercise REQUIRES a class diagram; the statement gate rejects a statement without one. "
+                        : "This exercise does not require a class diagram; add one only if it clearly helps students. ")
+                + AgentSystemPrompt.DIAGRAM_REQUIREMENT_RULE + "\n=== END DIAGRAM ===";
     }
 
     /** Groups authoritative Ares names by the type inside their brackets while retaining every name even if a future provider uses another shape. */

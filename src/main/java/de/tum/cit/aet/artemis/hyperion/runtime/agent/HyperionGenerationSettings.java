@@ -10,7 +10,7 @@ import org.springframework.ai.openai.OpenAiChatOptions;
  *
  * @param name                    the admin-defined profile name echoed back to the caller, or {@code ""} when the deployment configures no profiles
  * @param label                   the instructor-facing label, or {@code null} when the deployment configures no profiles
- * @param maxTurns                hard cap on model turns per attempt
+ * @param maxTurns                hard cap on authoring turns shared by all stages and repairs
  * @param maxJobDuration          wall-clock deadline for the run
  * @param maxTokensPerJob         provider spend guard, and the number of tokens admission reserves
  * @param stagedGeneration        whether the staged specification/tests/statement workflow applies
@@ -19,12 +19,23 @@ import org.springframework.ai.openai.OpenAiChatOptions;
  * @param chatOptions             prebuilt runtime provider options, or {@code null} when the profile changes neither model nor decoding parameters and the configured
  *                                    {@code ChatModel}'s own options apply unchanged
  * @param engineDefaults          whether every engine-affecting value equals the deployment default, so the run can reuse the shared singletons rather than deriving its own
+ * @param repairModel             optional model on the same provider for one bounded repair handoff; credentials remain deployment-owned
  * @param providerOptionsOverride whether {@link #chatOptions()} was authored by this profile rather than inherited, which the checkpoint provider contract must reflect
  */
 public record HyperionGenerationSettings(String name, @Nullable String label, int maxTurns, Duration maxJobDuration, long maxTokensPerJob, boolean stagedGeneration,
-        String stagedContext, int contextWindowTokens, @Nullable OpenAiChatOptions chatOptions, boolean engineDefaults, boolean providerOptionsOverride) {
+        String stagedContext, int contextWindowTokens, @Nullable OpenAiChatOptions chatOptions, boolean engineDefaults, boolean providerOptionsOverride,
+        @Nullable String repairModel) {
+
+    public HyperionGenerationSettings(String name, @Nullable String label, int maxTurns, Duration maxJobDuration, long maxTokensPerJob, boolean stagedGeneration,
+            String stagedContext, int contextWindowTokens, @Nullable OpenAiChatOptions chatOptions, boolean engineDefaults, boolean providerOptionsOverride) {
+        this(name, label, maxTurns, maxJobDuration, maxTokensPerJob, stagedGeneration, stagedContext, contextWindowTokens, chatOptions, engineDefaults, providerOptionsOverride,
+                null);
+    }
 
     public HyperionGenerationSettings {
+        if (repairModel != null && repairModel.isBlank()) {
+            throw new IllegalArgumentException("repair-model must not be blank");
+        }
         if (maxTurns <= 0) {
             throw new IllegalArgumentException("Hyperion effort profile '" + name + "': max-turns must be positive");
         }
@@ -56,6 +67,6 @@ public record HyperionGenerationSettings(String name, @Nullable String label, in
         // singletons already read per run.
         boolean stillEngineDefaults = engineDefaults && duration.equals(maxJobDuration);
         return new HyperionGenerationSettings(name, label, maxTurns, duration, tokens, stagedGeneration, stagedContext, contextWindowTokens, chatOptions, stillEngineDefaults,
-                providerOptionsOverride);
+                providerOptionsOverride, repairModel);
     }
 }

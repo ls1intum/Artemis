@@ -123,7 +123,9 @@ class ContractWitnessProbeTest {
         assertThat(overlay.get("tests/" + path)).isEqualTo(source);
         assertThat(overlay.get("tests/SecurityPolicy.yaml")).contains("    - \"de.tum.cit.aet.nodraft.HyperionContractWitnessProbeTest\"\n",
                 "    - \"de.tum.cit.aet.nodraft.RosterParserTest\"\n");
-        assertThat(AresSecurityPolicy.onlyTestClassesChanged(policy, overlay.get("tests/SecurityPolicy.yaml"))).isTrue();
+        // Everything but the test-class list stays as seeded.
+        assertThat(AresSecurityPolicy.derive(overlay.get("tests/SecurityPolicy.yaml"), Map.of(), Map.of(), null))
+                .isEqualTo(AresSecurityPolicy.derive(policy, Map.of(), Map.of(), null));
         assertThat(candidate).containsExactlyInAnyOrderEntriesOf(Map.of(hostPath, GENERATED_TEST, "SecurityPolicy.yaml", policy));
     }
 

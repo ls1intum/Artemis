@@ -217,7 +217,19 @@ public class SandboxBuildCommands {
                     export GRADLE_USER_HOME=/tmp/hyperion-gradle-home
                     rm -rf "$GRADLE_USER_HOME"
                     mkdir -p "$GRADLE_USER_HOME"
-                    cp -a /root/.gradle/. "$GRADLE_USER_HOME"/ || exit 74
+                    for entry in /root/.gradle/* /root/.gradle/.[!.]*; do
+                        [ -e "$entry" ] || continue
+                        [ "$entry" = /root/.gradle/wrapper ] && continue
+                        cp -a "$entry" "$GRADLE_USER_HOME"/ || exit 74
+                    done
+                    # Unpacked wrapper distributions are only read, so they are linked in place; a copy of their largest JAR exceeds the file-size
+                    # limit of the agent's shell. Their lock and marker files are copied, because the wrapper locks them for writing.
+                    for entry in /root/.gradle/wrapper/dists/*/*/*; do
+                        [ -e "$entry" ] || continue
+                        target="$GRADLE_USER_HOME/${entry#/root/.gradle/}"
+                        mkdir -p "${target%/*}" || exit 74
+                        if [ -d "$entry" ]; then ln -s "$entry" "$target" || exit 74; else cp -a "$entry" "$target" || exit 74; fi
+                    done
                 fi
                 if [ "$LANE" = "behavior-isolated" ] && [ -d "@@TRUSTED_STRUCTURAL_DIR@@" ]; then
                     TRUSTED_MANIFEST="$BUILD_DIR/.hyperion-trusted-structural-files"

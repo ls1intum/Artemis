@@ -9,19 +9,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.io.ClassPathResource;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 
 /**
- * Deterministic unit tests for the sandbox-free correctness gates: harness immutability, the Java/Ares conventions, the approved specification and test plan, the solution-leak
+ * Deterministic unit tests for the sandbox-free correctness gates: harness immutability, the Java/Ares conventions, the approved test plan, the solution-leak
  * check, and the orphan-residue strip. Fixtures are taken from real repository exports.
  */
 class ExerciseIntegrityGateTest {
@@ -680,376 +679,6 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.adaptWipedGradedTestsReasons(Set.of("testEvictsLru"), List.of("testEvictsLru()"))).hasSize(1);
     }
 
-    // --- Approved specification contract ---
-
-    @Test
-    void approvedSpecification_acceptsAContractThatRequiresStudentsToCreateEveryType() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `BaseShape` | abstract base | student-creates |
-                | `Rectangle` | concrete shape | student-creates |
-                """;
-        Map<String, String> solution = map("src/BaseShape.java", "public abstract class BaseShape {}", "src/Rectangle.java", "public class Rectangle {}");
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), solution)).isEmpty();
-    }
-
-    /**
-     * The template scaffold-presence matrix. A template legitimately ships stubs rather than implementations, so presence cannot be inferred from file counts or from the
-     * template merely differing from the solution: the frozen '## Design' table is the authority on which types must be there ({@code given}, {@code stubbed}) and which must not
-     * ({@code student-creates}). A rejected candidate is discarded without an instructor ever seeing it, so every doubt-on-read-back row must stay inert.
-     */
-    private static Stream<Arguments> scaffoldPresenceCases() {
-        String stubbedPlayer = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Player` | context students complete | stubbed |
-                """;
-        String genericStack = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Stack<T>` | generic container students complete | stubbed |
-                """;
-        String givenAndCreated = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Track` | supplied data type | given |
-                | `PlaybackStrategy` | abstraction students design | student-creates |
-                """;
-        String track = "public record Track(String title) {}";
-        Map<String, String> playerSolution = map("src/Player.java", "public class Player { int score() { return 1; } }");
-        return Stream.of(
-                Arguments.of("stubbed type present as an unimplemented stub", stubbedPlayer,
-                        map("src/Player.java", "public class Player { int score() { throw new UnsupportedOperationException(); } }"), playerSolution, null),
-                Arguments.of("stubbed type absent from the template", stubbedPlayer, map("src/Other.java", "class Other {}"), playerSolution, "Player"),
-                // A generic cell reaches this gate verbatim: searching for "Stack<T>" in a source declaring "class Stack<T>" finds nothing and rejected a sound exercise.
-                Arguments.of("generic stubbed cell whose template declaration is sound", genericStack, map("src/Stack.java", "public class Stack<T> { void push(T item) {} }"),
-                        map("src/Stack.java", "public class Stack<T> { void push(T item) { store.add(item); } }"), null),
-                // A student-created type is REQUIRED to be absent from the template, so its absence must never be read as a missing scaffold.
-                Arguments.of("student-creates type absent from the template", givenAndCreated, map("src/Track.java", track),
-                        map("src/Track.java", track, "src/PlaybackStrategy.java", "public interface PlaybackStrategy {}"), null),
-                Arguments.of("given type absent from the template", givenAndCreated, map("src/Unrelated.java", "class Unrelated {}"),
-                        map("src/Track.java", track, "src/PlaybackStrategy.java", "public interface PlaybackStrategy {}"), "Track"),
-                // Fail-open rows: no readable contract means no evidence to reject on.
-                Arguments.of("no approved specification", "", map("src/Anything.java", "class Anything {}"), map("src/Anything.java", "class Anything {}"), null),
-                Arguments.of("specification without a Design section", "## Rules\n1. Sort ascending.\n", Map.of(), Map.of(), null),
-                Arguments.of("Design section whose table has no parseable data rows", "## Design\n\nSee the table above.\n", Map.of(), Map.of(), null));
-    }
-
-    @ParameterizedTest(name = "{0}")
-    @MethodSource("scaffoldPresenceCases")
-    void approvedSpecification_enforcesTheTemplateScaffoldOnlyWhereTheContractSaysSo(String description, String spec, Map<String, String> template, Map<String, String> solution,
-            String expectedRejectedType) {
-        List<String> reasons = ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution);
-
-        if (expectedRejectedType == null) {
-            assertThat(reasons).isEmpty();
-        }
-        else {
-            assertThat(reasons).singleElement().satisfies(reason -> assertThat(reason).contains(expectedRejectedType).contains("template"));
-        }
-    }
-
-    @Test
-    void approvedSpecification_rejectsStudentCreatedTypesThatLeakIntoTheTemplate() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Track` | data | given |
-                | `PlaybackStrategy` | abstraction students design | student-creates |
-                | `Player` | context students wire | student-creates |
-                """;
-        Map<String, String> solution = map("src/Track.java", "public record Track(String title) {}", "src/PlaybackStrategy.java", "public interface PlaybackStrategy {}",
-                "src/Player.java", "public class Player {}");
-        Map<String, String> template = map("src/Track.java", "public record Track(String title) {}", "src/PlaybackStrategy.java", "public interface PlaybackStrategy {}",
-                "src/Player.java", "public class Player { /* TODO */ }");
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).singleElement()
-                .satisfies(reason -> assertThat(reason).contains("template already declares them", "PlaybackStrategy", "Player", "changing SPEC.md after approval cannot"));
-    }
-
-    @Test
-    void approvedSpecification_acceptsStudentCreatedTypesOnlyInTheSolutionIncludingSecondaryDeclarations() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Track` | supplied data type | given |
-                | `PlaybackStrategy` | abstraction students design | student-creates |
-                | `Player` | context students wire | student-creates |
-                """;
-        String track = "public record Track(String title) {}";
-        Map<String, String> solution = map("src/ExerciseTypes.java", "interface PlaybackStrategy {}\nclass Player {}", "src/Track.java", track);
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/Track.java", track), solution)).isEmpty();
-    }
-
-    private static Stream<Arguments> annotatedTypeOwnershipCases() {
-        return Stream
-                .of("@FunctionalInterface public interface Strategy { int apply(int x); }", "@java.lang.FunctionalInterface public interface Strategy { int apply(int x); }",
-                        "@Deprecated @FunctionalInterface public interface Strategy { int apply(int x); }",
-                        "@Deprecated(since = \"1.0\", forRemoval = false) public interface Strategy { int apply(int x); }",
-                        "@Metadata(values = {@Nested(value = \"}) class Phantom {}\")}) public interface Strategy { int apply(int x); }",
-                        "class Host { @FunctionalInterface public interface Strategy { int apply(int x); } }",
-                        "@Deprecated public @FunctionalInterface interface Strategy { int apply(int x); }")
-                .flatMap(source -> Stream.of(Arguments.of("student-creates", source), Arguments.of("given", source)));
-    }
-
-    @ParameterizedTest
-    @MethodSource("annotatedTypeOwnershipCases")
-    void approvedSpecification_acceptsAnnotatedStudentCreatedAndIdenticalGivenTypes(String status, String source) {
-        String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Strategy | abstraction | " + status + " |\n";
-        Map<String, String> solution = map("src/Strategy.java", source);
-        Map<String, String> template = status.equals("given") ? solution : Map.of();
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).isEmpty();
-    }
-
-    @Test
-    void approvedSpecification_preservesAnnotatedOwnershipAndGivenByteEquality() {
-        String given = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Strategy | abstraction | given |\n";
-        String source = "@FunctionalInterface public interface Strategy { int apply(int x); }";
-        Map<String, String> solution = map("src/Strategy.java", source);
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(given, map("src/Strategy.java", source + "\n"), solution)).singleElement().asString()
-                .contains("byte-for-byte identical");
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(given.replace("given", "student-creates"), solution, solution)).singleElement().asString()
-                .contains("template already declares them");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "// @FunctionalInterface public interface Strategy { int apply(int x); }",
-            "class Host { String text = \"@FunctionalInterface public interface Strategy {}\"; }",
-            "class Host { String text = \"\"\"\n@FunctionalInterface public interface Strategy {}\n\"\"\"; }",
-            "@Metadata(values = {@Nested(value = \"public interface Strategy {}\")}) public class Other {}", "@Broken( public interface Strategy { int apply(int x); }" })
-    void approvedSpecification_doesNotAcceptAnnotationTriviaOrMalformedArgumentsAsTypes(String source) {
-        String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Strategy | abstraction | student-creates |\n";
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), map("src/Example.java", source))).singleElement().asString()
-                .contains("reference solution does not declare them");
-    }
-
-    @Test
-    void approvedSpecification_doesNotMistakeATodoBreadcrumbForATypeDeclaration() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Track` | supplied data type | given |
-                | `PlaybackStrategy` | abstraction students design | student-creates |
-                """;
-        String track = "public record Track(String title) {}";
-        Map<String, String> solution = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}", "src/Track.java", track);
-        Map<String, String> template = map("src/Player.java", "public class Player { // TODO: create interface PlaybackStrategy\n}", "src/Track.java", track);
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).isEmpty();
-    }
-
-    @Test
-    void approvedSpecification_doesNotMistakeATextBlockExampleForAStudentCreatedType() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `PlaybackStrategy` | abstraction students design | student-creates |
-                """;
-        String help = String.join("\n", "class Help {", "    String example = \"\"\"", "        interface PlaybackStrategy {}", "        \"\"\";", "}");
-        Map<String, String> solution = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}", "src/Help.java", help);
-        Map<String, String> template = map("src/Help.java", help);
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).isEmpty();
-    }
-
-    @Test
-    void approvedSpecification_rejectsANamedTypeArtifactAndASameLineNestedDeclaration() {
-        String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| `Track` | supplied data type | given |\n"
-                + "| `PlaybackStrategy` | students create it | student-creates |\n";
-        String track = "public record Track(String title) {}";
-        Map<String, String> solution = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}", "src/Track.java", track);
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/PlaybackStrategy.java", "", "src/Track.java", track), solution)).singleElement()
-                .satisfies(reason -> assertThat(reason).contains("template already declares", "PlaybackStrategy"));
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/Player.java", "class Player { interface PlaybackStrategy {} }", "src/Track.java", track),
-                solution)).singleElement().satisfies(reason -> assertThat(reason).contains("template already declares", "PlaybackStrategy"));
-    }
-
-    @Test
-    void approvedSpecification_rejectsAStubbedTypeMissingOnlyFromTheReferenceSolution() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Input` | supplied value | given |
-                | `Processor` | behavior students complete | stubbed |
-                ## Public API
-                ```java
-                public record Input(int value) {}
-                ```
-                ```java
-                public class Processor {
-                    public int process();
-                }
-                ```
-                """;
-        String input = "public record Input(int value) {}";
-        Map<String, String> template = map("src/Input.java", input, "src/Processor.java",
-                "public class Processor { public int process() { throw new UnsupportedOperationException(); } }");
-        Map<String, String> solution = map("src/Input.java", input, "src/Processor.java", "public class Processor { public int process() { return 1; } }");
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).isEmpty();
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, map("src/Input.java", input))).singleElement()
-                .satisfies(reason -> assertThat(reason).contains("solution", "Processor", "does not declare"));
-    }
-
-    @Test
-    void approvedSpecification_rejectsAnIncompleteReferenceSolution() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Track` | supplied data type | given |
-                | `PlaybackStrategy` | abstraction students design | student-creates |
-                """;
-        String track = "public record Track(String title) {}";
-        Map<String, String> supplied = map("src/Track.java", track);
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, supplied, supplied)).singleElement()
-                .satisfies(reason -> assertThat(reason).contains("reference solution does not declare", "PlaybackStrategy"));
-    }
-
-    @Test
-    void approvedSpecification_acceptsIdenticalGivenTypesInSolutionAndTemplate() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Ingredient` | supplied immutable value | given |
-                """;
-        String ingredient = "public record Ingredient(String name, int potency) {}\n";
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/Ingredient.java", ingredient), map("src/Ingredient.java", ingredient))).isEmpty();
-    }
-
-    @Test
-    void approvedSpecification_rejectsDivergentGivenTypes() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | `Ingredient` | supplied immutable value | given |
-                """;
-        Map<String, String> solution = map("src/Ingredient.java", "public record Ingredient(String name, int potency) {}\n");
-        Map<String, String> template = map("src/Ingredient.java", "public class Ingredient { public void setPotency(int potency) {} }\n");
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).singleElement()
-                .satisfies(reason -> assertThat(reason).contains("given type", "Ingredient", "byte-for-byte identical", "solution and template", "First differences", "line 1",
-                        "solution is the canonical complete implementation", "Never delete solution documentation"));
-    }
-
-    @Test
-    void approvedSpecification_enforcesExactApisForGivenStubbedAndStudentCreatedTypes() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | Input | value | given |
-                | Processor | student implementation | stubbed |
-                | Policy | student-created policy | student-creates |
-
-                ## Public API
-                ```java
-                public record Input(int value) {}
-                ```
-                ```java
-                public class Processor {
-                    public Processor(Input input);
-                    public int process();
-                }
-                ```
-                ```java
-                public interface Policy {
-                    int apply(int input);
-                }
-                ```
-                """;
-        String input = "public record Input(int value) {}";
-        Map<String, String> solution = map("src/Input.java", input, "src/Processor.java",
-                "public class Processor { public Processor(Input input) {} public int process() { return 1; } }", "src/Policy.java",
-                "public interface Policy { int apply(int input); }");
-        Map<String, String> template = map("src/Input.java", input, "src/Processor.java",
-                "public class Processor { public Processor(Input input) {} public int process() { throw new UnsupportedOperationException(); } }");
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).isEmpty();
-
-        Map<String, String> driftedTemplate = map("src/Input.java", input, "src/Processor.java",
-                "public class Processor { public Processor(Input input) {} public int process() { return 0; } public int process(int mode) { return 0; } }");
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, driftedTemplate, solution))
-                .anySatisfy(reason -> assertThat(reason).contains("template public API for Processor", "extra", "process"));
-    }
-
-    @Test
-    void approvedSpecification_failsClosedWhenTheFrozenPublicApiIsInvalid() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | Policy | student-created policy | student-creates |
-
-                ## Public API
-                Policy has some method.
-                """;
-
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), map("src/Policy.java", "public interface Policy { int apply(int input); }")))
-                .anySatisfy(reason -> assertThat(reason).contains("structural contract is invalid", "cannot be replaced by candidate code"));
-    }
-
-    @Test
-    void templateTodoSeams_rejectMissingAndUnknownWorkMarkers() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | Player | player | stubbed |
-                | Context | context | stubbed |
-                ## Testing Strategy
-                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
-                |---|---|---|---|---|
-                | S1 | Player | create strategy | 3 | no |
-                | S2 | Context | wire strategy | 2 | no |
-                """;
-        Map<String, String> template = Map.of("src/Player.java", "class Player { // TODO S1: create strategy\n// TODO S9: stale work\n}");
-
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, template)).hasSize(2).anySatisfy(reason -> assertThat(reason).contains("declaring source", "S2"))
-                .anySatisfy(reason -> assertThat(reason).contains("does not declare", "S9"));
-    }
-
-    @Test
-    void templateTodoSeams_acceptExactCoverageAcrossFiles() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | Player | player | stubbed |
-                | Context | context | stubbed |
-                ## Testing Strategy
-                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
-                |---|---|---|---|---|
-                | S1 | Player | create strategy | 3 | no |
-                | S2 | Context | wire strategy | 2 | no |
-                """;
-        Map<String, String> template = Map.of("src/Player.java", "class Player { // TODO S1: create strategy\n}", "src/Context.java",
-                "class Context { // TODO S2: wire strategy\n}");
-
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, template)).isEmpty();
-    }
-
     @Test
     void approvedTestPlan_rejectsMissingHiddenVariantsInsteadOfSilentlyPublishingEverything() {
         String spec = """
@@ -1174,50 +803,134 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
-    void templateTodoSeams_ignoreMarkersOutsideJavaSources() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | Player | player | stubbed |
-                ## Testing Strategy
-                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
-                |---|---|---|---|---|
-                | S1 | Player | create strategy | 3 | no |
+    void sourceReadingTests_rejectTestsThatReadStudentSourcesThroughAPathBuiltElsewhere() {
+        String observed = """
+                package de.example;
+                import java.nio.file.Files;
+                import java.nio.file.Path;
+                class ClientSourceUsageTest {
+                    private static String readClientSource() throws java.io.IOException {
+                        Path source = Path.of("#studentWorkingDirectory#", "de", "example", "Client.java");
+                        return Files.readString(source);
+                    }
+                    @Test void clientUsesTheMachine() throws Exception { assertTrue(readClientSource().contains("new TicketMachine(")); }
+                }
                 """;
-        Map<String, String> template = Map.of("src/Player.java", "class Player { // TODO S1: create strategy\n}", "README.md", "TODO S9: author note", "target/Stale.java",
-                "// TODO S8: generated output");
+        String literalPath = "class T { @Test void t() throws Exception { String s = java.nio.file.Files.readString(java.nio.file.Path.of(\"assignment/src/de/example/Client.java\")); } }";
+        String resource = "class T { @Test void t() { var in = getClass().getResourceAsStream(\"/de/example/Client.java\"); assertNotNull(in); } }";
+        String qualifiedReader = "class T { @Test void t() throws Exception { var in = new java.io.FileInputStream(\"assignment/src/de/example/Client.java\"); } }";
+        String qualifiedScanner = "class T { @Test void t() throws Exception { var in = new java.util.Scanner(java.nio.file.Path.of(\"src\", \"Client.java\")); } }";
+        String pathInAConstant = """
+                class T {
+                    private static final String CLIENT = "src/de/example/Client.java";
+                    @Test void t() throws Exception { String s = java.nio.file.Files.readString(java.nio.file.Path.of(CLIENT)); }
+                }
+                """;
 
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, template)).isEmpty();
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/de/example/ClientSourceUsageTest.java", observed))).singleElement().asString()
+                .contains("ClientSourceUsageTest.java", "Client.java", "Tests must not read source files", AgentSystemPrompt.TESTABLE_STUDENT_CODE_RULE);
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", literalPath))).singleElement().asString().contains("assignment/src/de/example/Client.java");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", resource))).singleElement().asString().contains("/de/example/Client.java");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", qualifiedReader))).singleElement().asString()
+                .contains("assignment/src/de/example/Client.java");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", qualifiedScanner))).singleElement().asString().contains("Client.java");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", pathInAConstant))).singleElement().asString().contains("src/de/example/Client.java");
     }
 
     @Test
-    void templateTodoSeams_rejectBreadcrumbsForAbsentStudentCreatedOwnersAndWrongStubbedFiles() {
-        String spec = """
-                ## Design
-                | Type | Role | Template status |
-                |---|---|---|
-                | FireSpell | strategy | student-creates |
-                | IceSpell | strategy | student-creates |
-                | Mage | context | stubbed |
-                ## Testing Strategy
-                | Seam | Owner type | Observable responsibility | Weight | Hidden variant |
-                |---|---|---|---|---|
-                | S1 | FireSpell | formula | 2 | yes |
-                | S2 | IceSpell | formula | 2 | yes |
-                | S3 | Mage | delegation and switching | 3 | yes |
+    @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void sourceReadingTests_scanALongEscapedLiteralWithoutOverflowingTheStack() {
+        String literal = "assignment/src/" + "a\\\"".repeat(30_000) + "/Client.java";
+        String test = "class T { @Test void t() throws Exception { String s = java.nio.file.Files.readString(java.nio.file.Path.of(\"" + literal + "\")); } }";
+
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/T.java", test))).singleElement().asString().contains("/Client.java");
+    }
+
+    @Test
+    void sourceReadingTests_acceptTestsThatCaptureOutputCallMethodsOrReadTheirOwnData() {
+        String capture = """
+                class ClientTest {
+                    private final java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                    @BeforeEach void capture() { System.setOut(new java.io.PrintStream(out)); }
+                    @Test void printsInventory() { Client.run(new TicketMachine(3, 4)); assertEquals("3\\n2\\n", out.toString(), "Implement run in Client.java"); }
+                }
                 """;
-        Map<String, String> misleading = Map.of("src/Mage.java", "class Mage { // TODO S1: store\n// TODO S2: switch\n// TODO S3: cast\n}");
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, misleading)).hasSize(2).allSatisfy(reason -> assertThat(reason).contains("student-created", "Mage.java"));
+        String ownData = "class T { @Test void t() throws Exception { var in = getClass().getResourceAsStream(\"tickets.csv\"); assertNotNull(in); } }";
+        String commentedOut = "class T {\n // String s = Files.readString(Path.of(\"src/Client.java\"));\n @Test void t() { assertEquals(2, new Machine().count()); } }";
+        String ownDataAndASourceNameInAMessage = """
+                class ParserTest {
+                    @Test void parsesCases() throws Exception {
+                        var in = getClass().getResourceAsStream("cases.csv");
+                        assertEquals(3, new Parser().parse(in).size(), "Implement Parser.java");
+                    }
+                }
+                """;
 
-        Map<String, String> honest = Map.of("src/Mage.java", "class Mage { // TODO S3: delegate and switch\n}");
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, honest)).isEmpty();
+        String ownDataAndAnExpectedFileName = """
+                class ParserTest {
+                    @Test void readsTheFileName() throws Exception {
+                        var in = getClass().getResourceAsStream("cases.csv");
+                        assertEquals("Parser.java", new Parser().parse(in).getFirst().fileName());
+                    }
+                }
+                """;
 
-        Map<String, String> wrongFile = Map.of("src/Mage.java", "class Mage {}", "src/Helper.java", "class Helper { // TODO S3: delegate\n}");
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, wrongFile)).anySatisfy(reason -> assertThat(reason).contains("outside its approved owner", "Helper.java"));
+        String sameNameInAnotherMethod = """
+                class ReportTest {
+                    @Test void readsTheReport() throws Exception {
+                        String fileName = "report.csv";
+                        var lines = java.nio.file.Files.readAllLines(java.nio.file.Path.of(fileName));
+                    }
+                    @Test void namesTheSource() {
+                        String fileName = "Report.java";
+                        assertEquals(fileName, new Report().sourceName());
+                    }
+                }
+                """;
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ReportTest.java", sameNameInAnotherMethod))).as("a same-named local of another method").isEmpty();
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ClientTest.java", capture, "test/T.java", ownData, "test/U.java", commentedOut, "test/ParserTest.java",
+                ownDataAndASourceNameInAMessage, "test/FileNameTest.java", ownDataAndAnExpectedFileName))).isEmpty();
+    }
 
-        Map<String, String> ownerMentionedOnlyInAComment = Map.of("src/Helper.java", "// class Mage would own this\nclass Helper { // TODO S3: delegate\n}");
-        assertThat(ExerciseIntegrityGate.templateTodoSeamReasons(spec, ownerMentionedOnlyInAComment)).anySatisfy(reason -> assertThat(reason).contains("declaring source", "Mage"));
+    @Test
+    void sourceReadingTests_followOnlyThePathsConsumedByReads() {
+        String test = """
+                class ParserTest {
+                    @Test void parsesPaths() throws Exception {
+                        var input = getClass().getResourceAsStream("cases.csv");
+                        var parsedPath = new Parser().parse(input);
+                        assertEquals(java.nio.file.Path.of("Parser.java"), parsedPath);
+                        var unused = java.nio.file.Path.of("Unused.java");
+                        java.nio.file.Files.writeString(java.nio.file.Path.of("Generated.java"), "fixture");
+                    }
+                }
+                """;
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", test))).isEmpty();
+        String actualRead = test.replace("var unused =", "var source =").replace("java.nio.file.Files.writeString",
+                "java.nio.file.Files.readString(source); java.nio.file.Files.writeString");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", actualRead))).singleElement().asString().contains("Unused.java")
+                .doesNotContain("Parser.java", "Generated.java");
+    }
+
+    @Test
+    void sourceReadingTests_traceLocalValuesAtTheReadRatherThanLaterOrOverwrittenAssignments() {
+        String test = """
+                class ParserTest {
+                    @Test void parsesPaths() throws Exception {
+                        String fileName = "Parser.java";
+                        fileName = "cases.csv";
+                        String data = java.nio.file.Files.readString(java.nio.file.Path.of(fileName));
+                        fileName = "Expected.java";
+                        assertEquals(fileName, new Parser().parse(data).getFirst().fileName());
+                    }
+                }
+                """;
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", test))).isEmpty();
+        String sourceRead = test.replace("fileName = \"cases.csv\";", "fileName = \"Actual.java\";");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", sourceRead))).singleElement().asString().contains("Actual.java")
+                .doesNotContain("Expected.java", "Parser.java");
+        String aliasRead = test.replace("String data =", "String input = fileName; fileName = \"Unused.java\"; String data =").replace("Path.of(fileName)", "Path.of(input)");
+        assertThat(ExerciseIntegrityGate.sourceReadingTestReasons(map("test/ParserTest.java", aliasRead))).isEmpty();
     }
 
     @Test

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -110,6 +111,8 @@ class StructuralOracleSeederTest {
         when(workspace.extractRepositoryFiles(sandbox, "s", RepositoryRole.SOLUTION)).thenReturn(solution);
         when(workspace.extractRepositoryFiles(sandbox, "s", RepositoryRole.TEMPLATE)).thenReturn(template);
         when(workspace.extractRepositoryFiles(sandbox, "s", RepositoryRole.TESTS)).thenReturn(tests);
+        when(workspace.extractRepository(sandbox, "s", RepositoryRole.TESTS, null)).thenReturn(new GenerationWorkspace.RepositoryExtraction(tests, false));
+        when(workspace.extractRepository(sandbox, "s", RepositoryRole.SOLUTION, null)).thenReturn(new GenerationWorkspace.RepositoryExtraction(solution, false));
         return new StructuralOracleSeeder(workspace, approvedSpecs);
     }
 
@@ -693,6 +696,85 @@ class StructuralOracleSeederTest {
         ArgumentCaptor<InputStream> tar = ArgumentCaptor.forClass(InputStream.class);
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), tar.capture());
         assertThat(readTar(tar.getValue())).containsEntry("tests/test/x/test.json", oracle).containsEntry("tests/test/x/ClassTest.java", classProvider);
+    }
+
+    /**
+     * The server owns the Ares policy: after every seeding it writes the seeded policy with the live instructor test classes, whatever the agent left in the file, so a fresh
+     * repair session never has to reconstruct it.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void writesTheJUnitImportPermissionOnlyForStudentWrittenTestsInTheReferenceSolution(boolean studentWritesTests) throws Exception {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        String seedPolicy = new ClassPathResource("templates/java/test/gradle/projectTemplate/SecurityPolicy.yaml").getContentAsString(StandardCharsets.UTF_8)
+                .replace("${packageName}", "x");
+        Map<String, String> tests = Map.of("SecurityPolicy.yaml", seedPolicy, "test/x/StackTest.java", "package x; class StackTest {}");
+        Map<String, String> solution = new LinkedHashMap<>(Map.of("src/x/Stack.java", "package x;\npublic class Stack {}"));
+        if (studentWritesTests) {
+            solution.put("src/x/StackUsageTest.java", "package x;\nimport org.junit.jupiter.api.Test;\npublic class StackUsageTest { @Test void pushes() {} }");
+        }
+        // The permission follows the approved contract: the student test class must be assigned to students there.
+        ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
+        approvedSpecs.approve("s", """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Stack | supplied stack | given |
+                | StackUsageTest | tests students complete | stubbed |
+
+                ## Public API
+                ```java
+                public class Stack {
+                }
+                ```
+                ```java
+                public class StackUsageTest {
+                }
+                ```
+                """);
+        StructuralOracleSeeder seeder = seederWith(sandbox, solution, Map.of(), tests, approvedSpecs);
+        seeder.captureBaseline("s", tests);
+
+        seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
+
+        ArgumentCaptor<InputStream> tar = ArgumentCaptor.forClass(InputStream.class);
+        verify(sandbox, atLeastOnce()).copyIn(eq("s"), eq("/workspace"), tar.capture());
+        String written = tar.getAllValues().stream().map(archive -> {
+            try {
+                return readTar(archive).get("tests/SecurityPolicy.yaml");
+            }
+            catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        }).filter(java.util.Objects::nonNull).reduce((first, second) -> second).orElseThrow();
+        assertThat(written.contains("importTheFollowingPackage: \"org.junit.jupiter\"")).isEqualTo(studentWritesTests);
+        assertThat(written).contains("    - \"x.StackTest\"\n", "importTheFollowingPackage: \"org.apache.commons.lang3\"").doesNotContain("x.StackUsageTest");
+    }
+
+    @Test
+    void writesTheSeededPolicyWithTheLiveInstructorTestClassesAfterSeeding() throws Exception {
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        String seedPolicy = new ClassPathResource("templates/java/test/gradle/projectTemplate/SecurityPolicy.yaml").getContentAsString(StandardCharsets.UTF_8)
+                .replace("${packageName}", "x");
+        String oracle = "[{\"class\":{\"name\":\"X\",\"modifiers\":[\"public\"]}}]";
+        String classProvider = "class ClassTest extends ClassTestProvider { void load(){ retrieveStructureOracleJSON(null); } }";
+        Map<String, String> baseline = Map.of("SecurityPolicy.yaml", seedPolicy, "test/x/test.json", oracle, "test/x/ClassTest.java", classProvider);
+        Map<String, String> live = new LinkedHashMap<>(baseline);
+        live.put("SecurityPolicy.yaml", "theFollowingClassesAreTestClasses: [x.StackTest]\n");
+        live.put("test/x/StackTest.java", "package x; class StackTest {}");
+        StructuralOracleSeeder seeder = seederWith(sandbox, Map.of(), Map.of(), live);
+        seeder.captureBaseline("s", baseline);
+
+        seeder.seedIfStructuralDiff(sandbox, "s", javaExercise());
+
+        ArgumentCaptor<InputStream> tar = ArgumentCaptor.forClass(InputStream.class);
+        verify(sandbox).copyIn(eq("s"), eq("/workspace"), tar.capture());
+        String written = readTar(tar.getValue()).get("tests/SecurityPolicy.yaml");
+        assertThat(written).contains("# Ares 2 security policy", "    - \"x.ClassTest\"\n    - \"x.StackTest\"\n", "importTheFollowingPackage: \"org.apache.commons.lang3\"")
+                .doesNotContain("SortingExampleBehaviorTest");
+        Map<String, String> produced = new LinkedHashMap<>(live);
+        produced.put("SecurityPolicy.yaml", written);
+        assertThat(ExerciseIntegrityGate.securityPolicyReasons(baseline, produced, Map.of(), null)).isEmpty();
     }
 
     @Test

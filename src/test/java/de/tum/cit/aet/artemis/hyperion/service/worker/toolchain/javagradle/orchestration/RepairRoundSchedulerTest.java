@@ -447,6 +447,13 @@ class RepairRoundSchedulerTest {
         }
 
         @Test
+        void inconclusiveProbesAreCountedOnlyWhenThereAreAny() {
+            assertThat(RepairRoundScheduler.inconclusiveProbeNote(0)).isEmpty();
+            assertThat(RepairRoundScheduler.inconclusiveProbeNote(1)).isEqualTo(" 1 mutant probe was inconclusive and proved nothing either way.");
+            assertThat(RepairRoundScheduler.inconclusiveProbeNote(3)).isEqualTo(" 3 mutant probes were inconclusive and proved nothing either way.");
+        }
+
+        @Test
         void aLaterRoundReportsTheDrainRatherThanJustTheTotal() {
             // "3 issues" alone cannot tell a stuck repair loop from a productive one.
             assertThat(RepairRoundScheduler.roundMessage(round(2, 1, 4, 2)))
@@ -465,9 +472,9 @@ class RepairRoundSchedulerTest {
             SpecFidelityReport renamed = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP, "missing starter guidance"),
                     finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "different contradiction")));
 
-            assertThat(RepairRoundScheduler.repairImproved(first, improved)).isTrue();
-            assertThat(RepairRoundScheduler.repairImproved(first, first)).isFalse();
-            assertThat(RepairRoundScheduler.repairImproved(first, renamed)).isFalse();
+            assertThat(RepairRoundScheduler.repairImproved(first, improved, false)).isTrue();
+            assertThat(RepairRoundScheduler.repairImproved(first, first, false)).isFalse();
+            assertThat(RepairRoundScheduler.repairImproved(first, renamed, false)).isFalse();
         }
 
         @Test
@@ -476,12 +483,53 @@ class RepairRoundSchedulerTest {
             SpecFidelityReport current = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.MISSING_WORKED_EXAMPLE, "add an example"),
                     SpecFidelityReport.executableEvidenceUnavailable("probe failed").findings().getFirst()));
 
-            assertThat(RepairRoundScheduler.repairImproved(first, current)).isTrue();
+            assertThat(RepairRoundScheduler.repairImproved(first, current, false)).isTrue();
         }
 
         @Test
         void rejectsARepairThatIntroducesTheFirstCandidateBlocker() {
-            assertThat(RepairRoundScheduler.repairImproved(SpecFidelityReport.empty(), report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION))).isFalse();
+            assertThat(RepairRoundScheduler.repairImproved(SpecFidelityReport.empty(), report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION), false)).isFalse();
+        }
+
+        @Test
+        void aKilledMutantCountsAsProgressEvenWhenTheReReviewRaisesNewTextBlockers() {
+            SpecFidelityReport.Finding survivor = finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Rule R3 has an environment-proven surviving semantic mutant");
+            SpecFidelityReport.Finding contradiction = finding(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION, "contradictory boundary");
+            SpecFidelityReport previous = new SpecFidelityReport(List.of(survivor, contradiction));
+            SpecFidelityReport current = new SpecFidelityReport(List.of(contradiction, finding(SpecFidelityReport.Kind.HIDDEN_GRADED_REQUIREMENT, "a re-rolled text verdict")));
+
+            assertThat(RepairRoundScheduler.repairImproved(previous, current, true)).isTrue();
+            // The same reports without an executed kill or drain are a text-only round, judged by the strict-subset rule.
+            assertThat(RepairRoundScheduler.repairImproved(new SpecFidelityReport(List.of(contradiction)), current, false)).isFalse();
+        }
+
+        @Test
+        void aDrainedExecutedBlockerCountsAsProgressWithoutAKillDuringTheRecheck() {
+            SpecFidelityReport previous = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Rule R1 survivor")));
+            SpecFidelityReport current = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.UNCOVERED_REQUIREMENT, "a new text-only coverage concern")));
+
+            assertThat(RepairRoundScheduler.repairImproved(previous, current, false)).isTrue();
+        }
+
+        @Test
+        void aKilledMutantCountsAsProgressEvenWhenAFreshMutantOnAnotherRuleSurvives() {
+            SpecFidelityReport previous = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Rule R1 survivor")));
+            SpecFidelityReport otherRule = new SpecFidelityReport(List.of(finding(SpecFidelityReport.Kind.EXECUTABLE_WEAK_TEST_ORACLE, "Rule R2 survivor")));
+
+            assertThat(RepairRoundScheduler.repairImproved(previous, otherRule, true)).isTrue();
+            // Without a kill, trading one executed survivor for another is no progress.
+            assertThat(RepairRoundScheduler.repairImproved(previous, otherRule, false)).isFalse();
+        }
+
+        @Test
+        void anUnchangedUnrepairableBlockerDoesNotTurnAWitnessAdoptionIntoARegression() {
+            SpecFidelityReport.Finding contested = finding(SpecFidelityReport.Kind.SPECIFICATION_REVIEW_FINDING, "the review was inconclusive");
+            SpecFidelityReport beforeAdoption = new SpecFidelityReport(List.of(contested, finding(SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE, "Rule R1 witness")));
+            SpecFidelityReport afterAdoption = new SpecFidelityReport(List.of(contested));
+
+            assertThat(RepairRoundScheduler.repairImproved(beforeAdoption, afterAdoption, false)).isTrue();
+            assertThat(RepairRoundScheduler.repairImproved(afterAdoption,
+                    new SpecFidelityReport(List.of(contested, finding(SpecFidelityReport.Kind.UNENFORCEABLE_TECHNIQUE_RULE, "a new unrepairable blocker"))), false)).isFalse();
         }
 
         @Test
@@ -489,7 +537,7 @@ class RepairRoundSchedulerTest {
             SpecFidelityReport first = report(SpecFidelityReport.Kind.TEMPLATE_QUALITY_GAP);
             SpecFidelityReport current = report(SpecFidelityReport.Kind.CONTRACT_CONTRADICTION);
 
-            assertThat(RepairRoundScheduler.repairImproved(first, current)).isFalse();
+            assertThat(RepairRoundScheduler.repairImproved(first, current, false)).isFalse();
         }
     }
 }

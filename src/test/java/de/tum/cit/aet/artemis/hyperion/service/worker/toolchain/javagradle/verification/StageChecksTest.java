@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationBuildTool;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.AgentSystemPrompt;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 
 /**
@@ -55,9 +57,11 @@ class StageChecksTest {
         private java.util.function.Supplier<String> builtAgainstSpec = () -> spec;
 
         /** Stable work markers found in the template; the default matches the default specification's sole S1 seam. */
-        private String templateTodoOutput = "TODO S1:";
+        private String templateTodoOutput = "TODO:";
 
         private Map<String, String> templateRepositoryFiles = Map.of();
+
+        private Map<String, String> solutionRepositoryFiles = Map.of();
 
         /** {@code diff -rq} exit code; 1 means the trees differ (the expected, healthy case). */
         private int diffExitCode = 1;
@@ -141,6 +145,10 @@ class StageChecksTest {
 
         @Override
         public TarArchiveInputStream copyOut(String sessionId, String path) {
+            if (path.equals("/workspace/solution") && !solutionRepositoryFiles.isEmpty()) {
+                return ReportTarFixtures.tar("solution", solutionRepositoryFiles.entrySet().stream()
+                        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getBytes(StandardCharsets.UTF_8))));
+            }
             if (!path.equals("/workspace/template")) {
                 return super.copyOut(sessionId, path);
             }
@@ -262,7 +270,7 @@ class StageChecksTest {
         assertThat(service.validateArtifactWrite("s", "template/src/FuelStrategy.java", "public interface FuelStrategy { double compute(double input); }"))
                 .hasValueSatisfying(message -> assertThat(message).contains("FuelStrategy").contains("Do not restore or pre-create"));
         assertThat(service.validateArtifactWrite("s", "solution/src/FuelStrategy.java", "public interface FuelStrategy {}")).isEmpty();
-        assertThat(service.validateArtifactWrite("s", "template/src/Spacecraft.java", "public class Spacecraft { // TODO S1: create strategy\n}")).isEmpty();
+        assertThat(service.validateArtifactWrite("s", "template/src/Spacecraft.java", "public class Spacecraft { // TODO: create strategy\n}")).isEmpty();
         assertThat(service.validateArtifactWrite("s", "SPEC.md", sandbox.spec)).hasValueSatisfying(message -> assertThat(message).contains("read-only"));
     }
 
@@ -309,12 +317,58 @@ class StageChecksTest {
         verifyNoInteractions(verifier);
     }
 
+    @Test
+    void demotingAGivenTypeRewritesOnlyItsDesignStatusCell() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Demo` | supplied entry point, not given away | **given** |
+                | Track | supplied data | given |
+                | Player | context | student-creates
+                ## Notes
+                | Demo | elsewhere | given |
+                """;
+
+        String demoted = StageChecks.demoteGivenTypes(spec, Set.of("Demo", "Player"));
+
+        assertThat(demoted).isEqualTo(spec.replace("| `Demo` | supplied entry point, not given away | **given** |", "| `Demo` | supplied entry point, not given away | stubbed |"));
+        assertThat(StageChecks.designTableRows(demoted)).extracting(StageChecks.DesignRow::status).containsExactly("stubbed", "given", "student-creates");
+    }
+
     @Nested
     class Tests {
 
         private AgentVerifyReport report(boolean solutionPassed, boolean templateFailed) {
             return new AgentVerifyReport(5, solutionPassed, solutionPassed ? List.of() : List.of("testFoo"), 5, true, templateFailed, List.of(), List.of("testFoo"), List.of(),
                     List.of(), solutionPassed && templateFailed, solutionPassed && templateFailed ? List.of() : List.of("some blocking reason"));
+        }
+
+        @Test
+        void demotesAGivenTypeWhoseCodeNeedsAStudentCreatedTypeOnlyThroughTheStageGateCorrection() {
+            String spec = specWithDesign("| Player | context students create | student-creates |\n| Demo | supplied entry point | given |\n");
+            assertThat(service.correctGivenOwnership(sandbox, "s")).as("no approved specification to correct").isEmpty();
+            approvedSpecs.approve("s", spec);
+            sandbox.spec = spec;
+            sandbox.templateRepositoryFiles = Map.of("src/Demo.java", "public class Demo { public int calculate(int input) { return new Player().calculate(input); } }");
+            sandbox.solutionRepositoryFiles = Map.of("src/Player.java", "public class Player { public int calculate(int input) { return input; } }");
+            when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(report(true, false));
+
+            // An in-loop verify on a possibly half-written solution never makes the irreversible correction.
+            assertThat(check(GenerationStage.TESTS).observation()).doesNotContain("OWNERSHIP CORRECTED");
+            assertThat(approvedSpecs.approved("s")).contains(spec);
+
+            Optional<String> notice = service.correctGivenOwnership(sandbox, "s");
+
+            String corrected = approvedSpecs.approved("s").orElseThrow();
+            assertThat(StageChecks.designTableRows(corrected)).extracting(StageChecks.DesignRow::status).containsExactly("student-creates", "stubbed");
+            assertThat(corrected).isEqualTo(spec.replace("| Demo | supplied entry point | given |", "| Demo | supplied entry point | stubbed |"));
+            assertThat(sandbox.files()).containsEntry("/workspace/SPEC.md", corrected);
+            assertThat(notice)
+                    .hasValueSatisfying(text -> assertThat(text).startsWith("OWNERSHIP CORRECTED").contains("[Demo]", "Demo->Player", "'stubbed'", "compilable stub bodies"));
+            // The corrected contract has no given type left that needs a student-created one, so nothing is corrected twice.
+            assertThat(service.correctGivenOwnership(sandbox, "s")).isEmpty();
+            assertThat(approvedSpecs.approved("s")).contains(corrected);
         }
 
         @Test
@@ -666,37 +720,21 @@ class StageChecksTest {
         }
 
         @Test
-        void fails_whenTheSpecSaysDiagramYesButTheStatementHasNone() {
-            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise",
-                    "## Diagram\nYes – strategies collaborate with the context");
+        void fails_whenTheDesignRequiresADiagramButTheStatementHasNone() {
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n| Formatter | formats | student-creates |\n");
             sandbox.problemStatement = "# T\nImplement the strategy.\n";
 
             StageCheckResult result = check(GenerationStage.STATEMENT, null);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("no @startuml diagram");
+            assertThat(result.observation()).contains("no @startuml class diagram", "requires one", AgentSystemPrompt.DIAGRAM_REQUIREMENT_RULE);
         }
 
         @Test
-        void fails_whenTheBoldDiagramDecisionSaysYesButTheStatementHasNone() {
-            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise",
-                    "## Diagram\n**Yes** – strategies collaborate with the context");
-            sandbox.problemStatement = "# T\nImplement the strategy.\n";
-
-            StageCheckResult result = check(GenerationStage.STATEMENT, null);
-
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("no @startuml diagram");
-        }
-
-        @Test
-        void doesNotTreatYesterdayOrYesSlashNoAsADiagramPromise() {
-            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise",
-                    "## Diagram\nYesterday we considered one\n\n## Later\nyes");
+        void ignoresTheAuthorsDiagramAnswerWhenTheDesignNeedsNoDiagram() {
+            sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise", "## Diagram\nYes – please draw one");
             sandbox.problemStatement = "# T\nExplain the result.\n";
-            assertThat(check(GenerationStage.STATEMENT, null).passed()).isTrue();
 
-            sandbox.spec = sandbox.spec.replace("Yesterday we considered one", "yes/no undecided");
             assertThat(check(GenerationStage.STATEMENT, null).passed()).isTrue();
         }
 
@@ -795,16 +833,15 @@ class StageChecksTest {
     class ApprovedSpecification {
 
         @Test
-        void keepsTheApprovedDiagramPromise_afterTheLiveSpecRevokesIt() {
-            approvedSpecs.approve("s",
-                    specWithDesign("| Calculator | computes | stubbed |\n").replace("## Diagram\nno — single-class exercise", "## Diagram\nYes – several collaborating types"));
+        void derivesTheDiagramRequirementFromTheApprovedDesign_notTheLiveSpec() {
+            approvedSpecs.approve("s", specWithDesign("| Calculator | computes | stubbed |\n| Formatter | formats | student-creates |\n"));
             sandbox.spec = specWithDesign("| Calculator | computes | stubbed |\n");
             sandbox.problemStatement = "# T\nImplement it.\n";
 
             StageCheckResult result = check(GenerationStage.STATEMENT, null);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("no @startuml diagram");
+            assertThat(result.observation()).contains("no @startuml class diagram", "requires one");
         }
     }
 
@@ -1303,7 +1340,30 @@ class StageChecksTest {
 
             assertThat(result.passed()).isFalse();
             assertThat(result.observation()).contains("missing required section(s)").contains("## Rules").contains("## Worked Examples").contains("## Design")
-                    .contains("## Public API").contains("## Testing Strategy").contains("## Contract Risk Inventory").contains("## Diagram");
+                    .contains("## Public API").contains("## Testing Strategy").contains("## Contract Risk Inventory").doesNotContain("## Diagram");
+        }
+
+        @Test
+        void acceptsInlineCodeFormattingAroundStableRiskPartitions() {
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
+            for (String partitions : List.of("S1.P1: typical; S1.P2: extrema", "`S1.P1: typical`; `S1.P2: extrema`", "`S1.P1`: typical; `S1.P2`: extrema",
+                    "`S1.P1: typical; S1.P2: extrema`", "S1.P1: empty (passes in both modes; fault returns zero); S1.P2: nonempty (nested (case; detail))")) {
+                sandbox.spec = VALID_SPEC.replace("S1.P1: typical, zero, negative, and int extrema", partitions);
+                assertThat(check(GenerationStage.SPEC).passed()).as(partitions).isTrue();
+                assertThat(StageChecks.riskPartitionIds(sandbox.spec)).containsExactly("S1.P1", "S1.P2");
+            }
+        }
+
+        @Test
+        void formattedRiskPartitionsStillRequireDescriptionsCorrectOwnershipAndUniqueIds() {
+            exercise = new GenerationInput(exercise.id(), exercise.packageName(), exercise.problemStatement(), true, exercise.baselineGradedTestNames(), Set.of(),
+                    GenerationBuildTool.GRADLE);
+            for (String partitions : List.of("`S1.P1:`", "`S2.P1: typical`", "`S1.P0: typical`", "`S1.P1: typical`; `S1.P1: duplicate`", "S1.P1: typical; unlabeled",
+                    "S1.P1: typical (unclosed; S1.P2: extrema", "S1.P1: typical); S1.P2: extrema")) {
+                sandbox.spec = VALID_SPEC.replace("S1.P1: typical, zero, negative, and int extrema", partitions);
+                assertThat(check(GenerationStage.SPEC).passed()).as(partitions).isFalse();
+            }
         }
 
         @Test
