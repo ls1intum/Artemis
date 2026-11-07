@@ -1,10 +1,10 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, catchError, forkJoin, map, of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { FormsModule } from '@angular/forms';
@@ -101,7 +101,6 @@ const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
         ExerciseAddModalComponent,
         ExerciseGroupEditModalComponent,
         ConsistencyCheckComponent,
-        QuizExerciseExportComponent,
         ProgrammingExerciseEditSelectedComponent,
         ProgrammingAssessmentRepoExportButtonComponent,
         ExerciseScoresExportButtonComponent,
@@ -134,6 +133,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly participationWebsocketService = inject(ParticipationWebsocketService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
@@ -178,13 +178,15 @@ export class CourseManagementExercisesComponent implements OnInit {
     protected readonly groupEditIsNew = signal(false);
     readonly showConsistencyCheck = signal(false);
     readonly consistencyExercises = signal<ProgrammingExercise[]>([]);
-    readonly showQuizExport = signal(false);
     readonly showEditSelected = signal(false);
     readonly editSelectedData = signal<ProgrammingExercise[]>([]);
 
     readonly isGroup = computed(() => this.view() === 'group');
     /** Deleting a group requires the same permission as deleting an exercise: instructor (or admin) on the course. */
     readonly canDeleteGroups = computed(() => this.course()?.isAtLeastInstructor ?? false);
+    private readonly exportsEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.Exports), { initialValue: true });
+    /** The export endpoints accept instructors only and honour the Exports feature toggle. */
+    readonly canExport = computed(() => (this.course()?.isAtLeastInstructor ?? false) && this.exportsEnabled());
     /** Ids of all rendered cards, so each group's exercise table is a connected CDK drop target for the others. */
     readonly dropListIds = computed(() => this.cards().map((card) => card.id));
     readonly exerciseCount = computed(() => this.exercises().length);
@@ -540,16 +542,8 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.addModalVisible.set(true);
     }
 
-    openQuizExportDialog(): void {
-        if (this.courseId() === undefined) {
-            return;
-        }
-        this.showQuizExport.set(true);
-    }
-
-    /** "Back" in the export dialog returns to the manage-exercises modal (its default Create view). */
-    protected onQuizExportBack(): void {
-        this.addModalMode.set('create');
+    openExportModal(): void {
+        this.addModalMode.set('export');
         this.addModalVisible.set(true);
     }
 

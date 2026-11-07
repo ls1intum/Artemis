@@ -470,7 +470,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFileWithBuildplan();
         // Only the export directory needs cleaning up: the repositories are streamed from their bare repositories into it,
         // so none of them is cloned into a temporary directory of its own any more.
-        verify(fileService, times(1)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
+        verify(fileService, times(1)).createTemporaryDirectory(any(Path.class), eq("exercise-export-"), eq(5L));
         verify(fileService).schedulePathForDeletion(any(Path.class), eq(5L));
     }
 
