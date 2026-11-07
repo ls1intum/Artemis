@@ -15,6 +15,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -24,6 +26,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.errors.LargeObjectException;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.AfterEach;
@@ -1751,6 +1754,46 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         assertThat(updatedParticipation.team()).isNotNull();
         assertThat(updatedParticipation.team().students()).extracting(UserNameDTO::id).containsExactlyInAnyOrder(student1.getId(), student2.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resumeProgrammingExerciseParticipation_rejectsExistingExerciseMismatch(boolean requestedExerciseIsExam) throws Exception {
+        var examExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(ZonedDateTime.now().minusMinutes(10),
+                ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3), TEST_PREFIX + "student1", 7200, TEST_PREFIX);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, examExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+        examExercise = exerciseRepository.save(examExercise);
+        var originalExercise = requestedExerciseIsExam ? programmingExercise : examExercise;
+        var requestedExercise = requestedExerciseIsExam ? examExercise : programmingExercise;
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, originalExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var studentRepository = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        participation = participationRepo.save(participation);
+        long originalParticipationId = participation.getId();
+        String originalRepositoryUri = participation.getRepositoryUri();
+        String originalBuildPlanId = participation.getBuildPlanId();
+        var answerFile = studentRepository.workingCopyPath().resolve("student-answer.txt");
+        FileUtils.writeStringToFile(answerFile.toFile(), "The original student's answer", StandardCharsets.UTF_8);
+        String originalHead = studentRepository.workingCopy().getRepository().resolve("HEAD").name();
+        Mockito.clearInvocations(continuousIntegrationService);
+
+        request.put("/api/exercise/exercises/" + requestedExercise.getId() + "/participations/" + originalParticipationId + "/resume-programming-participation", null,
+                HttpStatus.BAD_REQUEST);
+
+        var persisted = (ProgrammingExerciseStudentParticipation) participationRepo.findById(originalParticipationId).orElseThrow();
+        assertThat(persisted.getExercise().getId()).isEqualTo(originalExercise.getId());
+        assertThat(persisted.getId()).isEqualTo(originalParticipationId);
+        assertThat(persisted.getInitializationState()).isEqualTo(InitializationState.INACTIVE);
+        assertThat(persisted.getRepositoryUri()).isEqualTo(originalRepositoryUri);
+        assertThat(persisted.getBuildPlanId()).isEqualTo(originalBuildPlanId);
+        assertThat(participationRepo.findByExerciseId(requestedExercise.getId())).isEmpty();
+        assertThat(Files.readString(answerFile)).isEqualTo("The original student's answer");
+        assertThat(studentRepository.workingCopy().getRepository().resolve("HEAD").name()).isEqualTo(originalHead);
+        verify(continuousIntegrationService, never()).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
+        verify(continuousIntegrationService, never()).configureBuildPlan(any());
     }
 
     @Test
