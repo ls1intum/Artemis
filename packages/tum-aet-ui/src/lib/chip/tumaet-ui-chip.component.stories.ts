@@ -32,3 +32,15 @@ export const Compact: Story = {
         size: 'small',
     },
 };
+
+/** A label longer than the space its container leaves truncates with an ellipsis; the remove button stays visible. */
+export const Truncated: Story = {
+    args: {
+        label: 'Introduction to Machine Learning and Neural Networks',
+        removable: true,
+    },
+    render: (args) => ({
+        props: args,
+        template: `<div style="width: 12rem"><tumaet-ui-chip [label]="label" [removable]="removable" [removeAriaLabel]="removeAriaLabel" (removed)="removed($event)" /></div>`,
+    }),
+};

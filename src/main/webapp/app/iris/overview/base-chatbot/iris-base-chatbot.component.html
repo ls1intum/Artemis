@@ -1,4 +1,5 @@
-<p-confirmdialog />
+<tumaet-ui-confirm-dialog />
+<jhi-about-iris-modal [(visible)]="aboutIrisModalVisible" />
 <!-- main chat section -->
 <div class="chat-layout">
     @if (isChatHistoryAvailable()) {
@@ -50,8 +51,8 @@
             @if (isChatHistoryOpen()) {
                 <div class="chat-history-container">
                     <div class="chat-history-top">
-                        <div class="px-2 mt-2 mb-3 d-flex align-items-center gap-2">
-                            <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
+                        <div class="px-2 mt-2 mb-4! flex items-center gap-2">
+                            <jhi-search-filter class="w-full" (newSearchEvent)="setSearchValue($event)" />
                             <jhi-course-sidebar-toggle-button [isCollapsed]="false" (toggleSidebar)="setChatHistoryVisibility(false)" />
                         </div>
 
@@ -163,21 +164,37 @@
                     <button
                         type="button"
                         class="session-title-trigger"
-                        (click)="toggleSessionMenu($event)"
-                        [attr.aria-expanded]="sessionMenuOpen()"
-                        aria-haspopup="menu"
+                        [tumAetUiMenuTrigger]="sessionMenu"
+                        (menuOpened)="sessionMenuOpen.set(true)"
+                        (menuClosed)="sessionMenuOpen.set(false)"
                         [attr.aria-label]="'artemisApp.iris.chatHistory.switchSession' | artemisTranslate"
                     >
                         <span class="session-title-text">{{ currentSessionTitle() }}</span>
                         <fa-icon [icon]="faChevronDown" class="session-title-chevron" [class.rotated]="sessionMenuOpen()" />
                     </button>
-                    @if (sessionMenuOpen()) {
-                        <div class="session-switcher-inline-menu">
-                            <p-menu [model]="sessionMenuItems()" styleClass="session-switcher-menu" (click)="$event.stopPropagation()" />
-                        </div>
-                    }
+                    <ng-template #sessionMenu>
+                        <tumaet-ui-menu class="session-switcher-menu">
+                            @for (group of sessionMenuGroups(); track group.labelKey) {
+                                <div role="group" [attr.aria-label]="group.labelKey | artemisTranslate">
+                                    <div class="session-menu-group-label" aria-hidden="true">{{ group.labelKey | artemisTranslate }}</div>
+                                    @for (item of group.items; track item.session.id) {
+                                        <button
+                                            type="button"
+                                            tumAetUiMenuItem
+                                            class="session-menu-item"
+                                            [class.session-menu-item-active]="item.isActive"
+                                            [attr.aria-current]="item.isActive ? 'true' : null"
+                                            (triggered)="onSessionClick(item.session)"
+                                        >
+                                            {{ item.label }}
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </tumaet-ui-menu>
+                    </ng-template>
                 }
-                <div class="d-flex gap-2">
+                <div class="flex gap-2">
                     @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
                         <div class="toolbox">
                             <button type="button" [routerLink]="relatedEntityRoute()" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
@@ -193,8 +210,8 @@
                             <div class="toolbox">
                                 <span
                                     class="rate-limit"
-                                    [pTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
-                                    tooltipPosition="bottom"
+                                    [tumAetUiTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
+                                    tumAetUiTooltipPlacement="bottom"
                                 >
                                     {{ rateLimitInfo()?.currentMessageCount }} / {{ rateLimit }}
                                 </span>
@@ -249,7 +266,7 @@
                                 [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
                             >
                                 @if (message.sender === IrisSender.USER) {
-                                    <div class="d-flex justify-content-end align-items-center">
+                                    <div class="flex justify-end items-center">
                                         <div class="bubble-right">
                                             @for (content of message.content; track content.id ?? $index) {
                                                 @if (content.type === IrisMessageContentType.TEXT) {
@@ -300,7 +317,7 @@
                                             <div class="rate-message-buttons toolbox">
                                                 <button
                                                     type="button"
-                                                    class="btn btn-sm rate-button-not-clicked"
+                                                    class="rate-button rate-button-not-clicked"
                                                     (click)="copyMessage(message, i)"
                                                     [attr.aria-label]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
                                                     [title]="'artemisApp.exerciseChatbot.actions.copy' | artemisTranslate"
@@ -310,7 +327,7 @@
                                                 @if (canRateMessage(message)) {
                                                     <button
                                                         type="button"
-                                                        class="btn btn-sm"
+                                                        class="rate-button"
                                                         [class.thumbs-up-clicked]="(message | as: IrisAssistantMessage).helpful"
                                                         [class.clickable]="!(message | as: IrisAssistantMessage).helpful"
                                                         [class.rate-button-not-clicked]="!(message | as: IrisAssistantMessage).helpful"
@@ -323,7 +340,7 @@
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        class="btn btn-sm"
+                                                        class="rate-button"
                                                         [class.thumbs-down-clicked]="(message | as: IrisAssistantMessage).helpful === false"
                                                         [class.clickable]="(message | as: IrisAssistantMessage).helpful !== false"
                                                         [class.rate-button-not-clicked]="(message | as: IrisAssistantMessage).helpful !== false"
@@ -397,13 +414,13 @@
                     <div class="button-container">
                         <button
                             type="button"
-                            class="btn btn-primary"
+                            tumAetUiButton
                             #acceptButton
                             (click)="acceptPermission(LLMSelectionDecision.CLOUD_AI)"
                             jhiTranslate="artemisApp.exerciseChatbot.accept"
                         ></button>
                         @if (showDeclineButton()) {
-                            <button type="button" class="btn btn-secondary" (click)="closeChat()" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
+                            <button type="button" tumAetUiButton severity="secondary" (click)="closeChat()" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
                         }
                     </div>
                 </div>
@@ -437,7 +454,6 @@
                                 [ngModel]="newMessageTextContent()"
                                 (ngModelChange)="newMessageTextContent.set($event)"
                                 rows="1"
-                                class="form-control"
                                 (input)="onInput()"
                                 (paste)="onPaste()"
                                 (focus)="onTextareaFocus()"

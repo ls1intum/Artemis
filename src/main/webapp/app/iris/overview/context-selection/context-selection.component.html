@@ -1,9 +1,8 @@
 <div class="iris-context-selection flex items-center gap-2">
     <span
         class="iris-context-trigger-wrapper"
-        [pTooltip]="'artemisApp.iris.contextSelection.addContextTooltip' | artemisTranslate"
-        tooltipPosition="bottom"
-        tooltipStyleClass="iris-context-tooltip iris-context-tooltip-tight"
+        [tumAetUiTooltip]="isPickerOpen() ? undefined : ('artemisApp.iris.contextSelection.addContextTooltip' | artemisTranslate)"
+        tumAetUiTooltipPlacement="bottom"
     >
         <p-select
             [attr.aria-label]="'artemisApp.iris.contextSelection.label' | artemisTranslate"
@@ -21,7 +20,8 @@
             optionValue="value"
             [ngModel]="selectedValue()"
             (onChange)="onSelectionChange($event.value)"
-            (onShow)="loadContextOptions()"
+            (onShow)="onPickerShow()"
+            (onHide)="isPickerOpen.set(false)"
             [filter]="true"
             filterBy="label"
             [filterPlaceholder]="'artemisApp.iris.contextSelection.search' | artemisTranslate"
@@ -48,14 +48,8 @@
     </span>
 
     @if (activeChip(); as chip) {
-        <p-chip [removable]="!disabled()" (onRemove)="onChipRemove()" styleClass="iris-context-chip">
-            <fa-icon [icon]="chip.faIcon" />
-            <span class="ms-1 iris-context-chip-label" [pTooltip]="chip.label" tooltipPosition="bottom" tooltipStyleClass="iris-context-tooltip iris-context-tooltip-spaced">{{
-                chip.label
-            }}</span>
-            <ng-template #removeicon>
-                <fa-icon [icon]="faXmark" />
-            </ng-template>
-        </p-chip>
+        <tumaet-ui-chip class="iris-context-chip" size="small" data-testid="iris-context-chip" [removable]="!disabled()" (removed)="onChipRemove()">
+            <span [tumAetUiTooltip]="chip.label" tumAetUiTooltipPlacement="bottom"><fa-icon [icon]="chip.faIcon" class="me-1" aria-hidden="true" />{{ chip.label }}</span>
+        </tumaet-ui-chip>
     }
 </div>

@@ -4,7 +4,7 @@
 
 .iris-logo {
     width: auto;
-    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.24));
+    filter: drop-shadow(0 3px 8px color-mix(in srgb, var(--iris-shadow-color) 24%, transparent));
 
     &.fluid {
         flex: 0;

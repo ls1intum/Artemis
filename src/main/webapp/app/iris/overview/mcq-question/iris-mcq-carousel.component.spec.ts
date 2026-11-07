@@ -65,18 +65,18 @@ describe('IrisMcqCarouselComponent', () => {
 
     it('should render the carousel header', () => {
         const el = render();
-        expect(el.querySelector('.carousel-header')).toBeTruthy();
+        expect(el.querySelector('.mcq-carousel-header')).toBeTruthy();
     });
 
     it('should render the correct number of dots', () => {
         const el = render();
-        const dots = el.querySelectorAll('.carousel-dots .dot');
+        const dots = el.querySelectorAll('.mcq-carousel-dots .dot');
         expect(dots).toHaveLength(3);
     });
 
     it('should highlight the first dot as active initially', () => {
         const el = render();
-        const dots = el.querySelectorAll('.carousel-dots .dot');
+        const dots = el.querySelectorAll('.mcq-carousel-dots .dot');
         expect(dots[0].classList.contains('active')).toBe(true);
         expect(dots[1].classList.contains('active')).toBe(false);
     });
@@ -116,7 +116,7 @@ describe('IrisMcqCarouselComponent', () => {
 
     it('should navigate to question via dot click', () => {
         const el = render();
-        const dots = el.querySelectorAll('.carousel-dots .dot');
+        const dots = el.querySelectorAll('.mcq-carousel-dots .dot');
         (dots[2] as HTMLButtonElement).click();
         fixture.detectChanges();
         expect(component.currentIndex()).toBe(2);
@@ -260,7 +260,7 @@ describe('IrisMcqCarouselComponent', () => {
         component.onAnswerChanged({ selectedIndex: 0, submitted: true });
         fixture.detectChanges();
 
-        const dots = el.querySelectorAll('.carousel-dots .dot');
+        const dots = el.querySelectorAll('.mcq-carousel-dots .dot');
         expect(dots[0].classList.contains('correct')).toBe(true);
         expect(dots[1].classList.contains('incorrect')).toBe(true);
         expect(dots[2].classList.contains('correct')).toBe(false);

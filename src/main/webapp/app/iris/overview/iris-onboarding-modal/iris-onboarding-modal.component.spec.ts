@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { IrisOnboardingRef } from './iris-onboarding-ref';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -39,7 +39,7 @@ function createMockElement(rect: Partial<DOMRect>): HTMLElement {
 describe('IrisOnboardingModalComponent', () => {
     let component: IrisOnboardingModalComponent;
     let fixture: ComponentFixture<IrisOnboardingModalComponent>;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: IrisOnboardingRef;
     let onboardingEventSubject: Subject<OnboardingEvent>;
 
     async function detectChanges(): Promise<void> {
@@ -61,8 +61,7 @@ describe('IrisOnboardingModalComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
-                MockProvider(DynamicDialogRef),
-                { provide: DynamicDialogConfig, useValue: { data: {} } },
+                { provide: IrisOnboardingRef, useValue: new IrisOnboardingRef() },
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: IrisOnboardingService,
@@ -76,7 +75,7 @@ describe('IrisOnboardingModalComponent', () => {
 
         fixture = TestBed.createComponent(IrisOnboardingModalComponent);
         component = fixture.componentInstance;
-        dialogRef = TestBed.inject(DynamicDialogRef);
+        dialogRef = TestBed.inject(IrisOnboardingRef);
         fixture.detectChanges();
     });
 

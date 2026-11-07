@@ -7,14 +7,14 @@
 .step-indicator {
     height: 8px;
     border-radius: 16px;
-    background: var(--bs-secondary-bg);
+    background: var(--iris-tertiary-background);
     transition:
         width 0.3s ease,
         background-color 0.3s ease;
 
     &.active {
         width: 20px;
-        background: var(--bs-primary);
+        background: var(--primary);
     }
 
     &.inactive {

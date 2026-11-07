@@ -1,6 +1,10 @@
-:host {
-    display: block;
+// The dialog panel caps the width at 90dvw and the height at 90dvh including its 1px border.
+.about-iris-panel {
     position: relative;
+    width: 40rem;
+    max-width: 90dvw;
+    margin: 0 -1rem -1rem;
+    background-color: var(--iris-secondary-background);
 }
 
 .close-btn-container {
@@ -18,7 +22,7 @@
     border: none;
     padding: 0.25rem;
     cursor: pointer;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     line-height: 1;
     z-index: 1;
 
@@ -27,9 +31,11 @@
     }
 }
 
-.modal-content-wrapper {
+.about-iris-content {
     padding: 2.5rem;
-    max-height: 40rem; /* 640px */
+
+    // Only this box scrolls, so the close button stays in the corner.
+    max-height: min(40rem, calc(90dvh - 2px));
     overflow-y: auto;
     scrollbar-gutter: stable;
 }
@@ -52,13 +58,13 @@
             margin: 0 0 0.25rem;
             font-size: 1.5rem;
             font-weight: 600;
-            color: var(--bs-body-color);
+            color: var(--body-color);
         }
 
         .subtitle {
             margin: 0 0 0.5rem;
             font-size: 1rem;
-            color: var(--bs-body-color);
+            color: var(--body-color);
         }
 
         .description {
@@ -70,7 +76,7 @@
 }
 
 .divider {
-    border-color: var(--bs-border-color);
+    border-color: var(--border-color);
 
     // Override Bootstrap's default <hr> opacity (0.25), which makes the divider nearly invisible.
     opacity: 1;
@@ -80,7 +86,7 @@
 .section-title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     margin-bottom: 0.75rem;
 }
 
@@ -97,7 +103,7 @@
 }
 
 .icon-wrapper {
-    --icon-accent-bg: rgba(var(--bs-primary-rgb), 0.1);
+    --icon-accent-bg: color-mix(in srgb, var(--primary) 10%, transparent);
     --expect-icon-bg: color-mix(in srgb, var(--iris-tertiary-background) 70%, transparent);
 
     display: flex;
@@ -109,7 +115,7 @@
     margin-top: 4px;
     border-radius: 0.5rem;
     background-color: var(--icon-accent-bg);
-    color: var(--bs-primary);
+    color: var(--primary);
 
     &--expect {
         background-color: var(--expect-icon-bg);
@@ -118,7 +124,7 @@
 
     &--privacy {
         background: none;
-        color: var(--bs-body-color);
+        color: var(--body-color);
         width: 36px;
         min-width: 36px;
         height: 36px;
@@ -126,14 +132,14 @@
     }
 }
 
-.card-title-text {
+.feature-card-title {
     margin: 0 0 0.25rem;
     font-size: 0.875rem;
     font-weight: 400;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
-.card-description {
+.feature-card-description {
     margin: 0;
     font-size: 0.875rem;
     color: var(--iris-label-color);
@@ -158,7 +164,7 @@
 .privacy-disclaimer {
     margin: 0.5rem 0 0;
     font-size: 0.75rem;
-    color: var(--bs-body-color);
+    color: var(--body-color);
 }
 
 .try-iris-btn-wrapper {
@@ -167,9 +173,6 @@
     margin-top: 1.5rem;
 }
 
-.try-iris-btn {
-    font-size: 0.875rem;
+.try-iris-btn-wrapper > button {
     min-width: 160px;
-    border-radius: 0.5rem;
-    padding: 0.5rem 0;
 }

@@ -3,9 +3,9 @@
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    border: 1px dashed var(--bs-border-color);
+    border: 1px dashed var(--border-color);
     border-radius: 8px;
-    color: var(--bs-secondary-color);
+    color: var(--text-body-secondary);
     margin-bottom: 8px;
     max-width: fit-content;
 }
@@ -20,7 +20,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background-color: var(--bs-secondary-color);
+    background-color: var(--text-body-secondary);
     animation: dot-pulse 1.4s infinite ease-in-out both;
 
     &:nth-child(1) {

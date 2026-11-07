@@ -20,7 +20,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { AthenaFeature, createAthenaCourseConfigState } from 'app/course/manage/services/athena-course-config.state';
 import { EnabledToggleComponent } from 'app/shared-ui/enabled-toggle/enabled-toggle.component';
@@ -43,16 +42,16 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
         EnabledToggleComponent,
         AthenaLogoComponent,
         TumAetUiMessageComponent,
+        AboutIrisModalComponent,
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
 
     protected readonly IrisLogoSize = IrisLogoSize;
-    private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
+    protected readonly aboutIrisModalVisible = signal(false);
 
     readonly course = input.required<Course>();
     readonly courseUpdated = output<Course>();
@@ -189,18 +188,6 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     }
 
     openAboutIrisModal(): void {
-        this.aboutIrisDialogRef?.close();
-        this.aboutIrisDialogRef =
-            this.dialogService.open(AboutIrisModalComponent, {
-                modal: true,
-                closable: false,
-                dismissableMask: true,
-                showHeader: false,
-                styleClass: 'about-iris-dialog',
-                maskStyleClass: 'about-iris-dialog',
-                width: '40rem',
-                breakpoints: { '640px': '95vw' },
-                data: { hideTryButton: true },
-            }) ?? undefined;
+        this.aboutIrisModalVisible.set(true);
     }
 }

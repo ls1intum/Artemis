@@ -723,6 +723,7 @@ export default tseslint.config(
             'src/main/webapp/app/admin/**/*.html',
             'src/main/webapp/app/course/request/**/*.html',
             'src/main/webapp/app/iris/manage/settings/**/*.html',
+            'src/main/webapp/app/iris/overview/**/*.html',
             'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
             'src/main/webapp/app/atlas/shared/competency-selection/**/*.html',
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.html',
@@ -814,6 +815,7 @@ export default tseslint.config(
         // here once it is scanned by tailwind.css (`migration-source-coverage` checks this) and its findings are fixed.
         // See client-development.mdx (### Styling).
         files: [
+            'src/main/webapp/app/iris/overview/**/*.html',
             'src/main/webapp/app/course/overview/course-statistics/**/*.html',
             'src/main/webapp/app/exam/overview/**/*.html',
             'src/main/webapp/app/exam/shared/**/*.html',
@@ -841,12 +843,16 @@ export default tseslint.config(
     {
         files: [
             'src/main/webapp/app/exam/**/*.ts',
+            'src/main/webapp/app/iris/overview/**/*.ts',
             'src/main/webapp/app/notification/**/*.ts',
             'src/main/webapp/app/calendar/**/*.ts',
             'src/main/webapp/app/atlas/shared/competency-selection/**/*.ts',
             'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.ts',
             'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.ts',
         ],
+        // The Iris context picker keeps the PrimeNG select as a contained fallback: tumaet-ui-select has no option groups,
+        // option templates or custom trigger yet. Remove this exception together with the fallback.
+        ignores: ['src/main/webapp/app/iris/overview/context-selection/context-selection.component.ts'],
         rules: {
             'no-restricted-imports': [
                 'error',

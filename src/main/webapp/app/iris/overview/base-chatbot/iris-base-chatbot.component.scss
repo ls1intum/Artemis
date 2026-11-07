@@ -6,19 +6,17 @@ $iris-border-radius-lg: 0.5rem; // 8px — cards, menus, text areas
 // Z-index scale for layered UI within the chat widget
 // z-index: 1    — scroll-to-bottom button, sticky sidebar headers
 // z-index: 10   — chat header (sits above messages)
-// z-index: 1050 — session switcher dropdown (above header, below global modals)
-$iris-z-index-dropdown: 1050;
 
 @mixin custom-scrollbar($width: 6px) {
     scrollbar-width: thin;
-    scrollbar-color: var(--bs-border-color) transparent;
+    scrollbar-color: var(--border-color) transparent;
 
     &::-webkit-scrollbar {
         width: $width;
     }
 
     &::-webkit-scrollbar-thumb {
-        background-color: var(--bs-border-color);
+        background-color: var(--border-color);
         border-radius: $iris-border-radius-md;
     }
 
@@ -50,7 +48,7 @@ $iris-z-index-dropdown: 1050;
     padding: 10px;
     gap: 10px;
 
-    .btn {
+    > button {
         flex: 1;
     }
 }
@@ -152,7 +150,7 @@ $iris-z-index-dropdown: 1050;
 
 .suggestion-button {
     background-color: var(--iris-secondary-background);
-    color: var(--bs-body-color);
+    color: var(--body-color);
     padding: 8px 16px;
     cursor: pointer;
     font-size: 12px;
@@ -197,7 +195,7 @@ $iris-z-index-dropdown: 1050;
     cursor: pointer;
     padding: 4px 8px;
     border-radius: $iris-border-radius-sm;
-    color: var(--bs-body-color);
+    color: var(--body-color);
     font-size: 14px;
     max-width: 250px;
 
@@ -223,12 +221,40 @@ $iris-z-index-dropdown: 1050;
     }
 }
 
-.session-switcher-inline-menu {
-    position: absolute;
-    top: 32px;
-    left: 4px;
-    z-index: $iris-z-index-dropdown;
-    min-width: 200px;
+// The switcher menu renders in an overlay at the end of the document; its elements are declared in this template, so these
+// rules still reach them.
+.session-switcher-menu {
+    width: 300px;
+    max-height: 220px;
+    padding: 8px;
+    border-radius: 0.5rem;
+    background-color: var(--iris-secondary-background);
+    font-size: 14px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+.session-menu-group-label {
+    padding: 8px 12px 4px;
+    color: var(--iris-label-color);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.session-menu-item {
+    width: 100%;
+    border-radius: 0.5rem;
+    color: var(--body-color);
+    font-size: 14px;
+    line-height: 1.5;
+
+    &:hover {
+        background-color: var(--iris-accent-background);
+    }
+
+    &.session-menu-item-active {
+        background-color: var(--iris-tertiary-background);
+    }
 }
 
 .related-entity-button {
@@ -268,10 +294,10 @@ $iris-z-index-dropdown: 1050;
     gap: 4px;
     padding: 4px 12px;
     font-size: 0.85rem;
-    border: 1px solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius-lg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
     background-color: var(--iris-secondary-background);
-    color: var(--bs-body-color);
+    color: var(--body-color);
     cursor: pointer;
     transition:
         background-color 0.2s,
@@ -290,12 +316,12 @@ $iris-z-index-dropdown: 1050;
 :host {
     .bubble-left,
     .bubble-right {
-        color: var(--bs-body-color);
+        color: var(--body-color);
 
         // prettier-ignore
-        -webkit-mask: radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
-            conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
-            radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
+        -webkit-mask: radial-gradient(var(--t) at var(--_d) 0, transparent 98%, black 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
+            conic-gradient(at var(--r) var(--r), black 75%, transparent 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
+            radial-gradient(50% 50%, black 98%, transparent 101%) 0 0 / var(--r) var(--r) space padding-box;
         overflow-wrap: break-word;
     }
 }
@@ -320,7 +346,7 @@ jhi-iris-mcq-question {
 
 .activity-trail {
     margin-bottom: 8px;
-    color: var(--bs-secondary-color);
+    color: var(--text-body-secondary);
     font-size: 0.875rem;
 
     summary {
@@ -394,7 +420,7 @@ jhi-iris-mcq-question {
 
 .client-chat-error {
     background-color: var(--artemis-alert-danger-background);
-    color: var(--bs-body-color);
+    color: var(--body-color);
     padding: 4px;
     border-top: 1px solid var(--artemis-alert-danger-border);
     border-radius: $iris-border-radius-sm;
@@ -444,8 +470,8 @@ pre {
         z-index: 10;
 
         &.has-content {
-            box-shadow: 0 10px 10px -15px rgba(0, 0, 0, 0.3);
-            border-bottom: 1px solid var(--bs-border-color);
+            box-shadow: 0 10px 10px -15px color-mix(in srgb, var(--iris-shadow-color) 30%, transparent);
+            border-bottom: 1px solid var(--border-color);
         }
 
         &:has(.session-title-trigger) {
@@ -540,6 +566,12 @@ pre {
     --iris-input-lines: 1;
 
     textarea {
+        display: block;
+        width: 100%;
+        appearance: none;
+        font-size: 1rem;
+        font-weight: 400;
+        color: var(--body-color);
         background-color: var(--iris-secondary-background);
         flex: 1 0 auto;
         padding: 16px;
@@ -565,10 +597,11 @@ pre {
             box-shadow: none;
         }
 
-        // Override dark theme's .form-control:disabled { background-color: $gray-800 !important }
-        // so the textarea stays consistent with the wrapper background when disabled.
+        &::placeholder {
+            color: var(--text-body-secondary);
+        }
+
         &:disabled {
-            background-color: var(--iris-secondary-background) !important;
             cursor: not-allowed;
         }
 
@@ -599,7 +632,7 @@ pre {
         min-width: 0;
         position: relative;
         background-color: var(--iris-secondary-background);
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--border-color);
         border-radius: $iris-border-radius-lg;
 
         &:focus-within {
@@ -655,7 +688,7 @@ pre {
         max-height: calc(var(--iris-textarea-height, calc(var(--iris-input-lines) * var(--iris-input-line-height) + 32px)) - 32px);
         border: 1px solid transparent;
         pointer-events: none;
-        font-family: var(--bs-body-font-family);
+        font-family: inherit;
         font-size: inherit;
         line-height: var(--iris-input-line-height);
         overflow-wrap: break-word;
@@ -668,12 +701,12 @@ pre {
     }
 
     .ghost-text-suggestion {
-        color: var(--bs-secondary-color);
+        color: var(--text-body-secondary);
         opacity: 0.6;
     }
 
     .chip-preview-text {
-        color: var(--bs-secondary-color);
+        color: var(--text-body-secondary);
         opacity: 1;
         white-space: pre-wrap;
     }
@@ -760,8 +793,8 @@ pre {
         padding: 8px;
         margin: 0 8px 8px;
         cursor: pointer;
-        border-radius: var(--bs-border-radius-lg);
-        color: var(--bs-body-color);
+        border-radius: 0.25rem;
+        color: var(--body-color);
 
         &:hover {
             background-color: var(--iris-accent-background);
@@ -778,7 +811,7 @@ pre {
 
     &-divider {
         height: 1px;
-        background-color: var(--bs-border-color);
+        background-color: var(--border-color);
         margin: 0.5rem 0.75rem;
     }
 
@@ -789,7 +822,7 @@ pre {
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--bs-body-color);
+        color: var(--body-color);
         background-color: transparent;
         border: none;
 
@@ -832,7 +865,7 @@ pre {
 
 .p-chat {
     background-color: var(--iris-tertiary-background);
-    color: var(--bs-body-color);
+    color: var(--body-color);
     border-radius: $iris-border-radius-sm;
     display: flex;
     flex-direction: column;
@@ -844,7 +877,7 @@ pre {
     padding: 10px;
     border-top-left-radius: $iris-border-radius-lg;
     border-top-right-radius: $iris-border-radius-lg;
-    border-bottom: 1px solid var(--bs-border-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .disclaimer-message {
@@ -869,7 +902,7 @@ pre {
     align-items: center;
     cursor: pointer;
     z-index: 1;
-    border: 1px solid var(--bs-border-color);
+    border: 1px solid var(--border-color);
 }
 
 .rate-message-buttons {
@@ -877,16 +910,25 @@ pre {
     justify-content: flex-end;
     width: fit-content;
 
-    button.btn {
+    .rate-button {
         padding: 4px 6px;
         display: flex;
         align-items: center;
         justify-content: center;
         border: none;
+        border-radius: $iris-border-radius-sm;
+        background-color: transparent;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        cursor: pointer;
 
         &:hover {
             background-color: var(--iris-tertiary-background);
-            border-radius: $iris-border-radius-sm;
+        }
+
+        &:disabled {
+            pointer-events: none;
+            opacity: 0.65;
         }
     }
 }

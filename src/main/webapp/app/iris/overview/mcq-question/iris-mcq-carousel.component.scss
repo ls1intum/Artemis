@@ -2,14 +2,14 @@
     max-width: 500px;
 }
 
-.carousel-header {
+.mcq-carousel-header {
     font-weight: 600;
     font-size: 0.85rem;
     color: var(--body-color);
     margin-bottom: 0.5rem;
 }
 
-.carousel-navigation {
+.mcq-carousel-navigation {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -17,7 +17,7 @@
     margin-top: 0.75rem;
 }
 
-.carousel-counter {
+.mcq-carousel-counter {
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--body-color);
@@ -51,7 +51,7 @@
     }
 }
 
-.carousel-dots {
+.mcq-carousel-dots {
     display: flex;
     align-items: center;
     gap: 0.375rem;
@@ -79,11 +79,11 @@
     }
 
     &.correct {
-        background: var(--bs-success);
+        background: var(--success);
     }
 
     &.incorrect {
-        background: var(--bs-danger);
+        background: var(--danger);
     }
 
     &.correct.active,

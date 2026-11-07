@@ -112,7 +112,7 @@ test.describe('Iris course tab (real Pyris)', { tag: '@slow' }, () => {
 
         // Selecting an exercise sets it as the chat context, which the chip reports back to the student
         await options.filter({ hasText: exercise.title! }).click();
-        const chip = picker.locator('.iris-context-chip');
+        const chip = picker.getByTestId('iris-context-chip');
         await expect(chip).toBeVisible();
         await expect(chip).toContainText(exercise.title!);
 

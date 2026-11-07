@@ -1,76 +1,82 @@
-<div class="close-btn-container">
-    <button type="button" class="close-btn" (click)="close()" [attr.aria-label]="'artemisApp.iris.aboutIrisModal.close' | artemisTranslate">
-        <fa-icon [icon]="faXmark" aria-hidden="true" />
-    </button>
-</div>
-
-<div class="modal-content-wrapper" role="document" aria-labelledby="about-iris-title">
-    <!-- Header: Logo + title + subtexts -->
-    <div class="header-section">
-        <div class="logo-container">
-            <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
+<!-- 40rem wide and at most 40rem tall, with its own close button instead of the dialog header, like About Athena. The
+     negative margin cancels the dialog content's own padding, so the panel box is the whole dialog. -->
+<tumaet-ui-dialog [(visible)]="visible" [dismissableMask]="true" [showHeader]="false" [ariaLabel]="'artemisApp.iris.aboutIrisModal.meetIris' | artemisTranslate">
+    <div class="about-iris-panel">
+        <div class="close-btn-container">
+            <button type="button" class="close-btn" (click)="close()" [attr.aria-label]="'artemisApp.iris.aboutIrisModal.close' | artemisTranslate">
+                <fa-icon [icon]="faXmark" aria-hidden="true" />
+            </button>
         </div>
-        <div class="header-text">
-            <h2 id="about-iris-title" jhiTranslate="artemisApp.iris.aboutIrisModal.meetIris"></h2>
-            <p class="subtitle" jhiTranslate="artemisApp.iris.aboutIrisModal.subtitle"></p>
-            <p class="description" jhiTranslate="artemisApp.iris.aboutIrisModal.description"></p>
-        </div>
-    </div>
 
-    <hr class="divider" />
-
-    <!-- Section: What Iris can do -->
-    <section>
-        <h3 class="section-title" jhiTranslate="artemisApp.iris.aboutIrisModal.whatIrisCanDo"></h3>
-        @for (card of whatIrisCanDo; track card.titleKey) {
-            <div class="feature-card">
-                <div class="icon-wrapper" aria-hidden="true">
-                    <fa-icon [icon]="card.icon" />
+        <div class="about-iris-content">
+            <!-- Header: Logo + title + subtexts -->
+            <div class="header-section">
+                <div class="logo-container">
+                    <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                 </div>
-                <div>
-                    <p class="card-title-text" [jhiTranslate]="card.titleKey"></p>
-                    <p class="card-description" [jhiTranslate]="card.descKey"></p>
+                <div class="header-text">
+                    <h2 id="about-iris-title" jhiTranslate="artemisApp.iris.aboutIrisModal.meetIris"></h2>
+                    <p class="subtitle" jhiTranslate="artemisApp.iris.aboutIrisModal.subtitle"></p>
+                    <p class="description" jhiTranslate="artemisApp.iris.aboutIrisModal.description"></p>
                 </div>
             </div>
-        }
-    </section>
 
-    <hr class="divider" />
+            <hr class="divider" />
 
-    <!-- Section: What to expect -->
-    <section>
-        <h3 class="section-title" jhiTranslate="artemisApp.iris.aboutIrisModal.whatToExpect"></h3>
-        @for (card of whatToExpect; track card.titleKey) {
-            <div class="feature-card">
-                <div class="icon-wrapper icon-wrapper--expect" aria-hidden="true">
-                    <fa-icon [icon]="card.icon" />
+            <!-- Section: What Iris can do -->
+            <section>
+                <h3 class="section-title" jhiTranslate="artemisApp.iris.aboutIrisModal.whatIrisCanDo"></h3>
+                @for (card of whatIrisCanDo; track card.titleKey) {
+                    <div class="feature-card">
+                        <div class="icon-wrapper" aria-hidden="true">
+                            <fa-icon [icon]="card.icon" />
+                        </div>
+                        <div>
+                            <p class="feature-card-title" [jhiTranslate]="card.titleKey"></p>
+                            <p class="feature-card-description" [jhiTranslate]="card.descKey"></p>
+                        </div>
+                    </div>
+                }
+            </section>
+
+            <hr class="divider" />
+
+            <!-- Section: What to expect -->
+            <section>
+                <h3 class="section-title" jhiTranslate="artemisApp.iris.aboutIrisModal.whatToExpect"></h3>
+                @for (card of whatToExpect; track card.titleKey) {
+                    <div class="feature-card">
+                        <div class="icon-wrapper icon-wrapper--expect" aria-hidden="true">
+                            <fa-icon [icon]="card.icon" />
+                        </div>
+                        <div>
+                            <p class="feature-card-title" [jhiTranslate]="card.titleKey"></p>
+                            <p class="feature-card-description" [jhiTranslate]="card.descKey"></p>
+                        </div>
+                    </div>
+                }
+            </section>
+
+            <hr class="divider" />
+
+            <!-- Privacy block -->
+            <div class="privacy-section">
+                <div class="icon-wrapper icon-wrapper--privacy" aria-hidden="true">
+                    <fa-icon [icon]="faShield" />
                 </div>
                 <div>
-                    <p class="card-title-text" [jhiTranslate]="card.titleKey"></p>
-                    <p class="card-description" [jhiTranslate]="card.descKey"></p>
+                    <h3 class="section-title privacy-title" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyTitle"></h3>
+                    <p class="feature-card-description" [jhiTranslate]="privacyDescKey()"></p>
+                    <p class="privacy-disclaimer" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyDisclaimer"></p>
                 </div>
             </div>
-        }
-    </section>
 
-    <hr class="divider" />
-
-    <!-- Privacy block -->
-    <div class="privacy-section">
-        <div class="icon-wrapper icon-wrapper--privacy" aria-hidden="true">
-            <fa-icon [icon]="faShield" />
-        </div>
-        <div>
-            <h3 class="section-title privacy-title" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyTitle"></h3>
-            <p class="card-description" [jhiTranslate]="privacyDescKey()"></p>
-            <p class="privacy-disclaimer" jhiTranslate="artemisApp.iris.aboutIrisModal.privacyDisclaimer"></p>
+            @if (!hideTryButton()) {
+                <!-- Try Iris button -->
+                <div class="try-iris-btn-wrapper">
+                    <button type="button" tumAetUiButton data-testid="try-iris-button" (click)="tryIris()" jhiTranslate="artemisApp.iris.aboutIrisModal.tryIris"></button>
+                </div>
+            }
         </div>
     </div>
-
-    @if (!hideTryButton) {
-        <!-- Try Iris button -->
-        <div class="try-iris-btn-wrapper">
-            <button type="button" pButton class="try-iris-btn" (click)="tryIris()" jhiTranslate="artemisApp.iris.aboutIrisModal.tryIris"></button>
-        </div>
-    }
-</div>
+</tumaet-ui-dialog>

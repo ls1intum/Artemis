@@ -30,6 +30,7 @@ describe('ChatHistoryItemComponent', () => {
     });
 
     afterEach(() => {
+        fixture.destroy();
         vi.restoreAllMocks();
     });
 
@@ -246,82 +247,63 @@ describe('ChatHistoryItemComponent', () => {
         expect(component.deleteSession.emit).toHaveBeenCalledWith(session);
     });
 
-    it('should build menuItems with correct delete action on menu toggle', async () => {
-        const session: IrisSessionDTO = {
-            id: 12,
-            title: 'Chat with menu',
-            creationDate: new Date(),
-            mode: ChatServiceMode.COURSE,
-            entityId: 1,
-            entityName: 'Course 1',
-        };
+    const menuSession: IrisSessionDTO = {
+        id: 12,
+        title: 'Chat with menu',
+        creationDate: new Date(),
+        mode: ChatServiceMode.COURSE,
+        entityId: 1,
+        entityName: 'Course 1',
+    };
 
-        fixture.componentRef.setInput('session', session);
+    const openMenu = async () => {
+        fixture.componentRef.setInput('session', menuSession);
         await fixture.whenStable();
+        fixture.debugElement.query(By.css('.menu-trigger')).nativeElement.click();
+        await fixture.whenStable();
+        return document.querySelector<HTMLButtonElement>('.delete-session-item');
+    };
 
-        // Menu items are empty before the first toggle
-        expect(component.menuItems()).toHaveLength(0);
+    it('should offer the delete action in the session menu', async () => {
+        const deleteItem = await openMenu();
 
-        // Simulate menu toggle (stopPropagation on the event, build items, toggle menu)
-        const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
-        component.onMenuToggle(mockEvent);
-
-        // After toggle, menu items should be populated with the delete action
-        expect(component.menuItems()).toHaveLength(1);
-        expect(component.menuItems()[0].styleClass).toBe('danger');
-        expect(component.menuItems()[0].label).toBeTruthy();
+        expect(deleteItem).not.toBeNull();
+        expect(deleteItem!.getAttribute('role')).toBe('menuitem');
+        expect(deleteItem!.textContent).toContain('artemisApp.iris.chatHistory.deleteSession');
     });
 
-    it('should emit deleteSession when menu item command is invoked', async () => {
-        const session: IrisSessionDTO = {
-            id: 13,
-            title: 'Chat to delete via menu',
-            creationDate: new Date(),
-            mode: ChatServiceMode.COURSE,
-            entityId: 1,
-            entityName: 'Course 1',
-        };
-
-        fixture.componentRef.setInput('session', session);
-        await fixture.whenStable();
-
+    it('should emit deleteSession, and not sessionClicked, when the delete action is chosen', async () => {
         vi.spyOn(component.deleteSession, 'emit');
+        vi.spyOn(component.sessionClicked, 'emit');
 
-        // Toggle to build menu items
-        const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
-        component.onMenuToggle(mockEvent);
-
-        // Invoke the command (simulates clicking the menu item)
-        component.menuItems()[0].command!({});
-
-        expect(component.deleteSession.emit).toHaveBeenCalledWith(session);
-    });
-
-    it('should use current translation when building menu items on toggle', async () => {
-        const session: IrisSessionDTO = {
-            id: 14,
-            title: 'Chat for language test',
-            creationDate: new Date(),
-            mode: ChatServiceMode.COURSE,
-            entityId: 1,
-            entityName: 'Course 1',
-        };
-
-        fixture.componentRef.setInput('session', session);
+        const deleteItem = await openMenu();
+        deleteItem!.click();
         await fixture.whenStable();
 
-        const translateService = TestBed.inject(TranslateService);
+        expect(component.deleteSession.emit).toHaveBeenCalledWith(menuSession);
+        expect(component.sessionClicked.emit).not.toHaveBeenCalled();
+    });
 
-        // First toggle in English
-        vi.spyOn(translateService, 'instant').mockReturnValue('Delete');
-        const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
-        component.onMenuToggle(mockEvent);
-        expect(component.menuItems()[0].label).toBe('Delete');
+    it('should not choose the session when the menu is opened with a click', async () => {
+        vi.spyOn(component.sessionClicked, 'emit');
 
-        // Simulate language change to German and toggle again
-        vi.spyOn(translateService, 'instant').mockReturnValue('Löschen');
-        component.onMenuToggle(mockEvent);
-        expect(component.menuItems()[0].label).toBe('Löschen');
+        const deleteItem = await openMenu();
+
+        expect(deleteItem).not.toBeNull();
+        expect(component.sessionClicked.emit).not.toHaveBeenCalled();
+    });
+
+    it.each(['Enter', ' '])('should not choose the session when the menu is opened with %j', async (key) => {
+        fixture.componentRef.setInput('session', menuSession);
+        await fixture.whenStable();
+        vi.spyOn(component.sessionClicked, 'emit');
+
+        const trigger = fixture.debugElement.query(By.css('.menu-trigger')).nativeElement as HTMLButtonElement;
+        trigger.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+        await fixture.whenStable();
+
+        expect(component.sessionClicked.emit).not.toHaveBeenCalled();
+        expect(document.querySelector('.delete-session-item')).not.toBeNull();
     });
 
     it('should not render related-entity-icon for course session', async () => {

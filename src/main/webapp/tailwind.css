@@ -86,6 +86,7 @@
 @source './app/modeling/manage/detail';
 @source './app/fileupload/manage/exercise-details';
 @source './app/iris/manage/settings';
+@source './app/iris/overview';
 @source './app/course/manage/athena-settings-update';
 @source './app/course/manage/control-center/about-athena-modal';
 @source './app/hyperion';
